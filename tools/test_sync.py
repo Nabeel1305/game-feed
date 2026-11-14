@@ -87,17 +87,24 @@ def main():
     A, B = os.path.join(work, 'A'), os.path.join(work, 'B')
     build_feed.build(A, copy.deepcopy(reg), 5)
     regB = copy.deepcopy(reg)
-    inside = [g for g in regB['games'] if g['status'] in build_feed.IN_FEED]
+    inside = [g for g in regB['games'] if build_feed.in_app(g)]
     donor, retired, changed = inside[1], inside[0], inside[-1]
     seventh = copy.deepcopy(donor)
     seventh.update(number=regB['next_number'], id='test-seventh', name='Seventh Game', status='testing', storage_prefix='t7.')
     regB['games'].append(seventh)
+    waiting = copy.deepcopy(donor)                  # a game he is still play-testing: finished, tested, but he has not said "put it on the app"
+    waiting.update(number=regB['next_number'] + 1, id='test-waiting', name='Waiting Game', status='testing', storage_prefix='tw.')
+    del waiting['in_app']
+    regB['games'].append(waiting)
     retired['status'] = 'retired'
     build_feed.build(B, regB, 6)
     changed_page = f"games/{changed['id']}/index.html"
     retouch(B, changed_page, b'\n<!-- a later version -->\n')
     new_page, gone_page = 'games/test-seventh/index.html', f"games/{retired['id']}/index.html"
     nA, nB = len(tree(A)), len(tree(B))
+    listB = open(os.path.join(B, 'games.js'), encoding='utf-8').read() + open(os.path.join(B, 'manifest.txt'), encoding='utf-8').read()
+    ok('test-seventh' in listB and 'test-waiting' not in listB and not os.path.exists(os.path.join(B, 'games', 'test-waiting')),
+       'a game he has not asked to be put on the app is not published, whatever its status')
 
     Remote.S.update(dir=A, log=[], fault=None)
     srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Remote)

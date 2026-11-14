@@ -48,6 +48,12 @@ def state(pg):
     return pg.evaluate('window.__feed.state()')
 
 
+def real_error(m):
+    """A browser refuses a buzz from a game nobody has touched yet and says so on the console. That happens after
+    "Restart", where the game is a fresh page; it is not a fault (in the phone app buzzes go through GameNative)."""
+    return m.type == 'error' and 'Blocked call to navigator.vibrate' not in m.text
+
+
 def game_frame(pg):
     h = pg.evaluate_handle('(() => { const s = window.__feed.cur(); return s && s.frame; })()').as_element()
     return h.content_frame() if h else None
@@ -65,7 +71,7 @@ def open_feed(browser, url, errs, **kw):
     ctx = browser.new_context(viewport={'width': W, 'height': H}, device_scale_factor=2, has_touch=True, is_mobile=True, **kw)
     pg = ctx.new_page()
     pg.on('pageerror', lambda e: errs.append('error: ' + str(e)))
-    pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' else None)
+    pg.on('console', lambda m: errs.append('console: ' + m.text) if real_error(m) else None)
     pg.goto(url)
     pg.wait_for_function('window.__feed && window.__feed.cur()')
     return ctx, pg
@@ -76,7 +82,7 @@ def main():
     listing, notes, problems = build_feed.build(OUT)
     if problems:
         print('build problems:', problems); sys.exit(1)
-    games = [g for g in json.load(open(os.path.join(root, 'games.json')))['games'] if g['status'] in build_feed.IN_FEED]
+    games = [g for g in json.load(open(os.path.join(root, 'games.json')))['games'] if build_feed.in_app(g)]
     byid = {g['id']: g for g in games}
     only = [a for a in sys.argv[1:] if not a.startswith('-')]
     class Quiet(http.server.SimpleHTTPRequestHandler):
@@ -354,7 +360,7 @@ def main():
         ctx.add_init_script("window.GameNative = { vibrate(p) { try { top.postMessage({ vib: 1 }, '*'); } catch (e) {} }, close() {} }; window.addEventListener('message', e => { if (e.data && e.data.vib) window.__vib = (window.__vib || 0) + 1; });")
         pg = ctx.new_page()
         pg.on('pageerror', lambda e: errs.append('error: ' + str(e)))
-        pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' else None)
+        pg.on('console', lambda m: errs.append('console: ' + m.text) if real_error(m) else None)
         pg.goto('file://' + os.path.join(OUT, 'index.html') + '#' + games[-1]['id'])
         pg.wait_for_function('window.__feed && window.__feed.cur()')
         t = Touch(pg)

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Tests the basic controls every game must have, the way a thumb would use them, in a phone-sized browser.
 
-For each game in the feed:
+For each game that is on the app, and each one he is still play-testing (so it is ready the day he says
+"put it on the app"):
   - a tap puts him on the level he was on (the saved level), not level 1
   - the pause button opens the same menu everywhere: Resume, Restart, Levels (and a way out)
   - while paused nothing moves; Resume carries on; Restart starts the same level afresh
@@ -89,7 +90,8 @@ def open_game(browser, base, g, errs, seed):
     ctx = browser.new_context(viewport={'width': W, 'height': H}, device_scale_factor=2, has_touch=True, is_mobile=True)
     pg = ctx.new_page()
     pg.on('pageerror', lambda e: errs.append(g['id'] + ': ' + str(e)))
-    url = f"{base}/games/{g['id']}/index.html"
+    # a game on the app is tested as the app carries it (plug and all); one he is still play-testing, straight from the project
+    url = f"{base[0]}/games/{g['id']}/index.html" if build_feed.in_app(g) else f"{base[1]}/{g['path']}"
     pg.goto(url)
     pg.evaluate("kv => { for (const k in kv) localStorage.setItem(k, JSON.stringify(kv[k])); }", seed)
     pg.goto(url)
@@ -250,14 +252,17 @@ def main():
     if problems:
         print('build problems:', problems); sys.exit(1)
     games = [g for g in json.load(open(os.path.join(root, 'games.json')))['games'] if g['status'] in build_feed.IN_FEED]
+    for g in games:
+        if 'live' not in (g.get('feed') or {}): print(f"{g['id']}: needs feed.live in games.json (JavaScript that is true once he is in live play)"); sys.exit(1)
     only = sys.argv[1] if len(sys.argv) > 1 else None
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
-    handler = functools.partial(Quiet, directory=OUT)
-    srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), handler)
-    srv.handle_error = lambda *a: None          # a page dropping a request it no longer needs (a clip, when its card is left) is not news
-    threading.Thread(target=srv.serve_forever, daemon=True).start()
-    base = f'http://127.0.0.1:{srv.server_address[1]}'
+    base, servers = [], []
+    for folder in (OUT, root):                  # the built app, and the project itself (for games not on the app yet)
+        srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Quiet, directory=folder))
+        srv.handle_error = lambda *a: None      # a page dropping a request it no longer needs is not news
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        base.append(f'http://127.0.0.1:{srv.server_address[1]}'); servers.append(srv)
     errs = []
     with sync_playwright() as p:
         browser = p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required'])
@@ -269,7 +274,7 @@ def main():
             else: ok(False, f"{g['id']}: tools/test_controls.py does not know how to test this game's controls yet")
             print(f"  {g['id']}: done in {time.time() - t0:.0f}s")
         browser.close()
-    srv.shutdown()
+    for srv in servers: srv.shutdown()
     ok(not errs, 'no JavaScript errors', '; '.join(errs[:4]))
     if fails:
         print(f'\nControls FAILED: {len(fails)} of {oks + len(fails)} checks'); [print('  -', f) for f in fails]; sys.exit(1)

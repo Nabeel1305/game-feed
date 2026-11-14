@@ -4,7 +4,7 @@ A swipe-up feed of mini-games. See **[LEDGER.md](LEDGER.md)** for every game and
 
 **Android app:** download [GameFeed.apk](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) on your phone and open it to install. Every time the app opens it fetches any new games by itself. Only a change to the app itself (the scrolling screen or the Android wrapper) needs this download again.
 
-- `games.json`: the official list of games
+- `games.json`: the official list of games. A game is on the phone app only when it has `"in_app": true`, which is set when Nabeel says to put it there
 - `games/<id>/index.html`: each game
 - `feed/`: the feed app (the scrolling screen, the plug that lets it start and pause any game, card pictures, clips, fonts)
 - `android/`: the Android wrapper around the feed app

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Builds the feed app into out/app/ (or the folder given with --out).
 
-The app is the feed page plus every game in games.json that is approved or in testing:
+The app is the feed page plus every game in games.json that Nabeel has asked to be put on the app
+("in_app": true; a game he is still play-testing is not there, whatever its status):
     index.html            the feed (feed/index.html)
     games.js              the list of games, made from games.json
     games/<id>/index.html each game, with the feed plug (feed/plug.js) put at the top of its page
@@ -10,13 +11,19 @@ The app is the feed page plus every game in games.json that is approved or in te
     manifest.txt          every file with its fingerprint: the phone app reads this to see what is new
 
 The same folder is what gets published as the feed page, what goes inside the phone app, and what GitHub
-puts on the gh-pages branch, where every installed phone app looks for new games (see android/ Sync.java).
-Adding a game to games.json is all it takes for it to show up here.
+puts on the app-v2 branch, where every installed phone app looks for new games (see android/ Sync.java).
+Setting "in_app": true on a game in games.json (when he says "put it on the app") is all it takes for it to show up here.
 Run: python3 tools/build_feed.py [--out DIR]"""
 import hashlib, json, os, re, shutil, sys
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-IN_FEED = ('approved', 'testing')
+IN_FEED = ('approved', 'testing')      # the only statuses a game on the app may have
+
+
+def in_app(g):
+    """A game is on the app only when Nabeel has said so ("put this game on the app"): "in_app": true in games.json.
+    A game he is still play-testing is a hosted page and nothing more, whatever its status."""
+    return g.get('in_app') is True and g['status'] in IN_FEED
 
 
 def fonts_available():
@@ -73,7 +80,7 @@ def build(out, reg=None, build_number=None):
         if os.path.isdir(src):
             shutil.copytree(src, os.path.join(out, d))
     for g in reg['games']:
-        if g['status'] not in IN_FEED:
+        if not in_app(g):
             continue
         src = os.path.join(root, g['path'])
         if not os.path.exists(src):

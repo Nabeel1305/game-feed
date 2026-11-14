@@ -241,7 +241,7 @@ def main():
         if i + 1 >= len(args): print('--trace needs the JavaScript to print'); sys.exit(1)
         probe = args[i + 1]; del args[i:i + 2]
     want = [a for a in args if not a.startswith('-')]
-    games = [g for g in reg['games'] if (g['id'] in want if want else g['status'] in ('approved', 'testing'))]
+    games = [g for g in reg['games'] if (g['id'] in want if want else (g.get('in_app') is True and g['status'] in ('approved', 'testing')))]       # with no name given: every game on the app
     if not games:
         print('no such game'); sys.exit(1)
     srv = serve()

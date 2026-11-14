@@ -22,6 +22,8 @@ if len(prefixes) != len(set(prefixes)): problems.append('two games share a stora
 if 'gf.' in prefixes: problems.append("storage_prefix 'gf.' belongs to the feed itself; give the game another")
 for g in games:
     if not os.path.exists(os.path.join(root, g['path'])): problems.append(f"{g['id']}: missing {g['path']}")
+    if g.get('in_app') not in (None, True, False): problems.append(f"{g['id']}: in_app must be true or false")
+    if g.get('in_app') is True and g['status'] not in ('approved', 'testing'): problems.append(f"{g['id']}: marked as on the app (in_app) but its status is {g['status']}")
     elif g['status'] in ('approved', 'testing'):
         # the basic controls every game in the feed must have (LESSONS rules 4 and 11); tools/test_controls.py tries them for real
         page = open(os.path.join(root, g['path']), encoding='utf-8').read()

@@ -4,16 +4,17 @@ import json, os, sys
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 reg = json.load(open(os.path.join(root, 'games.json')))
 games = sorted(reg['games'], key=lambda g: g['number'])
+on_app = lambda g: g.get('in_app') is True and g['status'] in ('approved', 'testing')      # only when Nabeel has said "put it on the app"
 lines = ['# Game Ledger', '', '_Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._', '',
          f"**{len(games)} game{'s' if len(games) != 1 else ''}** so far. Next number: **{reg['next_number']}**.", '']
 fa = reg.get('feed_app')
 if fa:
-    inside = sum(1 for g in games if g['status'] in ('approved', 'testing'))
+    inside = sum(1 for g in games if on_app(g))
     lines += [f"**{fa['name']}** (the scrolling app with all the games, version {fa['version']}): [open the feed]({fa['artifact']}) · [Android app]({fa['apk']}) · {inside} game{'s' if inside != 1 else ''} in it.", '']
 lines += [
-         '| # | Game | Status | Version | Feed mini mode | Play / test page | Code |', '|---|------|--------|---------|----------------|------------------|------|']
+         '| # | Game | Status | On the app | Version | Play / test page | Code |', '|---|------|--------|------------|---------|------------------|------|']
 for g in games:
-    lines.append(f"| {g['number']} | **{g['name']}** | {g['status']} | {g['version']} | {'yes' if g['feed']['mini'] else 'not yet'} | [play]({g['artifact']}) | `{g['path']}` |")
+    lines.append(f"| {g['number']} | **{g['name']}** | {g['status']} | {'yes' if on_app(g) else 'not yet (he has not said so)'} | {g['version']} | [play]({g['artifact']}) | `{g['path']}` |")
 lines += ['', '## What each game is', '']
 for g in games:
     extra = f" APK repo: `{g['apk_repo']}`." if g.get('apk_repo') else ''
