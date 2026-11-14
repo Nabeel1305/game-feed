@@ -165,8 +165,9 @@ function makeKnight(L) {
   const swordKey = pick(Object.keys(SWORDS));
   const f = L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
   const E = Math.exp;
+  const easy = clamp((6 - L) / 5, 0, 1);   // 1 at level 1 -> 0 from level 6: the first levels are for learning
   return {
-    L, boss, name, fem,
+    L, boss, name, fem, easy,
     metal: METALS[metalKey], metalKey,
     helm: boss ? pick(['great', 'crowned', 'horned']) : pick(HELMS),
     plume: r() < 0.6 ? pick(TINCT) : null,
@@ -176,20 +177,20 @@ function makeKnight(L) {
     skin: pick(SKIN), beard: !fem && r() < 0.5, scar: r() < 0.25, patch: r() < 0.1,
     sword: swordKey, swordSpec: SWORDS[swordKey], gem: pick(['#c0392b', '#2e86de', '#27ae60', '#f1c40f', '#8e44ad', null]),
     // fighting skill
-    windup: (0.28 + 0.62 * E(-f / 18)) * (boss ? 0.93 : 1),          // seconds of warning before his blade lands
-    parryWin: 0.14 + 0.46 * E(-f / 36),                               // how early you can meet his blade and still parry
-    gap: 0.5 + 1.6 * E(-f / 22),                                      // pause between his attacks
+    windup: (0.28 + 0.62 * E(-f / 18)) * (boss ? 0.93 : 1) * (1 + 0.5 * easy),   // seconds of warning before his blade lands
+    parryWin: 0.14 + 0.46 * E(-f / 36) + 0.2 * easy,                               // how early you can meet his blade and still parry
+    gap: (0.5 + 1.6 * E(-f / 22)) * (1 + 0.4 * easy),                // pause between his attacks
     oParry: Math.min(0.6, 0.06 + f * 0.012) * (boss ? 1.1 : 1),      // he parries your attacks
     oDodge: Math.min(0.25, f * 0.006),
     combo: L >= 4 ? Math.min(0.6, (f - 3) * 0.03) : 0,
     feint: L >= 8 ? Math.min(0.35, (f - 7) * 0.015) : 0,
-    dmg: 9 * (0.8 + f * 0.03),
-    hp: Math.round((70 + f * 6) * (boss ? 1.3 : 1)),
+    dmg: 9 * (0.8 + f * 0.03) * (1 - 0.4 * easy),
+    hp: Math.round((70 + f * 6) * (boss ? 1.3 : 1) * (1 - 0.25 * easy)),
     pHp: Math.round(100 + f * 2.5),
     read: 1 + Math.min(2.5, (L - 1) * 0.3),                           // how hard he punishes spam
     punish: 1.2 + Math.min(0.6, L * 0.05),
-    hints: L <= 4 ? 2 : L <= 9 ? 1 : 0,                              // arrow hints for the early levels
-    firstTo: L < 3 ? 1 : L < 20 ? 2 : 3
+    hints: L <= 5 ? 2 : L <= 10 ? 1 : 0,                              // arrow hints for the early levels
+    firstTo: L < 5 ? 1 : L < 20 ? 2 : 3
   };
 }
 
@@ -289,7 +290,7 @@ function strokeVsPath(p1x, p1y, p2x, p2y, ax, ay, bx, by) {
 // ---------- his attacks: cuts from any angle, thrusts at any spot ----------
 function makeAttack(kind) {
   const c = YOU(), R = Math.min(W, H * 0.6) * 0.5;
-  if (!kind) kind = Math.random() < (level < 3 ? 0.15 : 0.27) ? 'thrust' : 'cut';
+  if (!kind) kind = Math.random() < (level < 4 ? 0.12 : 0.27) ? 'thrust' : 'cut';
   if (kind === 'cut') {
     // the angle the blow starts from, around you (screen y points down): upper left, high, overhead, upper right...
     let pool = [-155, -125, -90, -55, -25];
@@ -339,13 +340,13 @@ function oppThink(dt) {
   }
 }
 // how close your stroke must pass to his blade's line (pixels): generous early, tighter later
-const parryTol = () => (28 + 30 * Math.exp(-level / 14)) * Math.min(W, H * 0.6) / 390;
+const parryTol = () => (28 + 30 * Math.exp(-level / 14)) * (1 + 0.6 * (K ? K.easy : 0)) * Math.min(W, H * 0.6) / 390;
 function judgeParry(P, A) {
   // P = your stroke {ax, ay, bx, by, at}. Cuts: meet his blade on the side it comes from. Thrusts: swipe through the spot he aims at.
   if (A.kind === 'cut') {
     const m = strokeVsPath(P.ax, P.ay, P.bx, P.by, A.sx, A.sy, A.ex, A.ey);
     if (m.d > parryTol()) return { ok: false, why: 'MISSED HIS BLADE' };
-    if (m.u > 0.42) return { ok: false, why: 'MEET IT ON ITS SIDE' };   // you have to meet it before it reaches you, on the side it's coming from
+    if (m.u > 0.42 + 0.2 * K.easy) return { ok: false, why: 'MEET IT ON ITS SIDE' };   // you have to meet it before it reaches you, on the side it's coming from
     return { ok: true, x: m.x, y: m.y };
   }
   const c = segClosest(A.px, A.py, P.ax, P.ay, P.bx, P.by);
@@ -371,8 +372,8 @@ function resolveAttack() {
     say(!j.ok ? j.why : early > win ? 'TOO EARLY' : 'TOO LATE', '#ff8a7a', 0.75, 0.66);
   }
   const caught = G.pAtk || G.t - G.lastSwing < 0.3;   // you were attacking instead of defending
-  let dmg = K.dmg * (A.kind === 'thrust' ? 0.8 : 1) * A.mul * (G.psta < 20 ? 1.3 : 1) * (caught && level > 2 ? 1.4 : 1);
-  if (caught && level > 2 && !A.punish) say('CAUGHT SWINGING', '#ff6b5b', 0.95, 0.62);
+  let dmg = K.dmg * (A.kind === 'thrust' ? 0.8 : 1) * A.mul * (G.psta < 20 ? 1.3 : 1) * (caught && level > 5 ? 1.4 : 1);
+  if (caught && level > 5 && !A.punish) say('CAUGHT SWINGING', '#ff6b5b', 0.95, 0.62);
   G.php -= dmg; G.hitsTaken++;
   G.flash = 0.35; G.shake = A.mul > 1.2 ? 16 : 11; if (!HEADLESS) { sfx.hurt(); vibe(A.mul > 1.2 ? [110, 40, 140] : 90); }
   if (A.punish) say('PUNISHED', '#ff6b5b', 1.05, 0.62);
@@ -408,7 +409,7 @@ function stroke(ax, ay, bx, by) {
   // a hard pull straight down toward yourself = step back
   if (by - ay > 60 && Math.abs(by - ay) > Math.abs(bx - ax) * 2.2 && ay > H * 0.62) { pDodge(); return; }
   G.pAnim = { kind: 'stroke', ax, ay, bx, by, t: 0, dur: 0.24 };
-  const flailing = G.t - G.lastSwing < (level <= 2 ? 0.2 : 0.4);   // nonstop swinging isn't parrying
+  const flailing = G.t - G.lastSwing < (level <= 4 ? 0.2 : 0.4);   // nonstop swinging isn't parrying
   G.lastSwing = G.t;                                                // every swipe counts, even a tired one
   if (G.os === 'windup' || G.os === 'strike') {           // he's swinging: this is a parry
     if (G.pBusy > 0.05) return;
@@ -468,7 +469,7 @@ function landAttack(a) {
     const recent = G.pTimes.filter(t => G.t - t < 2).length;
     const n = G.lastMoves.length, same = n >= 2 && G.lastMoves[n - 1] === G.lastMoves[n - 2];
     const spam = recent >= 4 || (same && recent >= 2) || G.oHits >= 2;
-    const spamBlock = Math.min(0.85, 0.28 + level * 0.07);
+    const spamBlock = Math.min(0.85, 0.28 + level * 0.07) * (1 - 0.3 * K.easy);
     let ch = (spam ? Math.max(spamBlock, K.oParry * K.read) : K.oParry) * (G.os === 'hurt' && !spam ? 0.5 : 1) * (G.osta < 20 ? 0.7 : 1) * (zone === 'head' ? 1.15 : 1);
     if (Math.random() < Math.min(0.9, ch)) {
       G.os = 'block'; G.ot = 0; G.oHits = 0; G.oBlock = { x: hx, y: hy }; clash(false, hx, hy);
@@ -694,33 +695,73 @@ function drawKnight() {
   y += dropY;
   ctx.save(); ctx.translate(x, y + 60 * s); ctx.rotate(lean); ctx.translate(-x, -(y + 60 * s));
   // cape
-  if (K.cape) { ctx.fillStyle = shade(K.cape, 0.75); ctx.beginPath(); ctx.moveTo(x - 30 * s, y - 20 * s); ctx.lineTo(x + 30 * s, y - 20 * s); ctx.lineTo(x + 44 * s, y + 70 * s); ctx.lineTo(x - 44 * s, y + 70 * s); ctx.fill(); }
-  // legs (tassets and greaves)
-  ctx.fillStyle = metalGrad(x - 26 * s, x + 26 * s, K.metal);
-  ctx.fillRect(x - 22 * s, y + 38 * s, 18 * s, 40 * s); ctx.fillRect(x + 4 * s, y + 38 * s, 18 * s, 40 * s);
-  // breastplate + tabard
-  ctx.fillStyle = metalGrad(x - 34 * s, x + 34 * s, K.metal);
-  ctx.beginPath(); ctx.moveTo(x - 32 * s, y - 22 * s); ctx.quadraticCurveTo(x, y - 30 * s, x + 32 * s, y - 22 * s); ctx.lineTo(x + 28 * s, y + 42 * s); ctx.lineTo(x - 28 * s, y + 42 * s); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = K.tab1; ctx.beginPath(); ctx.moveTo(x - 22 * s, y - 18 * s); ctx.lineTo(x + 22 * s, y - 18 * s); ctx.lineTo(x + 25 * s, y + 52 * s); ctx.lineTo(x - 25 * s, y + 52 * s); ctx.closePath(); ctx.fill();
-  ctx.save(); ctx.beginPath(); ctx.moveTo(x - 22 * s, y - 18 * s); ctx.lineTo(x + 22 * s, y - 18 * s); ctx.lineTo(x + 25 * s, y + 52 * s); ctx.lineTo(x - 25 * s, y + 52 * s); ctx.closePath(); ctx.clip();
-  ctx.translate(x, y + 12 * s); drawCharge(K.charge, 18 * s, K.tab2); ctx.restore();
-  ctx.fillStyle = '#3a2814'; ctx.fillRect(x - 25 * s, y + 30 * s, 50 * s, 5 * s); ctx.fillStyle = '#c9a24a'; ctx.fillRect(x - 3 * s, y + 30 * s, 6 * s, 5 * s);
-  // damage dents
+  if (K.cape) { ctx.fillStyle = shade(K.cape, 0.7); ctx.beginPath(); ctx.moveTo(x - 30 * s, y - 22 * s); ctx.lineTo(x + 30 * s, y - 22 * s); ctx.quadraticCurveTo(x + 50 * s, y + 30 * s, x + 46 * s, y + 80 * s); ctx.lineTo(x - 46 * s, y + 80 * s); ctx.quadraticCurveTo(x - 50 * s, y + 30 * s, x - 30 * s, y - 22 * s); ctx.fill(); }
+  const M = K.metal, plate = (x0, x1) => metalGrad(x0, x1, M);
+  const lame = (x0, y0, x1, y1, bulge) => { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo((x0 + x1) / 2, y0 + bulge, x1, y0); ctx.lineTo(x1, y1); ctx.quadraticCurveTo((x0 + x1) / 2, y1 + bulge, x0, y1); ctx.closePath(); ctx.fill(); ctx.stroke(); };
+  ctx.strokeStyle = 'rgba(20,20,25,.45)'; ctx.lineWidth = Math.max(1, s * 0.6);
+  // legs: cuisses (thighs), knee cops, greaves
+  for (const sx of [-1, 1]) {
+    const lx = x + sx * 13 * s;
+    ctx.fillStyle = plate(lx - 10 * s, lx + 10 * s);
+    ctx.beginPath(); ctx.moveTo(lx - 10 * s, y + 46 * s); ctx.lineTo(lx + 10 * s, y + 46 * s); ctx.lineTo(lx + 8 * s, y + 66 * s); ctx.lineTo(lx - 8 * s, y + 66 * s); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = plate(lx - 9 * s, lx + 9 * s); ctx.beginPath(); ctx.ellipse(lx, y + 68 * s, 9 * s, 6 * s, 0, 0, 7); ctx.fill(); ctx.stroke();   // poleyn
+    ctx.fillStyle = shade(M, 1.25); ctx.beginPath(); ctx.ellipse(lx, y + 68 * s, 3 * s, 2.5 * s, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = plate(lx - 8 * s, lx + 8 * s); ctx.fillRect(lx - 7.5 * s, y + 72 * s, 15 * s, 14 * s); ctx.strokeRect(lx - 7.5 * s, y + 72 * s, 15 * s, 14 * s);
+  }
+  // mail skirt under the surcoat
+  ctx.fillStyle = shade(M, 0.65); ctx.fillRect(x - 27 * s, y + 34 * s, 54 * s, 14 * s);
+  ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = Math.max(0.6, s * 0.35);
+  for (let ry = 0; ry < 5; ry++) for (let rx = 0; rx < 18; rx++) { ctx.beginPath(); ctx.arc(x - 26 * s + rx * 3 * s + (ry % 2) * 1.5 * s, y + 36 * s + ry * 2.6 * s, 1.3 * s, 0, Math.PI); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(20,20,25,.45)'; ctx.lineWidth = Math.max(1, s * 0.6);
+  // breastplate with a centre ridge, and the fauld (lames) below it
+  ctx.fillStyle = plate(x - 32 * s, x + 32 * s);
+  ctx.beginPath(); ctx.moveTo(x - 30 * s, y - 24 * s); ctx.quadraticCurveTo(x, y - 32 * s, x + 30 * s, y - 24 * s); ctx.quadraticCurveTo(x + 34 * s, y + 4 * s, x + 26 * s, y + 24 * s); ctx.lineTo(x - 26 * s, y + 24 * s); ctx.quadraticCurveTo(x - 34 * s, y + 4 * s, x - 30 * s, y - 24 * s); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = plate(x - 28 * s, x + 28 * s);
+  for (let i = 0; i < 3; i++) lame(x - (26 - i) * s, y + (24 + i * 4) * s, x + (26 - i) * s, y + (28 + i * 4) * s, 2 * s);
+  // surcoat in his colours, open at the sides so the plate shows
+  ctx.fillStyle = K.tab1; ctx.beginPath(); ctx.moveTo(x - 19 * s, y - 20 * s); ctx.lineTo(x + 19 * s, y - 20 * s); ctx.lineTo(x + 23 * s, y + 48 * s); ctx.lineTo(x + 8 * s, y + 52 * s); ctx.lineTo(x, y + 47 * s); ctx.lineTo(x - 8 * s, y + 52 * s); ctx.lineTo(x - 23 * s, y + 48 * s); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.clip(); ctx.translate(x, y + 10 * s); drawCharge(K.charge, 15 * s, K.tab2); ctx.restore();
+  ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.moveTo(x - 10 * s, y + 20 * s); ctx.lineTo(x - 12 * s, y + 48 * s); ctx.moveTo(x + 10 * s, y + 20 * s); ctx.lineTo(x + 12 * s, y + 48 * s); ctx.stroke();   // folds
+  ctx.strokeStyle = 'rgba(20,20,25,.45)';
+  // sword belt
+  ctx.fillStyle = '#3a2814'; ctx.fillRect(x - 24 * s, y + 26 * s, 48 * s, 4.5 * s); ctx.fillStyle = '#c9a24a'; ctx.fillRect(x - 3 * s, y + 25.5 * s, 6 * s, 5.5 * s);
+  // gorget (neck plates)
+  ctx.fillStyle = plate(x - 14 * s, x + 14 * s);
+  lame(x - 14 * s, y - 30 * s, x + 14 * s, y - 25 * s, 3 * s); lame(x - 12 * s, y - 34 * s, x + 12 * s, y - 30 * s, 2.5 * s);
+  // dents and scratches as he takes damage
   const dmgF = 1 - G.ohp / K.hp;
-  ctx.fillStyle = 'rgba(30,20,20,.35)';
-  if (dmgF > 0.3) { ctx.beginPath(); ctx.ellipse(x + 14 * s, y - 6 * s, 4 * s, 2.5 * s, 0.4, 0, 7); ctx.fill(); }
-  if (dmgF > 0.6) { ctx.beginPath(); ctx.ellipse(x - 12 * s, y + 20 * s, 5 * s, 3 * s, -0.3, 0, 7); ctx.fill(); }
-  // pauldrons
-  ctx.fillStyle = metalGrad(x - 46 * s, x - 22 * s, K.metal); ctx.beginPath(); ctx.ellipse(x - 34 * s, y - 20 * s, 13 * s, 10 * s, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = metalGrad(x + 22 * s, x + 46 * s, K.metal); ctx.beginPath(); ctx.ellipse(x + 34 * s, y - 20 * s, 13 * s, 10 * s, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(30,20,20,.35)'; ctx.strokeStyle = 'rgba(30,20,20,.4)';
+  if (dmgF > 0.3) { ctx.beginPath(); ctx.ellipse(x + 22 * s, y - 8 * s, 3.5 * s, 2 * s, 0.4, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x + 18 * s, y - 14 * s); ctx.lineTo(x + 27 * s, y - 2 * s); ctx.stroke(); }
+  if (dmgF > 0.6) { ctx.beginPath(); ctx.ellipse(x - 22 * s, y + 6 * s, 4 * s, 2.5 * s, -0.3, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x + 6 * s, y + 14 * s); ctx.lineTo(x - 8 * s, y + 30 * s); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(20,20,25,.45)';
+  // pauldrons: layered shoulder plates with rivets
+  for (const sx of [-1, 1]) {
+    const px = x + sx * 33 * s;
+    ctx.fillStyle = plate(px - 15 * s, px + 15 * s);
+    for (let i = 2; i >= 0; i--) { ctx.beginPath(); ctx.ellipse(px + sx * i * 1.5 * s, y - 20 * s + i * 5 * s, (14 - i * 1.5) * s, (10 - i) * s, sx * 0.25, Math.PI * 1.02, Math.PI * 2.0 - 0.02); ctx.lineTo(px + sx * i * 1.5 * s - (14 - i * 1.5) * s * 0.9, y - 20 * s + i * 5 * s + 4 * s); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle = shade(M, 1.4); for (const rx of [-8, 0, 8]) { ctx.beginPath(); ctx.arc(px + rx * s, y - 24 * s, 1.2 * s, 0, 7); ctx.fill(); }
+  }
   // head
   drawHelm(x, y - 42 * s, 13 * s);
   ctx.restore();
   // arms + sword (screen space so strikes can come at you)
   const P = oppPose(x, y, s);
-  ctx.strokeStyle = metalGrad(x - 40 * s, x + 40 * s, K.metal); ctx.lineCap = 'round'; ctx.lineWidth = 11 * s;
-  if (!P.flying) { ctx.beginPath(); ctx.moveTo(x + 32 * s, y - 16 * s); ctx.quadraticCurveTo((x + 32 * s + P.hx) / 2 + 8 * s, (y - 16 * s + P.hy) / 2 + 10 * s, P.hx, P.hy); ctx.stroke(); }
-  ctx.beginPath(); ctx.moveTo(x - 32 * s, y - 16 * s); ctx.quadraticCurveTo(x - 30 * s, y + 10 * s, P.flying ? x - 26 * s : (P.hx + x - 20 * s) / 2, P.flying ? y + 26 * s : (P.hy + y + 10 * s) / 2); ctx.stroke();
+  const arm = (sx, sy, hx, hy, bend) => {   // shoulder -> elbow -> hand, plated
+    const mx = (sx + hx) / 2, my = (sy + hy) / 2, dx = hx - sx, dy = hy - sy, L = Math.hypot(dx, dy) || 1;
+    const ex = mx - dy / L * bend * s, ey = my + dx / L * bend * s;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(20,20,25,.55)'; ctx.lineWidth = 12 * s; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.strokeStyle = metalGrad(Math.min(sx, hx) - 10 * s, Math.max(sx, hx) + 10 * s, K.metal); ctx.lineWidth = 10 * s;
+    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.fillStyle = metalGrad(ex - 7 * s, ex + 7 * s, K.metal); ctx.strokeStyle = 'rgba(20,20,25,.5)'; ctx.lineWidth = Math.max(1, 0.6 * s);
+    ctx.beginPath(); ctx.arc(ex, ey, 6.5 * s, 0, 7); ctx.fill(); ctx.stroke();                            // elbow cop
+    ctx.fillStyle = shade(K.metal, 1.35); ctx.beginPath(); ctx.arc(ex, ey, 2.2 * s, 0, 7); ctx.fill();
+    ctx.fillStyle = metalGrad(hx - 7 * s, hx + 7 * s, shade(K.metal, 0.9).replace(/rgb\((\d+),(\d+),(\d+)\)/, (m, r, g, b) => '#' + [r, g, b].map(v => (+v).toString(16).padStart(2, '0')).join('')));
+    ctx.beginPath(); ctx.ellipse(hx, hy, 7 * s, 6 * s, Math.atan2(dy, dx), 0, 7); ctx.fill(); ctx.stroke();   // gauntlet
+    ctx.strokeStyle = 'rgba(20,20,25,.4)'; for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.arc(hx, hy, (3 + k) * s, 0.4, 2.6); ctx.stroke(); }
+  };
+  if (!P.flying) arm(x + 32 * s, y - 16 * s, P.hx, P.hy, -10);
+  arm(x - 32 * s, y - 16 * s, P.flying ? x - 26 * s : (P.hx + x - 20 * s) / 2, P.flying ? y + 26 * s : (P.hy + y + 10 * s) / 2, 8);
   // sword
   const len = Math.hypot(P.tx - P.hx, P.ty - P.hy) || 1;
   const w = (P.big ? lerp(2.4, 5.5, P.big) : 2.4) * s * K.swordSpec[0];
@@ -740,7 +781,7 @@ function drawKnight() {
       ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = '#fff'; ctx.fillStyle = '#fff'; ctx.lineCap = 'round';
       if (A.kind === 'cut') {
         // the block zone: the half of his swing on the side it's coming from
-        const mx = lerp(A.sx, A.ex, 0.42), my = lerp(A.sy, A.ey, 0.42);
+        const mx = lerp(A.sx, A.ex, 0.42 + 0.2 * K.easy), my = lerp(A.sy, A.ey, 0.42 + 0.2 * K.easy);
         ctx.lineWidth = parryTol() * 1.4; ctx.globalAlpha = a * 0.35; ctx.beginPath(); ctx.moveTo(A.sx, A.sy); ctx.lineTo(mx, my); ctx.stroke();
         ctx.globalAlpha = a; ctx.lineWidth = 3; ctx.setLineDash([10, 9]); ctx.beginPath(); ctx.moveTo(A.sx, A.sy); ctx.lineTo(A.ex, A.ey); ctx.stroke(); ctx.setLineDash([]);
         const ang = Math.atan2(A.ey - A.sy, A.ex - A.sx); ctx.beginPath(); ctx.moveTo(A.ex + Math.cos(ang) * 14, A.ey + Math.sin(ang) * 14); ctx.lineTo(A.ex + Math.cos(ang + 2.5) * 16, A.ey + Math.sin(ang + 2.5) * 16); ctx.lineTo(A.ex + Math.cos(ang - 2.5) * 16, A.ey + Math.sin(ang - 2.5) * 16); ctx.fill();
