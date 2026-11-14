@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hippodrome</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caesar+Dressing&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#0e1f33;color:#f6efdd;font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.gk{font-family:"Caesar Dressing",Georgia,"Times New Roman",serif;letter-spacing:1px;font-weight:400}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.32);color:#f6efdd;font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,rgba(14,31,51,.62),rgba(7,14,24,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:47px;line-height:1;color:#f2c14e;text-shadow:0 4px 0 #8a4a1a,0 10px 24px rgba(0,0,0,.5)}
+.card h2{margin:0;font-size:34px;line-height:1.05;color:#f2c14e;text-shadow:0 3px 0 #8a4a1a}
+.meander{height:12px;margin:10px auto 8px;width:192px;opacity:.85;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Cpath d='M0 11H24M20 11V1H4V7H12' fill='none' stroke='%23f2c14e' stroke-width='2'/%3E%3C/svg%3E") repeat-x}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.8}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.65;font-weight:800}
+.oname{font-size:25px;line-height:1.15}
+.games{font-size:13px;opacity:.8;margin-top:2px}
+.pills{display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:800;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.12)}
+.sub{opacity:.88;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.9;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#f2c14e;color:#3a1d08;box-shadow:0 5px 0 #a8551f;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8551f}
+.btn.ghost{background:transparent;color:#f6efdd;box-shadow:none;border:1.5px solid rgba(246,239,221,.28);font-size:16px;padding:13px;margin-top:10px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.93}
+.rules b{color:#f2c14e}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:#f6efdd;cursor:pointer}
+.lvb small{display:block;font-size:10px;color:#f2c14e;min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px #f2c14e}
+.lvb.cur{background:#f2c14e;color:#3a1d08}.lvb.cur small{color:#3a1d08}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:#f2c14e}
+.stars .off{color:rgba(255,255,255,.2)}
+.board{margin:10px auto 0;max-width:270px;text-align:left;font-size:13.5px;font-weight:700}
+.board div{display:flex;justify-content:space-between;padding:3px 10px;border-radius:8px}
+.board .me{background:rgba(242,193,78,.2);color:#f2c14e}
+.board span:last-child{opacity:.75;font-weight:600}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:#f2c14e}.help{color:#a9e8c0;font-size:12.5px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="gk">HIPPODROME</h1>
+    <div class="meander"></div>
+    <div class="tag">FOUR HORSES · ONE WREATH</div>
+    <div class="vs">RACE <span id="hLvl">1</span></div>
+    <div class="oname gk" id="hVenue">Olympia</div>
+    <div class="games" id="hGames"></div>
+    <div class="pills" id="hPills"></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">RACE</button>
+    <button class="btn ghost" id="levelsBtn">Choose race</button>
+    <button class="btn ghost" id="rulesBtn">How to race</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="gk">HOW TO RACE</h2>
+    <ul class="rules">
+      <li><b>Left thumb: the reins.</b> Slide left or right to steer your team.</li>
+      <li><b>Right thumb: the whip.</b> Tap to crack it. Tap just as the ring closes, in time with the gallop, for a PERFECT crack: more speed and fresher horses.</li>
+      <li><b>Mind their wind.</b> Whip too often, or off the beat, and the horses are blown and slow right down.</li>
+      <li><b>The turn.</b> Hold your right thumb down to rein in before the post, steer round with your left, then let go and whip away. Too fast and you slide out to the wall. Too tight and you strike the post.</li>
+      <li><b>The inside wins.</b> The closer you pass the post, the faster the turn, and the bigger the risk. Rivals swing a little wide on the way in: get close behind one, turn tighter, and you take the inside.</li>
+      <li><b>The start.</b> Three trumpet notes, then GO. Crack the whip right on GO. Too early and your team rears.</li>
+      <li>Finish near the front to unlock the next race. First place wins the wreath.</li>
+    </ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="gk">CHOOSE RACE</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="gk" id="eTitle">VICTORY</h2>
+    <div class="stars" id="eStars"></div>
+    <div class="board" id="eBoard"></div>
+    <p class="sub" id="eSub"></p>
+    <button class="btn" id="eMain">NEXT RACE</button>
+    <button class="btn ghost" id="eAlt">Race it again</button>
+    <button class="btn ghost" id="eLevels">Choose race</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="gk">PAUSED</h2>
+    <button class="btn" id="pResume">RESUME</button>
+    <button class="btn ghost" id="pQuit">Leave the race</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const GK = '"Caesar Dressing", Georgia, "Times New Roman", serif';
+let W = 390, H = 844, DPR = 1, k = 1;
+function resize() { DPR = Math.min(devicePixelRatio || 1, 2.5); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('hp.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('hp.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let unlocked = store.get('unlocked', 1), level = Math.min(store.get('level', 1), unlocked), stars = store.get('stars', {});
+let bestTime = store.get('bestTime', {}), bestLap = store.get('bestLap', {}), bestChain = store.get('bestChain', 0), streaks = store.get('streaks', {}), wreaths = store.get('wreaths', 0);
+let HEADLESS = false;
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const c = v => clamp(Math.round(v * f), 0, 255); return `rgb(${c(n >> 16)},${c((n >> 8) & 255)},${c(n & 255)})`; }
+function mix(a, b, t) { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); const c = s => Math.round(((A >> s) & 255) * (1 - t) + ((B >> s) & 255) * t); return '#' + [16, 8, 0].map(s => c(s).toString(16).padStart(2, '0')).join(''); }
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+const ORD = ['', '1ST', '2ND', '3RD', '4TH', '5TH', '6TH', '7TH', '8TH'];
+const fmtT = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ---------- sounds: hooves, a whip that cracks on the beat, bronze trumpets, a lyre for the wreath ----------
+function sweep(dur, f0, f1, vol, q = 1, when = 0, type = 'bandpass') {   // a filtered noise whoosh that glides
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur);
+    const f = actx.createBiquadFilter(); f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = actx.createGain(); env(g, t, vol, dur, Math.min(0.1, dur * 0.3)); s.connect(f); f.connect(g); g.connect(BUS); s.start(t);
+  } catch (e) {}
+}
+let LOOPS = null;
+function ensureLoops() {
+  if (LOOPS || !actx || MUTE) return;
+  LOOPS = { rumble: bed(170, 0.7, 0.0001, 7, 'lowpass'), wind: bed(1300, 0.5, 0.0001, 0.4), crowd: bed(900, 0.45, 0.02, 0.13), skid: bed(2300, 0.9, 0.0001, 17), scrape: bed(3400, 3, 0.0001, 37) };
+}
+function loopsOff() { if (LOOPS) for (const key in LOOPS) LOOPS[key] && LOOPS[key].set(0, 0.08); }
+const horn = (f, d, v, w) => { tone(f, d + 0.1, v, 'sawtooth', w, null, 2300); tone(f, d + 0.12, v * 0.55, 'triangle', w, null, 5000); };   // the salpinx, a bronze trumpet
+const sfx = {
+  hoof(acc) { const v = vary(0.12); noise(0.065, (acc ? 150 : 215) * v, acc ? 0.3 : 0.17, 'lowpass', 1.2); if (acc) tone(72 * v, 0.08, 0.09, 'sine', 0, 46); },
+  whip(q, chain) {                    // q: 2 on the beat, 1 near it, 0 off it
+    sweep(0.05, 900, 3000, 0.13, 1.4);
+    if (q === 2) { noise(0.013, 5400, 0.55, 'highpass', 1, 0.035); tone(2000 * vary(0.03), 0.05, 0.05, 'triangle', 0.035, 1400, 6000); const f = note(523, Math.min(chain || 0, 12)); tone(f, 0.3, 0.085, 'triangle', 0.045, null, 6000); tone(f * 2, 0.2, 0.025, 'sine', 0.06); }
+    else if (q === 1) { noise(0.013, 4600, 0.4, 'highpass', 1, 0.035); tone(1650 * vary(0.04), 0.045, 0.035, 'triangle', 0.035, 1150, 5000); }
+    else { noise(0.05, 850, 0.3, 'lowpass', 1, 0.035); tone(250 * vary(), 0.17, 0.05, 'sawtooth', 0.05, 165, 700); }
+  },
+  blown() { tone(300, 0.5, 0.06, 'sawtooth', 0, 150, 600); noise(0.5, 1200, 0.16, 'bandpass', 1, 0, 0.05); },      // a spent snort
+  spent() { if (gate('spent', 400)) noise(0.12, 900, 0.14, 'bandpass', 1.5, 0, 0.02); },
+  lift() { if (!gate('lift', 500)) return; tone(330 * vary(0.05), 0.3, 0.05, 'sawtooth', 0, 250, 1100); noise(0.2, 2600, 0.12, 'bandpass', 3, 0, 0.03); },   // the axle groans
+  rein() { if (!gate('rein', 600)) return; tone(190 * vary(), 0.22, 0.035, 'sawtooth', 0, 150, 520); noise(0.25, 1800, 0.1, 'bandpass', 1, 0, 0.04); },
+  clash() { if (!gate('clash', 220)) return; const v = vary(); noise(0.012, 4000, 0.3, 'highpass'); noise(0.09, 700 * v, 0.5); tone(185 * v, 0.1, 0.16, 'triangle', 0, 120, 900); },
+  wall() { if (!gate('wall', 300)) return; noise(0.02, 5000, 0.35, 'highpass'); noise(0.2, 2800, 0.28, 'bandpass', 2); tone(120, 0.15, 0.2, 'sine', 0, 60); },
+  wreck() { noise(0.02, 3500, 0.6, 'highpass'); noise(0.5, 600, 0.95); tone(75, 0.5, 0.45, 'sine', 0, 32); for (let i = 0; i < 6; i++) noise(0.05, 1500 + Math.random() * 2500, 0.3, 'bandpass', 2, 0.06 + i * 0.07 + Math.random() * 0.03); sweep(1.0, 700, 320, 0.2, 0.7, 0.25); duck(0.7, 900); },
+  tick(i) { noise(0.012, 3000, 0.15, 'highpass'); horn(note(392, +i || 0), 0.22, 0.08, 0); },
+  go() { noise(0.015, 6000, 0.4, 'highpass'); horn(587, 0.6, 0.1, 0); tone(880, 0.6, 0.04, 'triangle', 0, null, 5000); sweep(0.5, 500, 1800, 0.22, 0.7); },
+  falseStart() { tone(330, 0.2, 0.07, 'triangle', 0, null, 2000); tone(262, 0.35, 0.07, 'triangle', 0.16, null, 1800); },
+  turn(q, chain) { if (q === 3 || q === true) [0, 2, 4].forEach((st, i) => pluck(note(392, st + Math.min(chain || 0, 5)), 0.8, 0.2, i * 0.07)); else if (q === 2) pluck(note(392, 1), 0.6, 0.15); },
+  pass(up) { if (up) { tone(note(523, 1), 0.12, 0.07, 'triangle', 0, null, 5000); tone(note(523, 3), 0.2, 0.07, 'triangle', 0.09, null, 5000); } else tone(233, 0.25, 0.045, 'triangle', 0, 208, 1500); },
+  lap(final) { noise(0.01, 6000, 0.2, 'highpass'); [1, 2.76, 5.4].forEach((m, j) => tone(520 * m, 1.1 / (1 + j * 0.6), 0.1 / (j + 1), 'sine')); if (final) [0, 2, 4].forEach((st, i) => horn(note(392, st), 0.14, 0.08, 0.3 + i * 0.17)); },
+  win(big) {
+    const n = big ? [[392, 0, 0.16], [523, 0.16, 0.16], [659, 0.32, 0.16], [784, 0.48, 0.7], [988, 0.48, 0.7]] : [[392, 0, 0.14], [523, 0.14, 0.14], [784, 0.28, 0.5]];
+    n.forEach(([f, t, d]) => horn(f, d, 0.085, t));
+    [0, 2, 4, 5, 7, 9].slice(0, big ? 6 : 4).forEach((st, i) => pluck(note(262, st), 1.3, 0.22, (big ? 0.55 : 0.35) + i * 0.09));
+  },
+  place() { [0, 2, 4].forEach((st, i) => pluck(note(330, st), 0.9, 0.2, i * 0.1)); },
+  lose() { pluck(294, 0.9, 0.2, 0); pluck(262, 0.9, 0.2, 0.2); pluck(220, 1.2, 0.22, 0.42); },
+  best() { [0, 2, 4].forEach((st, i) => tone(note(659, st), 0.22, 0.08, 'sine', i * 0.08)); },
+  click() { noise(0.01, 5000, 0.15, 'highpass'); tone(1500 * vary(), 0.04, 0.05, 'triangle', 0, null, 3500); }
+};
+MUTE = store.get('mute', false);
+
+// ---------- the Greek world: drivers, cities, champions, venues ----------
+const NAMES_M = ['Lykos', 'Kallias', 'Damon', 'Nikias', 'Theron', 'Phaidon', 'Leon', 'Kimon', 'Myron', 'Dion', 'Agathon', 'Kleitos', 'Iason', 'Glaukos', 'Philon', 'Zenon', 'Telamon', 'Kreon', 'Timon', 'Lysandros', 'Brasidas', 'Polydoros', 'Eumenes', 'Nikandros', 'Sosias', 'Theokles', 'Aristion', 'Euagoras', 'Pheidon', 'Melas', 'Hipparchos', 'Hippias', 'Philippos', 'Xanthippos', 'Melanippos', 'Leukippos', 'Kallippos', 'Hippomenes', 'Hipponax', 'Aristippos', 'Chrysippos', 'Zeuxippos', 'Hermippos', 'Damasippos', 'Lysippos', 'Archippos', 'Pausanias', 'Kleomenes', 'Alketas', 'Demaratos'];
+const NAMES_F = ['Kyniska', 'Euryleonis', 'Berenike', 'Bilistiche', 'Kassia', 'Timareta', 'Zeuxo', 'Aristokleia', 'Theodota', 'Hermione', 'Kleito', 'Arete', 'Gorgo', 'Lampito', 'Myrrine', 'Xanthippe', 'Melanippe', 'Leukippe', 'Nikippe', 'Kallipateira', 'Phile', 'Hipparete'];
+const POLEIS = [['Athens', 'Α', '#2b5fa8', '#e8e2d0'], ['Sparta', 'Λ', '#8f1d1a', '#d9b25a'], ['Thebes', 'Θ', '#2e7d4f', '#e8d9a8'], ['Corinth', 'Κ', '#d07a2a', '#3a2a1a'], ['Argos', 'Α', '#6a3d9a', '#e0d0f0'], ['Syracuse', 'Σ', '#1f8a8a', '#f0e6c8'], ['Rhodes', 'Ρ', '#c2185b', '#f7e3a1'], ['Kyrene', 'Κ', '#8a6a2a', '#f3ead7'], ['Thessaly', 'Θ', '#3b4d8f', '#e9c46a'], ['Macedon', 'Μ', '#4a2a6a', '#e9c46a'], ['Crete', 'Κ', '#b5632a', '#f3ead7'], ['Elis', 'Η', '#2f6f8f', '#f3ead7'], ['Delphi', 'Δ', '#7a5a1a', '#f7e3a1'], ['Ephesus', 'Ε', '#356b3a', '#f0e6c8'], ['Miletus', 'Μ', '#1a4a7a', '#f3d9a0'], ['Aegina', 'Α', '#3a7a7a', '#f3ead7'], ['Samos', 'Σ', '#8f2f6f', '#f3ead7'], ['Chios', 'Χ', '#5a7a2a', '#f3ead7'], ['Megara', 'Μ', '#6b4a2a', '#e8d9a8'], ['Sikyon', 'Σ', '#9a5a1a', '#f0e0b0'], ['Messene', 'Μ', '#2a5a4a', '#e9c46a'], ['Pylos', 'Π', '#7a6a3a', '#f3ead7'], ['Ithaca', 'Ι', '#3a5a8a', '#e8e2d0'], ['Mycenae', 'Μ', '#8a5a1a', '#f7e3a1'], ['Akragas', 'Α', '#a8642a', '#f3ead7'], ['Taras', 'Τ', '#2a6a8a', '#f3ead7'], ['Massalia', 'Μ', '#5a3a7a', '#f0e6c8'], ['Byzantion', 'Β', '#7a2a5a', '#e9c46a'], ['Naxos', 'Ν', '#4a6a9a', '#f3ead7'], ['Pella', 'Π', '#6a2a5a', '#e9c46a'], ['Larissa', 'Λ', '#3a6a3a', '#e8d9a8'], ['Chalkis', 'Χ', '#9a6a1a', '#f3ead7'], ['Tegea', 'Τ', '#5a4a8a', '#f3ead7']];
+const COATS = ['#6b4226', '#3a2a22', '#8a5a32', '#b9ab95', '#1f1a18', '#a0522d', '#7a4a2a', '#b8946a', '#4a3628', '#8f8478'];   // bay, dark bay, chestnut, grey, black, sorrel, brown, dun, seal, roan
+const BOSSES = [
+  ['Antilochos', 'the Cunning', 'Α', '#3d6b8c', '#e9d9a6', ['#6b4226', '#6b4226', '#3a2a22', '#8a5a32']],
+  ['Eumelos', 'of the Swift Mares', 'Ε', '#5b7a3a', '#f3ead7', ['#b9ab95', '#b9ab95', '#b8946a', '#b9ab95']],
+  ['Diomedes', 'Breaker of Horses', 'Δ', '#7a2a2a', '#d9b25a', ['#1f1a18', '#3a2a22', '#1f1a18', '#3a2a22']],
+  ['Oinomaos', 'King of Pisa', 'Ο', '#4a2a6a', '#e9c46a', ['#1f1a18', '#1f1a18', '#1f1a18', '#1f1a18']],
+  ['Pelops', 'Founder of the Games', 'Π', '#b5892a', '#fff3c4', ['#c8b48c', '#c8b48c', '#c8b48c', '#c8b48c']],
+  ['Hippolyte', 'Queen of the Amazons', 'Ι', '#8f2f4f', '#f2c14e', ['#a0522d', '#a0522d', '#8a5a32', '#a0522d']],
+  ['Phaethon', 'Son of the Sun', 'Φ', '#e8702a', '#ffe08a', ['#f2a03a', '#f2b24a', '#f2a03a', '#f2b24a']],
+  ['Ares', 'God of War', 'Α', '#5a0f0f', '#c0c0c8', ['#17110f', '#17110f', '#17110f', '#17110f']],
+  ['Poseidon', 'Lord of Horses', 'Π', '#1f7a8a', '#bff3ee', ['#7fd0c8', '#9fe0d8', '#7fd0c8', '#9fe0d8']],
+  ['Helios', 'the Sun Himself', 'Η', '#f2b01e', '#fffbe0', ['#ffd75a', '#ffe58a', '#ffd75a', '#ffe58a']]
+];
+// each venue: its own sky, far scenery, sand, and its own track (long or short straights, tight or open turns)
+const VENUES = [
+  { name: 'Olympia', games: 'The Olympic Games', prize: 'the olive wreath of Olympia', sky: ['#2f7fcf', '#8fc8f0', '#e3f1fa'], sun: [0.8, 0.6, '#fffbe6'], far: '#8fa6b5', hill: '#5f8f58', feat: 'temple', sand: ['#dcb984', '#d2ad76', '#ead9b8'], wall: '#ece5d2', Ls: 170, rIn: 4.5, Wt: 22 },
+  { name: 'Delphi', games: 'The Pythian Games', prize: 'the laurel wreath of Apollo', sky: ['#3a437c', '#e08a62', '#ffd9a6'], sun: [0.3, 0.14, '#ffe2b0'], far: '#8a6a78', hill: '#6f4f4c', feat: 'cliffs', sand: ['#d9ab7b', '#cf9f6e', '#ecc9a2'], wall: '#ead9c0', Ls: 150, rIn: 4, Wt: 20 },
+  { name: 'Isthmia', games: 'The Isthmian Games', prize: 'the pine wreath of Poseidon', sky: ['#1f6fc4', '#7fc4ee', '#dff2fb'], sun: [0.55, 0.7, '#ffffff'], far: '#7f9fb5', hill: '#4f7f5f', feat: 'sea', sand: ['#e3c999', '#dabd8a', '#f0e2c4'], wall: '#f0ebdd', Ls: 185, rIn: 5.5, Wt: 24 },
+  { name: 'Nemea', games: 'The Nemean Games', prize: 'the wild-celery wreath of Nemea', sky: ['#4f9ad8', '#a9d6f2', '#eef6e6'], sun: [0.15, 0.45, '#fff6d0'], far: '#93aa9a', hill: '#6f9a55', feat: 'cypress', sand: ['#d6b27c', '#cca66e', '#e6d4ae'], wall: '#e9e1cc', Ls: 160, rIn: 4.5, Wt: 22 },
+  { name: 'Athens', games: 'The Panathenaic Games', prize: 'an amphora of sacred olive oil', sky: ['#4a6fb5', '#f0b77a', '#ffe6b8'], sun: [0.62, 0.2, '#fff0c0'], far: '#a08a8a', hill: '#8a7a5a', feat: 'acropolis', sand: ['#ddb680', '#d3aa72', '#f0d9b0'], wall: '#f1e8d4', Ls: 175, rIn: 5, Wt: 22 },
+  { name: 'Sparta', games: 'The Games of Sparta', prize: 'a bronze tripod', sky: ['#2a3566', '#8a6a9a', '#f0b89a'], sun: [0.42, 0.08, '#ffd0a8'], far: '#6a6f95', hill: '#4a5a4a', feat: 'peaks', sand: ['#c9a071', '#be9465', '#dcbf9c'], wall: '#ddd3c0', Ls: 165, rIn: 4, Wt: 20 },
+  { name: 'Thebes', games: 'The Games of Herakles', prize: 'a bronze tripod', sky: ['#3b86cf', '#9bcdf0', '#eaf3f6'], sun: [0.9, 0.5, '#fffbe6'], far: '#9aa7a0', hill: '#8a9a5a', feat: 'walls', sand: ['#d8b27a', '#cea66c', '#e9d6b0'], wall: '#e6dcc4', Ls: 180, rIn: 5, Wt: 24 },
+  { name: 'Syracuse', games: 'The Games of Syracuse', prize: 'a silver cup', sky: ['#356fb8', '#f2c58f', '#ffe9c4'], sun: [0.25, 0.22, '#fff2c8'], far: '#8a8fa5', hill: '#5a7a5a', feat: 'volcano', sand: ['#dbb783', '#d1ab75', '#eed9b4'], wall: '#eee6d2', Ls: 170, rIn: 4.5, Wt: 22 },
+  { name: 'Rhodes', games: 'The Games of Helios', prize: 'a crown of white poplar', sky: ['#1a66c0', '#74bdea', '#d9f0fb'], sun: [0.48, 0.75, '#ffffff'], far: '#80a0b8', hill: '#5a8a6a', feat: 'colossus', sand: ['#e6cfa0', '#ddc391', '#f2e6c8'], wall: '#f4efe2', Ls: 190, rIn: 6, Wt: 24 },
+  { name: 'Alexandria', games: 'The Races of the Lageion', prize: 'a golden crown', sky: ['#4a3a78', '#e8825a', '#ffcf8f'], sun: [0.7, 0.1, '#ffe0a0'], far: '#9a7a70', hill: '#a88a5a', feat: 'pharos', sand: ['#e0b97f', '#d6ad71', '#f0d3a6'], wall: '#efe0bf', Ls: 175, rIn: 4, Wt: 22 },
+  { name: 'Kyrene', games: 'The Games of Kyrene', prize: 'a jar of precious silphium', sky: ['#2f86d6', '#a6d8f4', '#f6eed6'], sun: [0.35, 0.72, '#ffffff'], far: '#c9b38a', hill: '#d6b676', feat: 'dunes', sand: ['#e9cf98', '#e0c388', '#f4e6c2'], wall: '#f0e4c6', Ls: 160, rIn: 3.5, Wt: 20 },
+  { name: 'Troy', games: 'The Funeral Games of Patroklos', prize: 'a great bronze cauldron', sky: ['#222a55', '#7a5a8a', '#e8a07a'], sun: [0.58, 0.07, '#ffc090'], far: '#5a5a7a', hill: '#5a5548', feat: 'troy', sand: ['#c79d6c', '#bc9160', '#d9b894'], wall: '#d8cbb2', Ls: 185, rIn: 5, Wt: 26 }
+];
+const OLYMPOS = { name: 'Mount Olympos', games: 'The Games of the Gods', prize: 'a wreath of gold', sky: ['#3a4a9a', '#f0c070', '#fff3c8'], sun: [0.5, 0.5, '#fffbe0'], far: '#d9c9e0', hill: '#b9a6c9', feat: 'olympos', sand: ['#ead7a6', '#e2cc96', '#fff0cc'], wall: '#fbf6e6', Ls: 180, rIn: 4.5, Wt: 24 };
+const venueOf = L => L % 10 === 0 ? OLYMPOS : VENUES[(L - 1 - Math.floor(L / 10)) % VENUES.length];
+
+// ---------- one race: the venue, the field, and how forgiving the level is ----------
+function makeRace(L, opts = {}) {
+  const f = curve(L), e = easyOf(L), boss = L % 10 === 0, r = rng(L * 7717 + 11), pk = a => a[(r() * a.length) | 0];
+  const V = venueOf(L), T = makeTrack(V), n = L <= 5 ? 4 : L <= 14 ? 6 : 8, laps = L <= 2 ? 2 : 3;
+  const help = !!opts.help, skill = Math.min(0.92, 1 - Math.exp(-(f + 3) / 24)), spread = 0.78 - 0.08 * skill, cars = [], used = new Set(), usedN = new Set();
+  for (let i = 0; i < n - 1; i++) {
+    const isBoss = boss && i === 0, q = isBoss ? 1.07 : n > 2 ? 1 - i * spread / (n - 2) : 1, qc = Math.min(1, q);
+    let pol; do pol = pk(POLEIS); while (used.has(pol[0])); used.add(pol[0]);
+    const fem = r() < 0.22; let nm; do nm = pk(fem ? NAMES_F : NAMES_M); while (usedN.has(nm)); usedN.add(nm);
+    const B = isBoss ? BOSSES[(L / 10 - 1) % BOSSES.length] : null, c0 = pk(COATS);
+    const tight = clamp((0.35 + 0.62 * skill) * (0.6 + 0.4 * qc), 0, 0.97);
+    const cl = T.dMin + 0.7 + (1 - tight) * 8;
+    cars.push(newChariot({
+      ai: true, boss: isBoss, name: B ? B[0] : nm, full: B ? `${B[0]} ${B[1]}` : `${nm} of ${pol[0]}`, em: B ? B[2] : pol[1], col: B ? B[3] : pol[2], col2: B ? B[4] : pol[3],
+      coats: B ? B[5] : [c0, r() < 0.5 ? c0 : pk(COATS), c0, r() < 0.3 ? pk(COATS) : c0],
+      uA: clamp(0.1 + 0.82 * skill + (q - 0.6) * (0.08 + 0.16 * skill) - (help ? 0.12 : 0), 0, 0.96),          // how hard they drive the team
+      cs: clamp(0.8 + 0.145 * skill + (q - 0.6) * 0.05 - (help ? 0.04 : 0), 0.7, 0.965),                         // how close to the limit they corner
+      cl, sl: clamp(cl + 1.2 + (i % 3) * 2.3, T.dMin + 1, T.dMax - 1),                                            // corner lane and straight lane
+      pm: 0.02 + 0.2 * (1 - skill) * (1.3 - qc), rt: 0.12 + 0.55 * (1 - skill) * (1.4 - qc) * r(), agg: L >= 12 && i === 0 ? 0.35 * skill : 0
+    }));
+  }
+  const me = newChariot({ me: true, name: 'YOU', full: 'You', em: '★', col: '#b3261e', col2: '#f2c14e', coats: ['#efe9dc', '#e4dccb', '#f3eee4', '#dfd6c5'] });
+  // the starting line: rows of up to four, the favourite on the inside
+  const per = n <= 4 ? n : n / 2, slots = [];
+  for (let i = 0; i < n; i++) slots.push({ p: -5 - Math.floor(i / per) * 9, d: lerp(T.dMin + 1.3, T.dMax - 1.3, (i % per + 0.5) / per) });
+  const mine = L <= 3 || boss ? 1 : 1 + ((Math.random() * (n - 1)) | 0);        // lots are drawn for the lanes (the favourite keeps the inside); against a champion you start beside them
+  me.p = slots[mine].p; me.d = slots[mine].d; slots.splice(mine, 1);
+  cars.forEach((c, i) => { c.p = slots[i].p; c.d = slots[i].d; });
+  cars.push(me);
+  const kc = PH.KC * (1 - 0.6 * e), rRef = T.rIn + 2.3;
+  return {
+    L, V, T, cars, me, n, laps, boss, help, f, e, order: cars.slice(), t: 0, ct: 0, tickN: 0, phase: 'home', finN: 0, evs: [], parts: [], msgs: [], A: null, crowd: 0.25, ft: 0,
+    cfScale: 1 - 0.6 * e, assist: L <= 10, assistPre: clamp((8 - L) / 6, 0, 1), assistIn: L <= 5 ? 1 + 0.1 * Math.max(0, L - 4) : 1.3 + 0.3 * (L - 6), hint: L <= 5 ? 2 : L <= 10 ? 1 : 0,
+    wP: 0.075 + 0.065 * Math.exp(-f / 18) + 0.03 * e, wG: Math.min(0.24, 2 * (0.075 + 0.065 * Math.exp(-f / 18) + 0.03 * e)),
+    postWreck: L >= 6, wallWreck: L >= 8, tipWreck: L >= 8, tipAt: 0.55 + 0.35 * clamp((12 - L) / 4, 0, 1), wallAt: 5.6 + 5 * clamp((13 - L) / 5, 0, 1), wreckT: 2.3, autoStart: L <= 1 ? 0.05 : 0.5, need: boss ? 1 : n <= 4 ? 2 : 3,
+    tIdeal: Math.PI * rRef / holdSpeed(T, rRef, kc), eagle: !HEADLESS && Math.random() < 0.12
+  };
+}
+
+// ---------- the track: two straights joined by half-circle turns around the posts, run counter-clockwise ----------
+// A chariot's place is (p, d): p = metres run along the centre line since the start, d = metres from the centre line (negative = inside, by the posts).
+function makeTrack(V) {
+  const Ls = V.Ls, rIn = V.rIn, hw = V.Wt / 2, Rc = rIn + hw, tl = Math.PI * Rc;
+  return { Ls, rIn, hw, Rc, tl, L: 2 * Ls + 2 * tl, s0: Ls * 0.3, dMin: -hw + 1.45, dMax: hw - 1.45, r0: rIn + 2.2 };
+}
+const TP = { x: 0, z: 0, th: 0 };
+function trackAt(T, s, d, o = TP) {          // centre-line distance s and offset d -> a spot on the sand and the way the track points there
+  s %= T.L; if (s < 0) s += T.L;
+  if (s < T.Ls) { o.x = -T.Ls / 2 + s; o.z = -(T.Rc + d); o.th = 0; }
+  else if (s < T.Ls + T.tl) { const a = (s - T.Ls) / T.Rc, r = T.Rc + d; o.x = T.Ls / 2 + r * Math.sin(a); o.z = -r * Math.cos(a); o.th = a; }
+  else if (s < 2 * T.Ls + T.tl) { o.x = T.Ls / 2 - (s - T.Ls - T.tl); o.z = T.Rc + d; o.th = Math.PI; }
+  else { const a = (s - 2 * T.Ls - T.tl) / T.Rc, r = T.Rc + d; o.x = -T.Ls / 2 - r * Math.sin(a); o.z = r * Math.cos(a); o.th = Math.PI + a; }
+  return o;
+}
+const TI = { k: 0, dist: 0, a: 0, left: 0 };
+function turnInfo(T, s, o = TI) {            // k: 1 inside a turn; dist: metres to the next turn; a: angle already turned; left: metres of turn remaining
+  if (s < T.Ls) { o.k = 0; o.dist = T.Ls - s; o.a = 0; o.left = 0; }
+  else if (s < T.Ls + T.tl) { o.k = 1; o.dist = 0; o.a = (s - T.Ls) / T.Rc; o.left = T.Ls + T.tl - s; }
+  else if (s < 2 * T.Ls + T.tl) { o.k = 0; o.dist = 2 * T.Ls + T.tl - s; o.a = 0; o.left = 0; }
+  else { o.k = 1; o.dist = 0; o.a = (s - 2 * T.Ls - T.tl) / T.Rc; o.left = T.L - s; }
+  return o;
+}
+const sOf = (T, p) => { let s = (T.s0 + p) % T.L; if (s < 0) s += T.L; return s; };
+
+// ---------- physics: the same rules for every chariot ----------
+const PH = { vTop: 24, cruise: 0.78, acc: 4.6, accU: 3.4, brk: 11, coast: 2.4, VLAT: 8.5, KC: 0.54, resp: 9, tau: 6, gain: [0, 0.18, 0.3], cost: [0.17, 0.1, 0.06], regen: 0.04, LEN: 5.2, WID: 2.7 };
+const rEff = (T, r) => T.r0 * Math.pow(Math.max(r, 1) / T.r0, 0.6);           // a wide line carries more speed, but not as much as its extra length needs: the inside is the fast way round
+const holdSpeed = (T, r, kc = PH.KC) => Math.sqrt(PH.VLAT * rEff(T, r) / kc);  // the fastest a line of radius r can be held with the reins hard over
+const strideT = v => lerp(0.92, 0.72, clamp((v - 8) / (PH.vTop - 8), 0, 1));   // seconds per whip beat: the gallop quickens with speed
+function newChariot(o) {
+  return Object.assign({ p: 0, d: 0, v: 0, vd: 0, urge: 0, wind: 1, ph: 0, beatN: 0, lastBeat: -1, gal: Math.random(), wheel: 0, st: 'grid', wt: 0, blown: 0, balk: 0, slide: 0, tip: 0, scrape: 0, lat: 0, u: 0, b: 0,
+    lap: 1, fin: 0, place: 0, ghost: 0, whipT: 9, hitT: 9, onW: 0, auto: 0, rank: 0, react: 0, chain: 0, topChain: 0, pWhips: 0, whips: 0, turns: 0, pTurns: 0, tChain: 0, inTurn: 0, wrecks: 0, lapT0: 0, bestLap: 0, surge: 0, bErr: 0, wasT: 0, side: 0, sideT: 0 }, o);
+}
+function ev(R, c, type, val) { if (!HEADLESS) R.evs.push({ c, type, val }); }
+function wreckIt(c, R) { c.st = 'wreck'; c.wt = 0; c.tip = 0; c.urge = 0; c.u = 0; c.b = 0; c.wrecks++; c.tHit = 1; c.chain = 0; ev(R, c, 'wreck'); }
+function beatErr(c) { return (c.ph < 0.5 ? c.ph : c.ph - 1) * strideT(c.v); }   // seconds from the nearest beat (negative = early)
+function whip(c, q) {                        // q: 2 on the beat, 1 near it, 0 off it
+  c.whipT = 0; c.whips++;
+  c.urge = Math.min(1, c.urge + PH.gain[q]); c.wind -= PH.cost[q];
+  if (q === 0) c.balk = 0.45;                // off the beat the team breaks stride
+  if (c.wind <= 0) { c.wind = 0; c.blown = 3; c.urge = 0; }
+}
+function stepChariot(c, dt, R) {
+  const T = R.T;
+  c.whipT += dt; c.hitT += dt; if (c.ghost > 0) c.ghost -= dt; if (c.auto > 0) c.auto -= dt;
+  if (c.st === 'grid') return;
+  if (c.st === 'wreck') {
+    c.wt += dt; c.v = Math.max(0, c.v - 26 * dt); c.p += c.v * dt; c.vd *= 0.9; c.slide = 0; c.scrape = 0; c.lat = 0;
+    if (c.wt >= R.wreckT) { c.st = 'run'; c.v = 2.5; c.vd = 0; c.urge = 0; c.ghost = 1.5; c.wt = 0; c.onW = 0; c.d = clamp(c.d, T.dMin + 1.2, T.dMax - 1.2); }
+    return;
+  }
+  turnInfo(T, sOf(T, c.p)); const inT = TI.k, dist = TI.dist, r = T.Rc + c.d, fin = c.st === 'fin';
+  const u = fin ? 0 : c.u; let b = fin ? 0 : c.b;
+  const kc = PH.KC * (c.me ? R.cfScale : 1);
+  if (c.me && R.assist && !fin) {            // learning levels: the team looks after itself, less and less
+    const vh0 = holdSpeed(T, r, kc);
+    if (inT) { if (c.v > vh0 * R.assistIn) { b = 1; c.auto = 0.3; } }                                              // in the turn it steadies itself (a safety net that still costs you the line)
+    else if (R.assistPre > 0 && c.v > vh0 && dist <= (c.v * c.v - vh0 * vh0) / (2 * PH.brk) * R.assistPre + 1.5) { b = 1; c.auto = 0.3; }   // on the first levels it also slows in good time
+  }
+  // speed: cruising pace, plus what the whip has asked for, minus the reins
+  if (c.blown > 0) { c.blown -= dt; if (c.blown <= 0) { c.blown = 0; c.wind = Math.max(c.wind, 0.3); } }
+  if (c.balk > 0) c.balk -= dt;
+  if (!c.ai) c.urge *= Math.exp(-dt / PH.tau * (c.slide > 0.4 ? 7 : b > 0.3 ? 3 : 1));       // reining in costs some of the pace; a slide throws most of it away
+  const cru = PH.vTop * PH.cruise, vt = fin ? 9 : cru * (c.blown > 0 ? 0.8 : c.balk > 0 ? 0.93 : 1) + (c.blown > 0 ? 0 : c.urge) * (PH.vTop - cru);
+  if (b > 0) { if (c.v > 5) c.v = Math.max(5, c.v - PH.brk * b * dt); }
+  else if (c.v < vt) c.v = Math.min(vt, c.v + (PH.acc + PH.accU * c.urge) * (1 - Math.min(1, c.slide)) * dt);     // a sliding team cannot pull
+  else c.v = Math.max(vt, c.v - PH.coast * dt);
+  c.wind = Math.min(1, c.wind + PH.regen * (c.blown > 0 ? 2 : b > 0.3 ? 1.8 : 1) * dt);
+  // sideways: the reins against the outward throw of the turn
+  const cf = inT ? kc * c.v * c.v / rEff(T, r) : 0, g = Math.min(1, c.v / 9);
+  c.vd += (u * PH.VLAT * g + cf - c.vd) * Math.min(1, dt * PH.resp);
+  c.d += c.vd * dt; c.lat = cf;
+  const sl = inT ? (cf - 0.72 * PH.VLAT) / (0.5 * PH.VLAT) : 0;
+  c.slide = clamp(sl, 0, 1.5);
+  if (cf > 0.85 * PH.VLAT && c.v > 6) c.v -= Math.min(8, 6 * (cf / PH.VLAT - 0.85)) * dt;        // sliding scrubs speed away (but less than the reins would)
+  // far too fast with the reins hard over: the inner wheel lifts, and if it stays up the chariot goes over
+  const lift = sl > 0.85 ? (Math.min(sl, 3) - 0.85) / 0.65 * Math.max(0, -u) : 0, t0 = c.tip;
+  c.tip = lift > 0 ? Math.min(1, c.tip + lift * dt) : Math.max(0, c.tip - 1.6 * dt);
+  if (c.tip > 0.2 && t0 <= 0.2) ev(R, c, 'lift');
+  if (c.tip >= R.tipAt && R.tipWreck && !fin && c.ghost <= 0) { ev(R, c, 'tip'); wreckIt(c, R); return; }
+  // the walls: the stands outside, the barrier and the posts inside
+  c.scrape = Math.max(0, c.scrape - dt * 5);
+  if (c.d > T.dMax) {
+    const imp = Math.max(0, c.vd); c.d = T.dMax; c.vd = 0;
+    if (!c.onW) { c.onW = 1; if (imp > 0.6) { c.v *= 1 - Math.min(0.55, 0.06 + imp * 0.05); c.hitT = 0; c.tHit = 1; ev(R, c, 'wall', imp); if (R.wallWreck && imp > R.wallAt && c.v > 12 && !fin) { wreckIt(c, R); return; } } }
+    if (c.v > 10) c.v = Math.max(10, c.v - 16 * dt); c.scrape = 1; c.tHit = 1;
+  } else if (c.d < T.dMin) {
+    const imp = Math.max(0, -c.vd), post = inT || dist < 1.5;
+    c.d = T.dMin;
+    if (post && R.postWreck && c.v > 9 && c.ghost <= 0 && !fin) { ev(R, c, 'post'); wreckIt(c, R); return; }
+    c.vd = post ? 2.5 : 0;
+    if (!c.onW) { c.onW = 1; if (imp > 0.6 || post) { c.v *= 1 - Math.min(0.4, 0.06 + imp * 0.045); c.hitT = 0; ev(R, c, 'wall', imp); } }
+    if (c.v > 10) c.v = Math.max(10, c.v - 16 * dt); c.scrape = 1; c.tHit = 1;
+  } else if (c.d < T.dMax - 0.25 && c.d > T.dMin + 0.25) c.onW = 0;
+  // forward: the inside of a turn is the short way round
+  c.p += c.v * Math.sqrt(Math.max(0.15, 1 - c.vd * c.vd / (c.v * c.v + 1))) * dt * (inT ? T.Rc / r : 1);   // speed spent going sideways is not going forward
+  const sT = strideT(c.v); c.ph += dt / sT; if (c.ph >= 1) { c.ph -= 1; c.beatN++; }
+  c.gal += 2 * dt / sT; c.wheel += c.v * dt * 2;
+}
+
+// ---------- rivals: the same chariot, driven by rules ----------
+function aiDrive(c, R, dt) {
+  const T = R.T; turnInfo(T, sOf(T, c.p)); const inT = TI.k, dist = TI.dist, a = TI.a;
+  if (inT !== c.wasT) {                     // each new straight: how well will it judge the next turn?
+    c.wasT = inT;
+    if (!inT) { const bad = Math.random() < c.pm; c.bErr = bad ? 5 + Math.random() * 9 : (Math.random() - 0.5) * 3; c.wob = bad && R.L >= 8 && Math.random() < 0.12; }
+  }
+  // the lane it wants: its own on the straight; into the turn a lane off the post, closing on its corner lane by the middle of the turn, drifting out at the exit.
+  // That way in leaves the door open at the post: a team close behind that turns tighter can take the inside (and so can a rival, if you run wide).
+  const ent = c.tin ? c.cl : Math.max(c.cl, T.dMin + 3.1);
+  let dT = inT ? (a < 0.8 ? ent : a < 1.7 ? lerp(ent, c.cl, (a - 0.8) / 0.9) : c.cl + (a > 2 && !c.hug ? (a - 2) * 3 : 0)) : dist < 80 ? lerp(ent, c.sl, clamp((dist - 12) / 68, 0, 1)) : c.sl;
+  let slow = null, sdp = 1e9;
+  for (const o of R.cars) {
+    if (o === c || o.st === 'grid' || o.st === 'fin' || o.ghost > 0) continue;
+    let dp = o.p - c.p; dp -= Math.round(dp / T.L) * T.L;
+    if (dp > 1 && dp < 7 + c.v * 0.6 && Math.abs(o.d - dT) < 2.9 && (o.v < c.v - 0.2 || o.st === 'wreck')) { if (dp < sdp) { slow = o; sdp = dp; } }
+    else if (Math.abs(dp) < 5.6 && Math.abs(o.d - c.d) < 3.3) dT = o.d > c.d ? Math.min(dT, o.d - 3.0) : Math.max(dT, o.d + 3.0);   // someone alongside: keep a wheel's width
+  }
+  let boxed = false;
+  if (slow) {                               // a slower team ahead: go round, inside or outside, whichever is open
+    const free = d => d > T.dMin + 0.2 && d < T.dMax - 0.2 && !R.cars.some(o => { if (o === c || o === slow || o.st === 'grid') return false; let dp = o.p - c.p; dp -= Math.round(dp / T.L) * T.L; return Math.abs(dp) < 9 && Math.abs(o.d - d) < 2.8; });
+    const din = slow.d - 3.1, dout = slow.d + 3.1, fi = free(din), fo = free(dout);
+    if (c.side && R.t - c.sideT > 1.5) c.side = 0;
+    if (!c.side) { c.side = fi && fo ? (Math.abs(din - c.d) < Math.abs(dout - c.d) ? -1 : 1) : fi ? -1 : fo ? 1 : 0; c.sideT = R.t; }
+    if (c.side === -1 && fi) dT = din; else if (c.side === 1 && fo) dT = dout; else if (fi) dT = din; else if (fo) dT = dout; else boxed = true;
+  }
+  if (c.agg && !inT && dist > 40) {         // the favourite covers the line of whoever is coming up behind
+    for (const o of R.cars) { if (o === c || o.st !== 'run') continue; let dp = c.p - o.p; dp -= Math.round(dp / T.L) * T.L; if (dp > 5.5 && dp < 15 && o.v > c.v + 0.4) { dT = lerp(dT, o.d, c.agg); break; } }
+  }
+  dT = clamp(dT, T.dMin + 0.45, T.dMax - 0.5);
+  const kc = PH.KC * (c.me ? R.cfScale : 1), r = T.Rc + c.d, cf = inT ? kc * c.v * c.v / rEff(T, r) : 0, g = Math.min(1, c.v / 9);
+  c.u = clamp((clamp((dT - c.d) * 1.6, -5.5, 5.5) - cf) / (PH.VLAT * g), -1, 1);
+  if (inT && cf > 1.2 * PH.VLAT) c.u = Math.max(c.u, -0.3);                 // far too fast: ease the reins and run wide rather than flip
+  const vh = holdSpeed(T, T.Rc + (inT ? Math.max(c.d, dT) : dT), kc) * c.cs;
+  let b = 0;
+  if (inT) { if (c.v > vh * 1.02) b = clamp((c.v - vh) / 2.5, 0.25, 1); }
+  else if (c.v > vh && dist + c.bErr <= (c.v * c.v - vh * vh) / (2 * PH.brk) + c.v * 0.04) b = 1;
+  if (!b && boxed && sdp < 9 && c.v > slow.v) b = 0.6;
+  c.b = b;
+  if (c.wob && inT && a > 0.9) { c.wob = false; wreckIt(c, R); return; }       // once in a while a wheel comes off
+  if (!c.ai) return;                        // (the test autopilot borrows the steering and braking above, but whips for itself)
+  // how hard it drives: steady, a little kept back early, everything on the last half-lap
+  const uT = clamp(c.uA * (0.88 + 0.12 * Math.min(1, c.p / T.L)) + (c.p > (R.laps - 0.45) * T.L ? 0.08 : 0), 0, 1);
+  c.urge = b ? Math.max(0, c.urge - dt * 0.4) : c.urge + clamp(uT - c.urge, -dt * 0.25, dt * 0.5);
+  if (!b && c.whipT > 1.4 + c.gal % 1 && c.urge < uT + 0.02 && uT > 0.1) c.whipT = 0;   // (for show) the whip arm
+}
+
+// ---------- wheels and noses ----------
+function collide(R) {
+  const cs = R.cars, T = R.T;
+  for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) {
+    const a = cs[i], b = cs[j];
+    if (a.st === 'grid' || b.st === 'grid' || a.st === 'fin' || b.st === 'fin' || a.ghost > 0 || b.ghost > 0) continue;
+    let dp = a.p - b.p; dp -= Math.round(dp / T.L) * T.L;
+    const dd = a.d - b.d, ox = PH.WID - Math.abs(dd), oz = PH.LEN - Math.abs(dp);
+    if (ox <= 0 || oz <= 0) continue;
+    const wa = a.st === 'wreck', wb = b.st === 'wreck';
+    if (ox / PH.WID < oz / PH.LEN) {         // side by side: the wheels clash and push apart
+      const sg = dd >= 0 ? 1 : -1, ma = wa ? 0 : wb ? 1 : 0.5, rel = (a.vd - b.vd) * sg;
+      a.d += sg * ox * ma; b.d -= sg * ox * (1 - ma);
+      if (rel < 0) { if (!wa) a.vd -= sg * rel * 0.6; if (!wb) b.vd += sg * rel * 0.6; }
+      if (rel < -0.8) { if (!wa) a.v *= 0.985; if (!wb) b.v *= 0.985; ev(R, a, 'clash', -rel); ev(R, b, 'clash', -rel); }
+    } else {                                 // nose to tail: the one behind is held up
+      const front = dp > 0 ? a : b, rear = dp > 0 ? b : a;
+      if (rear.st !== 'wreck') { const cap = front.st === 'wreck' ? 4 : front.v * 0.97; if (rear.v > cap) { if (rear.v - cap > 2.5) ev(R, rear, 'bump', rear.v - cap); rear.v = cap; } rear.p -= oz * 0.5; }
+      if (front.st !== 'wreck') front.v += 0.15;
+    }
+  }
+}
+
+// ---------- the race ----------
+function rankCars(R) { const a = R.order; a.sort((x, y) => (x.fin || 1e9) - (y.fin || 1e9) || y.p - x.p); for (let i = 0; i < a.length; i++) a[i].rank = i + 1; }
+function gradeTurn(R) {
+  const me = R.me, x = me.tT / R.tIdeal, q = me.tHit ? 0 : x <= 1.3 ? 3 : x <= 1.7 ? 2 : 1;      // 3 perfect, 2 good, 1 wide, 0 scraped
+  me.turns++;
+  if (q === 3) { me.pTurns++; me.tChain++; me.wind = Math.min(1, me.wind + 0.1); } else me.tChain = 0;
+  me.lastTurn = { q, t: me.tT, clear: me.tMin };
+  ev(R, me, 'turn', q);
+}
+function playerWhip(R) {
+  const me = R.me;
+  if (R.phase === 'count') { if (R.ct > 0.5 && !me.jump) { me.jump = true; ev(R, me, 'jump'); } return; }
+  if (R.phase !== 'race') return;
+  if (me.st === 'grid') {                    // the start: a crack right on GO is a flying start
+    if (me.jump) return;
+    const perfect = R.t < 0.25; me.st = 'run'; me.urge = perfect ? 1 : 0.35; me.wind -= 0.04; me.whipT = 0; me.whips++; if (perfect) { me.pWhips++; me.chain = 1; }
+    ev(R, me, perfect ? 'pstart' : 'whip', 1); return;
+  }
+  if (me.st !== 'run') return;
+  if (me.blown > 0) { ev(R, me, 'spent'); return; }
+  const e = Math.abs(beatErr(me)), beat = me.ph < 0.5 ? me.beatN : me.beatN + 1;
+  let q = e <= R.wP ? 2 : e <= R.wG ? 1 : 0;
+  if (beat === me.lastBeat) q = 0;           // one crack per beat
+  me.lastBeat = beat;
+  whip(me, q);
+  if (q === 2) { me.chain++; me.pWhips++; me.topChain = Math.max(me.topChain, me.chain); } else me.chain = 0;
+  ev(R, me, 'whip', q);
+  if (me.blown > 0) ev(R, me, 'blown');
+}
+function raceStep(R, dt) {
+  const T = R.T, me = R.me;
+  if (R.phase === 'count') {                 // three trumpet notes, then GO
+    R.ct += dt;
+    const tk = Math.min(3, Math.floor(R.ct / 0.8));
+    if (tk > R.tickN) { R.tickN = tk; ev(R, null, 'tick', tk - 1); }
+    if (R.ct >= 3.2) { R.phase = 'race'; R.t = 0; for (const c of R.cars) c.react = c.me ? (me.jump ? 1.0 : R.autoStart) : c.rt; ev(R, null, 'go'); }
+    return;
+  }
+  if (R.phase !== 'race' && R.phase !== 'finish') return;
+  R.t += dt;
+  for (const c of R.cars) {
+    if (c.st === 'grid') { if (R.t >= c.react) c.st = 'run'; else continue; }
+    if (c.ai && c.st === 'run') aiDrive(c, R, dt);
+    stepChariot(c, dt, R);
+  }
+  collide(R);
+  for (const c of R.cars) {
+    if (c.st !== 'run') continue;
+    const lap = Math.floor(c.p / T.L) + 1;
+    if (lap !== c.lap && c.p > 0) {
+      const lt = R.t - c.lapT0; c.lapT0 = R.t; if (!c.bestLap || lt < c.bestLap) c.bestLap = lt;
+      c.lap = lap;
+      if (c.p >= R.laps * T.L) { c.st = 'fin'; c.fin = R.t; c.place = ++R.finN; c.ghost = 99; if (c.me) finishRace(R); }
+      else if (c.me) ev(R, c, 'lap', lap);
+    }
+  }
+  rankCars(R);
+  if (R.phase === 'finish' && !R.res.board && !HEADLESS) settle(R);
+  // your turns are timed from the moment you enter the half-circle to the moment you leave it
+  if (me.st === 'run' || me.st === 'wreck') {
+    turnInfo(T, sOf(T, me.p)); const kk = TI.k;
+    if (kk && !me.inTurn) { me.inTurn = 1; me.tT = 0; me.tMin = 99; me.tHit = 0; }
+    if (me.inTurn) { me.tT += dt; me.tMin = Math.min(me.tMin, me.d - T.dMin); if (!kk) { me.inTurn = 0; gradeTurn(R); } }
+  }
+  if (me.rank !== me.shown) {               // announce a change of place once it has held for a moment
+    if (me.rank !== me.pend) { me.pend = me.rank; me.pendT = 0; } else if ((me.pendT += dt) > 0.35) { if (me.shown && R.t > 3 && R.phase === 'race') ev(R, me, 'rank', me.shown); me.shown = me.rank; }
+  } else me.pend = 0;
+}
+function finishRace(R) {
+  const me = R.me, T = R.T; R.phase = 'finish'; R.ft = 0;
+  const ahead = R.cars.filter(c => c.fin && c !== me).sort((a, b) => b.fin - a.fin)[0];           // the one who crossed just before you
+  const behind = R.cars.filter(c => !c.fin).sort((a, b) => b.p - a.p)[0];                         // the nearest still racing
+  R.res = { place: me.place, time: me.fin, lap: me.bestLap, ok: me.place <= R.need,
+    gapAhead: ahead ? me.fin - ahead.fin : 0, ahead: ahead ? ahead.full : '', gapBehind: behind ? (me.p - behind.p) / Math.max(8, behind.v) : 0, behind: behind ? behind.full : '',
+    winner: R.order[0] };
+  ev(R, me, 'finish', me.place);
+}
+function settle(R) {                         // out of sight, the rest of the field is run to the line, so every gap on the board is the real one, not a guess
+  const res = R.res, me = R.me, save = R.cars.map(c => Object.assign({}, c)), t0 = R.t, f0 = R.finN, hd = HEADLESS, evs = R.evs;
+  res.board = [];                            // (set first: the steps below must not settle again)
+  HEADLESS = true; R.evs = [];
+  for (let i = 0; i < 60 * 150 && R.cars.some(c => !c.fin); i++) raceStep(R, 1 / 60);
+  res.board = R.cars.map(c => ({ c, fin: c.fin })).sort((a, b) => (a.fin || 1e9) - (b.fin || 1e9));
+  const nx = res.board[res.board.findIndex(x => x.c === me) + 1];
+  if (nx && nx.fin) { res.gapBehind = nx.fin - me.fin; res.behind = nx.c.full; } else { res.gapBehind = 0; res.behind = ''; }
+  R.cars.forEach((c, i) => { for (const key in c) delete c[key]; Object.assign(c, save[i]); });
+  R.t = t0; R.finN = f0; R.evs = evs; HEADLESS = hd; rankCars(R);
+}
+
+// ---------- the view: a camera close behind your own chariot ----------
+const CAM = { x: 0, z: 0, h: 3.3, th: 0, c: 1, s: 0, F: 400, hor: 300, roll: 0, back: 5.6, dl: 0, kick: 0 };
+const FX = { shake: 0, stop: 0, slow: 0, flash: 0, gold: 0 };
+const NEAR = 0.6, HW = 2.3, HT = 9.2, SD = 9, HS = 1.35, STOA = 2.8;    // near plane; outer wall height, top of the stands, depth of the stands, barrier height, colonnade height
+let SX = 0, SY = 0, SC = 0;
+function P3(x, y, z) {                      // a point in the arena -> the screen (SX, SY) and its scale SC in pixels per metre; false if behind the camera
+  const dx = x - CAM.x, dz = z - CAM.z, zc = dx * CAM.c + dz * CAM.s; if (zc < NEAR) { SC = 0; return false; }
+  SC = CAM.F / zc; SX = W / 2 + (dx * CAM.s - dz * CAM.c) * SC; SY = CAM.hor - (y - CAM.h) * SC; return true;
+}
+const depth = (x, z) => (x - CAM.x) * CAM.c + (z - CAM.z) * CAM.s;
+const Q = new Float32Array(72), CB = new Float32Array(72), CL = new Float32Array(78);
+function q4(x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4) { Q[0] = x1; Q[1] = y1; Q[2] = z1; Q[3] = x2; Q[4] = y2; Q[5] = z2; Q[6] = x3; Q[7] = y3; Q[8] = z3; Q[9] = x4; Q[10] = y4; Q[11] = z4; }
+function poly3(pts, n, fill) {              // fill a flat polygon given in arena coordinates, cut off cleanly where it passes behind the camera
+  let behind = 0;
+  for (let i = 0; i < n; i++) { const dx = pts[i * 3] - CAM.x, dz = pts[i * 3 + 2] - CAM.z, zc = dx * CAM.c + dz * CAM.s; CB[i * 3] = dx * CAM.s - dz * CAM.c; CB[i * 3 + 1] = pts[i * 3 + 1] - CAM.h; CB[i * 3 + 2] = zc; if (zc < NEAR) behind++; }
+  if (behind === n) return false;
+  let src = CB, m = n;
+  if (behind) {
+    m = 0;
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, az = CB[i * 3 + 2], bz = CB[j * 3 + 2], ain = az >= NEAR, bin = bz >= NEAR;
+      if (ain) { CL[m * 3] = CB[i * 3]; CL[m * 3 + 1] = CB[i * 3 + 1]; CL[m * 3 + 2] = az; m++; }
+      if (ain !== bin) { const t = (NEAR - az) / (bz - az); CL[m * 3] = CB[i * 3] + (CB[j * 3] - CB[i * 3]) * t; CL[m * 3 + 1] = CB[i * 3 + 1] + (CB[j * 3 + 1] - CB[i * 3 + 1]) * t; CL[m * 3 + 2] = NEAR; m++; }
+    }
+    if (m < 3) return false; src = CL;
+  }
+  ctx.beginPath();
+  for (let i = 0; i < m; i++) { const z = src[i * 3 + 2], sx = W / 2 + CAM.F * src[i * 3] / z, sy = CAM.hor - CAM.F * src[i * 3 + 1] / z; if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }
+  ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+  return true;
+}
+function tex4(img, ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz) {     // paint a picture onto a wall: A top-left, B top-right, C bottom-left, D bottom-right
+  if (!P3(ax, ay, az) || SC * 4 > CAM.F) return; const x0 = SX, y0 = SY, s0 = SC; if (!P3(bx, by, bz) || SC * 4 > CAM.F) return; const x1 = SX, y1 = SY, rt = s0 / SC;
+  if (rt > 3 || rt < 0.33 || !P3(dx, dy, dz)) return; const x3 = SX, y3 = SY; if (!P3(cx, cy, cz)) return;
+  const w = img.width, h = img.height; ctx.save();
+  if (rt > 1.5 || rt < 0.67) { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(x3, y3); ctx.lineTo(SX, SY); ctx.closePath(); ctx.clip(); }   // strong perspective: keep the picture inside its own wall
+  ctx.transform((x1 - x0) / w, (y1 - y0) / w, (SX - x0) / h, (SY - y0) / h, x0, y0); ctx.drawImage(img, 0, 0); ctx.restore();
+}
+function camFollow(R, dt, snap) {
+  const T = R.T, me = R.me, s = sOf(T, me.p);
+  let dth = trackAt(T, s + 5 + me.v * 0.12, 0).th - CAM.th; dth -= Math.round(dth / 6.2832) * 6.2832;      // look a little ahead, into the turn
+  CAM.th += snap ? dth : dth * Math.min(1, dt * 7);
+  CAM.dl += (me.d - CAM.dl) * (snap ? 1 : Math.min(1, dt * 5));
+  trackAt(T, s, lerp(me.d, CAM.dl, 0.6));
+  CAM.back = 5.3 + 0.9 * (me.v / PH.vTop) + CAM.kick * 0.9;
+  CAM.c = Math.cos(CAM.th); CAM.s = Math.sin(CAM.th);
+  let x = TP.x - CAM.back * CAM.c, z = TP.z - CAM.back * CAM.s;
+  // keep the camera inside the arena and off the barrier
+  const cx = clamp(x, -T.Ls / 2, T.Ls / 2), dd = Math.hypot(x - cx, z), ro = T.Rc + T.hw - 0.9, ri = T.rIn + 0.9;
+  if (dd > ro) { x = cx + (x - cx) * ro / dd; z = z * ro / dd; } else if (dd < ri && dd > 0.01) { x = cx + (x - cx) * ri / dd; z = z * ri / dd; }
+  CAM.x = x; CAM.z = z; CAM.h = 3.3; CAM.F = Math.min(W, H * 0.62) * 1.05 * (1 - 0.05 * CAM.kick); CAM.hor = H * 0.36;
+  const rollT = -clamp(me.lat * 0.0055 + me.vd * 0.004, -0.075, 0.075) * (me.st === 'wreck' ? 0 : 1);
+  CAM.roll += (rollT - CAM.roll) * (snap ? 1 : Math.min(1, dt * 5));
+  CAM.kick = Math.max(0, CAM.kick - dt * 1.7);
+}
+function camOrbit(R, t) {                   // the home screen: a slow walk around your team on the starting line
+  const T = R.T, me = R.me; trackAt(T, sOf(T, me.p) + 1.4, me.d);
+  const a = -2.5 + Math.sin(t * 0.12) * 0.5, rad = 9.5;
+  CAM.th = a + Math.PI; CAM.c = Math.cos(CAM.th); CAM.s = Math.sin(CAM.th);
+  let x = TP.x + Math.cos(a) * rad, z = TP.z + Math.sin(a) * rad; const cx = clamp(x, -T.Ls / 2, T.Ls / 2), dd = Math.hypot(x - cx, z), ro = T.Rc + T.hw - 0.9;
+  if (dd > ro) { x = cx + (x - cx) * ro / dd; z = z * ro / dd; }
+  CAM.x = x; CAM.z = z; CAM.h = 3.0; CAM.F = Math.min(W, H * 0.62) * 1.0; CAM.hor = H * 0.4; CAM.roll = 0;
+}
+
+// ---------- painted once per venue: the far scenery, the crowd, the walls ----------
+const PANOS = {};
+function buildPano(V) {
+  if (PANOS[V.name]) return PANOS[V.name];
+  const PW = 1280, B = 220, c = document.createElement('canvas'); c.width = PW; c.height = B;
+  const g = c.getContext('2d'), r = rng(V.name.charCodeAt(0) * 131 + V.name.charCodeAt(1) * 17 + V.name.length), TAU = 6.2832, f = V.feat;
+  const wrap = fn => { for (const ox of [-PW, 0, PW]) { g.save(); g.translate(ox, 0); fn(); g.restore(); } };
+  const sx = V.sun[0] * PW, sy = B - 26 - V.sun[1] * 175;
+  wrap(() => { const rg = g.createRadialGradient(sx, sy, 0, sx, sy, 130); rg.addColorStop(0, V.sun[2]); rg.addColorStop(0.1, V.sun[2]); rg.addColorStop(0.14, 'rgba(255,244,214,.5)'); rg.addColorStop(1, 'rgba(255,244,214,0)'); g.fillStyle = rg; g.fillRect(sx - 130, sy - 130, 260, 260); });
+  g.fillStyle = 'rgba(255,255,255,.42)';
+  for (let i = 0; i < 9; i++) { const x = r() * PW, y = 18 + r() * 95, w = 40 + r() * 70; wrap(() => { g.beginPath(); g.ellipse(x, y, w, 5, 0, 0, TAU); g.ellipse(x + w * 0.3, y - 5, w * 0.5, 6, 0, 0, TAU); g.fill(); }); }
+  const ridge = (amp, fr, sharp, win) => { const ph = fr.map(() => r() * TAU); return x => { let v = 0, ws = 0; for (let i = 0; i < fr.length; i++) { const w = 1 / (i + 1), s = Math.sin(x / PW * TAU * fr[i] + ph[i]); v += w * (sharp ? 1 - Math.abs(s) : 0.5 + 0.5 * s); ws += w; } return amp * v / ws * (win ? win(x) : 1); }; };
+  const layer = (h, col) => { g.fillStyle = col; g.beginPath(); g.moveTo(0, B); for (let x = 0; x <= PW; x += 4) g.lineTo(x, B - h(x)); g.lineTo(PW, B); g.fill(); };
+  const gap = (c0, half) => x => { let d = Math.abs(x / PW - c0); d = Math.min(d, 1 - d); return clamp((d - half) / 0.07, 0, 1); };   // 0 inside a sector of the horizon, 1 outside it
+  const sea = () => { const sg = g.createLinearGradient(0, B - 30, 0, B); sg.addColorStop(0, mix(V.sky[2], '#2f78a8', 0.6)); sg.addColorStop(1, '#27628f'); g.fillStyle = sg; g.fillRect(0, B - 30, PW, 30); g.fillStyle = 'rgba(255,255,255,.3)'; for (let i = 0; i < 60; i++) g.fillRect(r() * PW, B - 27 + r() * 24, 5 + r() * 14, 1); };
+  const temple = (x, y, w, cols = 6) => { const h = w * 0.42, cw = w / (cols * 2 - 1); g.fillStyle = '#cdbf9f'; g.fillRect(x - w / 2 - 3, y - 3, w + 6, 3); g.fillStyle = 'rgba(60,45,30,.55)'; g.fillRect(x - w / 2, y - 3 - h, w, h);
+    g.fillStyle = '#f0e8d6'; for (let i = 0; i < cols; i++) g.fillRect(x - w / 2 + i * cw * 2, y - 3 - h, cw, h); g.fillRect(x - w / 2 - 2, y - h - 8, w + 4, 5);
+    g.fillStyle = '#e2d6bb'; g.beginPath(); g.moveTo(x - w / 2 - 3, y - h - 8); g.lineTo(x, y - h - 8 - w * 0.16); g.lineTo(x + w / 2 + 3, y - h - 8); g.fill(); };
+  const cypress = (x, y, h) => { g.fillStyle = '#24492f'; g.beginPath(); g.ellipse(x, y - h / 2, h * 0.14, h / 2, 0, 0, TAU); g.fill(); };
+  const pine = (x, y, h) => { g.fillStyle = '#4a3a22'; g.fillRect(x - 1, y - h * 0.5, 2, h * 0.5); g.fillStyle = '#2f6b45'; g.beginPath(); g.ellipse(x, y - h * 0.7, h * 0.42, h * 0.3, 0, 0, TAU); g.fill(); };
+  const palm = (x, y, h) => { g.strokeStyle = '#5a4424'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + 3, y - h * 0.5, x + 1, y - h); g.stroke(); g.strokeStyle = '#3f7a3a'; g.lineWidth = 1.6; for (let i = 0; i < 7; i++) { const a = -Math.PI + i * Math.PI / 6; g.beginPath(); g.moveTo(x + 1, y - h); g.quadraticCurveTo(x + 1 + Math.cos(a) * h * 0.25, y - h - 5 + Math.sin(a) * 4, x + 1 + Math.cos(a) * h * 0.42, y - h + 4 + Math.abs(Math.sin(a)) * -2 + 5); g.stroke(); } };
+  const ship = (x, y, w) => { g.fillStyle = '#3a2618'; g.beginPath(); g.moveTo(x - w / 2, y - 4); g.quadraticCurveTo(x, y + 4, x + w / 2, y - 6); g.lineTo(x + w / 2, y - 2); g.quadraticCurveTo(x, y + 6, x - w / 2, y); g.fill(); g.fillRect(x - 0.5, y - 16, 1.2, 16); g.fillStyle = '#e8dcc0'; g.fillRect(x - 6, y - 15, 12, 6); };
+  const tower = (x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x - w / 2, y - h, w, h); for (let i = 0; i < 3; i++) g.fillRect(x - w / 2 + i * w / 2.5, y - h - 3, w / 5, 3); };
+  const scatter = (fn, h, cnt, lo, hi, on) => { for (let i = 0; i < cnt; i++) { const x = r() * PW, hh = lo + r() * (hi - lo); if (on && on(x) < 0.5) continue; fn(x, B - h(x) * (0.45 + r() * 0.5), hh); } };
+  const far = V.far, hill = V.hill;
+  if (f === 'temple') { layer(ridge(100, [2, 5, 9, 17]), far); const h2 = ridge(54, [3, 7, 13, 23]); layer(h2, hill); scatter(pine, h2, 46, 9, 17); temple(PW * 0.3, B - h2(PW * 0.3) + 6, 92); temple(PW * 0.36, B - h2(PW * 0.36) + 5, 36, 4); }
+  else if (f === 'cliffs') { layer(ridge(185, [2, 3, 7, 11], true), far); const h2 = ridge(84, [4, 9, 15], true); layer(h2, hill); scatter(cypress, h2, 26, 12, 22); temple(PW * 0.72, B - h2(PW * 0.72) + 5, 70); }
+  else if (f === 'sea') { layer(ridge(60, [3, 7, 12]), far); sea(); const w = gap(0.55, 0.17), h2 = ridge(50, [2, 6, 11, 19], false, w); layer(h2, hill); scatter(pine, h2, 60, 10, 18, w); for (let i = 0; i < 7; i++) ship(PW * (0.42 + r() * 0.26), B - 6 - r() * 18, 22 + r() * 10); temple(PW * 0.18, B - h2(PW * 0.18) + 5, 64); }
+  else if (f === 'cypress') { layer(ridge(74, [2, 5, 8, 15]), far); const h2 = ridge(58, [3, 6, 11, 21]); layer(h2, hill); scatter(cypress, h2, 70, 12, 26); g.fillStyle = '#efe6d2'; for (let i = 0; i < 3; i++) g.fillRect(PW * 0.42 + i * 12, B - h2(PW * 0.42) - 26, 5, 34); g.fillRect(PW * 0.42 - 2, B - h2(PW * 0.42) - 30, 34, 4); }
+  else if (f === 'acropolis') { layer(ridge(80, [2, 4, 9, 14]), far); const h2 = ridge(26, [5, 9, 17]); layer(h2, hill); g.fillStyle = '#e8dcc0'; for (let i = 0; i < 150; i++) { const x = r() * PW; g.fillRect(x, B - h2(x) - 2 - r() * 6, 5 + r() * 7, 5 + r() * 5); }
+    const ax = PW * 0.36; g.fillStyle = '#9a8468'; g.beginPath(); g.moveTo(ax - 150, B - 14); g.lineTo(ax - 112, B - 72); g.lineTo(ax + 108, B - 78); g.lineTo(ax + 150, B - 14); g.fill(); g.fillStyle = '#b8a482'; g.fillRect(ax - 112, B - 80, 220, 8); temple(ax + 14, B - 78, 104, 8); temple(ax - 70, B - 78, 34, 4); scatter(cypress, h2, 20, 10, 18); }
+  else if (f === 'peaks') { const h1 = ridge(160, [2, 5, 7, 13], true); layer(h1, far); g.fillStyle = '#f4f2f6'; for (let x = 0; x < PW;) { if (h1(x) <= 98) { x += 2; continue; } const x0 = x; g.beginPath(); g.moveTo(x, B - h1(x)); for (; x < PW && h1(x) > 98; x += 2) g.lineTo(x, B - h1(x)); for (let xx = x; xx >= x0; xx -= 2) { const h = h1(xx); g.lineTo(xx, B - h + Math.min(30, (h - 98) * 0.8) * (0.7 + 0.3 * Math.sin(xx * 0.45))); } g.fill(); } const h2 = ridge(60, [3, 8, 14, 22]); layer(h2, hill); scatter(cypress, h2, 34, 12, 22); }
+  else if (f === 'walls') { layer(ridge(64, [2, 5, 9]), far); const h2 = ridge(30, [3, 7, 15]); layer(h2, hill); const y = B - 22; g.fillStyle = '#c9b48c'; g.fillRect(PW * 0.16, y - 24, PW * 0.38, 26); for (let x = PW * 0.16; x < PW * 0.54; x += 9) g.fillRect(x, y - 28, 5, 4); for (let i = 0; i < 7; i++) tower(PW * (0.17 + i * 0.06), y + 2, 22, 44, '#b8a27a'); g.fillStyle = '#3a2a1a'; g.fillRect(PW * 0.35 - 7, y - 16, 14, 18); scatter(pine, h2, 30, 9, 15); }
+  else if (f === 'volcano') { layer(ridge(46, [3, 7, 11]), far); const ex = PW * 0.6; g.fillStyle = mix(far, '#6a5a6a', 0.5); g.beginPath(); g.moveTo(ex - 230, B); g.quadraticCurveTo(ex - 80, B - 60, ex - 18, B - 168); g.lineTo(ex + 16, B - 168); g.quadraticCurveTo(ex + 90, B - 60, ex + 240, B); g.fill(); g.fillStyle = '#f2eef2'; g.beginPath(); g.moveTo(ex - 18, B - 168); g.lineTo(ex + 16, B - 168); g.lineTo(ex + 34, B - 138); g.lineTo(ex + 8, B - 146); g.lineTo(ex - 10, B - 136); g.lineTo(ex - 34, B - 140); g.fill();
+    g.fillStyle = 'rgba(120,115,125,.5)'; for (let i = 0; i < 7; i++) { g.beginPath(); g.ellipse(ex + i * 16, B - 176 - i * 5, 14 + i * 5, 8 + i * 2, 0, 0, TAU); g.fill(); } sea(); const w = gap(0.6, 0.2), h2 = ridge(46, [2, 6, 13], false, w); layer(h2, hill); scatter(pine, h2, 40, 9, 16, w); temple(PW * 0.2, B - h2(PW * 0.2) + 5, 70); for (let i = 0; i < 5; i++) ship(PW * (0.48 + r() * 0.24), B - 6 - r() * 16, 22 + r() * 8); }
+  else if (f === 'colossus') { layer(ridge(50, [3, 8, 13]), far); sea(); const w = gap(0.5, 0.13), h2 = ridge(44, [2, 5, 11], false, w); layer(h2, hill); scatter(pine, h2, 40, 9, 16, w); for (let i = 0; i < 5; i++) ship(PW * (0.4 + r() * 0.2), B - 5 - r() * 14, 20 + r() * 9);
+    const cx2 = PW * 0.5, y = B - 22; g.fillStyle = '#d8ceb8'; g.fillRect(cx2 - 16, y - 16, 32, 18); g.fillStyle = '#a8763a'; g.fillRect(cx2 - 9, y - 70, 7, 56); g.fillRect(cx2 + 2, y - 70, 7, 56); g.fillRect(cx2 - 12, y - 112, 24, 46); g.beginPath(); g.arc(cx2, y - 121, 9, 0, TAU); g.fill();
+    g.strokeStyle = '#a8763a'; g.lineWidth = 6; g.beginPath(); g.moveTo(cx2 + 10, y - 106); g.lineTo(cx2 + 26, y - 138); g.moveTo(cx2 - 10, y - 104); g.lineTo(cx2 - 20, y - 78); g.stroke(); g.strokeStyle = '#e9c46a'; g.lineWidth = 2; for (let i = 0; i < 7; i++) { const a = -Math.PI + i * Math.PI / 6; g.beginPath(); g.moveTo(cx2 + Math.cos(a) * 10, y - 121 + Math.sin(a) * 10); g.lineTo(cx2 + Math.cos(a) * 17, y - 121 + Math.sin(a) * 17); g.stroke(); } g.fillStyle = '#ffd98a'; g.beginPath(); g.arc(cx2 + 27, y - 142, 5, 0, TAU); g.fill(); }
+  else if (f === 'pharos') { layer(ridge(40, [3, 7, 12]), far); sea(); const w = gap(0.42, 0.1), h2 = ridge(24, [2, 6, 13], false, w); layer(h2, hill); g.fillStyle = '#ecdcb8'; for (let i = 0; i < 120; i++) { const x = r() * PW; if (w(x) > 0.5) g.fillRect(x, B - h2(x) - 3 - r() * 7, 6 + r() * 9, 6 + r() * 6); } scatter(palm, h2, 34, 16, 28, w);
+    const px = PW * 0.42, y = B - 24; g.fillStyle = '#b8a888'; g.fillRect(px - 34, y - 4, 68, 8); g.fillStyle = '#efe6d0'; g.fillRect(px - 15, y - 70, 30, 68); g.fillStyle = '#e2d6ba'; g.fillRect(px - 10, y - 108, 20, 40); g.fillStyle = '#efe6d0'; g.fillRect(px - 6, y - 128, 12, 22); g.fillStyle = '#d0c2a2'; g.fillRect(px - 18, y - 72, 36, 4); g.fillRect(px - 13, y - 110, 26, 3);
+    const fg = g.createRadialGradient(px, y - 134, 0, px, y - 134, 26); fg.addColorStop(0, 'rgba(255,230,150,1)'); fg.addColorStop(0.3, 'rgba(255,170,70,.7)'); fg.addColorStop(1, 'rgba(255,140,40,0)'); g.fillStyle = fg; g.fillRect(px - 26, y - 160, 52, 52); for (let i = 0; i < 3; i++) ship(PW * (0.36 + r() * 0.12), B - 5 - r() * 12, 20); }
+  else if (f === 'dunes') { layer(ridge(44, [2, 5, 9]), far); const h2 = ridge(28, [3, 8, 14]); layer(h2, hill); layer(ridge(14, [4, 11, 19]), mix(hill, '#ffffff', 0.18)); scatter(palm, h2, 26, 16, 30); g.fillStyle = '#a88a5a'; g.beginPath(); g.moveTo(PW * 0.62, B - 20); g.lineTo(PW * 0.64, B - 62); g.lineTo(PW * 0.69, B - 66); g.lineTo(PW * 0.72, B - 20); g.fill(); temple(PW * 0.24, B - h2(PW * 0.24) + 4, 66); }
+  else if (f === 'troy') { layer(ridge(74, [2, 5, 9, 14]), far); sea(); const w = gap(0.7, 0.15), h2 = ridge(40, [2, 5, 12], false, w); layer(h2, hill); for (let i = 0; i < 9; i++) ship(PW * (0.59 + i * 0.026), B - 4 - (i % 2) * 5, 26);
+    const tx = PW * 0.3, y = B - h2(tx) + 8; g.fillStyle = '#b09a78'; g.beginPath(); g.moveTo(tx - 120, y); g.lineTo(tx - 96, y - 40); g.lineTo(tx + 96, y - 40); g.lineTo(tx + 120, y); g.fill(); for (let x = tx - 96; x < tx + 96; x += 9) g.fillRect(x, y - 44, 5, 4); for (const ox of [-90, -30, 40, 90]) tower(tx + ox, y - 30, 20, 30, '#a08a68'); temple(tx, y - 40, 60, 5); g.fillStyle = '#3a2a1a'; g.fillRect(tx + 4, y - 22, 14, 22); }
+  else { const wv = x => 0.3 + 0.7 * (1 - gap(0.5, 0.07)(x)), h1 = ridge(215, [1, 2, 5, 9], true, wv); layer(h1, far); layer(x => h1(x) * 0.86 - 10, mix(far, '#ffffff', 0.35)); layer(ridge(60, [3, 7, 12], true), hill);
+    g.fillStyle = 'rgba(255,255,255,.75)'; for (let i = 0; i < 26; i++) { const x = r() * PW, y = B - 40 - r() * 90, w = 50 + r() * 90; wrap(() => { g.beginPath(); g.ellipse(x, y, w, 9, 0, 0, TAU); g.ellipse(x + w * 0.3, y - 7, w * 0.5, 9, 0, 0, TAU); g.fill(); }); }
+    let bx = 0, bh = 0; for (let x = 0; x < PW; x += 4) if (h1(x) > bh) { bh = h1(x); bx = x; } g.save(); g.globalAlpha = 0.9; temple(bx, B - bh + 10, 50); g.restore(); }
+  const hz = g.createLinearGradient(0, B - 46, 0, B); hz.addColorStop(0, 'rgba(255,255,255,0)'); hz.addColorStop(1, V.sky[2]); g.globalAlpha = 0.55; g.fillStyle = hz; g.fillRect(0, B - 46, PW, 46); g.globalAlpha = 1;
+  return PANOS[V.name] = c;
+}
+function crowdTex(seed, cheer) {            // a patch of the stands: rows of spectators on stone steps
+  const c = document.createElement('canvas'); c.width = 96; c.height = 64; const g = c.getContext('2d'), r = rng(seed);
+  const cols = ['#f1ebdd', '#e7dcc4', '#c96f4a', '#8a3b2a', '#3d6b8c', '#d9b25a', '#7a8f5a', '#b98a6a', '#efe6d2', '#9a5a7a', '#f4efe4'], skin = ['#e0ac69', '#c68642', '#f1c27d', '#8d5524'];
+  for (let row = 0; row < 8; row++) {
+    const y = row * 8; g.fillStyle = row & 1 ? '#b3a78f' : '#c2b69e'; g.fillRect(0, y, 96, 8); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(0, y + 7, 96, 1);
+    for (let x = (row & 1) * 3; x < 94; x += 6) { const a = r(), b = r(), d = r(), e = r(); if (a < 0.1) continue; const up = cheer && b < 0.65 ? 1 : 0;
+      g.fillStyle = cols[(d * cols.length) | 0]; g.fillRect(x, y + 3 - up, 5, 5 + up); g.fillStyle = skin[(e * 4) | 0]; g.fillRect(x + 1, y - up, 3, 3);
+      if (up) { g.fillRect(x - 1, y - 2, 1, 4); g.fillRect(x + 5, y - 2, 1, 4); } }
+  }
+  return c;
+}
+function wallTex(V) {                       // the marble wall with a painted band and a Greek key
+  const c = document.createElement('canvas'); c.width = 80; c.height = 36; const g = c.getContext('2d');
+  g.fillStyle = V.wall; g.fillRect(0, 0, 80, 36); g.fillStyle = 'rgba(0,0,0,.07)'; for (let i = 0; i < 3; i++) g.fillRect(0, i * 8 + 7, 80, 1); for (let i = 0; i < 4; i++) g.fillRect(i * 20 + (i & 1) * 6, 0, 1, 16);
+  g.fillStyle = '#a23b2a'; g.fillRect(0, 20, 80, 16); g.fillStyle = shade(V.wall, 0.94); g.fillRect(0, 16, 80, 4);
+  g.strokeStyle = '#1f3a5f'; g.lineWidth = 1; for (let x = 0; x < 80; x += 10) { g.beginPath(); g.moveTo(x, 19.5); g.lineTo(x + 8, 19.5); g.lineTo(x + 8, 16.5); g.lineTo(x + 3, 16.5); g.lineTo(x + 3, 18); g.lineTo(x + 6, 18); g.stroke(); }
+  return c;
+}
+function stoaTex(V) {                       // the colonnade along the top of the stands, under a tiled roof
+  const c = document.createElement('canvas'); c.width = 64; c.height = 32; const g = c.getContext('2d');
+  g.fillStyle = '#4a3a2e'; g.fillRect(0, 0, 64, 32); g.fillStyle = '#b5532f'; g.fillRect(0, 0, 64, 6); g.fillStyle = 'rgba(0,0,0,.2)'; for (let x = 0; x < 64; x += 4) g.fillRect(x, 0, 1, 6);
+  g.fillStyle = V.wall; g.fillRect(0, 6, 64, 5); for (let x = 3; x < 64; x += 16) { g.fillRect(x, 11, 5, 21); g.fillRect(x - 1, 11, 7, 2); } g.fillStyle = 'rgba(0,0,0,.15)'; for (let x = 6; x < 64; x += 16) g.fillRect(x, 13, 2, 19);
+  return c;
+}
+let TEX = null;
+function buildArena(R) {
+  const T = R.T, V = R.V, ns = Math.round(T.Ls / 5), nt = 12, n = 2 * (ns + nt);
+  if (!TEX) TEX = { crowd: [crowdTex(7, 0), crowdTex(7, 1)] };
+  const F32 = () => new Float32Array(n + 1);
+  const A = { n, ns, nt, ix: F32(), iz: F32(), ox: F32(), oz: F32(), tx: F32(), tz: F32(), dz: new Float32Array(n), ord: [], wallCol: [], items: [], srt: [], mons: [], pano: buildPano(V), wall: wallTex(V), stoa: stoaTex(V), spCol: shade(V.wall, 0.9), spTop: shade(V.wall, 1.02), haze: V.sky[2] };
+  for (let i = 0; i <= n; i++) {
+    const j = i % n, s = j < ns ? j * T.Ls / ns : j < ns + nt ? T.Ls + (j - ns) * T.tl / nt : j < 2 * ns + nt ? T.Ls + T.tl + (j - ns - nt) * T.Ls / ns : 2 * T.Ls + T.tl + (j - 2 * ns - nt) * T.tl / nt;
+    trackAt(T, s, -T.hw); A.ix[i] = TP.x; A.iz[i] = TP.z; trackAt(T, s, T.hw); A.ox[i] = TP.x; A.oz[i] = TP.z; trackAt(T, s, T.hw + SD); A.tx[i] = TP.x; A.tz[i] = TP.z;
+  }
+  const sa = 6.2832 * (1 - V.sun[0]), sxx = Math.cos(sa), szz = Math.sin(sa);
+  for (let i = 0; i < n; i++) { const nx = A.ix[i] - A.ox[i], nz = A.iz[i] - A.oz[i], l = Math.hypot(nx, nz) || 1; A.wallCol.push(0.8 + 0.2 * Math.max(0, (nx * sxx + nz * szz) / l)); }
+  for (let i = 0; i < 420; i++) A.items.push({ z: 0, k: 0, i: 0 });
+  const kinds = V.feat === 'pharos' ? ['obel', 'tripod', 'col', 'altar'] : ['col', 'tripod', 'statue', 'altar'];
+  let ki = 0; for (let x = -T.Ls / 2 + 8; x <= T.Ls / 2 - 8; x += 13) A.mons.push({ x, z: 0, y: HS, kind: kinds[ki++ % 4] });
+  A.mons.push({ x: T.Ls / 2 + T.rIn * 0.3, z: 0, y: HS, kind: 'post' }, { x: -T.Ls / 2 - T.rIn * 0.3, z: 0, y: HS, kind: 'post' });
+  const a = trackAt(T, T.s0 - 0.35, -T.hw), ax = a.x, az = a.z, b = trackAt(T, T.s0 - 0.35, T.hw), bx = b.x, bz = b.z;
+  A.line = [ax, az, bx, bz, bx + 0.7, bz, ax + 0.7, az];
+  return A;
+}
+
+// ---------- the arena, drawn every frame ----------
+function drawWorld(R) {
+  if (!R.A) R.A = buildArena(R);
+  const A = R.A, V = R.V, T = R.T, n = A.n, F = CAM.F, hor = CAM.hor, now = performance.now() / 1000;
+  ctx.save();
+  ctx.translate(W / 2, hor); ctx.rotate(CAM.roll); ctx.translate(-W / 2, -hor);
+  if (FX.shake > 0.2) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  // sky, and the far scenery that swings round as you turn
+  let g = ctx.createLinearGradient(0, hor - H * 0.5, 0, hor); g.addColorStop(0, V.sky[0]); g.addColorStop(0.6, V.sky[1]); g.addColorStop(1, V.sky[2]);
+  ctx.fillStyle = g; ctx.fillRect(-W, -H, W * 3, hor + H + 2);
+  const pw = 6.2832 * F, ps = pw / A.pano.width, ph = A.pano.height * ps; let th = CAM.th % 6.2832; if (th < 0) th += 6.2832;
+  const x0 = W / 2 - pw * (1 - th / 6.2832);
+  for (let q = -1; q <= 1; q++) { const x = x0 + q * pw; if (x < W * 1.6 && x + pw > -W * 0.6) ctx.drawImage(A.pano, x, hor - ph + 1, pw, ph); }
+  if (R.eagle) { const ex = ((now * 26) % (W * 2.4)) - W * 0.7, ey = hor - H * 0.27 + Math.sin(now * 0.7) * 12, fl = Math.sin(now * 5) * 5; ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(ex - 11, ey - fl); ctx.quadraticCurveTo(ex - 4, ey - 2, ex, ey); ctx.quadraticCurveTo(ex + 4, ey - 2, ex + 11, ey - fl); ctx.stroke(); }
+  // the sand
+  g = ctx.createLinearGradient(0, hor, 0, H); g.addColorStop(0, V.sand[2]); g.addColorStop(0.3, V.sand[0]); g.addColorStop(1, V.sand[1]);
+  ctx.fillStyle = g; ctx.fillRect(-W, hor, W * 3, H * 2);
+  for (let i = 0; i < n; i++) { const j = i + 1; q4(A.ix[i], 0, A.iz[i], A.ox[i], 0, A.oz[i], A.ox[j], 0, A.oz[j], A.ix[j], 0, A.iz[j]); poly3(Q, 4, i & 1 ? V.sand[0] : V.sand[1]); }
+  const L = A.line; q4(L[0], 0.01, L[1], L[2], 0.01, L[3], L[4], 0.01, L[5], L[6], 0.01, L[7]); poly3(Q, 4, 'rgba(255,255,255,.85)');
+  if (R.hint && R.phase !== 'home') {      // learning levels: where to rein in, and the tight way round the post
+    for (let tn = 0; tn < 2; tn++) {
+      const s1 = tn ? 2 * T.Ls + T.tl : T.Ls, a = trackAt(T, s1 - 24, -T.hw), ax = a.x, az = a.z, b = trackAt(T, s1 - 24, T.hw), bx = b.x, bz = b.z, c2 = trackAt(T, s1 - 3, T.hw), cx = c2.x, cz = c2.z, d2 = trackAt(T, s1 - 3, -T.hw);
+      q4(ax, 0.01, az, bx, 0.01, bz, cx, 0.01, cz, d2.x, 0.01, d2.z); poly3(Q, 4, `rgba(190,45,30,${0.11 * R.hint})`);
+      ctx.fillStyle = `rgba(250,205,90,${0.42 * R.hint})`;
+      for (let j = 0; j <= 18; j++) { trackAt(T, s1 - 8 + j * (T.tl + 16) / 18, T.dMin + 1.0); if (P3(TP.x, 0.02, TP.z) && SC > 2.5) { ctx.beginPath(); ctx.ellipse(SX, SY, 0.3 * SC, 0.12 * SC, 0, 0, 6.2832); ctx.fill(); } }
+    }
+  }
+  // the outer wall, the stands and the crowd, far to near
+  const ord = A.ord; ord.length = 0;
+  for (let i = 0; i < n; i++) { const zc = depth((A.ox[i] + A.ox[i + 1]) / 2, (A.oz[i] + A.oz[i + 1]) / 2); A.dz[i] = zc; if (zc > -14) ord.push(i); }
+  ord.sort((p, q) => A.dz[q] - A.dz[p]);
+  const crowd = TEX.crowd[R.crowd > 0.55 && Math.sin(now * 13) > 0 ? 1 : 0], wc = V.wall;
+  for (const i of ord) {
+    const j = i + 1, zc = A.dz[i], x1 = A.ox[i], z1 = A.oz[i], x2 = A.ox[j], z2 = A.oz[j], u1 = A.tx[i], w1 = A.tz[i], u2 = A.tx[j], w2 = A.tz[j], top = HT + STOA;
+    q4(x1, 0, z1, x2, 0, z2, x2, HW, z2, x1, HW, z1); poly3(Q, 4, shade(wc, A.wallCol[i]));
+    q4(x1, HW, z1, x2, HW, z2, u2, HT, w2, u1, HT, w1); poly3(Q, 4, '#b9ad96');
+    q4(u1, HT, w1, u2, HT, w2, u2, top, w2, u1, top, w1); poly3(Q, 4, '#5a463a');
+    if (zc < 150) { tex4(A.wall, x1, HW, z1, x2, HW, z2, x1, 0, z1, x2, 0, z2); tex4(crowd, u1, HT, w1, u2, HT, w2, x1, HW, z1, x2, HW, z2); tex4(A.stoa, u1, top, w1, u2, top, w2, u1, HT, w1, u2, HT, w2); }
+    else if (zc < 260) tex4(crowd, u1, HT, w1, u2, HT, w2, x1, HW, z1, x2, HW, z2);
+    if (zc > 70) { q4(x1, 0, z1, x2, 0, z2, u2, top, w2, u1, top, w1); ctx.globalAlpha = Math.min(0.5, (zc - 70) / 420); poly3(Q, 4, A.haze); ctx.globalAlpha = 1; }
+    if (i % 5 === 0 && zc < 170 && P3(u1, top, w1)) {      // a pennant on the roof
+      const bx = SX, by = SY, s = SC, wv = Math.sin(now * 5 + i) * 0.25 * s; ctx.strokeStyle = '#5a4a3a'; ctx.lineWidth = Math.max(1, 0.08 * s); ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - 2.6 * s); ctx.stroke();
+      ctx.fillStyle = R.cars[(i / 5) % R.cars.length | 0].col; ctx.beginPath(); ctx.moveTo(bx, by - 2.6 * s); ctx.lineTo(bx + 1.5 * s, by - 2.2 * s + wv); ctx.lineTo(bx, by - 1.8 * s); ctx.fill();
+    }
+  }
+  // everything standing on the sand, sorted far to near: the barrier, its monuments, the posts, the banner, the chariots
+  const it = A.items; let ni = 0;
+  const add = (z, kd, idx) => { if (z > -8 && z < 340 && ni < it.length) { const o = it[ni++]; o.z = z; o.k = kd; o.i = idx; } };
+  const ns = A.ns, nt = A.nt, rI = T.rIn;
+  for (let i = 0; i < n; i++) {
+    const turn = (i >= ns && i < ns + nt) || i >= 2 * ns + nt, mx = (A.ix[i] + A.ix[i + 1]) / 2, mz = (A.iz[i] + A.iz[i + 1]) / 2;
+    let vis;
+    if (!turn) vis = i < ns ? CAM.z < -rI : CAM.z > rI;
+    else { const ccx = i < ns + nt ? T.Ls / 2 : -T.Ls / 2; vis = (CAM.x - mx) * (mx - ccx) + (CAM.z - mz) * mz > 0; }
+    if (vis) add(depth(mx, mz), 0, i);
+    if (i < ns) add(depth(mx, 0), 1, i);
+  }
+  add(depth(T.Ls / 2 + rI * 0.45, 0), 2, 0); add(depth(-T.Ls / 2 - rI * 0.45, 0), 2, 1);
+  for (let i = 0; i < A.mons.length; i++) add(depth(A.mons[i].x, A.mons[i].z) - 1.2, 3, i);
+  for (let i = 0; i < R.cars.length; i++) { const c = R.cars[i]; trackAt(T, sOf(T, c.p), c.d); c.wx = TP.x; c.wz = TP.z; add(depth(TP.x, TP.z), 4, i); }
+  add(depth((L[0] + L[2]) / 2, (L[1] + L[3]) / 2), 5, 0);
+  const srt = A.srt; srt.length = ni; for (let i = 0; i < ni; i++) srt[i] = it[i];
+  srt.sort((p, q) => q.z - p.z);
+  for (let q = 0; q < ni; q++) {
+    const o = srt[q], i = o.i;
+    if (o.k === 0) { const j = i + 1; q4(A.ix[i], 0, A.iz[i], A.ix[j], 0, A.iz[j], A.ix[j], HS, A.iz[j], A.ix[i], HS, A.iz[i]); poly3(Q, 4, A.spCol); if (o.z < 90) tex4(A.wall, A.ix[i], HS, A.iz[i], A.ix[j], HS, A.iz[j], A.ix[i], 0, A.iz[i], A.ix[j], 0, A.iz[j]); }
+    else if (o.k === 1) { const xa = A.ix[i], xb = A.ix[i + 1]; q4(xa, HS, -rI, xb, HS, -rI, xb, HS, rI, xa, HS, rI); poly3(Q, 4, A.spTop); }
+    else if (o.k === 2) { const i0 = i ? 2 * ns + nt : ns; for (let j = 0; j <= nt; j++) { Q[j * 3] = A.ix[i0 + j]; Q[j * 3 + 1] = HS; Q[j * 3 + 2] = A.iz[i0 + j]; } poly3(Q, nt + 1, A.spTop); }
+    else if (o.k === 3) drawMon(A.mons[i], R, now);
+    else if (o.k === 4) drawRig(R.cars[i], R);
+    else {                                 // two tall poles with pennants mark the line
+      for (const e of [0, 2]) if (P3(L[e], 0, L[e + 1])) { const x = SX, y = SY, s2 = SC, hg = 7.5 * s2, wv = Math.sin(now * 5 + e) * 0.3 * s2; ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = Math.max(1.5, 0.2 * s2); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - hg); ctx.stroke();
+        ctx.fillStyle = '#8f1d1a'; ctx.beginPath(); ctx.moveTo(x, y - hg); ctx.lineTo(x + (e ? -2.6 : 2.6) * s2, y - hg + 0.6 * s2 + wv); ctx.lineTo(x, y - hg + 1.3 * s2); ctx.fill(); ctx.fillStyle = '#f2c14e'; ctx.beginPath(); ctx.arc(x, y - hg, Math.max(1.5, 0.28 * s2), 0, 6.2832); ctx.fill(); }
+    }
+  }
+  // dust and sparks
+  for (const p of R.parts) {
+    if (!P3(p.x, p.y, p.z)) continue; const u = p.t / p.life;
+    if (p.k) { ctx.globalAlpha = 1 - u; ctx.fillStyle = p.col; const s = Math.max(1.5, p.s0 * SC); ctx.fillRect(SX - s / 2, SY - s / 2, s, s); }
+    else { ctx.globalAlpha = p.a * (1 - u); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(SX, SY, Math.min(52 * k, lerp(p.s0, p.s1, u) * SC), 0, 6.2832); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+function drawMon(m, R, now) {               // what stands on the barrier: columns, tripods, statues, altars, and the turning posts
+  if (!P3(m.x, m.y, m.z)) return; const s = SC, x = SX, y = SY; if (x < -90 || x > W + 90 || s < 0.9) return;
+  const mar = R.V.wall, dk = shade(mar, 0.74), brz = '#b08d57', brd = '#7a5f36';
+  const col = (h, w) => { ctx.fillStyle = mar; ctx.fillRect(x - w * 0.7 * s, y - 0.18 * s, w * 1.4 * s, 0.18 * s); ctx.beginPath(); ctx.moveTo(x - w / 2 * s, y - 0.18 * s); ctx.lineTo(x - w * 0.42 * s, y - h * s); ctx.lineTo(x + w * 0.42 * s, y - h * s); ctx.lineTo(x + w / 2 * s, y - 0.18 * s); ctx.fill();
+    ctx.fillStyle = dk; ctx.fillRect(x + w * 0.12 * s, y - h * s, w * 0.3 * s, (h - 0.18) * s); ctx.fillStyle = mar; ctx.fillRect(x - w * 0.72 * s, y - (h + 0.22) * s, w * 1.44 * s, 0.24 * s); };
+  const k2 = m.kind;
+  if (k2 === 'col') { col(3.6, 0.6); ctx.fillStyle = brz; ctx.beginPath(); ctx.arc(x, y - 4.15 * s, 0.34 * s, 0, 6.2832); ctx.fill(); }
+  else if (k2 === 'statue') {
+    col(2.2, 0.8); const b = y - 2.4 * s; ctx.fillStyle = brz; ctx.fillRect(x - 0.22 * s, b - 1.25 * s, 0.44 * s, 1.25 * s); ctx.beginPath(); ctx.arc(x, b - 1.45 * s, 0.2 * s, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = brd; ctx.beginPath(); ctx.moveTo(x - 0.2 * s, b - 1.1 * s); ctx.lineTo(x - 0.95 * s, b - 1.7 * s); ctx.lineTo(x - 0.3 * s, b - 0.6 * s); ctx.moveTo(x + 0.2 * s, b - 1.1 * s); ctx.lineTo(x + 0.95 * s, b - 1.7 * s); ctx.lineTo(x + 0.3 * s, b - 0.6 * s); ctx.fill();   // Nike's wings
+    ctx.strokeStyle = brz; ctx.lineWidth = Math.max(1, 0.1 * s); ctx.beginPath(); ctx.moveTo(x + 0.18 * s, b - 1.15 * s); ctx.lineTo(x + 0.5 * s, b - 1.85 * s); ctx.stroke();
+  } else if (k2 === 'tripod') {
+    ctx.strokeStyle = brz; ctx.lineWidth = Math.max(1, 0.09 * s); ctx.beginPath(); for (const o of [-0.45, 0, 0.45]) { ctx.moveTo(x + o * s, y); ctx.lineTo(x + o * 0.75 * s, y - 1.35 * s); } ctx.stroke();
+    ctx.fillStyle = brz; ctx.beginPath(); ctx.ellipse(x, y - 1.4 * s, 0.55 * s, 0.3 * s, 0, 0, Math.PI); ctx.fill(); ctx.fillStyle = brd; ctx.fillRect(x - 0.58 * s, y - 1.46 * s, 1.16 * s, 0.1 * s);
+  } else if (k2 === 'altar') {
+    ctx.fillStyle = mar; ctx.fillRect(x - 0.6 * s, y - 0.95 * s, 1.2 * s, 0.95 * s); ctx.fillStyle = dk; ctx.fillRect(x + 0.2 * s, y - 0.95 * s, 0.4 * s, 0.95 * s); ctx.fillStyle = mar; ctx.fillRect(x - 0.7 * s, y - 1.08 * s, 1.4 * s, 0.14 * s);
+    const fl = 0.55 + 0.12 * Math.sin(now * 11 + m.x); ctx.fillStyle = 'rgba(255,150,40,.9)'; ctx.beginPath(); ctx.moveTo(x - 0.25 * s, y - 1.08 * s); ctx.quadraticCurveTo(x - 0.1 * s, y - (1.08 + fl) * s, x + Math.sin(now * 7) * 0.08 * s, y - (1.15 + fl * 1.4) * s); ctx.quadraticCurveTo(x + 0.15 * s, y - (1.08 + fl) * s, x + 0.25 * s, y - 1.08 * s); ctx.fill();
+    ctx.fillStyle = 'rgba(255,230,140,.9)'; ctx.beginPath(); ctx.ellipse(x, y - 1.22 * s, 0.1 * s, 0.2 * s, 0, 0, 6.2832); ctx.fill();
+  } else if (k2 === 'obel') {
+    ctx.fillStyle = '#c9a56a'; ctx.beginPath(); ctx.moveTo(x - 0.4 * s, y); ctx.lineTo(x - 0.24 * s, y - 5 * s); ctx.lineTo(x, y - 5.5 * s); ctx.lineTo(x + 0.24 * s, y - 5 * s); ctx.lineTo(x + 0.4 * s, y); ctx.fill(); ctx.fillStyle = '#f2c14e'; ctx.beginPath(); ctx.moveTo(x - 0.24 * s, y - 5 * s); ctx.lineTo(x, y - 5.5 * s); ctx.lineTo(x + 0.24 * s, y - 5 * s); ctx.fill();
+  } else {                                 // the turning post: a tall pillar with a red band and a bronze top
+    for (const o of [-0.95, 0.95, 0]) { const h = o ? 3.3 : 5.4, w = o ? 0.5 : 0.8, xx = x + o * s; ctx.fillStyle = mar; ctx.beginPath(); ctx.moveTo(xx - w / 2 * s, y); ctx.lineTo(xx - w * 0.3 * s, y - h * s); ctx.lineTo(xx + w * 0.3 * s, y - h * s); ctx.lineTo(xx + w / 2 * s, y); ctx.fill();
+      ctx.fillStyle = dk; ctx.beginPath(); ctx.moveTo(xx + w * 0.12 * s, y); ctx.lineTo(xx + w * 0.08 * s, y - h * s); ctx.lineTo(xx + w * 0.3 * s, y - h * s); ctx.lineTo(xx + w / 2 * s, y); ctx.fill();
+      ctx.fillStyle = '#a23b2a'; ctx.fillRect(xx - w * 0.42 * s, y - h * 0.62 * s, w * 0.84 * s, 0.3 * s); ctx.fillStyle = brz; ctx.beginPath(); ctx.ellipse(xx, y - (h + 0.25) * s, w * 0.36 * s, 0.42 * s, 0, 0, 6.2832); ctx.fill(); }
+  }
+}
+
+// ---------- a chariot and its four horses, built from simple solid shapes so it reads from any side ----------
+function drawRig(c, R) {
+  const px = c.wx, pz = c.wz, T = R.T, wk = c.st === 'wreck' ? c.wt : 0, z0 = depth(px, pz);
+  if (z0 < -5 || z0 > 330) return;
+  const th = trackAt(T, sOf(T, c.p), c.d).th + Math.atan2(c.vd, Math.max(6, c.v)) * 0.9 + (wk ? Math.min(1.2, wk * 2.5) * (c.d > 0 ? -1 : 1) : 0);
+  const ct = Math.cos(th), st = Math.sin(th), far = z0 > 80, mid = z0 > 34, mine = c.me;
+  if (!c.cD) { c.cD = c.coats.map(x => shade(x, 0.62)); c.cL = c.coats.map(x => shade(x, 1.13)); c.colD = shade(c.col, 0.78); }
+  const P = (f, u, r) => P3(px + f * ct + r * st, u, pz + f * st - r * ct);
+  const seg = (f1, u1, r1, f2, u2, r2, w, col) => { if (!P(f1, u1, r1)) return; const x1 = SX, y1 = SY, s1 = SC; if (!P(f2, u2, r2)) return; ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.7, w * (s1 + SC) * 0.5); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(SX, SY); ctx.stroke(); };
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const near = mine || R.phase === 'home' ? 1 : clamp((z0 - 1.6) / 3, 0.1, 1);       // a rival right behind you, close to the camera, turns ghostly so it never hides your own team
+  ctx.globalAlpha = near * (c.ghost > 0 && c.ghost < 90 && Math.sin(c.ghost * 28) > 0 ? 0.45 : 1);
+  let qi = 0; for (const fr of RIGSH) { Q[qi++] = px + fr[0] * ct + fr[1] * st; Q[qi++] = 0.02; Q[qi++] = pz + fr[0] * st - fr[1] * ct; }
+  poly3(Q, 6, 'rgba(40,25,10,.3)');
+  const sf = clamp(c.v / 13, 0.1, 1), reined = c.b > 0.3 || c.auto > 0, up = reined ? 0.13 : 0, rearing = c.st === 'grid' && c.jump && R.phase === 'race' ? Math.sin(Math.min(1, R.t / 0.9) * Math.PI) : 0;
+  const horse = i => {
+    const hr = (i - 1.5) * 0.86, coat = c.coats[i], dk = c.cD[i], g2 = (c.gal + i * 0.13) * 6.2832, bob = Math.sin(g2) * 0.06 * sf + rearing * 0.5, nb = Math.sin(g2 + 0.9) * 0.1 * sf + up + rearing * 0.9;
+    if (far) { seg(1.12, 1.32, hr, 2.45, 1.4, hr, 0.62, coat); seg(2.45, 1.5, hr, 2.95, 2.0, hr, 0.3, coat); return; }
+    for (const sd of mid ? [0] : [-0.14, 0.14]) {
+      const a1 = g2 + (sd > 0 ? 0.5 : 0), a2 = g2 + 2.4 + (sd > 0 ? 0.5 : 0);
+      seg(1.25, 1.0 + bob * 0.3, hr + sd, 1.15 + Math.sin(a1) * 0.6 * sf, 0.06 + Math.max(0, Math.cos(a1)) * 0.3 * sf, hr + sd, 0.13, dk);
+      seg(2.3, 1.0 + bob, hr + sd, 2.4 + Math.sin(a2) * 0.65 * sf + rearing * 0.3, 0.06 + Math.max(0, Math.cos(a2)) * 0.32 * sf + rearing * 0.8, hr + sd, 0.13, dk);
+    }
+    seg(1.08, 1.42 + bob * 0.3, hr, 0.82 - 0.22 * sf, 1.08 + 0.26 * sf, hr + Math.sin(g2 * 0.5) * 0.08, 0.13, dk);
+    seg(1.12, 1.3 + bob * 0.3, hr, 2.42, 1.37 + bob, hr, 0.62, coat);
+    if (!mid) seg(1.3, 1.5 + bob * 0.4, hr, 2.3, 1.56 + bob, hr, 0.2, c.cL[i]);
+    seg(2.42, 1.48 + bob, hr, 2.94, 1.98 + nb, hr, 0.34, coat);
+    if (!mid) seg(2.4, 1.68 + bob, hr, 2.86, 2.12 + nb, hr, 0.1, dk);
+    seg(2.94, 1.98 + nb, hr, 3.3, 1.78 + nb, hr, 0.24, coat);
+    if (!mid) seg(1.9, 1.63 + bob * 0.7, hr - 0.2, 1.9, 1.63 + bob * 0.7, hr + 0.2, 0.2, c.col);          // a cloth in the team colour
+  };
+  const tA = wk ? Math.min(3.0, wk * 7) * (c.d > 0 ? -1 : 1) : -(c.slide * 0.09 + c.tip * 0.6), tc = Math.cos(tA), ts = Math.sin(tA), hop = wk ? Math.sin(Math.min(1, wk * 1.5) * Math.PI) * 1.0 : 0;
+  const B = (f, u, r) => P(f, 0.5 + (u - 0.5) * tc - r * ts + hop, (u - 0.5) * ts + r * tc);       // the car itself can tip
+  const segB = (f1, u1, r1, f2, u2, r2, w, col) => { if (!B(f1, u1, r1)) return; const x1 = SX, y1 = SY, s1 = SC; if (!B(f2, u2, r2)) return; ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.7, w * (s1 + SC) * 0.5); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(SX, SY); ctx.stroke(); };
+  const quadB = (a, b2, c2, d2, col) => { if (!B(a[0], a[1], a[2])) return; ctx.beginPath(); ctx.moveTo(SX, SY); if (!B(b2[0], b2[1], b2[2])) return; ctx.lineTo(SX, SY); if (!B(c2[0], c2[1], c2[2])) return; ctx.lineTo(SX, SY); if (!B(d2[0], d2[1], d2[2])) return; ctx.lineTo(SX, SY); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); };
+  const facing = ct * CAM.c + st * CAM.s;
+  const car = () => {
+    const wood = '#6b4a2a', brz = '#b08d57', skin = '#d9a066', lean = -c.u * 0.17, pull = reined ? 0.14 : 0, wt = c.whipT;
+    if (far) { segB(0, 0.95, -0.55, 0, 0.95, 0.55, 0.85, c.col); segB(0.1, 1.2, 0, 0.15, 2.0, 0, 0.42, '#f4eddc'); return; }
+    for (const sd of [-1, 1]) {                    // wheels, four spokes each
+      const wx = sd * 0.98; ctx.beginPath(); let ok = true;
+      for (let j = 0; j <= 10; j++) { const a = j / 10 * 6.2832; if (!B(Math.cos(a) * 0.5, 0.5 + Math.sin(a) * 0.5, wx)) { ok = false; break; } if (j) ctx.lineTo(SX, SY); else ctx.moveTo(SX, SY); }
+      if (ok) { ctx.strokeStyle = '#4a3320'; ctx.lineWidth = Math.max(1, 0.1 * SC); ctx.stroke(); }
+      if (!mid) for (let j = 0; j < 2; j++) { const a = c.wheel + j * 1.5708, cs2 = Math.cos(a) * 0.46, sn = Math.sin(a) * 0.46; segB(cs2, 0.5 + sn, wx, -cs2, 0.5 - sn, wx, 0.05, brz); }
+    }
+    segB(0, 0.5, -0.98, 0, 0.5, 0.98, 0.1, wood);
+    segB(0.55, 0.62, 0, 2.42, 1.08, 0, 0.07, wood);
+    quadB([-0.42, 0.58, -0.62], [0.58, 0.58, -0.5], [0.58, 0.58, 0.5], [-0.42, 0.58, 0.62], '#5a3d22');
+    for (let j = 0; j < 4; j++) { const a = RAIL[j], b2 = RAIL[j + 1]; quadB([a[0], 0.58, a[1]], [b2[0], 0.58, b2[1]], [b2[0], b2[2], b2[1]], [a[0], a[2], a[1]], j === 1 || j === 2 ? c.col : c.colD); segB(a[0], a[2], a[1], b2[0], b2[2], b2[1], 0.06, c.col2); }
+    let rx = 0.5 - pull * 1.6, ry = 1.5 + pull, rr = 0.17;
+    if (wt < 0.3) { const u = wt / 0.3, k1 = u < 0.3 ? u / 0.3 : 1 - (u - 0.3) / 0.7; rx = lerp(rx, 0.75, k1); ry = lerp(ry, 2.25, k1); rr = lerp(rr, 0.3, k1); }
+    if (!mid) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * 0.75; for (const i of [0, 1, 2, 3]) seg(0.5 - pull * 1.6, 1.5 + pull, i < 2 ? -0.17 : 0.17, 2.9, 1.92 + up, (i - 1.5) * 0.86, 0.025, '#3a2a1a'); ctx.globalAlpha = ga; }
+    // the driver, in a long white chiton with a sash in the team colour
+    segB(0.06, 0.62, lean * 0.2, 0.1 - pull * 0.5, 1.42, lean * 0.6, 0.42, '#e9e0cc');
+    segB(0.1 - pull * 0.5, 1.42, lean * 0.6, 0.16 - pull, 1.92, lean, 0.46, '#f4eddc');
+    segB(0.0 - pull * 0.6, 1.5, lean * 0.7 - 0.2, 0.04 - pull * 0.9, 1.9, lean + 0.2, 0.1, c.col);
+    const hx = 0.2 - pull, hy = 2.17, head = (df, col, rad) => { if (B(hx + df, hy + (df ? 0.04 : 0), lean)) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(SX, SY, Math.max(1, rad * SC), 0, 6.2832); ctx.fill(); } };
+    if (facing >= 0) { head(0, skin, 0.145); head(-0.05, '#2a1b12', 0.135); } else { head(-0.05, '#2a1b12', 0.135); head(0, skin, 0.145); }
+    if (c.boss || mine) segB(hx + 0.02, hy + 0.14, lean, hx - 0.26, hy + 0.2, lean, 0.09, c.col2);                 // a crest
+    segB(0.14 - pull, 1.86, lean - 0.24, 0.5 - pull * 1.6, 1.5 + pull, -0.17, 0.11, skin);
+    segB(0.14 - pull, 1.86, lean + 0.24, rx, ry, rr, 0.11, skin);
+    if (wt < 0.3 && B(rx, ry, rr)) {               // the whip, and the crack over the horses' backs
+      const x1 = SX, y1 = SY, u = wt / 0.3; if (P(1.3 + u * 0.8, 3.0 - u * 1.2, 0.3)) { const x2 = SX, y2 = SY; if (P(2.2 + u * 0.9, 2.75 - u * 0.75, 0.1)) { ctx.strokeStyle = '#2a1a10'; ctx.lineWidth = Math.max(1, 0.035 * SC); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.quadraticCurveTo(x2, y2, SX, SY); ctx.stroke();
+        if (wt > 0.02 && wt < 0.13) { const s = SC * (c.lastQ === 2 ? 0.55 : 0.32); ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = c.lastQ === 2 ? 'rgba(255,225,130,.95)' : 'rgba(255,255,255,.8)'; ctx.beginPath(); for (let j = 0; j < 8; j++) { const a = j * 0.7854, rd = j & 1 ? s * 0.35 : s; ctx.lineTo(SX + Math.cos(a) * rd, SY + Math.sin(a) * rd); } ctx.fill(); ctx.restore(); } } }
+    }
+  };
+  const horses = () => { const rd = st * CAM.c - ct * CAM.s; if (rd > 0) for (let i = 3; i >= 0; i--) horse(i); else for (let i = 0; i < 4; i++) horse(i); if (!far) seg(2.42, 1.5, -1.4, 2.42, 1.5, 1.4, 0.07, '#6b4a2a'); };
+  if (facing >= 0) { horses(); car(); } else { car(); horses(); }
+  ctx.globalAlpha = 1;
+  if (!mine && !far && R.phase !== 'home' && z0 > 3 && P(0.2, 3.0, 0) && SX > 6 && SX < W - 6) {      // who is that?
+    const fs = clamp(SC * 0.42, 9, 13) * k; ctx.font = `800 ${fs}px Nunito, sans-serif`; ctx.textAlign = 'center';
+    const tw = ctx.measureText(c.name).width + fs * 1.4; SX = clamp(SX, tw / 2 + 4, W - tw / 2 - 4); ctx.fillStyle = 'rgba(10,16,28,.55)'; rrect(SX - tw / 2, SY - fs * 1.05, tw, fs * 1.4, fs * 0.5); ctx.fill();
+    ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(SX - tw / 2 + fs * 0.6, SY - fs * 0.35, fs * 0.3, 0, 6.2832); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(c.name, SX + fs * 0.35, SY);
+  }
+}
+const RIGSH = [[-0.7, -1.15], [-0.7, 1.15], [1.2, 1.75], [3.5, 1.5], [3.5, -1.5], [1.2, -1.75]];
+const RAIL = [[-0.05, -0.64, 1.0], [0.42, -0.52, 1.22], [0.64, 0, 1.32], [0.42, 0.52, 1.22], [-0.05, 0.64, 1.0]];
+function dust(R, x, z, n, big) { for (let i = 0; i < n && R.parts.length < 150; i++) R.parts.push({ k: 0, x: x + (Math.random() - 0.5) * 1.6, y: 0.2, z: z + (Math.random() - 0.5) * 1.6, vx: (Math.random() - 0.5) * 2, vy: 0.6 + Math.random() * 1.4, vz: (Math.random() - 0.5) * 2, t: 0, life: 0.6 + Math.random() * 0.6, s0: 0.3, s1: big ? 1.7 : 1.0, col: R.V.sand[2], a: big ? 0.36 : 0.22 }); }
+function sparks(R, x, y, z, n) { for (let i = 0; i < n && R.parts.length < 170; i++) R.parts.push({ k: 1, x, y, z, vx: (Math.random() - 0.5) * 7, vy: 1 + Math.random() * 5, vz: (Math.random() - 0.5) * 7, t: 0, life: 0.25 + Math.random() * 0.3, s0: 0.07, col: Math.random() < 0.5 ? '#ffe9a0' : '#ffb03a' }); }
+
+// ---------- the race on screen: feedback for everything that happens ----------
+let R = null, paused = false, PET = [];
+function say(text, color = '#fff', size = 1, y = 0.26, dur = 0.9) { if (!R || HEADLESS) return; R.msgs = R.msgs.filter(m => Math.abs(m.y - y) > 0.04); R.msgs.push({ text, color, size, y, t: 0, dur }); }
+function petals(n) { for (let i = 0; i < n; i++) PET.push({ x: Math.random() * W, y: -20 - Math.random() * H * 0.5, vx: (Math.random() - 0.5) * 40, vy: 90 + Math.random() * 120, r: Math.random() * 6, vr: (Math.random() - 0.5) * 6, s: 4 + Math.random() * 5, col: ['#f2c14e', '#fff3c4', '#e87a6a', '#f6efdd', '#8fbf6a'][(Math.random() * 5) | 0] }); }
+function fx(R) {
+  const me = R.me;
+  for (const e of R.evs) {
+    const c = e.c, mine = c && c.me, near = c && !mine && Math.abs(c.p - me.p) < 45;
+    switch (e.type) {
+      case 'tick': sfx.tick(e.val); vibe(HAP.tick); break;
+      case 'go': sfx.go(); say('GO!', '#f2c14e', 1.7, 0.3, 0.8); R.crowd = 0.9; break;
+      case 'jump': sfx.falseStart(); say('TOO EARLY!', '#ff9a7a', 1, 0.3, 1.3); break;
+      case 'pstart': me.lastQ = 2; sfx.whip(2, 0); say('FLYING START!', '#f2c14e', 1.1, 0.3, 1.1); vibe(HAP.sharp); CAM.kick = 1; R.crowd = 1; break;
+      case 'whip': if (!mine) break; me.lastQ = e.val; sfx.whip(e.val, me.chain - 1);
+        if (e.val === 2) { CAM.kick = Math.max(CAM.kick, 0.7); vibe(HAP.tick); say(me.chain >= 3 ? `PERFECT ×${me.chain}` : 'PERFECT', '#f2c14e', 0.6, 0.7, 0.5); }
+        else if (e.val === 1) say('GOOD', '#f6efdd', 0.5, 0.7, 0.4);
+        else say('OFF THE BEAT', '#ff9a7a', 0.5, 0.7, 0.6);
+        break;
+      case 'blown': sfx.blown(); say('HORSES BLOWN!', '#ff7a6b', 0.9, 0.3, 1.4); break;
+      case 'spent': sfx.spent(); break;
+      case 'wall': if (mine) { sfx.wall(); FX.shake = Math.max(FX.shake, 5 + e.val * 1.5); vibe(HAP.light); say('SCRAPE!', '#ff9a7a', 0.8, 0.3, 0.7); } if (mine || near) sparks(R, c.wx, 0.6, c.wz, 10); break;
+      case 'post': if (mine) say('THE POST!', '#ff7a6b', 1.2, 0.3, 1.4); break;
+      case 'lift': if (mine) { say('WHEEL UP! EASE OFF', '#ffb03a', 0.8, 0.3, 0.8); sfx.lift(); vibe(HAP.light); } break;
+      case 'tip': if (mine) say('OVER SHE GOES!', '#ff7a6b', 1.1, 0.3, 1.4); break;
+      case 'wreck':
+        if (mine) { sfx.wreck(); FX.shake = 16; FX.stop = 0.1; FX.flash = 0.45; vibe(HAP.thud); R.crowd = 1; }
+        else if (near) { sfx.wreck(); say(`${c.name.toUpperCase()} WRECKS!`, '#f6efdd', 0.7, 0.2, 1.2); R.crowd = 0.9; }
+        if (c.wx != null) { dust(R, c.wx, c.wz, 14, true); sparks(R, c.wx, 0.8, c.wz, 12); } break;
+      case 'clash': if (mine) { sfx.clash(); FX.shake = Math.max(FX.shake, 4 + e.val); vibe(HAP.light); sparks(R, me.wx, 0.5, me.wz, 7); } break;
+      case 'bump': if (mine) { sfx.clash(); FX.shake = Math.max(FX.shake, 5); say('BLOCKED!', '#ff9a7a', 0.7, 0.3, 0.6); } break;
+      case 'turn': {
+        const q = e.val, lt = me.lastTurn; sfx.turn(q, me.tChain - 1);
+        if (q === 3) { const graze = lt.clear < 0.6; say(graze ? 'HUB-GRAZE!' : 'PERFECT TURN', '#f2c14e', graze ? 1.1 : 0.95, 0.24, 1.3); vibe(HAP.sharp); R.crowd = 1; FX.gold = 0.5; }
+        else if (q === 2) say('GOOD TURN', '#f6efdd', 0.75, 0.24, 1);
+        else if (q === 1) say('WIDE', '#d9c9a8', 0.7, 0.24, 0.9);
+        R.note = q ? { text: `${lt.t.toFixed(2)} s round the post${q === 3 ? `, clear by ${Math.max(0, lt.clear).toFixed(1)} m` : ''}`, t: 0 } : null; break;
+      }
+      case 'lap': { const fin = e.val === R.laps; sfx.lap(fin); say(fin ? 'FINAL LAP!' : `LAP ${e.val}`, fin ? '#f2c14e' : '#f6efdd', fin ? 1.3 : 0.9, 0.18, 1.3); if (fin) R.crowd = 1; break; }
+      case 'rank': { const up = me.rank < e.val; sfx.pass(up); if (up) { say(`${ORD[me.rank]}!`, '#f2c14e', 1.05, 0.18, 0.9); R.crowd = Math.max(R.crowd, 0.8); } else say(`${ORD[me.rank]}`, '#d9c9a8', 0.7, 0.18, 0.8); break; }
+      case 'finish': onFinish(R); break;
+    }
+  }
+  R.evs.length = 0;
+}
+function onFinish(R) {
+  const res = R.res, me = R.me, L = R.L, win = res.place === 1;
+  $('pauseBtn').classList.add('hidden');
+  res.stars = win ? 3 : res.ok ? (res.place === 2 ? 2 : 1) : 0;
+  if (win) { sfx.win(R.boss); vibe(HAP.heavy); FX.slow = 0.6; FX.gold = 1; petals(R.boss ? 140 : 90); wreaths++; store.set('wreaths', wreaths); }
+  else if (res.ok) { sfx.place(); vibe(HAP.sharp); petals(26); }
+  else sfx.lose();                                                    // no buzz for a loss
+  R.crowd = win ? 1 : res.ok ? 0.85 : 0.45;
+  streaks[L] = res.ok ? 0 : (streaks[L] || 0) + 1; store.set('streaks', streaks);
+  if (res.ok) { stars[L] = Math.max(stars[L] || 0, res.stars); store.set('stars', stars); unlocked = Math.max(unlocked, L + 1); store.set('unlocked', unlocked); }
+  const bt = bestTime[L], bl = bestLap[L];
+  res.prevT = bt; res.nbT = !!bt && res.time < bt; if (!bt || res.time < bt) { bestTime[L] = res.time; store.set('bestTime', bestTime); }
+  res.nbL = !!bl && res.lap < bl; if (res.lap && (!bl || res.lap < bl)) { bestLap[L] = res.lap; store.set('bestLap', bestLap); }
+  res.nbC = bestChain > 0 && me.topChain > bestChain; if (me.topChain > bestChain) { bestChain = me.topChain; store.set('bestChain', bestChain); }
+  if (res.nbT || res.nbL || res.nbC) setTimeout(() => { sfx.best(); vibe(HAP.best); }, 900);
+}
+function visuals(R, dt, rdt) {               // things that only matter to the eye and the ear
+  const me = R.me;
+  for (const m of R.msgs) m.t += rdt; R.msgs = R.msgs.filter(m => m.t < m.dur);
+  if (R.note) { R.note.t += rdt; if (R.note.t > 2.2) R.note = null; }
+  for (const p of R.parts) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; if (p.k) p.vy -= 14 * dt; else p.vy *= 0.97; }
+  R.parts = R.parts.filter(p => p.t < p.life && p.y > -0.2);
+  for (const p of PET) { p.x += (p.vx + Math.sin(p.r) * 30) * rdt; p.y += p.vy * rdt; p.r += p.vr * rdt; } PET = PET.filter(p => p.y < H + 30);
+  FX.shake = Math.max(0, FX.shake - rdt * 40); FX.flash = Math.max(0, FX.flash - rdt); FX.gold = Math.max(0, FX.gold - rdt * 0.9);
+  R.crowd += ((R.phase === 'finish' ? 0.7 : me.lap >= R.laps ? 0.5 : 0.28) - R.crowd) * Math.min(1, rdt * 0.5);
+  for (const c of R.cars) {                  // dust from every team
+    if (c.st !== 'run' || c.wx == null || c.v < 2) continue;
+    const reined = c.b > 0.3 || c.auto > 0, rate = c.v * 0.5 + c.slide * 14 + (reined ? 9 : 0) + c.scrape * 12;
+    if (Math.random() < rate * dt) dust(R, c.wx, c.wz, 1, c.slide > 0.5 || reined);
+    if (c.scrape > 0.6 && Math.random() < 20 * dt) sparks(R, c.wx, 0.5, c.wz, 2);
+  }
+  if (me.st === 'run' && me.v > 3) {         // your team's hoofbeats: three quick, then the accent on the beat
+    const p0 = me.hp == null ? me.ph : me.hp;
+    for (const h of [0.7, 0.8, 0.9]) if (p0 < h && me.ph >= h) sfx.hoof(false);
+    if (me.ph < p0) sfx.hoof(true);
+  }
+  me.hp = me.ph;
+}
+
+// ---------- on-screen instruments ----------
+function wreath(cx, cy, r, col) {
+  for (const sd of [-1, 1]) for (let i = 0; i < 9; i++) { const a = Math.PI / 2 + sd * (0.35 + i * 0.3), x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r; ctx.save(); ctx.translate(x, y); ctx.rotate(a + sd * 1.1); ctx.fillStyle = i & 1 ? col : shade(col, 0.8); ctx.beginPath(); ctx.ellipse(0, 0, r * 0.2, r * 0.085, 0, 0, 6.2832); ctx.fill(); ctx.restore(); }
+}
+function coachLine(R) {                      // one plain instruction at a time, on the learning levels
+  const me = R.me, L = R.L;
+  if (R.phase === 'count') return L <= 4 ? 'CRACK THE WHIP RIGHT ON "GO!"' : '';
+  if (R.phase !== 'race' || me.st !== 'run' || L > 10) return '';
+  if (L > 6) return me.auto > 0 && IN.wId == null ? 'REIN IN YOURSELF: HOLD RIGHT THUMB' : '';
+  turnInfo(R.T, sOf(R.T, me.p)); const inT = TI.k, dist = TI.dist;
+  if (L <= 2) { if (!me.steered) return 'LEFT THUMB: SLIDE TO STEER'; if (me.whips < 2) return 'RIGHT THUMB: TAP TO WHIP'; }
+  if (inT) return me.lat > 2.5 ? 'STEER LEFT · HUG THE POST' : '';
+  if (dist < 45 && me.v > 12) return L === 1 ? 'YOUR TEAM SLOWS FOR THE TURN' : !me.reined || L <= 4 ? 'HOLD RIGHT THUMB: REIN IN' : '';
+  if (L >= 2 && me.pWhips < 4 && dist > 50) return 'WHIP JUST AS THE RING CLOSES';
+  return '';
+}
+function drawHud(R, now) {
+  const me = R.me, T = R.T, pad = 12 * k, sm = `800 ${Math.round(11.5 * k)}px Nunito, sans-serif`;
+  ctx.save(); ctx.textBaseline = 'alphabetic'; ctx.lineCap = 'round';
+  if (FX.flash > 0) { const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.8); vg.addColorStop(0, 'rgba(255,0,0,0)'); vg.addColorStop(1, `rgba(180,20,10,${FX.flash * 1.4})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
+  if (FX.gold > 0) { const vg = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.25, W / 2, H * 0.45, H * 0.8); vg.addColorStop(0, 'rgba(255,215,120,0)'); vg.addColorStop(1, `rgba(255,205,100,${FX.gold * 0.4})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
+  if (me.urge > 0.55 && me.st === 'run') {   // speed streaks at full cry
+    ctx.strokeStyle = `rgba(255,255,255,${(me.urge - 0.55) * 0.35})`; ctx.lineWidth = 1.5; ctx.beginPath();
+    for (let i = 0; i < 10; i++) { const a = (i * 0.63 + Math.floor(now * 14) * 1.7) % 6.2832, r1 = H * 0.36 + (i % 3) * 30, r2 = r1 + 50 + (i % 4) * 22; ctx.moveTo(W / 2 + Math.cos(a) * r1 * 0.75, H * 0.48 + Math.sin(a) * r1); ctx.lineTo(W / 2 + Math.cos(a) * r2 * 0.75, H * 0.48 + Math.sin(a) * r2); }
+    ctx.stroke();
+  }
+  ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 5;
+  // your place, top left
+  const pos = me.fin ? me.place : me.rank || R.n, count = R.phase === 'count';
+  ctx.textAlign = 'left';
+  if (count) {                               // on the starting line nobody has a place yet: say where we are and what is to come
+    ctx.fillStyle = '#f2c14e'; ctx.font = `${Math.round(22 * k)}px ${GK}`; ctx.fillText(R.V.name.toUpperCase(), pad, 34 * k);
+    ctx.font = sm; ctx.fillStyle = '#f6efdd'; ctx.fillText(`RACE ${R.L}  ·  ${R.n} CHARIOTS  ·  ${R.laps} LAPS`, pad + 1, 52 * k);
+  } else {
+    ctx.fillStyle = pos === 1 ? '#f2c14e' : '#f6efdd'; ctx.font = `${Math.round(44 * k)}px ${GK}`; ctx.fillText(ORD[pos], pad, 50 * k);
+    ctx.font = sm; ctx.fillStyle = '#f6efdd'; ctx.fillText(`OF ${R.n}  ·  LAP ${clamp(me.lap, 1, R.laps)}/${R.laps}`, pad + 2, 68 * k);
+  }
+  if (R.help && !count) { ctx.shadowBlur = 0; ctx.fillStyle = '#a9e8c0'; rrect(pad, 75 * k, 56 * k, 14 * k, 6 * k); ctx.fill(); ctx.fillStyle = '#0e1f33'; ctx.font = `800 ${Math.round(9 * k)}px Nunito, sans-serif`; ctx.fillText('HELP ON', pad + 7 * k, 85.5 * k); ctx.shadowBlur = 5; }
+  // the leaderboard, top right: who is first, and where you are
+  ctx.font = sm; const rh = 15.5 * k;
+  for (let i = 0; i < R.order.length && !count; i++) {
+    const c = R.order[i], y = 22 * k + i * rh;
+    if (c.me) { ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(242,193,78,.28)'; rrect(W - pad - 100 * k, y - 11.5 * k, 104 * k, 15 * k, 5 * k); ctx.fill(); ctx.shadowBlur = 5; }
+    ctx.fillStyle = c.me ? '#f2c14e' : '#f6efdd'; ctx.textAlign = 'right'; ctx.fillText(c.name, W - pad, y); ctx.textAlign = 'left'; ctx.fillText(i + 1, W - pad - 97 * k, y);
+    ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(W - pad - 82 * k, y - 4 * k, 4 * k, 0, 6.2832); ctx.fill();
+    if (c.me) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); }
+  }
+  // the countdown: three bronze discs
+  if (R.phase === 'count') for (let i = 0; i < 3; i++) { ctx.fillStyle = i < R.tickN ? '#f2c14e' : 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(W / 2 + (i - 1) * 30 * k, H * 0.25, 9 * k, 0, 6.2832); ctx.fill(); }
+  // call-outs
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(26,13,6,.72)';
+  for (const m of R.msgs) {
+    const a = 1 - Math.max(0, (m.t - m.dur * 0.6) / (m.dur * 0.4)), pop = m.t < 0.12 ? 1 + 0.4 * (1 - m.t / 0.12) : 1;
+    const fs = Math.round(Math.min(W * 0.1, 40) * m.size * pop); ctx.globalAlpha = a; ctx.font = `${fs}px ${GK}`; ctx.lineWidth = Math.max(2.5, fs * 0.14); ctx.strokeText(m.text, W / 2, H * m.y - m.t * 12, W * 0.94);      // a dark edge keeps the words readable over the crowd
+    ctx.fillStyle = m.color; ctx.fillText(m.text, W / 2, H * m.y - m.t * 12, W * 0.94);
+  }
+  ctx.globalAlpha = 1;
+  if (R.note) { ctx.globalAlpha = Math.min(1, (2.2 - R.note.t) / 0.4); ctx.font = sm; ctx.fillStyle = '#f6efdd'; ctx.fillText(R.note.text, W / 2, H * 0.24 + 26 * k); ctx.globalAlpha = 1; }
+  if (R.phase === 'finish') {                // the finish: your place, the honest gap, and the wreath if you earned it
+    const res = R.res, win = res.place === 1, a = Math.min(1, R.ft / 0.25), pop = 1.5 - 0.5 * easeOut(a), cy = H * 0.4;
+    ctx.globalAlpha = a;
+    if (win) wreath(W / 2, cy - 4 * k, 86 * k * pop, '#7fae4e');
+    ctx.font = `${Math.round(58 * k * pop)}px ${GK}`; ctx.lineWidth = 7 * k; ctx.strokeText(win ? 'VICTORY!' : ORD[res.place], W / 2, cy, W * 0.9);
+    ctx.fillStyle = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#d9c9a8'; ctx.fillText(win ? 'VICTORY!' : ORD[res.place], W / 2, cy, W * 0.9);
+    ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; ctx.fillStyle = '#f6efdd'; ctx.lineWidth = 3.5 * k;
+    { const line = win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : `${res.gapAhead.toFixed(2)} s behind ${res.ahead}`; ctx.strokeText(line, W / 2, cy + 44 * k, W * 0.92); }
+    ctx.fillText(win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : `${res.gapAhead.toFixed(2)} s behind ${res.ahead}`, W / 2, cy + 44 * k, W * 0.92);
+    if (R.ft > 0.9) { ctx.globalAlpha = 0.6 + 0.25 * Math.sin(now * 5); ctx.fillText('Tap to continue', W / 2, H * 0.92); }
+    ctx.globalAlpha = 1;
+  }
+  for (const p of PET) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.shadowBlur = 0; ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * 0.45, 0, 0, 6.2832); ctx.fill(); ctx.restore(); }
+  if (R.phase === 'finish') { ctx.restore(); return; }
+  // coach line
+  const cl = coachLine(R);
+  if (cl) { ctx.font = `800 ${Math.round(13 * k)}px Nunito, sans-serif`; const tw = ctx.measureText(cl).width + 26 * k; ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(10,18,32,.6)'; rrect(W / 2 - tw / 2, H * 0.75 - 14 * k, tw, 28 * k, 14 * k); ctx.fill(); ctx.fillStyle = '#f2c14e'; ctx.fillText(cl, W / 2, H * 0.75 + 1); ctx.shadowBlur = 5; }
+  // left thumb: the reins
+  const by = H - 92 * k, lx = W * 0.22, wxp = W * 0.78;
+  ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(10,18,32,.34)'; rrect(lx - 52 * k, by - 9 * k, 104 * k, 18 * k, 9 * k); ctx.fill();
+  ctx.fillStyle = 'rgba(246,239,221,.3)'; ctx.fillRect(lx - 0.75, by - 6 * k, 1.5, 12 * k);
+  ctx.fillStyle = IN.sId != null ? '#f6efdd' : 'rgba(246,239,221,.6)'; ctx.beginPath(); ctx.arc(lx + me.u * 40 * k, by, 13 * k, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(246,239,221,.75)'; ctx.font = `800 ${Math.round(9.5 * k)}px Nunito, sans-serif`; ctx.fillText('◀  REINS  ▶', lx, by + 24 * k);
+  // right thumb: the whip, the beat, the horses' wind
+  const r0 = 30 * k, reined = IN.wId != null && me.b > 0.3, blown = me.blown > 0, sT = strideT(me.v), win = me.st === 'run' && !blown && !reined && (me.ph * sT < R.wP || (1 - me.ph) * sT < R.wP);
+  ctx.fillStyle = blown ? 'rgba(90,90,90,.55)' : win ? 'rgba(242,193,78,.6)' : 'rgba(10,18,32,.4)'; ctx.beginPath(); ctx.arc(wxp, by, r0, 0, 6.2832); ctx.fill();
+  if (me.urge > 0.02 && !blown) { ctx.fillStyle = 'rgba(242,193,78,.5)'; ctx.beginPath(); ctx.arc(wxp, by, r0 * Math.sqrt(me.urge), 0, 6.2832); ctx.fill(); }
+  if (me.st === 'run' && !blown && !reined) { ctx.strokeStyle = win ? '#f2c14e' : `rgba(246,239,221,${0.35 + 0.5 * me.ph})`; ctx.lineWidth = (win ? 4 : 2.5) * k; ctx.beginPath(); ctx.arc(wxp, by, r0 * (me.ph * sT < R.wP ? 1 : 1 + 0.95 * (1 - me.ph)), 0, 6.2832); ctx.stroke(); }
+  if (reined) { ctx.strokeStyle = '#ff7a6b'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.arc(wxp, by, r0 + 3 * k, 0, 6.2832); ctx.stroke(); }
+  ctx.fillStyle = '#f6efdd'; ctx.font = `800 ${Math.round(10.5 * k)}px Nunito, sans-serif`; ctx.fillText(blown ? 'BLOWN' : reined ? 'REINING' : 'WHIP', wxp, by + 1);
+  if (me.chain >= 2) { ctx.fillStyle = '#f2c14e'; ctx.font = `${Math.round(17 * k)}px ${GK}`; ctx.fillText(`×${me.chain}`, wxp + r0 + 16 * k, by - r0 * 0.6); }
+  const bw = 78 * k, bx = wxp - bw / 2, wy = by - r0 * 2 - 16 * k, low = me.wind < 0.22 || blown;
+  ctx.fillStyle = 'rgba(10,18,32,.45)'; rrect(bx, wy, bw, 7 * k, 3.5 * k); ctx.fill();
+  ctx.fillStyle = low ? (Math.sin(now * 14) > 0 ? '#ff5a3c' : '#ffb03a') : me.wind < 0.45 ? '#f2c14e' : '#9fe0a8'; rrect(bx, wy, Math.max(0.001, bw * me.wind), 7 * k, 3.5 * k); ctx.fill();
+  ctx.fillStyle = 'rgba(246,239,221,.8)'; ctx.font = `800 ${Math.round(9 * k)}px Nunito, sans-serif`; ctx.fillText("HORSES' WIND", wxp, wy - 7 * k);
+  // the little map: every team on the oval
+  const tot = T.Ls + 2 * (T.Rc + T.hw), ms = 100 * k / tot, mx = W / 2, my = H - 84 * k, ro = (T.Rc + T.hw) * ms, hl = T.Ls / 2 * ms;
+  ctx.fillStyle = 'rgba(10,18,32,.38)'; ctx.beginPath(); ctx.arc(mx - hl, my, ro, Math.PI / 2, Math.PI * 1.5); ctx.arc(mx + hl, my, ro, -Math.PI / 2, Math.PI / 2); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(246,239,221,.5)'; ctx.lineWidth = Math.max(1.5, T.rIn * ms * 1.4); ctx.beginPath(); ctx.moveTo(mx - hl, my); ctx.lineTo(mx + hl, my); ctx.stroke();
+  for (const c of R.order) { if (c.wx == null || c.me) continue; ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(mx + c.wx * ms, my - c.wz * ms, 2.7 * k, 0, 6.2832); ctx.fill(); }
+  if (me.wx != null) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mx + me.wx * ms, my - me.wz * ms, 4 * k, 0, 6.2832); ctx.fill(); ctx.fillStyle = '#b3261e'; ctx.beginPath(); ctx.arc(mx + me.wx * ms, my - me.wz * ms, 2.4 * k, 0, 6.2832); ctx.fill(); }
+  ctx.restore();
+}
+function draw(now) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!R) { ctx.fillStyle = '#0e1f33'; ctx.fillRect(0, 0, W, H); return; }
+  drawWorld(R);
+  if (R.phase !== 'home') drawHud(R, now);
+}
+
+// ---------- two thumbs ----------
+const IN = { sId: null, sx0: 0, sx: 0, wId: null, wT: 0 }, KEY = { l: 0, r: 0, d: 0 };
+function readInput(now) {
+  const me = R.me; let u = 0, b = 0;
+  if (IN.sId != null) {                      // left thumb: slide to steer, from wherever it first touched
+    const full = 56 * k; let dx = IN.sx - IN.sx0;
+    if (dx > full) { IN.sx0 = IN.sx - full; dx = full; } else if (dx < -full) { IN.sx0 = IN.sx + full; dx = -full; }
+    const raw = dx / full, a = Math.abs(raw); u = a < 0.07 ? 0 : Math.sign(raw) * Math.pow((a - 0.07) / 0.93, 1.15);
+  }
+  if (KEY.l) u = -1; if (KEY.r) u = 1;
+  if (IN.wId != null) b = clamp((now - IN.wT - 120) / 150, 0, 1);      // right thumb held down: rein in
+  if (KEY.d) b = 1;
+  me.u = u; me.b = b;
+  if (Math.abs(u) > 0.3) me.steered = 1;
+  if (b > 0.6) { if (!me.reinFx && me.st === 'run') { sfx.rein(); me.reinFx = 1; } me.reined = 1; } else me.reinFx = 0;
+}
+cv.addEventListener('pointerdown', e => {
+  audio(); ensureLoops();
+  if (!R || paused) return;
+  if (R.phase === 'finish') { if (R.ft > 0.9) showEnd(); return; }
+  if (R.phase !== 'count' && R.phase !== 'race') return;
+  if (e.clientX < W / 2) { if (IN.sId == null) { IN.sId = e.pointerId; IN.sx0 = IN.sx = e.clientX; } }
+  else if (IN.wId == null) { IN.wId = e.pointerId; IN.wT = performance.now(); }
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+});
+cv.addEventListener('pointermove', e => { if (e.pointerId === IN.sId) IN.sx = e.clientX; });
+function release(e) {
+  if (e.pointerId === IN.sId) IN.sId = null;
+  else if (e.pointerId === IN.wId) { IN.wId = null; if (e.type === 'pointerup' && performance.now() - IN.wT < 230 && R && !paused) playerWhip(R); }   // a quick tap is a crack of the whip
+}
+cv.addEventListener('pointerup', release);
+cv.addEventListener('pointercancel', release);
+addEventListener('keydown', e => {           // laptop: arrows steer, space whips, down reins in
+  if (e.repeat) { if (e.code === 'Space') e.preventDefault(); return; }
+  if (e.code === 'ArrowLeft') KEY.l = 1; else if (e.code === 'ArrowRight') KEY.r = 1; else if (e.code === 'ArrowDown') KEY.d = 1;
+  else if (e.code === 'Space') { e.preventDefault(); audio(); ensureLoops(); if (R && R.phase === 'finish') { if (R.ft > 0.9) showEnd(); } else if (R && !paused) playerWhip(R); }
+});
+addEventListener('keyup', e => { if (e.code === 'ArrowLeft') KEY.l = 0; else if (e.code === 'ArrowRight') KEY.r = 0; else if (e.code === 'ArrowDown') KEY.d = 0; });
+
+// ---------- screens ----------
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function showHome() {
+  R = makeRace(level, { help: (streaks[level] || 0) >= 3 }); R.phase = 'home'; paused = false; loopsOff(); PET = [];
+  $('pauseBtn').classList.add('hidden');
+  const fav = R.cars[0];
+  $('hLvl').textContent = level; $('hVenue').textContent = R.V.name; $('hGames').textContent = R.V.games;
+  $('hPills').innerHTML = `<span class="pill">${R.laps} laps</span><span class="pill">${R.n} chariots</span><span class="pill">${R.boss ? 'Champion' : 'Favourite'}: ${fav.full}</span>` + (R.boss ? '<span class="pill" style="background:#f2c14e;color:#3a1d08">YOU MUST WIN</span>' : `<span class="pill">Top ${R.need} go through</span>`);
+  $('hStat').innerHTML = [bestTime[level] ? `Your best here: <b>${fmtT(bestTime[level])}</b>` : '', wreaths ? `Wreaths won: <b>${wreaths}</b>` : ''].filter(Boolean).join(' · ') + (R.help ? `<br><span class="help">Help on: your rivals drive a touch slower until you get through.</span>` : '');
+  show('ovHome');
+}
+function startRace() {
+  audio(); ensureLoops();
+  R = makeRace(level, { help: (streaks[level] || 0) >= 3 }); R.phase = 'count'; paused = false; PET = [];
+  IN.sId = IN.wId = null; FX.shake = FX.stop = FX.slow = FX.flash = FX.gold = 0; CAM.kick = 0;
+  if (!HEADLESS) { camFollow(R, 0, true); $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now();
+}
+function showEnd() {
+  if (!R || R.phase !== 'finish') return; R.phase = 'done'; loopsOff();
+  const res = R.res, me = R.me, L = R.L, V = R.V, win = res.place === 1;
+  $('eTitle').textContent = win ? 'VICTORY!' : `${ORD[res.place]} PLACE`; $('eTitle').style.color = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#e0b8a0';
+  $('eStars').innerHTML = res.ok ? [1, 2, 3].map(i => `<span class="${i <= res.stars ? '' : 'off'}">★</span>`).join('') : '';
+  if (!res.board || !res.board.length) settle(R);
+  const bd = res.board, rows = bd.slice(0, 3); if (!rows.some(x => x.c === me)) rows.push(bd.find(x => x.c === me));       // the real finishing order: the first three, and you
+  $('eBoard').innerHTML = rows.map(x => { const i = bd.indexOf(x), gap = i === 0 ? fmtT(x.fin) : x.fin ? `+${(x.fin - bd[0].fin).toFixed(2)} s` : 'did not finish'; return `<div class="${x.c.me ? 'me' : ''}"><span>${i + 1}. ${x.c.full}</span><span>${gap}</span></div>`; }).join('');
+  const tip = me.wrecks ? 'A wreck costs about five seconds.' : me.pTurns * 2 < me.turns ? 'Rein in before the post, then hold the inside line.' : me.pWhips < me.whips * 0.7 ? 'Whip on the beat to keep your horses fresh.' : 'To pass, get close behind a rival and turn inside them at the post.';
+  $('eSub').innerHTML = (win ? `You win ${V.prize}.` : res.ok ? `Through to the next race. First place wins ${V.prize}.` : `${R.boss ? 'Only a win will do here.' : `You needed the top ${R.need}.`} ${tip}`) +
+    `<br>Time <b>${fmtT(res.time)}</b>${res.nbT ? ' <b class="nb">NEW BEST</b>' : res.prevT ? ` · best ${fmtT(Math.min(res.prevT, res.time))}` : ''} · best lap <b>${res.lap.toFixed(2)} s</b>${res.nbL ? ' <b class="nb">NEW BEST</b>' : ''}` +
+    `<br>Perfect turns <b>${me.pTurns}/${me.turns}</b> · longest whip chain <b>${me.topChain}</b>${res.nbC ? ' <b class="nb">NEW BEST</b>' : ''}` +
+    (!res.ok && (streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: your rivals will drive a touch slower here until you get through.</span>` : '');
+  $('eMain').textContent = res.ok ? 'NEXT RACE' : 'TRY AGAIN'; $('eMain').dataset.act = res.ok ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !res.ok);
+  show('ovEnd');
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startRace(); };
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showHome());
+function showLevels() {
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h;
+  $('lvSub').textContent = unlocked > 1 ? `${unlocked - 1} race${unlocked === 2 ? '' : 's'} run. Every tenth race is against a champion of legend.` : 'Finish near the front to unlock the next race.';
+  show('ovLevels');
+}
+$('levelsBtn').onclick = () => { sfx.click(); showLevels(); };
+$('eLevels').onclick = () => { showLevels(); };
+$('lvGrid').addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (!b || b.disabled) return; level = +b.dataset.l; store.set('level', level); showHome(); });
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') { level = Math.min(unlocked, level + 1); store.set('level', level); } startRace(); };
+$('eAlt').onclick = () => startRace();
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) { ensureLoops(); sfx.click(); } else loopsOff(); };
+sndIcon();
+$('pauseBtn').onclick = () => { if (!R || (R.phase !== 'race' && R.phase !== 'count')) return; paused = true; loopsOff(); IN.sId = IN.wId = null; show('ovPause'); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pQuit').onclick = () => { showHome(); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && R && !paused && (R.phase === 'race' || R.phase === 'count')) { paused = true; loopsOff(); IN.sId = IN.wId = null; show('ovPause'); } });
+
+// ---------- loop ----------
+function loopSounds() {
+  if (!LOOPS || !actx) return;
+  const live = R && !paused, on = live && (R.phase === 'race' || R.phase === 'finish'), me = on ? R.me : null, v = me ? me.v / PH.vTop : 0;
+  LOOPS.rumble && LOOPS.rumble.set(me ? 0.02 + 0.2 * v : 0, 0.15);
+  LOOPS.wind && LOOPS.wind.set(me ? 0.1 * v * v : 0, 0.2);
+  LOOPS.crowd && LOOPS.crowd.set(live ? (R.phase === 'home' || R.phase === 'done' ? 0.03 : 0.04 + 0.2 * R.crowd) : 0, 0.3);
+  LOOPS.skid && LOOPS.skid.set(me ? Math.min(0.2, me.slide * 0.14 + ((me.b > 0.3 || me.auto > 0) && me.v > 6 ? 0.07 : 0)) : 0, 0.06);
+  LOOPS.scrape && LOOPS.scrape.set(me ? me.scrape * 0.16 : 0, 0.04);
+}
+let last = performance.now();
+function frame(now) {
+  const rdt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (R && !paused) {
+    if (R.phase === 'home' || R.phase === 'done') { if (R.phase === 'home') camOrbit(R, now / 1000); visuals(R, 0, rdt); }
+    else {
+      let dt = rdt;
+      if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }            // a heartbeat of stillness on a wreck
+      else if (FX.slow > 0) { FX.slow -= rdt; dt *= 0.3; }   // slow motion across the line
+      if (window.__auto) window.__auto(R, dt); else readInput(now);
+      raceStep(R, dt); fx(R); visuals(R, dt, rdt); camFollow(R, dt);
+      if (R.phase === 'finish') { R.ft += rdt; if (R.ft > 3.2) showEnd(); }
+    }
+  }
+  loopSounds();
+  draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](key === 'turn' ? 3 : 2, 3); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(L, o) { HEADLESS = true; MUTE = true; level = L; R = makeRace(L, o || {}); R.phase = 'count'; R.ct = 2.9; R.tickN = 3; },
+  step(dt) { raceStep(R, dt); R.evs.length = 0; },
+  whip() { playerWhip(R); },
+  beatErr() { return beatErr(R.me); },
+  drive(c, dt) { aiDrive(c, R, dt); },
+  info(p) { turnInfo(R.T, sOf(R.T, p)); return { k: TI.k, dist: TI.dist, a: TI.a }; },
+  hold(r) { return holdSpeed(R.T, r, PH.KC * R.cfScale); },
+  live() { HEADLESS = false; last = performance.now(); },
+  go(L) { HEADLESS = false; level = L; startRace(); },
+  PH, FX, CAM,
+  get R() { return R; }
+};
+resize(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

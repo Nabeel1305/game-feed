@@ -19,7 +19,7 @@ Everything learned building the first games. Every new game must follow the **ru
 5. **Longer and deeper as levels rise:** rounds (best of 3/5), points decisions when nobody is knocked out, more health on both sides.
 6. **Controls:** two-thumb friendly; must work anywhere on the screen including the edges; never let the finger cover the target (offset crosshair); tap-to-select then drag-from-anywhere when a control could sit near an edge.
 7. **Feed-ready:** each game needs a mini mode that starts instantly (no menus) and the full mode; keep the bottom edge free for the feed's swipe-up handle.
-8. Keep call-out text clear of scenery text. Never show fake data.
+8. Keep call-out text clear of scenery text (a dark outline over busy backgrounds). Never show fake data, and never a guessed number either: if a figure isn't known yet, run the simulation on to get the real one (Hippodrome's finishing gaps).
 9. **Character variety:** never a short fixed list of opponents. Build names and looks by combining long lists (titles, first names, epithets, places, and many independent accessory/colour choices), seeded by level, so opponents rarely repeat. (Nabeel noticed the earlier games' small name lists.)
 10. Test on a 390x844 phone screen and look at a screenshot of every screen before sending.
 
@@ -28,6 +28,7 @@ Everything learned building the first games. Every new game must follow the **ru
 - Make a test copy of the page that exposes hooks (`window.__G`, geometry helpers, `__lvl(n)`), and drive it with Playwright.
 - **Run cheat tests in fast-forward:** call the game's update loop directly (many steps, no drawing) rather than real time. Real-time testing of High Noon took ~10 minutes per run.
 - Bots, at several levels (e.g. 1, 5, 15, 40, 80): a **spammer** (obvious repeated move), a **smart** player (~250 ms reactions, small aim error) and, for timing games, a **jumpy** player. Spammer must lose past the early levels; smart must win early and keep a chance at the top.
+- **Racing or pacing games:** also test the lazy *lines* (never brake, long way round, ride the wall), split results by starting position, and check that a faster player can actually get past an equal rival. If nobody can pass, the start decides everything.
 - `python3 tools/check.py` loads every game and fails on any JavaScript error. GitHub runs it on every push.
 
 ## Build notes per game
@@ -75,6 +76,22 @@ Everything learned building the first games. Every new game must follow the **ru
 - The flight, the alert card and the SAVED stamp only happen on screen; the test hook (`startType`) jumps straight into a mission.
 - Patrol = level: 3-6 missions, 3 city-trust hearts, stars by missions failed, a monster closes every 5th patrol and a villain every 10th. Best "saves in a row" and lifetime "citizens helped" are kept (`zn.bestStreak`, `zn.rescues`).
 - The hero is our own design (teal suit, gold cape, gold Z bolt, mask). Don't drift toward any real hero's look.
+
+### 6. Hippodrome (`games/hippodrome/`)
+- **Built from parts** like Zenith: `part1.html` (page, CSS, helpers, saves) + `/*KIT*/` + `part2.js` (sounds, names, venues, `makeRace`: the field and how forgiving the level is) + `part3.js` (track, physics, rivals' driving, collisions, race flow, `settle`) + `part4.js` (the behind-the-chariot view: camera, arena, chariots) + `part5.js` (feedback, HUD, two-thumb input, screens, loop, test hook). `python3 build.py`, never edit index.html.
+- **The view** is plain canvas 2D made to look 3D: a camera that only turns left/right (the horizon just shifts), flat polygons clipped where they pass behind the camera (`poly3`), walls painted with stretched pictures (`tex4`, skipped when too close or too skewed), everything standing on the sand sorted far to near, and one wide panorama strip per venue behind it all. Costs about 1 ms a frame.
+- **Where a chariot is:** `p` metres run along the centre line, `d` metres off it (negative = inside). The track is two straights and two half-circles, run counter-clockwise. In a turn the team is thrown outward by `kc * v² / rEff(r)`; the reins push back by up to `VLAT`.
+- **Two thumbs:** left half = reins (slide from wherever the thumb lands), right half = whip (tap under 230 ms) or rein in (hold). The whip has a beat (ring closes on the button); the horses' wind is the budget.
+- **Lesson: the long way round must cost more than it gives.** With true physics (grip speed grows with the square root of the radius) a wide line flat out was as quick as a tight line reined in, so never reining in won to level 45. Now grip grows slower than the radius (`rEff = r0 * (r / r0)^0.6`), so the inside really is the fast way.
+- **Lesson: a punishment must not double as a tool.** Sliding scrubbed speed, so sliding was a free brake and never reining in still won everywhere. Now a slide throws away the whip pace, the team cannot pull while it slides, the wheel lifts if you force the reins (tip over from level 8), and the wall pins you to a crawl.
+- **Lesson: test the lazy lines, not just the lazy inputs.** Bots that borrow the rivals' steering can hide a loophole. `test_sim.py` now has `humanNoRein`, `nobrake`, `outside` (long way round, flat out), `midNoRein`, `steerOnly`, `spam`, `spamleft`, `wall`, `idle`. All must lose after the learning levels.
+- **Lesson: equal pace means nobody can pass, and then the starting draw decides the race.** At the top the near-perfect bot won 12/12 from the front row and 0/12 from the second. `test_sim.py` now prints every cell split by starting row: read that split, not just the total. Fixes: rivals turn in one lane off the post and close on it mid-turn, so a tighter turn from close behind takes the inside (and they take it from you if you run wide); the field keeps a wide spread at every level so back-markers can always be passed; against a champion you start beside them.
+- **Lesson: never show a guessed number.** The finish banner estimated the gap one way and the end card another (5.5 s vs 9.2 s). Now `settle()` runs the rest of the field to the line out of sight (copy the cars, step the race, read the times, put the cars back), and both screens show that one real result.
+- **Lesson: anything close to the camera must fade.** A rival just behind you filled the screen and hid your own team. Rivals now turn ghostly as they near the camera. Call-outs over a busy crowd need a dark outline.
+- **Learning levels:** the team reins itself in before the turn (fades out by race 8) and steadies itself inside the turn (gone after race 10); weaker outward throw to race 6; painted braking zone and gold line; one coach line at a time. A first-timer bot gets through races 1-5.
+- **Help (P2):** after 3 straight losses rivals drive a touch slower (`uA - 0.12`, `cs - 0.04`); nothing about the player's rules changes. Rerun the lazy bots with `help` as the 4th argument.
+- Fair-bot profile after tuning: human-speed bot about 100% to race 18, half at the race 20 champion, fades in the 30s; practised bot to about 45; very good bot 75-90% at the top; near-perfect bot wins every champion race. Rival skill tops out around race 57.
+- Sounds: gallop = three soft hoofbeats then an accent on the whip beat; whip crack climbs the pentatonic with the chain; looping beds for wheels, wind, crowd, skid and scrape (`LOOPS`), all faded by speed and slide. `__sim.soundCheck()` peaks all under 0.5.
 
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:

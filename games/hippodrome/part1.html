@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hippodrome</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caesar+Dressing&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#0e1f33;color:#f6efdd;font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.gk{font-family:"Caesar Dressing",Georgia,"Times New Roman",serif;letter-spacing:1px;font-weight:400}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.32);color:#f6efdd;font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,rgba(14,31,51,.62),rgba(7,14,24,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:47px;line-height:1;color:#f2c14e;text-shadow:0 4px 0 #8a4a1a,0 10px 24px rgba(0,0,0,.5)}
+.card h2{margin:0;font-size:34px;line-height:1.05;color:#f2c14e;text-shadow:0 3px 0 #8a4a1a}
+.meander{height:12px;margin:10px auto 8px;width:192px;opacity:.85;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Cpath d='M0 11H24M20 11V1H4V7H12' fill='none' stroke='%23f2c14e' stroke-width='2'/%3E%3C/svg%3E") repeat-x}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.8}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.65;font-weight:800}
+.oname{font-size:25px;line-height:1.15}
+.games{font-size:13px;opacity:.8;margin-top:2px}
+.pills{display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:800;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.12)}
+.sub{opacity:.88;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.9;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#f2c14e;color:#3a1d08;box-shadow:0 5px 0 #a8551f;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8551f}
+.btn.ghost{background:transparent;color:#f6efdd;box-shadow:none;border:1.5px solid rgba(246,239,221,.28);font-size:16px;padding:13px;margin-top:10px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.93}
+.rules b{color:#f2c14e}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:#f6efdd;cursor:pointer}
+.lvb small{display:block;font-size:10px;color:#f2c14e;min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px #f2c14e}
+.lvb.cur{background:#f2c14e;color:#3a1d08}.lvb.cur small{color:#3a1d08}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:#f2c14e}
+.stars .off{color:rgba(255,255,255,.2)}
+.board{margin:10px auto 0;max-width:270px;text-align:left;font-size:13.5px;font-weight:700}
+.board div{display:flex;justify-content:space-between;padding:3px 10px;border-radius:8px}
+.board .me{background:rgba(242,193,78,.2);color:#f2c14e}
+.board span:last-child{opacity:.75;font-weight:600}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:#f2c14e}.help{color:#a9e8c0;font-size:12.5px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="gk">HIPPODROME</h1>
+    <div class="meander"></div>
+    <div class="tag">FOUR HORSES · ONE WREATH</div>
+    <div class="vs">RACE <span id="hLvl">1</span></div>
+    <div class="oname gk" id="hVenue">Olympia</div>
+    <div class="games" id="hGames"></div>
+    <div class="pills" id="hPills"></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">RACE</button>
+    <button class="btn ghost" id="levelsBtn">Choose race</button>
+    <button class="btn ghost" id="rulesBtn">How to race</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="gk">HOW TO RACE</h2>
+    <ul class="rules">
+      <li><b>Left thumb: the reins.</b> Slide left or right to steer your team.</li>
+      <li><b>Right thumb: the whip.</b> Tap to crack it. Tap just as the ring closes, in time with the gallop, for a PERFECT crack: more speed and fresher horses.</li>
+      <li><b>Mind their wind.</b> Whip too often, or off the beat, and the horses are blown and slow right down.</li>
+      <li><b>The turn.</b> Hold your right thumb down to rein in before the post, steer round with your left, then let go and whip away. Too fast and you slide out to the wall. Too tight and you strike the post.</li>
+      <li><b>The inside wins.</b> The closer you pass the post, the faster the turn, and the bigger the risk. Rivals swing a little wide on the way in: get close behind one, turn tighter, and you take the inside.</li>
+      <li><b>The start.</b> Three trumpet notes, then GO. Crack the whip right on GO. Too early and your team rears.</li>
+      <li>Finish near the front to unlock the next race. First place wins the wreath.</li>
+    </ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="gk">CHOOSE RACE</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="gk" id="eTitle">VICTORY</h2>
+    <div class="stars" id="eStars"></div>
+    <div class="board" id="eBoard"></div>
+    <p class="sub" id="eSub"></p>
+    <button class="btn" id="eMain">NEXT RACE</button>
+    <button class="btn ghost" id="eAlt">Race it again</button>
+    <button class="btn ghost" id="eLevels">Choose race</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="gk">PAUSED</h2>
+    <button class="btn" id="pResume">RESUME</button>
+    <button class="btn ghost" id="pQuit">Leave the race</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const GK = '"Caesar Dressing", Georgia, "Times New Roman", serif';
+let W = 390, H = 844, DPR = 1, k = 1;
+function resize() { DPR = Math.min(devicePixelRatio || 1, 2.5); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('hp.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('hp.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let unlocked = store.get('unlocked', 1), level = Math.min(store.get('level', 1), unlocked), stars = store.get('stars', {});
+let bestTime = store.get('bestTime', {}), bestLap = store.get('bestLap', {}), bestChain = store.get('bestChain', 0), streaks = store.get('streaks', {}), wreaths = store.get('wreaths', 0);
+let HEADLESS = false;
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const c = v => clamp(Math.round(v * f), 0, 255); return `rgb(${c(n >> 16)},${c((n >> 8) & 255)},${c(n & 255)})`; }
+function mix(a, b, t) { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); const c = s => Math.round(((A >> s) & 255) * (1 - t) + ((B >> s) & 255) * t); return '#' + [16, 8, 0].map(s => c(s).toString(16).padStart(2, '0')).join(''); }
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+const ORD = ['', '1ST', '2ND', '3RD', '4TH', '5TH', '6TH', '7TH', '8TH'];
+const fmtT = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`;
+
+/*KIT*/
