@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   check:
+    name: Check the games and the feed
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -19,8 +20,82 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Load every game
         run: python3 tools/check.py
+      - name: Test the feed
+        run: python3 tools/test_feed.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: screenshots
-          path: out/
+          path: |
+            out/*.png
+            out/feed/
+
+  # The phone app: the feed and every game inside one Android app, built after the checks pass.
+  # Every run builds it once unsigned-for-release (a debug build) to prove the app still builds.
+  # The real, installable GameFeed.apk needs the KEYSTORE_PASSWORD secret (see android/signing/README.md);
+  # without it this job says so and stops there.
+  apk:
+    name: Build the phone app
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Put the feed and the games inside the app
+        run: python3 tools/build_feed.py --out android/app/src/main/assets
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: The app builds
+        working-directory: android
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          gradle :app:assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GameFeed-test-build
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Is the signing password there?
+        id: key
+        run: |
+          if [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::warning::GameFeed.apk was not made. Add the KEYSTORE_PASSWORD secret (Settings > Secrets and variables > Actions), then run this workflow again."
+            echo "The app builds, but **GameFeed.apk was not made**: the \`KEYSTORE_PASSWORD\` secret is missing. Add it under Settings > Secrets and variables > Actions, then run this workflow again." >> "$GITHUB_STEP_SUMMARY"
+            echo "ready=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build signed APK
+        if: steps.key.outputs.ready == 'yes'
+        working-directory: android
+        env:
+          KEY_ALIAS: gamefeed
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          export KEYSTORE_FILE="$GITHUB_WORKSPACE/android/signing/release.p12"
+          gradle :app:assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/GameFeed.apk"
+      - uses: actions/upload-artifact@v4
+        if: steps.key.outputs.ready == 'yes'
+        with:
+          name: GameFeed-apk
+          path: GameFeed.apk
+      - name: Publish release
+        if: steps.key.outputs.ready == 'yes'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Game Feed (build ${{ github.run_number }})
+          body: Download GameFeed.apk below and open it on your Android phone to install. New builds install over the old one and keep your progress.
+          files: GameFeed.apk
+          make_latest: true

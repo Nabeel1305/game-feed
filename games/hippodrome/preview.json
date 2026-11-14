@@ -1,0 +1,9 @@
+{
+  "level": "window.__sim.go(24)",
+  "js": "window.__dodge=1; window.__ram=1; (() => { window.__auto = (R, dt) => { const S = window.__sim, me = R.me, T = R.T;\n  if (me.cs == null) Object.assign(me, { cs: 0.9, cl: T.dMin + 1.6, sl: T.dMin + 5, pm: 0, tin: 1 });\n  if (R.phase === 'race' && me.st === 'grid' && R.t > 0.15) S.whip();\n  if (me.st !== 'run') return;\n  S.drive(me, dt);\n  if (me.warn && me.warn.t > 0.4 && Math.abs(me.d - me.warn.by.d) < 7.6 && window.__dodge) { me.u = me.warn.sg; me.b = 0; }\n  else if (!me.warn && window.__ram && me.ramT > 1) { for (const c of R.cars) { if (c === me || c.st !== 'run') continue; let dp = c.p - me.p; dp -= Math.round(dp / T.L) * T.L; const gd = Math.abs(c.d - me.d); if (Math.abs(dp) < 2.6 && gd > 2.75 && gd < 6.5) { me.u = c.d > me.d ? 1 : -1; me.b = 0; break; } } }\n  const e = S.beatErr(); if (Math.abs(e) < 0.03 && me.urge < 0.8 && me.wind > 0.2 && !me.b && me.lb !== me.beatN) { me.lb = me.beatN; S.whip(); } }; })()",
+  "anchor": "window.__sim.R && window.__sim.R.phase === 'race' && window.__sim.R.t > 1.2",
+  "from": 0,
+  "secs": 3.4,
+  "poster": 1.7,
+  "crf": 41
+}

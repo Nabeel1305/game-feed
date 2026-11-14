@@ -1,0 +1,9 @@
+{
+  "pre": [{"t": 0.5, "press": [0.77, 0.875]}],
+  "anchor": "window.__sim.G && window.__sim.G.phase === 'draw'",
+  "from": -1.1, "secs": 3.0, "poster": 1.42,
+  "moves": [
+    {"t": 0.16, "to_js": "(() => { const g = window.__sim.geo(); return [g.head.x, g.head.y + Math.min(90, innerHeight * 0.1)]; })()", "ms": 170},
+    {"t": 0.36, "lift": true}
+  ]
+}

@@ -1,0 +1,8 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+*.jks
+# the feed and the games are copied in here by tools/build_feed.py when the app is built
+app/src/main/assets/

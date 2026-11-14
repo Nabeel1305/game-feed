@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0B0C10">
+<title>Game Feed</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  /* Layout: one full-bleed game card at a time, swiped up and down like a deck. A quiet bar under the
+     card holds the three controls: all games (search), the swipe handle, and pin. One visual world, dark. */
+  --ink:#0B0C10; --ink-2:#14161C; --ink-3:#1E2129;
+  --paper:#F4F1EA; --dim:rgba(244,241,234,.66); --faint:rgba(244,241,234,.38); --line:rgba(244,241,234,.14);
+  --accent:#FF5B3A;
+  --display:'Barlow Condensed','Arial Narrow','Roboto Condensed',Impact,sans-serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --bar:56px; --ease:cubic-bezier(.2,.8,.2,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--ink);color:var(--paper);font-family:var(--body);overflow:hidden;overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;max-width:520px;margin:0 auto;background:var(--ink)}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;background:#000}
+.slide{position:absolute;inset:0;overflow:hidden;background:var(--ink-2);will-change:transform}
+#stage.anim .slide{transition:transform .3s var(--ease)}
+
+/* the game itself */
+.game{position:absolute;inset:0;background:#000}
+.game iframe{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
+
+/* the card shown before a game starts */
+.cover{position:absolute;inset:0;display:block;width:100%;text-align:left;overflow:hidden;background:var(--bg,var(--ink-2));transition:opacity .18s linear}
+.slide.live .cover{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s linear,visibility 0s linear .18s}
+.poster,.pv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.pv{opacity:0;transition:opacity .35s linear}
+.pv.on{opacity:1}
+.shade{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to top,rgba(11,12,16,.95) 0%,rgba(11,12,16,.78) 24%,rgba(11,12,16,.2) 50%,rgba(11,12,16,0) 64%)}
+.play{position:absolute;left:50%;top:42%;width:92px;height:92px;margin:-46px 0 0 -46px;border-radius:50%;
+  border:2px solid var(--paper);background:rgba(11,12,16,.42);display:grid;place-items:center;pointer-events:none}
+.play::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--paper);opacity:0;animation:ring 2.6s ease-out infinite}
+.play svg{width:34px;height:34px;margin-left:5px;fill:var(--paper)}
+.play .spin{display:none;width:34px;height:34px;border-radius:50%;border:3px solid var(--faint);border-top-color:var(--paper);animation:spin .8s linear infinite}
+.slide.loading .play svg{display:none}
+.slide.loading .play .spin{display:block}
+.slide.loading .play::after{animation:none}
+.tap{position:absolute;left:0;right:0;top:calc(42% + 62px);text-align:center;font-family:var(--display);font-weight:600;font-size:14px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--paper);text-shadow:0 1px 8px rgba(0,0,0,.7);pointer-events:none}
+.info{position:absolute;left:0;right:0;bottom:0;padding:0 20px 20px;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.eyebrow{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);
+  font-variant-numeric:tabular-nums}
+.eyebrow b{color:var(--accent);font-weight:700}
+.title{font-family:var(--tf,var(--display)),var(--display);font-weight:var(--tw,400);font-synthesis:none;font-size:clamp(40px,13.4vw,66px);
+  line-height:.96;letter-spacing:.005em;color:var(--paper);text-wrap:balance;text-shadow:0 2px 18px rgba(0,0,0,.55);overflow-wrap:anywhere}
+.hook{font-size:16px;line-height:1.35;font-weight:600;color:var(--paper);opacity:.92;max-width:34ch;text-wrap:balance;text-shadow:0 1px 10px rgba(0,0,0,.6)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:14px;border:1px solid var(--line);
+  background:rgba(11,12,16,.5);font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--paper)}
+.chip svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.4}
+.chip svg.w{width:30px}
+.chip.two{border-color:rgba(255,91,58,.6);color:#FFD9CF}
+.oops{display:none;position:absolute;left:28px;right:28px;top:34%;padding:18px 16px;border-radius:16px;border:1px solid var(--line);background:rgba(11,12,16,.86);
+  text-align:center;font-size:16px;font-weight:700;line-height:1.4;color:var(--paper);pointer-events:none}
+.slide.failed .oops{display:block}
+.slide.failed .tap,.slide.failed .play{display:none}
+
+/* shown over a game that has been stopped part-way */
+.paused{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;
+  background:rgba(11,12,16,.88);text-align:center}
+.slide.live.halt .paused{display:flex}
+.paused .eyebrow{color:var(--dim)}
+.paused h3{font-family:var(--tf,var(--display)),var(--display);font-weight:var(--tw,400);font-synthesis:none;font-size:40px;line-height:1;margin-bottom:10px;text-wrap:balance}
+.paused .num{display:none;font-family:var(--display);font-weight:700;font-size:150px;line-height:1;color:var(--paper);font-variant-numeric:tabular-nums;
+  text-shadow:0 4px 30px rgba(0,0,0,.7)}
+.paused.count{background:rgba(11,12,16,.5)}
+.paused.count > *{display:none}
+.paused.count .num{display:block}
+.big{min-width:220px;height:56px;padding:0 28px;border-radius:28px;background:var(--paper);color:var(--ink);font-family:var(--display);
+  font-weight:700;font-size:20px;letter-spacing:.14em;text-transform:uppercase}
+.big:active{transform:scale(.97)}
+.plain{height:44px;padding:0 18px;font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+/* the break card */
+.set{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px;text-align:center;
+  background:radial-gradient(120% 80% at 50% 0%,#23262F 0%,var(--ink-2) 55%,var(--ink) 100%)}
+.set h2{font-family:var(--display);font-weight:700;font-size:54px;line-height:1;letter-spacing:.01em;text-transform:uppercase}
+.set p{font-size:17px;font-weight:600;color:var(--dim);margin-bottom:14px;font-variant-numeric:tabular-nums}
+
+/* the bar */
+#bar{position:relative;flex:none;height:calc(var(--bar) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
+  display:grid;grid-template-columns:76px 1fr 76px;align-items:stretch;background:var(--ink);border-top:1px solid var(--line);touch-action:none}
+#bar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:var(--bar);
+  font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);transition:opacity .2s linear}
+#bar button svg{width:23px;height:23px;fill:none;stroke:var(--paper);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#pinBtn.on{color:var(--accent)}
+#pinBtn.on svg{stroke:var(--accent);fill:var(--accent)}
+#handle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:var(--bar);min-width:0;padding:0 6px}
+#handle .grip{width:22px;height:11px;background:none;display:block}
+#handle .grip svg{display:block;width:22px;height:11px;fill:none;stroke:var(--faint);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#bar.hint #handle .grip svg{stroke:var(--paper)}
+#handle .what{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-family:var(--display);font-weight:600;font-size:13px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+#bar.quiet:not(.awake) button{opacity:.3}
+#bar.quiet:not(.awake) .what{color:var(--faint)}
+#bar.hint #handle .grip{animation:nudge 1.4s ease-in-out infinite}
+#bar.hint #handle .what{color:var(--paper)}
+#bar.quiet.hint #handle .grip{animation:none}
+
+/* all games */
+#lib{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;background:var(--ink-2);transform:translateY(102%);
+  transition:transform .28s var(--ease);padding-top:env(safe-area-inset-top)}
+#lib.open{transform:none}
+.lhead{display:flex;align-items:baseline;gap:10px;padding:18px 16px 10px 20px}
+.lhead h2{font-family:var(--display);font-weight:700;font-size:34px;line-height:1;letter-spacing:.02em;text-transform:uppercase}
+.lhead span{flex:1;font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);font-variant-numeric:tabular-nums}
+#libClose{width:44px;height:44px;border-radius:22px;display:grid;place-items:center;align-self:center}
+#libClose svg{width:22px;height:22px;fill:none;stroke:var(--paper);stroke-width:2.2;stroke-linecap:round}
+.find{position:relative;margin:0 16px 8px}
+.find svg{position:absolute;left:14px;top:50%;width:19px;height:19px;margin-top:-9.5px;fill:none;stroke:var(--dim);stroke-width:2;stroke-linecap:round}
+#q{width:100%;height:48px;padding:0 14px 0 42px;border-radius:14px;border:1px solid var(--line);background:var(--ink);color:var(--paper);
+  font:600 16px var(--body);-webkit-user-select:text;user-select:text}
+#q::placeholder{color:var(--faint)}
+#list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:4px 10px calc(18px + env(safe-area-inset-bottom))}
+.sect{padding:14px 10px 6px;font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.row{display:flex;align-items:stretch;border-radius:16px}
+.row + .row{margin-top:2px}
+.row .open{flex:1;min-width:0;display:flex;align-items:center;gap:13px;padding:8px 6px 8px 10px;text-align:left;border-radius:16px}
+.row .open:active{background:var(--ink-3)}
+.thumb{flex:none;width:54px;height:72px;border-radius:10px;object-fit:cover;background:var(--ink-3)}
+.rt{min-width:0;display:flex;flex-direction:column;gap:2px}
+.rn{font-size:17px;font-weight:800;line-height:1.2;color:var(--paper);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.rn small{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.1em;color:var(--accent);margin-right:7px;font-variant-numeric:tabular-nums}
+.rh{font-size:14px;font-weight:600;line-height:1.3;color:var(--dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rm{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-variant-numeric:tabular-nums}
+.row .pin{flex:none;width:52px;display:grid;place-items:center;border-radius:16px}
+.row .pin svg{width:22px;height:22px;fill:none;stroke:var(--faint);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.row .pin.on svg{stroke:var(--accent);fill:var(--accent)}
+.none{padding:36px 20px;text-align:center;font-size:16px;font-weight:600;line-height:1.4;color:var(--dim)}
+
+@keyframes ring{0%{transform:scale(.86);opacity:.55}70%,100%{transform:scale(1.22);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes nudge{0%,100%{transform:translateY(2px)}50%{transform:translateY(-5px)}}
+@media (prefers-reduced-motion:reduce){
+  .play::after,#bar.hint #handle .grip{animation:none}
+  #stage.anim .slide,#lib{transition-duration:.01s}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="stage" aria-label="Game feed"></main>
+  <nav id="bar" aria-label="Feed controls">
+    <button id="libBtn" aria-label="All games and search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Games</button>
+    <div id="handle" role="button" tabindex="0" aria-label="Swipe up for the next game, down for the last one"><span class="grip"><svg viewBox="0 0 22 11"><path d="M2 9.5l9-7.5 9 7.5"/></svg></span><span class="what" id="what">Swipe up · next game</span></div>
+    <button id="pinBtn" aria-label="Pin this game" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 3.5h6l-.8 6.2 3.3 3.3v1.5H6.5V13l3.3-3.3z"/><path d="M12 14.5V21"/></svg><span id="pinTxt">Pin</span></button>
+  </nav>
+  <section id="lib" aria-label="All games" aria-hidden="true">
+    <div class="lhead"><h2>Games</h2><span id="count"></span><button id="libClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div>
+    <div class="find"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input id="q" type="search" placeholder="Search by name, kind or number" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search"></div>
+    <div id="list"></div>
+  </section>
+</div>
+<script src="games.js"></script>
+<script>
+(() => {
+'use strict';
+const GAMES = (window.GF_GAMES || []).slice();
+const byId = {};
+GAMES.forEach(g => { byId[g.id] = g; });
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), bar = $('#bar'), lib = $('#lib'), list = $('#list'), q = $('#q');
+const SET_SIZE = 10;            // PLAYBOOK P27: a soft break after about ten games
+const QUICK = 2500;             // left a card this fast without playing = a quick skip (P29)
+const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const pad3 = n => String(n).padStart(3, '0');
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5v17l14-8.5z"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-.8 6.2 3.3 3.3v1.5H6.5V13l3.3-3.3z"/><path d="M12 14.5V21"/></svg>',
+  one: '<svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="3.2" fill="currentColor" stroke="none"/><circle cx="7" cy="7" r="6"/></svg>',
+  two: '<svg class="w" viewBox="0 0 30 14" aria-hidden="true"><circle cx="7" cy="7" r="3.2" fill="currentColor" stroke="none"/><circle cx="7" cy="7" r="6"/><circle cx="23" cy="7" r="3.2" fill="currentColor" stroke="none"/><circle cx="23" cy="7" r="6"/></svg>'
+};
+
+/* ---------- saved things (pins, play history for later tuning) ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('gf.' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('gf.' + k, JSON.stringify(v)); } catch (e) {} }
+};
+let pins = store.get('pins', []).filter(id => byId[id]);
+const stats = store.get('stats', {});
+const log = store.get('log', []);
+const stat = id => stats[id] || (stats[id] = { shown: 0, starts: 0, secs: 0, quick: 0, last: 0 });
+function note(id, ev, val) {
+  log.push([Date.now(), id, ev, val == null ? 0 : val]);
+  if (log.length > 600) log.splice(0, log.length - 600);
+  store.set('log', log);
+  store.set('stats', stats);
+}
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) GameNative.vibrate(JSON.stringify(p)); else if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+
+/* ---------- what comes next: a shuffled deck with a little rhythm (P26). The future "what next" brain replaces nextGame(). ---------- */
+let deck = [];
+const recent = [];
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+const hot = id => (byId[id].intensity || 3) >= 4;
+function nextGame() {
+  if (!deck.length) {
+    deck = shuffle(GAMES.map(g => g.id));
+    if (deck.length > 1 && deck[0] === recent[recent.length - 1]) deck.push(deck.shift());
+  }
+  let k = 0;
+  const run = recent.slice(-3);
+  if (run.length === 3 && run.every(hot)) { const c = deck.findIndex(id => !hot(id)); if (c > 0) k = c; }   // a calmer game after three intense ones
+  const id = deck.splice(k, 1)[0];
+  recent.push(id);
+  if (recent.length > 12) recent.shift();
+  return id;
+}
+
+/* ---------- the run of cards ---------- */
+const hist = [];
+let pos = 0, H = 0, busy = false;
+let setPlays = 0, setSecs = 0;
+function entry(i) {
+  while (hist.length <= i) {
+    const last = hist[hist.length - 1];
+    if (setPlays >= SET_SIZE && last && last.type !== 'set') hist.push({ type: 'set' });
+    else hist.push({ type: 'game', id: nextGame() });
+  }
+  return hist[i];
+}
+const slides = new Map();
+const cur = () => slides.get(pos);
+
+function buildGame(s) {
+  const g = s.g, e = s.el;
+  if (g.font) { const f = String(g.font).split(':'); e.style.setProperty('--tf', "'" + f[0] + "'"); e.style.setProperty('--tw', f[1] || '400'); }
+  s.box = el('div', 'game');
+  const c = s.cover = el('button', 'cover');
+  c.type = 'button';
+  c.setAttribute('aria-label', 'Play ' + g.name);
+  c.style.setProperty('--bg', g.color || 'linear-gradient(160deg,hsl(' + (g.n * 47 % 360) + ' 38% 24%),#14161C 70%)');
+  if (g.poster) { const im = el('img', 'poster'); im.alt = ''; im.decoding = 'async'; im.src = g.poster; im.onerror = () => im.remove(); c.appendChild(im); }
+  if (g.preview && !reduced) {
+    const v = s.video = el('video', 'pv');
+    v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'none';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('disableremoteplayback', '');
+    v.addEventListener('playing', () => v.classList.add('on'));
+    v.addEventListener('error', () => v.classList.remove('on'));
+    c.appendChild(v);
+  }
+  c.appendChild(el('span', 'shade'));
+  c.appendChild(el('span', 'play', ICON.play + '<span class="spin"></span>'));
+  c.appendChild(el('span', 'tap', 'Tap to play'));
+  c.appendChild(el('span', 'oops', 'This game did not load.<br>Swipe up for another one.'));
+  const two = g.thumbs === 2;
+  const mood = g.intensity >= 4 ? 'Intense' : g.intensity <= 2 ? 'Calm' : 'Lively';
+  c.appendChild(el('span', 'info',
+    '<span class="eyebrow"><b>№ ' + pad3(g.n) + '</b>' + (g.genre ? ' · ' + esc(g.genre) : '') + '</span>' +
+    '<span class="title">' + esc(g.name) + '</span>' +
+    '<span class="hook">' + esc(g.hook || '') + '</span>' +
+    '<span class="chips"><span class="chip' + (two ? ' two' : '') + '">' + (two ? ICON.two + 'Two thumbs' : ICON.one + 'One thumb') + '</span><span class="chip">' + mood + '</span></span>'));
+  const p = el('div', 'paused',
+    '<span class="eyebrow">Paused</span><h3>' + esc(g.name) + '</h3>' +
+    '<button class="big" data-act="continue">Continue</button><button class="plain" data-act="restart">Start over</button><span class="num" aria-live="polite"></span>');
+  e.append(s.box, c, p);
+  s.state = 'cover';
+}
+function buildSet(s) {
+  s.el.classList.add('set');
+  s.el.innerHTML = '<span class="eyebrow">Take a breath</span><h2>That\'s a set.</h2><p class="sum"></p>' +
+    '<button class="big" data-act="keep">Keep going</button><button class="plain" data-act="done">Done for now</button>';
+}
+function build(i) {
+  const en = entry(i);
+  const s = { i, en, el: el('section', 'slide'), state: 'idle' };
+  if (en.type === 'game') { s.g = byId[en.id]; buildGame(s); } else buildSet(s);
+  stage.appendChild(s.el);
+  slides.set(i, s);
+  return s;
+}
+function drop(s) {
+  unload(s);
+  s.el.remove();
+  slides.delete(s.i);
+}
+function place(dy) {
+  slides.forEach(s => { s.el.style.transform = 'translate3d(0,' + ((s.i - pos) * H + (dy || 0)) + 'px,0)'; });
+}
+function sync() {
+  for (let i = pos - 1; i <= pos + 1; i++) if (i >= 0 && !slides.has(i)) build(i);
+  Array.from(slides.values()).forEach(s => { if (Math.abs(s.i - pos) > 1) drop(s); });
+  place(0);
+}
+
+/* ---------- running a game ---------- */
+function send(s, cmd, extra) {
+  if (!s.frame || !s.frame.contentWindow) return;
+  try { s.frame.contentWindow.postMessage(Object.assign({ gf: 1, cmd }, extra || {}), '*'); } catch (e) {}
+}
+let textMode = false;                    // true once a game had to be handed over as text: later games go that way straight off
+function load(s, viaText) {
+  if (s.frame || !s.g) return;
+  if (textMode && !viaText && window.fetch) { loadText(s); return; }
+  const f = s.frame = document.createElement('iframe');
+  f.setAttribute('allow', 'autoplay; fullscreen; gamepad');
+  f.setAttribute('scrolling', 'no');
+  f.title = s.g.name;
+  s.ready = false;
+  s.viaText = !!viaText;
+  const check = () => noAnswer(s, f);
+  clearTimeout(s.loadT);
+  s.loadT = setTimeout(check, 6000);
+  f.addEventListener('load', () => { if (!s.ready && s.frame === f) { clearTimeout(s.loadT); s.loadT = setTimeout(check, 900); } });
+  if (viaText) f.srcdoc = s.html; else f.src = s.g.path;
+  s.box.appendChild(f);
+}
+function noAnswer(s, f) {                 // the page opened (or was refused) but the game never spoke: try the other way once, then give up
+  if (s.ready || s.frame !== f) return;
+  clearTimeout(s.loadT);
+  if (!s.viaText && window.fetch) loadText(s); else fail(s);
+}
+function loadText(s) {
+  s.viaText = true;
+  fetch(s.g.path).then(r => r.ok ? r.text() : Promise.reject()).then(html => {
+    if (s.ready || slides.get(s.i) !== s) return;
+    if (s.frame) { s.frame.remove(); s.frame = null; }
+    s.html = html.replace(/<head[^>]*>/i, m => m + '<base href="' + s.g.path.replace(/[^/]*$/, '') + '">');
+    load(s, true);
+  }).catch(() => fail(s));
+}
+document.addEventListener('securitypolicyviolation', e => {
+  if (!/frame-src|child-src|default-src/.test(e.violatedDirective || '')) return;
+  slides.forEach(s => { if (s.frame && !s.ready && !s.viaText) noAnswer(s, s.frame); });
+});
+function fail(s) {
+  if (s.ready) return;
+  s.el.classList.remove('loading');
+  s.el.classList.add('failed');
+  s.wantStart = false;
+  note(s.g.id, 'failed');
+}
+function unload(s) {
+  clearTimeout(s.loadT); clearTimeout(s.freezeT); clearTimeout(s.armT);
+  stopCount(s);
+  stopClock(s);
+  if (s.video) { try { s.video.pause(); } catch (e) {} }
+  if (s.frame) { s.frame.remove(); s.frame = null; }
+  s.ready = false; s.wantStart = false;
+}
+function onGame(s, d) {
+  if (d.ev === 'ready') {
+    s.ready = true;
+    if (s.viaText) textMode = true;
+    clearTimeout(s.loadT);
+    s.el.classList.remove('failed');
+    if (s.wantStart) begin(s);
+    else s.freezeT = setTimeout(() => { if (s.state === 'cover') send(s, 'pause'); }, 700);   // let it draw its first frames, then hold it still
+  } else if (d.ev === 'started') {
+    s.started = d.partial ? 'partly' : true;
+  } else if (d.ev === 'error') {
+    note(s.g.id, 'error', d.msg);
+    if (window.console) console.warn('[feed] ' + s.g.id + ': ' + d.msg);
+  } else if (d.ev === 'finish') {
+    note(s.g.id, 'finish', d.result || 0);
+  }
+}
+window.addEventListener('message', e => {
+  const d = e.data;
+  if (!d || d.gf !== 1) return;
+  for (const s of slides.values()) if (s.frame && s.frame.contentWindow === e.source) { onGame(s, d); return; }
+});
+function startClock(s) { s.t0 = performance.now(); }
+function stopClock(s) {
+  if (!s.t0 || !s.g) return;
+  const secs = (performance.now() - s.t0) / 1000;
+  s.t0 = 0;
+  stat(s.g.id).secs = Math.round((stat(s.g.id).secs + secs) * 10) / 10;
+  setSecs += secs;
+  note(s.g.id, 'played', Math.round(secs));
+}
+function begin(s) {                      // the game is loaded and he has tapped: go
+  clearTimeout(s.freezeT);
+  s.wantStart = false;
+  s.state = 'playing';
+  s.el.classList.remove('loading', 'halt');
+  s.el.classList.add('live');
+  if (s.video) { try { s.video.pause(); } catch (e) {} }
+  send(s, 'start', { mode: 'full' });
+  try { s.frame.focus(); } catch (e) {}
+  startClock(s);
+  const st = stat(s.g.id);
+  st.starts++; st.last = Date.now();
+  if (!s.counted) { s.counted = true; setPlays++; }
+  note(s.g.id, 'start');
+  chrome();
+}
+function tapCover(s) {
+  if (!s || s.state !== 'cover' || busy) return;
+  if (s.el.classList.contains('failed')) { s.el.classList.remove('failed'); unload(s); }
+  s.wantStart = true;
+  if (!s.frame) load(s);
+  if (s.ready) begin(s); else s.el.classList.add('loading');
+}
+function halt(s) {                       // freeze a running game and show "Paused"
+  if (!s || s.state !== 'playing') return;
+  send(s, 'pause');
+  s.state = 'paused';
+  s.el.classList.add('halt');
+  stopClock(s);
+  chrome();
+}
+function carryOn(s) {
+  if (!s || s.state !== 'paused') return;
+  s.state = 'playing';
+  s.el.classList.remove('halt');
+  send(s, 'resume');
+  try { s.frame.focus(); } catch (e) {}
+  startClock(s);
+  chrome();
+}
+function countIn(s) {                    // fast or two-thumb games get "3, 2, 1" to set the thumbs before the action carries on (P25)
+  if (!s || s.state !== 'paused') return;
+  const g = s.g, box = s.el.querySelector('.paused');
+  if (box.classList.contains('count')) return;
+  if (reduced || !(g.thumbs === 2 || g.intensity >= 4)) { carryOn(s); return; }
+  const num = box.querySelector('.num');
+  let n = 3;
+  box.classList.add('count');
+  (function tick() {
+    if (s.state !== 'paused' || !box.classList.contains('count')) return;
+    if (n === 0) { box.classList.remove('count'); carryOn(s); return; }
+    num.textContent = n--;
+    vibe(8);
+    s.countT = setTimeout(tick, 430);
+  })();
+}
+function stopCount(s) {
+  if (!s || !s.g) return;
+  clearTimeout(s.countT);
+  const box = s.el.querySelector('.paused');
+  if (box) box.classList.remove('count');
+}
+function restart(s) {
+  if (!s || !s.g) return;
+  unload(s);
+  s.state = 'cover';
+  s.el.classList.remove('live', 'halt', 'loading', 'failed');
+  arrive(s);
+}
+
+/* ---------- arriving at and leaving a card ---------- */
+function arrive(s) {
+  if (!s) return;
+  s.seenAt = performance.now();
+  if (s.g) {
+    if (s.state === 'cover') {
+      stat(s.g.id).shown++;
+      note(s.g.id, 'shown');
+      if (s.video) {
+        if (!s.video.src) s.video.src = s.g.preview;
+        const p = s.video.play();
+        if (p && p.catch) p.catch(() => {});
+      }
+      clearTimeout(s.armT);
+      s.armT = setTimeout(() => { if (cur() === s && s.state === 'cover') load(s); }, 350);   // get the game ready behind its card
+    }
+  } else {
+    const mins = Math.max(1, Math.round(setSecs / 60));
+    s.el.querySelector('.sum').textContent = setPlays + ' games · ' + mins + (mins === 1 ? ' minute' : ' minutes');
+  }
+  chrome();
+}
+function leave(s) {
+  if (!s) return;
+  clearTimeout(s.armT);
+  stopCount(s);
+  if (s.g) {
+    if (s.state === 'playing') halt(s);
+    if (s.state === 'cover') {
+      if (s.video) { try { s.video.pause(); } catch (e) {} }
+      if (performance.now() - s.seenAt < QUICK) { stat(s.g.id).quick++; note(s.g.id, 'quick'); }
+    }
+  }
+}
+function go(dir, dy0) {
+  if (busy) return false;
+  const to = pos + dir;
+  if (to < 0) { bounce(); return false; }
+  const from = cur();
+  leave(from);
+  if (from && !from.g && dir > 0) { setPlays = 0; setSecs = 0; }
+  entry(to);
+  if (!slides.has(to)) build(to);
+  place(dy0 || 0);
+  void stage.offsetHeight;
+  busy = true;
+  stage.classList.add('anim');
+  pos = to;
+  place(0);
+  hideHint();
+  vibe(6);
+  clearTimeout(go.t);
+  go.t = setTimeout(settle, 340);
+  return true;
+}
+function settle() {
+  if (!busy) return;
+  clearTimeout(go.t);
+  busy = false;
+  stage.classList.remove('anim');
+  sync();
+  arrive(cur());
+}
+stage.addEventListener('transitionend', e => { if (e.target.classList.contains('slide') && e.propertyName === 'transform') settle(); });
+function bounce() {
+  stage.classList.add('anim');
+  place(0);
+  setTimeout(() => { if (!busy) stage.classList.remove('anim'); }, 320);
+}
+function jump(id) {                       // from the games list: put that game next and go to it
+  if (!byId[id] || busy) return;
+  const s = cur();
+  if (s && s.g && s.g.id === id) return;
+  const after = hist[pos + 1];
+  if (after && after.type === 'game' && after.id === id) { go(1); return; }   // it was coming up next anyway
+  const nx = slides.get(pos + 1);
+  if (nx) drop(nx);
+  hist.splice(pos + 1, 0, { type: 'game', id });
+  const k = deck.indexOf(id);
+  if (k >= 0) deck.splice(k, 1);
+  recent.push(id);
+  go(1);
+}
+
+/* ---------- the bar ---------- */
+const pinBtn = $('#pinBtn'), what = $('#what');
+let awakeT = 0;
+function chrome() {
+  const s = cur();
+  const g = s && s.g;
+  const on = !!g && pins.includes(g.id);
+  pinBtn.classList.toggle('on', on);
+  pinBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  pinBtn.style.visibility = g ? '' : 'hidden';
+  $('#pinTxt').textContent = on ? 'Pinned' : 'Pin';
+  const playing = !!s && s.state === 'playing';
+  bar.classList.toggle('quiet', playing);
+  what.textContent = playing ? g.name : 'Swipe up · next game';
+}
+function wake() {
+  bar.classList.add('awake');
+  clearTimeout(awakeT);
+  awakeT = setTimeout(() => bar.classList.remove('awake'), 2600);
+}
+const asleep = () => bar.classList.contains('quiet') && !bar.classList.contains('awake');   // mid-game a stray thumb must not open things
+function togglePin(id) {
+  if (!id) return;
+  const k = pins.indexOf(id);
+  if (k >= 0) pins.splice(k, 1); else pins.unshift(id);
+  store.set('pins', pins);
+  note(id, k >= 0 ? 'unpin' : 'pin');
+  vibe(10);
+  chrome();
+}
+pinBtn.addEventListener('click', () => {
+  if (drag.moved) return;
+  if (asleep()) { wake(); return; }
+  const s = cur();
+  if (s && s.g) togglePin(s.g.id);
+});
+$('#libBtn').addEventListener('click', () => {
+  if (drag.moved) return;
+  if (asleep()) { wake(); return; }
+  openLib();
+});
+$('#handle').addEventListener('click', () => { if (!drag.moved && asleep()) wake(); });
+function hideHint() { if (bar.classList.contains('hint')) { bar.classList.remove('hint'); store.set('hint', 1); } }
+
+/* ---------- swiping ---------- */
+const drag = { on: false, moved: false, id: 0, x: 0, y: 0, dy: 0, pts: [] };
+function down(e) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  drag.moved = false;
+  if (busy || drag.on || lib.classList.contains('open')) return;
+  drag.on = true; drag.id = e.pointerId; drag.x = e.clientX; drag.y = e.clientY; drag.dy = 0;
+  drag.pts = [[e.timeStamp, e.clientY]];
+  drag.src = e.currentTarget;
+}
+function move(e) {
+  if (!drag.on || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved) {
+    if (Math.abs(dy) < 12 || Math.abs(dy) < Math.abs(dx)) return;
+    drag.moved = true;
+    try { drag.src.setPointerCapture(drag.id); } catch (err) {}
+    stage.classList.remove('anim');
+    stopCount(cur());
+    halt(cur());                           // peeking at the next card never costs him the game he is in
+  }
+  drag.dy = pos === 0 && dy > 0 ? dy * 0.3 : dy;
+  drag.pts.push([e.timeStamp, e.clientY]);
+  if (drag.pts.length > 6) drag.pts.shift();
+  place(drag.dy);
+}
+function up(e) {
+  if (!drag.on || e.pointerId !== drag.id) return;
+  drag.on = false;
+  if (!drag.moved) return;
+  const a = drag.pts[0], b = drag.pts[drag.pts.length - 1];
+  const v = b[0] > a[0] ? (b[1] - a[1]) / (b[0] - a[0]) : 0;       // px per ms, down is positive
+  const far = H * 0.22;
+  let dir = 0;
+  if (e.type !== 'pointercancel') {
+    if (drag.dy < -far || (v < -0.45 && drag.dy < -24)) dir = 1;
+    else if (drag.dy > far || (v > 0.45 && drag.dy > 24)) dir = -1;
+  }
+  if (!dir || !go(dir, drag.dy)) bounce();
+}
+[stage, bar].forEach(t => {
+  t.addEventListener('pointerdown', down);
+  t.addEventListener('pointermove', move);
+  t.addEventListener('pointerup', up);
+  t.addEventListener('pointercancel', up);
+});
+stage.addEventListener('click', e => {
+  if (drag.moved || busy) return;
+  const s = cur();
+  if (!s) return;
+  const act = e.target.closest('[data-act]');
+  if (act) {
+    const a = act.dataset.act;
+    if (a === 'continue') countIn(s);
+    else if (a === 'restart') restart(s);
+    else if (a === 'keep') go(1);
+    else if (a === 'done') done(s);
+    else if (a === 'back') { s.el.innerHTML = ''; s.el.classList.remove('set'); buildSet(s); arrive(s); }
+    return;
+  }
+  if (e.target.closest('.cover') && s.el.contains(e.target)) tapCover(s);
+});
+function done(s) {
+  note('', 'done', setPlays);
+  s.el.innerHTML = '<span class="eyebrow">Until next time</span><h2>Nice session.</h2><p>Your pins and progress are saved.</p>' +
+    '<button class="plain" data-act="back">Back to the feed</button>';
+  try { if (window.GameNative && GameNative.close) GameNative.close(); } catch (e) {}
+}
+let wheelAt = 0;
+stage.addEventListener('wheel', e => {
+  const s = cur();
+  if (!s || s.state === 'playing' || Math.abs(e.deltaY) < 20 || e.timeStamp - wheelAt < 500) return;
+  wheelAt = e.timeStamp;
+  go(e.deltaY > 0 ? 1 : -1);
+}, { passive: true });
+window.addEventListener('keydown', e => {
+  if (lib.classList.contains('open')) { if (e.key === 'Escape') closeLib(); return; }
+  const s = cur();
+  if (!s || s.state === 'playing') return;
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') go(1);
+  else if (e.key === 'ArrowUp' || e.key === 'PageUp') go(-1);
+});
+
+/* ---------- all games: search and pins ---------- */
+function rowHTML(g) {
+  const st = stats[g.id];
+  const meta = [g.thumbs === 2 ? 'Two thumbs' : 'One thumb'];
+  if (g.genre) meta.unshift(g.genre);
+  if (st && st.starts) meta.push('Played ' + st.starts + (st.starts === 1 ? ' time' : ' times'));
+  const on = pins.includes(g.id);
+  return '<div class="row" data-id="' + g.id + '"><button class="open">' +
+    (g.poster ? '<img class="thumb" loading="lazy" alt="" src="' + esc(g.poster) + '">' : '<span class="thumb"></span>') +
+    '<span class="rt"><span class="rn"><small>№ ' + pad3(g.n) + '</small>' + esc(g.name) + '</span><span class="rh">' + esc(g.hook || '') + '</span><span class="rm">' + esc(meta.join(' · ')) + '</span></span></button>' +
+    '<button class="pin' + (on ? ' on' : '') + '" aria-label="' + (on ? 'Unpin ' : 'Pin ') + esc(g.name) + '" aria-pressed="' + on + '">' + ICON.pin + '</button></div>';
+}
+function drawList() {
+  const term = q.value.trim().toLowerCase().replace(/^#|^№\s*/, '');
+  const all = GAMES.slice().sort((a, b) => b.n - a.n);
+  const hit = g => !term || (g.name + ' ' + (g.hook || '') + ' ' + (g.genre || '') + ' ' + (g.words || '') + ' ' + (g.thumbs === 2 ? 'two thumbs' : 'one thumb')).toLowerCase().includes(term) || String(g.n) === term || pad3(g.n) === term;
+  const found = all.filter(hit);
+  let html = '';
+  if (!found.length) html = '<p class="none">No game matches "' + esc(q.value.trim()) + '".<br>Try a shorter word.</p>';
+  else if (term) html = found.map(rowHTML).join('');
+  else {
+    const pinned = pins.map(id => byId[id]).filter(Boolean);
+    if (pinned.length) html += '<div class="sect">Pinned</div>' + pinned.map(rowHTML).join('');
+    html += '<div class="sect">' + (pinned.length ? 'All games, newest first' : 'Newest first') + '</div>' + all.map(rowHTML).join('');
+  }
+  list.innerHTML = html;
+  $('#count').textContent = GAMES.length + (GAMES.length === 1 ? ' game' : ' games');
+}
+function openLib() {
+  stopCount(cur());
+  halt(cur());
+  drawList();
+  lib.classList.add('open');
+  lib.setAttribute('aria-hidden', 'false');
+  list.scrollTop = 0;
+}
+function closeLib() {
+  lib.classList.remove('open');
+  lib.setAttribute('aria-hidden', 'true');
+  q.blur();
+  chrome();
+}
+$('#libClose').addEventListener('click', closeLib);
+q.addEventListener('input', drawList);
+list.addEventListener('click', e => {
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const id = row.dataset.id;
+  if (e.target.closest('.pin')) { const y = list.scrollTop; togglePin(id); drawList(); list.scrollTop = y; return; }
+  q.value = '';
+  closeLib();
+  jump(id);
+});
+
+/* ---------- the phone's back button, leaving the app, size changes ---------- */
+window.gameFeedBack = () => {
+  if (lib.classList.contains('open')) { closeLib(); return true; }
+  const s = cur();
+  if (s && s.state === 'playing') { halt(s); return true; }
+  return false;
+};
+window.gameFeedHide = () => { stopCount(cur()); halt(cur()); store.set('stats', stats); };      // the phone app calls this when it goes to the background
+document.addEventListener('visibilitychange', () => {
+  const s = cur();
+  if (!s) return;
+  if (document.hidden) { stopCount(s); halt(s); if (s.video) { try { s.video.pause(); } catch (e) {} } store.set('stats', stats); }
+  else if (s.state === 'cover' && s.video) { const p = s.video.play(); if (p && p.catch) p.catch(() => {}); }
+});
+function measure() { H = stage.clientHeight || window.innerHeight; if (!busy && !drag.moved) place(0); }
+window.addEventListener('resize', measure);
+
+/* ---------- go ---------- */
+function start(saved) {
+  measure();
+  if (!GAMES.length) { stage.innerHTML = '<p class="none">No games yet.</p>'; return; }
+  const want = (saved && saved.id) || decodeURIComponent((location.hash || '').slice(1));
+  if (byId[want]) { hist.push({ type: 'game', id: want }); recent.push(want); }
+  sync();
+  arrive(cur());
+  if (!store.get('hint', 0)) bar.classList.add('hint');
+  $('#count').textContent = GAMES.length + ' games';
+}
+const hotApi = window.claude && window.claude.hot;
+try { if (hotApi && hotApi.snapshot) hotApi.snapshot(() => { const s = cur(); return { id: s && s.g ? s.g.id : '' }; }); } catch (e) {}
+if (hotApi && hotApi.ready) hotApi.ready(start); else start((hotApi && hotApi.data) || {});
+
+window.__feed = {
+  games: GAMES, hist, slides, stats, log,
+  get pos() { return pos; }, get busy() { return busy; },
+  cur, go, jump, tap: () => tapCover(cur()), halt: () => halt(cur()), carryOn: () => carryOn(cur()), countIn: () => countIn(cur()), openLib, closeLib, togglePin,
+  state: () => { const s = cur(); return { pos, type: s.en.type, id: s.g ? s.g.id : null, state: s.state, ready: !!s.ready, started: s.started || false, halted: s.el.classList.contains('halt'), frames: Array.from(slides.values()).filter(x => x.frame).length, pins: pins.slice(), setPlays }; }
+};
+})();
+</script>
+</body>
+</html>

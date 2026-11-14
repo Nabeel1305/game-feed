@@ -1,6 +1,15 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file.",
   "next_number": 7,
+  "feed_app": {
+    "name": "Game Feed",
+    "version": "0.1.0",
+    "added": "2026-11-14",
+    "artifact": "https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP",
+    "artifact_slug": "8f097f55-7ea9-4e6a-aab9-11ee7208668e",
+    "apk": "https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk",
+    "summary": "All the games in one scrolling app: a shuffled feed of game cards (a short silent clip of each), tap to play, swipe for the next, search and pin. Built from this registry by tools/build_feed.py; the same build is the hosted page and the inside of the Android app."
+  },
   "games": [
     {
       "number": 1,
@@ -18,7 +27,16 @@
       "storage_prefix": null,
       "feed": {
         "mini": false,
-        "full": true
+        "full": true,
+        "hook": "Flick your caps across the stool. Knock theirs off.",
+        "genre": "Tabletop",
+        "intensity": 2,
+        "thumbs": 1,
+        "start": [
+          "#playBtn",
+          "#startBtn"
+        ],
+        "font": "Fredoka:600"
       }
     },
     {
@@ -36,7 +54,15 @@
       "storage_prefix": "ko.",
       "feed": {
         "mini": false,
-        "full": true
+        "full": true,
+        "hook": "First-person boxing. Jab, slip, block, put him down.",
+        "genre": "Boxing",
+        "intensity": 5,
+        "thumbs": 2,
+        "start": [
+          "#fightBtn"
+        ],
+        "font": "Bebas Neue"
       },
       "principles": [
         "P7 hit-stop",
@@ -64,7 +90,15 @@
       "storage_prefix": "hn.",
       "feed": {
         "mini": false,
-        "full": true
+        "full": true,
+        "hook": "Hand on the holster. Wait for the call, then draw.",
+        "genre": "Quick draw",
+        "intensity": 3,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Rye"
       },
       "principles": [
         "P3 honest draw times",
@@ -92,7 +126,15 @@
       "storage_prefix": "sw.",
       "feed": {
         "mini": false,
-        "full": true
+        "full": true,
+        "hook": "Sword duels where the blade follows your finger.",
+        "genre": "Duel",
+        "intensity": 4,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Cinzel:800"
       },
       "spec": "specs/04-sword-fight.md",
       "principles": [
@@ -120,7 +162,15 @@
       "storage_prefix": "zn.",
       "feed": {
         "mini": false,
-        "full": true
+        "full": true,
+        "hook": "One hero, a city of emergencies. Catch, zap, lift, fight.",
+        "genre": "Hero",
+        "intensity": 3,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bangers"
       },
       "principles": [
         "P5 one-word verb per mission",
@@ -148,7 +198,15 @@
       "storage_prefix": "hp.",
       "feed": {
         "mini": false,
-        "full": true
+        "full": true,
+        "hook": "Four horses, one wreath. Whip on the beat, ram your rivals.",
+        "genre": "Racing",
+        "intensity": 5,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Caesar Dressing"
       },
       "principles": [
         "P18 chains: perfect whip cracks climb in pitch; perfect turns chain",

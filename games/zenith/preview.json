@@ -1,0 +1,21 @@
+{
+  "seed": 3,
+  "pre": [
+    {
+      "t": 0.7,
+      "tap": [
+        0.5,
+        0.56
+      ]
+    },
+    {
+      "t": 1.2,
+      "follow": "(() => { const G = window.__sim.G; if (!G) return null; if (G.phase === 'fly' && G.fly) { const r = G.fly.rings.find(r => !r.done); return [innerWidth * 0.5, r ? r.y : innerHeight * 0.48]; } const M = G.M; if (G.phase === 'play' && M && M.fallers) { let b = null; for (const p of M.fallers) if (p.state === 'fall' && (!b || p.y > b.y)) b = p; if (!b) b = M.fallers.find(p => p.state === 'wait'); return [b ? b.x : M.hx, innerHeight * 0.8]; } return null; })()",
+      "ms": 9000
+    }
+  ],
+  "anchor": "window.__sim.G && window.__sim.G.phase === 'play'",
+  "from": 0.35,
+  "secs": 3.6,
+  "poster": 2.2
+}

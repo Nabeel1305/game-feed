@@ -5,7 +5,12 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 reg = json.load(open(os.path.join(root, 'games.json')))
 games = sorted(reg['games'], key=lambda g: g['number'])
 lines = ['# Game Ledger', '', '_Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._', '',
-         f"**{len(games)} game{'s' if len(games) != 1 else ''}** so far. Next number: **{reg['next_number']}**.", '',
+         f"**{len(games)} game{'s' if len(games) != 1 else ''}** so far. Next number: **{reg['next_number']}**.", '']
+fa = reg.get('feed_app')
+if fa:
+    inside = sum(1 for g in games if g['status'] in ('approved', 'testing'))
+    lines += [f"**{fa['name']}** (the scrolling app with all the games, version {fa['version']}): [open the feed]({fa['artifact']}) · [Android app]({fa['apk']}) · {inside} game{'s' if inside != 1 else ''} in it.", '']
+lines += [
          '| # | Game | Status | Version | Feed mini mode | Play / test page | Code |', '|---|------|--------|---------|----------------|------------------|------|']
 for g in games:
     lines.append(f"| {g['number']} | **{g['name']}** | {g['status']} | {g['version']} | {'yes' if g['feed']['mini'] else 'not yet'} | [play]({g['artifact']}) | `{g['path']}` |")
