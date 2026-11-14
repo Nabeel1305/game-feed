@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**4 games** so far. Next number: **5**.
+**5 games** so far. Next number: **6**.
 
 | # | Game | Status | Version | Feed mini mode | Play / test page | Code |
 |---|------|--------|---------|----------------|------------------|------|
@@ -10,6 +10,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 2 | **Knockout** | testing | 1.1.0 | not yet | [play](https://claude.ai/artifact/NPj7ei6Tm8u6KQkALziov7) | `games/knockout/index.html` |
 | 3 | **High Noon** | testing | 1.1.0 | not yet | [play](https://claude.ai/artifact/5dVHkDPdSaN7W65jNVdH3R) | `games/high-noon/index.html` |
 | 4 | **Steel & Honour** | testing | 0.12.0 | not yet | [play](https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5) | `games/sword-fight/index.html` |
+| 5 | **Zenith** | testing | 0.1.0 | not yet | [play](https://claude.ai/artifact/HQD2KteiP4RFWSZTdH8CRy) | `games/zenith/index.html` |
 
 ## What each game is
 
@@ -17,3 +18,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 2. **Knockout**: First-person two-thumb boxing. Tap to punch, flick to dodge, flick up for an uppercut, hold both to block. Endless levels, rounds and points decisions.
 3. **High Noon**: Cowboy quick-draw duel. Thumb on the holster, wait for DRAW (watch for fake calls), slide up to aim, release to shoot. Headshots win; endless levels.
 4. **Steel & Honour**: First-person medieval sword duels. Your blade follows your finger in any direction; tap to poke an exact spot. His cuts come from any angle and his thrusts aim at a spot: block by swiping across his blade on the side it comes from (or through the spot of a thrust). Perfect parries open him up. Endless levels, rounds, champion knights, huge variety of knights.
+5. **Zenith**: Superhero rescue patrols over Brightwater City. Alert after alert: fly through gold rings, then catch falling people, zap meteors with laser eyes, punch bad guys, blow out fires, lift hanging buses, and dodge-and-zap giant monsters and super villains. Missions are mixed from long lists so they rarely repeat.

@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file.",
-  "next_number": 5,
+  "next_number": 6,
   "games": [
     {
       "number": 1,
@@ -103,6 +103,34 @@
         "P3 honest near-miss",
         "P2 disclosed help (slower wind-ups only)",
         "P17 rare crow"
+      ]
+    },
+    {
+      "number": 5,
+      "id": "zenith",
+      "name": "Zenith",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-14",
+      "summary": "Superhero rescue patrols over Brightwater City. Alert after alert: fly through gold rings, then catch falling people, zap meteors with laser eyes, punch bad guys, blow out fires, lift hanging buses, and dodge-and-zap giant monsters and super villains. Missions are mixed from long lists so they rarely repeat.",
+      "path": "games/zenith/index.html",
+      "artifact": "https://claude.ai/artifact/HQD2KteiP4RFWSZTdH8CRy",
+      "artifact_slug": "84cfbc0f-f770-4d33-be93-f6f5436bee4c",
+      "apk_repo": null,
+      "storage_prefix": "zn.",
+      "feed": {
+        "mini": false,
+        "full": true
+      },
+      "principles": [
+        "P5 one-word verb per mission",
+        "P6/P7 juice and hit-stop",
+        "P18 rising chimes for rings and catches",
+        "P26 variety: never the same mission twice in a row",
+        "P13 best saves-in-a-row + lifetime citizens helped",
+        "P12 SAVED! stamp, bigger for monsters/villains",
+        "P2 disclosed help (more time only)",
+        "P17 rare golden special calls"
       ]
     }
   ],

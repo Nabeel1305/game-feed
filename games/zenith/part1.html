@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Zenith</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#0b1530;color:#fff;font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hero{font-family:Bangers,Impact,"Arial Black",sans-serif;letter-spacing:1.5px}
+#hud{position:fixed;left:0;right:0;top:0;padding:12px 14px 0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;z-index:2;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+#hud.hidden{display:none}
+.trust{font-size:17px;letter-spacing:2px;min-width:80px}
+.trust small,.mid small{display:block;font-size:9.5px;font-weight:800;letter-spacing:1px;opacity:.8}
+.mid{text-align:center}
+.mid .lv{font-size:24px;line-height:1}
+.pips{margin-top:3px;font-size:10px;letter-spacing:3px}
+#assist{display:none;font-size:9px;font-weight:800;letter-spacing:1px;color:#0b1530;background:#9ff0c8;border-radius:6px;padding:1px 5px;margin-top:3px}
+.rt{min-width:80px;text-align:right}
+#pauseBtn{pointer-events:auto;width:38px;height:34px;border-radius:10px;border:0;background:rgba(0,0,0,.3);color:#fff;font-weight:800;cursor:pointer}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,rgba(16,32,70,.72),rgba(5,10,25,.92))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:78px;line-height:.9;color:#ffd45a;text-shadow:0 5px 0 #a8620a,0 10px 24px rgba(0,0,0,.5)}
+.card h2{margin:0;font-size:44px;line-height:1;color:#ffd45a;text-shadow:0 3px 0 #a8620a}
+.tag{font-size:13px;font-weight:800;letter-spacing:2px;opacity:.8;margin-top:6px}
+.sub{opacity:.85;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:14px;opacity:.9}
+.btn{display:block;width:100%;margin-top:18px;border:0;border-radius:16px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#ffd45a;color:#3a2200;box-shadow:0 5px 0 #a8620a;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8620a}
+.btn.ghost{background:transparent;color:#fff;box-shadow:none;border:1.5px solid rgba(255,255,255,.28);font-size:16px;padding:13px;margin-top:10px}
+.rules{list-style:none;padding:0;margin:16px 0 0;text-align:left}
+.rules li{position:relative;padding:0 0 12px 0;font-size:14px;line-height:1.45;opacity:.92}
+.rules b{color:#ffd45a;font-family:Bangers,Impact,sans-serif;letter-spacing:1px;font-size:17px;font-weight:400;margin-right:4px}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer}
+.lvb small{display:block;font-size:10px;color:#ffd45a;min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px #ffd45a}
+.lvb.cur{background:#ffd45a;color:#3a2200}.lvb.cur small{color:#3a2200}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:10px;color:#ffd45a}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:#ffd45a}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="hud" class="hidden">
+  <div class="trust"><small>CITY TRUST</small><span id="hearts">♥♥♥</span></div>
+  <div class="mid"><div class="lv hero" id="lvN">PATROL 1</div><div class="pips" id="pips"></div><span id="assist">HELP ON</span></div>
+  <div class="rt"><button id="pauseBtn" aria-label="Pause">II</button></div>
+</div>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="hero">ZENITH</h1>
+    <div class="tag">GUARDIAN OF BRIGHTWATER CITY</div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PATROL 1</button>
+    <button class="btn ghost" id="levelsBtn">Choose patrol</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="hero">HOW TO SAVE THE DAY</h2>
+    <ul class="rules">
+      <li>Calls for help come in one after another. <b>Tap</b> to fly there and steer through the gold rings on the way.</li>
+      <li><b>CATCH!</b> People are falling. Slide your finger left and right to fly under them.</li>
+      <li><b>ZAP!</b> Hold your finger on a threat to burn it with your laser eyes. Don't overheat, and don't hit the helicopters.</li>
+      <li><b>FIGHT!</b> Tap bad guys before their glowing punch lands. Never tap the scared people.</li>
+      <li><b>BLOW!</b> Hold on a burning window to blow the fire out. Watch your breath.</li>
+      <li><b>LIFT!</b> Hold to lift, and slide left or right to keep it level.</li>
+      <li><b>DODGE &amp; ZAP!</b> Flick left or right to get out of the red zones. When the glowing core opens, hold your laser on it.</li>
+      <li>Fail a mission and the city loses a little trust. Lose all three hearts and the patrol ends. Finish a patrol to unlock the next.</li>
+    </ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="hero">CHOOSE PATROL</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="hero" id="eTitle">PATROL COMPLETE</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <button class="btn" id="eMain">NEXT PATROL</button>
+    <button class="btn ghost" id="eAlt">Fly it again</button>
+    <button class="btn ghost" id="eLevels">Choose patrol</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="hero">PAUSED</h2>
+    <button class="btn" id="pResume">RESUME</button>
+    <button class="btn ghost" id="pQuit">Back to the hideout</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+let W = 390, H = 844, DPR = 1, k = 1;
+const GY = () => H * 0.86;                     // street / ground level
+function resize() { DPR = Math.min(devicePixelRatio || 1, 2.5); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; buildWorld(); }
+addEventListener('resize', resize);
+
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('zn.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('zn.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let unlocked = store.get('unlocked', 1), level = Math.min(store.get('level', 1), unlocked), stars = store.get('stars', {});
+let bestStreak = store.get('bestStreak', 0), rescues = store.get('rescues', 0), streaks = store.get('streaks', {});
+let HEADLESS = false;
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const pick = a => a[(Math.random() * a.length) | 0];
+const dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const c = v => clamp(Math.round(v * f), 0, 255); return `rgb(${c(n >> 16)},${c((n >> 8) & 255)},${c(n & 255)})`; }
+function mix(a, b, t) { const A = parseInt(a.slice(1), 16), B = parseInt(b.slice(1), 16); const c = s => Math.round(((A >> s) & 255) * (1 - t) + ((B >> s) & 255) * t); return `rgb(${c(16)},${c(8)},${c(0)})`; }
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((6 - L) / 5, 0, 1);
+
+/*KIT*/
