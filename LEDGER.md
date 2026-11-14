@@ -11,7 +11,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 3 | **High Noon** | testing | 1.1.0 | not yet | [play](https://claude.ai/artifact/5dVHkDPdSaN7W65jNVdH3R) | `games/high-noon/index.html` |
 | 4 | **Steel & Honour** | testing | 0.12.0 | not yet | [play](https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5) | `games/sword-fight/index.html` |
 | 5 | **Zenith** | testing | 0.1.0 | not yet | [play](https://claude.ai/artifact/HQD2KteiP4RFWSZTdH8CRy) | `games/zenith/index.html` |
-| 6 | **Hippodrome** | testing | 0.1.0 | not yet | [play](https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM) | `games/hippodrome/index.html` |
+| 6 | **Hippodrome** | testing | 0.1.1 | not yet | [play](https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM) | `games/hippodrome/index.html` |
 
 ## What each game is
 

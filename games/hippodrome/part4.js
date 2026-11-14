@@ -30,12 +30,67 @@ function poly3(pts, n, fill) {              // fill a flat polygon given in aren
   ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
   return true;
 }
-function tex4(img, ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz) {     // paint a picture onto a wall: A top-left, B top-right, C bottom-left, D bottom-right
-  if (!P3(ax, ay, az) || SC * 4 > CAM.F) return; const x0 = SX, y0 = SY, s0 = SC; if (!P3(bx, by, bz) || SC * 4 > CAM.F) return; const x1 = SX, y1 = SY, rt = s0 / SC;
-  if (rt > 3 || rt < 0.33 || !P3(dx, dy, dz)) return; const x3 = SX, y3 = SY; if (!P3(cx, cy, cz)) return;
-  const w = img.width, h = img.height; ctx.save();
-  if (rt > 1.5 || rt < 0.67) { ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(x3, y3); ctx.lineTo(SX, SY); ctx.closePath(); ctx.clip(); }   // strong perspective: keep the picture inside its own wall
-  ctx.transform((x1 - x0) / w, (y1 - y0) / w, (SX - x0) / h, (SY - y0) / h, x0, y0); ctx.drawImage(img, 0, 0); ctx.restore();
+// ---------- a picture painted on the stands so that it stays put ----------
+// The patch is cut into upright strips at fixed places on the stands themselves, each strip so short that perspective barely changes across it.
+// So the crowd is nailed to its seats: it cannot slide, stretch or hang over the wall as the camera moves.
+let MA = 1, MB = 0, MC = 0, MD = 1, ME = 0, MF = 0, MS = 1, STRIPS = 0;      // the canvas transform the arena is drawn under (set once a frame); strips drawn this frame
+const TB = new Float32Array(5 * 66);
+function texQ(img, ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz) {   // A top-left, B top-right, C bottom-left, D bottom-right, in arena coordinates
+  const cc = CAM.c, cs = CAM.s, F = CAM.F, hx = W / 2, hy = CAM.hor, ZN = 1.4, M = 60, TOL = 2;
+  // the four corners as the camera sees them: across, up, away
+  let X = ax - CAM.x, Z = az - CAM.z; const aX = X * cs - Z * cc, aZ = X * cc + Z * cs, aY = ay - CAM.h;
+  X = bx - CAM.x; Z = bz - CAM.z; const bX = X * cs - Z * cc, bZ = X * cc + Z * cs, bY = by - CAM.h;
+  X = cx - CAM.x; Z = cz - CAM.z; const cX = X * cs - Z * cc, cZ = X * cc + Z * cs, cY = cy - CAM.h;
+  X = dx - CAM.x; Z = dz - CAM.z; const dX = X * cs - Z * cc, dZ = X * cc + Z * cs, dY = dy - CAM.h;
+  // keep the part in front of the camera (t runs along the patch, 0 at A/C, 1 at B/D)
+  let t0 = 0, t1 = 1, q = bZ - aZ;
+  if (q > 1e-6) t0 = Math.max(t0, (ZN - aZ) / q); else if (q < -1e-6) t1 = Math.min(t1, (ZN - aZ) / q); else if (aZ < ZN) return;
+  q = dZ - cZ; if (q > 1e-6) t0 = Math.max(t0, (ZN - cZ) / q); else if (q < -1e-6) t1 = Math.min(t1, (ZN - cZ) / q); else if (cZ < ZN) return;
+  if (t1 - t0 < 0.002) return;
+  // its two ends on the screen
+  let z = aZ + (bZ - aZ) * t0; const lTx = hx + F * (aX + (bX - aX) * t0) / z, lTy = hy - F * (aY + (bY - aY) * t0) / z, zLt = z;
+  z = cZ + (dZ - cZ) * t0; const lBx = hx + F * (cX + (dX - cX) * t0) / z, lBy = hy - F * (cY + (dY - cY) * t0) / z, zL = (zLt + z) / 2;
+  z = aZ + (bZ - aZ) * t1; const rTx = hx + F * (aX + (bX - aX) * t1) / z, rTy = hy - F * (aY + (bY - aY) * t1) / z, zRt = z;
+  z = cZ + (dZ - cZ) * t1; const rBx = hx + F * (cX + (dX - cX) * t1) / z, rBy = hy - F * (cY + (dY - cY) * t1) / z, zR = (zRt + z) / 2;
+  if ((lTx < -M && lBx < -M && rTx < -M && rBx < -M) || (lTx > W + M && lBx > W + M && rTx > W + M && rBx > W + M)) return;
+  // the part of its height that is on the screen (f runs down the patch, 0 at the top edge, 1 at the bottom edge)
+  let f0 = 1, f1 = 0;
+  for (let e = 0; e < 2; e++) {
+    const y0 = e ? rTy : lTy, y1 = e ? rBy : lBy, dy2 = y1 - y0; let a0 = 0, a1 = 1;
+    if (Math.abs(dy2) < 1e-6) { if (y0 < -M || y0 > H + M) continue; }
+    else { const u = (-M - y0) / dy2, v = (H + M - y0) / dy2; a0 = Math.max(0, Math.min(u, v)); a1 = Math.min(1, Math.max(u, v)); if (a1 <= a0) continue; }
+    if (a0 < f0) f0 = a0; if (a1 > f1) f1 = a1;
+  }
+  if (f1 - f0 < 0.004) return;
+  // how many strips: enough that the picture is never more than a couple of pixels out at a cut
+  const lLen = Math.hypot(lBx - lTx, lBy - lTy) * (f1 - f0), rLen = Math.hypot(rBx - rTx, rBy - rTy) * (f1 - f0), len = Math.max(lLen, rLen, 4);
+  const ex = ((rBx - lBx) - (rTx - lTx)) * (f1 - f0), ey = ((rBy - lBy) - (rTy - lTy)) * (f1 - f0), ratio = zL > zR ? zL / zR : zR / zL;
+  let n = Math.max(Math.ceil(Math.log(ratio) / Math.log(1 + 2 * TOL / len)), Math.ceil(Math.hypot(ex, ey) / (2 * TOL)), 1); if (n > 64) n = 64;
+  // the cuts: evenly spaced in "how much smaller it looks", so near strips are short and far strips long
+  const geo = n > 1 && Math.abs(zR - zL) > 0.01, iw = img.width, ih = img.height, sy = f0 * ih, sh = (f1 - f0) * ih, rip = img.rip;
+  for (let k = 0; k <= n; k++) {
+    const u = geo ? (zL * Math.pow(zR / zL, k / n) - zL) / (zR - zL) : k / n, t = t0 + (t1 - t0) * u;
+    let zz = aZ + (bZ - aZ) * t; const tx = hx + F * (aX + (bX - aX) * t) / zz, ty = hy - F * (aY + (bY - aY) * t) / zz;
+    zz = cZ + (dZ - cZ) * t; const bx2 = hx + F * (cX + (dX - cX) * t) / zz, by2 = hy - F * (cY + (dY - cY) * t) / zz;
+    TB[k * 5] = tx + (bx2 - tx) * f0; TB[k * 5 + 1] = ty + (by2 - ty) * f0; TB[k * 5 + 2] = tx + (bx2 - tx) * f1; TB[k * 5 + 3] = ty + (by2 - ty) * f1; TB[k * 5 + 4] = t;
+  }
+  let drew = 0;
+  for (let k = 0; k < n; k++) {
+    const o = k * 5, Ax = TB[o], Ay = TB[o + 1], Cx = TB[o + 2], Cy = TB[o + 3], Bx = TB[o + 5], By = TB[o + 6], Dx = TB[o + 7], Dy = TB[o + 8];
+    if ((Ax < -M && Bx < -M && Cx < -M && Dx < -M) || (Ax > W + M && Bx > W + M && Cx > W + M && Dx > W + M)) continue;
+    // the best-fitting slanted rectangle for this strip, a hair oversize so no gap can open between neighbours
+    let Ex = ((Bx - Ax) + (Dx - Cx)) / 2, Ey = ((By - Ay) + (Dy - Cy)) / 2, Vx = ((Cx - Ax) + (Dx - Bx)) / 2, Vy = ((Cy - Ay) + (Dy - By)) / 2;
+    const el = Math.hypot(Ex, Ey), vl = Math.hypot(Vx, Vy); if (el < 0.05 || vl < 0.05) continue;
+    const er = Math.hypot((Dx - Cx) - (Bx - Ax), (Dy - Cy) - (By - Ay)) / 2;     // how far this strip's true corners stray from the slanted rectangle: overlap by that much, so no wedge of bare stone can show
+    const fe = 1 + 1.5 / el, fv = 1 + (1 + er) / vl; Ex *= fe; Ey *= fe; Vx *= fv; Vy *= fv;
+    const Ox = (Ax + Bx + Cx + Dx) / 4 - (Ex + Vx) / 2, Oy = (Ay + By + Cy + Dy) / 4 - (Ey + Vy) / 2;
+    ctx.setTransform(MA * Ex + MC * Ey, MB * Ex + MD * Ey, MA * Vx + MC * Vy, MB * Vx + MD * Vy, MA * Ox + MC * Oy + ME, MB * Ox + MD * Oy + MF);
+    const sx = TB[o + 4] * iw, sw = (TB[o + 9] - TB[o + 4]) * iw;
+    let im = img, ku = 1, kv = 1;           // draw from the copy whose dots are about the size of the screen's
+    if (rip) { const a = clamp(Math.round(Math.log2(sw / (el * MS))), 0, rip.length - 1), b = clamp(Math.round(Math.log2(sh / (vl * MS))), 0, rip[0].length - 1); im = rip[a][b]; ku = im.width / iw; kv = im.height / ih; }
+    ctx.drawImage(im, sx * ku, sy * kv, sw * ku, sh * kv, 0, 0, 1, 1); drew++;
+  }
+  if (drew) { ctx.setTransform(MA, MB, MC, MD, ME, MF); STRIPS += drew; }
 }
 function camFollow(R, dt, snap) {
   const T = R.T, me = R.me, s = sOf(T, me.p);
@@ -113,42 +168,48 @@ function buildPano(V) {
   const hz = g.createLinearGradient(0, B - 46, 0, B); hz.addColorStop(0, 'rgba(255,255,255,0)'); hz.addColorStop(1, V.sky[2]); g.globalAlpha = 0.55; g.fillStyle = hz; g.fillRect(0, B - 46, PW, 46); g.globalAlpha = 1;
   return PANOS[V.name] = c;
 }
-function crowdTex(seed, cheer) {            // a patch of the stands: rows of spectators on stone steps
-  const c = document.createElement('canvas'); c.width = 96; c.height = 64; const g = c.getContext('2d'), r = rng(seed);
+const STOA_DARK = '#4a3a2e', STOA_ROOF = '#b5532f';
+function ripmap(base, nw, nh) {             // smaller copies of a picture, each half the size across and/or down
+  const lv = [];
+  for (let a = 0; a < nw; a++) { lv.push([]); for (let b = 0; b < nh; b++) {
+    if (!a && !b) { lv[0].push(base); continue; }
+    const src = b ? lv[a][b - 1] : lv[a - 1][0], c = document.createElement('canvas'); c.width = Math.max(1, base.width >> a); c.height = Math.max(1, base.height >> b);
+    const g = c.getContext('2d'); g.imageSmoothingEnabled = true; g.drawImage(src, 0, 0, c.width, c.height); lv[a].push(c); } }
+  base.rip = lv; return base;
+}
+function stoaTex(V) {                       // the row of columns along the top of the stands, in front of deep shade
+  const c = document.createElement('canvas'); c.width = 128; c.height = 32; const g = c.getContext('2d'); g.scale(2, 2);
+  g.fillStyle = STOA_DARK; g.fillRect(0, 0, 64, 16);
+  for (let x = 6; x < 64; x += 16) { g.fillStyle = V.wall; g.fillRect(x, 0, 4, 16); g.fillRect(x - 1, 0, 6, 1.5); g.fillStyle = 'rgba(0,0,0,.16)'; g.fillRect(x + 3, 1.5, 1, 14.5); }
+  return ripmap(c, 5, 3);
+}
+function crowdTex(seed) {                   // a patch of the stands: rows of spectators on stone steps. One still picture: the crowd keeps its seats.
+  const c = document.createElement('canvas'); c.width = 192; c.height = 128; const g = c.getContext('2d'), r = rng(seed); g.scale(2, 2);
   const cols = ['#f1ebdd', '#e7dcc4', '#c96f4a', '#8a3b2a', '#3d6b8c', '#d9b25a', '#7a8f5a', '#b98a6a', '#efe6d2', '#9a5a7a', '#f4efe4'], skin = ['#e0ac69', '#c68642', '#f1c27d', '#8d5524'];
   for (let row = 0; row < 8; row++) {
     const y = row * 8; g.fillStyle = row & 1 ? '#b3a78f' : '#c2b69e'; g.fillRect(0, y, 96, 8); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(0, y + 7, 96, 1);
-    for (let x = (row & 1) * 3; x < 94; x += 6) { const a = r(), b = r(), d = r(), e = r(); if (a < 0.1) continue; const up = cheer && b < 0.65 ? 1 : 0;
-      g.fillStyle = cols[(d * cols.length) | 0]; g.fillRect(x, y + 3 - up, 5, 5 + up); g.fillStyle = skin[(e * 4) | 0]; g.fillRect(x + 1, y - up, 3, 3);
-      if (up) { g.fillRect(x - 1, y - 2, 1, 4); g.fillRect(x + 5, y - 2, 1, 4); } }
+    for (let x = (row & 1) * 3; x < 94; x += 6) { const a = r(), d = r(), e = r(); if (a < 0.1) continue;
+      g.fillStyle = cols[(d * cols.length) | 0]; g.fillRect(x, y + 3, 5, 5); g.fillStyle = skin[(e * 4) | 0]; g.fillRect(x + 1, y, 3, 3); }
   }
-  return c;
-}
-function wallTex(V) {                       // the marble wall with a painted band and a Greek key
-  const c = document.createElement('canvas'); c.width = 80; c.height = 36; const g = c.getContext('2d');
-  g.fillStyle = V.wall; g.fillRect(0, 0, 80, 36); g.fillStyle = 'rgba(0,0,0,.07)'; for (let i = 0; i < 3; i++) g.fillRect(0, i * 8 + 7, 80, 1); for (let i = 0; i < 4; i++) g.fillRect(i * 20 + (i & 1) * 6, 0, 1, 16);
-  g.fillStyle = '#a23b2a'; g.fillRect(0, 20, 80, 16); g.fillStyle = shade(V.wall, 0.94); g.fillRect(0, 16, 80, 4);
-  g.strokeStyle = '#1f3a5f'; g.lineWidth = 1; for (let x = 0; x < 80; x += 10) { g.beginPath(); g.moveTo(x, 19.5); g.lineTo(x + 8, 19.5); g.lineTo(x + 8, 16.5); g.lineTo(x + 3, 16.5); g.lineTo(x + 3, 18); g.lineTo(x + 6, 18); g.stroke(); }
-  return c;
-}
-function stoaTex(V) {                       // the colonnade along the top of the stands, under a tiled roof
-  const c = document.createElement('canvas'); c.width = 64; c.height = 32; const g = c.getContext('2d');
-  g.fillStyle = '#4a3a2e'; g.fillRect(0, 0, 64, 32); g.fillStyle = '#b5532f'; g.fillRect(0, 0, 64, 6); g.fillStyle = 'rgba(0,0,0,.2)'; for (let x = 0; x < 64; x += 4) g.fillRect(x, 0, 1, 6);
-  g.fillStyle = V.wall; g.fillRect(0, 6, 64, 5); for (let x = 3; x < 64; x += 16) { g.fillRect(x, 11, 5, 21); g.fillRect(x - 1, 11, 7, 2); } g.fillStyle = 'rgba(0,0,0,.15)'; for (let x = 6; x < 64; x += 16) g.fillRect(x, 13, 2, 19);
-  return c;
+  let avg = '#b0977c';                     // the colour of the crowd from far away, for the stone under the picture
+  try { const d = g.getImageData(0, 0, 192, 128).data; let R2 = 0, G2 = 0, B2 = 0; for (let i = 0; i < d.length; i += 16) { R2 += d[i]; G2 += d[i + 1]; B2 += d[i + 2]; } const m = d.length / 16; avg = `rgb(${Math.round(R2 / m)},${Math.round(G2 / m)},${Math.round(B2 / m)})`; } catch (e) {}
+  c.avg = avg; return ripmap(c, 6, 5);
 }
 let TEX = null;
 function buildArena(R) {
   const T = R.T, V = R.V, ns = Math.round(T.Ls / 5), nt = 12, n = 2 * (ns + nt);
-  if (!TEX) TEX = { crowd: [crowdTex(7, 0), crowdTex(7, 1)] };
+  if (!TEX) TEX = { crowd: crowdTex(7) };
   const F32 = () => new Float32Array(n + 1);
-  const A = { n, ns, nt, ix: F32(), iz: F32(), ox: F32(), oz: F32(), tx: F32(), tz: F32(), dz: new Float32Array(n), ord: [], wallCol: [], items: [], srt: [], mons: [], pano: buildPano(V), wall: wallTex(V), stoa: stoaTex(V), spCol: shade(V.wall, 0.9), spTop: shade(V.wall, 1.02), haze: V.sky[2] };
+  const A = { n, ns, nt, ix: F32(), iz: F32(), ox: F32(), oz: F32(), tx: F32(), tz: F32(), dz: new Float32Array(n), ord: [], cWall: [], cRed: [], cKey: [], cEnt: [], cFar: [], items: [], srt: [], mons: [], pano: buildPano(V), stoa: stoaTex(V), spCol: shade(V.wall, 0.9), spRed: shade('#a23b2a', 0.92), spKey: shade('#1f3a5f', 0.95), spTop: shade(V.wall, 1.02), haze: V.sky[2] };
   for (let i = 0; i <= n; i++) {
     const j = i % n, s = j < ns ? j * T.Ls / ns : j < ns + nt ? T.Ls + (j - ns) * T.tl / nt : j < 2 * ns + nt ? T.Ls + T.tl + (j - ns - nt) * T.Ls / ns : 2 * T.Ls + T.tl + (j - 2 * ns - nt) * T.tl / nt;
     trackAt(T, s, -T.hw); A.ix[i] = TP.x; A.iz[i] = TP.z; trackAt(T, s, T.hw); A.ox[i] = TP.x; A.oz[i] = TP.z; trackAt(T, s, T.hw + SD); A.tx[i] = TP.x; A.tz[i] = TP.z;
   }
   const sa = 6.2832 * (1 - V.sun[0]), sxx = Math.cos(sa), szz = Math.sin(sa);
-  for (let i = 0; i < n; i++) { const nx = A.ix[i] - A.ox[i], nz = A.iz[i] - A.oz[i], l = Math.hypot(nx, nz) || 1; A.wallCol.push(0.8 + 0.2 * Math.max(0, (nx * sxx + nz * szz) / l)); }
+  for (let i = 0; i < n; i++) {             // each stretch of wall catches the sun a little differently; its colours are worked out once
+    const nx = A.ix[i] - A.ox[i], nz = A.iz[i] - A.oz[i], l = Math.hypot(nx, nz) || 1, lit = 0.84 + 0.16 * Math.max(0, (nx * sxx + nz * szz) / l);
+    A.cWall.push(shade(V.wall, lit)); A.cRed.push(shade('#a23b2a', lit)); A.cKey.push(shade('#1f3a5f', lit)); A.cEnt.push(shade(V.wall, lit * 0.98)); A.cFar.push(shade(mix(STOA_DARK, V.wall, 0.3), lit));
+  }
   for (let i = 0; i < 420; i++) A.items.push({ z: 0, k: 0, i: 0 });
   const kinds = V.feat === 'pharos' ? ['obel', 'tripod', 'col', 'altar'] : ['col', 'tripod', 'statue', 'altar'];
   let ki = 0; for (let x = -T.Ls / 2 + 8; x <= T.Ls / 2 - 8; x += 13) A.mons.push({ x, z: 0, y: HS, kind: kinds[ki++ % 4] });
@@ -189,14 +250,22 @@ function drawWorld(R) {
   const ord = A.ord; ord.length = 0;
   for (let i = 0; i < n; i++) { const zc = depth((A.ox[i] + A.ox[i + 1]) / 2, (A.oz[i] + A.oz[i + 1]) / 2); A.dz[i] = zc; if (zc > -14) ord.push(i); }
   ord.sort((p, q) => A.dz[q] - A.dz[p]);
-  const crowd = TEX.crowd[R.crowd > 0.55 && Math.sin(now * 13) > 0 ? 1 : 0], wc = V.wall;
+  const crowd = TEX.crowd, m0 = ctx.getTransform(); MA = m0.a; MB = m0.b; MC = m0.c; MD = m0.d; ME = m0.e; MF = m0.f; MS = Math.hypot(MA, MB); STRIPS = 0;
+  const band = (xa, za, xb, zb, y0, y1, col) => { q4(xa, y0, za, xb, y0, zb, xb, y1, zb, xa, y1, za); poly3(Q, 4, col); };
   for (const i of ord) {
     const j = i + 1, zc = A.dz[i], x1 = A.ox[i], z1 = A.oz[i], x2 = A.ox[j], z2 = A.oz[j], u1 = A.tx[i], w1 = A.tz[i], u2 = A.tx[j], w2 = A.tz[j], top = HT + STOA;
-    q4(x1, 0, z1, x2, 0, z2, x2, HW, z2, x1, HW, z1); poly3(Q, 4, shade(wc, A.wallCol[i]));
-    q4(x1, HW, z1, x2, HW, z2, u2, HT, w2, u1, HT, w1); poly3(Q, 4, '#b9ad96');
-    q4(u1, HT, w1, u2, HT, w2, u2, top, w2, u1, top, w1); poly3(Q, 4, '#5a463a');
-    if (zc < 150) { tex4(A.wall, x1, HW, z1, x2, HW, z2, x1, 0, z1, x2, 0, z2); tex4(crowd, u1, HT, w1, u2, HT, w2, x1, HW, z1, x2, HW, z2); tex4(A.stoa, u1, top, w1, u2, top, w2, u1, HT, w1, u2, HT, w2); }
-    else if (zc < 260) tex4(crowd, u1, HT, w1, u2, HT, w2, x1, HW, z1, x2, HW, z2);
+    // flat shapes run a hair long at both ends (about a pixel and a half), so no seam shows where two stretches of wall meet
+    const e = Math.max(0.01, 1.5 * Math.max(zc, 2) / F) / (Math.hypot(x2 - x1, z2 - z1) || 1);
+    const X1 = x1 - (x2 - x1) * e, Z1 = z1 - (z2 - z1) * e, X2 = x2 + (x2 - x1) * e, Z2 = z2 + (z2 - z1) * e, U1 = u1 - (u2 - u1) * e, W1 = w1 - (w2 - w1) * e, U2 = u2 + (u2 - u1) * e, W2 = w2 + (w2 - w1) * e;
+    const g = e * 1.8, X3 = x1 - (x2 - x1) * g, Z3 = z1 - (z2 - z1) * g, X4 = x2 + (x2 - x1) * g, Z4 = z2 + (z2 - z1) * g, U3 = u1 - (u2 - u1) * g, W3 = w1 - (w2 - w1) * g, U4 = u2 + (u2 - u1) * g, W4 = w2 + (w2 - w1) * g;   // bands painted over the marble run a little longer still, so the marble never peeps out at their ends
+    // the crowd on its steps: stone the colour of a distant crowd, then the picture pinned on top of it
+    q4(X1, HW, Z1, X2, HW, Z2, U2, HT, W2, U1, HT, W1); poly3(Q, 4, crowd.avg);
+    texQ(crowd, u1, HT, w1, u2, HT, w2, x1, HW, z1, x2, HW, z2);
+    // the wall below: marble, a dark key line, a red band along its foot. Flat shapes, so every edge is exact from any angle.
+    band(X1, Z1, X2, Z2, HW * 0.4, HW, A.cWall[i]); band(X3, Z3, X4, Z4, 0, HW * 0.44, A.cRed[i]); if (zc < 110) band(X3, Z3, X4, Z4, HW * 0.47, HW * 0.53, A.cKey[i]);
+    // the colonnade above: white columns in front of deep shade (a pinned picture), then a marble beam and a tiled roof (flat shapes)
+    band(U1, W1, U2, W2, HT, top, A.cFar[i]); texQ(A.stoa, u1, HT + STOA * 0.66, w1, u2, HT + STOA * 0.66, w2, u1, HT, w1, u2, HT, w2);
+    band(U3, W3, U4, W4, HT + STOA * 0.66, HT + STOA * 0.82, A.cEnt[i]); band(U3, W3, U4, W4, HT + STOA * 0.82, top, STOA_ROOF);
     if (zc > 70) { q4(x1, 0, z1, x2, 0, z2, u2, top, w2, u1, top, w1); ctx.globalAlpha = Math.min(0.5, (zc - 70) / 420); poly3(Q, 4, A.haze); ctx.globalAlpha = 1; }
     if (i % 5 === 0 && zc < 170 && P3(u1, top, w1)) {      // a pennant on the roof
       const bx = SX, by = SY, s = SC, wv = Math.sin(now * 5 + i) * 0.25 * s; ctx.strokeStyle = '#5a4a3a'; ctx.lineWidth = Math.max(1, 0.08 * s); ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx, by - 2.6 * s); ctx.stroke();
@@ -223,8 +292,12 @@ function drawWorld(R) {
   srt.sort((p, q) => q.z - p.z);
   for (let q = 0; q < ni; q++) {
     const o = srt[q], i = o.i;
-    if (o.k === 0) { const j = i + 1; q4(A.ix[i], 0, A.iz[i], A.ix[j], 0, A.iz[j], A.ix[j], HS, A.iz[j], A.ix[i], HS, A.iz[i]); poly3(Q, 4, A.spCol); if (o.z < 90) tex4(A.wall, A.ix[i], HS, A.iz[i], A.ix[j], HS, A.iz[j], A.ix[i], 0, A.iz[i], A.ix[j], 0, A.iz[j]); }
-    else if (o.k === 1) { const xa = A.ix[i], xb = A.ix[i + 1]; q4(xa, HS, -rI, xb, HS, -rI, xb, HS, rI, xa, HS, rI); poly3(Q, 4, A.spTop); }
+    if (o.k === 0) {                        // a stretch of the barrier's wall: marble, a key line, a red band along its foot (flat shapes, a hair long at both ends)
+      const j = i + 1, e = Math.max(0.01, 1.5 * Math.max(o.z, 2) / F) / (Math.hypot(A.ix[j] - A.ix[i], A.iz[j] - A.iz[i]) || 1), xa = A.ix[i] - (A.ix[j] - A.ix[i]) * e, za = A.iz[i] - (A.iz[j] - A.iz[i]) * e, xb = A.ix[j] + (A.ix[j] - A.ix[i]) * e, zb = A.iz[j] + (A.iz[j] - A.iz[i]) * e;
+      const g = e * 0.8, xc = xa - (A.ix[j] - A.ix[i]) * g, zc2 = za - (A.iz[j] - A.iz[i]) * g, xd = xb + (A.ix[j] - A.ix[i]) * g, zd = zb + (A.iz[j] - A.iz[i]) * g;
+      band(xa, za, xb, zb, HS * 0.4, HS, A.spCol); band(xc, zc2, xd, zd, 0, HS * 0.44, A.spRed); if (o.z < 110) band(xc, zc2, xd, zd, HS * 0.5, HS * 0.58, A.spKey);
+    }
+    else if (o.k === 1) { const e = Math.max(0.01, 1.5 * Math.max(o.z, 2) / F), xa = A.ix[i] - Math.sign(A.ix[i + 1] - A.ix[i]) * e, xb = A.ix[i + 1] + Math.sign(A.ix[i + 1] - A.ix[i]) * e; q4(xa, HS, -rI, xb, HS, -rI, xb, HS, rI, xa, HS, rI); poly3(Q, 4, A.spTop); }
     else if (o.k === 2) { const i0 = i ? 2 * ns + nt : ns; for (let j = 0; j <= nt; j++) { Q[j * 3] = A.ix[i0 + j]; Q[j * 3 + 1] = HS; Q[j * 3 + 2] = A.iz[i0 + j]; } poly3(Q, nt + 1, A.spTop); }
     else if (o.k === 3) drawMon(A.mons[i], R, now);
     else if (o.k === 4) drawRig(R.cars[i], R);

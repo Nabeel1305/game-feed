@@ -138,7 +138,7 @@
       "id": "hippodrome",
       "name": "Hippodrome",
       "status": "testing",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "added": "2026-11-14",
       "summary": "Greek four-horse chariot racing seen from behind your own chariot. Two thumbs: left steers the reins, right taps the whip on the beat of the gallop or holds to rein in. Turning the post is the skill: rein in, hug the inside, whip out, and pass rivals by turning tighter than they do. Live leaderboard, 4 to 8 chariots with Greek names, 12 venues from Olympia to Troy, a champion of legend every 10th race, endless levels.",
       "path": "games/hippodrome/index.html",

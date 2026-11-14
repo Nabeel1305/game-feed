@@ -327,6 +327,7 @@ window.__sim = {
   hold(r) { return holdSpeed(R.T, r, PH.KC * R.cfScale); },
   live() { HEADLESS = false; last = performance.now(); },
   go(L) { HEADLESS = false; level = L; startRace(); },
+  strips() { return STRIPS; },
   PH, FX, CAM,
   get R() { return R; }
 };
