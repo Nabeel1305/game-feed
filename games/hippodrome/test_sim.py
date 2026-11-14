@@ -2,7 +2,8 @@
 python3 test_sim.py [levels] [n] [bots] [help]     e.g.  python3 test_sim.py 1,3,6,12,25,50 10 smart,human,spam
 Each cell shows: races that got through / races run, the average finishing place, and (when lots put the bot on both rows) the same split by starting row.
 "fight:" shows, per race, blows taken, rams dodged, rivals broken, and how often the bot's own chariot was destroyed.
-Add a 4th argument (any word) to run with help on. Bots: smart, racer, expert, good, human, learner, beginner (fair players, best to worst; they steer away when warned);
+Add a 4th argument (any word except "quick") to run with help on. Add the word "quick" to use the feed's instant start
+(two quick notes and GO) instead of the full count: results must match the full count, e.g. python3 test_sim.py 20,45,60 80 human,good,expert quick Bots: smart, racer, expert, good, human, learner, beginner (fair players, best to worst; they steer away when warned);
 humanNoRein, nobrake, outside, outsideRein, midNoRein, steerOnly, spam, spamleft, wall, idle (lazy ways to play: all must lose after the learning levels);
 brute, bruteSmart, hunter, bruteNoRein (players who ram: must not do better than the same driver who just races); humanNoDodge (ignores every warning)."""
 from playwright.sync_api import sync_playwright
@@ -81,7 +82,7 @@ BOTS = r"""
     for (const L of cfg.levels) {
       let ok = 0, sum = 0, wr = 0, tt = 0, dead = 0, kills = 0, hits = 0, dod = 0, rams = 0; const rows = { 1: [0, 0], 2: [0, 0] };
       for (let n = 0; n < cfg.n; n++) {
-        S.start(L, { help: cfg.help });
+        S.start(L, { help: cfg.help, quick: cfg.quick });
         const R = S.R, me = R.me, b = {}; let steps = 0; const row = me.p < -10 ? 2 : 1;
         while (R.phase !== 'finish' && steps < 60 * 400) { BOTS[name](R, me, b, 1 / 60); S.step(1 / 60); steps++; }
         const place = R.phase === 'finish' ? R.res.place : R.n;
@@ -103,7 +104,9 @@ with sync_playwright() as p:
     levels = [int(x) for x in (sys.argv[1] if len(sys.argv) > 1 else '1,2,3,5,6,8,12,20,30,45,60,80').split(',')]
     n = int(sys.argv[2]) if len(sys.argv) > 2 else 10
     bots = (sys.argv[3] if len(sys.argv) > 3 else 'smart,human,steerOnly,nobrake,idle,spam,spamleft,wall').split(',')
-    res = pg.evaluate(BOTS, {'levels': levels, 'n': n, 'bots': bots, 'help': len(sys.argv) > 4})
+    # a 4th argument turns help on; the word "quick" anywhere after the bots tests the feed's instant start (no count)
+    extra = sys.argv[4:]
+    res = pg.evaluate(BOTS, {'levels': levels, 'n': n, 'bots': bots, 'help': any(a != 'quick' for a in extra), 'quick': 'quick' in extra})
     for name, rows in res.items():
         print(name)
         for L, r in rows.items(): print('   ', L.ljust(4), r)

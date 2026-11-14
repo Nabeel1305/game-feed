@@ -1041,6 +1041,8 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) { sfx.click(); startWind(); } else if (wind$) { wind$.stop(); wind$ = null; } };
 sndIcon();
 $('playBtn').onclick = () => { audio(); sfx.click(); startWind(); show(null); newBout(); };
+// The feed's instant start (tap a card in the Game Feed app): no wait before "EN GARDE!", the duel is live at once.
+window.gameFeedStart = m => { audio(); sfx.click(); startWind(); show(null); newBout(); if (m === 'mini' && G) G.intro = 0.05; };
 $('rulesBtn').onclick = () => show('ovRules');
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showHome());
 function showLevels() {

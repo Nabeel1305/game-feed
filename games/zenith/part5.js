@@ -1,6 +1,7 @@
 
 // ---------- the patrol: alert -> fly -> mission -> saved -> next alert ----------
 let G = null;
+let SKIP_ALERT = false;         // set by the feed's instant start for the first mission only
 function newPatrol() {
   G = { L: level, plan: planPatrol(level), idx: -1, hearts: 3, saved: 0, failed: 0, results: [], streak: G ? G.streak || 0 : 0, phase: 'alert', t: 0, at: 0, rt: 0, M: null, fly: null,
     msgs: [], parts: [], stop: 0, slow: 0, shake: 0, flash: 0, white: 0, kx: 0, ky: 0, over: null, introT: 9, assist: (streaks[level] || 0) >= 3, newBest: false };
@@ -19,7 +20,9 @@ function nextMission() {
   G.plan[G.idx].assist = G.assist;
   hud();
   if (HEADLESS) { startMission(); return; }
-  G.phase = 'alert'; G.at = 0; sfx.alert(); vibe(HAP.tick);
+  G.phase = 'alert'; G.at = 0;
+  if (SKIP_ALERT) { SKIP_ALERT = false; launch(); return; }       // the feed's instant start: no card to read, he is flying at once
+  sfx.alert(); vibe(HAP.tick);
 }
 function launch() { if (G.phase !== 'alert') return; G.phase = 'fly'; G.fly = makeFly(G.plan[G.idx]); sfx.takeoff(); }
 function startMission() {
@@ -202,6 +205,9 @@ function showHome() {
 }
 function startPatrol() { audio(); ensureLoops(); show(null); newPatrol(); }
 $('playBtn').onclick = () => { sfx.click(); startPatrol(); };
+// The feed's instant start (tap a card in the Game Feed app): the first alert card is skipped and he takes off at once.
+// Later missions in the same patrol keep their alert cards.
+window.gameFeedStart = m => { sfx.click(); SKIP_ALERT = m === 'mini'; startPatrol(); SKIP_ALERT = false; };
 $('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showHome());
 function showLevels() {

@@ -430,7 +430,7 @@ function begin(s) {                      // the game is loaded and he has tapped
   s.el.classList.remove('loading', 'halt');
   s.el.classList.add('live');
   if (s.video) { try { s.video.pause(); } catch (e) {} }
-  send(s, 'start', { mode: 'full', sound: soundOn });
+  send(s, 'start', { mode: s.g.mini ? 'mini' : 'full', sound: soundOn });     // mini = the game's instant start: no menus, count or intro
   try { s.frame.focus(); } catch (e) {}
   startClock(s);
   const st = stat(s.g.id);

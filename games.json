@@ -3,7 +3,7 @@
   "next_number": 7,
   "feed_app": {
     "name": "Game Feed",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "added": "2026-11-14",
     "artifact": "https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP",
     "artifact_slug": "8f097f55-7ea9-4e6a-aab9-11ee7208668e",
@@ -17,7 +17,7 @@
       "id": "bottle-cap-flick",
       "name": "Bottle Cap Flick",
       "status": "approved",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "added": "2026-11-11",
       "summary": "Flick bottle caps to knock the other side's caps off a wooden stool. Capture line, legs at each end, computer levels Beginner to Legendary, best of 1/3/5/7.",
       "path": "games/bottle-cap-flick/index.html",
@@ -27,7 +27,7 @@
       "apk_repo": "Nabeel1305/bottle-cap-flick",
       "storage_prefix": null,
       "feed": {
-        "mini": false,
+        "mini": true,
         "full": true,
         "hook": "Flick your caps across the stool. Knock theirs off.",
         "genre": "Tabletop",
@@ -37,7 +37,8 @@
           "#playBtn",
           "#startBtn"
         ],
-        "font": "Fredoka:600"
+        "font": "Fredoka:600",
+        "live": "document.getElementById('setupBar').style.display === 'none' && document.getElementById('home').classList.contains('hidden')"
       }
     },
     {
@@ -45,7 +46,7 @@
       "id": "knockout",
       "name": "Knockout",
       "status": "testing",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "added": "2026-11-14",
       "summary": "First-person two-thumb boxing. Tap to punch, flick to dodge, flick up for an uppercut, hold both to block. Endless levels, rounds and points decisions.",
       "path": "games/knockout/index.html",
@@ -54,7 +55,7 @@
       "apk_repo": null,
       "storage_prefix": "ko.",
       "feed": {
-        "mini": false,
+        "mini": true,
         "full": true,
         "hook": "First-person boxing. Jab, slip, block, put him down.",
         "genre": "Boxing",
@@ -63,7 +64,8 @@
         "start": [
           "#fightBtn"
         ],
-        "font": "Bebas Neue"
+        "font": "Bebas Neue",
+        "live": "window.__sim.G && window.__sim.G.phase === 'fight'"
       },
       "principles": [
         "P7 hit-stop",
@@ -90,7 +92,7 @@
       "apk_repo": null,
       "storage_prefix": "hn.",
       "feed": {
-        "mini": false,
+        "mini": true,
         "full": true,
         "hook": "Hand on the holster. Wait for the call, then draw.",
         "genre": "Quick draw",
@@ -99,7 +101,8 @@
         "start": [
           "#playBtn"
         ],
-        "font": "Rye"
+        "font": "Rye",
+        "live": "window.__sim.G && window.__sim.G.phase === 'ready'"
       },
       "principles": [
         "P3 honest draw times",
@@ -116,7 +119,7 @@
       "id": "sword-fight",
       "name": "Steel & Honour",
       "status": "testing",
-      "version": "0.12.0",
+      "version": "0.12.1",
       "added": "2026-11-14",
       "summary": "First-person medieval sword duels. Your blade follows your finger in any direction; tap to poke an exact spot. His cuts come from any angle and his thrusts aim at a spot: block by swiping across his blade on the side it comes from (or through the spot of a thrust). Perfect parries open him up. Endless levels, rounds, champion knights, huge variety of knights.",
       "path": "games/sword-fight/index.html",
@@ -126,7 +129,7 @@
       "apk_repo": null,
       "storage_prefix": "sw.",
       "feed": {
-        "mini": false,
+        "mini": true,
         "full": true,
         "hook": "Sword duels where the blade follows your finger.",
         "genre": "Duel",
@@ -135,7 +138,8 @@
         "start": [
           "#playBtn"
         ],
-        "font": "Cinzel:800"
+        "font": "Cinzel:800",
+        "live": "window.__sim.G && window.__sim.G.phase === 'fight'"
       },
       "spec": "specs/04-sword-fight.md",
       "principles": [
@@ -153,7 +157,7 @@
       "id": "zenith",
       "name": "Zenith",
       "status": "testing",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "added": "2026-11-14",
       "summary": "Superhero rescue patrols over Brightwater City. Alert after alert: fly through gold rings, then catch falling people, zap meteors with laser eyes, punch bad guys, blow out fires, lift hanging buses, and dodge-and-zap giant monsters and super villains. Missions are mixed from long lists so they rarely repeat.",
       "path": "games/zenith/index.html",
@@ -162,7 +166,7 @@
       "apk_repo": null,
       "storage_prefix": "zn.",
       "feed": {
-        "mini": false,
+        "mini": true,
         "full": true,
         "hook": "One hero, a city of emergencies. Catch, zap, lift, fight.",
         "genre": "Hero",
@@ -171,7 +175,8 @@
         "start": [
           "#playBtn"
         ],
-        "font": "Bangers"
+        "font": "Bangers",
+        "live": "window.__sim.G && window.__sim.G.phase === 'fly'"
       },
       "principles": [
         "P5 one-word verb per mission",
@@ -189,7 +194,7 @@
       "id": "hippodrome",
       "name": "Hippodrome",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "added": "2026-11-14",
       "summary": "Greek four-horse chariot racing seen from behind your own chariot. Two thumbs: left steers the reins, right taps the whip on the beat of the gallop or holds to rein in. Turning the post is the skill: rein in, hug the inside, whip out, and pass rivals by turning tighter than they do. Ram a rival who is level with you by swerving into them, dodge when a rough rival winds up to ram you, and break a chariot to put it out of the race; damage shows on the chariot. Live leaderboard, 4 to 8 chariots with Greek names, 12 venues from Olympia to Troy, a champion of legend every 10th race, endless levels.",
       "path": "games/hippodrome/index.html",
@@ -198,7 +203,7 @@
       "apk_repo": null,
       "storage_prefix": "hp.",
       "feed": {
-        "mini": false,
+        "mini": true,
         "full": true,
         "hook": "Four horses, one wreath. Whip on the beat, ram your rivals.",
         "genre": "Racing",
@@ -207,7 +212,8 @@
         "start": [
           "#playBtn"
         ],
-        "font": "Caesar Dressing"
+        "font": "Caesar Dressing",
+        "live": "window.__sim.R && window.__sim.R.phase === 'race'"
       },
       "principles": [
         "P18 chains: perfect whip cracks climb in pitch; perfect turns chain",

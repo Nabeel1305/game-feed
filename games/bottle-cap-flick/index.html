@@ -800,6 +800,9 @@ document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showScre
 document.querySelectorAll('[data-opp]').forEach(b => b.onclick = () => { pickMode = b.dataset.opp; segPick('data-opp', b); $('lvBlock').style.display = pickMode === 'cpu' ? '' : 'none'; });
 document.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => { level = b.dataset.lv; segPick('data-lv', b); });
 $('startBtn').onclick = () => { initAudio(); startGame(pickMode); };
+// The feed's instant start (tap a card in the Game Feed app): no menus, no formation step. Straight to the table
+// against the computer at the level last chosen, caps in the standard formation, his flick first.
+window.gameFeedStart = m => { initAudio(); startGame('cpu'); if (m === 'mini') ready(); };
 $('rematchBtn').onclick = () => (seriesOver ? startGame(mode) : nextGame());
 document.querySelectorAll('[data-bo]').forEach(b => b.onclick = () => {
   bestOf = +b.dataset.bo;

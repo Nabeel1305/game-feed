@@ -287,7 +287,7 @@ function gradeTurn(R) {
 }
 function playerWhip(R) {
   const me = R.me;
-  if (R.phase === 'count') { if (R.ct > 0.5 && !me.jump) { me.jump = true; ev(R, me, 'jump'); } return; }
+  if (R.phase === 'count') { if (R.ct > 0.5 && !me.jump && !R.quick) { me.jump = true; ev(R, me, 'jump'); } return; }
   if (R.phase !== 'race') return;
   if (me.st === 'grid') {                    // the start: a crack right on GO is a flying start
     if (me.jump) return;
@@ -305,11 +305,21 @@ function playerWhip(R) {
   ev(R, me, 'whip', q);
   if (me.blown > 0) ev(R, me, 'blown');
 }
+// The feed's instant start: no trumpet count to sit through. Two quick notes and "GO!", 0.6 s in all: ta, ta, GO.
+// The two notes are a third of a second apart and "GO!" falls on the third beat, so a crack right on "GO!" can
+// still be timed by ear. Everything about the race itself is unchanged (the rivals' reaction times, the flying
+// start), because the start decides a lot here: a rolling start, with every team already moving, was tried first
+// and made the top races much harder to win. With this start the bots finish the same as with the full count.
+// One kindness: a thumb that lands before "GO!" is not a false start (the tap that opened the card is still in the air).
+function quickStart(R) {
+  R.quick = 1; R.ct = 2.6; R.tickN = 2;
+  ev(R, null, 'tick', 1);
+}
 function raceStep(R, dt) {
   const T = R.T, me = R.me;
   if (R.phase === 'count') {                 // three trumpet notes, then GO
     R.ct += dt;
-    const tk = Math.min(3, Math.floor(R.ct / 0.8));
+    const tk = R.quick ? (R.ct >= 2.9 ? 3 : 2) : Math.min(3, Math.floor(R.ct / 0.8));
     if (tk > R.tickN) { R.tickN = tk; ev(R, null, 'tick', tk - 1); }
     if (R.ct >= 3.2) { R.phase = 'race'; R.t = 0; for (const c of R.cars) c.react = c.me ? (me.jump ? 1.0 : R.autoStart) : c.rt; ev(R, null, 'go'); }
     return;

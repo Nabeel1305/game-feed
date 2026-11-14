@@ -104,7 +104,15 @@ def main():
             ok(d['paused'], f"{g['id']}: held still while its card is showing")
             pg.screenshot(path=os.path.join(root, 'out', 'feed', g['id'] + '-card.png'))
             t.tap(W / 2, 330)
-            pg.wait_for_timeout(1300)
+            # straight into the action: live play within a second of the tap, with no menu, count or intro to wait through
+            live, t0, took = (g.get('feed') or {}).get('live'), time.time(), None
+            while live and time.time() - t0 < 3:
+                try:
+                    if fr.evaluate(live): took = time.time() - t0; break
+                except Exception: pass
+                pg.wait_for_timeout(40)
+            ok(not live or (took is not None and took <= 1.0), f"{g['id']}: he is playing within a second of the tap", 'never got going' if took is None else f'took {took:.2f} s')
+            pg.wait_for_timeout(max(0, 1300 - int((time.time() - t0) * 1000)))
             st = state(pg)
             ok(st['state'] == 'playing' and st['started'] is True, f"{g['id']}: one tap starts it", str(st))
             sels = (g.get('feed') or {}).get('start') or ['#playBtn']

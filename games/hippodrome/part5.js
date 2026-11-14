@@ -317,9 +317,10 @@ function showHome() {
   $('hStat').innerHTML = [bestTime[level] ? `Your best here: <b>${fmtT(bestTime[level])}</b>` : '', wreaths ? `Wreaths won: <b>${wreaths}</b>` : '', broken ? `Rivals broken: <b>${broken}</b>` : ''].filter(Boolean).join(' · ') + (R.help ? `<br><span class="help">Help on: your rivals drive a touch slower and pick fewer fights until you get through.</span>` : '');
   show('ovHome');
 }
-function startRace() {
+function startRace(quick) {
   audio(); ensureLoops();
   R = makeRace(level, { help: (streaks[level] || 0) >= 3 }); R.phase = 'count'; paused = false; PET = [];
+  if (quick === true) quickStart(R);
   IN.sId = IN.wId = null; FX.shake = FX.stop = FX.slow = FX.flash = FX.gold = 0; CAM.kick = 0;
   if (!HEADLESS) { camFollow(R, 0, true); $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now();
@@ -349,6 +350,9 @@ function showEnd() {
   show('ovEnd');
 }
 $('playBtn').onclick = () => { audio(); sfx.click(); startRace(); };
+// The feed's instant start (tap a card in the Game Feed app): "GO!" comes at once, with no trumpet count to wait
+// through (see quickStart). Races started from inside the game (next race, race again) keep the count.
+window.gameFeedStart = m => { audio(); sfx.click(); startRace(m === 'mini'); };
 $('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
 document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showHome());
 function showLevels() {
@@ -402,7 +406,7 @@ function frame(now) {
 }
 window.__sim = {
 /*SOUNDCHECK*/
-  start(L, o) { HEADLESS = true; MUTE = true; level = L; R = makeRace(L, o || {}); R.phase = 'count'; R.ct = 2.9; R.tickN = 3; },
+  start(L, o) { HEADLESS = true; MUTE = true; level = L; R = makeRace(L, o || {}); R.phase = 'count'; R.ct = 2.9; R.tickN = 3; if (o && o.quick) quickStart(R); },
   step(dt) { raceStep(R, dt); R.evs.length = 0; },
   whip() { playerWhip(R); },
   beatErr() { return beatErr(R.me); },

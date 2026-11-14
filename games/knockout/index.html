@@ -1002,6 +1002,8 @@ function startFight() {
   audio(); if (endTimer) { clearTimeout(endTimer); endTimer = null; endShow = null; } newFight();
 }
 $('fightBtn').onclick = () => { sfx.click(); startFight(); };
+// The feed's instant start (tap a card in the Game Feed app): no "LEVEL n" wait, the bell rings at once.
+window.gameFeedStart = m => { sfx.click(); startFight(); if (m === 'mini' && G) G.intro = 0.05; };
 function endAction(act) {
   $('ovEnd').classList.add('hidden');
   if (act === 'next') { level = Math.min(unlocked, level + 1); store.set('level', level); startFight(); }

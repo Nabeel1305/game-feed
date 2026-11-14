@@ -98,7 +98,7 @@ def build(out, reg=None, build_number=None):
             'n': g['number'], 'id': g['id'], 'name': g['name'], 'path': dest_rel,
             'hook': feed.get('hook') or first_sentence(g.get('summary', '')),
             'genre': feed.get('genre', ''), 'intensity': feed.get('intensity', 3), 'thumbs': feed.get('thumbs', 1),
-            'font': feed.get('font', ''), 'status': g['status'], 'v': g.get('version', ''),
+            'font': feed.get('font', ''), 'status': g['status'], 'v': g.get('version', ''), 'mini': bool(feed.get('mini')),
             'words': re.sub(r'\s+', ' ', g.get('summary', ''))[:240],
         }
         for key, folder, exts in (('poster', 'posters', ('webp', 'jpg', 'png')), ('preview', 'previews', ('webm', 'mp4'))):

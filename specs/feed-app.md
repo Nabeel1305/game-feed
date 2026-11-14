@@ -4,7 +4,7 @@ Nabeel's brief (Nov 2026): "build it properly, like an app on its own, an app th
 
 ## What he gets
 - **One card at a time, full screen.** Swipe up: next game. Swipe down: the one before. The order is a shuffled deck: every game comes up once before any repeats, never the same game twice running, and after three intense games in a row a calmer one is pulled forward (P26).
-- **The card** shows a 3 s silent clip of real play behind the game's number, kind, name (in the game's own title font), one line about it, and whether it needs one thumb or two (P25, P27, P30). A tap anywhere on the card starts the game at once: the feed presses the game's own Play button.
+- **The card** shows a 3 s silent clip of real play behind the game's number, kind, name (in the game's own title font), one line about it, and whether it needs one thumb or two (P25, P27, P30). A tap anywhere on the card drops him straight into the action: no menu, countdown or intro, playing within a second, at his own level (his choice on 14 Nov 2026 between this, taking over the clip at the exact moment he tapped, and leaving it as it was).
 - **The bar** under the card: **Games** (every game, newest first, pinned ones on top, search by name, kind or number; tap one to go to it), **Sound**, the swipe handle, **Pin**.
 - **Sound** is one switch for the whole app (his words: "when I off the sound, I'm offing the sound for all the games"): off silences every game until he turns it back on, and the app remembers it.
 - **Leaving a game** by swiping up on the bar freezes it exactly where it is. Coming back shows "Paused: Continue / Start over". Fast or two-thumb games count 3, 2, 1 before they carry on.
@@ -24,7 +24,7 @@ See "The feed app" in CLAUDE.md and LESSONS.md. In short: `tools/build_feed.py` 
 
 ## Later (not built; wait for him to ask)
 1. The "what comes next" brain: replace `nextGame()` in `feed/index.html`; the history is already there.
-2. Mini modes: a game that defines `window.gameFeedStart('mini')` and sets `feed.mini` could start a quick taste straight from the card.
+2. Taking over the clip at the exact moment he taps it (same scene, same position). Offered and not chosen; a much bigger build, one game at a time.
 3. Games reporting finished levels with `GameFeed.finish({win, level, score})` so the brain can tell finishing from quitting.
 4. When there are hundreds of games: fetch a game when its card comes up instead of keeping every game on every phone, and let him keep favourites for offline play. Proper hosting when there are real users (keep publishing the `app` branch for old installs).
 5. Calm-only filter, daily special (P28), a "least fun 10" review screen (P29).
