@@ -138,9 +138,9 @@
       "id": "hippodrome",
       "name": "Hippodrome",
       "status": "testing",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "added": "2026-11-14",
-      "summary": "Greek four-horse chariot racing seen from behind your own chariot. Two thumbs: left steers the reins, right taps the whip on the beat of the gallop or holds to rein in. Turning the post is the skill: rein in, hug the inside, whip out, and pass rivals by turning tighter than they do. Live leaderboard, 4 to 8 chariots with Greek names, 12 venues from Olympia to Troy, a champion of legend every 10th race, endless levels.",
+      "summary": "Greek four-horse chariot racing seen from behind your own chariot. Two thumbs: left steers the reins, right taps the whip on the beat of the gallop or holds to rein in. Turning the post is the skill: rein in, hug the inside, whip out, and pass rivals by turning tighter than they do. Ram a rival who is level with you by swerving into them, dodge when a rough rival winds up to ram you, and break a chariot to put it out of the race; damage shows on the chariot. Live leaderboard, 4 to 8 chariots with Greek names, 12 venues from Olympia to Troy, a champion of legend every 10th race, endless levels.",
       "path": "games/hippodrome/index.html",
       "artifact": "https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM",
       "artifact_slug": "1791f204-a523-4ed7-9eac-89d71257fc8e",
@@ -152,9 +152,9 @@
       },
       "principles": [
         "P18 chains: perfect whip cracks climb in pitch; perfect turns chain",
-        "P4 readable failure: painted braking zone, slide dust and lean, WHEEL UP warning, flashing wind bar",
-        "P3 honest near-miss: real finishing gaps, real turn times, real clearance from the post",
-        "P12 celebrations scaled: overtake call, perfect turn, the wreath",
+        "P4 readable failure: painted braking zone, slide dust and lean, WHEEL UP warning, flashing wind bar, a clear warning before every ram",
+        "P3 honest near-miss: real finishing gaps, real turn times, real clearance from the post, the true cost of every blow",
+        "P12 celebrations scaled: overtake call, perfect turn, a rival broken, the wreath",
         "P13 personal bests: race time and best lap per level, longest whip chain"
       ]
     }

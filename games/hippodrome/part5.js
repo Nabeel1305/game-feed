@@ -24,8 +24,8 @@ function fx(R) {
       case 'lift': if (mine) { say('WHEEL UP! EASE OFF', '#ffb03a', 0.8, 0.3, 0.8); sfx.lift(); vibe(HAP.light); } break;
       case 'tip': if (mine) say('OVER SHE GOES!', '#ff7a6b', 1.1, 0.3, 1.4); break;
       case 'wreck':
-        if (mine) { sfx.wreck(); FX.shake = 16; FX.stop = 0.1; FX.flash = 0.45; vibe(HAP.thud); R.crowd = 1; }
-        else if (near) { sfx.wreck(); say(`${c.name.toUpperCase()} WRECKS!`, '#f6efdd', 0.7, 0.2, 1.2); R.crowd = 0.9; }
+        if (mine) { if (c.st !== 'out') sfx.wreck(); FX.shake = 16; FX.stop = 0.1; FX.flash = 0.45; vibe(HAP.thud); R.crowd = 1; if (c.st !== 'out') float(R, me, `−${Math.round(PH.WRECKD * R.dmgIn)}`, '#ff7a6b'); }
+        else if (near && c.st !== 'out') { sfx.wreck(); say(`${c.name.toUpperCase()} WRECKS!`, '#f6efdd', 0.7, 0.2, 1.2); R.crowd = 0.9; }
         if (c.wx != null) { dust(R, c.wx, c.wz, 14, true); sparks(R, c.wx, 0.8, c.wz, 12); } break;
       case 'clash': if (mine) { sfx.clash(); FX.shake = Math.max(FX.shake, 4 + e.val); vibe(HAP.light); sparks(R, me.wx, 0.5, me.wz, 7); } break;
       case 'bump': if (mine) { sfx.clash(); FX.shake = Math.max(FX.shake, 5); say('BLOCKED!', '#ff9a7a', 0.7, 0.3, 0.6); } break;
@@ -38,6 +38,30 @@ function fx(R) {
       }
       case 'lap': { const fin = e.val === R.laps; sfx.lap(fin); say(fin ? 'FINAL LAP!' : `LAP ${e.val}`, fin ? '#f2c14e' : '#f6efdd', fin ? 1.3 : 0.9, 0.18, 1.3); if (fin) R.crowd = 1; break; }
       case 'rank': { const up = me.rank < e.val; sfx.pass(up); if (up) { say(`${ORD[me.rank]}!`, '#f2c14e', 1.05, 0.18, 0.9); R.crowd = Math.max(R.crowd, 0.8); } else say(`${ORD[me.rank]}`, '#d9c9a8', 0.7, 0.18, 0.8); break; }
+      case 'warn': if (me.warn && me.warn.by === c) { sfx.warn(); vibe(HAP.sharp); } break;
+      case 'evade': if (near) R.note = { text: `${c.name} pulls away from your swing`, t: 0 }; break;
+      case 'miss': if (me.st === 'run' && me.vd * e.val > 1.2) { say('DODGED!', '#f2c14e', 0.95, 0.3, 0.9); sfx.dodge(); vibe(HAP.tick); R.crowd = Math.max(R.crowd, 0.8); } break;
+      case 'ram': {                           // one chariot swung into another: v.d is what the one struck lost, v.back what the striker took back
+        const v = e.val, to = v.to, dn = Math.round(v.d), bn = Math.round(v.back);
+        if (mine) {
+          sfx.ram(v.d); FX.shake = Math.max(FX.shake, 6 + v.d * 0.25); if (v.d > 22) FX.stop = Math.max(FX.stop, 0.05); vibe(v.d > 22 ? HAP.sharp : HAP.light); CAM.kick = Math.max(CAM.kick, 0.6); R.crowd = Math.max(R.crowd, 0.85);
+          if (v.d >= 18) say(v.clash ? 'CLASH!' : v.pin ? 'CRUSHED ON THE WALL!' : v.wheel ? 'WHEEL STRIKE!' : 'RAM!', '#f2c14e', v.pin || v.wheel ? 1 : 0.85, 0.3, 0.8); else if (v.d >= 7) say('RAM', '#f6efdd', 0.6, 0.3, 0.6);     // a glancing blow gets a quieter word
+          if (dn >= 3) float(R, to, `−${dn}`, '#ffd76a'); if (bn >= 3) float(R, me, `−${bn}`, '#ff9a7a');
+        } else if (to.me) {
+          sfx.ram(v.d); FX.shake = Math.max(FX.shake, 9 + v.d * 0.3); FX.flash = Math.max(FX.flash, 0.22 + v.d * 0.007); if (v.d > 18) FX.stop = Math.max(FX.stop, 0.05); vibe(HAP.thud);
+          if (v.d >= 7) say(v.clash ? 'CLASH!' : v.pin ? 'CRUSHED ON THE WALL!' : 'HIT!', '#ff7a6b', v.pin ? 1 : 0.95, 0.3, 0.9);
+          if (dn >= 2) float(R, me, `−${dn}`, '#ff7a6b'); if (bn >= 3) float(R, c, `−${bn}`, '#ffd76a');
+        }
+        if (c.wx != null && to.wx != null) { const mx = (c.wx + to.wx) / 2, mz = (c.wz + to.wz) / 2; planks(R, mx, 0.9, mz, 4 + v.d * 0.3, ['#6b4a2a', '#8a6a3a', to.col]); sparks(R, mx, 0.7, mz, 8); dust(R, mx, mz, 3, true); }
+        break;
+      }
+      case 'out': {                           // a chariot has broken up
+        const by = e.val;
+        if (mine) { sfx.out(true); FX.shake = 22; FX.stop = 0.14; FX.flash = 0.6; FX.slow = 0.9; vibe(HAP.heavy); R.crowd = 1; R.msgs = []; R.note = null; }
+        else if (by && by.me) { sfx.out(false); sfx.kill(); say(`${c.name.toUpperCase()} IS OUT!`, '#f2c14e', 1.15, 0.2, 1.7); FX.gold = 0.8; FX.stop = Math.max(FX.stop, 0.1); vibe(HAP.heavy); R.crowd = 1; broken++; store.set('broken', broken); }
+        else if (near) { sfx.out(false); say(`${c.name.toUpperCase()} IS OUT!`, '#f6efdd', 0.8, 0.2, 1.4); R.crowd = Math.max(R.crowd, 0.9); }
+        breakUp(R, c); break;
+      }
       case 'finish': onFinish(R); break;
     }
   }
@@ -46,6 +70,11 @@ function fx(R) {
 function onFinish(R) {
   const res = R.res, me = R.me, L = R.L, win = res.place === 1;
   $('pauseBtn').classList.add('hidden');
+  if (res.out) {                              // your chariot broke up: the race is lost, and nothing is recorded as a best
+    res.stars = 0; setTimeout(() => sfx.lose(), 700); R.crowd = 0.5;
+    streaks[L] = (streaks[L] || 0) + 1; store.set('streaks', streaks); res.nbT = res.nbL = false; res.nbC = bestChain > 0 && me.topChain > bestChain; if (me.topChain > bestChain) { bestChain = me.topChain; store.set('bestChain', bestChain); }
+    return;
+  }
   res.stars = win ? 3 : res.ok ? (res.place === 2 ? 2 : 1) : 0;
   if (win) { sfx.win(R.boss); vibe(HAP.heavy); FX.slow = 0.6; FX.gold = 1; petals(R.boss ? 140 : 90); wreaths++; store.set('wreaths', wreaths); }
   else if (res.ok) { sfx.place(); vibe(HAP.sharp); petals(26); }
@@ -68,7 +97,22 @@ function visuals(R, dt, rdt) {               // things that only matter to the e
   for (const p of PET) { p.x += (p.vx + Math.sin(p.r) * 30) * rdt; p.y += p.vy * rdt; p.r += p.vr * rdt; } PET = PET.filter(p => p.y < H + 30);
   FX.shake = Math.max(0, FX.shake - rdt * 40); FX.flash = Math.max(0, FX.flash - rdt); FX.gold = Math.max(0, FX.gold - rdt * 0.9);
   R.crowd += ((R.phase === 'finish' ? 0.7 : me.lap >= R.laps ? 0.5 : 0.28) - R.crowd) * Math.min(1, rdt * 0.5);
+  for (const f of R.floats) f.t += rdt; if (R.floats.length) R.floats = R.floats.filter(f => f.t < 1);
+  for (const o of R.loose) {                 // what a broken chariot leaves behind: its team running free, a wheel bowling away
+    o.t += dt;
+    if (o.team) { o.v += (11 - o.v) * Math.min(1, dt * 0.6); o.p += o.v * dt; o.d += (o.dT - o.d) * Math.min(1, dt * 0.6); o.gal += 2 * dt / strideT(o.v); }
+    else { o.wx += o.vx * dt; o.wz += o.vz * dt; o.y += o.vy * dt; o.vy -= 14 * dt; if (o.y < 0.5) { o.y = 0.5; o.vy = Math.abs(o.vy) * 0.45; o.vx *= 0.9; o.vz *= 0.9; } o.vx *= 1 - 0.5 * dt; o.vz *= 1 - 0.5 * dt; o.spin += Math.hypot(o.vx, o.vz) * dt * 2; o.face += dt * 1.5; }
+  }
+  if (R.loose.length) R.loose = R.loose.filter(o => o.t < (o.team ? 4.2 : 3));
   for (const c of R.cars) {                  // dust from every team
+    if (c.st === 'run' && c.wx != null && c.str < c.strMax * 0.67 && c.str >= c.strMax * 0.34 && Math.random() < 3.5 * dt && R.parts.length < 150)       // a damaged chariot trails a thin wisp
+      R.parts.push({ k: 0, x: c.wx + (Math.random() - 0.5) * 0.8, y: 0.7, z: c.wz + (Math.random() - 0.5) * 0.8, vx: (Math.random() - 0.5), vy: 1 + Math.random(), vz: (Math.random() - 0.5), t: 0, life: 0.6 + Math.random() * 0.4, s0: 0.25, s1: 0.9, col: '#6a5f52', a: 0.22 });
+    if (c.st === 'run' && c.wx != null && c.str < c.strMax * 0.34) {       // a failing chariot trails smoke and sheds splinters
+      if (Math.random() < 9 * dt && R.parts.length < 150) R.parts.push({ k: 0, x: c.wx + (Math.random() - 0.5), y: 0.7, z: c.wz + (Math.random() - 0.5), vx: (Math.random() - 0.5), vy: 1.2 + Math.random(), vz: (Math.random() - 0.5), t: 0, life: 0.7 + Math.random() * 0.5, s0: 0.3, s1: 1.3, col: '#4a4038', a: 0.3 });
+      if (Math.random() < 1.6 * dt) planks(R, c.wx, 0.9, c.wz, 1, ['#6b4a2a', c.col]);
+      if (Math.random() < 7 * dt) sparks(R, c.wx, 0.25, c.wz, 2);
+      if (c.me) sfx.creak();
+    }
     if (c.st !== 'run' || c.wx == null || c.v < 2) continue;
     const reined = c.b > 0.3 || c.auto > 0, rate = c.v * 0.5 + c.slide * 14 + (reined ? 9 : 0) + c.scrape * 12;
     if (Math.random() < rate * dt) dust(R, c.wx, c.wz, 1, c.slide > 0.5 || reined);
@@ -89,17 +133,23 @@ function wreath(cx, cy, r, col) {
 function coachLine(R) {                      // one plain instruction at a time, on the learning levels
   const me = R.me, L = R.L;
   if (R.phase === 'count') return L <= 4 ? 'CRACK THE WHIP RIGHT ON "GO!"' : '';
-  if (R.phase !== 'race' || me.st !== 'run' || L > 10) return '';
-  if (L > 6) return me.auto > 0 && IN.wId == null ? 'REIN IN YOURSELF: HOLD RIGHT THUMB' : '';
+  if (R.phase !== 'race' || me.st !== 'run') return '';
+  if (me.warn && L <= 14) return me.warn.sg > 0 ? 'DODGE! STEER RIGHT ▶' : '◀ DODGE! STEER LEFT';       // a rival is winding up beside you
+  if (L > 10) return '';
   turnInfo(R.T, sOf(R.T, me.p)); const inT = TI.k, dist = TI.dist;
+  let beside = false;                        // the first few races with a rival level with you on a straight: show how to ram
+  if (L >= 3 && L <= 9 && !me.rams && !inT && dist > 55) for (const c of R.cars) { if (c === me || c.st !== 'run') continue; let dp = c.p - me.p; dp -= Math.round(dp / R.T.L) * R.T.L; const gd = Math.abs(c.d - me.d); if (Math.abs(dp) < 3 && gd > 2.9 && gd < 7) { beside = true; break; } }
+  if (L > 6) return me.auto > 0 && IN.wId == null ? 'REIN IN YOURSELF: HOLD RIGHT THUMB' : beside ? 'RIVAL BESIDE YOU: SWERVE INTO THEM' : '';
   if (L <= 2) { if (!me.steered) return 'LEFT THUMB: SLIDE TO STEER'; if (me.whips < 2) return 'RIGHT THUMB: TAP TO WHIP'; }
   if (inT) return me.lat > 2.5 ? 'STEER LEFT · HUG THE POST' : '';
   if (dist < 45 && me.v > 12) return L === 1 ? 'YOUR TEAM SLOWS FOR THE TURN' : !me.reined || L <= 4 ? 'HOLD RIGHT THUMB: REIN IN' : '';
   if (L >= 2 && me.pWhips < 4 && dist > 50) return 'WHIP JUST AS THE RING CLOSES';
+  if (beside) return 'RIVAL BESIDE YOU: SWERVE INTO THEM';
   return '';
 }
 function drawHud(R, now) {
   const me = R.me, T = R.T, pad = 12 * k, sm = `800 ${Math.round(11.5 * k)}px Nunito, sans-serif`;
+  if (R.phase === 'done') { for (const p of PET) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * 0.45, 0, 0, 6.2832); ctx.fill(); ctx.restore(); } return; }     // behind the end card: only the petals
   ctx.save(); ctx.textBaseline = 'alphabetic'; ctx.lineCap = 'round';
   if (FX.flash > 0) { const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.8); vg.addColorStop(0, 'rgba(255,0,0,0)'); vg.addColorStop(1, `rgba(180,20,10,${FX.flash * 1.4})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
   if (FX.gold > 0) { const vg = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.25, W / 2, H * 0.45, H * 0.8); vg.addColorStop(0, 'rgba(255,215,120,0)'); vg.addColorStop(1, `rgba(255,205,100,${FX.gold * 0.4})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
@@ -125,12 +175,34 @@ function drawHud(R, now) {
   for (let i = 0; i < R.order.length && !count; i++) {
     const c = R.order[i], y = 22 * k + i * rh;
     if (c.me) { ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(242,193,78,.28)'; rrect(W - pad - 100 * k, y - 11.5 * k, 104 * k, 15 * k, 5 * k); ctx.fill(); ctx.shadowBlur = 5; }
-    ctx.fillStyle = c.me ? '#f2c14e' : '#f6efdd'; ctx.textAlign = 'right'; ctx.fillText(c.name, W - pad, y); ctx.textAlign = 'left'; ctx.fillText(i + 1, W - pad - 97 * k, y);
-    ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(W - pad - 82 * k, y - 4 * k, 4 * k, 0, 6.2832); ctx.fill();
+    const dead = c.st === 'out';
+    ctx.fillStyle = c.me ? '#f2c14e' : dead ? 'rgba(246,239,221,.5)' : '#f6efdd'; ctx.textAlign = 'right'; ctx.fillText(c.name, W - pad, y); ctx.textAlign = 'left'; ctx.fillText(dead ? '✕' : i + 1, W - pad - 97 * k, y);
+    if (dead) { const nw = ctx.measureText(c.name).width; ctx.fillRect(W - pad - nw - 2, y - 4.5 * k, nw + 4, 1.4 * k); }     // out of the race: struck through
+    ctx.globalAlpha = dead ? 0.45 : 1; ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(W - pad - 82 * k, y - 4 * k, 4 * k, 0, 6.2832); ctx.fill(); ctx.globalAlpha = 1;
     if (c.me) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); }
   }
   // the countdown: three bronze discs
   if (R.phase === 'count') for (let i = 0; i < 3; i++) { ctx.fillStyle = i < R.tickN ? '#f2c14e' : 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(W / 2 + (i - 1) * 30 * k, H * 0.25, 9 * k, 0, 6.2832); ctx.fill(); }
+  // who is level with you, shown at the edge of the screen on their side; red and pulsing while they wind up to ram you
+  if (R.phase === 'race' && me.st === 'run') for (const side of [-1, 1]) {
+    let best = null, bs = 1e9, bdp = 0;
+    for (const c of R.cars) { if (c === me || c.st !== 'run') continue; let dp = c.p - me.p; dp -= Math.round(dp / T.L) * T.L; const gd = (c.d - me.d) * side; if (gd <= 0.5 || gd > 9 || Math.abs(dp) > 7) continue; const sc = Math.abs(dp) + gd * 0.5; if (sc < bs) { bs = sc; best = c; bdp = dp; } }
+    if (!best) continue;
+    if (!(best.rm === 1 || best.rm === 2) && best.wx != null && P3(best.wx, 1.5, best.wz) && SX > 34 * k && SX < W - 34 * k) continue;     // in plain view already: its own name tag is enough
+    const hot = best.rm === 1 || best.rm === 2, pu = hot ? 0.5 + 0.5 * Math.sin(now * 22) : 0, w = 78 * k, h = 30 * k, x = side < 0 ? pad * 0.6 : W - pad * 0.6 - w, y = H * 0.5 - clamp(bdp, -7, 7) * 4 * k - h / 2;
+    ctx.shadowBlur = 0;
+    if (hot) {                               // danger from this side: the edge of the screen glows red and arrows show the way out
+      const gx = side < 0 ? 0 : W, gr = ctx.createLinearGradient(gx, 0, gx - side * 90 * k, 0); gr.addColorStop(0, `rgba(225,40,25,${0.3 + 0.3 * pu})`); gr.addColorStop(1, 'rgba(225,40,25,0)'); ctx.fillStyle = gr; ctx.fillRect(side < 0 ? 0 : W - 90 * k, 0, 90 * k, H);
+      ctx.fillStyle = `rgba(255,235,225,${0.75 + 0.25 * pu})`; ctx.font = `900 ${Math.round(22 * k)}px Nunito, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(side < 0 ? '▶▶' : '◀◀', side < 0 ? x + w + 22 * k + pu * 5 * k : x - 22 * k - pu * 5 * k, y + h / 2);
+    }
+    ctx.fillStyle = hot ? `rgba(${190 + 40 * pu},${32 + 20 * pu},22,.92)` : 'rgba(10,18,32,.55)'; rrect(x, y, w, h, 9 * k); ctx.fill();
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'; ctx.fillStyle = best.col; ctx.beginPath(); ctx.arc(x + 10 * k, y + 11 * k, 4 * k, 0, 6.2832); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(10.5 * k)}px Nunito, sans-serif`; ctx.fillText(hot ? '! ' + best.name : best.name, x + 18 * k, y + 14.5 * k, w - 22 * k);
+    const f = clamp(best.str / best.strMax, 0, 1); ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(x + 7 * k, y + 19.5 * k, w - 14 * k, 5 * k, 2.5 * k); ctx.fill();
+    ctx.fillStyle = f > 0.66 ? '#9fe0a8' : f > 0.33 ? '#f2c14e' : '#ff5a3c'; rrect(x + 7 * k, y + 19.5 * k, Math.max(5 * k, (w - 14 * k) * f), 5 * k, 2.5 * k); ctx.fill();
+    ctx.shadowBlur = 5;
+  }
   // call-outs
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(26,13,6,.72)';
   for (const m of R.msgs) {
@@ -141,14 +213,14 @@ function drawHud(R, now) {
   ctx.globalAlpha = 1;
   if (R.note) { ctx.globalAlpha = Math.min(1, (2.2 - R.note.t) / 0.4); ctx.font = sm; ctx.fillStyle = '#f6efdd'; ctx.fillText(R.note.text, W / 2, H * 0.24 + 26 * k); ctx.globalAlpha = 1; }
   if (R.phase === 'finish') {                // the finish: your place, the honest gap, and the wreath if you earned it
-    const res = R.res, win = res.place === 1, a = Math.min(1, R.ft / 0.25), pop = 1.5 - 0.5 * easeOut(a), cy = H * 0.4;
+    const res = R.res, win = res.place === 1 && !res.out, a = Math.min(1, R.ft / 0.25), pop = 1.5 - 0.5 * easeOut(a), cy = H * 0.4, big = res.out ? 'DESTROYED' : win ? 'VICTORY!' : ORD[res.place];
     ctx.globalAlpha = a;
     if (win) wreath(W / 2, cy - 4 * k, 86 * k * pop, '#7fae4e');
-    ctx.font = `${Math.round(58 * k * pop)}px ${GK}`; ctx.lineWidth = 7 * k; ctx.strokeText(win ? 'VICTORY!' : ORD[res.place], W / 2, cy, W * 0.9);
-    ctx.fillStyle = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#d9c9a8'; ctx.fillText(win ? 'VICTORY!' : ORD[res.place], W / 2, cy, W * 0.9);
+    ctx.font = `${Math.round((res.out ? 46 : 58) * k * pop)}px ${GK}`; ctx.lineWidth = 7 * k; ctx.strokeText(big, W / 2, cy, W * 0.9);
+    ctx.fillStyle = res.out ? '#ff7a6b' : win ? '#f2c14e' : res.ok ? '#f6efdd' : '#d9c9a8'; ctx.fillText(big, W / 2, cy, W * 0.9);
     ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; ctx.fillStyle = '#f6efdd'; ctx.lineWidth = 3.5 * k;
-    { const line = win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : `${res.gapAhead.toFixed(2)} s behind ${res.ahead}`; ctx.strokeText(line, W / 2, cy + 44 * k, W * 0.92); }
-    ctx.fillText(win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : `${res.gapAhead.toFixed(2)} s behind ${res.ahead}`, W / 2, cy + 44 * k, W * 0.92);
+    const line = res.out ? (res.by ? `Your chariot was broken by ${res.by}` : 'Your chariot broke up') : win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : res.ahead ? `${res.gapAhead.toFixed(2)} s behind ${res.ahead}` : '';
+    ctx.strokeText(line, W / 2, cy + 44 * k, W * 0.92); ctx.fillText(line, W / 2, cy + 44 * k, W * 0.92);
     if (R.ft > 0.9) { ctx.globalAlpha = 0.6 + 0.25 * Math.sin(now * 5); ctx.fillText('Tap to continue', W / 2, H * 0.92); }
     ctx.globalAlpha = 1;
   }
@@ -175,11 +247,16 @@ function drawHud(R, now) {
   ctx.fillStyle = 'rgba(10,18,32,.45)'; rrect(bx, wy, bw, 7 * k, 3.5 * k); ctx.fill();
   ctx.fillStyle = low ? (Math.sin(now * 14) > 0 ? '#ff5a3c' : '#ffb03a') : me.wind < 0.45 ? '#f2c14e' : '#9fe0a8'; rrect(bx, wy, Math.max(0.001, bw * me.wind), 7 * k, 3.5 * k); ctx.fill();
   ctx.fillStyle = 'rgba(246,239,221,.8)'; ctx.font = `800 ${Math.round(9 * k)}px Nunito, sans-serif`; ctx.fillText("HORSES' WIND", wxp, wy - 7 * k);
+  // how much more your own chariot can take, above the reins
+  const cf2 = clamp(me.str / me.strMax, 0, 1), cx0 = lx - bw / 2;
+  ctx.fillStyle = 'rgba(10,18,32,.45)'; rrect(cx0, wy, bw, 7 * k, 3.5 * k); ctx.fill();
+  ctx.fillStyle = me.hurtT < 0.3 && Math.sin(now * 45) > 0 ? '#fff' : cf2 < 0.34 ? (Math.sin(now * 14) > 0 ? '#ff5a3c' : '#ffb03a') : cf2 < 0.67 ? '#f2c14e' : '#9fe0a8'; rrect(cx0, wy, Math.max(0.001, bw * cf2), 7 * k, 3.5 * k); ctx.fill();
+  ctx.fillStyle = 'rgba(246,239,221,.8)'; ctx.fillText(cf2 < 0.34 ? 'CHARIOT FAILING' : cf2 < 0.67 ? 'CHARIOT DAMAGED' : 'YOUR CHARIOT', lx, wy - 7 * k);
   // the little map: every team on the oval
   const tot = T.Ls + 2 * (T.Rc + T.hw), ms = 100 * k / tot, mx = W / 2, my = H - 84 * k, ro = (T.Rc + T.hw) * ms, hl = T.Ls / 2 * ms;
   ctx.fillStyle = 'rgba(10,18,32,.38)'; ctx.beginPath(); ctx.arc(mx - hl, my, ro, Math.PI / 2, Math.PI * 1.5); ctx.arc(mx + hl, my, ro, -Math.PI / 2, Math.PI / 2); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(246,239,221,.5)'; ctx.lineWidth = Math.max(1.5, T.rIn * ms * 1.4); ctx.beginPath(); ctx.moveTo(mx - hl, my); ctx.lineTo(mx + hl, my); ctx.stroke();
-  for (const c of R.order) { if (c.wx == null || c.me) continue; ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(mx + c.wx * ms, my - c.wz * ms, 2.7 * k, 0, 6.2832); ctx.fill(); }
+  for (const c of R.order) { if (c.wx == null || c.me || c.st === 'out') continue; ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(mx + c.wx * ms, my - c.wz * ms, 2.7 * k, 0, 6.2832); ctx.fill(); }
   if (me.wx != null) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mx + me.wx * ms, my - me.wz * ms, 4 * k, 0, 6.2832); ctx.fill(); ctx.fillStyle = '#b3261e'; ctx.beginPath(); ctx.arc(mx + me.wx * ms, my - me.wz * ms, 2.4 * k, 0, 6.2832); ctx.fill(); }
   ctx.restore();
 }
@@ -237,7 +314,7 @@ function showHome() {
   const fav = R.cars[0];
   $('hLvl').textContent = level; $('hVenue').textContent = R.V.name; $('hGames').textContent = R.V.games;
   $('hPills').innerHTML = `<span class="pill">${R.laps} laps</span><span class="pill">${R.n} chariots</span><span class="pill">${R.boss ? 'Champion' : 'Favourite'}: ${fav.full}</span>` + (R.boss ? '<span class="pill" style="background:#f2c14e;color:#3a1d08">YOU MUST WIN</span>' : `<span class="pill">Top ${R.need} go through</span>`);
-  $('hStat').innerHTML = [bestTime[level] ? `Your best here: <b>${fmtT(bestTime[level])}</b>` : '', wreaths ? `Wreaths won: <b>${wreaths}</b>` : ''].filter(Boolean).join(' · ') + (R.help ? `<br><span class="help">Help on: your rivals drive a touch slower until you get through.</span>` : '');
+  $('hStat').innerHTML = [bestTime[level] ? `Your best here: <b>${fmtT(bestTime[level])}</b>` : '', wreaths ? `Wreaths won: <b>${wreaths}</b>` : '', broken ? `Rivals broken: <b>${broken}</b>` : ''].filter(Boolean).join(' · ') + (R.help ? `<br><span class="help">Help on: your rivals drive a touch slower and pick fewer fights until you get through.</span>` : '');
   show('ovHome');
 }
 function startRace() {
@@ -250,16 +327,23 @@ function startRace() {
 function showEnd() {
   if (!R || R.phase !== 'finish') return; R.phase = 'done'; loopsOff();
   const res = R.res, me = R.me, L = R.L, V = R.V, win = res.place === 1;
-  $('eTitle').textContent = win ? 'VICTORY!' : `${ORD[res.place]} PLACE`; $('eTitle').style.color = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#e0b8a0';
+  $('eTitle').textContent = res.out ? 'CHARIOT DESTROYED' : win ? 'VICTORY!' : `${ORD[res.place]} PLACE`; $('eTitle').style.color = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#e0b8a0';
   $('eStars').innerHTML = res.ok ? [1, 2, 3].map(i => `<span class="${i <= res.stars ? '' : 'off'}">★</span>`).join('') : '';
   if (!res.board || !res.board.length) settle(R);
   const bd = res.board, rows = bd.slice(0, 3); if (!rows.some(x => x.c === me)) rows.push(bd.find(x => x.c === me));       // the real finishing order: the first three, and you
-  $('eBoard').innerHTML = rows.map(x => { const i = bd.indexOf(x), gap = i === 0 ? fmtT(x.fin) : x.fin ? `+${(x.fin - bd[0].fin).toFixed(2)} s` : 'did not finish'; return `<div class="${x.c.me ? 'me' : ''}"><span>${i + 1}. ${x.c.full}</span><span>${gap}</span></div>`; }).join('');
+  $('eBoard').innerHTML = rows.map(x => { const i = bd.indexOf(x), gap = x.out ? 'broken' : i === 0 ? fmtT(x.fin) : x.fin ? `+${(x.fin - bd[0].fin).toFixed(2)} s` : 'did not finish'; return `<div class="${x.c.me ? 'me' : ''}"><span>${i + 1}. ${x.c.full}</span><span>${gap}</span></div>`; }).join('');
+  const fight = me.rams || me.kills || me.hits ? `<br>Rams landed <b>${me.rams}</b> · rivals broken <b>${me.kills}</b> · blows taken <b>${me.hits}</b>` : '';
+  if (res.out) {
+    $('eStars').innerHTML = '';
+    $('eSub').innerHTML = `${res.by ? `Broken by ${res.by}.` : 'Your chariot could take no more.'} ${res.by ? 'When a rival draws level, keep room to steer away: against the wall you cannot dodge.' : 'Wrecks and hard knocks on the walls wear your chariot down.'}` + fight +
+      ((streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: your rivals will drive a touch slower and pick fewer fights here until you get through.</span>` : '');
+    $('eMain').textContent = 'TRY AGAIN'; $('eMain').dataset.act = 'again'; $('eAlt').classList.add('hidden'); show('ovEnd'); return;
+  }
   const tip = me.wrecks ? 'A wreck costs about five seconds.' : me.pTurns * 2 < me.turns ? 'Rein in before the post, then hold the inside line.' : me.pWhips < me.whips * 0.7 ? 'Whip on the beat to keep your horses fresh.' : 'To pass, get close behind a rival and turn inside them at the post.';
   $('eSub').innerHTML = (win ? `You win ${V.prize}.` : res.ok ? `Through to the next race. First place wins ${V.prize}.` : `${R.boss ? 'Only a win will do here.' : `You needed the top ${R.need}.`} ${tip}`) +
     `<br>Time <b>${fmtT(res.time)}</b>${res.nbT ? ' <b class="nb">NEW BEST</b>' : res.prevT ? ` · best ${fmtT(Math.min(res.prevT, res.time))}` : ''} · best lap <b>${res.lap.toFixed(2)} s</b>${res.nbL ? ' <b class="nb">NEW BEST</b>' : ''}` +
-    `<br>Perfect turns <b>${me.pTurns}/${me.turns}</b> · longest whip chain <b>${me.topChain}</b>${res.nbC ? ' <b class="nb">NEW BEST</b>' : ''}` +
-    (!res.ok && (streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: your rivals will drive a touch slower here until you get through.</span>` : '');
+    `<br>Perfect turns <b>${me.pTurns}/${me.turns}</b> · longest whip chain <b>${me.topChain}</b>${res.nbC ? ' <b class="nb">NEW BEST</b>' : ''}` + fight +
+    (!res.ok && (streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: your rivals will drive a touch slower and pick fewer fights here until you get through.</span>` : '');
   $('eMain').textContent = res.ok ? 'NEXT RACE' : 'TRY AGAIN'; $('eMain').dataset.act = res.ok ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !res.ok);
   show('ovEnd');

@@ -44,7 +44,23 @@ const sfx = {
   place() { [0, 2, 4].forEach((st, i) => pluck(note(330, st), 0.9, 0.2, i * 0.1)); },
   lose() { pluck(294, 0.9, 0.2, 0); pluck(262, 0.9, 0.2, 0.2); pluck(220, 1.2, 0.22, 0.42); },
   best() { [0, 2, 4].forEach((st, i) => tone(note(659, st), 0.22, 0.08, 'sine', i * 0.08)); },
-  click() { noise(0.01, 5000, 0.15, 'highpass'); tone(1500 * vary(), 0.04, 0.05, 'triangle', 0, null, 3500); }
+  click() { noise(0.01, 5000, 0.15, 'highpass'); tone(1500 * vary(), 0.04, 0.05, 'triangle', 0, null, 3500); },
+  ram(d) {                            // wood on wood: a crack, a heavy thump, splinters; bigger for a bigger blow
+    const v = vary(0.08), s = clamp((+d || 20) / 36, 0.3, 1);
+    noise(0.015, 3800, 0.5 * s, 'highpass'); noise(0.16, 520 * v, 0.85 * s); tone(96 * v, 0.22, 0.38 * s, 'sine', 0, 44);
+    for (let i = 0; i < 3; i++) noise(0.035, 1700 + Math.random() * 2200, 0.26 * s, 'bandpass', 2.5, 0.03 + i * 0.045);
+    duck(0.5, 350);
+  },
+  warn() { if (!gate('warn', 450)) return; tone(494, 0.08, 0.075, 'triangle', 0, null, 3000); tone(494, 0.08, 0.075, 'triangle', 0.12, null, 3000); sweep(0.4, 380, 1300, 0.09, 2.2, 0.04); },     // two quick knocks and a rising creak: someone is winding up beside you
+  dodge() { sweep(0.24, 2400, 600, 0.15, 1.2); tone(note(523, 2), 0.14, 0.05, 'triangle', 0.06, null, 5000); },
+  creak() { if (!gate('creak', 800)) return; tone(140 * vary(0.1), 0.25, 0.03, 'sawtooth', 0, 105, 480); noise(0.1, 1900, 0.05, 'bandpass', 4, 0.05); },       // a battered chariot complains
+  out(mine) {                         // a chariot breaks up: the crash, planks, and a wheel bowling away
+    noise(0.02, 3500, 0.6, 'highpass'); noise(0.55, 560, 0.95); tone(70, 0.6, 0.45, 'sine', 0, 30);
+    for (let i = 0; i < 8; i++) noise(0.05, 1300 + Math.random() * 2600, 0.3, 'bandpass', 2.2, 0.05 + i * 0.06 + Math.random() * 0.03);
+    for (let i = 0; i < 7; i++) noise(0.03, 900, 0.16 * (1 - i / 8), 'lowpass', 1, 0.6 + i * (0.09 + i * 0.012));
+    sweep(1.0, 700, 300, 0.2, 0.7, 0.25); duck(0.7, mine ? 1300 : 800);
+  },
+  kill() { [0, 2, 4, 7].forEach((st, i) => horn(note(392, st), 0.1 + (i === 3 ? 0.3 : 0), 0.075, 0.25 + i * 0.1)); }       // you broke a rival: a short trumpet call
 };
 MUTE = store.get('mute', false);
 
@@ -88,6 +104,7 @@ function makeRace(L, opts = {}) {
   const f = curve(L), e = easyOf(L), boss = L % 10 === 0, r = rng(L * 7717 + 11), pk = a => a[(r() * a.length) | 0];
   const V = venueOf(L), T = makeTrack(V), n = L <= 5 ? 4 : L <= 14 ? 6 : 8, laps = L <= 2 ? 2 : 3;
   const help = !!opts.help, skill = Math.min(0.92, 1 - Math.exp(-(f + 3) / 24)), spread = 0.78 - 0.08 * skill, cars = [], used = new Set(), usedN = new Set();
+  const cb = clamp((L - 3) / 30, 0, 1), rough = L < 4 ? [] : L < 10 ? [0] : L < 20 ? [0, 2] : L < 35 ? [0, 1, 3] : [0, 1, 2, 4];      // how rough the racing is, and which rivals start it (nobody before race 4)
   for (let i = 0; i < n - 1; i++) {
     const isBoss = boss && i === 0, q = isBoss ? 1.07 : n > 2 ? 1 - i * spread / (n - 2) : 1, qc = Math.min(1, q);
     let pol; do pol = pk(POLEIS); while (used.has(pol[0])); used.add(pol[0]);
@@ -101,7 +118,10 @@ function makeRace(L, opts = {}) {
       uA: clamp(0.1 + 0.82 * skill + (q - 0.6) * (0.08 + 0.16 * skill) - (help ? 0.12 : 0), 0, 0.96),          // how hard they drive the team
       cs: clamp(0.8 + 0.145 * skill + (q - 0.6) * 0.05 - (help ? 0.04 : 0), 0.7, 0.965),                         // how close to the limit they corner
       cl, sl: clamp(cl + 1.2 + (i % 3) * 2.3, T.dMin + 1, T.dMax - 1),                                            // corner lane and straight lane
-      pm: 0.02 + 0.2 * (1 - skill) * (1.3 - qc), rt: 0.12 + 0.55 * (1 - skill) * (1.4 - qc) * r(), agg: L >= 12 && i === 0 ? 0.35 * skill : 0
+      pm: 0.02 + 0.2 * (1 - skill) * (1.3 - qc), rt: 0.12 + 0.55 * (1 - skill) * (1.4 - qc) * r(), agg: L >= 12 && i === 0 ? 0.35 * skill : 0,
+      brute: rough.includes(i) ? 1 : 0,                                                                              // will it start a fight?
+      dodge: clamp(0.08 + 0.6 * skill + (isBoss ? 0.12 : i === 0 ? 0.06 : 0) - (help ? 0.15 : 0), 0, 0.8),           // how often it sees your swing coming and pulls away
+      str: isBoss ? 130 : i === 0 ? 95 : 80, strMax: isBoss ? 130 : i === 0 ? 95 : 80                                // how much its chariot can take (yours takes 100)
     }));
   }
   const me = newChariot({ me: true, name: 'YOU', full: 'You', em: '★', col: '#b3261e', col2: '#f2c14e', coats: ['#efe9dc', '#e4dccb', '#f3eee4', '#dfd6c5'] });
@@ -114,7 +134,8 @@ function makeRace(L, opts = {}) {
   cars.push(me);
   const kc = PH.KC * (1 - 0.6 * e), rRef = T.rIn + 2.3;
   return {
-    L, V, T, cars, me, n, laps, boss, help, f, e, order: cars.slice(), t: 0, ct: 0, tickN: 0, phase: 'home', finN: 0, evs: [], parts: [], msgs: [], A: null, crowd: 0.25, ft: 0,
+    L, V, T, cars, me, n, laps, boss, help, f, e, order: cars.slice(), t: 0, ct: 0, tickN: 0, phase: 'home', finN: 0, evs: [], parts: [], msgs: [], loose: [], floats: [], A: null, crowd: 0.25, ft: 0,
+    tell: 1 - 0.45 * cb + (help ? 0.25 : 0), ramRate: (L < 10 ? 0.8 : 0.45 + 0.45 * cb) * (help ? 0.5 : 1), ramCd: 8 - 4 * cb, ramGap: 10 - 3 * cb + (help ? 3 : 0), atkCd: 0, ramTurn: L >= 20, dmgIn: L <= 5 ? 0.35 : Math.min(0.8, 0.35 + (L - 5) * 0.036),      // the fighting: length of the warning, how keen the rough ones are, their rest between swings, the breather you get between attacks, whether they swing in the turns, how much of a blow your sturdier chariot feels
     cfScale: 1 - 0.6 * e, assist: L <= 10, assistPre: clamp((8 - L) / 6, 0, 1), assistIn: L <= 5 ? 1 + 0.1 * Math.max(0, L - 4) : 1.3 + 0.3 * (L - 6), hint: L <= 5 ? 2 : L <= 10 ? 1 : 0,
     wP: 0.075 + 0.065 * Math.exp(-f / 18) + 0.03 * e, wG: Math.min(0.24, 2 * (0.075 + 0.065 * Math.exp(-f / 18) + 0.03 * e)),
     postWreck: L >= 6, wallWreck: L >= 8, tipWreck: L >= 8, tipAt: 0.55 + 0.35 * clamp((12 - L) / 4, 0, 1), wallAt: 5.6 + 5 * clamp((13 - L) / 5, 0, 1), wreckT: 2.3, autoStart: L <= 1 ? 0.05 : 0.5, need: boss ? 1 : n <= 4 ? 2 : 3,

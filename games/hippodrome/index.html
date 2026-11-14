@@ -12,7 +12,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .gk{font-family:"Caesar Dressing",Georgia,"Times New Roman",serif;letter-spacing:1px;font-weight:400}
 #pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.32);color:#f6efdd;font-weight:800;cursor:pointer}
 #pauseBtn.hidden{display:none}
-.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,rgba(14,31,51,.62),rgba(7,14,24,.93))}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(14,31,51,.62),rgba(7,14,24,.93))}
 .ov.hidden,.btn.hidden{display:none}
 .card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
 .card h1{margin:0;font-size:47px;line-height:1;color:#f2c14e;text-shadow:0 4px 0 #8a4a1a,0 10px 24px rgba(0,0,0,.5)}
@@ -73,12 +73,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
   <div class="card">
     <h2 class="gk">HOW TO RACE</h2>
     <ul class="rules">
-      <li><b>Left thumb: the reins.</b> Slide left or right to steer your team.</li>
-      <li><b>Right thumb: the whip.</b> Tap to crack it. Tap just as the ring closes, in time with the gallop, for a PERFECT crack: more speed and fresher horses.</li>
-      <li><b>Mind their wind.</b> Whip too often, or off the beat, and the horses are blown and slow right down.</li>
-      <li><b>The turn.</b> Hold your right thumb down to rein in before the post, steer round with your left, then let go and whip away. Too fast and you slide out to the wall. Too tight and you strike the post.</li>
-      <li><b>The inside wins.</b> The closer you pass the post, the faster the turn, and the bigger the risk. Rivals swing a little wide on the way in: get close behind one, turn tighter, and you take the inside.</li>
-      <li><b>The start.</b> Three trumpet notes, then GO. Crack the whip right on GO. Too early and your team rears.</li>
+      <li><b>Left thumb: the reins.</b> Slide left or right to steer.</li>
+      <li><b>Right thumb: the whip.</b> Tap just as the ring closes, in time with the gallop, for a PERFECT crack: more speed, fresher horses. Whip too often or off the beat and the horses are blown.</li>
+      <li><b>The turn.</b> Hold your right thumb to rein in before the post, steer round with your left, then let go and whip away. Too fast and you slide out to the wall. Too tight and you strike the post.</li>
+      <li><b>The inside wins.</b> The closer to the post, the faster the turn. Rivals swing wide on the way in: get close behind one and turn tighter to pass.</li>
+      <li><b>Ram.</b> Swerve hard into a rival who is level with you. Harder hits break more, and more still against a wall. Break their chariot and they are out. Each blow costs yours a little.</li>
+      <li><b>Dodge.</b> Rough rivals ram you too. The screen edge glows red on their side before they swing: steer away. Against the wall you cannot, so keep some room. If your chariot is destroyed, your race is over.</li>
+      <li><b>The start.</b> Three trumpet notes, then GO: crack the whip right on GO.</li>
       <li>Finish near the front to unlock the next race. First place wins the wreath.</li>
     </ul>
     <button class="btn" data-back>Got it</button>
@@ -129,7 +130,7 @@ const store = {
   set(key, v) { try { localStorage.setItem('hp.' + key, JSON.stringify(v)); } catch (e) {} }
 };
 let unlocked = store.get('unlocked', 1), level = Math.min(store.get('level', 1), unlocked), stars = store.get('stars', {});
-let bestTime = store.get('bestTime', {}), bestLap = store.get('bestLap', {}), bestChain = store.get('bestChain', 0), streaks = store.get('streaks', {}), wreaths = store.get('wreaths', 0);
+let bestTime = store.get('bestTime', {}), bestLap = store.get('bestLap', {}), bestChain = store.get('bestChain', 0), streaks = store.get('streaks', {}), wreaths = store.get('wreaths', 0), broken = store.get('broken', 0);
 let HEADLESS = false;
 
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -266,7 +267,23 @@ const sfx = {
   place() { [0, 2, 4].forEach((st, i) => pluck(note(330, st), 0.9, 0.2, i * 0.1)); },
   lose() { pluck(294, 0.9, 0.2, 0); pluck(262, 0.9, 0.2, 0.2); pluck(220, 1.2, 0.22, 0.42); },
   best() { [0, 2, 4].forEach((st, i) => tone(note(659, st), 0.22, 0.08, 'sine', i * 0.08)); },
-  click() { noise(0.01, 5000, 0.15, 'highpass'); tone(1500 * vary(), 0.04, 0.05, 'triangle', 0, null, 3500); }
+  click() { noise(0.01, 5000, 0.15, 'highpass'); tone(1500 * vary(), 0.04, 0.05, 'triangle', 0, null, 3500); },
+  ram(d) {                            // wood on wood: a crack, a heavy thump, splinters; bigger for a bigger blow
+    const v = vary(0.08), s = clamp((+d || 20) / 36, 0.3, 1);
+    noise(0.015, 3800, 0.5 * s, 'highpass'); noise(0.16, 520 * v, 0.85 * s); tone(96 * v, 0.22, 0.38 * s, 'sine', 0, 44);
+    for (let i = 0; i < 3; i++) noise(0.035, 1700 + Math.random() * 2200, 0.26 * s, 'bandpass', 2.5, 0.03 + i * 0.045);
+    duck(0.5, 350);
+  },
+  warn() { if (!gate('warn', 450)) return; tone(494, 0.08, 0.075, 'triangle', 0, null, 3000); tone(494, 0.08, 0.075, 'triangle', 0.12, null, 3000); sweep(0.4, 380, 1300, 0.09, 2.2, 0.04); },     // two quick knocks and a rising creak: someone is winding up beside you
+  dodge() { sweep(0.24, 2400, 600, 0.15, 1.2); tone(note(523, 2), 0.14, 0.05, 'triangle', 0.06, null, 5000); },
+  creak() { if (!gate('creak', 800)) return; tone(140 * vary(0.1), 0.25, 0.03, 'sawtooth', 0, 105, 480); noise(0.1, 1900, 0.05, 'bandpass', 4, 0.05); },       // a battered chariot complains
+  out(mine) {                         // a chariot breaks up: the crash, planks, and a wheel bowling away
+    noise(0.02, 3500, 0.6, 'highpass'); noise(0.55, 560, 0.95); tone(70, 0.6, 0.45, 'sine', 0, 30);
+    for (let i = 0; i < 8; i++) noise(0.05, 1300 + Math.random() * 2600, 0.3, 'bandpass', 2.2, 0.05 + i * 0.06 + Math.random() * 0.03);
+    for (let i = 0; i < 7; i++) noise(0.03, 900, 0.16 * (1 - i / 8), 'lowpass', 1, 0.6 + i * (0.09 + i * 0.012));
+    sweep(1.0, 700, 300, 0.2, 0.7, 0.25); duck(0.7, mine ? 1300 : 800);
+  },
+  kill() { [0, 2, 4, 7].forEach((st, i) => horn(note(392, st), 0.1 + (i === 3 ? 0.3 : 0), 0.075, 0.25 + i * 0.1)); }       // you broke a rival: a short trumpet call
 };
 MUTE = store.get('mute', false);
 
@@ -310,6 +327,7 @@ function makeRace(L, opts = {}) {
   const f = curve(L), e = easyOf(L), boss = L % 10 === 0, r = rng(L * 7717 + 11), pk = a => a[(r() * a.length) | 0];
   const V = venueOf(L), T = makeTrack(V), n = L <= 5 ? 4 : L <= 14 ? 6 : 8, laps = L <= 2 ? 2 : 3;
   const help = !!opts.help, skill = Math.min(0.92, 1 - Math.exp(-(f + 3) / 24)), spread = 0.78 - 0.08 * skill, cars = [], used = new Set(), usedN = new Set();
+  const cb = clamp((L - 3) / 30, 0, 1), rough = L < 4 ? [] : L < 10 ? [0] : L < 20 ? [0, 2] : L < 35 ? [0, 1, 3] : [0, 1, 2, 4];      // how rough the racing is, and which rivals start it (nobody before race 4)
   for (let i = 0; i < n - 1; i++) {
     const isBoss = boss && i === 0, q = isBoss ? 1.07 : n > 2 ? 1 - i * spread / (n - 2) : 1, qc = Math.min(1, q);
     let pol; do pol = pk(POLEIS); while (used.has(pol[0])); used.add(pol[0]);
@@ -323,7 +341,10 @@ function makeRace(L, opts = {}) {
       uA: clamp(0.1 + 0.82 * skill + (q - 0.6) * (0.08 + 0.16 * skill) - (help ? 0.12 : 0), 0, 0.96),          // how hard they drive the team
       cs: clamp(0.8 + 0.145 * skill + (q - 0.6) * 0.05 - (help ? 0.04 : 0), 0.7, 0.965),                         // how close to the limit they corner
       cl, sl: clamp(cl + 1.2 + (i % 3) * 2.3, T.dMin + 1, T.dMax - 1),                                            // corner lane and straight lane
-      pm: 0.02 + 0.2 * (1 - skill) * (1.3 - qc), rt: 0.12 + 0.55 * (1 - skill) * (1.4 - qc) * r(), agg: L >= 12 && i === 0 ? 0.35 * skill : 0
+      pm: 0.02 + 0.2 * (1 - skill) * (1.3 - qc), rt: 0.12 + 0.55 * (1 - skill) * (1.4 - qc) * r(), agg: L >= 12 && i === 0 ? 0.35 * skill : 0,
+      brute: rough.includes(i) ? 1 : 0,                                                                              // will it start a fight?
+      dodge: clamp(0.08 + 0.6 * skill + (isBoss ? 0.12 : i === 0 ? 0.06 : 0) - (help ? 0.15 : 0), 0, 0.8),           // how often it sees your swing coming and pulls away
+      str: isBoss ? 130 : i === 0 ? 95 : 80, strMax: isBoss ? 130 : i === 0 ? 95 : 80                                // how much its chariot can take (yours takes 100)
     }));
   }
   const me = newChariot({ me: true, name: 'YOU', full: 'You', em: '★', col: '#b3261e', col2: '#f2c14e', coats: ['#efe9dc', '#e4dccb', '#f3eee4', '#dfd6c5'] });
@@ -336,7 +357,8 @@ function makeRace(L, opts = {}) {
   cars.push(me);
   const kc = PH.KC * (1 - 0.6 * e), rRef = T.rIn + 2.3;
   return {
-    L, V, T, cars, me, n, laps, boss, help, f, e, order: cars.slice(), t: 0, ct: 0, tickN: 0, phase: 'home', finN: 0, evs: [], parts: [], msgs: [], A: null, crowd: 0.25, ft: 0,
+    L, V, T, cars, me, n, laps, boss, help, f, e, order: cars.slice(), t: 0, ct: 0, tickN: 0, phase: 'home', finN: 0, evs: [], parts: [], msgs: [], loose: [], floats: [], A: null, crowd: 0.25, ft: 0,
+    tell: 1 - 0.45 * cb + (help ? 0.25 : 0), ramRate: (L < 10 ? 0.8 : 0.45 + 0.45 * cb) * (help ? 0.5 : 1), ramCd: 8 - 4 * cb, ramGap: 10 - 3 * cb + (help ? 3 : 0), atkCd: 0, ramTurn: L >= 20, dmgIn: L <= 5 ? 0.35 : Math.min(0.8, 0.35 + (L - 5) * 0.036),      // the fighting: length of the warning, how keen the rough ones are, their rest between swings, the breather you get between attacks, whether they swing in the turns, how much of a blow your sturdier chariot feels
     cfScale: 1 - 0.6 * e, assist: L <= 10, assistPre: clamp((8 - L) / 6, 0, 1), assistIn: L <= 5 ? 1 + 0.1 * Math.max(0, L - 4) : 1.3 + 0.3 * (L - 6), hint: L <= 5 ? 2 : L <= 10 ? 1 : 0,
     wP: 0.075 + 0.065 * Math.exp(-f / 18) + 0.03 * e, wG: Math.min(0.24, 2 * (0.075 + 0.065 * Math.exp(-f / 18) + 0.03 * e)),
     postWreck: L >= 6, wallWreck: L >= 8, tipWreck: L >= 8, tipAt: 0.55 + 0.35 * clamp((12 - L) / 4, 0, 1), wallAt: 5.6 + 5 * clamp((13 - L) / 5, 0, 1), wreckT: 2.3, autoStart: L <= 1 ? 0.05 : 0.5, need: boss ? 1 : n <= 4 ? 2 : 3,
@@ -370,16 +392,31 @@ function turnInfo(T, s, o = TI) {            // k: 1 inside a turn; dist: metres
 const sOf = (T, p) => { let s = (T.s0 + p) % T.L; if (s < 0) s += T.L; return s; };
 
 // ---------- physics: the same rules for every chariot ----------
-const PH = { vTop: 24, cruise: 0.78, acc: 4.6, accU: 3.4, brk: 11, coast: 2.4, VLAT: 8.5, KC: 0.54, resp: 9, tau: 6, gain: [0, 0.18, 0.3], cost: [0.17, 0.1, 0.06], regen: 0.04, LEN: 5.2, WID: 2.7 };
+const PH = { vTop: 24, cruise: 0.78, acc: 4.6, accU: 3.4, brk: 11, coast: 2.4, VLAT: 8.5, KC: 0.54, resp: 9, tau: 6, gain: [0, 0.18, 0.3], cost: [0.17, 0.1, 0.06], regen: 0.04, LEN: 5.2, WID: 2.7,
+  RAMV: 2, RAMK: 4.6, RAMMAX: 30, RECOIL: 0.25, PIN: 1.5, WHEEL: 1.25, WRECKD: 25 };      // ramming: closing speed that starts to hurt, damage per m/s above it, the most one blow can do, what the striker takes back, bonuses, what a wreck costs
 const rEff = (T, r) => T.r0 * Math.pow(Math.max(r, 1) / T.r0, 0.6);           // a wide line carries more speed, but not as much as its extra length needs: the inside is the fast way round
 const holdSpeed = (T, r, kc = PH.KC) => Math.sqrt(PH.VLAT * rEff(T, r) / kc);  // the fastest a line of radius r can be held with the reins hard over
 const strideT = v => lerp(0.92, 0.72, clamp((v - 8) / (PH.vTop - 8), 0, 1));   // seconds per whip beat: the gallop quickens with speed
 function newChariot(o) {
   return Object.assign({ p: 0, d: 0, v: 0, vd: 0, urge: 0, wind: 1, ph: 0, beatN: 0, lastBeat: -1, gal: Math.random(), wheel: 0, st: 'grid', wt: 0, blown: 0, balk: 0, slide: 0, tip: 0, scrape: 0, lat: 0, u: 0, b: 0,
-    lap: 1, fin: 0, place: 0, ghost: 0, whipT: 9, hitT: 9, onW: 0, auto: 0, rank: 0, react: 0, chain: 0, topChain: 0, pWhips: 0, whips: 0, turns: 0, pTurns: 0, tChain: 0, inTurn: 0, wrecks: 0, lapT0: 0, bestLap: 0, surge: 0, bErr: 0, wasT: 0, side: 0, sideT: 0 }, o);
+    lap: 1, fin: 0, place: 0, ghost: 0, whipT: 9, hitT: 9, onW: 0, auto: 0, rank: 0, react: 0, chain: 0, topChain: 0, pWhips: 0, whips: 0, turns: 0, pTurns: 0, tChain: 0, inTurn: 0, wrecks: 0, lapT0: 0, bestLap: 0, surge: 0, bErr: 0, wasT: 0, side: 0, sideT: 0,
+    str: 100, strMax: 100, ramT: 9, hurtT: 9, dSide: 0, rm: 0, rmT: 0, rmS: 0, rmCd: 3 + Math.random() * 3, rmD0: 0, dgT: 0, dgW: 0, dgS: 0, dgCd: 0, anger: 0, brute: 0, dodge: 0, outT: 0, outAt: 0, rams: 0, kills: 0, hits: 0, dodges: 0 }, o);
 }
 function ev(R, c, type, val) { if (!HEADLESS) R.evs.push({ c, type, val }); }
-function wreckIt(c, R) { c.st = 'wreck'; c.wt = 0; c.tip = 0; c.urge = 0; c.u = 0; c.b = 0; c.wrecks++; c.tHit = 1; c.chain = 0; ev(R, c, 'wreck'); }
+function wreckIt(c, R) { c.st = 'wreck'; c.wt = 0; c.tip = 0; c.urge = 0; c.u = 0; c.b = 0; c.rm = 0; c.wrecks++; c.tHit = 1; c.chain = 0; ev(R, c, 'wreck'); hurt(c, R, PH.WRECKD * (c.me ? R.dmgIn : 1), null, 0); }
+function hurt(c, R, dmg, by, side) {         // the chariot itself takes a knock; enough of them and it breaks up
+  if (!(dmg > 0) || c.st === 'out' || c.st === 'fin' || c.st === 'grid') return 0;
+  c.str -= dmg; c.hurtT = 0; if (side) c.dSide = side;
+  if (c.str <= 0.5) { c.str = 0; destroy(c, R, by); }
+  return dmg;
+}
+function destroy(c, R, by) {                 // broken up: out of the race for good
+  c.st = 'out'; c.outT = 0; c.outAt = R.t; c.urge = 0; c.u = 0; c.b = 0; c.rm = 0; c.by = by || null; c.ghost = 0;
+  if (by) by.kills++;
+  if (R.me.warn && R.me.warn.by === c) R.me.warn = null;
+  ev(R, c, 'out', by);
+  if (c.me) endOut(R);
+}
 function beatErr(c) { return (c.ph < 0.5 ? c.ph : c.ph - 1) * strideT(c.v); }   // seconds from the nearest beat (negative = early)
 function whip(c, q) {                        // q: 2 on the beat, 1 near it, 0 off it
   c.whipT = 0; c.whips++;
@@ -389,8 +426,9 @@ function whip(c, q) {                        // q: 2 on the beat, 1 near it, 0 o
 }
 function stepChariot(c, dt, R) {
   const T = R.T;
-  c.whipT += dt; c.hitT += dt; if (c.ghost > 0) c.ghost -= dt; if (c.auto > 0) c.auto -= dt;
+  c.whipT += dt; c.hitT += dt; c.ramT += dt; c.hurtT += dt; if (c.ghost > 0) c.ghost -= dt; if (c.auto > 0) c.auto -= dt; if (c.anger > 0) c.anger -= dt;
   if (c.st === 'grid') return;
+  if (c.st === 'out') { c.outT += dt; c.v = Math.max(0, c.v - 20 * dt); c.p += c.v * dt; c.vd *= 0.9; c.d = clamp(c.d + c.vd * dt, T.dMin, T.dMax); c.slide = 0; c.scrape = 0; c.lat = 0; return; }
   if (c.st === 'wreck') {
     c.wt += dt; c.v = Math.max(0, c.v - 26 * dt); c.p += c.v * dt; c.vd *= 0.9; c.slide = 0; c.scrape = 0; c.lat = 0;
     if (c.wt >= R.wreckT) { c.st = 'run'; c.v = 2.5; c.vd = 0; c.urge = 0; c.ghost = 1.5; c.wt = 0; c.onW = 0; c.d = clamp(c.d, T.dMin + 1.2, T.dMax - 1.2); }
@@ -429,14 +467,14 @@ function stepChariot(c, dt, R) {
   c.scrape = Math.max(0, c.scrape - dt * 5);
   if (c.d > T.dMax) {
     const imp = Math.max(0, c.vd); c.d = T.dMax; c.vd = 0;
-    if (!c.onW) { c.onW = 1; if (imp > 0.6) { c.v *= 1 - Math.min(0.55, 0.06 + imp * 0.05); c.hitT = 0; c.tHit = 1; ev(R, c, 'wall', imp); if (R.wallWreck && imp > R.wallAt && c.v > 12 && !fin) { wreckIt(c, R); return; } } }
+    if (!c.onW) { c.onW = 1; if (imp > 0.6) { c.v *= 1 - Math.min(0.55, 0.06 + imp * 0.05); c.hitT = 0; c.tHit = 1; ev(R, c, 'wall', imp); if (R.wallWreck && imp > R.wallAt && c.v > 12 && !fin) { wreckIt(c, R); return; } if (imp > 3 && !fin) { hurt(c, R, (imp - 3) * 2.2 * (c.me ? R.dmgIn : 1), null, 1); if (c.st === 'out') return; } } }
     if (c.v > 10) c.v = Math.max(10, c.v - 16 * dt); c.scrape = 1; c.tHit = 1;
   } else if (c.d < T.dMin) {
     const imp = Math.max(0, -c.vd), post = inT || dist < 1.5;
     c.d = T.dMin;
     if (post && R.postWreck && c.v > 9 && c.ghost <= 0 && !fin) { ev(R, c, 'post'); wreckIt(c, R); return; }
     c.vd = post ? 2.5 : 0;
-    if (!c.onW) { c.onW = 1; if (imp > 0.6 || post) { c.v *= 1 - Math.min(0.4, 0.06 + imp * 0.045); c.hitT = 0; ev(R, c, 'wall', imp); } }
+    if (!c.onW) { c.onW = 1; if (imp > 0.6 || post) { c.v *= 1 - Math.min(0.4, 0.06 + imp * 0.045); c.hitT = 0; ev(R, c, 'wall', imp); if (imp > 3 && !fin) { hurt(c, R, (imp - 3) * 2.2 * (c.me ? R.dmgIn : 1), null, -1); if (c.st === 'out') return; } } }
     if (c.v > 10) c.v = Math.max(10, c.v - 16 * dt); c.scrape = 1; c.tHit = 1;
   } else if (c.d < T.dMax - 0.25 && c.d > T.dMin + 0.25) c.onW = 0;
   // forward: the inside of a turn is the short way round
@@ -458,14 +496,17 @@ function aiDrive(c, R, dt) {
   let dT = inT ? (a < 0.8 ? ent : a < 1.7 ? lerp(ent, c.cl, (a - 0.8) / 0.9) : c.cl + (a > 2 && !c.hug ? (a - 2) * 3 : 0)) : dist < 80 ? lerp(ent, c.sl, clamp((dist - 12) / 68, 0, 1)) : c.sl;
   let slow = null, sdp = 1e9;
   for (const o of R.cars) {
-    if (o === c || o.st === 'grid' || o.st === 'fin' || o.ghost > 0) continue;
+    if (o === c || o.st === 'grid' || o.st === 'fin' || o.st === 'out' || o.ghost > 0) continue;
     let dp = o.p - c.p; dp -= Math.round(dp / T.L) * T.L;
     if (dp > 1 && dp < 7 + c.v * 0.6 && Math.abs(o.d - dT) < 2.9 && (o.v < c.v - 0.2 || o.st === 'wreck')) { if (dp < sdp) { slow = o; sdp = dp; } }
-    else if (Math.abs(dp) < 5.6 && Math.abs(o.d - c.d) < 3.3) dT = o.d > c.d ? Math.min(dT, o.d - 3.0) : Math.max(dT, o.d + 3.0);   // someone alongside: keep a wheel's width
+    else if (Math.abs(dp) < 5.6 && Math.abs(o.d - c.d) < 3.3) {          // someone alongside: keep a wheel's width (but it will not be herded on to a wall by you: it holds its ground 1.7 m out)
+      if (o.d > c.d) { const y = o.d - 3.0; if (y < dT) dT = o.me ? Math.max(y, Math.min(dT, T.dMin + 1.7)) : y; }
+      else { const y = o.d + 3.0; if (y > dT) dT = o.me ? Math.min(y, Math.max(dT, T.dMax - 1.7)) : y; }
+    }
   }
   let boxed = false;
   if (slow) {                               // a slower team ahead: go round, inside or outside, whichever is open
-    const free = d => d > T.dMin + 0.2 && d < T.dMax - 0.2 && !R.cars.some(o => { if (o === c || o === slow || o.st === 'grid') return false; let dp = o.p - c.p; dp -= Math.round(dp / T.L) * T.L; return Math.abs(dp) < 9 && Math.abs(o.d - d) < 2.8; });
+    const free = d => d > T.dMin + 0.2 && d < T.dMax - 0.2 && !R.cars.some(o => { if (o === c || o === slow || o.st === 'grid' || o.st === 'out') return false; let dp = o.p - c.p; dp -= Math.round(dp / T.L) * T.L; return Math.abs(dp) < 9 && Math.abs(o.d - d) < 2.8; });
     const din = slow.d - 3.1, dout = slow.d + 3.1, fi = free(din), fo = free(dout);
     if (c.side && R.t - c.sideT > 1.5) c.side = 0;
     if (!c.side) { c.side = fi && fo ? (Math.abs(din - c.d) < Math.abs(dout - c.d) ? -1 : 1) : fi ? -1 : fo ? 1 : 0; c.sideT = R.t; }
@@ -474,9 +515,12 @@ function aiDrive(c, R, dt) {
   if (c.agg && !inT && dist > 40) {         // the favourite covers the line of whoever is coming up behind
     for (const o of R.cars) { if (o === c || o.st !== 'run') continue; let dp = c.p - o.p; dp -= Math.round(dp / T.L) * T.L; if (dp > 5.5 && dp < 15 && o.v > c.v + 0.4) { dT = lerp(dT, o.d, c.agg); break; } }
   }
+  const fight = c.ai ? aiFight(c, R, dt, inT, dist) : 0;                    // 1 winding up beside you, 2 swinging in, 3 pulling away from your swing, 4 coming across to you
+  if (fight === 1) dT = c.rmD0 - c.rmS * 0.5; else if (fight === 4) dT = R.me.d - c.rmS * 4.2;       // (winding up, it leans half a metre away and holds that line)
   dT = clamp(dT, T.dMin + 0.45, T.dMax - 0.5);
   const kc = PH.KC * (c.me ? R.cfScale : 1), r = T.Rc + c.d, cf = inT ? kc * c.v * c.v / rEff(T, r) : 0, g = Math.min(1, c.v / 9);
   c.u = clamp((clamp((dT - c.d) * 1.6, -5.5, 5.5) - cf) / (PH.VLAT * g), -1, 1);
+  if (fight === 2) c.u = c.rmS; else if (fight === 3) c.u = c.dgS;
   if (inT && cf > 1.2 * PH.VLAT) c.u = Math.max(c.u, -0.3);                 // far too fast: ease the reins and run wide rather than flip
   const vh = holdSpeed(T, T.Rc + (inT ? Math.max(c.d, dT) : dT), kc) * c.cs;
   let b = 0;
@@ -487,17 +531,97 @@ function aiDrive(c, R, dt) {
   if (c.wob && inT && a > 0.9) { c.wob = false; wreckIt(c, R); return; }       // once in a while a wheel comes off
   if (!c.ai) return;                        // (the test autopilot borrows the steering and braking above, but whips for itself)
   // how hard it drives: steady, a little kept back early, everything on the last half-lap
-  const uT = clamp(c.uA * (0.88 + 0.12 * Math.min(1, c.p / T.L)) + (c.p > (R.laps - 0.45) * T.L ? 0.08 : 0), 0, 1);
+  let uT = clamp(c.uA * (0.88 + 0.12 * Math.min(1, c.p / T.L)) + (c.p > (R.laps - 0.45) * T.L ? 0.08 : 0), 0, 1);
+  if (fight === 1 || fight === 4) { let dp = R.me.p - c.p; dp -= Math.round(dp / T.L) * T.L; uT = clamp(uT + clamp(dp * 0.1, -0.3, 0.25), 0, 1); }      // keeping level with you while it winds up
   c.urge = b ? Math.max(0, c.urge - dt * 0.4) : c.urge + clamp(uT - c.urge, -dt * 0.25, dt * 0.5);
   if (!b && c.whipT > 1.4 + c.gal % 1 && c.urge < uT + 0.02 && uT > 0.1) c.whipT = 0;   // (for show) the whip arm
 }
 
+// A rough driver comes across to you, winds up where you can see it (the warning), then swings its chariot into yours.
+// While it winds up it holds its line, so with room you can steer away out of reach; against a wall you cannot.
+// Any driver may also pull away from your swing, if it sees it coming and has room. Returns 1 winding up, 2 swinging, 3 pulling away, 4 coming across, 0 none of these.
+function aiFight(c, R, dt, inT, dist) {
+  const me = R.me, T = R.T, stop = () => { if (c.rm === 1 || c.rm === 2) R.atkCd = R.ramGap; c.rm = 0; if (me.warn && me.warn.by === c) me.warn = null; };      // (after any attack on you, nobody starts another for a while)
+  if (c.rmCd > 0) c.rmCd -= dt; if (c.dgCd > 0) c.dgCd -= dt;
+  if (me.st !== 'run' || me.ghost > 0 || c.ghost > 0) { if (c.rm) stop(); c.dgT = 0; return 0; }
+  let dp = me.p - c.p; dp -= Math.round(dp / T.L) * T.L;
+  const gap = me.d - c.d, ag = Math.abs(gap), sg = gap > 0 ? 1 : -1, turn = (inT || dist < 14) && !R.ramTurn;       // sg: which side of this driver you are on
+  if (c.rm === 4) {                         // coming across the track to get within reach (no warning yet: you can see it coming)
+    c.rmT += dt;
+    if (Math.abs(dp) > 13 || sg !== c.rmS || c.rmT > 4.5 || turn) { stop(); c.rmCd = 2; return 0; }
+    if (ag <= 4.8 && Math.abs(dp) < 3) { c.rm = 1; c.rmT = 0; c.rmD0 = c.d; me.warn = { by: c, sg, t: 0 }; ev(R, c, 'warn', sg); return 1; }
+    return 4;
+  }
+  if (c.rm === 1) {                         // winding up: it holds its line for the length of the warning
+    c.rmT += dt;
+    if (Math.abs(dp) > 4.8 || sg !== c.rmS || turn) { stop(); c.rmCd = 2.5; return 0; }
+    if (c.rmT >= R.tell) {
+      if (ag > 6.6) { stop(); c.rmCd = R.ramCd * (0.6 + 0.5 * Math.random()); ev(R, c, 'miss', c.rmS); me.dodges++; return 0; }     // you are out of reach already: it thinks better of it
+      c.rm = 2; c.rmT = 0; c.rmD0 = c.d;
+    }
+    return 1;
+  }
+  if (c.rm === 2) {                         // the swing: flat out sideways for a moment, hit or miss
+    c.rmT += dt;
+    if (c.ramT < 0.4 || c.rmT > 0.62 || Math.abs(c.d - c.rmD0) > 5 || sg !== c.rmS || Math.abs(dp) > 5.4) {
+      if (c.ramT >= 0.4) { ev(R, c, 'miss', c.rmS); me.dodges++; }
+      stop(); c.rmCd = R.ramCd * (0.7 + 0.6 * Math.random()); return 0;
+    }
+    return 2;
+  }
+  if (c.dgT > 0) { c.dgT -= dt; if (c.dgW > 0) { c.dgW -= dt; return 0; } return 3; }        // pulling away from your swing (after a moment to react)
+  // your swing coming in: a good driver with room gets out of the way
+  const close = -me.vd * sg;                // how fast you are coming sideways at this driver
+  if (c.dgCd <= 0 && Math.abs(dp) < 4.4 && ag < 5.6 && close > 3.2 && -me.u * sg > 0.45) {
+    c.dgCd = 0.9;                           // one look per swing
+    const room = sg > 0 ? c.d - T.dMin : T.dMax - c.d;
+    if (Math.random() < c.dodge && room > 1.8) { c.dgT = 0.5; c.dgW = 0.05 + Math.random() * 0.1; c.dgS = -sg; ev(R, c, 'evade'); }
+    return 0;
+  }
+  // its own attack: only the rough ones start it, or anyone you have just rammed
+  const want = c.anger > 0 ? Math.max(c.brute, 0.9) : c.brute;
+  const level = Math.abs(dp) < 2.4, late = c.p > (R.laps - 0.5) * T.L;     // (on the last half-lap it only fights if you are right there: it has a race to win)
+  if (want <= 0 || c.rmCd > 0 || R.atkCd > 0 || R.t < 5 || ag < 2.9 || ag > 11 || !(level || (!late && dp > -6 && dp < 9))) return 0;
+  for (const o of R.cars) if (o.rm && o !== c) return 0;                  // one at a time: they do not gang up on you      // level with you, or near enough to get level by easing up or pressing on
+  if ((inT || dist < 34) && !R.ramTurn) return 0;
+  const room = sg > 0 ? T.dMax - me.d : me.d - T.dMin;                     // how far you could run before the wall stops you
+  if (Math.random() < want * R.ramRate * (level ? 1 : 0.5) * (room < 3 ? 2 : 1) * dt) {
+    c.rmT = 0; c.rmS = sg;
+    if (level && ag <= 4.8) { c.rm = 1; c.rmD0 = c.d; me.warn = { by: c, sg, t: 0 }; ev(R, c, 'warn', sg); return 1; }
+    c.rm = 4; return 4;
+  }
+  return 0;
+}
+
 // ---------- wheels and noses ----------
+// One chariot swung into another. Each deals a blow by how fast it was really closing and whether it was meant; the one against a wall cannot ride the blow.
+function ram(R, a, b, sg, vc, dp) {          // a is on the side sg of b (sg = +1: a is further out); returns false if it was only a brush
+  const T = R.T, va = -a.vd * sg, vb = b.vd * sg;                          // how fast each was moving towards the other
+  const ia = a.me ? (-a.u * sg >= 0.45 ? 1 : 0.3) : a.rm === 2 ? 1 : 0.3, ib = b.me ? (b.u * sg >= 0.45 ? 1 : 0.3) : b.rm === 2 ? 1 : 0.3;
+  const blow = e => clamp((e - PH.RAMV) * PH.RAMK, 0, PH.RAMMAX);
+  const fa = blow(Math.max(0, Math.min(va, vc)) * ia), fb = blow(Math.max(0, Math.min(vb, vc)) * ib);     // what a deals to b, and b to a
+  if (fa <= 0 && fb <= 0) return false;
+  const wheel = Math.abs(dp) < 1.4, pinA = sg > 0 ? a.d > T.dMax - 0.6 : a.d < T.dMin + 0.6, pinB = sg > 0 ? b.d < T.dMin + 0.6 : b.d > T.dMax - 0.6;
+  let da = fb * Math.min(1.6, (wheel ? PH.WHEEL : 1) * (pinA ? PH.PIN : 1)) + fa * PH.RECOIL, db = fa * Math.min(1.6, (wheel ? PH.WHEEL : 1) * (pinB ? PH.PIN : 1)) + fb * PH.RECOIL;     // (the two bonuses together count for at most 1.6: no single blow takes most of a chariot)
+  if (a.me) da *= R.dmgIn; if (b.me) db *= R.dmgIn;
+  // the shove: they bounce apart; one held by a wall cannot give, so the other takes it all
+  const wA = pinA ? 0 : pinB ? 1 : 0.5, j = 1.35 * vc;
+  a.vd += sg * j * wA; b.vd -= sg * j * (1 - wA);
+  a.v *= 1 - Math.min(0.14, 0.015 + 0.003 * da); b.v *= 1 - Math.min(0.14, 0.015 + 0.003 * db);
+  if (a.ai) a.urge = Math.max(0, a.urge - da * 0.006); if (b.ai) b.urge = Math.max(0, b.urge - db * 0.006);
+  a.ramT = 0; b.ramT = 0;
+  const hitter = fa >= fb ? a : b, hit = hitter === a ? b : a, clash = Math.min(fa, fb) > 0.55 * Math.max(fa, fb);
+  hitter.rams++; hit.hits++;
+  if (hit.ai && hitter.me) { hit.anger = 7; if (hit.rm) { hit.rm = 0; hit.rmCd = 1.2; R.atkCd = Math.min(R.atkCd > 0 ? R.atkCd : 9, 2); if (R.me.warn && R.me.warn.by === hit) R.me.warn = null; } }   // a rammed rival loses its own swing, and remembers
+  ev(R, hitter, 'ram', { to: hit, d: hitter === a ? db : da, back: hitter === a ? da : db, pin: hitter === a ? pinB : pinA, wheel, clash });
+  hurt(a, R, da, b, -sg); hurt(b, R, db, a, sg);
+  return true;
+}
 function collide(R) {
   const cs = R.cars, T = R.T;
   for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++) {
     const a = cs[i], b = cs[j];
-    if (a.st === 'grid' || b.st === 'grid' || a.st === 'fin' || b.st === 'fin' || a.ghost > 0 || b.ghost > 0) continue;
+    if (a.st === 'grid' || b.st === 'grid' || a.st === 'fin' || b.st === 'fin' || a.st === 'out' || b.st === 'out' || a.ghost > 0 || b.ghost > 0) continue;
     let dp = a.p - b.p; dp -= Math.round(dp / T.L) * T.L;
     const dd = a.d - b.d, ox = PH.WID - Math.abs(dd), oz = PH.LEN - Math.abs(dp);
     if (ox <= 0 || oz <= 0) continue;
@@ -505,6 +629,7 @@ function collide(R) {
     if (ox / PH.WID < oz / PH.LEN) {         // side by side: the wheels clash and push apart
       const sg = dd >= 0 ? 1 : -1, ma = wa ? 0 : wb ? 1 : 0.5, rel = (a.vd - b.vd) * sg;
       a.d += sg * ox * ma; b.d -= sg * ox * (1 - ma);
+      if (rel <= -PH.RAMV && !wa && !wb && (a.me || b.me) && a.ramT > 0.5 && b.ramT > 0.5 && ram(R, a, b, sg, -rel, dp)) continue;      // a real blow (only you and whoever you are fighting; rivals do not wreck each other)
       if (rel < 0) { if (!wa) a.vd -= sg * rel * 0.6; if (!wb) b.vd += sg * rel * 0.6; }
       if (rel < -0.8) { if (!wa) a.v *= 0.985; if (!wb) b.v *= 0.985; ev(R, a, 'clash', -rel); ev(R, b, 'clash', -rel); }
     } else {                                 // nose to tail: the one behind is held up
@@ -516,7 +641,10 @@ function collide(R) {
 }
 
 // ---------- the race ----------
-function rankCars(R) { const a = R.order; a.sort((x, y) => (x.fin || 1e9) - (y.fin || 1e9) || y.p - x.p); for (let i = 0; i < a.length; i++) a[i].rank = i + 1; }
+function rankCars(R) {                       // finishers by time, then those still racing by distance, then the broken ones (the last to break ranks highest)
+  const a = R.order, out = c => c.st === 'out' ? 1 : 0;
+  a.sort((x, y) => (x.fin || 1e9) - (y.fin || 1e9) || out(x) - out(y) || (out(x) ? y.outAt - x.outAt : y.p - x.p)); for (let i = 0; i < a.length; i++) a[i].rank = i + 1;
+}
 function gradeTurn(R) {
   const me = R.me, x = me.tT / R.tIdeal, q = me.tHit ? 0 : x <= 1.3 ? 3 : x <= 1.7 ? 2 : 1;      // 3 perfect, 2 good, 1 wide, 0 scraped
   me.turns++;
@@ -572,6 +700,8 @@ function raceStep(R, dt) {
     }
   }
   rankCars(R);
+  if (me.warn) { me.warn.t += dt; if (me.warn.by.rm === 0 && me.warn.t > 0.25) me.warn = null; }
+  if (R.atkCd > 0) R.atkCd -= dt;
   if (R.phase === 'finish' && !R.res.board && !HEADLESS) settle(R);
   // your turns are timed from the moment you enter the half-circle to the moment you leave it
   if (me.st === 'run' || me.st === 'wreck') {
@@ -586,18 +716,23 @@ function raceStep(R, dt) {
 function finishRace(R) {
   const me = R.me, T = R.T; R.phase = 'finish'; R.ft = 0;
   const ahead = R.cars.filter(c => c.fin && c !== me).sort((a, b) => b.fin - a.fin)[0];           // the one who crossed just before you
-  const behind = R.cars.filter(c => !c.fin).sort((a, b) => b.p - a.p)[0];                         // the nearest still racing
+  const behind = R.cars.filter(c => !c.fin && c.st !== 'out').sort((a, b) => b.p - a.p)[0];                         // the nearest still racing
   R.res = { place: me.place, time: me.fin, lap: me.bestLap, ok: me.place <= R.need,
     gapAhead: ahead ? me.fin - ahead.fin : 0, ahead: ahead ? ahead.full : '', gapBehind: behind ? (me.p - behind.p) / Math.max(8, behind.v) : 0, behind: behind ? behind.full : '',
     winner: R.order[0] };
   ev(R, me, 'finish', me.place);
 }
+function endOut(R) {                         // your own chariot has broken up: the race is over for you
+  const me = R.me; R.phase = 'finish'; R.ft = 0; rankCars(R);
+  R.res = { place: me.rank, time: 0, lap: me.bestLap, ok: false, out: true, by: me.by ? me.by.full : '', gapAhead: 0, ahead: '', gapBehind: 0, behind: '', winner: R.order[0] };
+  ev(R, me, 'finish', me.rank);
+}
 function settle(R) {                         // out of sight, the rest of the field is run to the line, so every gap on the board is the real one, not a guess
   const res = R.res, me = R.me, save = R.cars.map(c => Object.assign({}, c)), t0 = R.t, f0 = R.finN, hd = HEADLESS, evs = R.evs;
   res.board = [];                            // (set first: the steps below must not settle again)
   HEADLESS = true; R.evs = [];
-  for (let i = 0; i < 60 * 150 && R.cars.some(c => !c.fin); i++) raceStep(R, 1 / 60);
-  res.board = R.cars.map(c => ({ c, fin: c.fin })).sort((a, b) => (a.fin || 1e9) - (b.fin || 1e9));
+  for (let i = 0; i < 60 * 150 && R.cars.some(c => !c.fin && c.st !== 'out'); i++) raceStep(R, 1 / 60);
+  res.board = R.cars.map(c => ({ c, fin: c.fin, out: c.st === 'out', at: c.outAt })).sort((a, b) => (a.fin || 1e9) - (b.fin || 1e9) || (a.out ? 1 : 0) - (b.out ? 1 : 0) || b.at - a.at);
   const nx = res.board[res.board.findIndex(x => x.c === me) + 1];
   if (nx && nx.fin) { res.gapBehind = nx.fin - me.fin; res.behind = nx.c.full; } else { res.gapBehind = 0; res.behind = ''; }
   R.cars.forEach((c, i) => { for (const key in c) delete c[key]; Object.assign(c, save[i]); });
@@ -605,7 +740,7 @@ function settle(R) {                         // out of sight, the rest of the fi
 }
 
 // ---------- the view: a camera close behind your own chariot ----------
-const CAM = { x: 0, z: 0, h: 3.3, th: 0, c: 1, s: 0, F: 400, hor: 300, roll: 0, back: 5.6, dl: 0, kick: 0 };
+const CAM = { x: 0, z: 0, h: 3.3, th: 0, c: 1, s: 0, F: 400, hor: 300, roll: 0, back: 5.6, dl: 0, kick: 0, wide: 0, mx: 0, mz: 6 };
 const FX = { shake: 0, stop: 0, slow: 0, flash: 0, gold: 0 };
 const NEAR = 0.6, HW = 2.3, HT = 9.2, SD = 9, HS = 1.35, STOA = 2.8;    // near plane; outer wall height, top of the stands, depth of the stands, barrier height, colonnade height
 let SX = 0, SY = 0, SC = 0;
@@ -703,13 +838,16 @@ function camFollow(R, dt, snap) {
   CAM.th += snap ? dth : dth * Math.min(1, dt * 7);
   CAM.dl += (me.d - CAM.dl) * (snap ? 1 : Math.min(1, dt * 5));
   trackAt(T, s, lerp(me.d, CAM.dl, 0.6));
-  CAM.back = 5.3 + 0.9 * (me.v / PH.vTop) + CAM.kick * 0.9;
+  let beside = me.warn ? 1 : 0;              // someone level with you: the view pulls back and widens so you can see the chariot beside yours
+  if (!beside && R.phase !== 'finish') for (const o of R.cars) { if (o === me || (o.st !== 'run' && o.st !== 'grid')) continue; let dp = o.p - me.p; dp -= Math.round(dp / T.L) * T.L; if (Math.abs(dp) < 6.5 && Math.abs(o.d - me.d) < 8.5) { beside = 1; break; } }
+  CAM.wide += (beside - CAM.wide) * (snap ? 1 : Math.min(1, dt * (beside ? 3 : 1.3)));
+  CAM.back = 5.3 + 0.9 * (me.v / PH.vTop) + CAM.kick * 0.9 + 3 * CAM.wide;
   CAM.c = Math.cos(CAM.th); CAM.s = Math.sin(CAM.th);
   let x = TP.x - CAM.back * CAM.c, z = TP.z - CAM.back * CAM.s;
   // keep the camera inside the arena and off the barrier
   const cx = clamp(x, -T.Ls / 2, T.Ls / 2), dd = Math.hypot(x - cx, z), ro = T.Rc + T.hw - 0.9, ri = T.rIn + 0.9;
   if (dd > ro) { x = cx + (x - cx) * ro / dd; z = z * ro / dd; } else if (dd < ri && dd > 0.01) { x = cx + (x - cx) * ri / dd; z = z * ri / dd; }
-  CAM.x = x; CAM.z = z; CAM.h = 3.3; CAM.F = Math.min(W, H * 0.62) * 1.05 * (1 - 0.05 * CAM.kick); CAM.hor = H * 0.36;
+  CAM.x = x; CAM.z = z; CAM.h = 3.3 + 0.6 * CAM.wide; CAM.F = Math.min(W, H * 0.62) * 1.05 * (1 - 0.05 * CAM.kick) * (1 - 0.1 * CAM.wide); CAM.hor = H * 0.36;
   const rollT = -clamp(me.lat * 0.0055 + me.vd * 0.004, -0.075, 0.075) * (me.st === 'wreck' ? 0 : 1);
   CAM.roll += (rollT - CAM.roll) * (snap ? 1 : Math.min(1, dt * 5));
   CAM.kick = Math.max(0, CAM.kick - dt * 1.7);
@@ -891,8 +1029,9 @@ function drawWorld(R) {
   }
   add(depth(T.Ls / 2 + rI * 0.45, 0), 2, 0); add(depth(-T.Ls / 2 - rI * 0.45, 0), 2, 1);
   for (let i = 0; i < A.mons.length; i++) add(depth(A.mons[i].x, A.mons[i].z) - 1.2, 3, i);
-  for (let i = 0; i < R.cars.length; i++) { const c = R.cars[i]; trackAt(T, sOf(T, c.p), c.d); c.wx = TP.x; c.wz = TP.z; add(depth(TP.x, TP.z), 4, i); }
+  for (let i = 0; i < R.cars.length; i++) { const c = R.cars[i]; trackAt(T, sOf(T, c.p), c.d); c.wx = TP.x; c.wz = TP.z; add(depth(TP.x, TP.z), 4, i); if (c.me) { CAM.mz = depth(TP.x, TP.z); CAM.mx = (TP.x - CAM.x) * CAM.s - (TP.z - CAM.z) * CAM.c; } }
   add(depth((L[0] + L[2]) / 2, (L[1] + L[3]) / 2), 5, 0);
+  for (let i = 0; i < R.loose.length; i++) { const o = R.loose[i]; if (o.team) { trackAt(T, sOf(T, o.p), o.d); o.wx = TP.x; o.wz = TP.z; } add(depth(o.wx, o.wz), 6, i); }
   const srt = A.srt; srt.length = ni; for (let i = 0; i < ni; i++) srt[i] = it[i];
   srt.sort((p, q) => q.z - p.z);
   for (let q = 0; q < ni; q++) {
@@ -906,6 +1045,7 @@ function drawWorld(R) {
     else if (o.k === 2) { const i0 = i ? 2 * ns + nt : ns; for (let j = 0; j <= nt; j++) { Q[j * 3] = A.ix[i0 + j]; Q[j * 3 + 1] = HS; Q[j * 3 + 2] = A.iz[i0 + j]; } poly3(Q, nt + 1, A.spTop); }
     else if (o.k === 3) drawMon(A.mons[i], R, now);
     else if (o.k === 4) drawRig(R.cars[i], R);
+    else if (o.k === 6) { const lo = R.loose[i]; if (lo.team) drawRig(lo, R); else drawWheel(lo); }
     else {                                 // two tall poles with pennants mark the line
       for (const e of [0, 2]) if (P3(L[e], 0, L[e + 1])) { const x = SX, y = SY, s2 = SC, hg = 7.5 * s2, wv = Math.sin(now * 5 + e) * 0.3 * s2; ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = Math.max(1.5, 0.2 * s2); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - hg); ctx.stroke();
         ctx.fillStyle = '#8f1d1a'; ctx.beginPath(); ctx.moveTo(x, y - hg); ctx.lineTo(x + (e ? -2.6 : 2.6) * s2, y - hg + 0.6 * s2 + wv); ctx.lineTo(x, y - hg + 1.3 * s2); ctx.fill(); ctx.fillStyle = '#f2c14e'; ctx.beginPath(); ctx.arc(x, y - hg, Math.max(1.5, 0.28 * s2), 0, 6.2832); ctx.fill(); }
@@ -914,11 +1054,31 @@ function drawWorld(R) {
   // dust and sparks
   for (const p of R.parts) {
     if (!P3(p.x, p.y, p.z)) continue; const u = p.t / p.life;
-    if (p.k) { ctx.globalAlpha = 1 - u; ctx.fillStyle = p.col; const s = Math.max(1.5, p.s0 * SC); ctx.fillRect(SX - s / 2, SY - s / 2, s, s); }
+    if (p.k === 2) { if (SC > 110) continue; const s = Math.min(46 * k, Math.max(2, p.s0 * SC)); ctx.globalAlpha = u > 0.7 ? (1 - u) / 0.3 : 1; ctx.fillStyle = p.col; ctx.save(); ctx.translate(SX, SY); ctx.rotate(p.r + p.vr * p.t); ctx.fillRect(-s / 2, -s * 0.14, s, s * 0.28); ctx.restore(); }     // a plank, spinning
+    else if (p.k) { ctx.globalAlpha = 1 - u; ctx.fillStyle = p.col; const s = Math.max(1.5, p.s0 * SC); ctx.fillRect(SX - s / 2, SY - s / 2, s, s); }
     else { ctx.globalAlpha = p.a * (1 - u); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(SX, SY, Math.min(52 * k, lerp(p.s0, p.s1, u) * SC), 0, 6.2832); ctx.fill(); }
   }
   ctx.globalAlpha = 1;
+  if (R.floats.length) {                     // what each blow cost, floating up from the chariot that took it
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(26,13,6,.8)';
+    for (const f of R.floats) { if (!P3(f.x, f.y + f.t * 1.8, f.z)) continue; const fs = clamp(SC * 0.75, 15, 30) * k * (f.t < 0.1 ? 1.5 - 5 * f.t : 1); ctx.globalAlpha = f.t > 0.7 ? (1 - f.t) / 0.3 : 1; ctx.font = `${Math.round(fs)}px ${GK}`; ctx.lineWidth = fs * 0.16; ctx.strokeText(f.text, SX, SY); ctx.fillStyle = f.col; ctx.fillText(f.text, SX, SY); }
+    ctx.globalAlpha = 1;
+  }
   ctx.restore();
+}
+function drawWheel(o) {                      // a wheel that has come off, bowling away across the sand
+  if (!P3(o.wx, o.y, o.wz)) return; const r = 0.5 * SC; if (r < 1 || SX < -40 || SX > W + 40) return;
+  ctx.globalAlpha = o.t > 2.4 ? Math.max(0, (3 - o.t) / 0.6) : 1; ctx.strokeStyle = '#4a3320'; ctx.lineWidth = Math.max(1, 0.1 * SC); ctx.beginPath(); ctx.ellipse(SX, SY, r * (0.35 + 0.65 * Math.abs(Math.cos(o.face))), r, 0, 0, 6.2832); ctx.stroke();
+  ctx.strokeStyle = '#b08d57'; ctx.lineWidth = Math.max(0.7, 0.05 * SC); ctx.beginPath(); for (let j = 0; j < 2; j++) { const a = o.spin + j * 1.5708, cx = Math.cos(a) * r * (0.35 + 0.65 * Math.abs(Math.cos(o.face))), cy = Math.sin(a) * r; ctx.moveTo(SX - cx, SY - cy); ctx.lineTo(SX + cx, SY + cy); } ctx.stroke(); ctx.globalAlpha = 1;
+}
+function planks(R, x, y, z, n, cols) { for (let i = 0; i < n && R.parts.length < 230; i++) R.parts.push({ k: 2, x: x + (Math.random() - 0.5), y: y + Math.random() * 0.6, z: z + (Math.random() - 0.5), vx: (Math.random() - 0.5) * 9, vy: 2.5 + Math.random() * 6, vz: (Math.random() - 0.5) * 9, t: 0, life: 0.7 + Math.random() * 0.7, s0: 0.3 + Math.random() * 0.45, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 16, col: cols[(Math.random() * cols.length) | 0] }); }
+function float(R, c, text, col) { if (c.wx != null) R.floats.push({ x: c.wx, y: 2.7, z: c.wz, text, col, t: 0 }); }
+function breakUp(R, c) {                     // a chariot comes apart: planks, dust, a wheel bowling off, and the team running free
+  if (c.wx == null) return;
+  planks(R, c.wx, 0.8, c.wz, 26, ['#6b4a2a', '#5a3d22', c.col, c.colD || c.col, '#8a6a3a']); dust(R, c.wx, c.wz, 16, true); sparks(R, c.wx, 0.8, c.wz, 14);
+  const T = R.T, th = trackAt(T, sOf(T, c.p), c.d).th, side = c.dSide || (c.d > 0 ? -1 : 1), sp = Math.max(6, c.v * 0.7);
+  R.loose.push({ wx: c.wx, wz: c.wz, y: 0.5, vx: Math.cos(th) * sp + Math.sin(th) * side * 3, vz: Math.sin(th) * sp - Math.cos(th) * side * 3, vy: 5, spin: 0, face: Math.random() * 3, t: 0 });
+  R.loose.push({ team: 1, p: c.p + 0.6, d: c.d, dT: clamp(c.d - side * 2.5, T.dMin + 1.5, T.dMax - 1.5), v: Math.max(c.v, 10), vd: 0, coats: c.coats, cD: c.cD, cL: c.cL, col: c.col, colD: c.colD, col2: c.col2, gal: c.gal, wheel: 0, st: 'run', whipT: 9, b: 0, auto: 0, u: 0, slide: 0, tip: 0, ghost: 0, str: 1, strMax: 1, hurtT: 9, rm: 0, name: '', t: 0 });
 }
 function drawMon(m, R, now) {               // what stands on the barrier: columns, tripods, statues, altars, and the turning posts
   if (!P3(m.x, m.y, m.z)) return; const s = SC, x = SX, y = SY; if (x < -90 || x > W + 90 || s < 0.9) return;
@@ -949,16 +1109,19 @@ function drawMon(m, R, now) {               // what stands on the barrier: colum
 
 // ---------- a chariot and its four horses, built from simple solid shapes so it reads from any side ----------
 function drawRig(c, R) {
-  const px = c.wx, pz = c.wz, T = R.T, wk = c.st === 'wreck' ? c.wt : 0, z0 = depth(px, pz);
-  if (z0 < -5 || z0 > 330) return;
+  const px = c.wx, pz = c.wz, T = R.T, out = c.st === 'out', wk = c.st === 'wreck' ? c.wt : out ? c.outT : 0, z0 = depth(px, pz);
+  if (z0 < -5 || z0 > 330 || (out && c.outT > 4.2)) return;
+  const stg = out ? 2 : c.str >= c.strMax * 0.67 ? 0 : c.str >= c.strMax * 0.34 ? 1 : 2, ds = c.dSide || 1, fl = c.hurtT < 0.16 ? 1 - c.hurtT / 0.16 : 0;     // how battered it is (0 sound, 1 damaged, 2 failing), which side took it, and the flash of a fresh blow
   const th = trackAt(T, sOf(T, c.p), c.d).th + Math.atan2(c.vd, Math.max(6, c.v)) * 0.9 + (wk ? Math.min(1.2, wk * 2.5) * (c.d > 0 ? -1 : 1) : 0);
   const ct = Math.cos(th), st = Math.sin(th), far = z0 > 80, mid = z0 > 34, mine = c.me;
   if (!c.cD) { c.cD = c.coats.map(x => shade(x, 0.62)); c.cL = c.coats.map(x => shade(x, 1.13)); c.colD = shade(c.col, 0.78); }
   const P = (f, u, r) => P3(px + f * ct + r * st, u, pz + f * st - r * ct);
   const seg = (f1, u1, r1, f2, u2, r2, w, col) => { if (!P(f1, u1, r1)) return; const x1 = SX, y1 = SY, s1 = SC; if (!P(f2, u2, r2)) return; ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.7, w * (s1 + SC) * 0.5); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(SX, SY); ctx.stroke(); };
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const near = mine || R.phase === 'home' ? 1 : clamp((z0 - 1.6) / 3, 0.1, 1);       // a rival right behind you, close to the camera, turns ghostly so it never hides your own team
-  ctx.globalAlpha = near * (c.ghost > 0 && c.ghost < 90 && Math.sin(c.ghost * 28) > 0 ? 0.45 : 1);
+  let near = 1;                              // a rival between the camera and your own team turns ghostly so it never hides you; one off to the side stays solid, so you can see it coming
+  if (!mine && R.phase !== 'home') { near = clamp((z0 - 1.6) / 3, 0.1, 1); if (z0 < CAM.mz - 0.8) near = Math.min(near, Math.max(0.07, clamp((Math.abs((px - CAM.x) * CAM.s - (pz - CAM.z) * CAM.c - CAM.mx) - 1.3) / 2.2, 0, 1))); }
+  const al = near * (c.ghost > 0 && c.ghost < 90 && Math.sin(c.ghost * 28) > 0 ? 0.45 : 1) * (out ? clamp(4.2 - c.outT, 0, 1) : c.team ? clamp(4.2 - c.t, 0, 1) : 1);
+  ctx.globalAlpha = al;
   let qi = 0; for (const fr of RIGSH) { Q[qi++] = px + fr[0] * ct + fr[1] * st; Q[qi++] = 0.02; Q[qi++] = pz + fr[0] * st - fr[1] * ct; }
   poly3(Q, 6, 'rgba(40,25,10,.3)');
   const sf = clamp(c.v / 13, 0.1, 1), reined = c.b > 0.3 || c.auto > 0, up = reined ? 0.13 : 0, rearing = c.st === 'grid' && c.jump && R.phase === 'race' ? Math.sin(Math.min(1, R.t / 0.9) * Math.PI) : 0;
@@ -978,7 +1141,8 @@ function drawRig(c, R) {
     seg(2.94, 1.98 + nb, hr, 3.3, 1.78 + nb, hr, 0.24, coat);
     if (!mid) seg(1.9, 1.63 + bob * 0.7, hr - 0.2, 1.9, 1.63 + bob * 0.7, hr + 0.2, 0.2, c.col);          // a cloth in the team colour
   };
-  const tA = wk ? Math.min(3.0, wk * 7) * (c.d > 0 ? -1 : 1) : -(c.slide * 0.09 + c.tip * 0.6), tc = Math.cos(tA), ts = Math.sin(tA), hop = wk ? Math.sin(Math.min(1, wk * 1.5) * Math.PI) * 1.0 : 0;
+  const tA = wk ? Math.min(3.0, wk * 7) * (c.d > 0 ? -1 : 1) : -(c.slide * 0.09 + c.tip * 0.6) + (stg === 2 ? ds * 0.16 + Math.sin(c.wheel * 1.3) * 0.045 : stg === 1 ? ds * 0.09 + Math.sin(c.wheel * 1.1) * 0.015 : 0) + (c.rm === 1 ? -c.rmS * 0.13 * Math.min(1, c.rmT / 0.25) : c.rm === 2 ? c.rmS * 0.2 : 0);   // tipping in a slide; a damaged chariot sags to its hurt side and a failing one shudders; a rough driver leans away to wind up, then into the swing
+  const tc = Math.cos(tA), ts = Math.sin(tA), hop = wk ? Math.sin(Math.min(1, wk * 1.5) * Math.PI) * (out ? 1.3 : 1.0) : 0;
   const B = (f, u, r) => P(f, 0.5 + (u - 0.5) * tc - r * ts + hop, (u - 0.5) * ts + r * tc);       // the car itself can tip
   const segB = (f1, u1, r1, f2, u2, r2, w, col) => { if (!B(f1, u1, r1)) return; const x1 = SX, y1 = SY, s1 = SC; if (!B(f2, u2, r2)) return; ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.7, w * (s1 + SC) * 0.5); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(SX, SY); ctx.stroke(); };
   const quadB = (a, b2, c2, d2, col) => { if (!B(a[0], a[1], a[2])) return; ctx.beginPath(); ctx.moveTo(SX, SY); if (!B(b2[0], b2[1], b2[2])) return; ctx.lineTo(SX, SY); if (!B(c2[0], c2[1], c2[2])) return; ctx.lineTo(SX, SY); if (!B(d2[0], d2[1], d2[2])) return; ctx.lineTo(SX, SY); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); };
@@ -986,16 +1150,34 @@ function drawRig(c, R) {
   const car = () => {
     const wood = '#6b4a2a', brz = '#b08d57', skin = '#d9a066', lean = -c.u * 0.17, pull = reined ? 0.14 : 0, wt = c.whipT;
     if (far) { segB(0, 0.95, -0.55, 0, 0.95, 0.55, 0.85, c.col); segB(0.1, 1.2, 0, 0.15, 2.0, 0, 0.42, '#f4eddc'); return; }
-    for (const sd of [-1, 1]) {                    // wheels, four spokes each
-      const wx = sd * 0.98; ctx.beginPath(); let ok = true;
-      for (let j = 0; j <= 10; j++) { const a = j / 10 * 6.2832; if (!B(Math.cos(a) * 0.5, 0.5 + Math.sin(a) * 0.5, wx)) { ok = false; break; } if (j) ctx.lineTo(SX, SY); else ctx.moveTo(SX, SY); }
+    for (const sd of [-1, 1]) {                    // wheels, four spokes each. A damaged one wobbles and has lost a spoke; a broken chariot has lost the wheel
+      if (out && sd === ds) continue;
+      const wx = sd * 0.98, wob = stg && sd === ds && !out ? (stg === 2 ? 0.3 : 0.11) * Math.sin(c.wheel * 0.8) : 0; ctx.beginPath(); let ok = true;
+      for (let j = 0; j <= 10; j++) { const a = j / 10 * 6.2832; if (!B(Math.cos(a) * 0.5, 0.5 + Math.sin(a) * 0.5, wx + wob * Math.sin(a))) { ok = false; break; } if (j) ctx.lineTo(SX, SY); else ctx.moveTo(SX, SY); }
       if (ok) { ctx.strokeStyle = '#4a3320'; ctx.lineWidth = Math.max(1, 0.1 * SC); ctx.stroke(); }
-      if (!mid) for (let j = 0; j < 2; j++) { const a = c.wheel + j * 1.5708, cs2 = Math.cos(a) * 0.46, sn = Math.sin(a) * 0.46; segB(cs2, 0.5 + sn, wx, -cs2, 0.5 - sn, wx, 0.05, brz); }
+      if (!mid) for (let j = 0; j < (wob && stg === 2 ? 1 : 2); j++) { const a = c.wheel + j * 1.5708, cs2 = Math.cos(a) * 0.46, sn = Math.sin(a) * 0.46; segB(cs2, 0.5 + sn, wx + wob * sn * 2, -cs2, 0.5 - sn, wx - wob * sn * 2, 0.05, brz); }
     }
     segB(0, 0.5, -0.98, 0, 0.5, 0.98, 0.1, wood);
     segB(0.55, 0.62, 0, 2.42, 1.08, 0, 0.07, wood);
     quadB([-0.42, 0.58, -0.62], [0.58, 0.58, -0.5], [0.58, 0.58, 0.5], [-0.42, 0.58, 0.62], '#5a3d22');
-    for (let j = 0; j < 4; j++) { const a = RAIL[j], b2 = RAIL[j + 1]; quadB([a[0], 0.58, a[1]], [b2[0], 0.58, b2[1]], [b2[0], b2[2], b2[1]], [a[0], a[2], a[1]], j === 1 || j === 2 ? c.col : c.colD); segB(a[0], a[2], a[1], b2[0], b2[2], b2[1], 0.06, c.col2); }
+    const pc = fl ? mix(c.col, '#ffffff', fl * 0.8) : c.col;
+    for (let j = 0; j < 4; j++) {                  // the rail in four panels. A battered chariot has panels snapped off short on the side that took the blows
+      const a = RAIL[j], b2 = RAIL[j + 1], hurtSide = (j < 2) === (ds < 0), snap = stg === 2 ? hurtSide : stg === 1 ? j === (ds < 0 ? 0 : 3) : false;
+      const ha = snap ? 0.58 + (a[2] - 0.58) * (j & 1 ? 0.7 : 0.4) : a[2], hb = snap ? 0.58 + (b2[2] - 0.58) * (j & 1 ? 0.35 : 0.75) : b2[2];
+      quadB([a[0], 0.58, a[1]], [b2[0], 0.58, b2[1]], [b2[0], hb, b2[1]], [a[0], ha, a[1]], fl ? pc : snap ? (j === 1 || j === 2 ? '#8a6a3e' : '#6e5230') : j === 1 || j === 2 ? c.col : c.colD);      // a snapped panel shows bare wood
+      if (!snap) segB(a[0], a[2], a[1], b2[0], b2[2], b2[1], 0.06, c.col2);
+      else if (!mid) { segB(a[0], ha, a[1], a[0] + 0.03, ha + 0.24, a[1] * 1.04, 0.035, '#8a6a3a'); segB(b2[0], hb, b2[1], b2[0] - 0.02, hb + 0.17, b2[1] * 1.03, 0.03, '#6b4a2a'); }     // splinters
+      if (stg && !snap && !mid && (j === 1 || j === 2)) {     // cracks across the panels that are still whole
+        const t1 = j === 1 ? 0.35 : 0.6, x = t => lerp(a[0], b2[0], t) - 0.015, r = t => lerp(a[1], b2[1], t) * 0.985, top = lerp(a[2], b2[2], t1);
+        segB(x(t1), top, r(t1), x(t1 + 0.14), top - 0.25, r(t1 + 0.14), 0.03, 'rgba(28,14,8,.85)'); segB(x(t1 + 0.14), top - 0.25, r(t1 + 0.14), x(t1 + 0.02), top - 0.48, r(t1 + 0.02), 0.03, 'rgba(28,14,8,.85)');
+      }
+    }
+    if (stg === 2 && !out && !mid) segB(-0.35, 0.56, ds * 0.45, -1.75, 0.07 + 0.06 * Math.abs(Math.sin(c.wheel * 1.7)), ds * 0.8, 0.09, '#7a5a36');     // a failing chariot drags a broken plank
+    if (out && wk > 0.4) {                         // the driver thrown clear, down on the sand
+      const sd2 = -ds; seg(-1.7, 0.17, sd2 * 1.5, -0.7, 0.2, sd2 * 1.9, 0.36, '#e9e0cc'); seg(-1.25, 0.2, sd2 * 1.6, -0.9, 0.22, sd2 * 2.0, 0.1, c.col);
+      if (P(-0.5, 0.22, sd2 * 2.0)) { ctx.fillStyle = '#2a1b12'; ctx.beginPath(); ctx.arc(SX, SY, Math.max(1, 0.14 * SC), 0, 6.2832); ctx.fill(); }
+      return;
+    }
     let rx = 0.5 - pull * 1.6, ry = 1.5 + pull, rr = 0.17;
     if (wt < 0.3) { const u = wt / 0.3, k1 = u < 0.3 ? u / 0.3 : 1 - (u - 0.3) / 0.7; rx = lerp(rx, 0.75, k1); ry = lerp(ry, 2.25, k1); rr = lerp(rr, 0.3, k1); }
     if (!mid) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * 0.75; for (const i of [0, 1, 2, 3]) seg(0.5 - pull * 1.6, 1.5 + pull, i < 2 ? -0.17 : 0.17, 2.9, 1.92 + up, (i - 1.5) * 0.86, 0.025, '#3a2a1a'); ctx.globalAlpha = ga; }
@@ -1014,12 +1196,20 @@ function drawRig(c, R) {
     }
   };
   const horses = () => { const rd = st * CAM.c - ct * CAM.s; if (rd > 0) for (let i = 3; i >= 0; i--) horse(i); else for (let i = 0; i < 4; i++) horse(i); if (!far) seg(2.42, 1.5, -1.4, 2.42, 1.5, 1.4, 0.07, '#6b4a2a'); };
-  if (facing >= 0) { horses(); car(); } else { car(); horses(); }
+  if (c.team) horses(); else if (out) car(); else if (facing >= 0) { horses(); car(); } else { car(); horses(); }
   ctx.globalAlpha = 1;
-  if (!mine && !far && R.phase !== 'home' && z0 > 3 && P(0.2, 3.0, 0) && SX > 6 && SX < W - 6) {      // who is that?
+  if (!mine && !c.team && !out && !far && R.phase !== 'home' && z0 > 3 && P(0.2, 3.0, 0) && SX > 6 && SX < W - 6) {      // who is that?
     const fs = clamp(SC * 0.42, 9, 13) * k; ctx.font = `800 ${fs}px Nunito, sans-serif`; ctx.textAlign = 'center';
     const tw = ctx.measureText(c.name).width + fs * 1.4; SX = clamp(SX, tw / 2 + 4, W - tw / 2 - 4); ctx.fillStyle = 'rgba(10,16,28,.55)'; rrect(SX - tw / 2, SY - fs * 1.05, tw, fs * 1.4, fs * 0.5); ctx.fill();
     ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(SX - tw / 2 + fs * 0.6, SY - fs * 0.35, fs * 0.3, 0, 6.2832); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(c.name, SX + fs * 0.35, SY);
+    if (c.str < c.strMax) {                        // how much more its chariot can take, once it has taken something
+      const bw = tw - fs * 0.7, f = c.str / c.strMax, by = SY + fs * 0.5; ctx.fillStyle = 'rgba(10,16,28,.6)'; rrect(SX - bw / 2, by, bw, fs * 0.34, fs * 0.17); ctx.fill();
+      ctx.fillStyle = f > 0.66 ? '#9fe0a8' : f > 0.33 ? '#f2c14e' : '#ff5a3c'; rrect(SX - bw / 2, by, Math.max(fs * 0.34, bw * f), fs * 0.34, fs * 0.17); ctx.fill();
+    }
+    if (c.rm === 1 || c.rm === 2) {                // winding up to ram you: a red mark over its name
+      const pu = 1 + 0.25 * Math.sin(performance.now() / 45), rx = SX, ry = SY - fs * 2.0; ctx.fillStyle = '#e0301e'; ctx.beginPath(); ctx.arc(rx, ry, fs * 0.72 * pu, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = `900 ${fs * 1.15}px Nunito, sans-serif`; ctx.fillText('!', rx, ry + fs * 0.4);
+    }
   }
 }
 const RIGSH = [[-0.7, -1.15], [-0.7, 1.15], [1.2, 1.75], [3.5, 1.5], [3.5, -1.5], [1.2, -1.75]];
@@ -1052,8 +1242,8 @@ function fx(R) {
       case 'lift': if (mine) { say('WHEEL UP! EASE OFF', '#ffb03a', 0.8, 0.3, 0.8); sfx.lift(); vibe(HAP.light); } break;
       case 'tip': if (mine) say('OVER SHE GOES!', '#ff7a6b', 1.1, 0.3, 1.4); break;
       case 'wreck':
-        if (mine) { sfx.wreck(); FX.shake = 16; FX.stop = 0.1; FX.flash = 0.45; vibe(HAP.thud); R.crowd = 1; }
-        else if (near) { sfx.wreck(); say(`${c.name.toUpperCase()} WRECKS!`, '#f6efdd', 0.7, 0.2, 1.2); R.crowd = 0.9; }
+        if (mine) { if (c.st !== 'out') sfx.wreck(); FX.shake = 16; FX.stop = 0.1; FX.flash = 0.45; vibe(HAP.thud); R.crowd = 1; if (c.st !== 'out') float(R, me, `−${Math.round(PH.WRECKD * R.dmgIn)}`, '#ff7a6b'); }
+        else if (near && c.st !== 'out') { sfx.wreck(); say(`${c.name.toUpperCase()} WRECKS!`, '#f6efdd', 0.7, 0.2, 1.2); R.crowd = 0.9; }
         if (c.wx != null) { dust(R, c.wx, c.wz, 14, true); sparks(R, c.wx, 0.8, c.wz, 12); } break;
       case 'clash': if (mine) { sfx.clash(); FX.shake = Math.max(FX.shake, 4 + e.val); vibe(HAP.light); sparks(R, me.wx, 0.5, me.wz, 7); } break;
       case 'bump': if (mine) { sfx.clash(); FX.shake = Math.max(FX.shake, 5); say('BLOCKED!', '#ff9a7a', 0.7, 0.3, 0.6); } break;
@@ -1066,6 +1256,30 @@ function fx(R) {
       }
       case 'lap': { const fin = e.val === R.laps; sfx.lap(fin); say(fin ? 'FINAL LAP!' : `LAP ${e.val}`, fin ? '#f2c14e' : '#f6efdd', fin ? 1.3 : 0.9, 0.18, 1.3); if (fin) R.crowd = 1; break; }
       case 'rank': { const up = me.rank < e.val; sfx.pass(up); if (up) { say(`${ORD[me.rank]}!`, '#f2c14e', 1.05, 0.18, 0.9); R.crowd = Math.max(R.crowd, 0.8); } else say(`${ORD[me.rank]}`, '#d9c9a8', 0.7, 0.18, 0.8); break; }
+      case 'warn': if (me.warn && me.warn.by === c) { sfx.warn(); vibe(HAP.sharp); } break;
+      case 'evade': if (near) R.note = { text: `${c.name} pulls away from your swing`, t: 0 }; break;
+      case 'miss': if (me.st === 'run' && me.vd * e.val > 1.2) { say('DODGED!', '#f2c14e', 0.95, 0.3, 0.9); sfx.dodge(); vibe(HAP.tick); R.crowd = Math.max(R.crowd, 0.8); } break;
+      case 'ram': {                           // one chariot swung into another: v.d is what the one struck lost, v.back what the striker took back
+        const v = e.val, to = v.to, dn = Math.round(v.d), bn = Math.round(v.back);
+        if (mine) {
+          sfx.ram(v.d); FX.shake = Math.max(FX.shake, 6 + v.d * 0.25); if (v.d > 22) FX.stop = Math.max(FX.stop, 0.05); vibe(v.d > 22 ? HAP.sharp : HAP.light); CAM.kick = Math.max(CAM.kick, 0.6); R.crowd = Math.max(R.crowd, 0.85);
+          if (v.d >= 18) say(v.clash ? 'CLASH!' : v.pin ? 'CRUSHED ON THE WALL!' : v.wheel ? 'WHEEL STRIKE!' : 'RAM!', '#f2c14e', v.pin || v.wheel ? 1 : 0.85, 0.3, 0.8); else if (v.d >= 7) say('RAM', '#f6efdd', 0.6, 0.3, 0.6);     // a glancing blow gets a quieter word
+          if (dn >= 3) float(R, to, `−${dn}`, '#ffd76a'); if (bn >= 3) float(R, me, `−${bn}`, '#ff9a7a');
+        } else if (to.me) {
+          sfx.ram(v.d); FX.shake = Math.max(FX.shake, 9 + v.d * 0.3); FX.flash = Math.max(FX.flash, 0.22 + v.d * 0.007); if (v.d > 18) FX.stop = Math.max(FX.stop, 0.05); vibe(HAP.thud);
+          if (v.d >= 7) say(v.clash ? 'CLASH!' : v.pin ? 'CRUSHED ON THE WALL!' : 'HIT!', '#ff7a6b', v.pin ? 1 : 0.95, 0.3, 0.9);
+          if (dn >= 2) float(R, me, `−${dn}`, '#ff7a6b'); if (bn >= 3) float(R, c, `−${bn}`, '#ffd76a');
+        }
+        if (c.wx != null && to.wx != null) { const mx = (c.wx + to.wx) / 2, mz = (c.wz + to.wz) / 2; planks(R, mx, 0.9, mz, 4 + v.d * 0.3, ['#6b4a2a', '#8a6a3a', to.col]); sparks(R, mx, 0.7, mz, 8); dust(R, mx, mz, 3, true); }
+        break;
+      }
+      case 'out': {                           // a chariot has broken up
+        const by = e.val;
+        if (mine) { sfx.out(true); FX.shake = 22; FX.stop = 0.14; FX.flash = 0.6; FX.slow = 0.9; vibe(HAP.heavy); R.crowd = 1; R.msgs = []; R.note = null; }
+        else if (by && by.me) { sfx.out(false); sfx.kill(); say(`${c.name.toUpperCase()} IS OUT!`, '#f2c14e', 1.15, 0.2, 1.7); FX.gold = 0.8; FX.stop = Math.max(FX.stop, 0.1); vibe(HAP.heavy); R.crowd = 1; broken++; store.set('broken', broken); }
+        else if (near) { sfx.out(false); say(`${c.name.toUpperCase()} IS OUT!`, '#f6efdd', 0.8, 0.2, 1.4); R.crowd = Math.max(R.crowd, 0.9); }
+        breakUp(R, c); break;
+      }
       case 'finish': onFinish(R); break;
     }
   }
@@ -1074,6 +1288,11 @@ function fx(R) {
 function onFinish(R) {
   const res = R.res, me = R.me, L = R.L, win = res.place === 1;
   $('pauseBtn').classList.add('hidden');
+  if (res.out) {                              // your chariot broke up: the race is lost, and nothing is recorded as a best
+    res.stars = 0; setTimeout(() => sfx.lose(), 700); R.crowd = 0.5;
+    streaks[L] = (streaks[L] || 0) + 1; store.set('streaks', streaks); res.nbT = res.nbL = false; res.nbC = bestChain > 0 && me.topChain > bestChain; if (me.topChain > bestChain) { bestChain = me.topChain; store.set('bestChain', bestChain); }
+    return;
+  }
   res.stars = win ? 3 : res.ok ? (res.place === 2 ? 2 : 1) : 0;
   if (win) { sfx.win(R.boss); vibe(HAP.heavy); FX.slow = 0.6; FX.gold = 1; petals(R.boss ? 140 : 90); wreaths++; store.set('wreaths', wreaths); }
   else if (res.ok) { sfx.place(); vibe(HAP.sharp); petals(26); }
@@ -1096,7 +1315,22 @@ function visuals(R, dt, rdt) {               // things that only matter to the e
   for (const p of PET) { p.x += (p.vx + Math.sin(p.r) * 30) * rdt; p.y += p.vy * rdt; p.r += p.vr * rdt; } PET = PET.filter(p => p.y < H + 30);
   FX.shake = Math.max(0, FX.shake - rdt * 40); FX.flash = Math.max(0, FX.flash - rdt); FX.gold = Math.max(0, FX.gold - rdt * 0.9);
   R.crowd += ((R.phase === 'finish' ? 0.7 : me.lap >= R.laps ? 0.5 : 0.28) - R.crowd) * Math.min(1, rdt * 0.5);
+  for (const f of R.floats) f.t += rdt; if (R.floats.length) R.floats = R.floats.filter(f => f.t < 1);
+  for (const o of R.loose) {                 // what a broken chariot leaves behind: its team running free, a wheel bowling away
+    o.t += dt;
+    if (o.team) { o.v += (11 - o.v) * Math.min(1, dt * 0.6); o.p += o.v * dt; o.d += (o.dT - o.d) * Math.min(1, dt * 0.6); o.gal += 2 * dt / strideT(o.v); }
+    else { o.wx += o.vx * dt; o.wz += o.vz * dt; o.y += o.vy * dt; o.vy -= 14 * dt; if (o.y < 0.5) { o.y = 0.5; o.vy = Math.abs(o.vy) * 0.45; o.vx *= 0.9; o.vz *= 0.9; } o.vx *= 1 - 0.5 * dt; o.vz *= 1 - 0.5 * dt; o.spin += Math.hypot(o.vx, o.vz) * dt * 2; o.face += dt * 1.5; }
+  }
+  if (R.loose.length) R.loose = R.loose.filter(o => o.t < (o.team ? 4.2 : 3));
   for (const c of R.cars) {                  // dust from every team
+    if (c.st === 'run' && c.wx != null && c.str < c.strMax * 0.67 && c.str >= c.strMax * 0.34 && Math.random() < 3.5 * dt && R.parts.length < 150)       // a damaged chariot trails a thin wisp
+      R.parts.push({ k: 0, x: c.wx + (Math.random() - 0.5) * 0.8, y: 0.7, z: c.wz + (Math.random() - 0.5) * 0.8, vx: (Math.random() - 0.5), vy: 1 + Math.random(), vz: (Math.random() - 0.5), t: 0, life: 0.6 + Math.random() * 0.4, s0: 0.25, s1: 0.9, col: '#6a5f52', a: 0.22 });
+    if (c.st === 'run' && c.wx != null && c.str < c.strMax * 0.34) {       // a failing chariot trails smoke and sheds splinters
+      if (Math.random() < 9 * dt && R.parts.length < 150) R.parts.push({ k: 0, x: c.wx + (Math.random() - 0.5), y: 0.7, z: c.wz + (Math.random() - 0.5), vx: (Math.random() - 0.5), vy: 1.2 + Math.random(), vz: (Math.random() - 0.5), t: 0, life: 0.7 + Math.random() * 0.5, s0: 0.3, s1: 1.3, col: '#4a4038', a: 0.3 });
+      if (Math.random() < 1.6 * dt) planks(R, c.wx, 0.9, c.wz, 1, ['#6b4a2a', c.col]);
+      if (Math.random() < 7 * dt) sparks(R, c.wx, 0.25, c.wz, 2);
+      if (c.me) sfx.creak();
+    }
     if (c.st !== 'run' || c.wx == null || c.v < 2) continue;
     const reined = c.b > 0.3 || c.auto > 0, rate = c.v * 0.5 + c.slide * 14 + (reined ? 9 : 0) + c.scrape * 12;
     if (Math.random() < rate * dt) dust(R, c.wx, c.wz, 1, c.slide > 0.5 || reined);
@@ -1117,17 +1351,23 @@ function wreath(cx, cy, r, col) {
 function coachLine(R) {                      // one plain instruction at a time, on the learning levels
   const me = R.me, L = R.L;
   if (R.phase === 'count') return L <= 4 ? 'CRACK THE WHIP RIGHT ON "GO!"' : '';
-  if (R.phase !== 'race' || me.st !== 'run' || L > 10) return '';
-  if (L > 6) return me.auto > 0 && IN.wId == null ? 'REIN IN YOURSELF: HOLD RIGHT THUMB' : '';
+  if (R.phase !== 'race' || me.st !== 'run') return '';
+  if (me.warn && L <= 14) return me.warn.sg > 0 ? 'DODGE! STEER RIGHT ▶' : '◀ DODGE! STEER LEFT';       // a rival is winding up beside you
+  if (L > 10) return '';
   turnInfo(R.T, sOf(R.T, me.p)); const inT = TI.k, dist = TI.dist;
+  let beside = false;                        // the first few races with a rival level with you on a straight: show how to ram
+  if (L >= 3 && L <= 9 && !me.rams && !inT && dist > 55) for (const c of R.cars) { if (c === me || c.st !== 'run') continue; let dp = c.p - me.p; dp -= Math.round(dp / R.T.L) * R.T.L; const gd = Math.abs(c.d - me.d); if (Math.abs(dp) < 3 && gd > 2.9 && gd < 7) { beside = true; break; } }
+  if (L > 6) return me.auto > 0 && IN.wId == null ? 'REIN IN YOURSELF: HOLD RIGHT THUMB' : beside ? 'RIVAL BESIDE YOU: SWERVE INTO THEM' : '';
   if (L <= 2) { if (!me.steered) return 'LEFT THUMB: SLIDE TO STEER'; if (me.whips < 2) return 'RIGHT THUMB: TAP TO WHIP'; }
   if (inT) return me.lat > 2.5 ? 'STEER LEFT · HUG THE POST' : '';
   if (dist < 45 && me.v > 12) return L === 1 ? 'YOUR TEAM SLOWS FOR THE TURN' : !me.reined || L <= 4 ? 'HOLD RIGHT THUMB: REIN IN' : '';
   if (L >= 2 && me.pWhips < 4 && dist > 50) return 'WHIP JUST AS THE RING CLOSES';
+  if (beside) return 'RIVAL BESIDE YOU: SWERVE INTO THEM';
   return '';
 }
 function drawHud(R, now) {
   const me = R.me, T = R.T, pad = 12 * k, sm = `800 ${Math.round(11.5 * k)}px Nunito, sans-serif`;
+  if (R.phase === 'done') { for (const p of PET) { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.col; ctx.beginPath(); ctx.ellipse(0, 0, p.s, p.s * 0.45, 0, 0, 6.2832); ctx.fill(); ctx.restore(); } return; }     // behind the end card: only the petals
   ctx.save(); ctx.textBaseline = 'alphabetic'; ctx.lineCap = 'round';
   if (FX.flash > 0) { const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.8); vg.addColorStop(0, 'rgba(255,0,0,0)'); vg.addColorStop(1, `rgba(180,20,10,${FX.flash * 1.4})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
   if (FX.gold > 0) { const vg = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.25, W / 2, H * 0.45, H * 0.8); vg.addColorStop(0, 'rgba(255,215,120,0)'); vg.addColorStop(1, `rgba(255,205,100,${FX.gold * 0.4})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
@@ -1153,12 +1393,34 @@ function drawHud(R, now) {
   for (let i = 0; i < R.order.length && !count; i++) {
     const c = R.order[i], y = 22 * k + i * rh;
     if (c.me) { ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(242,193,78,.28)'; rrect(W - pad - 100 * k, y - 11.5 * k, 104 * k, 15 * k, 5 * k); ctx.fill(); ctx.shadowBlur = 5; }
-    ctx.fillStyle = c.me ? '#f2c14e' : '#f6efdd'; ctx.textAlign = 'right'; ctx.fillText(c.name, W - pad, y); ctx.textAlign = 'left'; ctx.fillText(i + 1, W - pad - 97 * k, y);
-    ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(W - pad - 82 * k, y - 4 * k, 4 * k, 0, 6.2832); ctx.fill();
+    const dead = c.st === 'out';
+    ctx.fillStyle = c.me ? '#f2c14e' : dead ? 'rgba(246,239,221,.5)' : '#f6efdd'; ctx.textAlign = 'right'; ctx.fillText(c.name, W - pad, y); ctx.textAlign = 'left'; ctx.fillText(dead ? '✕' : i + 1, W - pad - 97 * k, y);
+    if (dead) { const nw = ctx.measureText(c.name).width; ctx.fillRect(W - pad - nw - 2, y - 4.5 * k, nw + 4, 1.4 * k); }     // out of the race: struck through
+    ctx.globalAlpha = dead ? 0.45 : 1; ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(W - pad - 82 * k, y - 4 * k, 4 * k, 0, 6.2832); ctx.fill(); ctx.globalAlpha = 1;
     if (c.me) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); }
   }
   // the countdown: three bronze discs
   if (R.phase === 'count') for (let i = 0; i < 3; i++) { ctx.fillStyle = i < R.tickN ? '#f2c14e' : 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(W / 2 + (i - 1) * 30 * k, H * 0.25, 9 * k, 0, 6.2832); ctx.fill(); }
+  // who is level with you, shown at the edge of the screen on their side; red and pulsing while they wind up to ram you
+  if (R.phase === 'race' && me.st === 'run') for (const side of [-1, 1]) {
+    let best = null, bs = 1e9, bdp = 0;
+    for (const c of R.cars) { if (c === me || c.st !== 'run') continue; let dp = c.p - me.p; dp -= Math.round(dp / T.L) * T.L; const gd = (c.d - me.d) * side; if (gd <= 0.5 || gd > 9 || Math.abs(dp) > 7) continue; const sc = Math.abs(dp) + gd * 0.5; if (sc < bs) { bs = sc; best = c; bdp = dp; } }
+    if (!best) continue;
+    if (!(best.rm === 1 || best.rm === 2) && best.wx != null && P3(best.wx, 1.5, best.wz) && SX > 34 * k && SX < W - 34 * k) continue;     // in plain view already: its own name tag is enough
+    const hot = best.rm === 1 || best.rm === 2, pu = hot ? 0.5 + 0.5 * Math.sin(now * 22) : 0, w = 78 * k, h = 30 * k, x = side < 0 ? pad * 0.6 : W - pad * 0.6 - w, y = H * 0.5 - clamp(bdp, -7, 7) * 4 * k - h / 2;
+    ctx.shadowBlur = 0;
+    if (hot) {                               // danger from this side: the edge of the screen glows red and arrows show the way out
+      const gx = side < 0 ? 0 : W, gr = ctx.createLinearGradient(gx, 0, gx - side * 90 * k, 0); gr.addColorStop(0, `rgba(225,40,25,${0.3 + 0.3 * pu})`); gr.addColorStop(1, 'rgba(225,40,25,0)'); ctx.fillStyle = gr; ctx.fillRect(side < 0 ? 0 : W - 90 * k, 0, 90 * k, H);
+      ctx.fillStyle = `rgba(255,235,225,${0.75 + 0.25 * pu})`; ctx.font = `900 ${Math.round(22 * k)}px Nunito, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(side < 0 ? '▶▶' : '◀◀', side < 0 ? x + w + 22 * k + pu * 5 * k : x - 22 * k - pu * 5 * k, y + h / 2);
+    }
+    ctx.fillStyle = hot ? `rgba(${190 + 40 * pu},${32 + 20 * pu},22,.92)` : 'rgba(10,18,32,.55)'; rrect(x, y, w, h, 9 * k); ctx.fill();
+    ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left'; ctx.fillStyle = best.col; ctx.beginPath(); ctx.arc(x + 10 * k, y + 11 * k, 4 * k, 0, 6.2832); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(10.5 * k)}px Nunito, sans-serif`; ctx.fillText(hot ? '! ' + best.name : best.name, x + 18 * k, y + 14.5 * k, w - 22 * k);
+    const f = clamp(best.str / best.strMax, 0, 1); ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(x + 7 * k, y + 19.5 * k, w - 14 * k, 5 * k, 2.5 * k); ctx.fill();
+    ctx.fillStyle = f > 0.66 ? '#9fe0a8' : f > 0.33 ? '#f2c14e' : '#ff5a3c'; rrect(x + 7 * k, y + 19.5 * k, Math.max(5 * k, (w - 14 * k) * f), 5 * k, 2.5 * k); ctx.fill();
+    ctx.shadowBlur = 5;
+  }
   // call-outs
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(26,13,6,.72)';
   for (const m of R.msgs) {
@@ -1169,14 +1431,14 @@ function drawHud(R, now) {
   ctx.globalAlpha = 1;
   if (R.note) { ctx.globalAlpha = Math.min(1, (2.2 - R.note.t) / 0.4); ctx.font = sm; ctx.fillStyle = '#f6efdd'; ctx.fillText(R.note.text, W / 2, H * 0.24 + 26 * k); ctx.globalAlpha = 1; }
   if (R.phase === 'finish') {                // the finish: your place, the honest gap, and the wreath if you earned it
-    const res = R.res, win = res.place === 1, a = Math.min(1, R.ft / 0.25), pop = 1.5 - 0.5 * easeOut(a), cy = H * 0.4;
+    const res = R.res, win = res.place === 1 && !res.out, a = Math.min(1, R.ft / 0.25), pop = 1.5 - 0.5 * easeOut(a), cy = H * 0.4, big = res.out ? 'DESTROYED' : win ? 'VICTORY!' : ORD[res.place];
     ctx.globalAlpha = a;
     if (win) wreath(W / 2, cy - 4 * k, 86 * k * pop, '#7fae4e');
-    ctx.font = `${Math.round(58 * k * pop)}px ${GK}`; ctx.lineWidth = 7 * k; ctx.strokeText(win ? 'VICTORY!' : ORD[res.place], W / 2, cy, W * 0.9);
-    ctx.fillStyle = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#d9c9a8'; ctx.fillText(win ? 'VICTORY!' : ORD[res.place], W / 2, cy, W * 0.9);
+    ctx.font = `${Math.round((res.out ? 46 : 58) * k * pop)}px ${GK}`; ctx.lineWidth = 7 * k; ctx.strokeText(big, W / 2, cy, W * 0.9);
+    ctx.fillStyle = res.out ? '#ff7a6b' : win ? '#f2c14e' : res.ok ? '#f6efdd' : '#d9c9a8'; ctx.fillText(big, W / 2, cy, W * 0.9);
     ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; ctx.fillStyle = '#f6efdd'; ctx.lineWidth = 3.5 * k;
-    { const line = win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : `${res.gapAhead.toFixed(2)} s behind ${res.ahead}`; ctx.strokeText(line, W / 2, cy + 44 * k, W * 0.92); }
-    ctx.fillText(win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : `${res.gapAhead.toFixed(2)} s behind ${res.ahead}`, W / 2, cy + 44 * k, W * 0.92);
+    const line = res.out ? (res.by ? `Your chariot was broken by ${res.by}` : 'Your chariot broke up') : win ? (res.behind ? `Won by ${res.gapBehind.toFixed(2)} s from ${res.behind}` : 'Unchallenged') : res.ahead ? `${res.gapAhead.toFixed(2)} s behind ${res.ahead}` : '';
+    ctx.strokeText(line, W / 2, cy + 44 * k, W * 0.92); ctx.fillText(line, W / 2, cy + 44 * k, W * 0.92);
     if (R.ft > 0.9) { ctx.globalAlpha = 0.6 + 0.25 * Math.sin(now * 5); ctx.fillText('Tap to continue', W / 2, H * 0.92); }
     ctx.globalAlpha = 1;
   }
@@ -1203,11 +1465,16 @@ function drawHud(R, now) {
   ctx.fillStyle = 'rgba(10,18,32,.45)'; rrect(bx, wy, bw, 7 * k, 3.5 * k); ctx.fill();
   ctx.fillStyle = low ? (Math.sin(now * 14) > 0 ? '#ff5a3c' : '#ffb03a') : me.wind < 0.45 ? '#f2c14e' : '#9fe0a8'; rrect(bx, wy, Math.max(0.001, bw * me.wind), 7 * k, 3.5 * k); ctx.fill();
   ctx.fillStyle = 'rgba(246,239,221,.8)'; ctx.font = `800 ${Math.round(9 * k)}px Nunito, sans-serif`; ctx.fillText("HORSES' WIND", wxp, wy - 7 * k);
+  // how much more your own chariot can take, above the reins
+  const cf2 = clamp(me.str / me.strMax, 0, 1), cx0 = lx - bw / 2;
+  ctx.fillStyle = 'rgba(10,18,32,.45)'; rrect(cx0, wy, bw, 7 * k, 3.5 * k); ctx.fill();
+  ctx.fillStyle = me.hurtT < 0.3 && Math.sin(now * 45) > 0 ? '#fff' : cf2 < 0.34 ? (Math.sin(now * 14) > 0 ? '#ff5a3c' : '#ffb03a') : cf2 < 0.67 ? '#f2c14e' : '#9fe0a8'; rrect(cx0, wy, Math.max(0.001, bw * cf2), 7 * k, 3.5 * k); ctx.fill();
+  ctx.fillStyle = 'rgba(246,239,221,.8)'; ctx.fillText(cf2 < 0.34 ? 'CHARIOT FAILING' : cf2 < 0.67 ? 'CHARIOT DAMAGED' : 'YOUR CHARIOT', lx, wy - 7 * k);
   // the little map: every team on the oval
   const tot = T.Ls + 2 * (T.Rc + T.hw), ms = 100 * k / tot, mx = W / 2, my = H - 84 * k, ro = (T.Rc + T.hw) * ms, hl = T.Ls / 2 * ms;
   ctx.fillStyle = 'rgba(10,18,32,.38)'; ctx.beginPath(); ctx.arc(mx - hl, my, ro, Math.PI / 2, Math.PI * 1.5); ctx.arc(mx + hl, my, ro, -Math.PI / 2, Math.PI / 2); ctx.closePath(); ctx.fill();
   ctx.strokeStyle = 'rgba(246,239,221,.5)'; ctx.lineWidth = Math.max(1.5, T.rIn * ms * 1.4); ctx.beginPath(); ctx.moveTo(mx - hl, my); ctx.lineTo(mx + hl, my); ctx.stroke();
-  for (const c of R.order) { if (c.wx == null || c.me) continue; ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(mx + c.wx * ms, my - c.wz * ms, 2.7 * k, 0, 6.2832); ctx.fill(); }
+  for (const c of R.order) { if (c.wx == null || c.me || c.st === 'out') continue; ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(mx + c.wx * ms, my - c.wz * ms, 2.7 * k, 0, 6.2832); ctx.fill(); }
   if (me.wx != null) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(mx + me.wx * ms, my - me.wz * ms, 4 * k, 0, 6.2832); ctx.fill(); ctx.fillStyle = '#b3261e'; ctx.beginPath(); ctx.arc(mx + me.wx * ms, my - me.wz * ms, 2.4 * k, 0, 6.2832); ctx.fill(); }
   ctx.restore();
 }
@@ -1265,7 +1532,7 @@ function showHome() {
   const fav = R.cars[0];
   $('hLvl').textContent = level; $('hVenue').textContent = R.V.name; $('hGames').textContent = R.V.games;
   $('hPills').innerHTML = `<span class="pill">${R.laps} laps</span><span class="pill">${R.n} chariots</span><span class="pill">${R.boss ? 'Champion' : 'Favourite'}: ${fav.full}</span>` + (R.boss ? '<span class="pill" style="background:#f2c14e;color:#3a1d08">YOU MUST WIN</span>' : `<span class="pill">Top ${R.need} go through</span>`);
-  $('hStat').innerHTML = [bestTime[level] ? `Your best here: <b>${fmtT(bestTime[level])}</b>` : '', wreaths ? `Wreaths won: <b>${wreaths}</b>` : ''].filter(Boolean).join(' · ') + (R.help ? `<br><span class="help">Help on: your rivals drive a touch slower until you get through.</span>` : '');
+  $('hStat').innerHTML = [bestTime[level] ? `Your best here: <b>${fmtT(bestTime[level])}</b>` : '', wreaths ? `Wreaths won: <b>${wreaths}</b>` : '', broken ? `Rivals broken: <b>${broken}</b>` : ''].filter(Boolean).join(' · ') + (R.help ? `<br><span class="help">Help on: your rivals drive a touch slower and pick fewer fights until you get through.</span>` : '');
   show('ovHome');
 }
 function startRace() {
@@ -1278,16 +1545,23 @@ function startRace() {
 function showEnd() {
   if (!R || R.phase !== 'finish') return; R.phase = 'done'; loopsOff();
   const res = R.res, me = R.me, L = R.L, V = R.V, win = res.place === 1;
-  $('eTitle').textContent = win ? 'VICTORY!' : `${ORD[res.place]} PLACE`; $('eTitle').style.color = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#e0b8a0';
+  $('eTitle').textContent = res.out ? 'CHARIOT DESTROYED' : win ? 'VICTORY!' : `${ORD[res.place]} PLACE`; $('eTitle').style.color = win ? '#f2c14e' : res.ok ? '#f6efdd' : '#e0b8a0';
   $('eStars').innerHTML = res.ok ? [1, 2, 3].map(i => `<span class="${i <= res.stars ? '' : 'off'}">★</span>`).join('') : '';
   if (!res.board || !res.board.length) settle(R);
   const bd = res.board, rows = bd.slice(0, 3); if (!rows.some(x => x.c === me)) rows.push(bd.find(x => x.c === me));       // the real finishing order: the first three, and you
-  $('eBoard').innerHTML = rows.map(x => { const i = bd.indexOf(x), gap = i === 0 ? fmtT(x.fin) : x.fin ? `+${(x.fin - bd[0].fin).toFixed(2)} s` : 'did not finish'; return `<div class="${x.c.me ? 'me' : ''}"><span>${i + 1}. ${x.c.full}</span><span>${gap}</span></div>`; }).join('');
+  $('eBoard').innerHTML = rows.map(x => { const i = bd.indexOf(x), gap = x.out ? 'broken' : i === 0 ? fmtT(x.fin) : x.fin ? `+${(x.fin - bd[0].fin).toFixed(2)} s` : 'did not finish'; return `<div class="${x.c.me ? 'me' : ''}"><span>${i + 1}. ${x.c.full}</span><span>${gap}</span></div>`; }).join('');
+  const fight = me.rams || me.kills || me.hits ? `<br>Rams landed <b>${me.rams}</b> · rivals broken <b>${me.kills}</b> · blows taken <b>${me.hits}</b>` : '';
+  if (res.out) {
+    $('eStars').innerHTML = '';
+    $('eSub').innerHTML = `${res.by ? `Broken by ${res.by}.` : 'Your chariot could take no more.'} ${res.by ? 'When a rival draws level, keep room to steer away: against the wall you cannot dodge.' : 'Wrecks and hard knocks on the walls wear your chariot down.'}` + fight +
+      ((streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: your rivals will drive a touch slower and pick fewer fights here until you get through.</span>` : '');
+    $('eMain').textContent = 'TRY AGAIN'; $('eMain').dataset.act = 'again'; $('eAlt').classList.add('hidden'); show('ovEnd'); return;
+  }
   const tip = me.wrecks ? 'A wreck costs about five seconds.' : me.pTurns * 2 < me.turns ? 'Rein in before the post, then hold the inside line.' : me.pWhips < me.whips * 0.7 ? 'Whip on the beat to keep your horses fresh.' : 'To pass, get close behind a rival and turn inside them at the post.';
   $('eSub').innerHTML = (win ? `You win ${V.prize}.` : res.ok ? `Through to the next race. First place wins ${V.prize}.` : `${R.boss ? 'Only a win will do here.' : `You needed the top ${R.need}.`} ${tip}`) +
     `<br>Time <b>${fmtT(res.time)}</b>${res.nbT ? ' <b class="nb">NEW BEST</b>' : res.prevT ? ` · best ${fmtT(Math.min(res.prevT, res.time))}` : ''} · best lap <b>${res.lap.toFixed(2)} s</b>${res.nbL ? ' <b class="nb">NEW BEST</b>' : ''}` +
-    `<br>Perfect turns <b>${me.pTurns}/${me.turns}</b> · longest whip chain <b>${me.topChain}</b>${res.nbC ? ' <b class="nb">NEW BEST</b>' : ''}` +
-    (!res.ok && (streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: your rivals will drive a touch slower here until you get through.</span>` : '');
+    `<br>Perfect turns <b>${me.pTurns}/${me.turns}</b> · longest whip chain <b>${me.topChain}</b>${res.nbC ? ' <b class="nb">NEW BEST</b>' : ''}` + fight +
+    (!res.ok && (streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: your rivals will drive a touch slower and pick fewer fights here until you get through.</span>` : '');
   $('eMain').textContent = res.ok ? 'NEXT RACE' : 'TRY AGAIN'; $('eMain').dataset.act = res.ok ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !res.ok);
   show('ovEnd');

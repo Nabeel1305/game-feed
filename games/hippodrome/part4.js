@@ -1,6 +1,6 @@
 
 // ---------- the view: a camera close behind your own chariot ----------
-const CAM = { x: 0, z: 0, h: 3.3, th: 0, c: 1, s: 0, F: 400, hor: 300, roll: 0, back: 5.6, dl: 0, kick: 0 };
+const CAM = { x: 0, z: 0, h: 3.3, th: 0, c: 1, s: 0, F: 400, hor: 300, roll: 0, back: 5.6, dl: 0, kick: 0, wide: 0, mx: 0, mz: 6 };
 const FX = { shake: 0, stop: 0, slow: 0, flash: 0, gold: 0 };
 const NEAR = 0.6, HW = 2.3, HT = 9.2, SD = 9, HS = 1.35, STOA = 2.8;    // near plane; outer wall height, top of the stands, depth of the stands, barrier height, colonnade height
 let SX = 0, SY = 0, SC = 0;
@@ -98,13 +98,16 @@ function camFollow(R, dt, snap) {
   CAM.th += snap ? dth : dth * Math.min(1, dt * 7);
   CAM.dl += (me.d - CAM.dl) * (snap ? 1 : Math.min(1, dt * 5));
   trackAt(T, s, lerp(me.d, CAM.dl, 0.6));
-  CAM.back = 5.3 + 0.9 * (me.v / PH.vTop) + CAM.kick * 0.9;
+  let beside = me.warn ? 1 : 0;              // someone level with you: the view pulls back and widens so you can see the chariot beside yours
+  if (!beside && R.phase !== 'finish') for (const o of R.cars) { if (o === me || (o.st !== 'run' && o.st !== 'grid')) continue; let dp = o.p - me.p; dp -= Math.round(dp / T.L) * T.L; if (Math.abs(dp) < 6.5 && Math.abs(o.d - me.d) < 8.5) { beside = 1; break; } }
+  CAM.wide += (beside - CAM.wide) * (snap ? 1 : Math.min(1, dt * (beside ? 3 : 1.3)));
+  CAM.back = 5.3 + 0.9 * (me.v / PH.vTop) + CAM.kick * 0.9 + 3 * CAM.wide;
   CAM.c = Math.cos(CAM.th); CAM.s = Math.sin(CAM.th);
   let x = TP.x - CAM.back * CAM.c, z = TP.z - CAM.back * CAM.s;
   // keep the camera inside the arena and off the barrier
   const cx = clamp(x, -T.Ls / 2, T.Ls / 2), dd = Math.hypot(x - cx, z), ro = T.Rc + T.hw - 0.9, ri = T.rIn + 0.9;
   if (dd > ro) { x = cx + (x - cx) * ro / dd; z = z * ro / dd; } else if (dd < ri && dd > 0.01) { x = cx + (x - cx) * ri / dd; z = z * ri / dd; }
-  CAM.x = x; CAM.z = z; CAM.h = 3.3; CAM.F = Math.min(W, H * 0.62) * 1.05 * (1 - 0.05 * CAM.kick); CAM.hor = H * 0.36;
+  CAM.x = x; CAM.z = z; CAM.h = 3.3 + 0.6 * CAM.wide; CAM.F = Math.min(W, H * 0.62) * 1.05 * (1 - 0.05 * CAM.kick) * (1 - 0.1 * CAM.wide); CAM.hor = H * 0.36;
   const rollT = -clamp(me.lat * 0.0055 + me.vd * 0.004, -0.075, 0.075) * (me.st === 'wreck' ? 0 : 1);
   CAM.roll += (rollT - CAM.roll) * (snap ? 1 : Math.min(1, dt * 5));
   CAM.kick = Math.max(0, CAM.kick - dt * 1.7);
@@ -286,8 +289,9 @@ function drawWorld(R) {
   }
   add(depth(T.Ls / 2 + rI * 0.45, 0), 2, 0); add(depth(-T.Ls / 2 - rI * 0.45, 0), 2, 1);
   for (let i = 0; i < A.mons.length; i++) add(depth(A.mons[i].x, A.mons[i].z) - 1.2, 3, i);
-  for (let i = 0; i < R.cars.length; i++) { const c = R.cars[i]; trackAt(T, sOf(T, c.p), c.d); c.wx = TP.x; c.wz = TP.z; add(depth(TP.x, TP.z), 4, i); }
+  for (let i = 0; i < R.cars.length; i++) { const c = R.cars[i]; trackAt(T, sOf(T, c.p), c.d); c.wx = TP.x; c.wz = TP.z; add(depth(TP.x, TP.z), 4, i); if (c.me) { CAM.mz = depth(TP.x, TP.z); CAM.mx = (TP.x - CAM.x) * CAM.s - (TP.z - CAM.z) * CAM.c; } }
   add(depth((L[0] + L[2]) / 2, (L[1] + L[3]) / 2), 5, 0);
+  for (let i = 0; i < R.loose.length; i++) { const o = R.loose[i]; if (o.team) { trackAt(T, sOf(T, o.p), o.d); o.wx = TP.x; o.wz = TP.z; } add(depth(o.wx, o.wz), 6, i); }
   const srt = A.srt; srt.length = ni; for (let i = 0; i < ni; i++) srt[i] = it[i];
   srt.sort((p, q) => q.z - p.z);
   for (let q = 0; q < ni; q++) {
@@ -301,6 +305,7 @@ function drawWorld(R) {
     else if (o.k === 2) { const i0 = i ? 2 * ns + nt : ns; for (let j = 0; j <= nt; j++) { Q[j * 3] = A.ix[i0 + j]; Q[j * 3 + 1] = HS; Q[j * 3 + 2] = A.iz[i0 + j]; } poly3(Q, nt + 1, A.spTop); }
     else if (o.k === 3) drawMon(A.mons[i], R, now);
     else if (o.k === 4) drawRig(R.cars[i], R);
+    else if (o.k === 6) { const lo = R.loose[i]; if (lo.team) drawRig(lo, R); else drawWheel(lo); }
     else {                                 // two tall poles with pennants mark the line
       for (const e of [0, 2]) if (P3(L[e], 0, L[e + 1])) { const x = SX, y = SY, s2 = SC, hg = 7.5 * s2, wv = Math.sin(now * 5 + e) * 0.3 * s2; ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = Math.max(1.5, 0.2 * s2); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y - hg); ctx.stroke();
         ctx.fillStyle = '#8f1d1a'; ctx.beginPath(); ctx.moveTo(x, y - hg); ctx.lineTo(x + (e ? -2.6 : 2.6) * s2, y - hg + 0.6 * s2 + wv); ctx.lineTo(x, y - hg + 1.3 * s2); ctx.fill(); ctx.fillStyle = '#f2c14e'; ctx.beginPath(); ctx.arc(x, y - hg, Math.max(1.5, 0.28 * s2), 0, 6.2832); ctx.fill(); }
@@ -309,11 +314,31 @@ function drawWorld(R) {
   // dust and sparks
   for (const p of R.parts) {
     if (!P3(p.x, p.y, p.z)) continue; const u = p.t / p.life;
-    if (p.k) { ctx.globalAlpha = 1 - u; ctx.fillStyle = p.col; const s = Math.max(1.5, p.s0 * SC); ctx.fillRect(SX - s / 2, SY - s / 2, s, s); }
+    if (p.k === 2) { if (SC > 110) continue; const s = Math.min(46 * k, Math.max(2, p.s0 * SC)); ctx.globalAlpha = u > 0.7 ? (1 - u) / 0.3 : 1; ctx.fillStyle = p.col; ctx.save(); ctx.translate(SX, SY); ctx.rotate(p.r + p.vr * p.t); ctx.fillRect(-s / 2, -s * 0.14, s, s * 0.28); ctx.restore(); }     // a plank, spinning
+    else if (p.k) { ctx.globalAlpha = 1 - u; ctx.fillStyle = p.col; const s = Math.max(1.5, p.s0 * SC); ctx.fillRect(SX - s / 2, SY - s / 2, s, s); }
     else { ctx.globalAlpha = p.a * (1 - u); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(SX, SY, Math.min(52 * k, lerp(p.s0, p.s1, u) * SC), 0, 6.2832); ctx.fill(); }
   }
   ctx.globalAlpha = 1;
+  if (R.floats.length) {                     // what each blow cost, floating up from the chariot that took it
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(26,13,6,.8)';
+    for (const f of R.floats) { if (!P3(f.x, f.y + f.t * 1.8, f.z)) continue; const fs = clamp(SC * 0.75, 15, 30) * k * (f.t < 0.1 ? 1.5 - 5 * f.t : 1); ctx.globalAlpha = f.t > 0.7 ? (1 - f.t) / 0.3 : 1; ctx.font = `${Math.round(fs)}px ${GK}`; ctx.lineWidth = fs * 0.16; ctx.strokeText(f.text, SX, SY); ctx.fillStyle = f.col; ctx.fillText(f.text, SX, SY); }
+    ctx.globalAlpha = 1;
+  }
   ctx.restore();
+}
+function drawWheel(o) {                      // a wheel that has come off, bowling away across the sand
+  if (!P3(o.wx, o.y, o.wz)) return; const r = 0.5 * SC; if (r < 1 || SX < -40 || SX > W + 40) return;
+  ctx.globalAlpha = o.t > 2.4 ? Math.max(0, (3 - o.t) / 0.6) : 1; ctx.strokeStyle = '#4a3320'; ctx.lineWidth = Math.max(1, 0.1 * SC); ctx.beginPath(); ctx.ellipse(SX, SY, r * (0.35 + 0.65 * Math.abs(Math.cos(o.face))), r, 0, 0, 6.2832); ctx.stroke();
+  ctx.strokeStyle = '#b08d57'; ctx.lineWidth = Math.max(0.7, 0.05 * SC); ctx.beginPath(); for (let j = 0; j < 2; j++) { const a = o.spin + j * 1.5708, cx = Math.cos(a) * r * (0.35 + 0.65 * Math.abs(Math.cos(o.face))), cy = Math.sin(a) * r; ctx.moveTo(SX - cx, SY - cy); ctx.lineTo(SX + cx, SY + cy); } ctx.stroke(); ctx.globalAlpha = 1;
+}
+function planks(R, x, y, z, n, cols) { for (let i = 0; i < n && R.parts.length < 230; i++) R.parts.push({ k: 2, x: x + (Math.random() - 0.5), y: y + Math.random() * 0.6, z: z + (Math.random() - 0.5), vx: (Math.random() - 0.5) * 9, vy: 2.5 + Math.random() * 6, vz: (Math.random() - 0.5) * 9, t: 0, life: 0.7 + Math.random() * 0.7, s0: 0.3 + Math.random() * 0.45, r: Math.random() * 6.28, vr: (Math.random() - 0.5) * 16, col: cols[(Math.random() * cols.length) | 0] }); }
+function float(R, c, text, col) { if (c.wx != null) R.floats.push({ x: c.wx, y: 2.7, z: c.wz, text, col, t: 0 }); }
+function breakUp(R, c) {                     // a chariot comes apart: planks, dust, a wheel bowling off, and the team running free
+  if (c.wx == null) return;
+  planks(R, c.wx, 0.8, c.wz, 26, ['#6b4a2a', '#5a3d22', c.col, c.colD || c.col, '#8a6a3a']); dust(R, c.wx, c.wz, 16, true); sparks(R, c.wx, 0.8, c.wz, 14);
+  const T = R.T, th = trackAt(T, sOf(T, c.p), c.d).th, side = c.dSide || (c.d > 0 ? -1 : 1), sp = Math.max(6, c.v * 0.7);
+  R.loose.push({ wx: c.wx, wz: c.wz, y: 0.5, vx: Math.cos(th) * sp + Math.sin(th) * side * 3, vz: Math.sin(th) * sp - Math.cos(th) * side * 3, vy: 5, spin: 0, face: Math.random() * 3, t: 0 });
+  R.loose.push({ team: 1, p: c.p + 0.6, d: c.d, dT: clamp(c.d - side * 2.5, T.dMin + 1.5, T.dMax - 1.5), v: Math.max(c.v, 10), vd: 0, coats: c.coats, cD: c.cD, cL: c.cL, col: c.col, colD: c.colD, col2: c.col2, gal: c.gal, wheel: 0, st: 'run', whipT: 9, b: 0, auto: 0, u: 0, slide: 0, tip: 0, ghost: 0, str: 1, strMax: 1, hurtT: 9, rm: 0, name: '', t: 0 });
 }
 function drawMon(m, R, now) {               // what stands on the barrier: columns, tripods, statues, altars, and the turning posts
   if (!P3(m.x, m.y, m.z)) return; const s = SC, x = SX, y = SY; if (x < -90 || x > W + 90 || s < 0.9) return;
@@ -344,16 +369,19 @@ function drawMon(m, R, now) {               // what stands on the barrier: colum
 
 // ---------- a chariot and its four horses, built from simple solid shapes so it reads from any side ----------
 function drawRig(c, R) {
-  const px = c.wx, pz = c.wz, T = R.T, wk = c.st === 'wreck' ? c.wt : 0, z0 = depth(px, pz);
-  if (z0 < -5 || z0 > 330) return;
+  const px = c.wx, pz = c.wz, T = R.T, out = c.st === 'out', wk = c.st === 'wreck' ? c.wt : out ? c.outT : 0, z0 = depth(px, pz);
+  if (z0 < -5 || z0 > 330 || (out && c.outT > 4.2)) return;
+  const stg = out ? 2 : c.str >= c.strMax * 0.67 ? 0 : c.str >= c.strMax * 0.34 ? 1 : 2, ds = c.dSide || 1, fl = c.hurtT < 0.16 ? 1 - c.hurtT / 0.16 : 0;     // how battered it is (0 sound, 1 damaged, 2 failing), which side took it, and the flash of a fresh blow
   const th = trackAt(T, sOf(T, c.p), c.d).th + Math.atan2(c.vd, Math.max(6, c.v)) * 0.9 + (wk ? Math.min(1.2, wk * 2.5) * (c.d > 0 ? -1 : 1) : 0);
   const ct = Math.cos(th), st = Math.sin(th), far = z0 > 80, mid = z0 > 34, mine = c.me;
   if (!c.cD) { c.cD = c.coats.map(x => shade(x, 0.62)); c.cL = c.coats.map(x => shade(x, 1.13)); c.colD = shade(c.col, 0.78); }
   const P = (f, u, r) => P3(px + f * ct + r * st, u, pz + f * st - r * ct);
   const seg = (f1, u1, r1, f2, u2, r2, w, col) => { if (!P(f1, u1, r1)) return; const x1 = SX, y1 = SY, s1 = SC; if (!P(f2, u2, r2)) return; ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.7, w * (s1 + SC) * 0.5); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(SX, SY); ctx.stroke(); };
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const near = mine || R.phase === 'home' ? 1 : clamp((z0 - 1.6) / 3, 0.1, 1);       // a rival right behind you, close to the camera, turns ghostly so it never hides your own team
-  ctx.globalAlpha = near * (c.ghost > 0 && c.ghost < 90 && Math.sin(c.ghost * 28) > 0 ? 0.45 : 1);
+  let near = 1;                              // a rival between the camera and your own team turns ghostly so it never hides you; one off to the side stays solid, so you can see it coming
+  if (!mine && R.phase !== 'home') { near = clamp((z0 - 1.6) / 3, 0.1, 1); if (z0 < CAM.mz - 0.8) near = Math.min(near, Math.max(0.07, clamp((Math.abs((px - CAM.x) * CAM.s - (pz - CAM.z) * CAM.c - CAM.mx) - 1.3) / 2.2, 0, 1))); }
+  const al = near * (c.ghost > 0 && c.ghost < 90 && Math.sin(c.ghost * 28) > 0 ? 0.45 : 1) * (out ? clamp(4.2 - c.outT, 0, 1) : c.team ? clamp(4.2 - c.t, 0, 1) : 1);
+  ctx.globalAlpha = al;
   let qi = 0; for (const fr of RIGSH) { Q[qi++] = px + fr[0] * ct + fr[1] * st; Q[qi++] = 0.02; Q[qi++] = pz + fr[0] * st - fr[1] * ct; }
   poly3(Q, 6, 'rgba(40,25,10,.3)');
   const sf = clamp(c.v / 13, 0.1, 1), reined = c.b > 0.3 || c.auto > 0, up = reined ? 0.13 : 0, rearing = c.st === 'grid' && c.jump && R.phase === 'race' ? Math.sin(Math.min(1, R.t / 0.9) * Math.PI) : 0;
@@ -373,7 +401,8 @@ function drawRig(c, R) {
     seg(2.94, 1.98 + nb, hr, 3.3, 1.78 + nb, hr, 0.24, coat);
     if (!mid) seg(1.9, 1.63 + bob * 0.7, hr - 0.2, 1.9, 1.63 + bob * 0.7, hr + 0.2, 0.2, c.col);          // a cloth in the team colour
   };
-  const tA = wk ? Math.min(3.0, wk * 7) * (c.d > 0 ? -1 : 1) : -(c.slide * 0.09 + c.tip * 0.6), tc = Math.cos(tA), ts = Math.sin(tA), hop = wk ? Math.sin(Math.min(1, wk * 1.5) * Math.PI) * 1.0 : 0;
+  const tA = wk ? Math.min(3.0, wk * 7) * (c.d > 0 ? -1 : 1) : -(c.slide * 0.09 + c.tip * 0.6) + (stg === 2 ? ds * 0.16 + Math.sin(c.wheel * 1.3) * 0.045 : stg === 1 ? ds * 0.09 + Math.sin(c.wheel * 1.1) * 0.015 : 0) + (c.rm === 1 ? -c.rmS * 0.13 * Math.min(1, c.rmT / 0.25) : c.rm === 2 ? c.rmS * 0.2 : 0);   // tipping in a slide; a damaged chariot sags to its hurt side and a failing one shudders; a rough driver leans away to wind up, then into the swing
+  const tc = Math.cos(tA), ts = Math.sin(tA), hop = wk ? Math.sin(Math.min(1, wk * 1.5) * Math.PI) * (out ? 1.3 : 1.0) : 0;
   const B = (f, u, r) => P(f, 0.5 + (u - 0.5) * tc - r * ts + hop, (u - 0.5) * ts + r * tc);       // the car itself can tip
   const segB = (f1, u1, r1, f2, u2, r2, w, col) => { if (!B(f1, u1, r1)) return; const x1 = SX, y1 = SY, s1 = SC; if (!B(f2, u2, r2)) return; ctx.strokeStyle = col; ctx.lineWidth = Math.max(0.7, w * (s1 + SC) * 0.5); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(SX, SY); ctx.stroke(); };
   const quadB = (a, b2, c2, d2, col) => { if (!B(a[0], a[1], a[2])) return; ctx.beginPath(); ctx.moveTo(SX, SY); if (!B(b2[0], b2[1], b2[2])) return; ctx.lineTo(SX, SY); if (!B(c2[0], c2[1], c2[2])) return; ctx.lineTo(SX, SY); if (!B(d2[0], d2[1], d2[2])) return; ctx.lineTo(SX, SY); ctx.closePath(); ctx.fillStyle = col; ctx.fill(); };
@@ -381,16 +410,34 @@ function drawRig(c, R) {
   const car = () => {
     const wood = '#6b4a2a', brz = '#b08d57', skin = '#d9a066', lean = -c.u * 0.17, pull = reined ? 0.14 : 0, wt = c.whipT;
     if (far) { segB(0, 0.95, -0.55, 0, 0.95, 0.55, 0.85, c.col); segB(0.1, 1.2, 0, 0.15, 2.0, 0, 0.42, '#f4eddc'); return; }
-    for (const sd of [-1, 1]) {                    // wheels, four spokes each
-      const wx = sd * 0.98; ctx.beginPath(); let ok = true;
-      for (let j = 0; j <= 10; j++) { const a = j / 10 * 6.2832; if (!B(Math.cos(a) * 0.5, 0.5 + Math.sin(a) * 0.5, wx)) { ok = false; break; } if (j) ctx.lineTo(SX, SY); else ctx.moveTo(SX, SY); }
+    for (const sd of [-1, 1]) {                    // wheels, four spokes each. A damaged one wobbles and has lost a spoke; a broken chariot has lost the wheel
+      if (out && sd === ds) continue;
+      const wx = sd * 0.98, wob = stg && sd === ds && !out ? (stg === 2 ? 0.3 : 0.11) * Math.sin(c.wheel * 0.8) : 0; ctx.beginPath(); let ok = true;
+      for (let j = 0; j <= 10; j++) { const a = j / 10 * 6.2832; if (!B(Math.cos(a) * 0.5, 0.5 + Math.sin(a) * 0.5, wx + wob * Math.sin(a))) { ok = false; break; } if (j) ctx.lineTo(SX, SY); else ctx.moveTo(SX, SY); }
       if (ok) { ctx.strokeStyle = '#4a3320'; ctx.lineWidth = Math.max(1, 0.1 * SC); ctx.stroke(); }
-      if (!mid) for (let j = 0; j < 2; j++) { const a = c.wheel + j * 1.5708, cs2 = Math.cos(a) * 0.46, sn = Math.sin(a) * 0.46; segB(cs2, 0.5 + sn, wx, -cs2, 0.5 - sn, wx, 0.05, brz); }
+      if (!mid) for (let j = 0; j < (wob && stg === 2 ? 1 : 2); j++) { const a = c.wheel + j * 1.5708, cs2 = Math.cos(a) * 0.46, sn = Math.sin(a) * 0.46; segB(cs2, 0.5 + sn, wx + wob * sn * 2, -cs2, 0.5 - sn, wx - wob * sn * 2, 0.05, brz); }
     }
     segB(0, 0.5, -0.98, 0, 0.5, 0.98, 0.1, wood);
     segB(0.55, 0.62, 0, 2.42, 1.08, 0, 0.07, wood);
     quadB([-0.42, 0.58, -0.62], [0.58, 0.58, -0.5], [0.58, 0.58, 0.5], [-0.42, 0.58, 0.62], '#5a3d22');
-    for (let j = 0; j < 4; j++) { const a = RAIL[j], b2 = RAIL[j + 1]; quadB([a[0], 0.58, a[1]], [b2[0], 0.58, b2[1]], [b2[0], b2[2], b2[1]], [a[0], a[2], a[1]], j === 1 || j === 2 ? c.col : c.colD); segB(a[0], a[2], a[1], b2[0], b2[2], b2[1], 0.06, c.col2); }
+    const pc = fl ? mix(c.col, '#ffffff', fl * 0.8) : c.col;
+    for (let j = 0; j < 4; j++) {                  // the rail in four panels. A battered chariot has panels snapped off short on the side that took the blows
+      const a = RAIL[j], b2 = RAIL[j + 1], hurtSide = (j < 2) === (ds < 0), snap = stg === 2 ? hurtSide : stg === 1 ? j === (ds < 0 ? 0 : 3) : false;
+      const ha = snap ? 0.58 + (a[2] - 0.58) * (j & 1 ? 0.7 : 0.4) : a[2], hb = snap ? 0.58 + (b2[2] - 0.58) * (j & 1 ? 0.35 : 0.75) : b2[2];
+      quadB([a[0], 0.58, a[1]], [b2[0], 0.58, b2[1]], [b2[0], hb, b2[1]], [a[0], ha, a[1]], fl ? pc : snap ? (j === 1 || j === 2 ? '#8a6a3e' : '#6e5230') : j === 1 || j === 2 ? c.col : c.colD);      // a snapped panel shows bare wood
+      if (!snap) segB(a[0], a[2], a[1], b2[0], b2[2], b2[1], 0.06, c.col2);
+      else if (!mid) { segB(a[0], ha, a[1], a[0] + 0.03, ha + 0.24, a[1] * 1.04, 0.035, '#8a6a3a'); segB(b2[0], hb, b2[1], b2[0] - 0.02, hb + 0.17, b2[1] * 1.03, 0.03, '#6b4a2a'); }     // splinters
+      if (stg && !snap && !mid && (j === 1 || j === 2)) {     // cracks across the panels that are still whole
+        const t1 = j === 1 ? 0.35 : 0.6, x = t => lerp(a[0], b2[0], t) - 0.015, r = t => lerp(a[1], b2[1], t) * 0.985, top = lerp(a[2], b2[2], t1);
+        segB(x(t1), top, r(t1), x(t1 + 0.14), top - 0.25, r(t1 + 0.14), 0.03, 'rgba(28,14,8,.85)'); segB(x(t1 + 0.14), top - 0.25, r(t1 + 0.14), x(t1 + 0.02), top - 0.48, r(t1 + 0.02), 0.03, 'rgba(28,14,8,.85)');
+      }
+    }
+    if (stg === 2 && !out && !mid) segB(-0.35, 0.56, ds * 0.45, -1.75, 0.07 + 0.06 * Math.abs(Math.sin(c.wheel * 1.7)), ds * 0.8, 0.09, '#7a5a36');     // a failing chariot drags a broken plank
+    if (out && wk > 0.4) {                         // the driver thrown clear, down on the sand
+      const sd2 = -ds; seg(-1.7, 0.17, sd2 * 1.5, -0.7, 0.2, sd2 * 1.9, 0.36, '#e9e0cc'); seg(-1.25, 0.2, sd2 * 1.6, -0.9, 0.22, sd2 * 2.0, 0.1, c.col);
+      if (P(-0.5, 0.22, sd2 * 2.0)) { ctx.fillStyle = '#2a1b12'; ctx.beginPath(); ctx.arc(SX, SY, Math.max(1, 0.14 * SC), 0, 6.2832); ctx.fill(); }
+      return;
+    }
     let rx = 0.5 - pull * 1.6, ry = 1.5 + pull, rr = 0.17;
     if (wt < 0.3) { const u = wt / 0.3, k1 = u < 0.3 ? u / 0.3 : 1 - (u - 0.3) / 0.7; rx = lerp(rx, 0.75, k1); ry = lerp(ry, 2.25, k1); rr = lerp(rr, 0.3, k1); }
     if (!mid) { const ga = ctx.globalAlpha; ctx.globalAlpha = ga * 0.75; for (const i of [0, 1, 2, 3]) seg(0.5 - pull * 1.6, 1.5 + pull, i < 2 ? -0.17 : 0.17, 2.9, 1.92 + up, (i - 1.5) * 0.86, 0.025, '#3a2a1a'); ctx.globalAlpha = ga; }
@@ -409,12 +456,20 @@ function drawRig(c, R) {
     }
   };
   const horses = () => { const rd = st * CAM.c - ct * CAM.s; if (rd > 0) for (let i = 3; i >= 0; i--) horse(i); else for (let i = 0; i < 4; i++) horse(i); if (!far) seg(2.42, 1.5, -1.4, 2.42, 1.5, 1.4, 0.07, '#6b4a2a'); };
-  if (facing >= 0) { horses(); car(); } else { car(); horses(); }
+  if (c.team) horses(); else if (out) car(); else if (facing >= 0) { horses(); car(); } else { car(); horses(); }
   ctx.globalAlpha = 1;
-  if (!mine && !far && R.phase !== 'home' && z0 > 3 && P(0.2, 3.0, 0) && SX > 6 && SX < W - 6) {      // who is that?
+  if (!mine && !c.team && !out && !far && R.phase !== 'home' && z0 > 3 && P(0.2, 3.0, 0) && SX > 6 && SX < W - 6) {      // who is that?
     const fs = clamp(SC * 0.42, 9, 13) * k; ctx.font = `800 ${fs}px Nunito, sans-serif`; ctx.textAlign = 'center';
     const tw = ctx.measureText(c.name).width + fs * 1.4; SX = clamp(SX, tw / 2 + 4, W - tw / 2 - 4); ctx.fillStyle = 'rgba(10,16,28,.55)'; rrect(SX - tw / 2, SY - fs * 1.05, tw, fs * 1.4, fs * 0.5); ctx.fill();
     ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(SX - tw / 2 + fs * 0.6, SY - fs * 0.35, fs * 0.3, 0, 6.2832); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(c.name, SX + fs * 0.35, SY);
+    if (c.str < c.strMax) {                        // how much more its chariot can take, once it has taken something
+      const bw = tw - fs * 0.7, f = c.str / c.strMax, by = SY + fs * 0.5; ctx.fillStyle = 'rgba(10,16,28,.6)'; rrect(SX - bw / 2, by, bw, fs * 0.34, fs * 0.17); ctx.fill();
+      ctx.fillStyle = f > 0.66 ? '#9fe0a8' : f > 0.33 ? '#f2c14e' : '#ff5a3c'; rrect(SX - bw / 2, by, Math.max(fs * 0.34, bw * f), fs * 0.34, fs * 0.17); ctx.fill();
+    }
+    if (c.rm === 1 || c.rm === 2) {                // winding up to ram you: a red mark over its name
+      const pu = 1 + 0.25 * Math.sin(performance.now() / 45), rx = SX, ry = SY - fs * 2.0; ctx.fillStyle = '#e0301e'; ctx.beginPath(); ctx.arc(rx, ry, fs * 0.72 * pu, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = `900 ${fs * 1.15}px Nunito, sans-serif`; ctx.fillText('!', rx, ry + fs * 0.4);
+    }
   }
 }
 const RIGSH = [[-0.7, -1.15], [-0.7, 1.15], [1.2, 1.75], [3.5, 1.5], [3.5, -1.5], [1.2, -1.75]];
