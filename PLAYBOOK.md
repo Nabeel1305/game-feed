@@ -1,4 +1,6 @@
-# The Game Feed Playbook (for Claude, not for Nabeel to read)
+# The Game Feed Playbook: the "engagement factors" (for Claude, not for Nabeel to read)
+
+Nabeel calls this research the **engagement factors**. Every game gets them from its first build, without him asking. Choosing which ones fit is the job; skipping them is not an option.
 
 Design principles for every game, from the research done in Nov 2026 (King/Candy Crush GDC talk, SDT research, Peggle, Fruit Ninja, Threes, Alto, Monument Valley, Wordle, Sakurai on hit-stop, "Juice it or lose it", "Art of Screenshake") plus Nabeel's own taste.
 

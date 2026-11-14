@@ -8,7 +8,7 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Win and lose moments:** winning must feel as good as losing feels bad (a sound and a visual for each). Keep each under ~2 seconds and let a tap skip to the next round.
 - **Engaging and challenging**, with no easy way to win.
 - **Every sound must be satisfying.** Crisp, layered, pitch-varied, never harsh or nagging, pleasant on the 50th play. Full rules and code in `PLAYBOOK.md` (Satisfying Sounds).
-- **Design principles** (flow, juice, calm, dark patterns to avoid) are in `PLAYBOOK.md`. Apply only the ones that suit each game.
+- **Engagement factors in every game, always, without being told** (his words: "I shouldn't have to tell you"). They are the research in `PLAYBOOK.md`: pick the ones that suit each game from the player's point of view, never all of them blindly, but never none.
 
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.
