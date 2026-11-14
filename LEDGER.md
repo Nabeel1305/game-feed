@@ -4,7 +4,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
 **6 games** so far. Next number: **7**.
 
-**Game Feed** (the scrolling app with all the games, version 0.2.0): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 6 games in it.
+**Game Feed** (the scrolling app with all the games, version 0.3.0): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 6 games in it.
 
 | # | Game | Status | Version | Feed mini mode | Play / test page | Code |
 |---|------|--------|---------|----------------|------------------|------|

@@ -110,6 +110,8 @@ def main():
             sels = (g.get('feed') or {}).get('start') or ['#playBtn']
             ok(not fr.locator(sels[-1]).is_visible(), f"{g['id']}: its own menu is gone, play has begun")
             pg.screenshot(path=os.path.join(root, 'out', 'feed', g['id'] + '-play.png'))
+            d = fr.evaluate('window.GameFeed.debug()')
+            ok(d['soundOn'] and d['wired'] and len(d['knobs']) > 0 and all(k == 1 for k in d['knobs']), f"{g['id']}: its sound goes out through the app's sound switch", str(d))
             # frozen means frozen
             fr.evaluate('window.__n = 0; window.__tk = 0; (function f() { window.__n++; requestAnimationFrame(f); })(); setInterval(() => window.__tk++, 50)')
             pg.wait_for_timeout(300)
@@ -231,6 +233,54 @@ def main():
         ok(not errs, 'no errors while swiping, searching and pinning', '; '.join(errs[:3]))
         ctx.close()
 
+        # 4b. the one sound switch for the whole app
+        print('Sound switch:')
+        LISTEN = """async () => {
+            const c = window.GameFeed.contexts()[0];
+            const ear = c.createAnalyser(); ear.fftSize = 2048;
+            c.__gfKnob.connect(ear);                               // listen where the speaker is
+            const o = c.createOscillator(), g = c.createGain();
+            g.gain.value = 0.2; o.connect(g); g.connect(c.destination);   // a test tone, sent out the way every game sends its sound
+            o.start();
+            await new Promise(r => setTimeout(r, 300));
+            const buf = new Float32Array(ear.fftSize); ear.getFloatTimeDomainData(buf);
+            o.stop();
+            return Math.max(...buf.map(Math.abs));
+        }"""
+        errs = []
+        ctx, pg = open_feed(b, base + '#' + games[1]['id'], errs)
+        t = Touch(pg)
+        ok(pg.get_attribute('#soundBtn', 'aria-pressed') == 'true' and pg.inner_text('#soundTxt').strip().lower() == 'sound', 'sound starts on')
+        pg.click('#soundBtn'); pg.wait_for_timeout(200)
+        ok(pg.evaluate('window.__feed.soundOn') is False and pg.get_attribute('#soundBtn', 'aria-pressed') == 'false' and pg.inner_text('#soundTxt').strip().lower() == 'muted',
+           'one tap on Sound turns sound off, and the bar shows it')
+        pg.screenshot(path=os.path.join(root, 'out', 'feed', 'sound-off.png'))
+        wait_ready(pg); pg.wait_for_timeout(600); t.tap(W / 2, 330); pg.wait_for_timeout(1200)
+        fr = game_frame(pg)
+        d = fr.evaluate('window.GameFeed.debug()')
+        ok(state(pg)['state'] == 'playing' and d['soundOn'] is False and d['wired'] and len(d['knobs']) > 0 and all(k == 0 for k in d['knobs']), 'a game started with sound off is silent from its first moment', str(d))
+        ok(fr.evaluate(LISTEN) < 0.001, 'nothing at all reaches the speaker')
+        pg.click('#soundBtn'); pg.wait_for_timeout(250)
+        ok(pg.evaluate('window.__feed.soundOn') is False, 'mid-game, one stray tap on Sound changes nothing')
+        pg.click('#soundBtn'); pg.wait_for_timeout(350)
+        loud = fr.evaluate(LISTEN)
+        ok(pg.evaluate('window.__feed.soundOn') is True and loud > 0.05, 'a second tap turns sound back on while playing', f'heard {loud:.3f}')
+        pg.click('#soundBtn'); pg.wait_for_timeout(350)
+        ok(pg.evaluate('window.__feed.soundOn') is False and fr.evaluate(LISTEN) < 0.001, 'and off again while playing')
+        first = state(pg)['id']
+        t.swipe(W / 2, H - 28, H - 28 - 420)
+        wait_ready(pg); pg.wait_for_timeout(600); t.tap(W / 2, 330); pg.wait_for_timeout(1200)
+        fr2 = game_frame(pg)
+        d = fr2.evaluate('window.GameFeed.debug()')
+        ok(state(pg)['id'] != first and state(pg)['state'] == 'playing' and d['soundOn'] is False and all(k == 0 for k in d['knobs']) and fr2.evaluate(LISTEN) < 0.001,
+           'off means off for every game: the next game is silent too', str(d))
+        pg.reload(); pg.wait_for_function('window.__feed && window.__feed.cur()')
+        ok(pg.evaluate('window.__feed.soundOn') is False and pg.get_attribute('#soundBtn', 'aria-pressed') == 'false', 'the choice is remembered after closing the app')
+        pg.click('#soundBtn'); pg.wait_for_timeout(200)
+        ok(pg.evaluate('window.__feed.soundOn') is True, 'and one tap brings sound back')
+        ok(not errs, 'no errors with the sound switch', '; '.join(errs[:3]))
+        ctx.close()
+
         # 5. the break card after ten games
         print('Break card:')
         errs = []
@@ -275,6 +325,9 @@ def main():
         pg.evaluate('window.__feed.halt()'); pg.wait_for_timeout(150)
         c0 = fr.evaluate('performance.now()'); pg.wait_for_timeout(400); c1 = fr.evaluate('performance.now()')
         ok(c0 == c1, 'and freezes')
+        pg.evaluate('window.__feed.setSound(false)'); pg.wait_for_timeout(200)
+        ok(fr.evaluate('window.GameFeed.debug().soundOn') is False and all(k == 0 for k in fr.evaluate('window.GameFeed.debug().knobs')), 'and the sound switch reaches the game')
+        pg.evaluate('window.__feed.setSound(true)'); pg.wait_for_timeout(100)
         ok(fr.evaluate("(() => { try { localStorage.setItem('gf.t', '1'); return localStorage.getItem('gf.t'); } catch (e) { return 'ERR ' + e.name; } })()") == '1', 'and a game can save its progress')
         ok((pg.evaluate('window.__vib || 0')) > 0, 'and vibration goes through the phone app')
         t.swipe(W / 2, H - 28, H - 28 - 420)

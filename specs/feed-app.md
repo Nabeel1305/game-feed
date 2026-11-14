@@ -5,7 +5,8 @@ Nabeel's brief (Nov 2026): "build it properly, like an app on its own, an app th
 ## What he gets
 - **One card at a time, full screen.** Swipe up: next game. Swipe down: the one before. The order is a shuffled deck: every game comes up once before any repeats, never the same game twice running, and after three intense games in a row a calmer one is pulled forward (P26).
 - **The card** shows a 3 s silent clip of real play behind the game's number, kind, name (in the game's own title font), one line about it, and whether it needs one thumb or two (P25, P27, P30). A tap anywhere on the card starts the game at once: the feed presses the game's own Play button.
-- **The bar** under the card: **Games** (every game, newest first, pinned ones on top, search by name, kind or number; tap one to go to it), the swipe handle, **Pin**.
+- **The bar** under the card: **Games** (every game, newest first, pinned ones on top, search by name, kind or number; tap one to go to it), **Sound**, the swipe handle, **Pin**.
+- **Sound** is one switch for the whole app (his words: "when I off the sound, I'm offing the sound for all the games"): off silences every game until he turns it back on, and the app remembers it.
 - **Leaving a game** by swiping up on the bar freezes it exactly where it is. Coming back shows "Paused: Continue / Start over". Fast or two-thumb games count 3, 2, 1 before they carry on.
 - **A soft break** after about ten games played: "That's a set. Keep going / Done for now" (P27, AVOID 10). No streaks, no notifications, nothing that expires.
 - **Play history is kept on the phone** for the later "what comes next" brain (P29): per game how often its card was shown, started, seconds played, quick skips (left within 2.5 s without playing), pins, plus a rolling log of the last 600 events (`gf.stats`, `gf.log`).

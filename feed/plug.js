@@ -3,6 +3,7 @@
      - "pause" stops the game's clock: animation frames, timers, performance.now() and sound all stand still
      - "resume" lets them run again from the same instant
      - "start" presses the game's own Play button (or calls window.gameFeedStart(mode) if the game has one)
+     - "sound" is the app's one sound switch: off silences everything the game plays, whatever its own sound button says
    Outside the feed (the page opened on its own) it does nothing at all.
    A game may also use: window.GameFeed.finish({win, level, score}) to tell the feed a level ended,
    and may define window.gameFeedPause() / window.gameFeedResume() for anything extra it wants to do. */
@@ -70,14 +71,62 @@
     else { rCT(id); rCI(id); }
   };
 
-  /* ---- sound ---- */
-  var ctxs = [];
+  /* ---- sound ----
+     Every sound context the game makes gets a volume knob of ours between the game and the speaker: the game's
+     "destination" is that knob. The feed's sound switch turns the knob to 0 or 1, so it works on any game. */
+  var ctxs = [], soundOn = true, media = [];
+  var realDest = null;
+  try {
+    var owner = window.BaseAudioContext || window.AudioContext || window.webkitAudioContext;
+    var desc = owner && Object.getOwnPropertyDescriptor(owner.prototype, 'destination');
+    realDest = desc && desc.get;
+  } catch (e) {}
+  function addKnob(c) {
+    try {
+      var out = realDest ? realDest.call(c) : c.destination;
+      var knob = c.createGain();
+      knob.gain.value = soundOn ? 1 : 0;
+      knob.connect(out);
+      Object.defineProperty(c, 'destination', { configurable: true, get: function () { return knob; } });
+      c.__gfKnob = knob;
+    } catch (e) {}
+  }
+  function setSound(on) {
+    soundOn = !!on;
+    var v = soundOn ? 1 : 0;
+    ctxs.forEach(function (c) {
+      var k = c.__gfKnob;
+      if (!k) return;
+      try {
+        k.gain.cancelScheduledValues(0);
+        if (c.state === 'running') k.gain.setTargetAtTime(v, c.currentTime, 0.012);   // a quick fade, no click
+        else k.gain.value = v;
+      } catch (e) { try { k.gain.value = v; } catch (e2) {} }
+    });
+    var els = Array.prototype.slice.call(document.querySelectorAll('audio,video')).concat(media);
+    els.forEach(function (el) {
+      try {
+        if (!soundOn) { if (!el.muted) { el.muted = true; el.__gfMuted = true; } }
+        else if (el.__gfMuted) { el.muted = false; el.__gfMuted = false; }
+      } catch (e) {}
+    });
+    try { if (typeof window.gameFeedSound === 'function') window.gameFeedSound(soundOn); } catch (e) {}
+  }
+  try {                                       // sound files and video, for games that use them
+    var realPlay = window.HTMLMediaElement && HTMLMediaElement.prototype.play;
+    if (realPlay) HTMLMediaElement.prototype.play = function () {
+      if (media.indexOf(this) < 0) media.push(this);
+      if (!soundOn && !this.muted) { this.muted = true; this.__gfMuted = true; }
+      return realPlay.apply(this, arguments);
+    };
+  } catch (e) {}
   ['AudioContext', 'webkitAudioContext'].forEach(function (k) {
     var C = window[k];
     if (!C) return;
     var W = function (opts) {
       var c = opts === undefined ? new C() : new C(opts);
       ctxs.push(c);
+      addKnob(c);
       if (paused) { c.__gfHeld = true; try { c.suspend(); } catch (e) {} }
       return c;
     };
@@ -119,7 +168,8 @@
 
   /* ---- start: press the game's own Play button(s) ---- */
   function visible(el) { return !!el && el.getClientRects().length > 0; }
-  function start(mode) {
+  function start(mode, sound) {
+    if (sound !== undefined) setSound(sound);
     resume();
     window.GameFeed.mode = mode || 'full';
     try { window.focus(); } catch (e) {}
@@ -139,9 +189,13 @@
   window.GameFeed = {
     inFeed: true, id: cfg.id, mode: 'full',
     isPaused: function () { return paused; },
+    soundOn: function () { return soundOn; },
+    contexts: function () { return ctxs.slice(); },
     finish: function (result) { post('finish', { result: result || {} }); },
     debug: function () {
-      return { paused: paused, frames: Object.keys(frames).length, timers: Object.keys(timers).length, sound: ctxs.map(function (c) { return c.state; }) };
+      return { paused: paused, frames: Object.keys(frames).length, timers: Object.keys(timers).length, sound: ctxs.map(function (c) { return c.state; }),
+        soundOn: soundOn, knobs: ctxs.map(function (c) { return c.__gfKnob ? c.__gfKnob.gain.value : null; }),
+        wired: ctxs.every(function (c) { return !!c.__gfKnob && c.destination === c.__gfKnob; }) };
     }
   };
 
@@ -150,7 +204,8 @@
     if (e.source !== window.parent || !d || d.gf !== 1) return;
     if (d.cmd === 'pause') pause();
     else if (d.cmd === 'resume') resume();
-    else if (d.cmd === 'start') start(d.mode);
+    else if (d.cmd === 'start') start(d.mode, d.sound);
+    else if (d.cmd === 'sound') setSound(d.on);
     else if (d.cmd === 'ping') post('ready');
   });
   /* inside the feed, the feed decides when a game stops: the game's own "page hidden" pause would only stack a second pause on top */

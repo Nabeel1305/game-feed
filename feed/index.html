@@ -95,10 +95,15 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
 /* the bar */
 #bar{position:relative;flex:none;height:calc(var(--bar) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);
-  display:grid;grid-template-columns:76px 1fr 76px;align-items:stretch;background:var(--ink);border-top:1px solid var(--line);touch-action:none}
+  display:grid;grid-template-columns:58px 58px 1fr 58px 58px;align-items:stretch;background:var(--ink);border-top:1px solid var(--line);touch-action:none}
 #bar button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:var(--bar);
   font-family:var(--display);font-weight:600;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);transition:opacity .2s linear}
 #bar button svg{width:23px;height:23px;fill:none;stroke:var(--paper);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#soundBtn .x{display:none}
+#soundBtn.off .x{display:inline}
+#soundBtn.off .w{display:none}
+#soundBtn.off{color:var(--accent)}
+#soundBtn.off svg{stroke:var(--accent)}
 #pinBtn.on{color:var(--accent)}
 #pinBtn.on svg{stroke:var(--accent);fill:var(--accent)}
 #handle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:var(--bar);min-width:0;padding:0 6px}
@@ -165,7 +170,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
   <div id="toast" role="status" aria-live="polite"></div>
   <nav id="bar" aria-label="Feed controls">
     <button id="libBtn" aria-label="All games and search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Games</button>
-    <div id="handle" role="button" tabindex="0" aria-label="Swipe up for the next game, down for the last one"><span class="grip"><svg viewBox="0 0 22 11"><path d="M2 9.5l9-7.5 9 7.5"/></svg></span><span class="what" id="what">Swipe up · next game</span></div>
+    <button id="soundBtn" aria-label="Sound for every game" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path class="w" d="M15 9.2a4 4 0 010 5.6M17.6 6.6a7.6 7.6 0 010 10.8"/><path class="x" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg><span id="soundTxt">Sound</span></button>
+    <div id="handle" role="button" tabindex="0" aria-label="Swipe up for the next game, down for the last one"><span class="grip"><svg viewBox="0 0 22 11"><path d="M2 9.5l9-7.5 9 7.5"/></svg></span><span class="what" id="what">Next game</span></div>
+    <span aria-hidden="true"></span>
     <button id="pinBtn" aria-label="Pin this game" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 3.5h6l-.8 6.2 3.3 3.3v1.5H6.5V13l3.3-3.3z"/><path d="M12 14.5V21"/></svg><span id="pinTxt">Pin</span></button>
   </nav>
   <section id="lib" aria-label="All games" aria-hidden="true">
@@ -387,6 +394,7 @@ function unload(s) {
 function onGame(s, d) {
   if (d.ev === 'ready') {
     s.ready = true;
+    tellSound(s);
     if (s.viaText) textMode = true;
     clearTimeout(s.loadT);
     s.el.classList.remove('failed');
@@ -422,7 +430,7 @@ function begin(s) {                      // the game is loaded and he has tapped
   s.el.classList.remove('loading', 'halt');
   s.el.classList.add('live');
   if (s.video) { try { s.video.pause(); } catch (e) {} }
-  send(s, 'start', { mode: 'full' });
+  send(s, 'start', { mode: 'full', sound: soundOn });
   try { s.frame.focus(); } catch (e) {}
   startClock(s);
   const st = stat(s.g.id);
@@ -573,7 +581,7 @@ function jump(id) {                       // from the games list: put that game 
 }
 
 /* ---------- the bar ---------- */
-const pinBtn = $('#pinBtn'), what = $('#what');
+const pinBtn = $('#pinBtn'), what = $('#what'), soundBtn = $('#soundBtn');
 let awakeT = 0;
 function chrome() {
   const s = cur();
@@ -585,7 +593,10 @@ function chrome() {
   $('#pinTxt').textContent = on ? 'Pinned' : 'Pin';
   const playing = !!s && s.state === 'playing';
   bar.classList.toggle('quiet', playing);
-  what.textContent = playing ? g.name : 'Swipe up · next game';
+  what.textContent = playing ? g.name : bar.classList.contains('hint') ? 'Swipe up' : 'Next game';
+  soundBtn.classList.toggle('off', !soundOn);
+  soundBtn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+  $('#soundTxt').textContent = soundOn ? 'Sound' : 'Muted';
 }
 function wake() {
   bar.classList.add('awake');
@@ -614,6 +625,24 @@ $('#libBtn').addEventListener('click', () => {
   openLib();
 });
 $('#handle').addEventListener('click', () => { if (!drag.moved && asleep()) wake(); });
+
+/* ---------- the one sound switch for the whole app: off means no game makes a sound, whatever its own sound button says ---------- */
+let soundOn = store.get('sound', 1) !== 0;
+function tellSound(s) { send(s, 'sound', { on: soundOn }); }
+function setSound(on) {
+  soundOn = !!on;
+  store.set('sound', soundOn ? 1 : 0);
+  slides.forEach(tellSound);
+  note('', soundOn ? 'sound on' : 'sound off');
+  vibe(10);
+  chrome();
+  toast(soundOn ? 'Sound on' : 'Sound off for every game', 2000);
+}
+soundBtn.addEventListener('click', () => {
+  if (drag.moved) return;
+  if (asleep()) { wake(); return; }
+  setSound(!soundOn);
+});
 function hideHint() { if (bar.classList.contains('hint')) { bar.classList.remove('hint'); store.set('hint', 1); } }
 
 /* ---------- swiping ---------- */
@@ -777,12 +806,12 @@ function footLine() {
   try { if (native && native.version) bits.push('App ' + native.version()); } catch (e) {}
   return bits.join(' · ');
 }
-function toast(text) {
+function toast(text, ms) {
   const t = $('#toast');
   t.textContent = text;
   t.classList.add('on');
   clearTimeout(toastT);
-  toastT = setTimeout(() => t.classList.remove('on'), 3600);
+  toastT = setTimeout(() => t.classList.remove('on'), ms || 3600);
 }
 
 /* ---------- the phone's back button, leaving the app, size changes ---------- */
@@ -813,7 +842,7 @@ function start(saved) {
   if (byId[want]) { hist.push({ type: 'game', id: want }); recent.push(want); }
   sync();
   arrive(cur());
-  if (!store.get('hint', 0)) bar.classList.add('hint');
+  if (!store.get('hint', 0)) { bar.classList.add('hint'); chrome(); }
   $('#count').textContent = GAMES.length + ' games';
   try { if (native && native.ready) native.ready(String(BUILD.rev || '')); } catch (e) {}      // tells the app this copy of the feed works
   if (fresh.length) setTimeout(() => toast(fresh.length === 1 ? 'New game: ' + byId[fresh[0]].name : fresh.length + ' new games'), 500);
@@ -824,7 +853,7 @@ if (hotApi && hotApi.ready) hotApi.ready(start); else start((hotApi && hotApi.da
 
 window.__feed = {
   games: GAMES, hist, slides, stats, log, fresh, build: BUILD,
-  get pending() { return pending; },
+  get pending() { return pending; }, get soundOn() { return soundOn; }, setSound,
   get pos() { return pos; }, get busy() { return busy; },
   cur, go, jump, tap: () => tapCover(cur()), halt: () => halt(cur()), carryOn: () => carryOn(cur()), countIn: () => countIn(cur()), openLib, closeLib, togglePin,
   state: () => { const s = cur(); return { pos, type: s.en.type, id: s.g ? s.g.id : null, state: s.state, ready: !!s.ready, started: s.started || false, halted: s.el.classList.contains('halt'), frames: Array.from(slides.values()).filter(x => x.frame).length, pins: pins.slice(), setPlays }; }

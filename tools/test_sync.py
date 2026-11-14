@@ -223,24 +223,26 @@ def main():
         st = pg.evaluate('window.__feed.state()')
         ok(st['state'] == 'playing' and pg.evaluate('window.__feed.pending') == r['rev'] and not pg.evaluate("sessionStorage.getItem('reloads')"), 'a running game is never interrupted by an update', str(st))
         # he swipes on: once the game he left has been put away, the feed takes the update at that quiet moment
-        on_card = None
         for _ in range(4):
             if pg.evaluate("sessionStorage.getItem('reloads')"): break
-            pg.evaluate('window.__feed.go(1)'); pg.wait_for_timeout(450)
-            on_card = pg.evaluate('window.__feed ? window.__feed.state().id : null') or on_card
-            pg.wait_for_timeout(600)
+            pg.evaluate('window.__feed.go(1)'); pg.wait_for_timeout(1000)
         pg.wait_for_function('window.__feed && window.__feed.cur() && window.__feed.games.some(g => g.id === "test-seventh")', timeout=8000)
         st = pg.evaluate('window.__feed.state()')
         ids = pg.evaluate('window.__feed.games.map(g => g.id)')
         ok('test-seventh' in ids and retired['id'] not in ids, 'after the update the feed lists the new game and not the retired one', str(ids))
-        ok(st['pos'] == 0 and st['state'] == 'cover' and (st['id'] == on_card or on_card == retired['id']), 'the card he was looking at stays in front of him', f"was on {on_card}, now {st['id']}")
+        on_card = pg.evaluate('location.hash.slice(1)')          # the card that was on screen when the feed took the update
+        gone = on_card == retired['id']                         # ...which may have been the very game this update retires
+        ok(st['pos'] == 0 and st['state'] == 'cover' and st['id'] == ('test-seventh' if gone else on_card),
+           'the card he was looking at stays in front of him (or the new game, if his card was the retired game)', f"was on {on_card}, now {st['id']}")
         pg.wait_for_timeout(700)
         ok(pg.locator('#toast.on').count() == 1 and 'seventh game' in pg.locator('#toast').inner_text().lower(), 'a note says a new game arrived', pg.locator('#toast').inner_text())
         pg.wait_for_timeout(300)
-        pg.evaluate('window.__feed.go(1)'); pg.wait_for_timeout(900)
+        if not gone:
+            pg.evaluate('window.__feed.go(1)'); pg.wait_for_timeout(900)
         st = pg.evaluate('window.__feed.state()')
         ok(st['id'] == 'test-seventh', 'and the new game is the very next card', str(st))
-        ok(pg.locator('.slide .cover .new').count() >= 1 and pg.evaluate("window.__feed.cur().el.querySelector('.new') !== null"), 'marked New')
+        ok(pg.locator('.slide .cover .new').count() >= 1 and pg.evaluate("window.__feed.cur().el.querySelector('.new') !== null"), 'marked New',
+           str(pg.evaluate("({reloads: sessionStorage.getItem('reloads'), fresh: window.__feed.fresh, known: localStorage.getItem('gf.known'), hash: location.hash, hist: window.__feed.hist.map(e => e.id || e.type), pos: window.__feed.pos})")) + f' on_card={on_card} gone={gone}')
         os.makedirs(os.path.join(root, 'out', 'feed'), exist_ok=True)
         pg.screenshot(path=os.path.join(root, 'out', 'feed', 'new-game.png'))
         pg.wait_for_function('window.__feed.state().ready'); pg.wait_for_timeout(600)
