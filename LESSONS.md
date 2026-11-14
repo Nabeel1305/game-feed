@@ -21,6 +21,7 @@ Everything learned building the first games. Every new game must follow the **ru
 10. Test on a 390x844 phone screen and look at a screenshot of every screen before sending.
 
 ## How to test (fast)
+- Best pattern (from Steel & Honour): add a `window.__sim` hook to the game itself (start headless + muted, step(dt), act(...)) and run bots inside the page with one `page.evaluate`, so hundreds of bouts take seconds.
 - Make a test copy of the page that exposes hooks (`window.__G`, geometry helpers, `__lvl(n)`), and drive it with Playwright.
 - **Run cheat tests in fast-forward:** call the game's update loop directly (many steps, no drawing) rather than real time. Real-time testing of High Noon took ~10 minutes per run.
 - Bots, at several levels (e.g. 1, 5, 15, 40, 80): a **spammer** (obvious repeated move), a **smart** player (~250 ms reactions, small aim error) and, for timing games, a **jumpy** player. Spammer must lose past the early levels; smart must win early and keep a chance at the top.
@@ -51,6 +52,15 @@ Everything learned building the first games. Every new game must follow the **ru
 - Outlaw curve: draw time 0.43 + 1.05*e^(-f/10) s; accuracy up to 0.86; sway; sidesteps from level 7; farther away as levels rise; first to 1/2/3 rounds.
 - Feel: revolver drawn piece by piece (tapered barrel, fluted cylinder, hammer, brass guard, walnut grip, leather glove, cuff) with recoil, flash, smoke. Losing ~1 s (slight tip, partial grey, one heartbeat). Winning: hat flies, golden flash, twangy guitar via Karplus-Strong plucked-string synthesis. Auto-continue after ~2 s or tap to skip after 250 ms. Losing the duel shows a tombstone.
 - Tests: jumpy thumbs lose from level 3; sloppy body shots win early, lose from ~14; a sharp player wins up to ~70.
+
+### 4. Steel & Honour (`games/sword-fight/`)
+- First-person knight duel built on Knockout's structure. Knight drawn at scale `U*0.64` (at `U*0.95` he filled the screen). Castle courtyard: wall with crenellations and stone courses, four towers (two off screen for tilts), gate, banners in the challenger's colours and charge, torches, tilt-yard rails.
+- Knights are mixed from long lists: titles (by gender), 55 male / 30 female first names, 40 epithets, 40 places, 10 boss names; looks = metal finish (6), helmet (8 kinds incl. open-face with skin/beard/scar/eye patch), plume, two tabard tinctures and a heraldic charge (12 incl. a simple lion), cape, sword type (6, changes blade length/width), pommel gem.
+- His attacks: L (comes at your left), R, O (overhead), T (thrust). Telegraph = blade swings to that side + a gleam; arrow hints on levels 1-4 (strong) and 5-9 (faint). Feints from level 8 switch side mid-windup with fresh warning time. Combos chain quick follow-ups. Windups never below 0.3 s.
+- Parry = swipe toward the side it comes from (L/R), up for overhead, tap for a thrust, within `parryWin` before impact (0.58 s at L1 down to ~0.15 s). Last 38% of the window = perfect parry -> 0.95 s stagger -> riposte x2.2. Gestures fire mid-swipe (34 px) so there's no lift delay. Swipe down = step back (dodges anything, 20 stamina).
+- Attacks: swipe L/R = slash (13 stamina, 10 dmg), up = overhead (18, 15), tap = poke (9, 6). He parries by level; spam (4+ attacks in 2 s, the same move twice, or 2+ hits in a row) triggers a sharp read (block chance 0.22 + 0.06*level, up to 0.85) and a fast punish counter. Interrupting his windup gets rarer with level.
+- **Anti-flail rule (new lesson):** a parry only counts if you weren't swinging in the last 0.4 s (0.2 s on levels 1-2). Without it, swiping the same way nonstop parried every attack from that side by accident.
+- Test hook: `window.__sim` (start(level) runs headless and muted, step(dt), act(kind, dir)). `test_sim.py` plays spam / mash / panic / human / smart bots in fast-forward: a full ladder runs in ~3 s. Results: spam and mashing lose from ~level 5-12; random-parry panic loses from 8; a human-speed bot wins to ~25; a perfect bot keeps a chance at 60-90.
 
 ### Shared building blocks
 Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/catch; synthesized sounds (filtered noise for hits/shots, tones for bells/calls, plucked strings for music); a vibration helper that prefers `window.GameNative.vibrate` (phone app) over `navigator.vibrate`; level grid; full-screen overlay CSS for home / rules / levels / round break / end; pause when the tab is hidden.

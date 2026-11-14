@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file.",
-  "next_number": 4,
+  "next_number": 5,
   "games": [
     {
       "number": 1,
@@ -56,16 +56,27 @@
         "mini": false,
         "full": true
       }
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 4,
       "id": "sword-fight",
-      "name": "Sword Fight",
-      "status": "planned",
-      "spec": "specs/04-sword-fight.md",
-      "summary": "First-person medieval knight duels. Parry by striking along his attack's line at the right moment, slash, thrust, dodge. Endless rounds and levels, huge variety of knights."
+      "name": "Steel & Honour",
+      "status": "testing",
+      "version": "0.9.0",
+      "added": "2026-11-14",
+      "summary": "First-person medieval sword duels. No shield: parry by swinging into his blade's line at the right moment (perfect parries open him up for a riposte), slash, poke, step back. Endless levels, rounds, champion knights, huge variety of knights.",
+      "path": "games/sword-fight/index.html",
+      "source": "games/sword-fight/test_sim.py = fast-forward bot tests (python3 test_sim.py 1,5,12,25,60 8)",
+      "artifact": "https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5",
+      "artifact_slug": "bad36ef5-39c4-4aa1-a5fb-cdf1aaeffa66",
+      "apk_repo": null,
+      "storage_prefix": "sw.",
+      "feed": {
+        "mini": false,
+        "full": true
+      },
+      "spec": "specs/04-sword-fight.md"
     }
-  ]
+  ],
+  "planned": []
 }
