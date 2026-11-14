@@ -1,0 +1,24 @@
+#!/usr/bin/env python3
+"""Generate LEDGER.md from games.json.  python3 tools/ledger.py  (add --check to fail if it's out of date)"""
+import json, os, sys
+root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+reg = json.load(open(os.path.join(root, 'games.json')))
+games = sorted(reg['games'], key=lambda g: g['number'])
+lines = ['# Game Ledger', '', '_Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._', '',
+         f"**{len(games)} game{'s' if len(games) != 1 else ''}** so far. Next number: **{reg['next_number']}**.", '',
+         '| # | Game | Status | Version | Feed mini mode | Play / test page | Code |', '|---|------|--------|---------|----------------|------------------|------|']
+for g in games:
+    lines.append(f"| {g['number']} | **{g['name']}** | {g['status']} | {g['version']} | {'yes' if g['feed']['mini'] else 'not yet'} | [play]({g['artifact']}) | `{g['path']}` |")
+lines += ['', '## What each game is', '']
+for g in games:
+    extra = f" APK repo: `{g['apk_repo']}`." if g.get('apk_repo') else ''
+    lines.append(f"{g['number']}. **{g['name']}**: {g['summary']}{extra}")
+out = '\n'.join(lines) + '\n'
+path = os.path.join(root, 'LEDGER.md')
+if '--check' in sys.argv:
+    cur = open(path).read() if os.path.exists(path) else ''
+    if cur != out:
+        print('LEDGER.md is out of date: run python3 tools/ledger.py'); sys.exit(1)
+    print('LEDGER.md is up to date')
+else:
+    open(path, 'w').write(out); print('wrote LEDGER.md')

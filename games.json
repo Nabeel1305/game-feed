@@ -1,0 +1,52 @@
+{
+  "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. The feed app and LEDGER.md are generated from this file.",
+  "next_number": 4,
+  "games": [
+    {
+      "number": 1,
+      "id": "bottle-cap-flick",
+      "name": "Bottle Cap Flick",
+      "status": "approved",
+      "version": "1.0.0",
+      "added": "2026-11-11",
+      "summary": "Flick bottle caps to knock the other side's caps off a wooden stool. Capture line, legs at each end, computer levels Beginner to Legendary, best of 1/3/5/7.",
+      "path": "games/bottle-cap-flick/index.html",
+      "source": "games/bottle-cap-flick/src (engine.js + game.tpl.html -> build.py; train.js = self-play tests)",
+      "artifact": "https://claude.ai/artifact/KkPZNYvjwLp3vobTWiBhYK",
+      "artifact_slug": "97d36143-31ea-4c68-9b68-4b93fe7eec78",
+      "apk_repo": "Nabeel1305/bottle-cap-flick",
+      "storage_prefix": null,
+      "feed": { "mini": false, "full": true }
+    },
+    {
+      "number": 2,
+      "id": "knockout",
+      "name": "Knockout",
+      "status": "approved",
+      "version": "1.0.0",
+      "added": "2026-11-14",
+      "summary": "First-person two-thumb boxing. Tap to punch, flick to dodge, flick up for an uppercut, hold both to block. Endless levels, rounds and points decisions.",
+      "path": "games/knockout/index.html",
+      "artifact": "https://claude.ai/artifact/NPj7ei6Tm8u6KQkALziov7",
+      "artifact_slug": "ad3c3a97-dcef-4c79-bc66-916eb7be4718",
+      "apk_repo": null,
+      "storage_prefix": "ko.",
+      "feed": { "mini": false, "full": true }
+    },
+    {
+      "number": 3,
+      "id": "high-noon",
+      "name": "High Noon",
+      "status": "approved",
+      "version": "1.0.0",
+      "added": "2026-11-14",
+      "summary": "Cowboy quick-draw duel. Thumb on the holster, wait for DRAW (watch for fake calls), slide up to aim, release to shoot. Headshots win; endless levels.",
+      "path": "games/high-noon/index.html",
+      "artifact": "https://claude.ai/artifact/5dVHkDPdSaN7W65jNVdH3R",
+      "artifact_slug": "257cc38e-aa8e-4884-a8ae-e4991b160bcc",
+      "apk_repo": null,
+      "storage_prefix": "hn.",
+      "feed": { "mini": false, "full": true }
+    }
+  ]
+}
