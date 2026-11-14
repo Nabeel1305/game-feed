@@ -4,7 +4,8 @@ Nabeel is building a TikTok-style feed of mini-games: swipe up and a random game
 
 ## At the start of every session
 1. Read `games.json` (the official registry) and `LEDGER.md`. If he asks "where are we?", answer from these: number of games, each game with its status and play link, and what's next.
-2. Read `LESSONS.md` and follow it: his taste, the rules every game must pass, how to test, and build notes for each existing game. Reuse code from the most similar existing game in `games/<id>/index.html`.
+2. Check `planned` in `games.json`: the next game may already be designed, with its full spec in `specs/`. If he says "build the next game", build that one.
+3. Read `LESSONS.md` and follow it: his taste, the rules every game must pass, how to test, and build notes for each existing game. Reuse code from the most similar existing game in `games/<id>/index.html`.
 
 ## Adding or changing a game
 1. Build the game as one self-contained `games/<id>/index.html` (canvas, inline JS/CSS, Google Fonts with fallbacks, synthesized sounds). Give it its own `storage_prefix` for saves.

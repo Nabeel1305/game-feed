@@ -1,5 +1,5 @@
 {
-  "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. The feed app and LEDGER.md are generated from this file.",
+  "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file.",
   "next_number": 4,
   "games": [
     {
@@ -16,7 +16,10 @@
       "artifact_slug": "97d36143-31ea-4c68-9b68-4b93fe7eec78",
       "apk_repo": "Nabeel1305/bottle-cap-flick",
       "storage_prefix": null,
-      "feed": { "mini": false, "full": true }
+      "feed": {
+        "mini": false,
+        "full": true
+      }
     },
     {
       "number": 2,
@@ -31,7 +34,10 @@
       "artifact_slug": "ad3c3a97-dcef-4c79-bc66-916eb7be4718",
       "apk_repo": null,
       "storage_prefix": "ko.",
-      "feed": { "mini": false, "full": true }
+      "feed": {
+        "mini": false,
+        "full": true
+      }
     },
     {
       "number": 3,
@@ -46,7 +52,20 @@
       "artifact_slug": "257cc38e-aa8e-4884-a8ae-e4991b160bcc",
       "apk_repo": null,
       "storage_prefix": "hn.",
-      "feed": { "mini": false, "full": true }
+      "feed": {
+        "mini": false,
+        "full": true
+      }
+    }
+  ],
+  "planned": [
+    {
+      "number": 4,
+      "id": "sword-fight",
+      "name": "Sword Fight",
+      "status": "planned",
+      "spec": "specs/04-sword-fight.md",
+      "summary": "First-person medieval knight duels. Parry by striking along his attack's line at the right moment, slash, thrust, dodge. Endless rounds and levels, huge variety of knights."
     }
   ]
 }

@@ -15,3 +15,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 1. **Bottle Cap Flick**: Flick bottle caps to knock the other side's caps off a wooden stool. Capture line, legs at each end, computer levels Beginner to Legendary, best of 1/3/5/7. APK repo: `Nabeel1305/bottle-cap-flick`.
 2. **Knockout**: First-person two-thumb boxing. Tap to punch, flick to dodge, flick up for an uppercut, hold both to block. Endless levels, rounds and points decisions.
 3. **High Noon**: Cowboy quick-draw duel. Thumb on the holster, wait for DRAW (watch for fake calls), slide up to aim, release to shoot. Headshots win; endless levels.
+
+## Up next (designed, not built yet)
+
+4. **Sword Fight**: First-person medieval knight duels. Parry by striking along his attack's line at the right moment, slash, thrust, dodge. Endless rounds and levels, huge variety of knights. Spec: `specs/04-sword-fight.md`.

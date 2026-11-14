@@ -17,7 +17,8 @@ Everything learned building the first games. Every new game must follow the **ru
 6. **Controls:** two-thumb friendly; must work anywhere on the screen including the edges; never let the finger cover the target (offset crosshair); tap-to-select then drag-from-anywhere when a control could sit near an edge.
 7. **Feed-ready:** each game needs a mini mode that starts instantly (no menus) and the full mode; keep the bottom edge free for the feed's swipe-up handle.
 8. Keep call-out text clear of scenery text. Never show fake data.
-9. Test on a 390x844 phone screen and look at a screenshot of every screen before sending.
+9. **Character variety:** never a short fixed list of opponents. Build names and looks by combining long lists (titles, first names, epithets, places, and many independent accessory/colour choices), seeded by level, so opponents rarely repeat. (Nabeel noticed the earlier games' small name lists.)
+10. Test on a 390x844 phone screen and look at a screenshot of every screen before sending.
 
 ## How to test (fast)
 - Make a test copy of the page that exposes hooks (`window.__G`, geometry helpers, `__lvl(n)`), and drive it with Playwright.

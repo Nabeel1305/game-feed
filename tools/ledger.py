@@ -13,6 +13,10 @@ lines += ['', '## What each game is', '']
 for g in games:
     extra = f" APK repo: `{g['apk_repo']}`." if g.get('apk_repo') else ''
     lines.append(f"{g['number']}. **{g['name']}**: {g['summary']}{extra}")
+if reg.get('planned'):
+    lines += ['', '## Up next (designed, not built yet)', '']
+    for g in reg['planned']:
+        lines.append(f"{g['number']}. **{g['name']}**: {g['summary']} Spec: `{g['spec']}`.")
 out = '\n'.join(lines) + '\n'
 path = os.path.join(root, 'LEDGER.md')
 if '--check' in sys.argv:
