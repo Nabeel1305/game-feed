@@ -55,6 +55,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .eyebrow{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);
   font-variant-numeric:tabular-nums}
 .eyebrow b{color:var(--accent);font-weight:700}
+.new{display:inline-block;margin-left:9px;padding:0 8px;border-radius:10px;background:var(--accent);color:#fff;font-family:var(--display);font-style:normal;
+  font-weight:700;font-size:12px;line-height:19px;letter-spacing:.16em;text-transform:uppercase;vertical-align:1px;text-shadow:none}
 .title{font-family:var(--tf,var(--display)),var(--display);font-weight:var(--tw,400);font-synthesis:none;font-size:clamp(40px,13.4vw,66px);
   line-height:.96;letter-spacing:.005em;color:var(--paper);text-wrap:balance;text-shadow:0 2px 18px rgba(0,0,0,.55);overflow-wrap:anywhere}
 .hook{font-size:16px;line-height:1.35;font-weight:600;color:var(--paper);opacity:.92;max-width:34ch;text-wrap:balance;text-shadow:0 1px 10px rgba(0,0,0,.6)}
@@ -140,6 +142,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .row .pin{flex:none;width:52px;display:grid;place-items:center;border-radius:16px}
 .row .pin svg{width:22px;height:22px;fill:none;stroke:var(--faint);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .row .pin.on svg{stroke:var(--accent);fill:var(--accent)}
+.foot{padding:22px 10px 4px;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+  font-variant-numeric:tabular-nums;text-align:center}
+#toast{position:absolute;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:4;transform:translate(-50%,-140%);max-width:calc(100% - 32px);padding:10px 18px;
+  border-radius:22px;background:var(--paper);color:var(--ink);font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 24px rgba(0,0,0,.5);transition:transform .35s var(--ease);pointer-events:none}
+#toast.on{transform:translate(-50%,0)}
 .none{padding:36px 20px;text-align:center;font-size:16px;font-weight:600;line-height:1.4;color:var(--dim)}
 
 @keyframes ring{0%{transform:scale(.86);opacity:.55}70%,100%{transform:scale(1.22);opacity:0}}
@@ -147,13 +155,14 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 @keyframes nudge{0%,100%{transform:translateY(2px)}50%{transform:translateY(-5px)}}
 @media (prefers-reduced-motion:reduce){
   .play::after,#bar.hint #handle .grip{animation:none}
-  #stage.anim .slide,#lib{transition-duration:.01s}
+  #stage.anim .slide,#lib,#toast{transition-duration:.01s}
 }
 </style>
 </head>
 <body>
 <div id="app">
   <main id="stage" aria-label="Game feed"></main>
+  <div id="toast" role="status" aria-live="polite"></div>
   <nav id="bar" aria-label="Feed controls">
     <button id="libBtn" aria-label="All games and search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Games</button>
     <div id="handle" role="button" tabindex="0" aria-label="Swipe up for the next game, down for the last one"><span class="grip"><svg viewBox="0 0 22 11"><path d="M2 9.5l9-7.5 9 7.5"/></svg></span><span class="what" id="what">Swipe up · next game</span></div>
@@ -174,6 +183,8 @@ const byId = {};
 GAMES.forEach(g => { byId[g.id] = g; });
 const $ = s => document.querySelector(s);
 const stage = $('#stage'), bar = $('#bar'), lib = $('#lib'), list = $('#list'), q = $('#q');
+const BUILD = window.GF_BUILD || {};
+const native = window.GameNative || null;   // only inside the phone app
 const SET_SIZE = 10;            // PLAYBOOK P27: a soft break after about ten games
 const QUICK = 2500;             // left a card this fast without playing = a quick skip (P29)
 const reduced = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -202,7 +213,17 @@ function note(id, ev, val) {
   store.set('log', log);
   store.set('stats', stats);
 }
-function vibe(p) { try { if (window.GameNative && GameNative.vibrate) GameNative.vibrate(JSON.stringify(p)); else if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+function vibe(p) { try { if (native && native.vibrate) native.vibrate(JSON.stringify(p)); else if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+
+/* ---------- new games: any game this phone has not shown a card for yet. They come up first, with a "New" tag. ---------- */
+let known = store.get('known', null);
+const fresh = [];
+if (!Array.isArray(known)) { known = GAMES.map(g => g.id); store.set('known', known); }       // first time ever: nothing counts as new
+else GAMES.forEach(g => { if (!known.includes(g.id)) fresh.push(g.id); });
+fresh.sort((a, b) => byId[a].n - byId[b].n);
+const freshQueue = fresh.slice(), freshShown = [];
+const isNew = id => fresh.includes(id);
+function seen(id) { if (!known.includes(id)) { known.push(id); store.set('known', known); } }
 
 /* ---------- what comes next: a shuffled deck with a little rhythm (P26). The future "what next" brain replaces nextGame(). ---------- */
 let deck = [];
@@ -210,8 +231,17 @@ const recent = [];
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 const hot = id => (byId[id].intensity || 3) >= 4;
 function nextGame() {
+  if (freshQueue.length) {                // a game that just arrived goes to the front of the line
+    const id = freshQueue.shift(), at = deck.indexOf(id);
+    if (at >= 0) deck.splice(at, 1);
+    freshShown.push(id);
+    recent.push(id);
+    return id;
+  }
   if (!deck.length) {
-    deck = shuffle(GAMES.map(g => g.id));
+    deck = shuffle(GAMES.map(g => g.id).filter(id => !freshShown.includes(id)));
+    freshShown.length = 0;
+    if (!deck.length) deck = shuffle(GAMES.map(g => g.id));
     if (deck.length > 1 && deck[0] === recent[recent.length - 1]) deck.push(deck.shift());
   }
   let k = 0;
@@ -262,7 +292,7 @@ function buildGame(s) {
   const two = g.thumbs === 2;
   const mood = g.intensity >= 4 ? 'Intense' : g.intensity <= 2 ? 'Calm' : 'Lively';
   c.appendChild(el('span', 'info',
-    '<span class="eyebrow"><b>№ ' + pad3(g.n) + '</b>' + (g.genre ? ' · ' + esc(g.genre) : '') + '</span>' +
+    '<span class="eyebrow"><b>№ ' + pad3(g.n) + '</b>' + (g.genre ? ' · ' + esc(g.genre) : '') + (isNew(g.id) ? '<i class="new">New</i>' : '') + '</span>' +
     '<span class="title">' + esc(g.name) + '</span>' +
     '<span class="hook">' + esc(g.hook || '') + '</span>' +
     '<span class="chips"><span class="chip' + (two ? ' two' : '') + '">' + (two ? ICON.two + 'Two thumbs' : ICON.one + 'One thumb') + '</span><span class="chip">' + mood + '</span></span>'));
@@ -453,6 +483,7 @@ function restart(s) {
   s.state = 'cover';
   s.el.classList.remove('live', 'halt', 'loading', 'failed');
   arrive(s);
+  takeUpdate();
 }
 
 /* ---------- arriving at and leaving a card ---------- */
@@ -462,6 +493,7 @@ function arrive(s) {
   if (s.g) {
     if (s.state === 'cover') {
       stat(s.g.id).shown++;
+      seen(s.g.id);
       note(s.g.id, 'shown');
       if (s.video) {
         if (!s.video.src) s.video.src = s.g.preview;
@@ -517,6 +549,7 @@ function settle() {
   stage.classList.remove('anim');
   sync();
   arrive(cur());
+  takeUpdate();
 }
 stage.addEventListener('transitionend', e => { if (e.target.classList.contains('slide') && e.propertyName === 'transform') settle(); });
 function bounce() {
@@ -649,7 +682,7 @@ function done(s) {
   note('', 'done', setPlays);
   s.el.innerHTML = '<span class="eyebrow">Until next time</span><h2>Nice session.</h2><p>Your pins and progress are saved.</p>' +
     '<button class="plain" data-act="back">Back to the feed</button>';
-  try { if (window.GameNative && GameNative.close) GameNative.close(); } catch (e) {}
+  try { if (native && native.close) native.close(); } catch (e) {}
 }
 let wheelAt = 0;
 stage.addEventListener('wheel', e => {
@@ -675,7 +708,7 @@ function rowHTML(g) {
   const on = pins.includes(g.id);
   return '<div class="row" data-id="' + g.id + '"><button class="open">' +
     (g.poster ? '<img class="thumb" loading="lazy" alt="" src="' + esc(g.poster) + '">' : '<span class="thumb"></span>') +
-    '<span class="rt"><span class="rn"><small>№ ' + pad3(g.n) + '</small>' + esc(g.name) + '</span><span class="rh">' + esc(g.hook || '') + '</span><span class="rm">' + esc(meta.join(' · ')) + '</span></span></button>' +
+    '<span class="rt"><span class="rn"><small>№ ' + pad3(g.n) + '</small>' + esc(g.name) + (isNew(g.id) ? '<i class="new">New</i>' : '') + '</span><span class="rh">' + esc(g.hook || '') + '</span><span class="rm">' + esc(meta.join(' · ')) + '</span></span></button>' +
     '<button class="pin' + (on ? ' on' : '') + '" aria-label="' + (on ? 'Unpin ' : 'Pin ') + esc(g.name) + '" aria-pressed="' + on + '">' + ICON.pin + '</button></div>';
 }
 function drawList() {
@@ -691,7 +724,7 @@ function drawList() {
     if (pinned.length) html += '<div class="sect">Pinned</div>' + pinned.map(rowHTML).join('');
     html += '<div class="sect">' + (pinned.length ? 'All games, newest first' : 'Newest first') + '</div>' + all.map(rowHTML).join('');
   }
-  list.innerHTML = html;
+  list.innerHTML = html + '<p class="foot">' + esc(footLine()) + '</p>';
   $('#count').textContent = GAMES.length + (GAMES.length === 1 ? ' game' : ' games');
 }
 function openLib() {
@@ -707,6 +740,7 @@ function closeLib() {
   lib.setAttribute('aria-hidden', 'true');
   q.blur();
   chrome();
+  takeUpdate();
 }
 $('#libClose').addEventListener('click', closeLib);
 q.addEventListener('input', drawList);
@@ -720,6 +754,37 @@ list.addEventListener('click', e => {
   jump(id);
 });
 
+/* ---------- new games arriving ----------
+   The phone app fetches the newest feed and games in the background and then calls gameFeedUpdate. The feed takes
+   the update by asking the app to load it again, but only at a quiet moment: never while a game is running or waiting. */
+let pending = '', lastSync = null, toastT = 0;
+function gameInHand() { for (const s of slides.values()) if (s.state === 'playing' || s.state === 'paused') return true; return false; }
+function takeUpdate() {
+  if (!pending || !native || !native.reload || busy || drag.on || gameInHand() || lib.classList.contains('open')) return;
+  pending = '';
+  store.set('stats', stats);
+  const s = cur();
+  try { native.reload(s && s.g ? s.g.id : ''); } catch (e) {}     // the card he is looking at stays; new games are the next cards
+}
+window.gameFeedUpdate = r => {
+  lastSync = r || null;
+  if (r && r.ok && r.rev && r.rev !== BUILD.rev) { pending = r.rev; takeUpdate(); }
+};
+function footLine() {
+  const bits = [];
+  if (lastSync) bits.push(pending ? 'New games ready' : lastSync.ok ? 'Up to date' : 'Could not check for new games');
+  if (BUILD.rev) bits.push('Feed ' + BUILD.rev);
+  try { if (native && native.version) bits.push('App ' + native.version()); } catch (e) {}
+  return bits.join(' · ');
+}
+function toast(text) {
+  const t = $('#toast');
+  t.textContent = text;
+  t.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => t.classList.remove('on'), 3600);
+}
+
 /* ---------- the phone's back button, leaving the app, size changes ---------- */
 window.gameFeedBack = () => {
   if (lib.classList.contains('open')) { closeLib(); return true; }
@@ -732,7 +797,10 @@ document.addEventListener('visibilitychange', () => {
   const s = cur();
   if (!s) return;
   if (document.hidden) { stopCount(s); halt(s); if (s.video) { try { s.video.pause(); } catch (e) {} } store.set('stats', stats); }
-  else if (s.state === 'cover' && s.video) { const p = s.video.play(); if (p && p.catch) p.catch(() => {}); }
+  else {
+    if (s.state === 'cover' && s.video) { const p = s.video.play(); if (p && p.catch) p.catch(() => {}); }
+    takeUpdate();
+  }
 });
 function measure() { H = stage.clientHeight || window.innerHeight; if (!busy && !drag.moved) place(0); }
 window.addEventListener('resize', measure);
@@ -747,13 +815,16 @@ function start(saved) {
   arrive(cur());
   if (!store.get('hint', 0)) bar.classList.add('hint');
   $('#count').textContent = GAMES.length + ' games';
+  try { if (native && native.ready) native.ready(String(BUILD.rev || '')); } catch (e) {}      // tells the app this copy of the feed works
+  if (fresh.length) setTimeout(() => toast(fresh.length === 1 ? 'New game: ' + byId[fresh[0]].name : fresh.length + ' new games'), 500);
 }
 const hotApi = window.claude && window.claude.hot;
 try { if (hotApi && hotApi.snapshot) hotApi.snapshot(() => { const s = cur(); return { id: s && s.g ? s.g.id : '' }; }); } catch (e) {}
 if (hotApi && hotApi.ready) hotApi.ready(start); else start((hotApi && hotApi.data) || {});
 
 window.__feed = {
-  games: GAMES, hist, slides, stats, log,
+  games: GAMES, hist, slides, stats, log, fresh, build: BUILD,
+  get pending() { return pending; },
   get pos() { return pos; }, get busy() { return busy; },
   cur, go, jump, tap: () => tapCover(cur()), halt: () => halt(cur()), carryOn: () => carryOn(cur()), countIn: () => countIn(cur()), openLib, closeLib, togglePin,
   state: () => { const s = cur(); return { pos, type: s.en.type, id: s.g ? s.g.id : null, state: s.state, ready: !!s.ready, started: s.started || false, halted: s.el.classList.contains('halt'), frames: Array.from(slides.values()).filter(x => x.frame).length, pins: pins.slice(), setPlays }; }

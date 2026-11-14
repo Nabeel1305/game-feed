@@ -17,12 +17,13 @@ See "The feed app" in CLAUDE.md and LESSONS.md. In short: `tools/build_feed.py` 
 - Random for now means a shuffled deck, not dice: with few games, dice repeat the same game too often.
 - Pin means "keep this one handy" (top of the Games list). It does not change the order yet; that belongs to the later brain.
 - No likes, comments, profiles or sharing: he asked for search and pin.
-- The app works with no internet and asks for no permissions except vibration.
+- **Install once.** His words: "I'm probably never gonna stop adding games to this app... if I just tell you to add this game, will it be able to add without me updating anything? Because that's what I need." So the phone app fetches new games, and the feed itself, from the project's `app` branch every time it opens; a new APK is only for changes to the small Android wrapper.
+- The app works with no internet from whatever is on the phone, and uses the internet only to fetch new games. It asks for vibration and internet, nothing else, and sends nothing about him anywhere.
 - Engagement principles used for the feed itself: P25 (pause anywhere, thumbs warning), P26 (variety with rhythm, pins), P27 (previews, tap to start, set card), P29 (history for tuning), P30 (each game's identity on its card).
 
 ## Later (not built; wait for him to ask)
 1. The "what comes next" brain: replace `nextGame()` in `feed/index.html`; the history is already there.
 2. Mini modes: a game that defines `window.gameFeedStart('mini')` and sets `feed.mini` could start a quick taste straight from the card.
 3. Games reporting finished levels with `GameFeed.finish({win, level, score})` so the brain can tell finishing from quitting.
-4. Serving the built app from GitHub Pages, so the phone app can pick up new games without a new APK, and downloads for offline play.
+4. When there are hundreds of games: fetch a game when its card comes up instead of keeping every game on every phone, and let him keep favourites for offline play. Proper hosting when there are real users (keep publishing the `app` branch for old installs).
 5. Calm-only filter, daily special (P28), a "least fun 10" review screen (P29).

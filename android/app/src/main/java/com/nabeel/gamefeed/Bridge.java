@@ -10,9 +10,9 @@ import org.json.JSONArray;
 
 /** Exposed to the feed and to every game as window.GameNative */
 public class Bridge {
-    private final Activity act;
+    private final MainActivity act;
 
-    Bridge(Activity a) { act = a; }
+    Bridge(MainActivity a) { act = a; }
 
     /** pattern is what a page would give navigator.vibrate: "30" or "[20,40,20]" (buzz, gap, buzz...). */
     @JavascriptInterface
@@ -41,4 +41,18 @@ public class Bridge {
     /** "Done for now" on the break card: put the app away (it stays where he left it). */
     @JavascriptInterface
     public void close() { act.runOnUiThread(() -> act.moveTaskToBack(true)); }
+
+    /** The feed says it is up and running (so the app knows this copy of the feed works). */
+    @JavascriptInterface
+    public void ready(String rev) { act.feedIsUp(); }
+
+    /** The feed asks to be loaded again, because newer games have arrived on the phone. at = the game whose card it was showing. */
+    @JavascriptInterface
+    public void reload(String at) { act.runOnUiThread(() -> act.loadFeed(at)); }
+
+    /** The installed app's version, shown at the bottom of the games list. */
+    @JavascriptInterface
+    public String version() {
+        try { return act.getPackageManager().getPackageInfo(act.getPackageName(), 0).versionName; } catch (Exception e) { return ""; }
+    }
 }

@@ -22,6 +22,12 @@ jobs:
         run: python3 tools/check.py
       - name: Test the feed
         run: python3 tools/test_feed.py
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Test the part of the phone app that fetches new games
+        run: python3 tools/test_sync.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -29,6 +35,38 @@ jobs:
           path: |
             out/*.png
             out/feed/
+
+  # Installed phone apps look here for new games. The built feed app goes on the "app" branch; every time the
+  # phone app opens it reads manifest.txt from that branch and fetches whatever is new (android/.../Sync.java).
+  # Nothing is published unless every check above passed.
+  publish:
+    name: Publish the feed for installed apps
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-app
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build the feed app
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: python3 tools/build_feed.py --out "$RUNNER_TEMP/app"
+      - name: Put it on the app branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd "$RUNNER_TEMP/app"
+          git init -q -b app
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Feed app, build ${{ github.run_number }} (from ${GITHUB_SHA::7})"
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" app:app
+          echo "Published build ${{ github.run_number }}: $(head -1 manifest.txt)" >> "$GITHUB_STEP_SUMMARY"
 
   # The phone app: the feed and every game inside one Android app, built after the checks pass.
   # Every run builds it once unsigned-for-release (a debug build) to prove the app still builds.
@@ -46,6 +84,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Put the feed and the games inside the app
+        env:
+          BUILD_NUMBER: ${{ github.run_number }}
         run: python3 tools/build_feed.py --out android/app/src/main/assets
       - uses: actions/setup-java@v5
         with:

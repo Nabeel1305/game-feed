@@ -3,12 +3,13 @@
   "next_number": 7,
   "feed_app": {
     "name": "Game Feed",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "added": "2026-11-14",
     "artifact": "https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP",
     "artifact_slug": "8f097f55-7ea9-4e6a-aab9-11ee7208668e",
     "apk": "https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk",
-    "summary": "All the games in one scrolling app: a shuffled feed of game cards (a short silent clip of each), tap to play, swipe for the next, search and pin. Built from this registry by tools/build_feed.py; the same build is the hosted page and the inside of the Android app."
+    "summary": "All the games in one scrolling app: a shuffled feed of game cards (a short silent clip of each), tap to play, swipe for the next, search and pin. Built from this registry by tools/build_feed.py; the same build is the hosted page, the inside of the Android app, and the 'app' branch that installed apps fetch new games from, so a phone gets every new game by itself.",
+    "published": "https://raw.githubusercontent.com/Nabeel1305/game-feed/app/"
   },
   "games": [
     {
