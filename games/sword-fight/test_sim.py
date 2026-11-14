@@ -1,4 +1,4 @@
-"""Fast-forward bot tests for Steel & Honour.  python3 test_sim.py 1,5,12,25,60 8"""
+"""Fast-forward bot tests for Steel & Honour.  python3 test_sim.py 1,5,12,25,60 8 [assist]"""
 from playwright.sync_api import sync_playwright
 import sys, os
 BOTS = r"""
@@ -10,7 +10,7 @@ BOTS = r"""
     for (const bot of cfg.bots) {
       let wins = 0;
       for (let n = 0; n < cfg.n; n++) {
-        S.start(L);
+        S.setStreak(L, cfg.assist ? 3 : 0); S.start(L);
         let handled = null, nextAct = 0, steps = 0;
         while (!S.G.over && steps < 60 * 900) {
           const G = S.G, K = S.K; steps++;
@@ -59,6 +59,6 @@ with sync_playwright() as p:
     errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('file://' + os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')); pg.wait_for_timeout(500)
     levels = [int(x) for x in (sys.argv[1] if len(sys.argv) > 1 else '1,5,12,25,60').split(',')]; n = int(sys.argv[2]) if len(sys.argv) > 2 else 6
-    res = pg.evaluate(BOTS, {'levels': levels, 'bots': ['spam', 'poker', 'center', 'panic', 'human', 'smart'], 'n': n})
+    res = pg.evaluate(BOTS, {'levels': levels, 'bots': ['spam', 'poker', 'center', 'panic', 'human', 'smart'], 'n': n, 'assist': len(sys.argv) > 3})
     for L, v in res.items(): print('L' + L, v)
     print('errors', errs); b.close()

@@ -28,6 +28,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .lvl{text-align:center;font-size:24px;line-height:1;min-width:56px}
 .lvl small{display:block;font-family:Nunito,sans-serif;font-size:10px;font-weight:800;opacity:.6;letter-spacing:1px}
 #combo{position:fixed;left:50%;top:76px;transform:translateX(-50%);font-size:22px;color:#ffd166;opacity:0;transition:opacity .2s;pointer-events:none;z-index:2}
+#combo.pop{animation:pop .28s cubic-bezier(.3,1.8,.5,1)}
+@keyframes pop{0%{transform:translateX(-50%) scale(1.6)}100%{transform:translateX(-50%) scale(1)}}
+.near{margin:6px auto 0;max-width:240px}.near .nl{font-family:Nunito,sans-serif;font-size:14px;font-weight:800;color:#fff;letter-spacing:0;opacity:.85}
+.near .hb{height:12px}.near .hb i{background:linear-gradient(90deg,#ff6b6b,#ff4757)}
+.nb{color:#ffd166}.assistNote{color:#7bed9f;font-size:12.5px}
+#assist{display:none;font-family:Nunito,sans-serif;font-size:9px;font-weight:800;letter-spacing:1px;color:#0b0d14;background:#7bed9f;border-radius:6px;padding:1px 5px;margin-top:3px}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.1);color:#fff;font-size:18px;cursor:pointer}
 .ov{position:fixed;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(30,20,40,.82),rgba(5,5,10,.94))}
 .ov.hidden{display:none}
 .card{width:calc(100% - 44px);max-width:360px;text-align:center}
@@ -61,7 +68,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <div id="hud">
   <div class="bars">
     <div class="side"><div class="nm">YOU</div><div class="hb"><i id="pbar" style="width:100%"></i></div><div class="sb"><i id="sbar" style="width:100%"></i></div></div>
-    <div class="lvl disp"><span id="lvlN">1</span><small>LEVEL</small><div class="clock" id="clock">1:00</div></div>
+    <div class="lvl disp"><span id="lvlN">1</span><small>LEVEL</small><div class="clock" id="clock">1:00</div><div id="assist">ASSIST</div></div>
     <div class="side r"><div class="nm" id="oName">Opponent</div><div class="hb"><i id="obar" style="width:100%"></i></div></div>
   </div>
 </div>
@@ -69,12 +76,14 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <button id="pauseBtn" aria-label="Pause">II</button>
 
 <div class="ov" id="ovStart">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
   <div class="card">
     <h1 class="disp">KNOCKOUT</h1>
     <p class="sub">Two thumbs. One opponent at a time.</p>
     <div class="vs">LEVEL <span id="sLvl">1</span> · YOUR OPPONENT</div>
     <div class="oname disp" id="sName">Opponent</div>
     <div class="ostats" id="sStats"></div>
+    <p class="sub" id="sBest" style="font-size:12.5px"></p>
     <div class="howto">
       <div class="ht"><b>Tap = punch</b>Left side jab, right side cross. Tap his head or body. Don't spam: he'll slip it and hit back hard.</div>
       <div class="ht"><b>Swipe = dodge</b>Flick left or right to slip a punch. Dodge away from the glowing glove.</div>
@@ -146,6 +155,9 @@ const store = {
 let unlocked = Math.max(store.get('unlocked', 1), store.get('level', 1));
 let level = Math.min(store.get('level', 1), unlocked);
 let stars = store.get('stars', {});
+let bests = store.get('bests', {});          // fastest knockout per level, seconds
+let streaks = store.get('streaks', {});      // straight losses per level (for corner help)
+let HEADLESS = false;
 
 // ---------- random helpers ----------
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -160,6 +172,12 @@ const SKINS = ['#f1c27d', '#e0ac69', '#c68642', '#8d5524', '#a8693e', '#5c3a21',
 const GLOVES = ['#2e86de', '#10ac84', '#8854d0', '#222f3e', '#f7b731', '#eb3b5a', '#20bf6b', '#fa8231', '#3867d6', '#4b6584'];
 const TRUNKS = ['#ffffff', '#1e272e', '#f7b731', '#0fb9b1', '#a55eea', '#eb3b5a', '#2d98da', '#20bf6b'];
 function makeOpponent(L) {
+  const o = baseOpponent(L);
+  // Corner help (disclosed): after 3 straight losses at this level he is a little slower and softer, until you beat him.
+  if ((streaks[L] || 0) >= 3) { o.assist = true; o.windup *= 1.12; o.gap *= 1.12; o.dmg *= 0.9; }
+  return o;
+}
+function baseOpponent(L) {
   const r = rng(L * 7919 + 13);
   const boss = L % 10 === 0;
   const pick = a => a[(r() * a.length) | 0];
@@ -189,39 +207,118 @@ function makeOpponent(L) {
   };
 }
 
-// ---------- audio ----------
-let actx = null;
-function audio() { if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (actx && actx.state === 'suspended') actx.resume().catch(() => {}); }
-function noise(dur, freq, vol, q = 1) {
-  if (!actx) return;
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
   try {
-    const t = actx.currentTime, n = Math.floor(actx.sampleRate * dur), buf = actx.createBuffer(1, n, actx.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
-    const s = actx.createBufferSource(); s.buffer = buf;
-    const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = freq; f.Q.value = q;
-    const g = actx.createGain(); g.gain.value = vol;
-    s.connect(f); f.connect(g); g.connect(actx.destination); s.start(t);
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
   } catch (e) {}
 }
-function tone(freq, dur, vol, type = 'sine') {
-  if (!actx) return;
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
   try {
-    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, t);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
-    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
   } catch (e) {}
 }
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+// Knockout sounds: leather, bone and a crowd that reacts. Every sound has a visual twin.
+let crowd$ = null;
 const sfx = {
-  hit: big => { noise(big ? 0.22 : 0.14, big ? 700 : 1100, big ? 0.9 : 0.6); tone(big ? 70 : 95, 0.15, 0.4); },
-  block: () => { noise(0.08, 2500, 0.35, 4); tone(320, 0.05, 0.12, 'square'); },
-  whoosh: () => noise(0.18, 3500, 0.18, 0.5),
-  hurt: () => { noise(0.25, 500, 1); tone(55, 0.25, 0.5); },
-  bell: () => { tone(1250, 1.2, 0.25, 'triangle'); tone(1870, 0.9, 0.12, 'sine'); }
+  punch(kind, combo) {            // a landed punch: snap + leather body + weight
+    if (!gate('punch', 30)) return;
+    const v = vary(), big = kind === 'upper' ? 1.5 : kind === 'cross' ? 1.15 : 0.85;
+    noise(0.014, 4200 * v, 0.35 * big, 'highpass');
+    noise(0.09 + 0.04 * big, 1300 / big * v, 0.7 * big, 'lowpass', 1.2);
+    tone(170 * v / big, 0.11 * big, 0.32 * big, 'sine', 0, 70 / big);
+    tone(330 * v / big, 0.06, 0.06 * big, 'triangle', 0, 180, 1500);
+    if (combo >= 2) tone(note(392, Math.min(combo - 2, 9)), 0.16, 0.05, 'triangle', 0.01, null, 5000);   // the chain climbs a scale
+    if (crowd$ && big >= 1.15) { crowd$.set(crowd$.base * (1.8 + combo * 0.25), 0.05); setTimeout(() => crowd$ && crowd$.set(crowd$.base, 0.6), 250); }
+  },
+  block() { const v = vary(); noise(0.012, 3000, 0.18, 'highpass'); noise(0.07, 800 * v, 0.45); tone(210 * v, 0.07, 0.1, 'triangle', 0, 150, 1200); },
+  whoosh() { if (!gate('whoosh', 60)) return; noise(0.15, 1700 * vary(0.12), 0.16, 'bandpass', 0.8, 0, 0.03); },
+  slip() { noise(0.2, 1100 * vary(), 0.18, 'bandpass', 0.7, 0, 0.04); },
+  hurt(big) {                      // you get hit: a dull thump, the world goes muffled for a moment
+    const v = vary(); noise(0.015, 2500, 0.3, 'highpass'); noise(0.28, 420 * v, 0.95); tone(110 * v, 0.3, 0.45, 'sine', 0, 42); if (big) tone(70, 0.45, 0.35, 'sine', 0.02, 35);
+    duck(0.7, big ? 600 : 300);
+  },
+  tell(type) {                     // his wind-up gives itself away (quieter than impacts)
+    if (type === 'jab') noise(0.1, 1300 * vary(), 0.09, 'bandpass', 2, 0, 0.02);                 // a sharp breath
+    else if (type === 'hook') noise(0.22, 650 * vary(), 0.14, 'bandpass', 1.2, 0, 0.06);         // shoulder and cloth swing
+    else { tone(105 * vary(), 0.2, 0.06, 'sawtooth', 0, 85, 420); noise(0.18, 500, 0.1, 'bandpass', 1.5, 0, 0.03); }   // a low grunt
+  },
+  bell(n = 1) {                     // a real ring bell: metal partials, rung n times
+    for (let i = 0; i < n; i++) { const w = i * 0.32; noise(0.01, 7000, 0.25, 'highpass', 1, w); [1, 2.76, 5.4, 8.93].forEach((k, j) => tone(760 * k, 1.4 / (1 + j * 0.5), 0.16 / (j + 1), 'sine', w)); }
+  },
+  koWin(boss) { this.bell(3); if (crowd$) { crowd$.set(0.32, 0.05); setTimeout(() => crowd$ && crowd$.set(crowd$.base, 1.2), 2200); } [0, 2, 4, 5].forEach((st, i) => tone(note(262, st), 0.5, 0.07, 'triangle', 0.15 + i * 0.11, null, 4000)); if (boss) tone(note(262, 10), 0.9, 0.06, 'triangle', 0.65, null, 5000); },
+  pointsWin() { this.bell(1); [0, 2, 4].forEach((st, i) => tone(note(330, st), 0.3, 0.08, 'triangle', 0.2 + i * 0.1, null, 4000)); if (crowd$) { crowd$.set(0.2, 0.1); setTimeout(() => crowd$ && crowd$.set(crowd$.base, 1), 1200); } },
+  lose() { tone(196, 0.45, 0.1, 'triangle', 0.1, null, 1800); tone(165, 0.5, 0.1, 'triangle', 0.35, null, 1600); tone(131, 0.9, 0.11, 'triangle', 0.6, 120, 1400); noise(0.5, 260, 0.6); if (crowd$) { crowd$.set(0.02, 0.2); setTimeout(() => crowd$ && crowd$.set(crowd$.base, 2), 1500); } },
+  best() { [0, 2, 4].forEach((st, i) => tone(note(659, st), 0.22, 0.08, 'sine', i * 0.08)); },
+  click() { noise(0.01, 5000, 0.15, 'highpass'); tone(1500 * vary(), 0.04, 0.05, 'triangle', 0, null, 3500); }
 };
-function vibe(p) {
-  try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {}
-}
+MUTE = store.get('mute', false);
+function startCrowd() { if (actx && !crowd$ && !MUTE) crowd$ = bed(750, 0.6, 0.05, 0.13); }
 
 // ---------- state ----------
 let opp, G;
@@ -238,8 +335,11 @@ function newFight() {
     cool: 0,
     os: 'idle', ot: 0, oNext: 1.2, oPunch: null, oGuard: 'high',
     hurtT: 0, shake: 0, flash: 0, hitFlash: 0, msgs: [], combo: 0, comboT: 0,
-    landed: 0, thrown: 0, dodges: 0, intro: 1.6, sta: 100, idleT: 0, oHits: 0, oHitT: 0, pTimes: [], whiff: 0, gassedSaid: false
+    landed: 0, thrown: 0, dodges: 0, intro: 1.6, sta: 100, idleT: 0, oHits: 0, oHitT: 0, pTimes: [], whiff: 0, gassedSaid: false,
+    stop: 0, slow: 0, kx: 0, ky: 0, bruises: [], maxCombo: 0, fightT: 0, bulbs: [], squash: 0,
+    cat: !HEADLESS && Math.random() < 1 / 30 ? { x: -0.15, dir: 1 } : null       // a rare visitor on the apron
   };
+  $('assist').style.display = opp.assist ? 'block' : 'none';
   $('lvlN').textContent = level;
   $('oName').textContent = opp.name;
   updateBars(); updateClock();
@@ -296,7 +396,7 @@ function landPunch(g) {
   if (Math.random() < slipCh) {
     G.os = 'slip'; G.ot = 0; G.slipDir = Math.random() < 0.5 ? -1 : 1; G.oHits = 0; G.combo = 0;
     G.whiff = 0.28;                                  // you're off balance for a moment
-    say(spam ? 'HE READ YOU' : 'SLIPPED', '#ff9f43', 1, 0.5, 0.3); sfx.whoosh();
+    say(spam ? 'HE READ YOU' : 'SLIPPED', '#ff9f43', 1, 0.5, 0.3); sfx.slip();
     G.counterNext = true;
     return;
   }
@@ -318,25 +418,40 @@ function landPunch(g) {
   }
   if (open) { dmg *= 1.6; say('COUNTER!', '#ffd166', 1.2); }
   if (G.os === 'windup' && Math.random() < Math.max(0.2, 0.6 - level * 0.02)) { say('INTERRUPTED', '#7bed9f', 0.9); G.oPunch = null; }
-  G.combo++; G.comboT = 1.4; if (G.combo >= 3) dmg *= 1 + Math.min(0.5, (G.combo - 2) * 0.1);
+  G.combo++; G.comboT = 1.4; G.maxCombo = Math.max(G.maxCombo, G.combo); if (G.combo >= 3) dmg *= 1 + Math.min(0.5, (G.combo - 2) * 0.1);
   if (Math.random() < 0.035) { dmg *= 3; say('LUCKY SHOT!', '#ffd166', 1.4, 0.5, 0.24); G.shake = 14; }   // there's always a chance
   G.ohp -= dmg; G.landed++; G.rs.p += dmg;
   G.oHits++; G.oHitT = 1.1;
   if (G.oHits >= (level >= 8 ? 2 : 3) && G.ohp > 0) {
     // he covers up, then fires back
     G.os = 'cover'; G.ot = 0; G.oHits = 0; G.oNext = 0;
-    sfx.hit(g.upper || g.side === 'R'); G.ohp > 0 && updateBars();
-    G.shake = Math.max(G.shake, 4); G.hitFlash = 0.1;
+    impact(g, toBody, open); G.ohp > 0 && updateBars();
+    G.hitFlash = 0.1;
     say(g.upper ? 'UPPERCUT!' : 'HIT', '#fff', 0.9, 0.5, 0.3);
     return;
   }
   G.os = 'hurt'; G.ot = 0; G.hurtT = 0.28; G.hurtDir = g.side === 'L' ? 1 : -1; G.hurtUp = g.upper;
-  G.shake = Math.max(G.shake, g.upper ? 9 : 4); G.hitFlash = 0.12;
-  sfx.hit(g.upper || g.side === 'R');
+  G.hitFlash = 0.12;
+  impact(g, toBody, open);
   if (!open) say(g.upper ? 'UPPERCUT!' : toBody ? 'BODY' : g.side === 'L' ? 'JAB' : 'CROSS', '#fff', g.upper ? 1.1 : 0.8, 0.5 + (Math.random() - 0.5) * 0.2, 0.3);
   if (Math.random() < 0.35) G.oGuard = toBody ? 'low' : 'high';
   updateBars();
   if (G.ohp <= 0) win();
+}
+// The feel of a landed punch: a tiny freeze, a kick of the camera toward the blow, a bruise that stays.
+function impact(g, toBody, open) {
+  const kind = g.upper ? 'upper' : g.side === 'L' ? 'jab' : 'cross';
+  sfx.punch(kind, G.combo);
+  G.stop = Math.max(G.stop, (kind === 'upper' ? 0.085 : kind === 'cross' ? 0.05 : 0.035) + (open ? 0.025 : 0));
+  const dir = g.side === 'L' ? 1 : -1;
+  G.kx += dir * (kind === 'upper' ? 2 : 5) * U * 0.25; G.ky += (kind === 'upper' ? -7 : -2) * U * 0.25;
+  G.squash = kind === 'upper' ? 1 : 0.6;
+  vibe(kind === 'upper' || open ? HAP.light : HAP.tick);
+  // bruise where it landed (in his body's own coordinates), stays for the whole fight
+  const o = oppScreen();
+  const bx = clamp((g.tx - o.x) / o.s, -14, 14), by = toBody ? clamp((g.ty - o.y) / o.s, 0, 40) : clamp((g.ty - (o.y - 32 * o.s)) / o.s, -8, 12);
+  const near = G.bruises.find(b => b.body === toBody && Math.hypot(b.x - bx, b.y - by) < 6);
+  if (near) near.a = Math.min(1, near.a + 0.18); else if (G.bruises.length < 12) G.bruises.push({ x: bx, y: by, body: toBody, a: 0.25 });
 }
 function dodge(dir) {
   if (G.phase !== 'fight' || G.dodge || G.whiff > 0) return;
@@ -400,6 +515,7 @@ function startAttack(chainLeft, counter, punish) {
   if (oTired && !G.oTiredSaid) { say("HE'S TIRED", '#7bed9f', 0.9, 0.5, 0.3); G.oTiredSaid = true; }
   G.oPunch = { type, side, wind: (opp.windup / 1000) * (type === 'upper' ? 1.25 : type === 'jab' ? 0.8 : 1) * (punish ? 0.5 : quick ? 0.7 : 1) * (oTired ? 1.3 : 1), chain, feint: !quick && !punish && Math.random() < opp.feint, done: false, mul, punish };
   G.os = 'windup'; G.ot = 0;
+  sfx.tell(type);
 }
 function resolveOppPunch() {
   const P = G.oPunch; P.done = true;
@@ -408,17 +524,19 @@ function resolveOppPunch() {
   const dodged = G.dodge && G.dodge.t < 0.4 && (P.type !== 'hook' || G.dodge.dir === (P.side === 'L' ? 1 : -1));
   if (off > 0.34 || dodged) {
     P.missed = true; G.dodges += dodged ? 1 : 0;
-    say(dodged ? 'SLIPPED!' : 'MISSED YOU', '#7bed9f', 1); sfx.whoosh(); return;
+    say(dodged ? 'SLIPPED!' : 'MISSED YOU', '#7bed9f', 1); sfx.whoosh(); if (dodged) vibe(HAP.sharp); return;
   }
   if (G.blocking) {
     if (P.type === 'upper') { dmg *= 0.7; say('GUARD BROKEN', '#ff6b6b', 1); }
-    else { const gassed = G.sta < 25; dmg *= gassed ? 0.55 : 0.18; sfx.block(); say(gassed ? 'WEAK GUARD' : 'BLOCK', gassed ? '#ff9f43' : '#9bb', 0.9); G.shake = gassed ? 7 : 3; G.php -= dmg; G.rs.o += dmg; updateBars(); checkLose(); return; }
+    else { const gassed = G.sta < 25; dmg *= gassed ? 0.55 : 0.18; sfx.block(); say(gassed ? 'WEAK GUARD' : 'BLOCK', gassed ? '#ff9f43' : '#9bb', 0.9); kick(P, gassed ? 3 : 1.5); G.php -= dmg; G.rs.o += dmg; updateBars(); checkLose(); return; }
   }
   G.php -= dmg; G.rs.o += dmg; G.combo = 0;
   if (P.mul >= 1.4) say(P.punish ? 'COUNTERED!' : 'PUNISHED', '#ff4757', 1.2, 0.5, 0.62);
-  G.flash = P.mul > 1.2 ? 0.5 : 0.35; G.shake = P.mul > 1.2 ? 18 : 12; sfx.hurt(); vibe(P.mul > 1.2 ? [120, 40, 160] : P.type === 'upper' ? 160 : 90);
+  G.flash = P.mul > 1.2 ? 0.5 : 0.35; kick(P, P.mul > 1.2 ? 9 : 6); G.stop = Math.max(G.stop, 0.045); sfx.hurt(P.mul > 1.2 || P.type === 'upper'); vibe(P.mul > 1.2 || P.type === 'upper' ? HAP.thud : HAP.light);
   updateBars(); checkLose();
 }
+// his punch knocks the camera away from where it came from
+function kick(P, k) { const dir = P.type === 'upper' ? 0 : P.side === 'L' ? 1 : -1; G.kx += dir * k * U * 0.5; G.ky += (P.type === 'upper' ? -k : k * 0.4) * U * 0.5; G.shake = Math.max(G.shake, k * 0.6); }
 function checkLose() { if (G.php <= 0) lose(); }
 
 // ---------- rounds ----------
@@ -452,32 +570,50 @@ function decision() {
 }
 
 // ---------- fight end ----------
+let endTimer = null, endShow = null;
+function scheduleEnd(fn, ms) { endShow = fn; endTimer = setTimeout(() => { endTimer = null; endShow = null; fn(); }, ms); }
+function skipEnd() { if (!endShow || G.t < 0.3) return; clearTimeout(endTimer); const f = endShow; endTimer = null; endShow = null; G.slow = 0; f(); }
+const mmss = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
 function win(points, card) {
-  G.phase = points ? 'decision' : 'ko'; G.t = 0; G.os = points ? 'idle' : 'ko'; G.ot = 0; sfx.bell(); vibe([80, 60, 200]);
+  G.phase = points ? 'decision' : 'ko'; G.t = 0; G.os = points ? 'idle' : 'ko'; G.ot = 0; G.over = 'won';
+  if (points) sfx.pointsWin(); else { sfx.koWin(opp.boss); G.stop = 0.13; G.slow = 0.9; G.kx += U * 2; }
+  vibe(HAP.heavy);
   const hpLeft = G.php / G.pMax * 100;
   const st = points ? (hpLeft > 50 ? 2 : 1) : hpLeft > 66 ? 3 : hpLeft > 33 ? 2 : 1;
   stars[level] = Math.max(stars[level] || 0, st); store.set('stars', stars);
-  setTimeout(() => {
+  streaks[level] = 0; store.set('streaks', streaks);
+  let newBest = false;
+  if (!points) { const prev = bests[level]; if (!prev || G.fightT < prev) { newBest = !!prev; bests[level] = G.fightT; store.set('bests', bests); } }
+  unlocked = Math.max(unlocked, level + 1); store.set('unlocked', unlocked);
+  if (HEADLESS) return;
+  scheduleEnd(() => {
     $('eTitle').textContent = points ? 'YOU WIN ON POINTS' : 'K.O.!'; $('eTitle').style.color = '#ffd166';
     $('eStars').innerHTML = [1, 2, 3].map(i => `<span class="${i <= st ? '' : 'off'}">★</span>`).join('');
     const acc = G.thrown ? Math.round(G.landed / G.thrown * 100) : 0;
-    $('eSub').textContent = (points ? `The judges gave it to you. ${card}. ` : `You knocked out ${opp.name}. `) + `${acc}% of your punches landed, ${G.dodges} dodge${G.dodges === 1 ? '' : 's'}.`;
+    $('eSub').innerHTML = (points ? `The judges gave it to you. ${card}.` : `You knocked out ${opp.name} in <b>${mmss(G.fightT)}</b>.`) +
+      (!points && newBest ? ` <b class="nb">NEW BEST</b>` : !points && bests[level] < G.fightT ? ` Best: ${mmss(bests[level])}.` : '') +
+      `<br>${acc}% of punches landed · best combo ${G.maxCombo} · ${G.dodges} dodge${G.dodges === 1 ? '' : 's'}`;
+    if (newBest) { sfx.best(); vibe(HAP.best); }
     $('eNext').textContent = 'NEXT FIGHT'; $('eNext').dataset.act = 'next';
     $('eRetry').textContent = 'Fight again'; $('eRetry').dataset.act = 'again';
-    unlocked = Math.max(unlocked, level + 1); store.set('unlocked', unlocked);
     $('ovEnd').classList.remove('hidden');
-  }, 1800);
+  }, points ? 900 : 1700);
 }
 function lose(points, card) {
-  G.phase = points ? 'decision' : 'down'; G.t = 0; sfx.bell(); vibe([300]);
-  setTimeout(() => {
+  G.phase = points ? 'decision' : 'down'; G.t = 0; G.over = 'lost'; sfx.lose();          // no vibration on a loss
+  streaks[level] = (streaks[level] || 0) + 1; store.set('streaks', streaks);
+  if (HEADLESS) return;
+  const left = Math.max(1, Math.round(G.ohp / opp.maxHp * 100));
+  scheduleEnd(() => {
     $('eTitle').textContent = points ? 'LOST ON POINTS' : 'KNOCKED DOWN'; $('eTitle').style.color = '#ff6b6b';
-    $('eStars').innerHTML = '';
-    $('eSub').textContent = points ? `Nobody went down, but the judges scored it for ${opp.name}. ${card}.` : `${opp.name} got you this time. Watch the glowing glove and dodge away from it.`;
+    // honest near-miss: how close it really was
+    $('eStars').innerHTML = `<div class="near"><div class="nl">${opp.name.split(' ').pop()} had ${left}% left</div><div class="hb"><i style="width:${left}%"></i></div></div>`;
+    $('eSub').innerHTML = (points ? `Nobody went down, but the judges scored it for ${opp.name}. ${card}.` : left <= 20 ? `So close. One or two more clean shots.` : `Watch the glowing glove and dodge away from it.`) +
+      ((streaks[level] || 0) >= 3 ? `<br><span class="assistNote">Corner help is on for this level: he'll be a touch slower until you beat him.</span>` : '');
     $('eNext').textContent = 'TRY AGAIN'; $('eNext').dataset.act = 'again';
     $('eRetry').textContent = 'Choose another level'; $('eRetry').dataset.act = 'levels';
     $('ovEnd').classList.remove('hidden');
-  }, 1500);
+  }, points ? 900 : 1300);
 }
 
 // ---------- update ----------
@@ -486,10 +622,10 @@ function update(dt) {
   G.t += dt;
   if (G.phase === 'intro') {
     G.intro -= dt;
-    if (G.intro <= 0) { G.phase = 'fight'; sfx.bell(); say('FIGHT!', '#ffd166', 1.8, 0.5, 0.42); }
+    if (G.intro <= 0) { G.phase = 'fight'; sfx.bell(); startCrowd(); say('FIGHT!', '#ffd166', 1.8, 0.5, 0.42); }
   }
   if (G.phase === 'fight') {
-    G.roundT -= dt; updateClock();
+    G.roundT -= dt; G.fightT += dt; if (!HEADLESS) updateClock();
     G.osta = Math.min(100, G.osta + dt * 9); if (G.osta > 45) G.oTiredSaid = false;
     if (G.roundT <= 0) { endRound(); return; }
     oppThink(dt);
@@ -499,8 +635,10 @@ function update(dt) {
     G.oHitT -= dt; if (G.oHitT <= 0) G.oHits = 0;
     G.whiff = Math.max(0, G.whiff - dt);
     if (G.pTimes.length > 12) G.pTimes = G.pTimes.slice(-12);
-    $('sbar').style.width = G.sta + '%'; $('sbar').parentNode.classList.toggle('low', G.sta < 20);
+    if (!HEADLESS) { $('sbar').style.width = G.sta + '%'; $('sbar').parentNode.classList.toggle('low', G.sta < 20); }
   } else if (G.phase === 'ko') G.ot += dt;
+  if (G.over === 'won' && G.t < 2.2 && Math.random() < dt * (opp.boss ? 26 : 16)) G.bulbs.push({ x: Math.random(), y: 0.08 + Math.random() * 0.34, t: 0 });   // camera flash bulbs in the crowd
+  G.bulbs.forEach(b => b.t += dt); G.bulbs = G.bulbs.filter(b => b.t < 0.25);
   for (const s of ['L', 'R']) {
     const g = G.gloves[s]; if (!g) continue;
     g.t += dt;
@@ -509,11 +647,16 @@ function update(dt) {
   }
   if (G.dodge) { G.dodge.t += dt; if (G.dodge.t > 0.42) G.dodge = null; }
   G.shake = Math.max(0, G.shake - dt * 40);
+  G.squash = Math.max(0, G.squash - dt * 6);
+  if (G.cat) { G.cat.x += dt * 0.06; if (G.cat.x > 1.15) G.cat = null; }
   G.flash = Math.max(0, G.flash - dt);
   G.hitFlash = Math.max(0, G.hitFlash - dt);
   G.comboT -= dt; if (G.comboT <= 0) G.combo = 0;
-  const c = $('combo');
-  if (G.combo >= 3) { c.textContent = `${G.combo} HIT COMBO`; c.style.opacity = 1; } else c.style.opacity = 0;
+  if (!HEADLESS) {
+    const c = $('combo');
+    if (G.combo >= 3) { const t = `${G.combo} HIT COMBO`; if (c.textContent !== t) { c.textContent = t; c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); } c.style.opacity = 1; }
+    else { c.style.opacity = 0; c.textContent = ''; }
+  }
   G.msgs.forEach(m => m.t += dt); G.msgs = G.msgs.filter(m => m.t < 0.9);
 }
 
@@ -617,6 +760,8 @@ function drawOpponent() {
   ctx.fillStyle = shade(skin, 0.8); ctx.fillRect(-8 * s, -20 * s, 16 * s, 14 * s);
   // head
   const hx = headOx, hy = -32 * s + headOy;
+  ctx.save();
+  if (G.squash > 0) { const k = G.squash * 0.11; ctx.translate(hx, hy); ctx.scale(1 + k, 1 - k * 0.8); ctx.translate(-hx, -hy); }
   ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(hx, hy, 16.5 * s, 19 * s, 0, 0, Math.PI * 2); ctx.fill();
   // ears
   ctx.beginPath(); ctx.ellipse(hx - 15 * s, hy + 1 * s, 3 * s, 4.5 * s, 0, 0, Math.PI * 2); ctx.ellipse(hx + 15 * s, hy + 1 * s, 3 * s, 4.5 * s, 0, 0, Math.PI * 2); ctx.fill();
@@ -655,6 +800,9 @@ function drawOpponent() {
   const dmgFrac = 1 - G.ohp / opp.maxHp;
   if (dmgFrac > 0.4) { ctx.fillStyle = 'rgba(160,40,60,.35)'; ctx.beginPath(); ctx.ellipse(hx + 8 * s, hy - 1 * s, 4 * s, 3 * s, 0, 0, Math.PI * 2); ctx.fill(); }
   if (dmgFrac > 0.7) { ctx.fillStyle = 'rgba(160,40,60,.35)'; ctx.beginPath(); ctx.ellipse(hx - 9 * s, hy + 4 * s, 4 * s, 3 * s, 0, 0, Math.PI * 2); ctx.fill(); }
+  for (const b of G.bruises) if (!b.body) { ctx.fillStyle = `rgba(150,35,70,${0.45 * b.a})`; ctx.beginPath(); ctx.ellipse(hx + b.x * s, hy + b.y * s, (2.5 + 2.5 * b.a) * s, (2 + 2 * b.a) * s, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
+  for (const b of G.bruises) if (b.body) { ctx.fillStyle = `rgba(170,40,50,${0.35 * b.a})`; ctx.beginPath(); ctx.ellipse(b.x * s, b.y * s, (3 + 3 * b.a) * s, (2.5 + 2 * b.a) * s, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.restore();
 
   // gloves (drawn in screen space so punches can fly at the camera)
@@ -710,23 +858,39 @@ function drawPlayerGloves() {
     glove(x, y, r, '#e84118', null, rot);
   }
 }
+function drawCat(x, y) {
+  const u = U * 0.9, step = Math.sin(performance.now() / 120);
+  ctx.save(); ctx.translate(x, y - u * 4.5); ctx.fillStyle = '#16131a';
+  ctx.beginPath(); ctx.ellipse(0, 0, u * 5, u * 2.4, 0, 0, Math.PI * 2); ctx.fill();               // body
+  ctx.beginPath(); ctx.arc(u * 5, -u * 2, u * 2, 0, Math.PI * 2); ctx.fill();                      // head
+  ctx.beginPath(); ctx.moveTo(u * 4, -u * 3.6); ctx.lineTo(u * 4.4, -u * 5.2); ctx.lineTo(u * 5.2, -u * 3.8); ctx.moveTo(u * 5.4, -u * 3.8); ctx.lineTo(u * 6.3, -u * 5.2); ctx.lineTo(u * 6.6, -u * 3.4); ctx.fill();
+  ctx.strokeStyle = '#16131a'; ctx.lineWidth = u * 0.9; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(-u * 4.5, -u * 0.5); ctx.quadraticCurveTo(-u * 8, -u * 2, -u * 7.5, -u * 6); ctx.stroke();   // tail up
+  for (const [lx, ph] of [[-3, 1], [-1.5, -1], [2.5, -1], [4, 1]]) { ctx.beginPath(); ctx.moveTo(lx * u, u); ctx.lineTo((lx + step * ph * 0.6) * u, u * 4.5); ctx.stroke(); }
+  ctx.fillStyle = '#9be15d'; ctx.beginPath(); ctx.arc(u * 5.8, -u * 2.2, u * 0.35, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
 function draw() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const cam = G ? camOffset() : 0;
   const sh = G ? G.shake : 0;
   ctx.save();
   if (sh) ctx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
+  if (G) ctx.translate(G.kx, G.ky);
   if (G && G.dodge) { const p = G.dodge.t / 0.42; ctx.translate(W / 2, H); ctx.rotate(G.dodge.dir * 0.05 * Math.sin(Math.min(1, p) * Math.PI)); ctx.translate(-W / 2, -H); }
   drawArena(cam);
+  if (G && G.cat) drawCat(G.cat.x * W + cam * 0.6, H * 0.41);
   if (G) {
+    for (const b of G.bulbs) { const a = 1 - b.t / 0.25; ctx.save(); ctx.globalCompositeOperation = 'lighter'; const r = U * (3 + 9 * a); const bg = ctx.createRadialGradient(b.x * W, b.y * H, 0, b.x * W, b.y * H, r * 3); bg.addColorStop(0, `rgba(255,255,240,${a})`); bg.addColorStop(1, 'rgba(255,255,240,0)'); ctx.fillStyle = bg; ctx.fillRect(b.x * W - r * 3, b.y * H - r * 3, r * 6, r * 6); ctx.restore(); }
     drawOpponent();
     if (G.hitFlash > 0) { ctx.fillStyle = `rgba(255,255,255,${G.hitFlash * 1.5})`; ctx.fillRect(0, 0, W, H); }
     if (G.phase !== 'down') drawPlayerGloves();
     // messages
     for (const m of G.msgs) {
       const a = 1 - m.t / 0.9;
+      const pop = m.t < 0.12 ? 1 + 0.35 * (1 - m.t / 0.12) : 1;
       ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = m.color;
-      ctx.font = `${U * 11 * m.size}px "Bebas Neue", Impact, sans-serif`; ctx.textAlign = 'center';
+      ctx.font = `${U * 11 * m.size * pop}px "Bebas Neue", Impact, sans-serif`; ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 8;
       ctx.fillText(m.text, W * m.x, H * m.y - m.t * U * 10); ctx.restore();
     }
@@ -768,6 +932,7 @@ function refreshBlock() {
 }
 cv.addEventListener('pointerdown', e => {
   audio();
+  if (G && G.over) { skipEnd(); return; }
   if (!G || G.phase === 'intro' && false) return;
   ptrs.set(e.pointerId, { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, lx: e.clientX, t0: performance.now(), mode: null });
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
@@ -826,13 +991,17 @@ function showStart() {
   const speed = o.windup > 650 ? 'Slow' : o.windup > 480 ? 'Steady' : o.windup > 360 ? 'Quick' : o.windup > 280 ? 'Fast' : o.windup > 230 ? 'Lightning' : 'Inhuman';
   const rounds = o.rounds > 1 ? `${o.rounds} rounds × ${o.roundLen}s` : `1 round · ${o.roundLen}s`;
   $('sStats').innerHTML = `<span class="pill">${rounds}</span><span class="pill">Speed: ${speed}</span><span class="pill">Guard: ${Math.round(o.block * 100)}%</span>${o.combo ? '<span class="pill">Throws combos</span>' : ''}${o.feint ? '<span class="pill">Fakes punches</span>' : ''}${o.boss ? '<span class="pill" style="background:#f7b731;color:#2a1a00">BOSS</span>' : ''}`;
+  $('sBest').innerHTML = (bests[level] ? `Your fastest KO here: <b>${mmss(bests[level])}</b>` : '') + (o.assist ? `${bests[level] ? '<br>' : ''}<span class="assistNote">Corner help on: he's a touch slower until you beat him.</span>` : '');
   $('ovStart').classList.remove('hidden');
 }
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); if (MUTE && crowd$) { crowd$.stop(); crowd$ = null; } };
+sndIcon();
 function startFight() {
   ['ovStart', 'ovEnd', 'ovPause', 'ovLevels', 'ovBreak'].forEach(id => $(id).classList.add('hidden'));
-  audio(); newFight();
+  audio(); if (endTimer) { clearTimeout(endTimer); endTimer = null; endShow = null; } newFight();
 }
-$('fightBtn').onclick = startFight;
+$('fightBtn').onclick = () => { sfx.click(); startFight(); };
 function endAction(act) {
   $('ovEnd').classList.add('hidden');
   if (act === 'next') { level = Math.min(unlocked, level + 1); store.set('level', level); startFight(); }
@@ -871,8 +1040,12 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // ---------- loop ----------
 let last = performance.now();
 function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const rdt = Math.min(0.05, (now - last) / 1000); last = now;
+  let dt = rdt;
   if (!paused && G) {
+    if (G.stop > 0) { G.stop -= rdt; dt = 0; }                 // hit-stop: the world freezes for a heartbeat
+    else if (G.slow > 0) { G.slow -= rdt; dt *= 0.3; }        // slow motion on the knockout blow
+    const damp = Math.pow(0.0005, rdt); G.kx *= damp; G.ky *= damp;
     if (keys.q) step(-dt * 0.9);
     if (keys.e) step(dt * 0.9);
     update(dt);
@@ -880,6 +1053,29 @@ function frame(now) {
   draw();
   requestAnimationFrame(frame);
 }
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const k of Object.keys(sfx)) {
+      if (typeof sfx[k] !== 'function') continue;
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const key in lastPlay) delete lastPlay[key]; for (const key in NB) delete NB[key];
+      let err = null; try { k === 'pluck' ? sfx.pluck(196) : sfx[k](true, 3); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), d = buf.getChannelData(0); let pk = 0; for (const x of d) pk = Math.max(pk, Math.abs(x));
+      out[k] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const key in NB) delete NB[key];
+    return out;
+  },
+  start(L) { HEADLESS = true; MUTE = true; level = L; opp = makeOpponent(L); newFight(); G.phase = 'fight'; },
+  step(dt) { update(dt); },
+  punch(side, where, upper) { const o = oppScreen(); punch(side, o.x + (side === 'L' ? -6 : 6) * o.s, where === 'body' ? o.y + 18 * o.s : o.y - 30 * o.s, !!upper); },
+  dodge(d) { dodge(d); }, block(b) { G.blocking = b && G.phase === 'fight'; },
+  next() { nextRound(); G.phase = 'fight'; }, setStreak(L, n) { streaks = { [L]: n }; },
+  get G() { return G; }, get opp() { return opp; }
+};
 resize();
 // idle preview behind the start screen
 opp = makeOpponent(level);

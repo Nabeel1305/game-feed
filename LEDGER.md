@@ -7,9 +7,9 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | # | Game | Status | Version | Feed mini mode | Play / test page | Code |
 |---|------|--------|---------|----------------|------------------|------|
 | 1 | **Bottle Cap Flick** | approved | 1.0.0 | not yet | [play](https://claude.ai/artifact/KkPZNYvjwLp3vobTWiBhYK) | `games/bottle-cap-flick/index.html` |
-| 2 | **Knockout** | approved | 1.0.0 | not yet | [play](https://claude.ai/artifact/NPj7ei6Tm8u6KQkALziov7) | `games/knockout/index.html` |
-| 3 | **High Noon** | approved | 1.0.0 | not yet | [play](https://claude.ai/artifact/5dVHkDPdSaN7W65jNVdH3R) | `games/high-noon/index.html` |
-| 4 | **Steel & Honour** | testing | 0.11.0 | not yet | [play](https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5) | `games/sword-fight/index.html` |
+| 2 | **Knockout** | testing | 1.1.0 | not yet | [play](https://claude.ai/artifact/NPj7ei6Tm8u6KQkALziov7) | `games/knockout/index.html` |
+| 3 | **High Noon** | testing | 1.1.0 | not yet | [play](https://claude.ai/artifact/5dVHkDPdSaN7W65jNVdH3R) | `games/high-noon/index.html` |
+| 4 | **Steel & Honour** | testing | 0.12.0 | not yet | [play](https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5) | `games/sword-fight/index.html` |
 
 ## What each game is
 

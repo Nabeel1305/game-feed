@@ -25,8 +25,8 @@
       "number": 2,
       "id": "knockout",
       "name": "Knockout",
-      "status": "approved",
-      "version": "1.0.0",
+      "status": "testing",
+      "version": "1.1.0",
       "added": "2026-11-14",
       "summary": "First-person two-thumb boxing. Tap to punch, flick to dodge, flick up for an uppercut, hold both to block. Endless levels, rounds and points decisions.",
       "path": "games/knockout/index.html",
@@ -37,14 +37,24 @@
       "feed": {
         "mini": false,
         "full": true
-      }
+      },
+      "principles": [
+        "P7 hit-stop",
+        "P8 camera kick + bruises that stay",
+        "P18 combo chain with rising notes",
+        "P12 KO celebration (flash bulbs, bell, slow-mo)",
+        "P3 honest near-miss",
+        "P13 fastest KO per level",
+        "P2 disclosed corner help",
+        "P17 rare cat on the apron"
+      ]
     },
     {
       "number": 3,
       "id": "high-noon",
       "name": "High Noon",
-      "status": "approved",
-      "version": "1.0.0",
+      "status": "testing",
+      "version": "1.1.0",
       "added": "2026-11-14",
       "summary": "Cowboy quick-draw duel. Thumb on the holster, wait for DRAW (watch for fake calls), slide up to aim, release to shoot. Headshots win; endless levels.",
       "path": "games/high-noon/index.html",
@@ -55,14 +65,23 @@
       "feed": {
         "mini": false,
         "full": true
-      }
+      },
+      "principles": [
+        "P3 honest draw times",
+        "P13 fastest winning shot",
+        "P7 freeze on the winning shot",
+        "P8 bullet holes that stay",
+        "P11 haptic tick on the count and DRAW",
+        "P2 disclosed help",
+        "P17 rare tumbleweed"
+      ]
     },
     {
       "number": 4,
       "id": "sword-fight",
       "name": "Steel & Honour",
       "status": "testing",
-      "version": "0.11.0",
+      "version": "0.12.0",
       "added": "2026-11-14",
       "summary": "First-person medieval sword duels. Your blade follows your finger in any direction; tap to poke an exact spot. His cuts come from any angle and his thrusts aim at a spot: block by swiping across his blade on the side it comes from (or through the spot of a thrust). Perfect parries open him up. Endless levels, rounds, champion knights, huge variety of knights.",
       "path": "games/sword-fight/index.html",
@@ -75,7 +94,16 @@
         "mini": false,
         "full": true
       },
-      "spec": "specs/04-sword-fight.md"
+      "spec": "specs/04-sword-fight.md",
+      "principles": [
+        "P18 parry chain with rising steel",
+        "P7 hit-stop on parries and the winning blow",
+        "P8 dents and scratches that stay",
+        "P13 longest parry chain",
+        "P3 honest near-miss",
+        "P2 disclosed help (slower wind-ups only)",
+        "P17 rare crow"
+      ]
     }
   ],
   "planned": []

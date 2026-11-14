@@ -67,6 +67,21 @@ Everything learned building the first games. Every new game must follow the **ru
 - Armour: segmented plate (layered pauldrons with rivets, gorget lames, ridged breastplate, fauld lames, mail skirt, cuisses, knee cops, greaves), surcoat open at the sides, plated arms with elbow cops and gauntlets, dents and scratches as he's hurt.
 - Test hook `window.__sim` (start, step, stroke, poke, geo, you, tol). `test_sim.py` bots: spam, poker, center, panic, human (0.33 s, sloppy aim), smart. Results: spam loses from ~5, pokes from ~5, centre-swipe from ~12, panic from ~5; human-speed wins through 40 and about half at 90.
 
+### Engagement pass (Nov 2026, games 2-4)
+Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
+- **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
+- **Hit-stop and slow-mo live in `frame()`, not `update()`:** `G.stop` freezes game time, `G.slow` scales it. The fast-forward bots call `update()` directly, so feel changes never change test results.
+- **Camera kick:** `G.kx/G.ky` pushed in the direction of the blow and damped each frame (`Math.pow(0.0008, dt)`), on top of the small random shake.
+- **Permanence:** hits are stored in body coordinates (`(hitX - centre) / scale`) so bruises, dents and bullet holes stay put while the figure moves.
+- **Honest near-miss:** on a loss, show his real remaining health (bar + %) or the real draw times. Never invent a margin.
+- **Personal bests:** Knockout fastest KO per level (`ko.bests`), High Noon fastest winning shot (`hn.bestDraw`), Steel & Honour longest parry chain (`sw.bestChain`). "NEW BEST" only when an earlier best was beaten.
+- **Disclosed help (P2):** after 3 straight losses at a level (`<prefix>streaks`), the opponent is a touch slower, a pill says "HELP ON"/"ASSIST", and it resets on a win. **Lesson: help must only add reaction time (longer wind-up/draw), never loosen the rules.** Widening the sword parry window let the centre-swipe cheat bot win 3/6 at level 8; slower wind-ups alone kept every cheat at 0. Always rerun the cheat bots with help on (`test_sim.py ... assist`).
+- **Rare surprises:** cosmetic only, never in the way of aiming (cat on the ring apron 1/30, tumbleweed behind the outlaw 1/12, crow over the castle 1/15).
+- **No vibration on losing;** a short thud when hit is fine (it's information).
+- **Sound check:** each game's `__sim.soundCheck()` renders every `sfx` offline and returns the peak; all must be under 1.0 with no errors (run it after any sound change). A transient click can measure louder than a gunshot after the compressor, so compare peaks and turn small clicks down.
+- **Bug found:** `.hidden` only hid `.ov` overlays, so "Fight again" showed on loss screens. CSS now `.ov.hidden,.btn.hidden{display:none}`.
+- Knockout and High Noon now have their own `test_sim.py` and `window.__sim` hooks like Steel & Honour.
+
 ### Shared building blocks
 Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/catch; synthesized sounds (filtered noise for hits/shots, tones for bells/calls, plucked strings for music); a vibration helper that prefers `window.GameNative.vibrate` (phone app) over `navigator.vibrate`; level grid; full-screen overlay CSS for home / rules / levels / round break / end; pause when the tab is hidden.
 
