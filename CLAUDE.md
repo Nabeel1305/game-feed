@@ -6,9 +6,10 @@ Nabeel is building a TikTok-style feed of mini-games: swipe up and a random game
 1. Read `games.json` (the official registry) and `LEDGER.md`. If he asks "where are we?", answer from these: number of games, each game with its status and play link, and what's next.
 2. Check `planned` in `games.json`: the next game may already be designed, with its full spec in `specs/`. If he says "build the next game", build that one.
 3. Read `LESSONS.md` and follow it: his taste, the rules every game must pass, how to test, and build notes for each existing game. Reuse code from the most similar existing game in `games/<id>/index.html`.
+4. Read `PLAYBOOK.md` before designing or changing a game: the design principles (P1–P30), the **Satisfying Sounds** rules and sound kit (S1–S11), the checklist and the AVOID list. Pick 3–5 principles that suit the game (never all of them) and record them in the spec and in the game's `principles` field in `games.json`. The sound rules apply to every game.
 
 ## Adding or changing a game
-1. Build the game as one self-contained `games/<id>/index.html` (canvas, inline JS/CSS, Google Fonts with fallbacks, synthesized sounds). Give it its own `storage_prefix` for saves.
+1. Build the game as one self-contained `games/<id>/index.html` (canvas, inline JS/CSS, Google Fonts with fallbacks, synthesized sounds built from the PLAYBOOK sound kit). Give it its own `storage_prefix` for saves.
 2. Test it (see LESSONS.md, including fast-forward cheat tests), then publish it as an artifact so he can play it; republish the same artifact for each revision.
 3. When he approves it: add or update its entry in `games.json` (next number; never renumber; bump `version` on changes), run `python3 tools/ledger.py`, add its build notes and any new lessons to `LESSONS.md`, then commit and push. GitHub runs `tools/check.py`, which loads every game and fails on errors or registry mistakes.
 4. Statuses: `in-progress` (being built), `testing` (he's play-testing), `approved` (done), `retired` (removed from the feed, number kept).
