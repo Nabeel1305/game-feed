@@ -8,4 +8,5 @@ public class View {
     public void setHapticFeedbackEnabled(boolean b) {}
     public void setOnLongClickListener(OnLongClickListener l) {}
     public void setBackgroundColor(int c) {}
+    public final ViewParent getParent() { return null; }
 }

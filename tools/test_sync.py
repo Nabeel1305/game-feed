@@ -182,13 +182,30 @@ def main():
         r = sync(pe, publish=evil)
         ok(not r['ok'] and not os.path.exists(os.path.join(work, 'escape.txt')) and not os.path.exists(pe + '/../escape.txt') and tree(pe) == {} if os.path.isdir(pe) else not r['ok'],
            f'a list naming "{bad}" is refused whole', r['error'])
+    # 12b. the feed page itself only ever comes from inside the APK: a change to the app is installed, never fetched
+    apk1 = phone('apk1', A); retouch(apk1, 'index.html', b'\n<!-- the app as installed -->\n')
+    ps = phone('pshell')
+    r = sync(ps, apk=apk1, publish=B)
+    theirs = tree(B); mine = tree(ps)
+    ok(r['ok'] and 'index.html' not in r['asked'] and mine['index.html'] == sha(os.path.join(apk1, 'index.html')) and mine['index.html'] != theirs['index.html']
+       and all(mine[k] == v for k, v in theirs.items() if k != 'index.html') and set(mine) == set(theirs),
+       'the feed page on the phone is the installed app\'s own; everything else is what is published', str(r['asked'][-3:]))
+    r = sync(ps, apk=apk1)
+    ok(r['ok'] and not r['changed'] and r['asked'] == ['manifest.txt'], 'and it is not touched again on the next check', str(r['asked']))
+    apk2 = phone('apk2', A); retouch(apk2, 'index.html', b'\n<!-- a newer app, installed later -->\n')
+    # the newer app carries a build number at least as high as what is published
+    listing = open(os.path.join(apk2, 'manifest.txt'), encoding='utf-8').read().replace('build 5', 'build 6')
+    open(os.path.join(apk2, 'manifest.txt'), 'w', encoding='utf-8').write(listing)
+    r = sync(ps, apk=apk2)
+    ok(r['ok'] and r['changed'] and r['fetched'] == 0 and tree(ps)['index.html'] == sha(os.path.join(apk2, 'index.html')), 'installing a newer app brings its own feed page', str({k: r[k] for k in ('fetched', 'fromApp', 'asked')}))
     # 13. a file that went missing on the phone comes back
     os.remove(os.path.join(p1, new_page))
     r = sync(p1, publish=B)
     ok(r['ok'] and r['fetched'] == 1 and tree(p1) == tree(B), 'a file that went missing on the phone is fetched again')
     srv.shutdown()
 
-    # 14. the whole journey, seen in the feed: open the fetched copy, a new game is published, the phone fetches it, the feed shows it first
+    # 14. the whole journey, seen in the feed: a new game is published while he plays; the phone fetches it; the feed adds it
+    #     to what it is showing without reloading or disturbing anything; it is the next card, marked New.
     print('The whole journey:')
     try:
         from playwright.sync_api import sync_playwright
@@ -198,64 +215,82 @@ def main():
     srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Remote)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base2 = f'http://127.0.0.1:{srv.server_address[1]}/'
+    NATIVE = "if (window === top) window.GameNative = { vibrate() {}, close() {}, version() { return '1.0.6'; }, lastProblem() { return ''; }, ready(rev) { window.__ready = rev; }, reload(at) { sessionStorage.setItem('reloads', 1 + +(sessionStorage.getItem('reloads') || 0)); sessionStorage.setItem('reloadAt', at); sessionStorage.setItem('reloadCard', (window.__feed && window.__feed.state().id) || ''); location.reload(); } }; else window.GameNative = { vibrate() {} };"
     pj = phone('journey')
     r = sync(pj, apk=A, publish=A, address=base2)
     with sync_playwright() as p:
         b = p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required', '--mute-audio'])
         ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
-        # stands in for the phone app: reload() loads the feed again, as MainActivity does
-        ctx.add_init_script("if (window === top) window.GameNative = { vibrate() {}, close() {}, version() { return '1.0.6'; }, ready(rev) { window.__ready = rev; }, reload(at) { sessionStorage.setItem('reloads', 1 + +(sessionStorage.getItem('reloads') || 0)); location.hash = at ? '#' + at : ''; location.reload(); } }; else window.GameNative = { vibrate() {} };")
+        ctx.add_init_script(NATIVE)        # stands in for the phone app
         pg = ctx.new_page()
         errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.goto('file://' + os.path.join(pj, 'index.html'))
         pg.wait_for_function('window.__feed && window.__feed.cur()')
-        n0 = pg.evaluate('window.__feed.games.length')
-        ok(n0 == len(inside) and pg.evaluate('window.__ready') == pg.evaluate('window.__feed.build.rev') and pg.evaluate('window.__feed.fresh.length') == 0,
+        ok(pg.evaluate('window.__feed.games.length') == len(inside) and pg.evaluate('window.__ready') == pg.evaluate('window.__feed.build.rev') and pg.evaluate('window.__feed.fresh.length') == 0 and not pg.evaluate('window.__feed.builtIn'),
            'the feed opens from the fetched folder and tells the app it is running; nothing is marked New on a first run')
-        # a game is running when the update lands: it must not be interrupted
+        born = pg.evaluate('performance.timeOrigin')
         pg.wait_for_function('window.__feed.state().ready'); pg.wait_for_timeout(600)
         pg.evaluate('window.__feed.tap()'); pg.wait_for_timeout(800)
+        playing = pg.evaluate('window.__feed.state().id')
         r = sync(pj, apk=A, publish=B, address=base2)
         ok(r['ok'] and r['changed'], 'the phone fetches the new game while he plays')
         pg.evaluate(f"window.gameFeedUpdate({json.dumps({k: r[k] for k in ('ok', 'changed', 'build', 'rev', 'fetched')})})")
-        pg.wait_for_timeout(500)
-        st = pg.evaluate('window.__feed.state()')
-        ok(st['state'] == 'playing' and pg.evaluate('window.__feed.pending') == r['rev'] and not pg.evaluate("sessionStorage.getItem('reloads')"), 'a running game is never interrupted by an update', str(st))
-        # he swipes on: once the game he left has been put away, the feed takes the update at that quiet moment
-        for _ in range(4):
-            if pg.evaluate("sessionStorage.getItem('reloads')"): break
-            pg.evaluate('window.__feed.go(1)'); pg.wait_for_timeout(1000)
-        pg.wait_for_function('window.__feed && window.__feed.cur() && window.__feed.games.some(g => g.id === "test-seventh")', timeout=8000)
+        pg.wait_for_timeout(700)
         st = pg.evaluate('window.__feed.state()')
         ids = pg.evaluate('window.__feed.games.map(g => g.id)')
-        ok('test-seventh' in ids and retired['id'] not in ids, 'after the update the feed lists the new game and not the retired one', str(ids))
-        on_card = pg.evaluate('location.hash.slice(1)')          # the card that was on screen when the feed took the update
-        gone = on_card == retired['id']                         # ...which may have been the very game this update retires
-        ok(st['pos'] == 0 and st['state'] == 'cover' and st['id'] == ('test-seventh' if gone else on_card),
-           'the card he was looking at stays in front of him (or the new game, if his card was the retired game)', f"was on {on_card}, now {st['id']}")
-        pg.wait_for_timeout(700)
-        ok(pg.locator('#toast.on').count() == 1 and 'seventh game' in pg.locator('#toast').inner_text().lower(), 'a note says a new game arrived', pg.locator('#toast').inner_text())
-        pg.wait_for_timeout(300)
-        if not gone:
-            pg.evaluate('window.__feed.go(1)'); pg.wait_for_timeout(900)
+        ok(st['state'] == 'playing' and st['id'] == playing and pg.evaluate('performance.timeOrigin') == born and not pg.evaluate("sessionStorage.getItem('reloads')"),
+           'the game he is playing carries on: nothing is reloaded', str(st))
+        ok('test-seventh' in ids and (retired['id'] not in ids) and pg.evaluate('window.__feed.build.rev') == r['rev'], 'the feed now has the new game in its list, and no longer offers the retired one', str(ids))
+        ok(pg.locator('#toast.on').count() == 0, 'no note is put over a game in play')
+        t0 = pg.evaluate('window.__feed.pos')
+        pg.evaluate('window.__feed.go(1)'); pg.wait_for_timeout(900)
         st = pg.evaluate('window.__feed.state()')
-        ok(st['id'] == 'test-seventh', 'and the new game is the very next card', str(st))
-        ok(pg.locator('.slide .cover .new').count() >= 1 and pg.evaluate("window.__feed.cur().el.querySelector('.new') !== null"), 'marked New',
-           str(pg.evaluate("({reloads: sessionStorage.getItem('reloads'), fresh: window.__feed.fresh, known: localStorage.getItem('gf.known'), hash: location.hash, hist: window.__feed.hist.map(e => e.id || e.type), pos: window.__feed.pos})")) + f' on_card={on_card} gone={gone}')
+        ok(st['id'] == 'test-seventh' and st['pos'] == t0 + 1 and st['state'] == 'cover', 'the new game is the very next card', str(st))
+        ok(pg.evaluate("window.__feed.cur().el.querySelector('.new') !== null"), 'marked New')
+        ok(pg.locator('#toast.on').count() == 1 and 'seventh game' in pg.locator('#toast').inner_text().lower(), 'and the note about it comes now that no game is running', pg.locator('#toast').inner_text())
         os.makedirs(os.path.join(root, 'out', 'feed'), exist_ok=True)
         pg.screenshot(path=os.path.join(root, 'out', 'feed', 'new-game.png'))
         pg.wait_for_function('window.__feed.state().ready'); pg.wait_for_timeout(600)
         pg.evaluate('window.__feed.tap()'); pg.wait_for_timeout(1200)
         st = pg.evaluate('window.__feed.state()')
         ok(st['state'] == 'playing' and st['started'] is True, 'and it plays', str(st))
-        pg.evaluate('window.__feed.halt(); window.__feed.openLib()'); pg.wait_for_timeout(400)
+        pg.evaluate('window.__feed.go(-1)'); pg.wait_for_timeout(900)
+        st = pg.evaluate('window.__feed.state()')
+        ok(st['id'] == playing and st['state'] == 'paused', 'the game he was in before is still there, paused where he left it', str(st))
+        pg.evaluate('window.__feed.openLib()'); pg.wait_for_timeout(400)
         foot = pg.locator('#list .foot').inner_text()
-        ok('UP TO DATE' in foot.upper() or 'FEED' in foot.upper(), 'the games list shows which version is on the phone', foot)
+        ok('UP TO DATE' in foot.upper() and r['rev'].upper() in foot.upper(), 'the games list says it is up to date and which games version is on the phone', foot)
         pg.screenshot(path=os.path.join(root, 'out', 'feed', 'games-list-new.png'))
         pg.reload(); pg.wait_for_function('window.__feed && window.__feed.cur()')
-        ok(pg.evaluate('window.__feed.fresh.length') == 0, 'once seen, it is no longer New')
+        ok(pg.evaluate('window.__feed.fresh.length') == 0 and 'test-seventh' in pg.evaluate('window.__feed.games.map(g => g.id)'), 'after closing and opening, the game is there and no longer New')
         ok(not errs, 'no errors on the way', '; '.join(errs[:3]))
+        ctx.close()
+
+        # 15. straight after an install the feed runs from the copy inside the APK; it moves to the fetched folder once, at a quiet moment
+        inapk = os.path.join(work, 'android_asset')
+        shutil.copytree(A, inapk)
+        ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
+        ctx.add_init_script(NATIVE)
+        pg = ctx.new_page()
+        errs = []
+        pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.goto('file://' + os.path.join(inapk, 'index.html'))
+        pg.wait_for_function('window.__feed && window.__feed.cur()')
+        ok(pg.evaluate('window.__feed.builtIn'), 'the feed knows when it is running from the copy inside the APK')
+        pg.wait_for_function('window.__feed.state().ready'); pg.wait_for_timeout(600)
+        pg.evaluate('window.__feed.tap()'); pg.wait_for_timeout(700)
+        pg.evaluate("window.gameFeedUpdate({ok: true, changed: true, build: 6, rev: 'ffffffffffff', fetched: 3})"); pg.wait_for_timeout(400)
+        ok(pg.evaluate('window.__feed.state().state') == 'playing' and not pg.evaluate("sessionStorage.getItem('reloads')") and pg.evaluate('window.__feed.pending') == 'ffffffffffff',
+           'there too, a game in play is never interrupted')
+        for _ in range(4):
+            if pg.evaluate("sessionStorage.getItem('reloads')"): break
+            pg.evaluate('window.__feed && window.__feed.go(1)'); pg.wait_for_timeout(1000)
+        pg.wait_for_function('window.__feed && window.__feed.cur()')
+        ok(pg.evaluate("sessionStorage.getItem('reloads')") == '1', 'once no game is in hand it asks the app, once, to load the fetched copy')
+        at, card = pg.evaluate("[sessionStorage.getItem('reloadAt'), sessionStorage.getItem('reloadCard')]")
+        ok(bool(at) and at == card, 'and names the card he is looking at, so the fetched copy opens on it', f'{at} vs {card}')
+        ok(not errs, 'no errors there either', '; '.join(errs[:3]))
         b.close()
     srv.shutdown()
     finish(work)

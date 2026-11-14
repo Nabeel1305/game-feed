@@ -79,6 +79,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .paused h3{font-family:var(--tf,var(--display)),var(--display);font-weight:var(--tw,400);font-synthesis:none;font-size:40px;line-height:1;margin-bottom:10px;text-wrap:balance}
 .paused .num{display:none;font-family:var(--display);font-weight:700;font-size:150px;line-height:1;color:var(--paper);font-variant-numeric:tabular-nums;
   text-shadow:0 4px 30px rgba(0,0,0,.7)}
+.paused .two{display:flex;gap:10px}
+.paused .two .plain{min-width:105px;border:1px solid var(--line);border-radius:22px;color:var(--paper)}
+.paused .two .plain:active{transform:scale(.97)}
 .paused.count{background:rgba(11,12,16,.5)}
 .paused.count > *{display:none}
 .paused.count .num{display:block}
@@ -104,6 +107,9 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 #soundBtn.off .w{display:none}
 #soundBtn.off{color:var(--accent)}
 #soundBtn.off svg{stroke:var(--accent)}
+#pauseBtn{visibility:hidden}
+#bar.quiet #pauseBtn{visibility:visible}           /* only while a game is running */
+#pauseBtn svg{stroke-width:2.6}
 #pinBtn.on{color:var(--accent)}
 #pinBtn.on svg{stroke:var(--accent);fill:var(--accent)}
 #handle{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:var(--bar);min-width:0;padding:0 6px}
@@ -147,7 +153,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .row .pin{flex:none;width:52px;display:grid;place-items:center;border-radius:16px}
 .row .pin svg{width:22px;height:22px;fill:none;stroke:var(--faint);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .row .pin.on svg{stroke:var(--accent);fill:var(--accent)}
-.foot{padding:22px 10px 4px;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+.foot{white-space:pre-line;line-height:1.7;padding:22px 10px 4px;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
   font-variant-numeric:tabular-nums;text-align:center}
 #toast{position:absolute;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:4;transform:translate(-50%,-140%);max-width:calc(100% - 32px);padding:10px 18px;
   border-radius:22px;background:var(--paper);color:var(--ink);font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;
@@ -172,7 +178,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <button id="libBtn" aria-label="All games and search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>Games</button>
     <button id="soundBtn" aria-label="Sound for every game" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9.5h3.2L11.5 6v12l-4.3-3.5H4z"/><path class="w" d="M15 9.2a4 4 0 010 5.6M17.6 6.6a7.6 7.6 0 010 10.8"/><path class="x" d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg><span id="soundTxt">Sound</span></button>
     <div id="handle" role="button" tabindex="0" aria-label="Swipe up for the next game, down for the last one"><span class="grip"><svg viewBox="0 0 22 11"><path d="M2 9.5l9-7.5 9 7.5"/></svg></span><span class="what" id="what">Next game</span></div>
-    <span aria-hidden="true"></span>
+    <button id="pauseBtn" aria-label="Pause this game"><svg viewBox="0 0 24 24"><path d="M8.5 5.5v13M15.5 5.5v13"/></svg>Pause</button>
     <button id="pinBtn" aria-label="Pin this game" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M9 3.5h6l-.8 6.2 3.3 3.3v1.5H6.5V13l3.3-3.3z"/><path d="M12 14.5V21"/></svg><span id="pinTxt">Pin</span></button>
   </nav>
   <section id="lib" aria-label="All games" aria-hidden="true">
@@ -305,7 +311,9 @@ function buildGame(s) {
     '<span class="chips"><span class="chip' + (two ? ' two' : '') + '">' + (two ? ICON.two + 'Two thumbs' : ICON.one + 'One thumb') + '</span><span class="chip">' + mood + '</span></span>'));
   const p = el('div', 'paused',
     '<span class="eyebrow">Paused</span><h3>' + esc(g.name) + '</h3>' +
-    '<button class="big" data-act="continue">Continue</button><button class="plain" data-act="restart">Start over</button><span class="num" aria-live="polite"></span>');
+    '<button class="big" data-act="continue">Resume</button>' +
+    '<span class="two"><button class="plain" data-act="restart">Restart</button>' + (g.levels ? '<button class="plain" data-act="levels">Levels</button>' : '') + '</span>' +
+    '<span class="num" aria-live="polite"></span>');
   e.append(s.box, c, p);
   s.state = 'cover';
 }
@@ -316,6 +324,7 @@ function buildSet(s) {
 }
 function build(i) {
   const en = entry(i);
+  if (en.type === 'game' && !byId[en.id]) en.id = nextGame();           // that game has left the feed since
   const s = { i, en, el: el('section', 'slide'), state: 'idle' };
   if (en.type === 'game') { s.g = byId[en.id]; buildGame(s); } else buildSet(s);
   stage.appendChild(s.el);
@@ -382,6 +391,7 @@ function fail(s) {
   s.el.classList.add('failed');
   s.wantStart = false;
   note(s.g.id, 'failed');
+  hadTrouble(s.g.id + ': did not load');
 }
 function unload(s) {
   clearTimeout(s.loadT); clearTimeout(s.freezeT); clearTimeout(s.armT);
@@ -404,6 +414,7 @@ function onGame(s, d) {
     s.started = d.partial ? 'partly' : true;
   } else if (d.ev === 'error') {
     note(s.g.id, 'error', d.msg);
+    hadTrouble(s.g.id + ': ' + d.msg);
     if (window.console) console.warn('[feed] ' + s.g.id + ': ' + d.msg);
   } else if (d.ev === 'finish') {
     note(s.g.id, 'finish', d.result || 0);
@@ -453,6 +464,7 @@ function halt(s) {                       // freeze a running game and show "Paus
   s.el.classList.add('halt');
   stopClock(s);
   chrome();
+  sayWhenQuiet();
 }
 function carryOn(s) {
   if (!s || s.state !== 'paused') return;
@@ -485,13 +497,24 @@ function stopCount(s) {
   const box = s.el.querySelector('.paused');
   if (box) box.classList.remove('count');
 }
-function restart(s) {
+function restart(s) {                    // "Restart" on the Paused card: a fresh copy of the game, and straight back into play at his level
   if (!s || !s.g) return;
   unload(s);
   s.state = 'cover';
   s.el.classList.remove('live', 'halt', 'loading', 'failed');
-  arrive(s);
-  takeUpdate();
+  note(s.g.id, 'restart');
+  tapCover(s);
+}
+function pickLevel(s) {                  // "Levels" on the Paused card: the game opens its own level list (lower levels open, higher ones locked)
+  if (!s || s.state !== 'paused') return;
+  stopCount(s);
+  s.state = 'playing';
+  s.el.classList.remove('halt');
+  send(s, 'levels');                     // the plug shows the list first, then lets the game's clock run again
+  try { s.frame.focus(); } catch (e) {}
+  startClock(s);
+  note(s.g.id, 'levels');
+  chrome();
 }
 
 /* ---------- arriving at and leaving a card ---------- */
@@ -504,12 +527,12 @@ function arrive(s) {
       seen(s.g.id);
       note(s.g.id, 'shown');
       if (s.video) {
-        if (!s.video.src) s.video.src = s.g.preview;
+        if (!s.video.getAttribute('src')) s.video.src = s.g.preview;
         const p = s.video.play();
         if (p && p.catch) p.catch(() => {});
       }
       clearTimeout(s.armT);
-      s.armT = setTimeout(() => { if (cur() === s && s.state === 'cover') load(s); }, 350);   // get the game ready behind its card
+      s.armT = setTimeout(() => { if (cur() === s && s.state === 'cover') load(s); }, 500);   // get the game ready behind its card
     }
   } else {
     const mins = Math.max(1, Math.round(setSecs / 60));
@@ -524,8 +547,9 @@ function leave(s) {
   if (s.g) {
     if (s.state === 'playing') halt(s);
     if (s.state === 'cover') {
-      if (s.video) { try { s.video.pause(); } catch (e) {} }
       if (performance.now() - s.seenAt < QUICK) { stat(s.g.id).quick++; note(s.g.id, 'quick'); }
+      unload(s);                          // only ever one game waiting behind a card: easier on the phone's memory
+      if (s.video) { try { s.video.removeAttribute('src'); s.video.load(); s.video.classList.remove('on'); } catch (e) {} }
     }
   }
 }
@@ -558,6 +582,7 @@ function settle() {
   sync();
   arrive(cur());
   takeUpdate();
+  sayWhenQuiet();
 }
 stage.addEventListener('transitionend', e => { if (e.target.classList.contains('slide') && e.propertyName === 'transform') settle(); });
 function bounce() {
@@ -623,6 +648,11 @@ $('#libBtn').addEventListener('click', () => {
   if (drag.moved) return;
   if (asleep()) { wake(); return; }
   openLib();
+});
+$('#pauseBtn').addEventListener('click', () => {         // the same pause for every game: Resume, Restart, Levels
+  if (drag.moved) return;
+  if (asleep()) { wake(); return; }
+  halt(cur());
 });
 $('#handle').addEventListener('click', () => { if (!drag.moved && asleep()) wake(); });
 
@@ -700,6 +730,7 @@ stage.addEventListener('click', e => {
     const a = act.dataset.act;
     if (a === 'continue') countIn(s);
     else if (a === 'restart') restart(s);
+    else if (a === 'levels') pickLevel(s);
     else if (a === 'keep') go(1);
     else if (a === 'done') done(s);
     else if (a === 'back') { s.el.innerHTML = ''; s.el.classList.remove('set'); buildSet(s); arrive(s); }
@@ -784,27 +815,102 @@ list.addEventListener('click', e => {
 });
 
 /* ---------- new games arriving ----------
-   The phone app fetches the newest feed and games in the background and then calls gameFeedUpdate. The feed takes
-   the update by asking the app to load it again, but only at a quiet moment: never while a game is running or waiting. */
-let pending = '', lastSync = null, toastT = 0;
+   The phone app fetches new games in the background and then calls gameFeedUpdate. The feed reads the new list and
+   adds the games to what it is showing. It never reloads for that: nothing on screen is disturbed, the next card
+   is simply the new game. (The feed page itself only changes when a new APK is installed.)
+   One exception: right after an install the feed is running from the copy inside the APK; to see fetched games it
+   has to move over to the fetched folder, which it does once, at a quiet moment, never while a game is in hand. */
+const builtIn = /\/android_asset\//.test(location.pathname);
+let pending = '', lastSync = null, toastT = 0, readingList = false, staleRev = '';
 function gameInHand() { for (const s of slides.values()) if (s.state === 'playing' || s.state === 'paused') return true; return false; }
 function takeUpdate() {
   if (!pending || !native || !native.reload || busy || drag.on || gameInHand() || lib.classList.contains('open')) return;
   pending = '';
   store.set('stats', stats);
   const s = cur();
-  try { native.reload(s && s.g ? s.g.id : ''); } catch (e) {}     // the card he is looking at stays; new games are the next cards
+  try { native.reload(s && s.g ? s.g.id : ''); } catch (e) {}       // the card he is looking at is the one the fetched copy opens on
 }
 window.gameFeedUpdate = r => {
   lastSync = r || null;
-  if (r && r.ok && r.rev && r.rev !== BUILD.rev) { pending = r.rev; takeUpdate(); }
+  if (!r || !r.ok || !r.rev || r.rev === BUILD.rev || r.rev === staleRev) return;
+  if (builtIn) { pending = r.rev; takeUpdate(); }
+  else readList(r.rev);
 };
+function readList(rev) {
+  if (readingList) return;
+  readingList = true;
+  const sc = document.createElement('script');
+  const done = ok => { readingList = false; sc.remove(); if (ok) addGames(rev); };
+  sc.onload = () => done(true);
+  sc.onerror = () => done(false);
+  sc.src = 'games.js?rev=' + encodeURIComponent(rev) + '&t=' + Date.now();
+  document.head.appendChild(sc);
+}
+function addGames(rev) {
+  const list = window.GF_GAMES || [], nb = window.GF_BUILD || {};
+  if (!list.length || nb.rev !== rev) { staleRev = rev; return; }      // not the list that was announced: leave things as they are
+  const ids = {}, added = [];
+  list.forEach(g => {
+    ids[g.id] = 1;
+    if (byId[g.id]) Object.assign(byId[g.id], g);                      // a game he has: newer details (its page is picked up the next time it loads)
+    else { GAMES.push(g); byId[g.id] = g; added.push(g.id); }
+  });
+  for (let i = GAMES.length - 1; i >= 0; i--) {                        // a game taken out of the feed is offered no more (a card on screen stays until he leaves it)
+    const id = GAMES[i].id;
+    if (ids[id]) continue;
+    GAMES.splice(i, 1);
+    delete byId[id];
+    deck = deck.filter(x => x !== id);
+    [freshQueue, fresh, pins].forEach(a => { const k = a.indexOf(id); if (k >= 0) a.splice(k, 1); });
+  }
+  GAMES.sort((x, y) => x.n - y.n);
+  store.set('pins', pins);
+  BUILD.rev = rev;
+  BUILD.games = GAMES.length;
+  const news = added.filter(id => !known.includes(id)).sort((x, y) => byId[x].n - byId[y].n);
+  news.forEach(id => { fresh.push(id); freshQueue.push(id); });
+  if (news.length) {
+    comeNext(freshQueue.shift());                                      // the first new game is the very next card
+    whenQuiet = news.length === 1 ? 'New game: ' + byId[news[0]].name : news.length + ' new games';
+    sayWhenQuiet();
+  }
+  $('#count').textContent = GAMES.length + (GAMES.length === 1 ? ' game' : ' games');
+  note('', 'games added', news.length);
+  if (lib.classList.contains('open')) drawList();
+}
+function comeNext(id) {                  // make this game the card after the one on screen, without moving anything he can see
+  const after = hist[pos + 1];
+  if (after && after.type === 'game' && after.id === id) return;
+  const nx = slides.get(pos + 1);
+  if (nx && nx.state !== 'cover' && nx.state !== 'idle') { freshQueue.unshift(id); return; }   // a game is waiting there: let the new one follow it
+  if (nx) drop(nx);
+  hist.splice(pos + 1, 0, { type: 'game', id });
+  const k = deck.indexOf(id);
+  if (k >= 0) deck.splice(k, 1);
+  freshShown.push(id);
+  recent.push(id);
+  if (!busy) sync();
+}
+let whenQuiet = '';                       // a note that waits until no game is running, so nothing covers a game in play
+function sayWhenQuiet() {
+  const s = cur();
+  if (!whenQuiet || (s && s.state === 'playing')) return;
+  toast(whenQuiet);
+  whenQuiet = '';
+}
+/* anything that went wrong, kept short, for the line at the bottom of the games list */
+const trouble = { n: 0, last: '' };
+function hadTrouble(what) { trouble.n++; trouble.last = String(what).slice(0, 120); store.set('trouble', trouble.last); }
+window.addEventListener('error', e => hadTrouble('feed: ' + ((e && e.message) || 'error')));
 function footLine() {
   const bits = [];
   if (lastSync) bits.push(pending ? 'New games ready' : lastSync.ok ? 'Up to date' : 'Could not check for new games');
-  if (BUILD.rev) bits.push('Feed ' + BUILD.rev);
+  if (BUILD.rev) bits.push('Games ' + BUILD.rev);
   try { if (native && native.version) bits.push('App ' + native.version()); } catch (e) {}
-  return bits.join(' · ');
+  let more = '';
+  try { const p = native && native.lastProblem ? native.lastProblem() : ''; if (p) more = 'Last problem: ' + p; } catch (e) {}
+  if (trouble.n) more += (more ? ' · ' : '') + 'Errors this time: ' + trouble.n + ' (' + trouble.last + ')';
+  return bits.join(' · ') + (more ? '\n' + more : '');
 }
 function toast(text, ms) {
   const t = $('#toast');
@@ -853,9 +959,9 @@ if (hotApi && hotApi.ready) hotApi.ready(start); else start((hotApi && hotApi.da
 
 window.__feed = {
   games: GAMES, hist, slides, stats, log, fresh, build: BUILD,
-  get pending() { return pending; }, get soundOn() { return soundOn; }, setSound,
+  get pending() { return pending; }, get soundOn() { return soundOn; }, setSound, builtIn, trouble,
   get pos() { return pos; }, get busy() { return busy; },
-  cur, go, jump, tap: () => tapCover(cur()), halt: () => halt(cur()), carryOn: () => carryOn(cur()), countIn: () => countIn(cur()), openLib, closeLib, togglePin,
+  cur, go, jump, tap: () => tapCover(cur()), halt: () => halt(cur()), carryOn: () => carryOn(cur()), countIn: () => countIn(cur()), restart: () => restart(cur()), pickLevel: () => pickLevel(cur()), openLib, closeLib, togglePin,
   state: () => { const s = cur(); return { pos, type: s.en.type, id: s.g ? s.g.id : null, state: s.state, ready: !!s.ready, started: s.started || false, halted: s.el.classList.contains('halt'), frames: Array.from(slides.values()).filter(x => x.frame).length, pins: pins.slice(), setPlays }; }
 };
 })();

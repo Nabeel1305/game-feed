@@ -31,6 +31,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .btn{display:block;width:100%;margin-top:18px;border:0;border-radius:16px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#ffd45a;color:#3a2200;box-shadow:0 5px 0 #a8620a;cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8620a}
 .btn.ghost{background:transparent;color:#fff;box-shadow:none;border:1.5px solid rgba(255,255,255,.28);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(16,26,58,.9),rgba(5,10,25,.96))} /* menus over a live scene: dark enough that the words are the only thing to read */
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
 .rules{list-style:none;padding:0;margin:16px 0 0;text-align:left}
 .rules li{position:relative;padding:0 0 12px 0;font-size:14px;line-height:1.45;opacity:.92}
 .rules b{color:#ffd45a;font-family:Bangers,Impact,sans-serif;letter-spacing:1px;font-size:17px;font-weight:400;margin-right:4px}
@@ -106,8 +109,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <div class="ov hidden" id="ovPause">
   <div class="card">
     <h2 class="hero">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
-    <button class="btn ghost" id="pQuit">Back to the hideout</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Back to the hideout</button>
   </div>
 </div>
 

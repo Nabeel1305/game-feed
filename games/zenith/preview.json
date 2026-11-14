@@ -1,21 +1,16 @@
 {
   "seed": 3,
-  "pre": [
+  "level": "window.__sim.go(5, 'monster')",
+  "js": "setInterval(() => { const G = window.__sim.G, m = G && G.phase === 'play' ? G.M : null; if (!m || !m.lanes || m.dead) return; if (!m.__staged) { m.__staged = 1; m.dmg = m.D * 0.4; } if (m.st === 'tele' && m.danger.includes(m.lane)) { const safe = [0, 1, 2].filter(l => !m.danger.includes(l)); if (safe.length) window.__sim.flick(safe[0] > m.lane ? 1 : -1); } }, 50)",
+  "anchor": "(() => { const G = window.__sim.G; return !!G && G.phase === 'play' && !!G.M && G.M.st === 'open'; })()",
+  "from": -0.9,
+  "secs": 3.4,
+  "poster": 2.05,
+  "moves": [
     {
-      "t": 0.7,
-      "tap": [
-        0.5,
-        0.56
-      ]
-    },
-    {
-      "t": 1.2,
-      "follow": "(() => { const G = window.__sim.G; if (!G) return null; if (G.phase === 'fly' && G.fly) { const r = G.fly.rings.find(r => !r.done); return [innerWidth * 0.5, r ? r.y : innerHeight * 0.48]; } const M = G.M; if (G.phase === 'play' && M && M.fallers) { let b = null; for (const p of M.fallers) if (p.state === 'fall' && (!b || p.y > b.y)) b = p; if (!b) b = M.fallers.find(p => p.state === 'wait'); return [b ? b.x : M.hx, innerHeight * 0.8]; } return null; })()",
-      "ms": 9000
+      "t": 0.12,
+      "follow": "(() => { const G = window.__sim.G, m = G && G.M; if (m && m.dead) return 'lift'; const c = window.__sim.core(); return c ? [c.x, c.y] : null; })()",
+      "ms": 2300
     }
-  ],
-  "anchor": "window.__sim.G && window.__sim.G.phase === 'play'",
-  "from": 0.35,
-  "secs": 3.6,
-  "poster": 2.2
+  ]
 }

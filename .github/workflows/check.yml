@@ -22,6 +22,8 @@ jobs:
         run: python3 tools/check.py
       - name: Test the feed
         run: python3 tools/test_feed.py
+      - name: Test every game's basic controls (pause, restart, levels, level remembered)
+        run: python3 tools/test_controls.py
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -36,9 +38,12 @@ jobs:
             out/*.png
             out/feed/
 
-  # Installed phone apps look here for new games. The built feed app goes on the "app" branch; every time the
+  # Installed phone apps look here for new games. The built feed app goes on the "app-v2" branch; every time the
   # phone app opens it reads manifest.txt from that branch and fetches whatever is new (android/.../Sync.java).
   # Nothing is published unless every check above passed.
+  # The old "app" branch is frozen at build 18 on purpose and must never be deleted or pushed to again: the first
+  # phone apps (builds 15 to 18) read it, and they restart the feed under the player whenever it changes
+  # (LESSONS, "New games without a new APK"). Leaving it alone keeps those installs working as they are.
   publish:
     name: Publish the feed for installed apps
     needs: check
@@ -55,17 +60,17 @@ jobs:
         env:
           BUILD_NUMBER: ${{ github.run_number }}
         run: python3 tools/build_feed.py --out "$RUNNER_TEMP/app"
-      - name: Put it on the app branch
+      - name: Put it on the app-v2 branch
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd "$RUNNER_TEMP/app"
-          git init -q -b app
+          git init -q -b app-v2
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "Feed app, build ${{ github.run_number }} (from ${GITHUB_SHA::7})"
-          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" app:app
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" app-v2:app-v2
           echo "Published build ${{ github.run_number }}: $(head -1 manifest.txt)" >> "$GITHUB_STEP_SUMMARY"
 
   # The phone app: the feed and every game inside one Android app, built after the checks pass.

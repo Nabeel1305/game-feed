@@ -22,6 +22,13 @@ if len(prefixes) != len(set(prefixes)): problems.append('two games share a stora
 if 'gf.' in prefixes: problems.append("storage_prefix 'gf.' belongs to the feed itself; give the game another")
 for g in games:
     if not os.path.exists(os.path.join(root, g['path'])): problems.append(f"{g['id']}: missing {g['path']}")
+    elif g['status'] in ('approved', 'testing'):
+        # the basic controls every game in the feed must have (LESSONS rules 4 and 11); tools/test_controls.py tries them for real
+        page = open(os.path.join(root, g['path']), encoding='utf-8').read()
+        for need, what in (('id="pResume"', 'a pause menu with Resume'), ('id="pRestart"', 'Restart on its pause menu'), ('id="pLevels"', 'Levels on its pause menu'),
+                           ('window.gameFeedStart', 'an instant start (window.gameFeedStart)'), ('window.gameFeedLevels', 'window.gameFeedLevels for the feed\'s Levels button')):
+            if need not in page: problems.append(f"{g['id']}: has no {what}")
+        if not g.get('storage_prefix'): problems.append(f"{g['id']}: needs a storage_prefix (its level must be remembered)")
 
 # the feed app: built from the registry; a game without a card picture or with fonts the app does not carry is a problem
 listing = []

@@ -99,6 +99,7 @@ def build(out, reg=None, build_number=None):
             'hook': feed.get('hook') or first_sentence(g.get('summary', '')),
             'genre': feed.get('genre', ''), 'intensity': feed.get('intensity', 3), 'thumbs': feed.get('thumbs', 1),
             'font': feed.get('font', ''), 'status': g['status'], 'v': g.get('version', ''), 'mini': bool(feed.get('mini')),
+            'levels': 'window.gameFeedLevels' in html,          # the game can open its own level list: the Paused card offers "Levels"
             'words': re.sub(r'\s+', ' ', g.get('summary', ''))[:240],
         }
         for key, folder, exts in (('poster', 'posters', ('webp', 'jpg', 'png')), ('preview', 'previews', ('webm', 'mp4'))):

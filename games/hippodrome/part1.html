@@ -29,6 +29,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#f2c14e;color:#3a1d08;box-shadow:0 5px 0 #a8551f;cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8551f}
 .btn.ghost{background:transparent;color:#f6efdd;box-shadow:none;border:1.5px solid rgba(246,239,221,.28);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,27,44,.92),rgba(7,14,24,.97))} /* menus over a live scene: dark enough that the words are the only thing to read */
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
 .rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
 .rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.93}
 .rules b{color:#f2c14e}
@@ -110,8 +113,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <div class="ov hidden" id="ovPause">
   <div class="card">
     <h2 class="gk">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
-    <button class="btn ghost" id="pQuit">Leave the race</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Leave the race</button>
   </div>
 </div>
 

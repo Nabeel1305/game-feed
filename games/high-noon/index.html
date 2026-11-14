@@ -33,6 +33,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .btn{display:block;width:100%;margin-top:20px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:19px;font-weight:800;background:#f5c26b;color:#3a1d08;box-shadow:0 5px 0 #8a4b17;cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #8a4b17}
 .btn.ghost{background:transparent;color:#fff3dc;box-shadow:none;border:1.5px solid rgba(255,243,220,.25);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(52,26,10,.93),rgba(20,10,5,.97))} /* menus over a live scene: dark enough that the words are the only thing to read */
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
 .rules{list-style:none;padding:0;margin:18px 0 0;text-align:left;counter-reset:r}
 .rules li{counter-increment:r;position:relative;padding:0 0 14px 40px;font-size:14.5px;line-height:1.45;opacity:.9}
 .rules li::before{content:counter(r);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;background:rgba(245,194,107,.2);color:#f5c26b;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:13px}
@@ -114,8 +117,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <div class="ov hidden" id="ovPause">
   <div class="card">
     <h2 class="west">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
-    <button class="btn ghost" id="pQuit">Walk away</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Walk away</button>
   </div>
 </div>
 
@@ -770,6 +775,7 @@ function duelOver(won) {
   const st = won ? (G.oW === 0 && G.headshots >= G.pW ? 3 : G.oW === 0 ? 2 : 1) : 0;
   if (won) { stars[level] = Math.max(stars[level] || 0, st); store.set('stars', stars); unlocked = Math.max(unlocked, level + 1); store.set('unlocked', unlocked); }
   if (HEADLESS) return;
+  if (won) store.set('level', level + 1);     // he comes back to the next duel, even if he leaves before pressing NEXT
   $('eTitle').textContent = won ? 'YOU WIN' : 'R.I.P.';
   $('eTitle').style.color = won ? '#f5c26b' : '#c0392b';
   $('eStars').innerHTML = won ? [1, 2, 3].map(i => `<span class="${i <= st ? '' : 'off'}">★</span>`).join('')
@@ -969,7 +975,9 @@ cv.addEventListener('pointerup', release);
 cv.addEventListener('pointercancel', release);
 
 // ---------- screens ----------
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
 function showHome() {
+  savedLevel();
   const o = makeOutlaw(level);
   $('hLvl').textContent = level; $('hName').textContent = o.name;
   const sp = o.react > 1.1 ? 'Slow' : o.react > 0.8 ? 'Steady' : o.react > 0.6 ? 'Quick' : o.react > 0.5 ? 'Lightning' : 'Legendary';
@@ -982,10 +990,20 @@ $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); 
 sndIcon();
 function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(k => $(k).classList.toggle('hidden', k !== id)); }
 function hideAll() { show(null); }
-$('playBtn').onclick = () => { audio(); sfx.click(); startWind(); hideAll(); newDuel(); };
+function startDuel() { audio(); startWind(); hideAll(); paused = false; store.set('level', level); newDuel(); last = performance.now(); }
+$('playBtn').onclick = () => { audio(); sfx.click(); startDuel(); };
+// The feed's instant start (tap a card in the Game Feed app): the duel he was on, thumb straight to the holster.
+window.gameFeedStart = () => { savedLevel(); audio(); sfx.click(); startDuel(); };
 $('rulesBtn').onclick = () => show('ovRules');
-document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showHome());
-function showLevels() {
+// Back from the level list goes to where it was opened from: the pause menu, the screen underneath, or home.
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else { G = null; showHome(); }
+});
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home';
+  lvUnder = ['ovHome', 'ovEnd'].find(k => !$(k).classList.contains('hidden')) || null;      // the screen that waits underneath
   const top = Math.ceil((unlocked + 5) / 5) * 5;
   let h = '';
   for (let L = 1; L <= top; L++) {
@@ -996,16 +1014,28 @@ function showLevels() {
   $('lvSub').textContent = unlocked > 1 ? `${unlocked - 1} duel${unlocked === 2 ? '' : 's'} won. Win to unlock the next.` : 'Win a duel to unlock the next.';
   show('ovLevels');
 }
-$('levelsBtn').onclick = showLevels;
-$('eLevels').onclick = () => { G = null; showLevels(); };
-$('lvGrid').addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (!b || b.disabled) return; level = +b.dataset.l; store.set('level', level); showHome(); });
-$('eMain').onclick = () => { audio(); startWind(); if ($('eMain').dataset.act === 'next') { level = Math.min(unlocked, level + 1); store.set('level', level); } hideAll(); newDuel(); };
-$('eAlt').onclick = () => { audio(); startWind(); hideAll(); newDuel(); };
+$('levelsBtn').onclick = () => showLevels('home');
+$('eLevels').onclick = () => { G = null; showLevels('home'); };
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { audio(); sfx.click(); startDuel(); }      // picked from the pause menu: that duel starts at once
+});
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, level + 1); startDuel(); };
+$('eAlt').onclick = () => startDuel();
+// ---------- pause menu: resume, restart this duel, or pick a lower level (the same in every game) ----------
 let paused = false;
-$('pauseBtn').onclick = () => { if (!G || G.phase === 'end') return; paused = true; show('ovPause'); };
+const duelOn = () => !!G && !G.over;
+function openPause() { paused = true; $('pLvl').textContent = `Level ${level} · ${O.name}`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (duelOn()) openPause(); };
 $('pResume').onclick = () => { paused = false; hideAll(); last = performance.now(); if (G && G.phase === 'count') { G.phase = 'ready'; G.hold = false; G.ptr = null; } };
+$('pRestart').onclick = () => { audio(); sfx.click(); startDuel(); };
+$('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => { paused = false; G = null; showHome(); };
-document.addEventListener('visibilitychange', () => { if (document.hidden && G && G.phase !== 'end' && !paused) { paused = true; show('ovPause'); } });
+// The feed's "Levels" button on its Paused card: the level list opens over the duel (Back returns to the pause menu).
+// On the home or result screen the list opens over it and Back closes it again.
+window.gameFeedLevels = () => { if (duelOn()) { paused = true; showLevels('pause'); } else showLevels('feed'); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && duelOn() && !paused) openPause(); });
 
 let last = performance.now();
 function frame(now) {

@@ -6,6 +6,9 @@ public class WebView extends android.view.View {
     public void evaluateJavascript(String script, ValueCallback<String> cb) {}
     public void addJavascriptInterface(Object o, String name) {}
     public void clearCache(boolean includeDiskFiles) {}
+    public void reload() {}
+    public void destroy() {}
+    public void setWebViewClient(WebViewClient c) {}
     public void onPause() {}
     public void onResume() {}
 }

@@ -23,9 +23,12 @@ import java.util.regex.Pattern;
  *
  * The published folder has a manifest.txt: one line per file, "sha256 size path". This compares it with what the
  * phone has and fetches only what is new or changed. Every file is checked against its fingerprint before it is put
- * in place. The games, pictures and fonts go in first; the list of games (games.js) and the feed page (index.html)
- * go in last, so the list never names a game that is not on the phone yet. If the internet drops half way, what
- * already arrived is kept and the rest is fetched next time; the feed keeps working from what it had.
+ * in place. The games, pictures and fonts go in first and the list of games (games.js) goes in last, so the list
+ * never names a game that is not on the phone yet. If the internet drops half way, what already arrived is kept
+ * and the rest is fetched next time; the feed keeps working from what it had.
+ *
+ * One file is never fetched: the feed page itself (index.html). It is always the copy inside the APK. New games
+ * arrive by themselves; a change to the app itself only ever arrives when a new APK is installed (Nabeel's rule).
  *
  * Plain Java on purpose (nothing from Android), so tools/test_sync.py can test it on any computer.
  */
@@ -94,6 +97,8 @@ final class Sync {
     }
 
     static final long MAX_FILE = 64L * 1024 * 1024;
+    /** The feed page: only ever taken from inside the APK, never downloaded. */
+    static final String SHELL = "index.html";
     private static final String PART = ".part";
     private static final String LOCAL = "manifest.txt";
 
@@ -164,19 +169,24 @@ final class Sync {
             // an out-of-date answer from the server, or a published app older than the one inside the APK: keep what we have
             if (remote.build < local.build || (inApp != null && remote.build < inApp.build)) { r.ok = true; return r; }
 
+            // what each file should be: as published, except the feed page, which is the APK's own
+            boolean ownShell = bundled != null && inApp != null && inApp.files.containsKey(SHELL);
+            LinkedHashMap<String, Entry> wanted = new LinkedHashMap<>(remote.files);
+            if (ownShell) wanted.put(SHELL, inApp.files.get(SHELL));
+
             List<String> need = new ArrayList<>();
             List<String> last = new ArrayList<>();
-            for (Map.Entry<String, Entry> e : remote.files.entrySet()) {
+            for (Map.Entry<String, Entry> e : wanted.entrySet()) {
                 String p = e.getKey();
                 Entry want = e.getValue(), have = local.files.get(p);
                 File f = new File(dir, p);
                 if (have != null && have.hash.equals(want.hash) && f.isFile() && f.length() == want.size) continue;
-                if (p.equals("games.js") || p.equals("index.html")) last.add(p); else need.add(p);
+                if (p.equals("games.js") || p.equals(SHELL)) last.add(p); else need.add(p);
             }
             need.addAll(last);
 
             for (String p : need) {
-                Entry want = remote.files.get(p);
+                Entry want = wanted.get(p);
                 boolean got = false;
                 Entry b = inApp == null ? null : inApp.files.get(p);
                 if (bundled != null && b != null && b.hash.equals(want.hash)) {
@@ -186,6 +196,7 @@ final class Sync {
                     } catch (IOException e) { got = false; }
                     if (got) r.fromApp++;
                 }
+                if (!got && ownShell && p.equals(SHELL)) throw new IOException("cannot copy the feed page out of the app");
                 if (!got) {
                     if (!want.hash.equals(download(base + p + "?v=" + want.hash.substring(0, 16), part, want.size))) throw new IOException("wrong contents for " + p);
                     r.fetched++;
@@ -209,7 +220,9 @@ final class Sync {
                 touched = true;
             }
 
-            if (touched || local.build != remote.build || !local.rev.equals(remote.rev)) write(new File(dir, LOCAL), part, text);
+            now.build = remote.build;
+            now.rev = remote.rev;
+            if (touched || local.build != remote.build || !local.rev.equals(remote.rev)) write(new File(dir, LOCAL), part, now.text());
             r.changed = touched;
             r.build = remote.build;
             r.rev = remote.rev;

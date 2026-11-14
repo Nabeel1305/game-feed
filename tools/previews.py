@@ -21,8 +21,19 @@ then films a few seconds while playing the moves in games/<id>/preview.json if t
                  {"t": 1.0, "hold": [0.8, 0.85], "ms": 900, "finger": 1},
                  {"t": 1.2, "press": [0.5, 0.9]}, {"t": 1.5, "slide": [[0.5, 0.9], [0.5, 0.4]], "ms": 200}, {"t": 1.8, "lift": true},
                  {"t": 2.0, "to": [0.5, 0.4], "ms": 200}        glide a finger that is down to a spot ("to_js": JavaScript giving [x, y] in pixels)
-                 {"t": 2.0, "follow": "js", "ms": 2500} ] }     keep a finger on whatever the JavaScript points at ([x, y] in pixels)
+                 {"t": 2.0, "follow": "js", "ms": 2500},        keep a finger on whatever the JavaScript points at ([x, y] in pixels; 'lift' = let go now)
+                 {"t": 0.0, "js": "..."} ] }                    run JavaScript in the game at that moment (to set the scene up)
+
+Every clip keeps to the same rules, so the cards look like one set (LESSONS, "The feed app"):
+  the most exciting moment of the game, in the middle of play; no menu, intro banner or toast in shot;
+  the big moment lands about half-way through; 3 to 3.6 seconds; over before any result screen appears.
 Positions are fractions of the screen (0-1). With no preview.json the game is simply filmed after Play.
+
+Planning a clip:  python3 tools/previews.py knockout --trace "JavaScript that returns a short text"
+plays the game's preview.json without filming and prints that text every time it changes, against the clip's
+clock ("pre" = before the clip starts). Use it to see when the game says what, whether the big moment lands
+where it should, and when a result screen would cut in. For example, for Knockout:
+    --trace "(() => { const G = window.__sim.G; return G ? [G.phase, G.os, G.ohp.toFixed(0), G.msgs.map(m => m.text).join('|')].join(' ') : ''; })()"
 Needs: playwright with chromium, ffmpeg, Pillow. A sheet of frames is saved to out/previews/ for a look."""
 import base64, io, json, os, subprocess, sys, tempfile, threading, http.server, functools, shutil, time
 
@@ -69,6 +80,8 @@ def plan(moves):
             ev.append((t, 'press', f, m['press'][0], m['press'][1]))
         elif 'lift' in m:
             ev.append((t, 'lift', f, 0, 0))
+        elif 'js' in m:                             # run some JavaScript in the game at that moment (to set a scene up)
+            ev.append((t, 'js', f, m['js'], 0))
         elif 'to' in m or 'to_js' in m or 'follow' in m:   # worked out at the moment it happens (see act)
             ev.append((t, 'live', f, m, 0))
         elif 'drag' in m or 'slide' in m:           # drag = press, move, lift; slide = move a finger that is already down
@@ -83,7 +96,7 @@ def plan(moves):
     return sorted(ev, key=lambda e: e[0])
 
 
-def film(browser, port, g):
+def film(browser, port, g, probe=None):
     from PIL import Image
     feed = g.get('feed') or {}
     cfg = {}
@@ -124,9 +137,11 @@ def film(browser, port, g):
     anchor, t0, last_poll = cfg.get('anchor'), None, 0
     if not anchor: t0 = t_start + wait
     live = []
+    last_probe, last_txt = 0, None
     def act(e):
         _, kind, f, x, y = e
         if kind == 'lift': touch.lift(f)
+        elif kind == 'js': pg.evaluate(x)
         elif kind == 'live':
             m, now = x, time.monotonic()
             if 'follow' in m: live.append({'f': f, 'js': m['follow'], 'end': now + m.get('ms', 1000) / 1000, 'last': 0})
@@ -142,6 +157,7 @@ def film(browser, port, g):
                 if now - a['last'] > 0.022:
                     a['last'] = now
                     xy = pg.evaluate(a['js'])
+                    if xy == 'lift': touch.lift(f); live.remove(a); continue        # the JavaScript says: let go now
                     if xy: (touch.move if f in touch.down else touch.press)(f, xy[0], xy[1])
                 if now >= a['end']: touch.lift(f); live.remove(a)
             else:                                       # glide a finger to a spot
@@ -161,11 +177,21 @@ def film(browser, port, g):
             while frames and frames[0][0] < keep: frames.pop(0)
         else:
             while ev and now - t0 >= ev[0][0]: act(ev.pop(0))
-            if now - t0 >= lead + secs: break
+            if now - t0 >= lead + secs + (0.6 if probe else 0): break
+        if probe and now - last_probe > 0.03:           # --trace: say what the game is doing, against the clip's clock
+            last_probe = now
+            try: txt = pg.evaluate(probe)
+            except Exception as e: txt = 'trace error: ' + str(e)[:90]
+            if txt != last_txt:
+                last_txt = txt
+                print(('clip %+.2f' % (now - t0 - lead)) if t0 else ('pre  %5.2f' % (now - t_start)), '', txt)
         pg.wait_for_timeout(5)
     cdp.send('Page.stopScreencast')
     pg.wait_for_timeout(60)
     ctx.close()
+    if probe:
+        print(f"{g['id']}: traced only, nothing filmed" + (f"  !! {errs[:2]}" if errs else ''))
+        return not errs
     c0 = t0 + lead
     frames = [(t - c0, d) for t, d in frames if t >= c0 - 0.05]
     if len(frames) < 8:
@@ -209,7 +235,12 @@ def film(browser, port, g):
 def main():
     from playwright.sync_api import sync_playwright
     reg = json.load(open(os.path.join(root, 'games.json'), encoding='utf-8'))
-    want = [a for a in sys.argv[1:] if not a.startswith('-')]
+    args, probe = sys.argv[1:], None
+    if '--trace' in args:                       # plan a clip: play it without filming and print what the game is doing
+        i = args.index('--trace')
+        if i + 1 >= len(args): print('--trace needs the JavaScript to print'); sys.exit(1)
+        probe = args[i + 1]; del args[i:i + 2]
+    want = [a for a in args if not a.startswith('-')]
     games = [g for g in reg['games'] if (g['id'] in want if want else g['status'] in ('approved', 'testing'))]
     if not games:
         print('no such game'); sys.exit(1)
@@ -218,7 +249,7 @@ def main():
     with sync_playwright() as p:
         b = p.chromium.launch(args=['--autoplay-policy=no-user-gesture-required', '--mute-audio'])
         for g in games:
-            try: ok = film(b, srv.server_address[1], g) and ok
+            try: ok = film(b, srv.server_address[1], g, probe) and ok
             except Exception as e:
                 print('!!', e); ok = False
         b.close()

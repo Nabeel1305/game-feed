@@ -1,9 +1,48 @@
 {
-  "wait": 1.5, "secs": 3.0, "poster": 0.75,
+  "seed": 4,
+  "level": "window.gameFeedStart('mini')",
+  "pre": [
+    {
+      "t": 0.3,
+      "js": "(() => { const s = window.__sim, G = s.G; G.ohp = s.K.hp * 0.1; G.oNext = 1.7; document.getElementById('obar').style.width = '10%'; })()"
+    }
+  ],
+  "anchor": "(() => { const s = window.__sim, G = s.G; if (!G || G.phase !== 'fight' || G.t < 2.3) return false; const A = G.atk; return G.os === 'windup' && !!A && G.ot >= A.wind - 0.3; })()",
+  "from": -0.75,
+  "secs": 3.2,
+  "poster": 1.2,
   "moves": [
-    {"t": 0.2, "drag": [[0.18, 0.3], [0.5, 0.42], [0.82, 0.56]], "ms": 170},
-    {"t": 0.85, "drag": [[0.84, 0.28], [0.5, 0.42], [0.2, 0.6]], "ms": 170},
-    {"t": 1.5, "drag": [[0.5, 0.2], [0.5, 0.45], [0.48, 0.66]], "ms": 160},
-    {"t": 2.15, "drag": [[0.2, 0.5], [0.5, 0.44], [0.82, 0.36]], "ms": 170}
+    {
+      "t": 0.0,
+      "js": "window.__pv = (() => { const A = window.__sim.G.atk; if (!A) return null; if (A.kind === 'cut') { const dx = A.ex - A.sx, dy = A.ey - A.sy, L = Math.hypot(dx, dy) || 1, qx = A.sx + dx * 0.3, qy = A.sy + dy * 0.3; return { a: [qx - dy / L * 70, qy + dx / L * 70], b: [qx + dy / L * 70, qy - dx / L * 70] }; } return { a: [A.px - 70, A.py], b: [A.px + 70, A.py] }; })()"
+    },
+    {
+      "t": 0.01,
+      "to_js": "window.__pv.a",
+      "ms": 1
+    },
+    {
+      "t": 0.03,
+      "to_js": "window.__pv.b",
+      "ms": 80
+    },
+    {
+      "t": 0.14,
+      "lift": true
+    },
+    {
+      "t": 0.62,
+      "to_js": "(() => { const g = window.__sim.geo(); return [g.body.x0 - 46, g.y - 8]; })()",
+      "ms": 1
+    },
+    {
+      "t": 0.64,
+      "to_js": "(() => { const g = window.__sim.geo(); return [g.body.x1 + 46, g.y + 16]; })()",
+      "ms": 100
+    },
+    {
+      "t": 0.77,
+      "lift": true
+    }
   ]
 }

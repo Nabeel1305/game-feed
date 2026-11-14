@@ -4,6 +4,7 @@
      - "resume" lets them run again from the same instant
      - "start" presses the game's own Play button (or calls window.gameFeedStart(mode) if the game has one)
      - "sound" is the app's one sound switch: off silences everything the game plays, whatever its own sound button says
+     - "levels" opens the game's own level list (window.gameFeedLevels()) from the feed's Paused card
    Outside the feed (the page opened on its own) it does nothing at all.
    A game may also use: window.GameFeed.finish({win, level, score}) to tell the feed a level ended,
    and may define window.gameFeedPause() / window.gameFeedResume() for anything extra it wants to do. */
@@ -206,6 +207,10 @@
     else if (d.cmd === 'resume') resume();
     else if (d.cmd === 'start') start(d.mode, d.sound);
     else if (d.cmd === 'sound') setSound(d.on);
+    else if (d.cmd === 'levels') {            // "Levels" on the feed's Paused card: the game shows its own level list, then its clock runs again
+      try { if (typeof window.gameFeedLevels === 'function') window.gameFeedLevels(); } catch (e) {}
+      resume();
+    }
     else if (d.cmd === 'ping') post('ready');
   });
   /* inside the feed, the feed decides when a game stops: the game's own "page hidden" pause would only stack a second pause on top */

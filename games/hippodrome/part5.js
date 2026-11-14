@@ -82,6 +82,7 @@ function onFinish(R) {
   R.crowd = win ? 1 : res.ok ? 0.85 : 0.45;
   streaks[L] = res.ok ? 0 : (streaks[L] || 0) + 1; store.set('streaks', streaks);
   if (res.ok) { stars[L] = Math.max(stars[L] || 0, res.stars); store.set('stars', stars); unlocked = Math.max(unlocked, L + 1); store.set('unlocked', unlocked); }
+  if (res.ok && !HEADLESS) store.set('level', L + 1);       // he comes back to the next race, even if he leaves before pressing NEXT
   const bt = bestTime[L], bl = bestLap[L];
   res.prevT = bt; res.nbT = !!bt && res.time < bt; if (!bt || res.time < bt) { bestTime[L] = res.time; store.set('bestTime', bestTime); }
   res.nbL = !!bl && res.lap < bl; if (res.lap && (!bl || res.lap < bl)) { bestLap[L] = res.lap; store.set('bestLap', bestLap); }
@@ -308,7 +309,9 @@ addEventListener('keyup', e => { if (e.code === 'ArrowLeft') KEY.l = 0; else if 
 
 // ---------- screens ----------
 function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
 function showHome() {
+  savedLevel();
   R = makeRace(level, { help: (streaks[level] || 0) >= 3 }); R.phase = 'home'; paused = false; loopsOff(); PET = [];
   $('pauseBtn').classList.add('hidden');
   const fav = R.cars[0];
@@ -319,6 +322,7 @@ function showHome() {
 }
 function startRace(quick) {
   audio(); ensureLoops();
+  if (!HEADLESS) store.set('level', level);
   R = makeRace(level, { help: (streaks[level] || 0) >= 3 }); R.phase = 'count'; paused = false; PET = [];
   if (quick === true) quickStart(R);
   IN.sId = IN.wId = null; FX.shake = FX.stop = FX.slow = FX.flash = FX.gold = 0; CAM.kick = 0;
@@ -350,30 +354,53 @@ function showEnd() {
   show('ovEnd');
 }
 $('playBtn').onclick = () => { audio(); sfx.click(); startRace(); };
-// The feed's instant start (tap a card in the Game Feed app): "GO!" comes at once, with no trumpet count to wait
-// through (see quickStart). Races started from inside the game (next race, race again) keep the count.
-window.gameFeedStart = m => { audio(); sfx.click(); startRace(m === 'mini'); };
+// The feed's instant start (tap a card in the Game Feed app): the race he was on, and "GO!" comes at once, with no
+// trumpet count to wait through (see quickStart). Races started from inside the game (next race, race again, restart) keep the count.
+window.gameFeedStart = m => { savedLevel(); audio(); sfx.click(); startRace(m === 'mini'); };
 $('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
-document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showHome());
-function showLevels() {
+// Back from the level list goes to where it was opened from: the pause menu, the screen underneath, or home.
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && raceOn()) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home';
+  lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;      // the screen that waits underneath
   const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
   for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
   $('lvGrid').innerHTML = h;
   $('lvSub').textContent = unlocked > 1 ? `${unlocked - 1} race${unlocked === 2 ? '' : 's'} run. Every tenth race is against a champion of legend.` : 'Finish near the front to unlock the next race.';
   show('ovLevels');
 }
-$('levelsBtn').onclick = () => { sfx.click(); showLevels(); };
-$('eLevels').onclick = () => { showLevels(); };
-$('lvGrid').addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (!b || b.disabled) return; level = +b.dataset.l; store.set('level', level); showHome(); });
-$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') { level = Math.min(unlocked, level + 1); store.set('level', level); } startRace(); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => { showLevels('home'); };
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startRace(); }      // picked from the pause menu: that race starts at once
+});
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, level + 1); startRace(); };
 $('eAlt').onclick = () => startRace();
 function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) { ensureLoops(); sfx.click(); } else loopsOff(); };
 sndIcon();
-$('pauseBtn').onclick = () => { if (!R || (R.phase !== 'race' && R.phase !== 'count')) return; paused = true; loopsOff(); IN.sId = IN.wId = null; show('ovPause'); };
+// ---------- pause menu: resume, restart this race, or pick a lower level (the same in every game) ----------
+const raceOn = () => !!R && (R.phase === 'race' || R.phase === 'count');
+function openPause() {
+  paused = true; loopsOff(); IN.sId = IN.wId = null;
+  $('pLvl').textContent = `Race ${R.L} · ${R.V.name}`;
+  show('ovPause');
+}
+$('pauseBtn').onclick = () => { if (raceOn()) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); startRace(); };
+$('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => { showHome(); };
-document.addEventListener('visibilitychange', () => { if (document.hidden && R && !paused && (R.phase === 'race' || R.phase === 'count')) { paused = true; loopsOff(); IN.sId = IN.wId = null; show('ovPause'); } });
+// The feed's "Levels" button on its Paused card: the level list opens over the race (Back returns to the pause menu).
+// On the home or result screen the list opens over it and Back closes it again.
+window.gameFeedLevels = () => { if (raceOn()) { openPause(); showLevels('pause'); } else showLevels('feed'); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && raceOn() && !paused) openPause(); });
 
 // ---------- loop ----------
 function loopSounds() {

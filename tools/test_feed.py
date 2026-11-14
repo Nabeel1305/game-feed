@@ -82,6 +82,7 @@ def main():
     class Quiet(http.server.SimpleHTTPRequestHandler):
         def log_message(self, *a): pass
     srv = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(Quiet, directory=OUT))
+    srv.handle_error = lambda *a: None          # a page dropping a request it no longer needs (a clip, when its card is left) is not news
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     base = f'http://127.0.0.1:{srv.server_address[1]}/index.html'
     os.makedirs(os.path.join(root, 'out', 'feed'), exist_ok=True)
@@ -90,6 +91,7 @@ def main():
 
         # 1. every game: one tap on its card starts it; it freezes and carries on
         print('Every game starts from its card, freezes and carries on:')
+        restart_took = []
         for g in games:
             if only and g['id'] not in only: continue
             errs = []
@@ -152,11 +154,44 @@ def main():
                 ok(state(pg)['state'] == 'paused' and pg.locator('.slide.halt .paused.count').count() == 1, f"{g['id']}: counts 3, 2, 1 before carrying on")
                 if g['id'] == games[-1]['id']: pg.screenshot(path=os.path.join(root, 'out', 'feed', 'count-in.png'))
                 pg.wait_for_timeout(1500)
-            ok(state(pg)['state'] == 'playing' and not fr.evaluate('window.GameFeed.debug().paused'), f"{g['id']}: Continue carries on" + ('' if quick else ' straight away'))
+            ok(state(pg)['state'] == 'playing' and not fr.evaluate('window.GameFeed.debug().paused'), f"{g['id']}: Resume carries on" + ('' if quick else ' straight away'))
+            # the basic controls, in the same place for every game: Pause on the bar, then Resume, Restart or Levels
+            gid = g['id']
+            pg.click('#pauseBtn'); pg.wait_for_timeout(150)
+            ok(state(pg)['state'] == 'playing', f"{gid}: one stray tap on Pause mid-game does nothing")
+            pg.click('#pauseBtn'); pg.wait_for_timeout(200)
+            ok(state(pg)['state'] == 'paused' and state(pg)['halted'], f"{gid}: Pause on the bar pauses it")
+            acts = pg.evaluate("Array.from(document.querySelectorAll('.slide.halt .paused [data-act]')).filter(b => b.getClientRects().length).map(b => b.dataset.act)")
+            ok(acts == ['continue', 'restart', 'levels'], f"{gid}: the Paused card offers Resume, Restart and Levels", str(acts))
+            if gid == games[0]['id']: pg.screenshot(path=os.path.join(root, 'out', 'feed', 'paused-card.png'))
+            # Restart: a fresh match, straight into play
+            pg.click('.slide.halt [data-act="restart"]')
+            t0, took = time.time(), None
+            while time.time() - t0 < 5:
+                try:
+                    fr = game_frame(pg)
+                    if fr and state(pg)['state'] == 'playing' and state(pg)['started'] and (not live or fr.evaluate(live)): took = time.time() - t0; break
+                except Exception: pass
+                pg.wait_for_timeout(50)
+            ok(took is not None and took < 4, f"{gid}: Restart goes straight into a fresh match", 'never got going' if took is None else f'took {took:.2f} s')
+            restart_took.append(round(took or 9, 2))
+            # Levels: the game's own level list opens; Back shows the game's pause menu; Resume carries the same match on
+            pg.wait_for_timeout(300)
+            pg.evaluate('window.__feed.halt()'); pg.wait_for_timeout(120)
+            pg.click('.slide.halt [data-act="levels"]'); pg.wait_for_timeout(400)
+            bc = gid == 'bottle-cap-flick'
+            lv, pm = ('#levels', '#pause') if bc else ('#ovLevels', '#ovPause')
+            ok(state(pg)['state'] == 'playing' and not fr.evaluate('window.GameFeed.debug().paused') and fr.locator(lv).is_visible(), f"{gid}: Levels opens the game's own level list")
+            if gid == games[1]['id']: pg.screenshot(path=os.path.join(root, 'out', 'feed', 'levels-in-feed.png'))
+            fr.click('#lvBack' if gid in ('bottle-cap-flick', 'knockout') else '#ovLevels [data-back]'); pg.wait_for_timeout(150)
+            ok(fr.locator(pm).is_visible() and not fr.locator(lv).is_visible(), f"{gid}: Back from the list shows the game's pause menu")
+            fr.click('#pResume'); pg.wait_for_timeout(200)
+            ok(not fr.locator(pm).is_visible() and state(pg)['state'] == 'playing', f"{gid}: and Resume carries the match on")
             pg.wait_for_timeout(1200)
             ok(not errs, f"{g['id']}: no errors", '; '.join(errs[:3]))
             print(f"  {'ok  ' if not any(g['id'] in f for f in fails) else 'FAIL'} #{g['number']} {g['name']}")
             ctx.close()
+        print('  Restart to live play took', restart_took, 'seconds')
         if only:
             b.close(); srv.shutdown(); finish(); return
 
@@ -193,7 +228,7 @@ def main():
         ok(st['pos'] == p0 - 1 and st['state'] == 'paused' and st['halted'], 'coming back shows it paused', str(st))
         pg.screenshot(path=os.path.join(root, 'out', 'feed', 'paused.png'))
         pg.click('.slide.halt [data-act="continue"]'); pg.wait_for_timeout(1900)
-        ok(state(pg)['state'] == 'playing' and not fr.evaluate('window.GameFeed.debug().paused'), 'Continue carries on')
+        ok(state(pg)['state'] == 'playing' and not fr.evaluate('window.GameFeed.debug().paused'), 'Resume carries on')
         # a stray thumb on the bar mid-game does nothing; a second tap works
         pg.click('#libBtn'); pg.wait_for_timeout(200)
         ok(not pg.evaluate("document.querySelector('#lib').classList.contains('open')") and state(pg)['state'] == 'playing', 'one stray tap on the bar mid-game opens nothing')

@@ -8,4 +8,5 @@ public class Activity extends android.content.Context {
     public void setContentView(android.view.View v) {}
     public final void runOnUiThread(Runnable r) {}
     public boolean moveTaskToBack(boolean nonRoot) { return true; }
+    public void finish() {}
 }

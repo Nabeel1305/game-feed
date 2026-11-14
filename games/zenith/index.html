@@ -31,6 +31,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .btn{display:block;width:100%;margin-top:18px;border:0;border-radius:16px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#ffd45a;color:#3a2200;box-shadow:0 5px 0 #a8620a;cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #a8620a}
 .btn.ghost{background:transparent;color:#fff;box-shadow:none;border:1.5px solid rgba(255,255,255,.28);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(16,26,58,.9),rgba(5,10,25,.96))} /* menus over a live scene: dark enough that the words are the only thing to read */
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
 .rules{list-style:none;padding:0;margin:16px 0 0;text-align:left}
 .rules li{position:relative;padding:0 0 12px 0;font-size:14px;line-height:1.45;opacity:.92}
 .rules b{color:#ffd45a;font-family:Bangers,Impact,sans-serif;letter-spacing:1px;font-size:17px;font-weight:400;margin-right:4px}
@@ -106,8 +109,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <div class="ov hidden" id="ovPause">
   <div class="card">
     <h2 class="hero">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
-    <button class="btn ghost" id="pQuit">Back to the hideout</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Back to the hideout</button>
   </div>
 </div>
 
@@ -1184,6 +1189,7 @@ function patrolOver(won) {
   const st = won ? (G.failed === 0 ? 3 : G.failed === 1 ? 2 : 1) : 0;
   if (won) { stars[G.L] = Math.max(stars[G.L] || 0, st); store.set('stars', stars); unlocked = Math.max(unlocked, G.L + 1); store.set('unlocked', unlocked); }
   if (HEADLESS) return;
+  if (won) store.set('level', G.L + 1);       // he comes back to the next patrol, even if he leaves before pressing NEXT
   loopsOff();
   if (won) sfx.patrol();
   setTimeout(() => {
@@ -1332,40 +1338,67 @@ cv.addEventListener('pointercancel', release);
 
 // ---------- screens ----------
 function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
 function showHome() {
+  savedLevel();
   G = null; $('hud').classList.add('hidden'); loopsOff();
   $('playBtn').textContent = `PATROL ${level}`;
   $('hStat').innerHTML = rescues ? `Citizens helped: <b>${rescues}</b> · Best saves in a row: <b>${bestStreak}</b>` : 'Brightwater City needs a hero.';
   if ((streaks[level] || 0) >= 3) $('hStat').innerHTML += `<br><span style="color:#9ff0c8">Help on: trouble moves a touch slower on this patrol.</span>`;
   show('ovHome');
 }
-function startPatrol() { audio(); ensureLoops(); show(null); newPatrol(); }
+function startPatrol() { audio(); ensureLoops(); show(null); paused = false; store.set('level', level); newPatrol(); last = performance.now(); }
 $('playBtn').onclick = () => { sfx.click(); startPatrol(); };
-// The feed's instant start (tap a card in the Game Feed app): the first alert card is skipped and he takes off at once.
-// Later missions in the same patrol keep their alert cards.
-window.gameFeedStart = m => { sfx.click(); SKIP_ALERT = m === 'mini'; startPatrol(); SKIP_ALERT = false; };
+// The feed's instant start (tap a card in the Game Feed app): the patrol he was on; the first alert card is skipped
+// and he takes off at once. Later missions in the same patrol keep their alert cards.
+window.gameFeedStart = m => { savedLevel(); sfx.click(); SKIP_ALERT = m === 'mini'; startPatrol(); SKIP_ALERT = false; };
 $('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
-document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => showHome());
-function showLevels() {
+// Back from the level list goes to where it was opened from: the pause menu, the screen underneath, or home.
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home';
+  lvUnder = ['ovHome', 'ovEnd'].find(k => !$(k).classList.contains('hidden')) || null;      // the screen that waits underneath
   const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
   for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 5 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
   $('lvGrid').innerHTML = h;
   $('lvSub').textContent = unlocked > 1 ? `${unlocked - 1} patrol${unlocked === 2 ? '' : 's'} done. Gold-edged patrols end with a giant monster or a super villain.` : 'Finish a patrol to unlock the next.';
   show('ovLevels');
 }
-$('levelsBtn').onclick = () => { sfx.click(); showLevels(); };
-$('eLevels').onclick = () => { G = null; showLevels(); };
-$('lvGrid').addEventListener('click', e => { const b = e.target.closest('[data-l]'); if (!b || b.disabled) return; level = +b.dataset.l; store.set('level', level); showHome(); });
-$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') { level = Math.min(unlocked, level + 1); store.set('level', level); } startPatrol(); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => { G = null; showLevels('home'); };
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); if (G && !G.over) G.streak = 0; startPatrol(); }      // picked from the pause menu: that patrol starts at once
+});
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, level + 1); startPatrol(); };
 $('eAlt').onclick = () => startPatrol();
 function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) { ensureLoops(); sfx.click(); } else loopsOff(); };
 sndIcon();
+// ---------- pause menu: resume, restart this patrol, or pick a lower level (the same in every game) ----------
 let paused = false;
-$('pauseBtn').onclick = () => { if (!G || G.over) return; paused = true; loopsOff(); show('ovPause'); };
+const patrolOn = () => !!G && !G.over;
+function openPause() {
+  paused = true; loopsOff();
+  if (G.M && G.phase === 'play') { if (G.M.ptr) G.M.ptr.flicked = true; MT[G.M.type].up(G.M, 0, 0); }      // let go of anything he was holding (never a dodge by accident)
+  ptrId = null;
+  $('pLvl').textContent = `Patrol ${G.L} · mission ${Math.min(G.plan.length, G.idx + 1)} of ${G.plan.length}`;
+  show('ovPause');
+}
+$('pauseBtn').onclick = () => { if (patrolOn()) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); G.streak = 0; startPatrol(); };       // walking out of a patrol ends the run of saves
+$('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => { paused = false; showHome(); };
-document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) { paused = true; loopsOff(); show('ovPause'); if (G.M && G.phase === 'play') MT[G.M.type].up(G.M, 0, 0); } });
+// The feed's "Levels" button on its Paused card: the level list opens over the patrol (Back returns to the pause menu).
+// On the home or result screen the list opens over it and Back closes it again.
+window.gameFeedLevels = () => { if (patrolOn()) { openPause(); showLevels('pause'); } else showLevels('feed'); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && patrolOn() && !paused) openPause(); });
 
 // ---------- loop ----------
 function loopSounds() {
@@ -1419,6 +1452,11 @@ window.__sim = {
   spot(i) { return spotXY(i); }, winAt(x, y) { return MT.fire.winAt(G.M, x, y); },
   setStreak(L, n) { streaks = { [L]: n }; },
   live() { HEADLESS = false; },
+  // for the card clip (tools/previews.py): a real patrol, straight to one kind of mission (the flight in comes first, as always)
+  go(L, type) {
+    HEADLESS = false; level = L; SKIP_ALERT = true; startPatrol(); SKIP_ALERT = false;
+    if (type) { G.plan[G.idx] = makeSpec(type, L, G.idx); G.plan[G.idx].assist = G.assist; G.fly = makeFly(G.plan[G.idx]); hud(); }
+  },
   size() { return { W, H, k }; },
   get G() { return G; }, get M() { return G && G.M; }
 };

@@ -46,9 +46,16 @@ public class Bridge {
     @JavascriptInterface
     public void ready(String rev) { act.feedIsUp(); }
 
-    /** The feed asks to be loaded again, because newer games have arrived on the phone. at = the game whose card it was showing. */
+    /**
+     * The feed asks to be loaded again. It only does this to move from the copy inside the APK to the fetched folder,
+     * and only at a quiet moment. "at" is the id of the card on screen, so the fetched copy opens on the same card.
+     */
     @JavascriptInterface
-    public void reload(String at) { act.runOnUiThread(() -> act.loadFeed(at)); }
+    public void reload(String at) { final String card = at == null ? "" : at; act.runOnUiThread(() -> act.loadFeed(card)); }
+
+    /** The last thing that went wrong (the app or its web engine stopping), for the bottom of the games list. "" if nothing. */
+    @JavascriptInterface
+    public String lastProblem() { return act.lastProblem(); }
 
     /** The installed app's version, shown at the bottom of the games list. */
     @JavascriptInterface

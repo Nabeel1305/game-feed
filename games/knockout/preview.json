@@ -1,12 +1,44 @@
 {
-  "wait": 1.7, "secs": 3.0, "poster": 0.9,
+  "level": "window.gameFeedStart('mini')",
+  "pre": [
+    {
+      "t": 0.5,
+      "js": "(() => { const G = window.__sim.G, o = window.__sim.opp; G.ohp = 26; G.oNext = 9; o.slip = 0; o.block = 0; document.getElementById('obar').style.width = (26 / o.maxHp * 100) + '%'; })()"
+    }
+  ],
+  "wait": 2.4,
+  "secs": 3.0,
+  "poster": 1.75,
   "moves": [
-    {"t": 0.25, "tap": [0.27, 0.72]},
-    {"t": 0.55, "tap": [0.74, 0.72], "finger": 1},
-    {"t": 0.95, "tap": [0.27, 0.72]},
-    {"t": 1.35, "drag": [[0.74, 0.8], [0.74, 0.52]], "ms": 110, "finger": 1},
-    {"t": 1.9, "tap": [0.27, 0.72]},
-    {"t": 2.2, "tap": [0.74, 0.72], "finger": 1},
-    {"t": 2.55, "tap": [0.27, 0.72]}
+    {
+      "t": 0.2,
+      "tap": [
+        0.3,
+        0.4
+      ]
+    },
+    {
+      "t": 0.6,
+      "tap": [
+        0.7,
+        0.4
+      ],
+      "finger": 1
+    },
+    {
+      "t": 1.05,
+      "drag": [
+        [
+          0.72,
+          0.8
+        ],
+        [
+          0.72,
+          0.5
+        ]
+      ],
+      "ms": 110,
+      "finger": 1
+    }
   ]
 }

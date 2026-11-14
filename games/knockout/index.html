@@ -48,6 +48,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .btn{display:block;width:100%;margin-top:22px;border:0;border-radius:16px;padding:17px;font:inherit;font-size:20px;font-weight:800;background:#ffd166;color:#2a1a00;box-shadow:0 5px 0 #b5651d;cursor:pointer}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b5651d}
 .btn.ghost{background:transparent;color:#fff;box-shadow:none;border:1.5px solid rgba(255,255,255,.25);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 35%,rgba(24,16,34,.93),rgba(5,5,10,.97))} /* menus over a live scene: dark enough that the words are the only thing to read */
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
 .howto{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;text-align:left}
 .ht{background:rgba(255,255,255,.07);border-radius:14px;padding:11px 12px;font-size:13px;line-height:1.35}
 .ht b{display:block;font-size:15px;color:#ffd166;margin-bottom:2px}
@@ -127,8 +130,10 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <div class="ov hidden" id="ovPause">
   <div class="card">
     <h2 class="disp">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
-    <button class="btn ghost" id="pQuit">Give up this fight</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Give up this fight</button>
   </div>
 </div>
 
@@ -586,6 +591,7 @@ function win(points, card) {
   if (!points) { const prev = bests[level]; if (!prev || G.fightT < prev) { newBest = !!prev; bests[level] = G.fightT; store.set('bests', bests); } }
   unlocked = Math.max(unlocked, level + 1); store.set('unlocked', unlocked);
   if (HEADLESS) return;
+  store.set('level', level + 1);            // he comes back to the next fight, even if he leaves before pressing NEXT
   scheduleEnd(() => {
     $('eTitle').textContent = points ? 'YOU WIN ON POINTS' : 'K.O.!'; $('eTitle').style.color = '#ffd166';
     $('eStars').innerHTML = [1, 2, 3].map(i => `<span class="${i <= st ? '' : 'off'}">★</span>`).join('');
@@ -984,7 +990,9 @@ window.addEventListener('keyup', e => {
 });
 
 // ---------- screens ----------
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
 function showStart() {
+  savedLevel();
   const o = makeOpponent(level);
   $('sLvl').textContent = level;
   $('sName').textContent = o.name;
@@ -999,22 +1007,27 @@ $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); 
 sndIcon();
 function startFight() {
   ['ovStart', 'ovEnd', 'ovPause', 'ovLevels', 'ovBreak'].forEach(id => $(id).classList.add('hidden'));
+  paused = false; store.set('level', level);
   audio(); if (endTimer) { clearTimeout(endTimer); endTimer = null; endShow = null; } newFight();
 }
 $('fightBtn').onclick = () => { sfx.click(); startFight(); };
 // The feed's instant start (tap a card in the Game Feed app): no "LEVEL n" wait, the bell rings at once.
-window.gameFeedStart = m => { sfx.click(); startFight(); if (m === 'mini' && G) G.intro = 0.05; };
+window.gameFeedStart = m => { savedLevel(); sfx.click(); startFight(); if (m === 'mini' && G) G.intro = 0.05; };
 function endAction(act) {
   $('ovEnd').classList.add('hidden');
-  if (act === 'next') { level = Math.min(unlocked, level + 1); store.set('level', level); startFight(); }
+  if (act === 'next') { level = Math.min(unlocked, level + 1); startFight(); }
   else if (act === 'again') startFight();
-  else { G = null; showLevels(); }
+  else { G = null; showLevels('home'); }
 }
 $('eNext').onclick = () => endAction($('eNext').dataset.act);
 $('eRetry').onclick = () => endAction($('eRetry').dataset.act);
 $('bNext').onclick = () => { audio(); nextRound(); };
-function showLevels() {
-  $('ovStart').classList.add('hidden');
+let lvFrom = 'home', lvUnder = [];
+function showLevels(from) {
+  lvFrom = from || 'home';
+  if (endTimer) { clearTimeout(endTimer); const f = endShow; endTimer = null; endShow = null; if (G) G.slow = 0; if (f) f(); }   // a result that was about to appear: show it now, under the list
+  lvUnder = ['ovStart', 'ovEnd', 'ovBreak'].filter(id => !$(id).classList.contains('hidden'));     // whatever screen is up waits underneath
+  ['ovStart', 'ovEnd', 'ovBreak', 'ovPause'].forEach(id => $(id).classList.add('hidden'));
   const top = Math.max(unlocked + 5, Math.ceil((unlocked + 1) / 5) * 5 + 5);
   let h = '';
   for (let L = 1; L <= top; L++) {
@@ -1026,18 +1039,30 @@ function showLevels() {
   $('ovLevels').classList.remove('hidden');
   setTimeout(() => { const c = $('lvGrid').querySelector('.cur'); if (c) c.scrollIntoView({ block: 'center' }); }, 0);
 }
-$('levelsBtn').onclick = showLevels;
-$('lvBack').onclick = () => { $('ovLevels').classList.add('hidden'); showStart(); };
+$('levelsBtn').onclick = () => showLevels('home');
+$('lvBack').onclick = () => {
+  $('ovLevels').classList.add('hidden');
+  if (lvFrom === 'pause' && G) openPause(); else if (lvFrom === 'feed' && lvUnder.length) lvUnder.forEach(id => $(id).classList.remove('hidden')); else showStart();
+};
 $('lvGrid').addEventListener('click', e => {
   const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
   level = +b.dataset.l; store.set('level', level);
-  $('ovLevels').classList.add('hidden'); showStart();
+  $('ovLevels').classList.add('hidden');
+  if (lvFrom === 'home') showStart(); else { sfx.click(); startFight(); }      // picked from the pause menu: that fight starts at once
 });
+// ---------- pause menu: resume, restart this fight, or pick a lower level (the same in every game) ----------
 let paused = false;
-$('pauseBtn').onclick = () => { if (!G || G.phase !== 'fight') return; paused = true; $('ovPause').classList.remove('hidden'); };
+function openPause() { paused = true; $('pLvl').textContent = `Level ${level} · ${opp.name}`; $('ovPause').classList.remove('hidden'); }
+const fightOn = () => !!G && !G.over && (G.phase === 'fight' || G.phase === 'intro');
+$('pauseBtn').onclick = () => { if (fightOn()) openPause(); };
 $('pResume').onclick = () => { paused = false; $('ovPause').classList.add('hidden'); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); startFight(); };
+$('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => { paused = false; $('ovPause').classList.add('hidden'); G = null; showStart(); };
-document.addEventListener('visibilitychange', () => { if (document.hidden && G && G.phase === 'fight') { paused = true; $('ovPause').classList.remove('hidden'); } });
+// The feed's "Levels" button on its Paused card: the level list opens over the fight (Back returns to the pause menu).
+// On any other screen (home, between rounds, a result) the list opens over it and Back closes it again.
+window.gameFeedLevels = () => { if (fightOn()) { paused = true; showLevels('pause'); } else showLevels('feed'); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && fightOn() && !paused) openPause(); });
 
 // ---------- loop ----------
 let last = performance.now();
