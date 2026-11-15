@@ -14,7 +14,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 4 | **Steel & Honour** | testing | yes: core game, always on the phone | 0.13.0 | [play](https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5) | `games/sword-fight/index.html` |
 | 5 | **Zenith** | testing | yes: core game, always on the phone | 0.2.0 | [play](https://claude.ai/artifact/HQD2KteiP4RFWSZTdH8CRy) | `games/zenith/index.html` |
 | 6 | **Hippodrome** | testing | yes: core game, always on the phone | 0.3.0 | [play](https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM) | `games/hippodrome/index.html` |
-| 7 | **Bandit** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4HD7GnZtuVf1ahdLsjefSG) | `games/bandit/index.html` |
+| 7 | **Bandit** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/4HD7GnZtuVf1ahdLsjefSG) | `games/bandit/index.html` |
 
 ## What each game is
 

@@ -147,7 +147,7 @@ function drawHud(G, now) {
       }
     }
     // the mirror, when he is behind you or his missile is in the air
-    const behind = f.alive && me.r && me.r.off > 2.2 && me.r.d < 1700, mw = 178 * k, mh = 98 * k, mx = W / 2 - mw / 2, my = 50 * k;      // only while there is something in it to see
+    const behind = f.alive && me.r && me.r.off > 1.7 && me.r.d < 1700, mw = 178 * k, mh = 98 * k, mx = W / 2 - mw / 2, my = 50 * k;
     if (behind || G.threat) {
       drawMirror(G, now, mx, my, mw, mh, !!G.threat || (f.onT && f.lock > 0.05));
       if (f.onT && f.lock > 0.02 && !G.threat) { ctx.fillStyle = 'rgba(8,20,36,.55)'; rrect(mx, my + mh + 6 * k, mw, 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = '#ff5a4a'; rrect(mx, my + mh + 6 * k, Math.max(7 * k, mw * f.lock), 7 * k, 3.5 * k); ctx.fill(); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#ffd9d2'; ctx.fillText('HE IS LOCKING ON  ·  TURN HARD', W / 2, my + mh + 24 * k); }
@@ -194,7 +194,7 @@ function drawHud(G, now) {
   if (hp < 1) { ctx.fillStyle = 'rgba(8,20,36,.5)'; rrect(bx0, by0, bw, 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = me.hurtT < 0.25 && Math.sin(now * 45) > 0 ? '#fff' : hp < 0.36 ? (Math.sin(now * 14) > 0 ? '#ff5a4a' : '#ffb03a') : hp < 0.7 ? '#ffd166' : '#9ff0b0'; rrect(bx0, by0, Math.max(7 * k, bw * hp), 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = `700 ${Math.round(10.5 * k)}px ${BC}`; ctx.fillText(hp < 0.36 ? 'JET FAILING' : 'JET DAMAGED', W / 2, by0 - 9 * k); }
   ctx.restore();
 }
-function behindMirror(G) { const me = G.me, f = G.foe; return G.phase === 'fight' && (G.threat || (f.alive && me.r && me.r.off > 2.2 && me.r.d < 1700)); }
+function behindMirror(G) { const me = G.me, f = G.foe; return G.phase === 'fight' && (G.threat || (f.alive && me.r && me.r.off > 1.7 && me.r.d < 1700)); }
 function draw(now) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (!G) { ctx.fillStyle = '#0b1a2e'; ctx.fillRect(0, 0, W, H); return; }

@@ -700,7 +700,8 @@ function drawParticle(p) {
 function glow(img, x, y, z, size, a) { if (!P3(x, y, z)) return; const s = size * CC.F / PZ; if (s < 0.5) return; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a; ctx.drawImage(img, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
 function drawJetItem(j, m, sc, now) {
   drawModel(m, j, sc);
-  if (j.alive) for (const nz of m.noz) {       // the engines: a blue-white burn that stretches when it is working hard
+  const fw = fwdOf(j), seen = (CC.x - j.x) * fw[0] + (CC.y - j.y) * fw[1] + (CC.z - j.z) * fw[2] < 0;      // the burn only shows from behind
+  if (j.alive && seen) for (const nz of m.noz) {       // the engines: a blue-white burn that stretches when it is working hard
     const thr = 0.55 + 0.45 * clamp((j.v - 150) / 150, 0, 1), fl = 0.85 + 0.15 * Math.sin(now * 61 + nz[0] * 9);
     for (let q = 0; q < 3; q++) { const p = partPos(j, [nz[0], nz[1], -9.3 - q * 1.5 * thr], sc); glow(q === 0 ? TEX.hot : TEX.burn, p[0], p[1], p[2], (1.25 - q * 0.3) * sc * fl, (0.9 - q * 0.25) * thr); }
   }
@@ -731,7 +732,7 @@ function drawItems(now, mirror) {
     else if (it.k === 1) { PX = it.x; PY = it.y; PZ = it.z; drawParticle(it.p); }
     else if (it.k === 2) drawJetItem(it.j, it.m, it.sc, now);
     else if (it.k === 3) { const s = it.s; glow(TEX.hot, s.x, s.y, s.z, mirror ? 9 : 3.2, 1); glow(TEX.fire, s.x - s.d[0] * 5, s.y - s.d[1] * 5, s.z - s.d[2] * 5, mirror ? 7 : 2.6, 0.8); }
-    else { const fl = it.fl, q = 1 - fl.age / 2, fk = 0.75 + 0.25 * Math.sin(now * 70 + fl.x); glow(TEX.hot, fl.x, fl.y, fl.z, (mirror ? 10 : 5) * fk * (0.5 + 0.5 * q), Math.min(1, q * 1.6)); glow(TEX.fire, fl.x, fl.y, fl.z, (mirror ? 20 : 11) * fk * q, 0.55 * q); }
+    else { const fl = it.fl, q = 1 - fl.age / 2, fk = 0.75 + 0.25 * Math.sin(now * 70 + fl.x); glow(TEX.hot, fl.x, fl.y, fl.z, 5 * fk * (0.5 + 0.5 * q), Math.min(1, q * 1.6) * (mirror ? 0.8 : 1)); glow(TEX.fire, fl.x, fl.y, fl.z, 11 * fk * q, (mirror ? 0.3 : 0.55) * q); }
   }
 }
 function drawWorld(G, now) {
@@ -744,7 +745,8 @@ function drawWorld(G, now) {
 // the mirror: what is behind you, left and right the way a mirror shows them
 function drawMirror(G, now, x, y, w, h, hot) {
   const me = G.me;
-  CAMM.x = me.x; CAMM.y = me.y + 2.5; CAMM.z = me.z; CAMM.yaw = me.yaw + Math.PI; CAMM.pitch = -me.pitch * 0.7 - 0.03; CAMM.roll = 0; CAMM.F = w * 1.2; CAMM.cx = w / 2; CAMM.cy = h * 0.5; camSet(CAMM);
+  const f = G.foe, aim = f.alive && me.r && me.r.off > 1.7 ? f : (G.threat || f), dx = aim.x - me.x, dy = aim.y - me.y - 2.5, dz = aim.z - me.z, dd = Math.hypot(dx, dy, dz) || 1;      // it looks straight at him (or at his missile), so he is always in it
+  CAMM.x = me.x; CAMM.y = me.y + 2.5; CAMM.z = me.z; CAMM.yaw = Math.atan2(dx, dz); CAMM.pitch = clamp(Math.asin(clamp(dy / dd, -1, 1)), -0.6, 0.6); CAMM.roll = 0; CAMM.F = w * 1.9; CAMM.cx = w / 2; CAMM.cy = h * 0.5; camSet(CAMM);
   ctx.save(); rrect(x, y, w, h, 12 * k); ctx.clip(); ctx.translate(x + w, y); ctx.scale(-1, 1);
   CC = CAMM; drawSky(CAMM, w, false); collect(G, true); drawItems(now, true);
   const th = G.threat; if (th && P3(th.x, th.y, th.z)) { const r = (7 + 3 * Math.sin(now * 24)) * k; ctx.strokeStyle = '#ff3b2e'; ctx.lineWidth = 2.2 * k; ctx.beginPath(); ctx.arc(PX, PY, r, 0, TAU); ctx.stroke(); }      // his missile, ringed so it cannot be missed
@@ -901,7 +903,7 @@ function drawHud(G, now) {
       }
     }
     // the mirror, when he is behind you or his missile is in the air
-    const behind = f.alive && me.r && me.r.off > 2.2 && me.r.d < 1700, mw = 178 * k, mh = 98 * k, mx = W / 2 - mw / 2, my = 50 * k;      // only while there is something in it to see
+    const behind = f.alive && me.r && me.r.off > 1.7 && me.r.d < 1700, mw = 178 * k, mh = 98 * k, mx = W / 2 - mw / 2, my = 50 * k;
     if (behind || G.threat) {
       drawMirror(G, now, mx, my, mw, mh, !!G.threat || (f.onT && f.lock > 0.05));
       if (f.onT && f.lock > 0.02 && !G.threat) { ctx.fillStyle = 'rgba(8,20,36,.55)'; rrect(mx, my + mh + 6 * k, mw, 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = '#ff5a4a'; rrect(mx, my + mh + 6 * k, Math.max(7 * k, mw * f.lock), 7 * k, 3.5 * k); ctx.fill(); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#ffd9d2'; ctx.fillText('HE IS LOCKING ON  ·  TURN HARD', W / 2, my + mh + 24 * k); }
@@ -948,7 +950,7 @@ function drawHud(G, now) {
   if (hp < 1) { ctx.fillStyle = 'rgba(8,20,36,.5)'; rrect(bx0, by0, bw, 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = me.hurtT < 0.25 && Math.sin(now * 45) > 0 ? '#fff' : hp < 0.36 ? (Math.sin(now * 14) > 0 ? '#ff5a4a' : '#ffb03a') : hp < 0.7 ? '#ffd166' : '#9ff0b0'; rrect(bx0, by0, Math.max(7 * k, bw * hp), 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = `700 ${Math.round(10.5 * k)}px ${BC}`; ctx.fillText(hp < 0.36 ? 'JET FAILING' : 'JET DAMAGED', W / 2, by0 - 9 * k); }
   ctx.restore();
 }
-function behindMirror(G) { const me = G.me, f = G.foe; return G.phase === 'fight' && (G.threat || (f.alive && me.r && me.r.off > 2.2 && me.r.d < 1700)); }
+function behindMirror(G) { const me = G.me, f = G.foe; return G.phase === 'fight' && (G.threat || (f.alive && me.r && me.r.off > 1.7 && me.r.d < 1700)); }
 function draw(now) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   if (!G) { ctx.fillStyle = '#0b1a2e'; ctx.fillRect(0, 0, W, H); return; }
