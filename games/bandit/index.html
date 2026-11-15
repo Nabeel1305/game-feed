@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Bandit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#0b1a2e;color:#eef4fb;font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.bn{font-family:"Bebas Neue","Barlow Condensed",Impact,"Arial Narrow",sans-serif;letter-spacing:2px;font-weight:400}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(6,14,26,.38);color:#eef4fb;font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(11,26,46,.5),rgba(5,11,21,.92))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:84px;line-height:.9;color:#fff;text-shadow:0 4px 0 #1b3a63,0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:44px;line-height:1;color:#fff;text-shadow:0 3px 0 #1b3a63}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,#ffb347,transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.oname{font-size:32px;line-height:1.05;color:#ffb347}
+.games{font-size:13px;opacity:.85;margin-top:3px}
+.pills{display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:800;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.13)}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#ffb347;color:#2b1602;box-shadow:0 5px 0 #b86a12;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #b86a12}
+.btn.ghost{background:transparent;color:#eef4fb;box-shadow:none;border:1.5px solid rgba(238,244,251,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(11,24,42,.93),rgba(5,11,21,.97))} /* menus over a live scene: dark enough that the words are the only thing to read */
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:#ffb347}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:#eef4fb;cursor:pointer}
+.lvb small{display:block;font-size:10px;color:#ffd166;min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px #ffb347}
+.lvb.cur{background:#ffb347;color:#2b1602}.lvb.cur small{color:#2b1602}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:#ffd166}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:#ffd166}.help{color:#a9e8c0;font-size:12.5px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="bn">BANDIT</h1>
+    <div class="bar"></div>
+    <div class="tag">ONE SKY · ONE OF YOU GOES HOME</div>
+    <div class="vs">SORTIE <span id="hLvl">1</span></div>
+    <div class="oname bn" id="hFoe"></div>
+    <div class="games" id="hJet"></div>
+    <div class="pills" id="hPills"></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">TAKE OFF</button>
+    <button class="btn ghost" id="levelsBtn">Choose sortie</button>
+    <button class="btn ghost" id="rulesBtn">How to fly</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="bn">HOW TO FLY</h2>
+    <ul class="rules">
+      <li><b>Left thumb flies.</b> Push it the way you want the nose to go. Push further to turn harder; hard turns cost speed.</li>
+      <li><b>Lock on.</b> Get behind the bandit and keep him inside your ring until it turns red. A lock only takes from behind him.</li>
+      <li><b>Right thumb: FIRE.</b> With a lock, FIRE sends a missile. The closer you are behind him, the less time he has to shake it. Up close, hold FIRE for the cannon.</li>
+      <li><b>He drops flares.</b> A flare can pull your missile away. He needs a moment before he can drop another: a second missile straight after the first often gets through.</li>
+      <li><b>When he is behind you</b> a mirror opens at the top. He can only lock on from behind you. Beeping means he is doing it: turn hard to slip out of his sights.</li>
+      <li><b>MISSILE!</b> Turn hard, and tap FLARE as the ring closes on the button. Too early or too late and it stays on you. Flares come back slowly, so do not waste them.</li>
+      <li>Shoot down every bandit before your fuel runs out to unlock the next sortie. Take no hits for three stars.</li>
+    </ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="bn">CHOOSE SORTIE</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="bn" id="eTitle">SPLASH ONE</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <button class="btn" id="eMain">NEXT SORTIE</button>
+    <button class="btn ghost" id="eAlt">Fly it again</button>
+    <button class="btn ghost" id="eLevels">Choose sortie</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="bn">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Return to base</button>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const BN = '"Bebas Neue", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1;
+function resize() { DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('bd.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('bd.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let unlocked = store.get('unlocked', 1), level = Math.min(store.get('level', 1), unlocked), stars = store.get('stars', {});
+let bestTime = store.get('bestTime', {}), streaks = store.get('streaks', {}), kills = store.get('kills', 0), bestRun = store.get('bestRun', 0), run = store.get('run', 0);
+let HEADLESS = false;
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+const fmtT = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
+const TAU = Math.PI * 2;
+const wrapA = a => { a = (a + Math.PI) % TAU; if (a < 0) a += TAU; return a - Math.PI; };
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ---------- part 2: the fight itself (no drawing, no sound: the test bots run this at full speed) ----------
+// Distances are in metres, angles in radians, y is up. Everything here is game rules, tuned for fun, not a simulator.
+const PH = {
+  VMAX: 300, VMIN: 120, ACC: 62, DRAG: 28, K_TURN: 272, RATE_MAX: 1.62, PITCH_MAX: 0.72, FLOOR: 240, CEIL: 2600,
+  LOCK_A: 0.25, LOCK_R: 1150, LOCK_T: 0.75, GUN_A: 0.07, GUN_R: 430, GUN_DPS: 80,
+  FOE_A: 0.26, FOE_R: 1000, REAR: 1.45, SHOT_V: 540, SHOT_TURN: 3.4, SHOT_LIFE: 4.2, HIT_R: 16
+};
+
+// who you meet: built from long lists so the same bandit rarely comes round twice
+const CALL = ['Viper', 'Jackal', 'Ghost', 'Razor', 'Cobra', 'Hawk', 'Wraith', 'Dagger', 'Saber', 'Talon', 'Raven', 'Mamba', 'Havoc', 'Fang', 'Blaze', 'Onyx', 'Reaper', 'Phantom', 'Switch', 'Tracer', 'Bolt', 'Scythe', 'Hornet', 'Wolf', 'Lynx', 'Banshee', 'Cinder', 'Drift', 'Echo', 'Flint', 'Grim', 'Hex', 'Iron', 'Jinx', 'Kite', 'Lancer', 'Maverick', 'Nomad', 'Omen', 'Pike', 'Quake', 'Rook', 'Spectre', 'Thorn', 'Umbra', 'Vandal', 'Warden', 'Zephyr', 'Ash', 'Bishop', 'Comet', 'Dusk', 'Ember', 'Frost', 'Gale', 'Harrier', 'Icarus', 'Javelin', 'Kestrel', 'Locust'];
+const BOSS = ['Widowmaker', 'Black Baron', 'Night Witch', 'Iron Duke', 'Skull King', 'Red Empress', 'Lord Tempest', 'The Surgeon', 'Old Lightning', 'Queen Cobra', 'Grey Wolf', 'The Undertaker'];
+const RANKS = ['Lt.', 'Capt.', 'Maj.', 'Cmdr.', 'Col.', 'Flt. Lt.', 'Sqn. Ldr.'];
+const SURN = ['Okafor', 'Varga', 'Lindqvist', 'Moreau', 'Tanaka', 'Novak', 'Ferreira', 'Haddad', 'Kowalski', 'Brandt', 'Castillo', 'Dragan', 'Ekström', 'Falk', 'Guerra', 'Hoang', 'Ivanov', 'Jansen', 'Kimura', 'Lambert', 'Mbeki', 'Nilsen', 'Orlov', 'Petrov', 'Quintero', 'Rahimi', 'Sato', 'Tavares', 'Ueda', 'Vasquez', 'Weber', 'Xu', 'Yilmaz', 'Zielinski', 'Adeyemi', 'Bakr', 'Costa', 'Dumont', 'Eze', 'Fontaine', 'Gashi', 'Horvat', 'Ito', 'Juarez', 'Kovac', 'Larsen', 'Mancini', 'Nasser', 'Ozturk', 'Pavlov'];
+const SQA = ['Crimson', 'Black', 'Iron', 'Silver', 'Golden', 'Midnight', 'Desert', 'Arctic', 'Storm', 'Scarlet', 'Phantom', 'Savage', 'Royal', 'Burning', 'Silent', 'Thunder', 'Ghost', 'Steel', 'Wild', 'Night'];
+const SQB = ['Kestrels', 'Wolves', 'Scorpions', 'Lancers', 'Falcons', 'Jackals', 'Cobras', 'Tigers', 'Ravens', 'Hornets', 'Sharks', 'Panthers', 'Eagles', 'Hounds', 'Vipers', 'Dragons', 'Hawks', 'Lions', 'Owls', 'Stallions'];
+const FRAMES = ['twin', 'delta', 'swept'], FRAME_NAME = { twin: 'twin-tail fighter', delta: 'delta-wing fighter', swept: 'swept-wing fighter' };
+const PAINT = [['#b89b6a', '#8a6a44'], ['#5d6e4a', '#3f4a33'], ['#5a7fa8', '#3e5f86'], ['#3d4048', '#272a30'], ['#c9d0d8', '#93a1b0'], ['#9a5b43', '#6b3a2b'], ['#c08a2e', '#4a3515'], ['#6a4f80', '#40304d'], ['#7a8a8f', '#4f5d62'], ['#4d7a72', '#2f4f4a']];
+const TRIM = ['#e0392b', '#f2c230', '#f4f4f4', '#ff7a1a', '#2fd0e0', '#e04fb0', '#7be04f'];
+function foeLook(L, i) {
+  const r = rng(L * 7919 + i * 104729 + 13), pick = a => a[Math.floor(r() * a.length)], boss = L % 10 === 0;
+  return { call: pick(boss ? BOSS : CALL), rank: pick(RANKS), surn: pick(SURN), squad: pick(SQA) + ' ' + pick(SQB), frame: pick(FRAMES), paint: pick(PAINT), trim: pick(TRIM), boss };
+}
+
+// how hard a sortie is. One number (f) rises with the level; everything he does gets a little sharper with it.
+function makeCfg(L, help) {
+  const f = curve(L), e = easyOf(L), boss = L % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+  const c = {
+    L, boss, help: !!help,
+    bandits: boss ? 1 : L < 6 ? 1 : L < 20 ? 2 : 3,
+    aim: x(0.5, 0.97, 26),                                       // how hard he can pull, against your 1.0
+    jink: x(0.28, 0.7, 24),                                        // how hard he weaves when you are behind him
+    breakAfter: L < 2 ? 99 : 3.5 + 5.5 * Math.exp(-f / 12),        // seconds on his tail before he hauls round and comes for you
+    spent: 2.2 + 1.6 * Math.exp(-f / 20),                        // after he fires he flies straight this long: your opening
+    foeShots: L >= 2,
+    foeLock: 0.95 + 2.3 * Math.exp(-f / 14) + e * 0.8,           // how long he needs you in his sights
+    foeCool: 3.2 + 4 * Math.exp(-f / 20),
+    foeShotV: x(460, 540, 25),
+    react: 0.3 + 1.0 * Math.exp(-f / 12) + e * 0.6,              // how long before he reacts to your missile
+    foeFlares: L < 3 ? 0 : Math.min(4, 1 + Math.floor(f / 10)),
+    flareSkill: L < 3 ? 0 : x(0.6, 0.85, 20),                   // how often he times his flare right
+    foeHi: 1.0,
+    gunDps: L < 4 ? 0 : x(10, 36, 30),
+    myLo: 0.12, myHi: 0.46 + 1.2 * Math.exp(-f / 20) + e * 0.35, // the moment your flare works: this long before it reaches you
+    dbl: L < 15 ? 0 : x(0.15, 0.65, 40),                         // how often he sends a second missile right behind the first
+    needHard: L < 3 ? 0 : 0.12,                                  // ... and only if you have been turning hard this long
+    dmgShot: L <= 3 ? 34 : 55,
+    foeHp: boss ? 200 : 100,
+    fuel: 0
+  };
+  if (help) { c.foeLock += 0.6; c.foeShotV *= 0.92; c.foeCool += 1; c.spent += 0.8; }      // help only buys time; the rules stay the same
+  c.fuel = 120 * c.bandits + (boss ? 40 : 0);
+  return c;
+}
+
+function mkJet(x, y, z, yaw, v) {
+  return { x, y, z, yaw, pitch: 0, roll: 0, v: v || 240, sx: 0, sy: 0, load: 0, hard: 0, agil: 1, hp: 100, hpMax: 100, alive: true,
+    lock: 0, onT: false, shots: 2, rearm: 0, side: 1, flares: 3, flareMax: 3, flareT: 0, regen: 0, dropped: 0,
+    firing: false, gunOn: false, heat: 0, gunHot: false, tracerT: 0, hurtT: 9, r: null, boost: false, front: false, fast: false };
+}
+const fwdOf = j => { const cp = Math.cos(j.pitch); return [Math.sin(j.yaw) * cp, Math.sin(j.pitch), Math.cos(j.yaw) * cp]; };
+// where t is, seen from j's seat: az (to the right +), el (above +), d (how far), off (angle off the nose)
+function rel(j, t) {
+  const dx = t.x - j.x, dy = t.y - j.y, dz = t.z - j.z, d = Math.hypot(dx, dy, dz) || 1, cy = Math.cos(j.yaw), sy = Math.sin(j.yaw), cp = Math.cos(j.pitch), sp = Math.sin(j.pitch);
+  const lz = dx * sy * cp + dy * sp + dz * cy * cp, lx = dx * cy - dz * sy, ly = -dx * sy * sp + dy * cp - dz * cy * sp;
+  return { az: Math.atan2(lx, lz), el: Math.atan2(ly, Math.hypot(lx, lz)), d, off: Math.acos(clamp(lz / d, -1, 1)) };
+}
+
+function fly(j, dt) {
+  const sx = clamp(j.sx, -1, 1); let sy = clamp(j.sy, -1, 1);
+  const load = Math.min(1, Math.hypot(sx, sy)), rate = Math.min(PH.RATE_MAX, PH.K_TURN / j.v) * j.agil;
+  j.yaw = wrapA(j.yaw + sx * rate * dt);
+  j.pitch += sy * rate * 0.8 * dt;
+  if (Math.abs(sy) < 0.1) j.pitch -= j.pitch * Math.min(1, 0.7 * dt);                        // lets go of the climb or dive by itself
+  if (j.y < PH.FLOOR + 220 && j.pitch < 0.1) j.pitch += (PH.FLOOR + 220 - j.y) / 220 * 1.6 * dt;   // the cloud tops are the floor
+  if (j.y > PH.CEIL - 220 && j.pitch > -0.1) j.pitch -= (j.y - PH.CEIL + 220) / 220 * 1.6 * dt;     // and the air runs out above
+  j.pitch = clamp(j.pitch, -PH.PITCH_MAX, PH.PITCH_MAX);
+  const vm = PH.VMAX * (j.boost ? 1.3 : 1);                    // chasing from a long way back, the burners come on
+  j.v = clamp(j.v + (PH.ACC * (j.boost ? 1.9 : 1) * (1 - j.v / vm) - PH.DRAG * load * load * (j.v / 220) - 48 * Math.sin(j.pitch) - (j.brake || 0) * 75) * dt, PH.VMIN, vm * 1.1);
+  const cp = Math.cos(j.pitch);
+  j.x += Math.sin(j.yaw) * cp * j.v * dt; j.y += Math.sin(j.pitch) * j.v * dt; j.z += Math.cos(j.yaw) * cp * j.v * dt;
+  if (j.y < PH.FLOOR - 60) { j.y = PH.FLOOR - 60; if (j.pitch < 0) j.pitch = 0; }
+  if (j.y > PH.CEIL + 60) { j.y = PH.CEIL + 60; if (j.pitch > 0) j.pitch = 0; }
+  j.roll += (sx * 1.15 - j.roll) * Math.min(1, 6 * dt);
+  j.load = load; j.hard = load > 0.6 ? j.hard + dt : 0;
+}
+
+function spawnFoe(G) {
+  const me = G.me, c = G.cfg, r = G.rnd, i = G.idx, L = G.L;
+  let kind = 'ahead';                                           // sortie 1 he is in front of you; sortie 2 he starts behind you (the flare lesson); 3 in front again
+  if (L === 2 && i === 0) kind = 'six'; else if (L > 3) { const q = r(); kind = c.boss ? 'merge' : q < 0.36 ? 'ahead' : q < 0.72 ? 'merge' : 'six'; }
+  const side = r() < 0.5 ? -1 : 1, cy = Math.cos(me.yaw), sy = Math.sin(me.yaw);
+  let d = 560, lat = 130 * side, yaw = me.yaw + 0.15 * side, v = 215;
+  if (kind === 'merge') { d = 1500; lat = 170 * side; yaw = me.yaw + Math.PI; v = 250; }
+  else if (kind === 'six') { d = -700; lat = 60 * side; yaw = me.yaw; v = 265; }
+  const f = mkJet(me.x + sy * d + cy * lat, clamp(me.y + (kind === 'ahead' ? 30 : 120 * (r() - 0.5)), PH.FLOOR + 300, PH.CEIL - 300), me.z + cy * d - sy * lat, yaw, v);
+  f.look = foeLook(L, i); f.hp = f.hpMax = c.foeHp; f.flares = f.flareMax = c.foeFlares; f.shots = 1; f.cool = kind === 'six' ? (L <= 2 ? 1.6 : 0.6) : 2.2 + r() * 1.5;
+  f.rnd = rng(L * 31337 + i * 977 + 5); f.seenShot = null; f.seen = 0; f.brk = 1; f.tried = false; f.chasedT = 0; f.wv = 0; f.wvDir = side; f.wvLen = 1.6; f.wvUp = 0; f.brkT = 0; f.runT = kind === 'ahead' ? 0 : 9; f.spent = 0; f.spentDir = side; f.second = 0; f.kind = kind;
+  G.foe = f; G.evs.push({ k: 'spawn', kind });
+}
+function makeFight(L, o) {
+  o = o || {};
+  const G = { L, cfg: makeCfg(L, o.help), rnd: rng(L * 2654435 + (o.seed || 0) * 97 + 7), phase: 'fight', t: 0, idx: 0, kills: 0, me: mkJet(0, 1200, 0, 0, 250), foe: null,
+    shots: [], flares: [], evs: [], msgs: [], sid: 0, fuel: 0, next: 0, endT: 0, why: '', res: null, hitsTaken: 0, fired: 0, landed: 0, evaded: 0, foeFired: 0, flareRes: '', gunHits: 0,
+    in: { sx: 0, sy: 0, fire: false, press: false, flare: false }, threat: null, tti: 9, coach: 0 };
+  G.fuel = G.cfg.fuel; spawnFoe(G);
+  return G;
+}
+
+const ttiOf = (s, j) => Math.hypot(j.x - s.x, j.y - s.y, j.z - s.z) / Math.max(140, s.v - j.v * 0.55);
+function launch(G, a, b) {
+  const f = fwdOf(a), rx = Math.cos(a.yaw), rz = -Math.sin(a.yaw); a.shots--; a.side = -a.side; if (a === G.me) { a.rearm = a.rearm > 0 ? a.rearm : 3.6; G.fired++; } else G.foeFired++;
+  const s = { x: a.x + rx * 4.5 * a.side, y: a.y - 1.3, z: a.z + rz * 4.5 * a.side, d: f, v: a.v + 50, vmax: a === G.me ? PH.SHOT_V : G.cfg.foeShotV, age: 0, from: a, to: b, decoy: null, dead: false, dist: 0, id: ++G.sid };
+  G.shots.push(s); G.evs.push({ k: 'launch', a, s });
+}
+function shotStep(G, s, dt) {
+  s.age += dt; s.v = Math.min(s.vmax, s.v + 650 * dt);
+  const t = s.decoy || s.to, ax = t.x - s.x, ay = t.y - s.y, az = t.z - s.z, dist = Math.hypot(ax, ay, az) || 1, live = s.decoy || s.to.alive;
+  if (s.age > 0.12 && live) {                                    // it turns toward what it is chasing, as fast as it is allowed
+    const nx = ax / dist, ny = ay / dist, nz = az / dist, th = Math.acos(clamp(s.d[0] * nx + s.d[1] * ny + s.d[2] * nz, -1, 1)), mx = PH.SHOT_TURN * dt;
+    if (th <= mx || th < 1e-4) s.d = [nx, ny, nz];
+    else { const q = mx / th, sn = Math.sin(th), a = Math.sin((1 - q) * th) / sn, b = Math.sin(q * th) / sn; s.d = [s.d[0] * a + nx * b, s.d[1] * a + ny * b, s.d[2] * a + nz * b]; }
+  }
+  const mv = s.v * dt; s.x += s.d[0] * mv; s.y += s.d[1] * mv; s.z += s.d[2] * mv; s.dist = dist;
+  if (live && dist < PH.HIT_R + mv) {
+    s.dead = true;
+    if (s.decoy) G.evs.push({ k: 'pop', s });
+    else { G.evs.push({ k: 'hit', s }); if (s.from === G.me) G.landed++; else G.hitsTaken++; hurt(G, s.to, s.to === G.me ? G.cfg.dmgShot : 100, s.from, 'shot'); }
+  } else if (s.age > PH.SHOT_LIFE || s.y < 0) { s.dead = true; G.evs.push({ k: 'fizzle', s }); }
+}
+// A flare only pulls a missile off if it is dropped at the right moment, while turning hard. One rule for both pilots.
+function dropFlare(G, j) {
+  if (j.flares <= 0 || j.flareT > 0 || !j.alive) return false;
+  const me = j === G.me, c = G.cfg; j.flares--; j.flareT = me ? 1.0 : 1.7; j.dropped++;
+  const fl = { x: j.x, y: j.y - 2, z: j.z, vx: Math.sin(j.yaw) * j.v * 0.45, vy: -34, vz: Math.cos(j.yaw) * j.v * 0.45, age: 0, by: j };
+  G.flares.push(fl);
+  let res = 'none';
+  for (const s of G.shots) {
+    if (s.dead || s.decoy || s.to !== j) continue;
+    const tti = ttiOf(s, j);
+    if (tti > (me ? c.myHi : c.foeHi)) res = 'early'; else if (tti < (me ? c.myLo : 0.1)) res = 'late'; else if (j.hard < (me ? c.needHard : 0.15)) res = 'straight'; else { s.decoy = fl; res = 'ok'; }
+  }
+  if (me) { G.flareRes = res; if (res === 'ok') G.evaded++; }
+  G.evs.push({ k: 'flare', j, res, fl });
+  return true;
+}
+function hurt(G, j, dmg, by, kind) {
+  if (!j.alive) return;
+  j.hp -= dmg; j.hurtT = 0; if (kind === 'gun' && by === G.me) G.gunHits += dmg;
+  G.evs.push({ k: 'hurt', j, kind, dmg });
+  if (j.hp > 0) return;
+  j.hp = 0; j.alive = false; j.firing = j.gunOn = false; G.evs.push({ k: 'kill', j, kind });
+  if (j === G.me) { G.endT = 1.6; G.why = kind; }
+  else { G.kills++; if (G.idx + 1 < G.cfg.bandits) G.next = 2.6; else { G.endT = 1.9; G.why = 'win'; } }
+}
+function guns(G, a, b, dps, dt) {
+  if (a.gunHot) { a.heat -= dt / 1.6; if (a.heat <= 0.35) a.gunHot = false; }
+  if (!a.firing || a.gunHot || !a.alive) { if (!a.gunHot) a.heat = Math.max(0, a.heat - dt / 2.5); a.gunOn = false; return; }
+  a.gunOn = true; a.heat += dt / 2.4; if (a.heat >= 1) { a.gunHot = true; G.evs.push({ k: 'hot', a }); }
+  a.tracerT -= dt; if (a.tracerT <= 0) { a.tracerT = 0.07; G.evs.push({ k: 'tracer', a }); }
+  if (!b.alive) return;
+  const r = rel(a, b);
+  if (r.off < PH.GUN_A && r.d < PH.GUN_R) hurt(G, b, dps * (1 - 0.45 * r.d / PH.GUN_R) * dt, a, 'gun');
+}
+
+// the other pilot
+function ai(G, dt) {
+  const f = G.foe, me = G.me, c = G.cfg;
+  const r = rel(f, me), rb = rel(me, f); f.r = r; f.firing = false; f.cool -= dt;
+  const inb = G.shots.find(s => s.to === f && !s.dead && !s.decoy);
+  if (inb) {                                                     // something is coming for him: after his reaction time he breaks, and tries a flare
+    if (f.seenShot !== inb) { f.seenShot = inb; f.seen = 0; f.brk = rb.az > 0 ? 1 : -1; f.tried = false; }
+    f.seen += dt;
+    if (f.seen >= c.react) {
+      f.sx = f.brk; f.sy = f.y > 1500 ? -0.3 : 0.3;
+      if (!f.tried && f.flares > 0 && f.flareT <= 0 && f.hard >= 0.15 && ttiOf(inb, f) < c.foeHi) { f.tried = true; if (f.rnd() < c.flareSkill) dropFlare(G, f); }
+      return;
+    }
+  } else f.seenShot = null;
+  f.brake = 0;
+  if (f.spent > 0) { f.spent -= dt; f.agil = 0.75; f.sx = f.spentDir * 0.12; f.sy = 0; f.fast = true; return; }      // he has just fired: he flies on, watching it go. Your opening.
+  const chased = rb.off < 0.6 && rb.d < 1400 && r.off > 1.5;    // you are behind him, pointing at him
+  f.chasedT = chased ? f.chasedT + dt : Math.max(0, f.chasedT - dt * 2);
+  if (f.brkT > 0) {                                              // hauling round as hard as he can to make you fly past; then he comes for you
+    f.brkT -= dt; f.agil = 1.35; f.sx = f.wvDir; f.sy = 0.35; if (f.brkT <= 0) { f.chasedT = 0; f.runT = 9; } return;
+  }
+  if (chased && f.runT <= 0) {
+    f.agil = 1;
+    if (f.chasedT > c.breakAfter) { f.brkT = 2.4 + f.rnd() * 0.8; f.wvDir = rb.az > 0 ? 1 : -1; return; }
+    f.wv += dt;
+    if (f.wv > f.wvLen) { f.wv = 0; f.wvDir = -f.wvDir; f.wvLen = (1.1 + 1.7 * f.rnd()) * (1.6 - 0.7 * c.jink); f.wvUp = f.rnd() * 2 - 1; }
+    const amp = clamp(c.jink * (me.lock > 0.3 ? 1.25 : 1), 0, 1);  // he feels the lock coming and works harder
+    f.sx = f.wvDir * amp; f.sy = f.wvUp * 0.5 * c.jink;
+    return;
+  }
+  if (f.runT > 0) f.runT -= dt;
+  f.agil = f.runT > 0 ? 1.25 + 0.45 * c.aim : 1;                 // on an attack run he flies at his very best: he will get behind you unless you fly well
+  f.fast = f.runT > 0 && r.d > 600; f.brake = 0;
+  if (r.d < 520 && r.off < 0.9 && (f.v > me.v + 5 || r.d < 280)) f.brake = 1;      // close behind you he holds back, so he stays there instead of flying past
+  const au = f.runT > 0 ? 1 : c.aim; let sx = clamp(r.az * 2.4, -1, 1) * au, sy = clamp(r.el * 2.4, -1, 1) * au;      // he comes for you
+  if (r.d < 150 && r.off < 0.6) sx = sx >= 0 ? -1 : 1;           // too close: slide past instead of ramming
+  f.sx = sx; f.sy = sy;
+  if (c.gunDps > 0 && r.off < PH.GUN_A * 1.4 && r.d < PH.GUN_R * 0.9) f.firing = true;
+}
+
+function step(G, dt) {
+  if (G.phase !== 'fight') return;
+  const me = G.me, c = G.cfg, I = G.in; let f = G.foe;
+  G.t += dt;
+  if (me.alive) { me.sx = I.sx; me.sy = I.sy; } else { me.sx = 0.25; me.sy = -0.5; }
+  if (f.alive) ai(G, dt); else { f.sx = 0.4; f.sy = -0.7; }
+  const r0 = me.r || rel(me, f); me.boost = me.alive && f.alive && r0.d > 600 && r0.off < 0.7; f.boost = f.alive && me.alive && (f.fast || (!!f.r && f.r.d > 600 && f.r.off < 0.7)); f.fast = false;
+  fly(me, dt); fly(f, dt);
+  if (!me.alive) me.y -= 40 * dt; if (!f.alive) { f.y -= 55 * dt; f.roll += 2.2 * dt; }
+  // locks
+  const rm = rel(me, f); me.r = rm;
+  const ring = me.alive && f.alive && rm.off < PH.LOCK_A && rm.d < PH.LOCK_R, tail = !!f.r && f.r.off > PH.REAR;     // a lock only takes from behind him
+  const on = ring && tail, was = me.lock; me.front = ring && !tail;
+  me.onT = on; me.lock = clamp(me.lock + (on ? dt / PH.LOCK_T : -dt * 1.3), 0, 1);
+  if (me.lock >= 1 && was < 1) G.evs.push({ k: 'locked' });
+  const fon = c.foeShots && f.alive && me.alive && f.r && f.r.off < PH.FOE_A && f.r.d < PH.FOE_R && rm.off > PH.REAR && f.cool <= 0 && f.spent <= 0;     // and his only from behind you
+  f.onT = fon; f.lock = clamp(f.lock + (fon ? dt / c.foeLock : -dt * 0.8), 0, 1);
+  // triggers
+  if (I.press) { I.press = false; if (me.alive && me.lock >= 1 && me.shots > 0 && f.alive) { launch(G, me, f); me.lock = 0.45; } else if (me.alive && me.shots <= 0 && me.lock >= 1) G.evs.push({ k: 'empty' }); }
+  if (I.flare) { I.flare = false; if (me.alive && !dropFlare(G, me)) G.evs.push({ k: 'noflare' }); }
+  me.firing = I.fire && me.alive;
+  if (f.alive && f.lock >= 1 && f.shots > 0 && !G.shots.some(s => s.from === f && !s.dead)) { launch(G, f, me); f.shots = 1; f.cool = c.foeCool; f.lock = 0; f.spent = c.spent; f.spentDir = f.rnd() < 0.5 ? -1 : 1; f.runT = 0; f.chasedT = 0; f.second = f.rnd() < c.dbl ? 1.2 : 0; }
+  if (f.second > 0 && f.alive) { f.second -= dt; if (f.second <= 0 && me.alive && f.r && f.r.off < 0.6) launch(G, f, me), f.shots = 1; }
+  guns(G, me, f, PH.GUN_DPS, dt); guns(G, f, me, c.gunDps, dt);
+  for (const s of G.shots) if (!s.dead) shotStep(G, s, dt);
+  if (G.shots.length && G.shots[0].dead && G.shots.every(s => s.dead)) G.shots.length = 0;
+  for (const fl of G.flares) { fl.age += dt; fl.x += fl.vx * dt; fl.y += fl.vy * dt; fl.z += fl.vz * dt; fl.vx *= 1 - 1.4 * dt; fl.vz *= 1 - 1.4 * dt; fl.vy -= 30 * dt; }
+  if (G.flares.length && G.flares[0].age > 2.2) G.flares.shift();
+  // what comes back with time
+  for (const j of [me, f]) {
+    j.flareT -= dt; j.hurtT += dt;
+    if (j.flares < j.flareMax) { j.regen += dt; if (j.regen >= (j === me ? 7 : 8)) { j.regen = 0; j.flares++; } } else j.regen = 0;
+  }
+  if (me.shots < 2) { me.rearm -= dt; if (me.rearm <= 0) { me.shots++; me.rearm = me.shots < 2 ? 3.6 : 0; G.evs.push({ k: 'rearm' }); } }
+  // the missile coming for you, if there is one
+  const th = G.shots.find(s => s.to === me && !s.dead && !s.decoy); G.threat = th || null; G.tti = th ? ttiOf(th, me) : 9;
+  // the next bandit, the end of the sortie
+  if (G.next > 0) { G.next -= dt; if (G.next <= 0) { G.idx++; me.hp = Math.min(me.hpMax, me.hp + 25); me.shots = 2; me.rearm = 0; me.flares = me.flareMax; spawnFoe(G); } }
+  if (me.alive && f.alive) { G.fuel -= dt; if (G.fuel <= 0) { G.fuel = 0; G.endT = 0.01; G.why = 'fuel'; G.evs.push({ k: 'fuel' }); } }
+  if (G.endT > 0) { G.endT -= dt; if (G.endT <= 0) finish(G, G.why === 'win'); }
+}
+
+// ---------- part 3: the view. A camera just behind your jet, a sky, a floor of cloud, two jets, smoke and fire ----------
+const SUN = (() => { const v = [-0.55, 0.34, 0.76], l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; })();
+const HAZE = '#d6e7f4';
+const CAM = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0, F: 370, cx: 195, cy: 370, cyw: 1, syw: 0, cp: 1, sp: 0, cr: 1, sr: 0, orbit: 0 };
+const CAMM = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, roll: 0, F: 120, cx: 0, cy: 0, cyw: 1, syw: 0, cp: 1, sp: 0, cr: 1, sr: 0 };
+let CC = CAM;                                 // the camera being drawn through
+function camSet(c) { c.cyw = Math.cos(c.yaw); c.syw = Math.sin(c.yaw); c.cp = Math.cos(c.pitch); c.sp = Math.sin(c.pitch); c.cr = Math.cos(c.roll); c.sr = Math.sin(c.roll); }
+let PX = 0, PY = 0, PZ = 0;
+function P3(x, y, z) {                        // a place in the sky -> a place on the screen (false if it is behind the camera)
+  const c = CC, dx = x - c.x, dy = y - c.y, dz = z - c.z;
+  const X = dx * c.cyw - dz * c.syw, Z = dx * c.syw * c.cp + dy * c.sp + dz * c.cyw * c.cp, Y = -dx * c.syw * c.sp + dy * c.cp - dz * c.cyw * c.sp;
+  PZ = Z; if (Z < 1) return false;
+  const q = c.F / Z; PX = c.cx + (X * c.cr - Y * c.sr) * q; PY = c.cy - (X * c.sr + Y * c.cr) * q; return true;
+}
+const FX = { shake: 0, kx: 0, ky: 0, flash: 0, red: 0, gold: 0, stop: 0, slow: 0 };
+
+// ----- pictures made once: the cloud floor, cloud heaps, soft blobs for smoke, fire and glare -----
+let TEX = null;
+const TW = 2600;                              // one tile of cloud floor is this many metres across
+function soft(size, stops) { const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'), gr = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2); for (const [o, col] of stops) gr.addColorStop(o, col); g.fillStyle = gr; g.fillRect(0, 0, size, size); return c; }
+function makeTex() {
+  const S = 256, r = rng(4242), g = new Float32Array(S * S);
+  for (const [n, amp] of [[4, 1], [8, 0.55], [16, 0.3], [32, 0.16], [64, 0.08]]) {       // noise that joins up at the edges, in five sizes
+    const grid = new Float32Array(n * n); for (let i = 0; i < n * n; i++) grid[i] = r();
+    const cell = S / n;
+    for (let y = 0; y < S; y++) {
+      const gy = y / cell, y0 = Math.floor(gy), fy = gy - y0, sy = fy * fy * (3 - 2 * fy), ya = (y0 % n) * n, yb = ((y0 + 1) % n) * n;
+      for (let x = 0; x < S; x++) { const gx = x / cell, x0 = Math.floor(gx), fx = gx - x0, sx = fx * fx * (3 - 2 * fx), xa = x0 % n, xb = (x0 + 1) % n; g[y * S + x] += amp * ((grid[ya + xa] * (1 - sx) + grid[ya + xb] * sx) * (1 - sy) + (grid[yb + xa] * (1 - sx) + grid[yb + xb] * sx) * sy); }
+    }
+  }
+  let mn = 9, mx = -9; for (const v of g) { if (v < mn) mn = v; if (v > mx) mx = v; }
+  const c0 = document.createElement('canvas'); c0.width = c0.height = S; const x0 = c0.getContext('2d'), im = x0.createImageData(S, S), d = im.data;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const i = y * S + x, h = (g[i] - mn) / (mx - mn), hs = (g[((y + 3) % S) * S + (x + S - 3) % S] - mn) / (mx - mn);    // the height a little way toward the sun
+    const lit = clamp(0.6 + (h - hs) * 6, 0, 1), deep = clamp((0.45 - h) / 0.2, 0, 1) * 0.6;       // slopes that face the sun are bright; hollows are blue
+    d[i * 4] = (148 + 107 * lit) * (1 - deep) + 62 * deep; d[i * 4 + 1] = (168 + 87 * lit) * (1 - deep) + 98 * deep; d[i * 4 + 2] = (204 + 51 * lit) * (1 - deep) + 152 * deep; d[i * 4 + 3] = 255;
+  }
+  x0.putImageData(im, 0, 0);
+  const lv = [c0];
+  for (const s of [64, 16]) { const c = document.createElement('canvas'); c.width = c.height = s; const q = c.getContext('2d'); q.imageSmoothingQuality = 'high'; q.drawImage(lv[lv.length - 1], 0, 0, s, s); lv.push(c); }
+  const heaps = [];
+  for (let v = 0; v < 3; v++) {                // heaps of cloud that stand up out of the floor
+    const c = document.createElement('canvas'); c.width = 192; c.height = 128; const q = c.getContext('2d'), rr = rng(77 + v * 13);
+    for (let i = 0; i < 16; i++) {
+      const bx = 34 + rr() * 124, by = 62 + rr() * 34 - Math.sin((bx - 34) / 124 * Math.PI) * 26, br = 20 + rr() * 26, gr = q.createRadialGradient(bx - br * 0.25, by - br * 0.3, br * 0.1, bx, by, br);
+      gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(0.6, 'rgba(226,236,247,.75)'); gr.addColorStop(1, 'rgba(190,206,228,0)'); q.fillStyle = gr; q.beginPath(); q.arc(bx, by, br, 0, TAU); q.fill();
+    }
+    const fade = q.createLinearGradient(0, 84, 0, 128); fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, 'rgba(0,0,0,1)'); q.globalCompositeOperation = 'destination-out'; q.fillStyle = fade; q.fillRect(0, 84, 192, 44);
+    heaps.push(c);
+  }
+  TEX = {
+    lv, pat: lv.map(c => ctx.createPattern(c, 'repeat')), mpt: [TW / 256, TW / 64, TW / 16], heaps,
+    smoke: soft(64, [[0, 'rgba(255,255,255,.9)'], [0.45, 'rgba(250,252,255,.45)'], [1, 'rgba(240,246,255,0)']]),
+    dark: soft(64, [[0, 'rgba(52,50,52,.9)'], [0.5, 'rgba(70,68,72,.45)'], [1, 'rgba(90,90,96,0)']]),
+    fire: soft(64, [[0, 'rgba(255,246,200,1)'], [0.3, 'rgba(255,180,60,.85)'], [0.7, 'rgba(230,80,20,.35)'], [1, 'rgba(160,30,10,0)']]),
+    hot: soft(64, [[0, 'rgba(255,255,255,1)'], [0.2, 'rgba(255,244,210,.95)'], [0.5, 'rgba(255,190,90,.4)'], [1, 'rgba(255,140,40,0)']]),
+    burn: soft(64, [[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(190,225,255,.9)'], [0.6, 'rgba(90,150,255,.35)'], [1, 'rgba(60,110,255,0)']]),
+    sun: soft(256, [[0, 'rgba(255,255,255,1)'], [0.06, 'rgba(255,252,236,1)'], [0.12, 'rgba(255,240,200,.55)'], [0.4, 'rgba(255,230,180,.16)'], [1, 'rgba(255,225,170,0)']])
+  };
+}
+
+// ----- the jets: built from flat pieces, turned and lit, far pieces drawn first -----
+function loft(m, st, n, col, half) {          // a body: rings of points joined into panels. st = [z, half width, half height, centre height]
+  const base = m.V.length, cnt = half ? n + 1 : n;
+  for (const s of st) for (let j = 0; j < cnt; j++) { const a = half ? j / n * Math.PI : (j + 0.5) / n * TAU; m.V.push([s[1] * Math.cos(a), s[3] + s[2] * Math.sin(a), s[0]]); }
+  for (let i = 0; i < st.length - 1; i++) for (let j = 0; j < (half ? n : cnt); j++) {
+    const a = base + i * cnt + j, b = base + i * cnt + (j + 1) % cnt, c = base + (i + 1) * cnt + (j + 1) % cnt, d = base + (i + 1) * cnt + j;
+    face(m, [a, d, c, b], typeof col === 'function' ? col(i, j) : col, { cull: true, mid: [0, (st[i][3] + st[i + 1][3]) / 2, (st[i][0] + st[i + 1][0]) / 2] });
+  }
+  if (!half) { const idx = []; for (let j = 0; j < cnt; j++) idx.push(base + (st.length - 1) * cnt + j); face(m, idx, [40, 42, 48], { cull: true, mid: [0, st[st.length - 1][3], st[st.length - 1][0] + 1] }); }
+}
+function face(m, idx, col, o) {
+  const A = m.V[idx[0]], B = m.V[idx[1]], Cc = m.V[idx[2]];
+  let nx = (B[1] - A[1]) * (Cc[2] - A[2]) - (B[2] - A[2]) * (Cc[1] - A[1]), ny = (B[2] - A[2]) * (Cc[0] - A[0]) - (B[0] - A[0]) * (Cc[2] - A[2]), nz = (B[0] - A[0]) * (Cc[1] - A[1]) - (B[1] - A[1]) * (Cc[0] - A[0]);
+  const l = Math.hypot(nx, ny, nz) || 1; nx /= l; ny /= l; nz /= l;
+  if (o && o.mid) { let cx = 0, cy = 0, cz = 0; for (const i of idx) { cx += m.V[i][0]; cy += m.V[i][1]; cz += m.V[i][2]; } cx /= idx.length; cy /= idx.length; cz /= idx.length; if ((cx - o.mid[0]) * nx + (cy - o.mid[1]) * ny + (cz - o.mid[2]) * nz < 0) { idx = idx.slice().reverse(); nx = -nx; ny = -ny; nz = -nz; } }
+  m.F.push({ v: idx, col, n: [nx, ny, nz], cull: !!(o && o.cull), col2: o && o.col2, glass: o && o.glass });
+}
+function plate(m, pts, col, col2, both) {     // a thin flat piece (wing, fin). both: make its mirror image on the other side too
+  const add = ps => { const idx = ps.map(p => m.V.push(p) - 1); face(m, idx, col, { col2: col2 || col }); };
+  add(pts); if (both) add(pts.map(p => [-p[0], p[1], p[2]]).reverse());
+}
+const hexc = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+function buildJet(frame, c1, c2, trim, hero) {
+  const m = { V: [], F: [], noz: [], tips: [], len: 19.2 }, A = hexc(c1), B = hexc(c2), T = hexc(trim), GL = hero ? [176, 138, 62] : [34, 44, 60], DK = [58, 62, 70];
+  const body = (i, j) => i === 0 ? (hero ? DK : T) : (j >= 4 ? B : A);     // nose cone in its own colour, a darker belly
+  loft(m, [[9.6, 0.05, 0.05, 0], [8.1, 0.44, 0.38, 0.02], [6.2, 0.8, 0.66, 0.1], [3.8, 1.14, 0.86, 0.16], [0.4, 1.5, 0.9, 0.1], [-4.2, 1.56, 0.84, 0.04], [-7.4, 1.36, 0.7, 0], [-8.4, 1.16, 0.6, 0]], 8, body);
+  const cs = [[7.0, 0.04, 0.04, 0.6], [6.0, 0.4, 0.38, 0.8], [4.6, 0.47, 0.46, 0.92], [3.2, 0.38, 0.32, 0.92], [2.1, 0.08, 0.06, 0.88]], b0 = m.F.length;
+  loft(m, cs, 4, GL, true); for (let i = b0; i < m.F.length; i++) m.F[i].glass = 1;
+  if (frame === 'twin') {
+    plate(m, [[1.45, 0.05, 2.7], [6.7, -0.06, -2.3], [6.7, -0.06, -4.3], [1.45, 0.05, -5.5]], A, B, true);
+    plate(m, [[1.3, 0, -6.2], [4.2, 0, -8.6], [4.2, 0, -9.7], [1.3, 0, -9.1]], A, B, true);
+    plate(m, [[1.25, 0.7, -4.5], [1.25, 0.7, -8.4], [2.15, 2.65, -8.82], [2.15, 2.65, -6.6]], A, A, true);
+    plate(m, [[2.15, 2.65, -6.6], [2.15, 2.65, -8.82], [2.55, 3.5, -9.0], [2.55, 3.5, -7.4]], T, T, true);
+    m.noz = [[-0.74, 0, -8.5], [0.74, 0, -8.5]]; m.tips = [[-6.7, -0.06, -3.4], [6.7, -0.06, -3.4]];
+  } else if (frame === 'delta') {
+    plate(m, [[1.4, 0, 3.4], [7.0, 0, -6.6], [7.0, 0, -7.4], [1.4, 0, -7.7]], A, B, true);
+    plate(m, [[1.0, 0.32, 6.3], [3.3, 0.32, 4.7], [3.3, 0.32, 4.0], [1.0, 0.32, 4.4]], B, B, true);
+    plate(m, [[0, 0.8, -3.0], [0, 0.8, -8.3], [0, 3.1, -8.8], [0, 3.1, -6.4]], A, A, false);
+    plate(m, [[0, 3.1, -6.4], [0, 3.1, -8.8], [0, 4.3, -9.1], [0, 4.3, -7.7]], T, T, false);
+    m.noz = [[-0.74, 0, -8.5], [0.74, 0, -8.5]]; m.tips = [[-7.0, 0, -7.0], [7.0, 0, -7.0]];
+  } else {
+    plate(m, [[1.4, 0, 2.2], [7.5, 0, -4.9], [7.5, 0, -6.3], [1.4, 0, -3.8]], A, B, true);
+    plate(m, [[1.2, 0, -6.4], [4.1, 0, -9.2], [4.1, 0, -10.0], [1.2, 0, -8.7]], A, B, true);
+    plate(m, [[0, 0.8, -3.8], [0, 0.8, -8.4], [0, 3.4, -9.2], [0, 3.4, -7.2]], A, A, false);
+    plate(m, [[0, 3.4, -7.2], [0, 3.4, -9.2], [0, 4.7, -9.7], [0, 4.7, -8.3]], T, T, false);
+    m.noz = [[0, 0, -8.5]]; m.tips = [[-7.5, 0, -5.6], [7.5, 0, -5.6]];
+  }
+  for (const nz of m.noz) { const b0 = m.V.length; loft(m, [[-8.3, 0.66, 0.66, nz[1]], [-9.5, 0.56, 0.56, nz[1]]], 8, [46, 48, 54]); for (let i = b0; i < m.V.length; i++) m.V[i][0] += nz[0]; }
+  return m;
+}
+const MODELS = {};
+function modelFor(look) { const key = look.frame + look.paint[0] + look.trim; return MODELS[key] || (MODELS[key] = buildJet(look.frame, look.paint[0], look.paint[1], look.trim, false)); }
+let HERO = null;
+const SXv = new Float32Array(400), SYv = new Float32Array(400), SZv = new Float32Array(400), WX = new Float32Array(400), WY = new Float32Array(400), WZ = new Float32Array(400);
+function jetAxes(j) {
+  const cy = Math.cos(j.yaw), sy = Math.sin(j.yaw), cp = Math.cos(j.pitch), sp = Math.sin(j.pitch), cr = Math.cos(j.roll), sr = Math.sin(j.roll);
+  // model x (right wing): rolled (right wing down for a right bank), pitched, then turned to the heading
+  const rx = cr, ry = -sr, rz = 0, ux = sr, uy = cr, uz = 0;                 // after the roll: right = (cr, -sr, 0), up = (sr, cr, 0), forward = (0, 0, 1)
+  const pit = (x, y, z) => [x, y * cp + z * sp, -y * sp + z * cp], yw = v => [v[0] * cy + v[2] * sy, v[1], -v[0] * sy + v[2] * cy];
+  return [yw(pit(rx, ry, rz)), yw(pit(ux, uy, uz)), yw(pit(0, 0, 1))];
+}
+function drawModel(m, j, sc, alpha) {
+  const [R, U, Fw] = jetAxes(j), n = m.V.length, c = CC;
+  for (let i = 0; i < n; i++) {
+    const v = m.V[i], wx = j.x + (v[0] * R[0] + v[1] * U[0] + v[2] * Fw[0]) * sc, wy = j.y + (v[0] * R[1] + v[1] * U[1] + v[2] * Fw[1]) * sc, wz = j.z + (v[0] * R[2] + v[1] * U[2] + v[2] * Fw[2]) * sc;
+    WX[i] = wx; WY[i] = wy; WZ[i] = wz;
+    if (P3(wx, wy, wz)) { SXv[i] = PX; SYv[i] = PY; SZv[i] = PZ; } else SZv[i] = -1;
+  }
+  const vis = [];
+  for (const f of m.F) {
+    let z = 0, ok = true, cx = 0, cy = 0, cz = 0; for (const i of f.v) { if (SZv[i] < 0) { ok = false; break; } z += SZv[i]; cx += WX[i]; cy += WY[i]; cz += WZ[i]; }
+    if (!ok) continue;
+    const k = f.v.length; cx /= k; cy /= k; cz /= k;
+    let nx = f.n[0] * R[0] + f.n[1] * U[0] + f.n[2] * Fw[0], ny = f.n[0] * R[1] + f.n[1] * U[1] + f.n[2] * Fw[1], nz = f.n[0] * R[2] + f.n[1] * U[2] + f.n[2] * Fw[2];
+    const toCam = (c.x - cx) * nx + (c.y - cy) * ny + (c.z - cz) * nz; let col = f.col;
+    if (toCam < 0) { if (f.cull) continue; nx = -nx; ny = -ny; nz = -nz; col = f.col2 || col; }
+    let li = 0.5 + 0.5 * Math.max(0, nx * SUN[0] + ny * SUN[1] + nz * SUN[2]) + 0.1 * Math.max(0, ny);
+    if (f.glass) li += 0.5 * Math.pow(Math.max(0, nx * SUN[0] + ny * SUN[1] + nz * SUN[2]), 6);
+    vis.push({ z: z / k, f, s: `rgb(${Math.min(255, col[0] * li) | 0},${Math.min(255, col[1] * li) | 0},${Math.min(255, col[2] * li) | 0})` });
+  }
+  vis.sort((a, b) => b.z - a.z);
+  if (alpha != null) ctx.globalAlpha = alpha;
+  ctx.lineWidth = 0.7; ctx.lineJoin = 'round';
+  for (const q of vis) {
+    const v = q.f.v; ctx.beginPath(); ctx.moveTo(SXv[v[0]], SYv[v[0]]); for (let i = 1; i < v.length; i++) ctx.lineTo(SXv[v[i]], SYv[v[i]]); ctx.closePath();
+    ctx.fillStyle = q.s; ctx.fill(); ctx.strokeStyle = q.s; ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+function partPos(j, p, sc) { const [R, U, Fw] = jetAxes(j); return [j.x + (p[0] * R[0] + p[1] * U[0] + p[2] * Fw[0]) * sc, j.y + (p[0] * R[1] + p[1] * U[1] + p[2] * Fw[1]) * sc, j.z + (p[0] * R[2] + p[1] * U[2] + p[2] * Fw[2]) * sc]; }
+
+// ----- smoke, fire, sparks -----
+const PT = [];
+function puff(x, y, z, vx, vy, vz, life, s0, s1, kind, a) { if (PT.length > 560) PT.splice(0, 40); PT.push({ x, y, z, vx, vy, vz, age: 0, life, s0, s1, kind, a: a == null ? 1 : a }); }
+function burst(x, y, z, big) {
+  const n = big ? 1 : 0.5;
+  puff(x, y, z, 0, 0, 0, 0.2, 30 * n, 70 * n, 3, 1);
+  for (let i = 0; i < 14 * n; i++) { const a = Math.random() * TAU, e = Math.random() * 2 - 1, v = 14 + Math.random() * 42; puff(x, y, z, Math.cos(a) * v, e * v, Math.sin(a) * v, 0.45 + Math.random() * 0.5, 7 * n, 26 * n, 2, 0.95); }
+  for (let i = 0; i < 16 * n; i++) { const a = Math.random() * TAU, e = Math.random() * 2 - 1, v = 6 + Math.random() * 22; puff(x, y, z, Math.cos(a) * v, e * v + 4, Math.sin(a) * v, 1.3 + Math.random() * 1.4, 9 * n, 42 * n, 1, 0.8); }
+  if (big) for (let i = 0; i < 12; i++) { const a = Math.random() * TAU, e = Math.random() * 1.6 - 0.6, v = 60 + Math.random() * 110; puff(x, y, z, Math.cos(a) * v, e * v, Math.sin(a) * v, 0.8 + Math.random() * 0.9, 1.2, 0.6, 4, 1); }
+}
+const SC_ME = 1, SC_FOE = 2.3;      // he is drawn bigger than life, so a jet half a kilometre off still reads as a jet
+function visuals(G, dt, rdt) {                // what trails behind things, frame by frame (never changes the fight)
+  const me = G.me, f = G.foe;
+  for (const p of PT) { p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; const dr = p.kind === 4 ? 0.4 : 2.2; p.vx *= 1 - dr * dt; p.vz *= 1 - dr * dt; p.vy = p.kind === 4 ? p.vy - 60 * dt : p.vy * (1 - dr * dt); }
+  for (let i = PT.length - 1; i >= 0; i--) if (PT[i].age >= PT[i].life) PT.splice(i, 1);
+  if (dt <= 0) return;
+  for (const s of G.shots) if (!s.dead) puff(s.x - s.d[0] * 4, s.y - s.d[1] * 4, s.z - s.d[2] * 4, (Math.random() - 0.5) * 3, 1.5, (Math.random() - 0.5) * 3, 1.5, 1.6, 7.5, 0, 0.6);
+  for (const fl of G.flares) if (fl.age < 1.9 && Math.random() < 0.6) puff(fl.x, fl.y, fl.z, 0, 3, 0, 0.9, 1, 4.5, 0, 0.35);
+  for (const [j, m, sc] of [[me, HERO, SC_ME], [f, f.look ? modelFor(f.look) : HERO, SC_FOE]]) {
+    if (!j || !m) continue;
+    if (j.alive && j.load > 0.62) for (const t of m.tips) { const p = partPos(j, t, sc); puff(p[0], p[1], p[2], 0, 0, 0, 0.42, 0.5, 1.5, 5, 0.5 * (j.load - 0.4)); }
+    const hurtN = j.alive ? (j.hp < j.hpMax * 0.35 ? 0.9 : j.hp < j.hpMax * 0.7 ? 0.4 : 0) : 1;
+    if (hurtN > 0 && Math.random() < hurtN) { const p = partPos(j, [0.6, 0.2, -7], sc); puff(p[0], p[1], p[2], (Math.random() - 0.5) * 6, 2, (Math.random() - 0.5) * 6, 1.4, 2.5, 10 + 8 * hurtN, 1, 0.55); }
+    if (!j.alive && j.y > 30) { const p = partPos(j, [0, 0, -4], sc); puff(p[0], p[1], p[2], (Math.random() - 0.5) * 8, 4, (Math.random() - 0.5) * 8, 0.5, 5, 13, 2, 0.9); }
+  }
+}
+
+// ----- the camera -----
+function camFollow(G, rdt, snap) {
+  const me = G.me, t = snap ? 1 : Math.min(1, 6 * rdt);
+  if (G.phase === 'home') CAM.orbit = 0.75 * Math.sin(performance.now() / 5200); else CAM.orbit += (0 - CAM.orbit) * Math.min(1, 3 * rdt);
+  CAM.yaw = wrapA(CAM.yaw + wrapA(me.yaw + CAM.orbit - CAM.yaw) * t); CAM.pitch += (me.pitch * 0.9 - CAM.pitch) * t; CAM.roll += (me.roll * 0.5 - CAM.roll) * (snap ? 1 : Math.min(1, 4.5 * rdt));
+  const cp = Math.cos(CAM.pitch), back = 34, up = 11;
+  CAM.x = me.x - Math.sin(CAM.yaw) * cp * back; CAM.y = me.y - Math.sin(CAM.pitch) * back + up; CAM.z = me.z - Math.cos(CAM.yaw) * cp * back;
+  FX.shake = Math.max(0, FX.shake - rdt * 26); FX.kx *= Math.pow(0.0008, rdt); FX.ky *= Math.pow(0.0008, rdt);
+  CAM.F = Math.min(W, H * 0.62) * 0.95; CAM.cx = W / 2 + FX.kx + (Math.random() - 0.5) * FX.shake; CAM.cy = H * 0.44 + FX.ky + (Math.random() - 0.5) * FX.shake; camSet(CAM);
+}
+
+// ----- sky and cloud floor, drawn with the horizon level and then turned by the bank -----
+function drawSky(c, rad, floorTex) {
+  ctx.save(); ctx.translate(c.cx, c.cy); ctx.rotate(-c.roll);
+  const F = c.F, yh = F * Math.tan(c.pitch), sky = ctx.createLinearGradient(0, yh, 0, yh - F * 1.5);
+  sky.addColorStop(0, '#cfe4f5'); sky.addColorStop(0.1, '#a9cdee'); sky.addColorStop(0.36, '#5f9be0'); sky.addColorStop(0.7, '#2a66bd'); sky.addColorStop(1, '#123f8c');
+  ctx.fillStyle = sky; ctx.fillRect(-rad, -rad, rad * 2, rad + yh + 1);
+  ctx.fillStyle = HAZE; ctx.fillRect(-rad, yh, rad * 2, rad - yh + 1);
+  const h = Math.max(40, c.y);
+  if (floorTex && TEX) {
+    const rx = c.cyw, rz = -c.syw, fx = c.syw, fz = c.cyw, tp = Math.tan(c.pitch);
+    let y = yh + 1.2;
+    while (y < rad) {
+      const a = Math.atan(y / F) - c.pitch, stepY = clamp((y - yh) * 0.05 * QUAL, 1.2 * QUAL, 5 * QUAL);
+      if (a > 0.004) {
+        const D = h / Math.tan(a), Z = D * c.cp - h * c.sp;
+        if (Z > 1 && D < 60000) {
+          const s = Z / F, ca = Math.cos(c.pitch + a), g = F * h / ((D * D + h * h) * ca * ca), lv = s > TEX.mpt[1] * 0.9 ? 2 : s > TEX.mpt[0] * 1.6 ? 1 : 0, mpt = TEX.mpt[lv];
+          const X0 = ((c.x + fx * D) % TW + TW) % TW, Z0 = ((c.z + fz * D) % TW + TW) % TW, p = TEX.pat[lv];
+          p.setTransform(new DOMMatrix([mpt * rx / s, -mpt * fx * g, mpt * rz / s, -mpt * fz * g, -(X0 * rx + Z0 * rz) / s, y + (X0 * fx + Z0 * fz) * g]));
+          ctx.fillStyle = p; ctx.fillRect(-rad, y, rad * 2, stepY + 0.7);
+        }
+      }
+      y += stepY;
+    }
+  } else { const fl = ctx.createLinearGradient(0, yh, 0, yh + F); fl.addColorStop(0, HAZE); fl.addColorStop(1, '#b9cfe6'); ctx.fillStyle = fl; ctx.fillRect(-rad, yh, rad * 2, rad - yh + 1); }
+  const hz = ctx.createLinearGradient(0, yh, 0, yh + F * 0.42); hz.addColorStop(0, 'rgba(214,231,244,1)'); hz.addColorStop(0.25, 'rgba(214,231,244,.72)'); hz.addColorStop(1, 'rgba(214,231,244,0)');
+  ctx.fillStyle = hz; ctx.fillRect(-rad, yh - 1, rad * 2, F * 0.42 + 1);
+  ctx.restore();
+}
+
+let QUAL = 1;                                 // 1 = finest cloud floor; a phone that cannot keep up gets a coarser one (see frame())
+const ITEMS = [];
+function drawParticle(p) {
+  const t = p.age / p.life, s = (p.s0 + (p.s1 - p.s0) * t) * CC.F / PZ; if (s < 0.4) return;
+  const a = p.a * Math.pow(1 - t, 1.3) * clamp((PZ - 12) / 60, 0, 1); if (a < 0.01) return;      // anything right in front of the camera fades, so it never hides the fight
+  if (p.kind === 4) { const x1 = PX, y1 = PY; if (!P3(p.x - p.vx * 0.035, p.y - p.vy * 0.035, p.z - p.vz * 0.035)) return; ctx.globalAlpha = a; ctx.strokeStyle = '#ffe9a8'; ctx.lineWidth = Math.max(1, s); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(PX, PY); ctx.stroke(); ctx.globalAlpha = 1; return; }
+  const img = p.kind === 0 || p.kind === 5 ? TEX.smoke : p.kind === 1 ? TEX.dark : p.kind === 2 ? TEX.fire : TEX.hot, add = p.kind === 2 || p.kind === 3;
+  if (add) ctx.globalCompositeOperation = 'lighter';
+  ctx.globalAlpha = a; ctx.drawImage(img, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1;
+  if (add) ctx.globalCompositeOperation = 'source-over';
+}
+function glow(img, x, y, z, size, a) { if (!P3(x, y, z)) return; const s = size * CC.F / PZ; if (s < 0.5) return; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a; ctx.drawImage(img, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+function drawJetItem(j, m, sc, now) {
+  drawModel(m, j, sc);
+  if (j.alive) for (const nz of m.noz) {       // the engines: a blue-white burn that stretches when it is working hard
+    const thr = 0.55 + 0.45 * clamp((j.v - 150) / 150, 0, 1), fl = 0.85 + 0.15 * Math.sin(now * 61 + nz[0] * 9);
+    for (let q = 0; q < 3; q++) { const p = partPos(j, [nz[0], nz[1], -9.3 - q * 1.5 * thr], sc); glow(q === 0 ? TEX.hot : TEX.burn, p[0], p[1], p[2], (1.25 - q * 0.3) * sc * fl, (0.9 - q * 0.25) * thr); }
+  }
+}
+function collect(G, mirror) {
+  ITEMS.length = 0;
+  const me = G.me, f = G.foe;
+  if (!mirror && TEX) {                        // heaps of cloud standing on the floor, on a grid that goes on for ever
+    const cell = 950, n = 5, cx0 = Math.floor(CC.x / cell), cz0 = Math.floor(CC.z / cell);
+    for (let ix = -n; ix <= n; ix++) for (let iz = -n; iz <= n; iz++) {
+      const gx = cx0 + ix, gz = cz0 + iz, hsh = Math.abs(Math.sin(gx * 127.1 + gz * 311.7) * 43758.5453) % 1; if (hsh > 0.42) continue;
+      const hx = (gx + 0.2 + 0.6 * ((hsh * 7.13) % 1)) * cell, hz = (gz + 0.2 + 0.6 * ((hsh * 13.7) % 1)) * cell, w = 300 + 380 * ((hsh * 3.3) % 1);
+      if (!P3(hx, w * 0.2, hz)) continue;
+      const d = PZ, far = clamp((n * cell - 300 - Math.hypot(hx - CC.x, hz - CC.z)) / 900, 0, 1), near = clamp((d - 120) / 300, 0, 1); if (far * near < 0.02) continue;
+      ITEMS.push({ z: d, k: 0, x: PX, y: PY, w: w * CC.F / d, a: far * near * 0.92, v: Math.floor(hsh * 30) % 3 });
+    }
+  }
+  for (const p of PT) if (P3(p.x, p.y, p.z)) ITEMS.push({ z: PZ, k: 1, p, x: PX, y: PY });
+  if (!mirror && P3(me.x, me.y, me.z)) ITEMS.push({ z: PZ, k: 2, j: me, m: HERO, sc: SC_ME });
+  if (f && f.look && (f.alive || f.y > 0) && P3(f.x, f.y, f.z)) ITEMS.push({ z: PZ, k: 2, j: f, m: modelFor(f.look), sc: mirror ? SC_FOE * 1.5 : SC_FOE });
+  for (const s of G.shots) if (!s.dead && P3(s.x, s.y, s.z)) ITEMS.push({ z: PZ - 2, k: 3, s });
+  for (const fl of G.flares) if (fl.age < 2 && P3(fl.x, fl.y, fl.z)) ITEMS.push({ z: PZ - 1, k: 4, fl });
+  ITEMS.sort((a, b) => b.z - a.z);
+}
+function drawItems(now, mirror) {
+  for (const it of ITEMS) {
+    if (it.k === 0) { const img = TEX.heaps[it.v], w = it.w, hh = w * 0.67; ctx.globalAlpha = it.a; ctx.drawImage(img, it.x - w / 2, it.y - hh * 0.72, w, hh); ctx.globalAlpha = 1; }
+    else if (it.k === 1) { PX = it.x; PY = it.y; PZ = it.z; drawParticle(it.p); }
+    else if (it.k === 2) drawJetItem(it.j, it.m, it.sc, now);
+    else if (it.k === 3) { const s = it.s; glow(TEX.hot, s.x, s.y, s.z, mirror ? 9 : 3.2, 1); glow(TEX.fire, s.x - s.d[0] * 5, s.y - s.d[1] * 5, s.z - s.d[2] * 5, mirror ? 7 : 2.6, 0.8); }
+    else { const fl = it.fl, q = 1 - fl.age / 2, fk = 0.75 + 0.25 * Math.sin(now * 70 + fl.x); glow(TEX.hot, fl.x, fl.y, fl.z, (mirror ? 10 : 5) * fk * (0.5 + 0.5 * q), Math.min(1, q * 1.6)); glow(TEX.fire, fl.x, fl.y, fl.z, (mirror ? 20 : 11) * fk * q, 0.55 * q); }
+  }
+}
+function drawWorld(G, now) {
+  if (!TEX) makeTex();
+  CC = CAM; const rad = Math.hypot(W, H) * 0.62 + 30;
+  drawSky(CAM, rad, true);
+  if (P3(CAM.x + SUN[0] * 1e5, CAM.y + SUN[1] * 1e5, CAM.z + SUN[2] * 1e5)) { const s = CAM.F * 0.62; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.85; ctx.drawImage(TEX.sun, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  collect(G, false); drawItems(now, false);
+}
+// the mirror: what is behind you, left and right the way a mirror shows them
+function drawMirror(G, now, x, y, w, h, hot) {
+  const me = G.me;
+  CAMM.x = me.x; CAMM.y = me.y + 2.5; CAMM.z = me.z; CAMM.yaw = me.yaw + Math.PI; CAMM.pitch = -me.pitch * 0.7 - 0.03; CAMM.roll = 0; CAMM.F = w * 1.2; CAMM.cx = w / 2; CAMM.cy = h * 0.5; camSet(CAMM);
+  ctx.save(); rrect(x, y, w, h, 12 * k); ctx.clip(); ctx.translate(x + w, y); ctx.scale(-1, 1);
+  CC = CAMM; drawSky(CAMM, w, false); collect(G, true); drawItems(now, true);
+  const th = G.threat; if (th && P3(th.x, th.y, th.z)) { const r = (7 + 3 * Math.sin(now * 24)) * k; ctx.strokeStyle = '#ff3b2e'; ctx.lineWidth = 2.2 * k; ctx.beginPath(); ctx.arc(PX, PY, r, 0, TAU); ctx.stroke(); }      // his missile, ringed so it cannot be missed
+  CC = CAM;
+  ctx.restore();
+  ctx.lineWidth = 2.5 * k; ctx.strokeStyle = hot ? `rgba(255,${70 + 60 * Math.sin(now * 20)},60,.95)` : 'rgba(238,244,251,.55)'; rrect(x, y, w, h, 12 * k); ctx.stroke();
+}
+
+// ---------- part 4: sounds, what you feel and read, the two thumbs, the screens, the loop ----------
+const sfx = {
+  click() { const v = vary(); noise(0.012, 5000 * v, 0.2, 'highpass'); tone(1500 * v, 0.04, 0.05, 'triangle', 0, null, 4000); },
+  seek(p) { if (!gate('seek', 60)) return; tone(520 + 400 * (p || 0), 0.055, 0.1, 'triangle', 0, null, 3200); noise(0.008, 5000, 0.05, 'highpass'); },                // the ring is on him: ticks that climb
+  locked() { tone(784, 0.11, 0.08, 'triangle', 0, null, 5000); tone(1175, 0.2, 0.08, 'triangle', 0.07, null, 5000); noise(0.01, 6000, 0.12, 'highpass'); },
+  launch() { const v = vary(0.04); noise(0.05, 3200, 0.3, 'highpass'); noise(0.6, 650 * v, 0.55, 'bandpass', 0.6); tone(210 * v, 0.45, 0.22, 'sine', 0, 70); tone(900 * v, 0.3, 0.05, 'triangle', 0.02, 300, 2500); },
+  warn(p) { if (!gate('warn', 90)) return; tone(330 + 90 * (p || 0), 0.08, 0.15, 'sine'); tone(660 + 180 * (p || 0), 0.05, 0.03, 'sine'); },                                        // he has you in his sights
+  alarm() { if (!gate('alarm', 70)) return; tone(620, 0.07, 0.12, 'triangle', 0, null, 3000); tone(465, 0.07, 0.1, 'triangle', 0.075, null, 3000); },   // his missile is on its way
+  flare() { const v = vary(); tone(420 * v, 0.07, 0.15, 'sine', 0, 780 * v); noise(0.012, 5200, 0.16, 'highpass'); noise(0.3, 2300, 0.14, 'bandpass', 0.8); },
+  evade() { tone(note(659, 0), 0.12, 0.1, 'triangle', 0, null, 6000); tone(note(659, 2), 0.2, 0.1, 'triangle', 0.08, null, 6000); tone(note(1318, 2), 0.16, 0.03, 'sine', 0.1); },
+  gun() { if (!gate('gun', 62)) return; const v = vary(); noise(0.05, 1500 * v, 0.42, 'lowpass'); tone(150 * v, 0.055, 0.26, 'sine', 0, 85); noise(0.008, 6000, 0.12, 'highpass'); },
+  gunFar() { if (!gate('gunFar', 80)) return; noise(0.05, 900, 0.12, 'lowpass'); },
+  tick() { if (!gate('tick', 75)) return; const v = vary(); noise(0.015, 5200, 0.22, 'highpass'); tone(980 * v, 0.035, 0.09, 'triangle', 0, null, 4000); },   // your cannon finds him
+  thud() { if (!gate('thud', 110)) return; noise(0.07, 520, 0.5); tone(125, 0.09, 0.24, 'sine', 0, 70); },                                                 // his cannon finds you
+  hit() { noise(0.02, 5000, 0.35, 'highpass'); noise(0.4, 420, 0.75); tone(130, 0.35, 0.4, 'sine', 0, 50); tone(210, 0.2, 0.16, 'triangle', 0, 80, 900); },
+  boom() { noise(0.03, 6000, 0.4, 'highpass'); noise(0.95, 360, 0.9); tone(115, 0.75, 0.5, 'sine', 0, 40); tone(196, 0.45, 0.22, 'triangle', 0, 62, 900); noise(1.4, 900, 0.16, 'bandpass', 0.5, 0.12); },
+  pop() { noise(0.02, 4500, 0.2, 'highpass'); noise(0.3, 520, 0.4); tone(160, 0.2, 0.18, 'sine', 0, 70); },
+  splash(n) { const s = Math.max(0, (n | 0) - 1); [0, 2, 4].forEach((q, i) => tone(note(523, q + s), 0.24, 0.11, 'triangle', 0.15 + i * 0.085, null, 6000)); },
+  win(boss) { [0, 2, 4, 5, 7].forEach((q, i) => tone(note(392, q), i === 4 ? 0.7 : 0.2, 0.11, 'triangle', i * 0.11, null, 6000)); tone(note(784, 7), 0.6, 0.035, 'sine', 0.46); if (boss) [0, 4, 7].forEach((q, i) => tone(note(196, q), 0.9, 0.07, 'triangle', 0.5 + i * 0.02, null, 2500)); },
+  lose() { tone(220, 0.35, 0.11, 'triangle', 0, null, 2000); tone(185, 0.6, 0.11, 'triangle', 0.2, 147, 2000); noise(0.4, 280, 0.3); },
+  best() { [0, 2, 4].forEach((s, i) => tone(note(659, s), 0.2, 0.1, 'sine', i * 0.08)); },
+  rearm() { const v = vary(); noise(0.01, 4200, 0.18, 'highpass'); tone(700 * v, 0.06, 0.09, 'triangle', 0, 900 * v, 4000); },
+  empty() { if (!gate('empty', 150)) return; noise(0.02, 1200, 0.16); tone(240, 0.05, 0.05, 'triangle', 0, null, 1500); },
+  low() { tone(294, 0.14, 0.08, 'triangle', 0, null, 2500); tone(247, 0.2, 0.08, 'triangle', 0.16, null, 2500); }
+};
+let LOOPS = null;
+function ensureLoops() { if (LOOPS || !actx || HEADLESS) return; LOOPS = { eng: bed(120, 0.6, 0, 0.3, 'lowpass'), air: bed(1100, 0.5, 0, 0.21) }; }
+function loopsOff() { if (LOOPS) { LOOPS.eng && LOOPS.eng.set(0, 0.1); LOOPS.air && LOOPS.air.set(0, 0.1); } }
+
+let G = null, paused = false;
+function say(text, color, size, y, dur) { if (!G) return; G.msgs = G.msgs.filter(m => Math.abs(m.y - (y || 0.25)) > 0.03); G.msgs.push({ text, color: color || '#fff', size: size || 1, y: y || 0.25, dur: dur || 1.3, t: 0 }); }
+const NUM = ['', 'ONE', 'TWO', 'THREE', 'FOUR'];
+// everything that just happened in the fight becomes something to hear, see and feel
+function fx(G) {
+  const me = G.me, f = G.foe;
+  for (const e of G.evs) {
+    if (e.k === 'launch') { if (e.a === me) { sfx.launch(); vibe(HAP.light); FX.ky += 4 * k; say('MISSILE AWAY', '#ffd166', 0.62, 0.3, 0.8); } else { sfx.alarm(); FX.red = Math.max(FX.red, 0.55); vibe(HAP.tick); say('MISSILE!', '#ff6a5a', 1.25, 0.25, 1.1); } }
+    else if (e.k === 'locked') { sfx.locked(); vibe(HAP.tick); }
+    else if (e.k === 'flare') {
+      sfx.flare(); if (e.j === me) { vibe(HAP.tick); if (e.res === 'early') say('TOO EARLY', '#ffd166', 0.7, 0.32, 0.9); else if (e.res === 'late') say('TOO LATE', '#ffd166', 0.7, 0.32, 0.9); else if (e.res === 'straight') say('TURN HARDER', '#ffd166', 0.7, 0.32, 0.9); }
+      else if (e.res === 'ok') say('HE FLARED', '#cfe0f0', 0.62, 0.32, 0.9);
+    }
+    else if (e.k === 'pop') { burst(e.s.x, e.s.y, e.s.z, false); sfx.pop(); if (e.s.to === me) { sfx.evade(); vibe(HAP.sharp); say('EVADED!', '#9ff0b0', 1.05, 0.25, 1.1); FX.gold = Math.max(FX.gold, 0.35); } }
+    else if (e.k === 'hit') { if (e.s.to === me && me.alive) { burst(e.s.x, e.s.y, e.s.z, false); sfx.hit(); FX.red = 1; FX.shake = 16 * k; FX.stop = Math.max(FX.stop, 0.05); say('HIT!', '#ff6a5a', 1.2, 0.25, 1); } }
+    else if (e.k === 'hurt' && e.kind === 'gun') {
+      if (e.j === f) { sfx.tick(); if (Math.random() < 0.5) puff(f.x, f.y + 1, f.z, (Math.random() - 0.5) * 60, 20 + Math.random() * 40, (Math.random() - 0.5) * 60, 0.3, 0.8, 0.4, 4, 1); }
+      else { sfx.thud(); FX.red = Math.max(FX.red, 0.45); FX.shake = Math.max(FX.shake, 5 * k); }
+    }
+    else if (e.k === 'kill') {
+      burst(e.j.x, e.j.y, e.j.z, true); sfx.boom(); duck(0.6, 600); FX.shake = 12 * k;
+      if (e.j === f) { FX.stop = 0.1; FX.slow = 0.75; FX.gold = 1; vibe(HAP.heavy); sfx.splash(G.kills); say('SPLASH ' + (NUM[G.kills] || G.kills) + '!', '#ffd166', 1.5, 0.25, 1.9); }
+      else { FX.red = 1; FX.stop = 0.08; say('SHOT DOWN', '#ff6a5a', 1.4, 0.25, 2); }
+    }
+    else if (e.k === 'tracer') {
+      const a = e.a, d = fwdOf(a), sp = 0.012; if (a === me) sfx.gun(); else sfx.gunFar();
+      puff(a.x + d[0] * 9, a.y + d[1] * 9 - 0.6, a.z + d[2] * 9, (d[0] + (Math.random() - 0.5) * sp) * 950, (d[1] + (Math.random() - 0.5) * sp) * 950 + 20, (d[2] + (Math.random() - 0.5) * sp) * 950, 0.42, 0.5, 0.5, 4, 1);
+    }
+    else if (e.k === 'spawn') { G.tagT = 2.8; if (e.kind === 'six') say('BANDIT ON YOUR SIX!', '#ff6a5a', 0.9, 0.3, 1.7); else if (G.idx > 0) say('ANOTHER BANDIT!', '#ffd166', 0.9, 0.3, 1.5); }
+    else if (e.k === 'fizzle') { if (e.s.from === me && f.alive) say('MISSED', '#cfe0f0', 0.62, 0.32, 0.8); }
+    else if (e.k === 'rearm') sfx.rearm();
+    else if (e.k === 'empty') { sfx.empty(); say('RELOADING', '#cfe0f0', 0.62, 0.32, 0.7); }
+    else if (e.k === 'noflare') { sfx.empty(); if (me.flares <= 0) say('NO FLARES', '#ffd166', 0.62, 0.32, 0.7); }
+    else if (e.k === 'hot') { if (e.a === me) say('CANNON HOT', '#ffd166', 0.62, 0.32, 0.8); }
+  }
+  G.evs.length = 0;
+}
+// the steady signals: the ring finding him, him finding you, his missile closing
+const CUE = { seek: 0, warn: 0, alarm: 0, lowT: 0 };
+function cues(G, dt) {
+  const me = G.me, f = G.foe;
+  if (me.onT && me.lock < 1) { CUE.seek -= dt; if (CUE.seek <= 0) { CUE.seek = 0.2 - 0.12 * me.lock; sfx.seek(me.lock); } } else CUE.seek = 0;
+  if (G.threat) { CUE.alarm -= dt; if (CUE.alarm <= 0) { CUE.alarm = clamp(G.tti * 0.22, 0.1, 0.42); sfx.alarm(); } }
+  else if (f.alive && f.onT && f.lock > 0.02) { CUE.warn -= dt; if (CUE.warn <= 0) { CUE.warn = 0.5 - 0.32 * f.lock; sfx.warn(f.lock); } } else { CUE.warn = 0; CUE.alarm = 0; }
+  if (G.fuel < 20 && G.fuel > 0) { CUE.lowT -= dt; if (CUE.lowT <= 0) { CUE.lowT = 2.5; sfx.low(); } }
+  for (const m of G.msgs) m.t += dt; if (G.msgs.length && G.msgs[0].t > G.msgs[0].dur) G.msgs.shift();
+  G.msgs = G.msgs.filter(m => m.t <= m.dur);
+  if (G.tagT > 0) G.tagT -= dt;
+}
+
+function finish(G, win) {
+  G.phase = win ? 'won' : 'lost'; G.ft = 0;
+  const L = G.L, c = G.cfg, me = G.me, res = G.res = { win, why: G.why, time: G.t, hits: G.hitsTaken, stars: 0, fired: G.fired, landed: G.landed, evaded: G.evaded, foeHp: G.foe ? Math.max(0, G.foe.hp / G.foe.hpMax) : 0, left: c.bandits - G.kills, nb: false, prev: bestTime[L] || 0, run: 0, nbRun: false };
+  if (win) res.stars = G.hitsTaken === 0 ? 3 : G.hitsTaken === 1 ? 2 : 1;
+  if (HEADLESS) return;
+  streaks[L] = win ? 0 : (streaks[L] || 0) + 1; store.set('streaks', streaks);
+  if (win) {
+    stars[L] = Math.max(stars[L] || 0, res.stars); store.set('stars', stars); unlocked = Math.max(unlocked, L + 1); store.set('unlocked', unlocked);
+    store.set('level', L + 1);                               // he comes back to the next sortie, even if he leaves before pressing NEXT
+    res.nb = !!res.prev && res.time < res.prev; if (!res.prev || res.time < res.prev) { bestTime[L] = +res.time.toFixed(2); store.set('bestTime', bestTime); }
+    kills += G.kills; store.set('kills', kills); run++; res.nbRun = bestRun > 0 && run > bestRun; if (run > bestRun) { bestRun = run; store.set('bestRun', bestRun); } store.set('run', run); res.run = run;
+    sfx.win(c.boss); vibe(res.nb || res.nbRun ? HAP.best : HAP.heavy); FX.gold = 1; say(c.bandits > 1 ? 'SKY CLEAR' : 'GOOD KILL', '#ffd166', 1.3, 0.25, 2.2);
+  } else {
+    if (G.kills) { kills += G.kills; store.set('kills', kills); } run = 0; store.set('run', 0);
+    sfx.lose(); if (G.why === 'fuel') say('OUT OF FUEL', '#ff6a5a', 1.3, 0.25, 2.2);
+  }
+}
+
+// ---------- what is written on the glass ----------
+function camSpace(x, y, z) { const c = CAM, dx = x - c.x, dy = y - c.y, dz = z - c.z, X = dx * c.cyw - dz * c.syw, Z = dx * c.syw * c.cp + dy * c.sp + dz * c.cyw * c.cp, Y = -dx * c.syw * c.sp + dy * c.cp - dz * c.cyw * c.sp; return [X * c.cr - Y * c.sr, X * c.sr + Y * c.cr, Z]; }
+const BTN = { fx: 0, fy: 0, fr: 0, lx: 0, ly: 0, lr: 0, sx: 0, sy: 0 };
+function layout() { BTN.fr = 41 * k; BTN.fx = W - 66 * k; BTN.fy = H - 108 * k; BTN.lr = 31 * k; BTN.lx = W - 150 * k; BTN.ly = H - 176 * k; BTN.sx = 92 * k; BTN.sy = H - 124 * k; }
+function coachLine(G) {
+  const me = G.me, f = G.foe, L = G.L; if (L > 3 || !f.alive || !me.alive) return '';
+  if (G.threat) return L <= 2 ? 'Tap FLARE as the ring closes on it' : 'Turn hard, then FLARE as the ring closes';
+  if (f.onT && f.lock > 0.1) return 'He is locking on: turn hard';
+  if (L === 2 && G.t < 12 && me.r && me.r.off > 1.7 && G.foeFired === 0) return 'He is behind you: watch the mirror';
+  if (L === 1 || G.t < 14) { if (me.lock >= 1) return me.shots > 0 ? 'Locked: tap FIRE' : 'Reloading'; if (me.onT) return 'Hold him in the ring'; if (me.front) return 'Get behind him to lock on'; if (me.r && me.r.off > 0.9) return 'Push your thumb toward the arrow'; return 'Left thumb: steer the ring onto him'; }
+  return '';
+}
+function drawHud(G, now) {
+  const me = G.me, f = G.foe, c = G.cfg, live = G.phase === 'fight', pad = 12 * k;
+  ctx.save(); ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (FX.red > 0) { const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.22, W / 2, H / 2, H * 0.78); vg.addColorStop(0, 'rgba(255,0,0,0)'); vg.addColorStop(1, `rgba(200,24,12,${Math.min(0.85, FX.red * 0.8)})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
+  if (FX.gold > 0) { const vg = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.25, W / 2, H * 0.45, H * 0.8); vg.addColorStop(0, 'rgba(255,215,120,0)'); vg.addColorStop(1, `rgba(255,205,100,${FX.gold * 0.38})`); ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H); }
+  if (live && me.alive) {
+    // the ring: where your nose points. He has to be inside it.
+    const d = fwdOf(me); CC = CAM;
+    if (P3(me.x + d[0] * 4000, me.y + d[1] * 4000, me.z + d[2] * 4000)) {
+      const bx = PX, by = PY, rr = CAM.F * Math.tan(PH.LOCK_A), lk = me.lock, locked = lk >= 1 && f.alive, col = locked ? '#ff5a4a' : me.onT ? '#ffd166' : 'rgba(190,255,214,.8)';
+      ctx.strokeStyle = 'rgba(8,20,36,.35)'; ctx.lineWidth = 4.5 * k; ctx.beginPath(); ctx.arc(bx, by, rr, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = col; ctx.lineWidth = (locked ? 3 : 1.6) * k; ctx.setLineDash(locked ? [] : [10 * k, 7 * k]); ctx.beginPath(); ctx.arc(bx, by, rr, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      if (lk > 0.02 && !locked) { ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.arc(bx, by, rr, -Math.PI / 2, -Math.PI / 2 + TAU * lk); ctx.stroke(); }
+      ctx.strokeStyle = col; ctx.lineWidth = 1.6 * k; ctx.beginPath(); for (const a of [0, 1, 2, 3]) { const ca = Math.cos(a * Math.PI / 2), sa = Math.sin(a * Math.PI / 2); ctx.moveTo(bx + ca * rr * 0.16, by + sa * rr * 0.16); ctx.lineTo(bx + ca * rr * 0.34, by + sa * rr * 0.34); } ctx.stroke();
+      if (me.gunOn || (me.r && me.r.d < PH.GUN_R * 1.15 && f.alive)) { ctx.strokeStyle = me.r && me.r.off < PH.GUN_A && me.r.d < PH.GUN_R ? '#ff5a4a' : 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.6 * k; ctx.beginPath(); ctx.arc(bx, by, CAM.F * Math.tan(PH.GUN_A), 0, TAU); ctx.stroke(); }
+      if (locked) { ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.fillStyle = Math.sin(now * 18) > -0.3 ? '#ff5a4a' : '#fff'; ctx.lineWidth = 3.5 * k; ctx.strokeStyle = 'rgba(8,20,36,.7)'; ctx.strokeText(me.shots > 0 ? 'LOCK  ·  FIRE' : 'LOCK', bx, by - rr - 13 * k); ctx.fillText(me.shots > 0 ? 'LOCK  ·  FIRE' : 'LOCK', bx, by - rr - 13 * k); }
+      else if (me.front && f.alive) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 3.5 * k; ctx.strokeStyle = 'rgba(8,20,36,.7)'; ctx.strokeText('NO LOCK FROM THE FRONT  ·  GET BEHIND HIM', bx, by - rr - 13 * k); ctx.fillStyle = '#fff'; ctx.fillText('NO LOCK FROM THE FRONT  ·  GET BEHIND HIM', bx, by - rr - 13 * k); }
+    }
+    // him: boxed if you can see him, an arrow to follow if you cannot
+    if (f.alive) {
+      const q = camSpace(f.x, f.y, f.z), on = q[2] > 1, sx = on ? CAM.cx + q[0] * CAM.F / q[2] : 0, sy = on ? CAM.cy - q[1] * CAM.F / q[2] : 0, hot = f.onT && f.lock > 0.05;
+      if (on && sx > 16 && sx < W - 16 && sy > 16 && sy < H - 150 * k) {
+        const s = clamp(9.5 * SC_FOE * CAM.F / q[2], 15 * k, 110 * k), col = me.lock >= 1 ? '#ff5a4a' : me.onT ? '#ffd166' : '#9ff0b0', g = s * 0.45;
+        ctx.strokeStyle = 'rgba(8,20,36,.4)'; ctx.lineWidth = 4 * k; for (let pass = 0; pass < 2; pass++) {
+          ctx.beginPath(); for (const [ax, ay] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { ctx.moveTo(sx + ax * s, sy + ay * (s - g)); ctx.lineTo(sx + ax * s, sy + ay * s); ctx.lineTo(sx + ax * (s - g), sy + ay * s); } ctx.stroke();
+          ctx.strokeStyle = col; ctx.lineWidth = 2 * k;
+        }
+        if (f.hp < f.hpMax) { const bw = s * 2; ctx.fillStyle = 'rgba(8,20,36,.5)'; ctx.fillRect(sx - bw / 2, sy + s + 5 * k, bw, 4 * k); ctx.fillStyle = '#ff7a4a'; ctx.fillRect(sx - bw / 2, sy + s + 5 * k, bw * f.hp / f.hpMax, 4 * k); }
+        if (G.tagT > 0) { ctx.globalAlpha = Math.min(1, G.tagT / 0.5); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 3.5 * k; ctx.strokeStyle = 'rgba(8,20,36,.7)'; const t = '“' + f.look.call.toUpperCase() + '”'; ctx.strokeText(t, sx, sy - s - 12 * k); ctx.fillStyle = '#fff'; ctx.fillText(t, sx, sy - s - 12 * k); ctx.globalAlpha = 1; }
+      } else {
+        let ax = q[0], ay = q[1]; const l = Math.hypot(ax, ay); if (l < 1e-3) { ax = 0; ay = -1; } else { ax /= l; ay /= l; }
+        const ex = W * 0.36, ey = H * 0.24, px = CAM.cx + ax * ex, py = CAM.cy - 6 * k - ay * ey, ang = Math.atan2(-ay, ax), pu = hot ? 0.5 + 0.5 * Math.sin(now * 20) : 0, sz = (15 + 4 * pu) * k;
+        ctx.save(); ctx.translate(px, py); ctx.rotate(ang);
+        ctx.fillStyle = 'rgba(8,20,36,.45)'; ctx.beginPath(); ctx.moveTo(sz + 3 * k, 0); ctx.lineTo(-sz * 0.75 - 2 * k, -sz - 3 * k); ctx.lineTo(-sz * 0.3, 0); ctx.lineTo(-sz * 0.75 - 2 * k, sz + 3 * k); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = hot ? '#ff5a4a' : '#ffd166'; ctx.beginPath(); ctx.moveTo(sz, 0); ctx.lineTo(-sz * 0.7, -sz * 0.85); ctx.lineTo(-sz * 0.25, 0); ctx.lineTo(-sz * 0.7, sz * 0.85); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+    // the mirror, when he is behind you or his missile is in the air
+    const behind = f.alive && me.r && me.r.off > 2.2 && me.r.d < 1700, mw = 178 * k, mh = 98 * k, mx = W / 2 - mw / 2, my = 50 * k;      // only while there is something in it to see
+    if (behind || G.threat) {
+      drawMirror(G, now, mx, my, mw, mh, !!G.threat || (f.onT && f.lock > 0.05));
+      if (f.onT && f.lock > 0.02 && !G.threat) { ctx.fillStyle = 'rgba(8,20,36,.55)'; rrect(mx, my + mh + 6 * k, mw, 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = '#ff5a4a'; rrect(mx, my + mh + 6 * k, Math.max(7 * k, mw * f.lock), 7 * k, 3.5 * k); ctx.fill(); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#ffd9d2'; ctx.fillText('HE IS LOCKING ON  ·  TURN HARD', W / 2, my + mh + 24 * k); }
+    }
+  }
+  // top left: which sortie, how many bandits are left
+  ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 5; ctx.textAlign = 'left';
+  ctx.font = `${Math.round(24 * k)}px ${BN}`; ctx.fillStyle = '#fff'; ctx.fillText('SORTIE ' + G.L, pad, 26 * k);
+  for (let i = 0; i < c.bandits; i++) { ctx.fillStyle = i < G.kills ? '#ffd166' : 'rgba(255,255,255,.35)'; ctx.beginPath(); const x = pad + 7 * k + i * 17 * k, y = 46 * k; ctx.moveTo(x, y - 6 * k); ctx.lineTo(x + 6 * k, y + 5 * k); ctx.lineTo(x, y + 2 * k); ctx.lineTo(x - 6 * k, y + 5 * k); ctx.closePath(); ctx.fill(); }
+  if (c.help) { ctx.shadowBlur = 0; ctx.fillStyle = '#a9e8c0'; rrect(pad, 58 * k, 56 * k, 14 * k, 6 * k); ctx.fill(); ctx.fillStyle = '#0b1a2e'; ctx.font = `800 ${Math.round(9 * k)}px Nunito, sans-serif`; ctx.fillText('HELP ON', pad + 7 * k, 65.5 * k); ctx.shadowBlur = 5; }
+  // top right: fuel, only once it is worth worrying about
+  if (live && G.fuel < c.fuel * 0.4) { const low = G.fuel < 20, w = 70 * k; ctx.textAlign = 'right'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = low && Math.sin(now * 12) > 0 ? '#ff6a5a' : '#fff'; ctx.fillText('FUEL', W - pad, 22 * k); ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(8,20,36,.5)'; rrect(W - pad - w, 32 * k, w, 6 * k, 3 * k); ctx.fill(); ctx.fillStyle = low ? '#ff6a5a' : '#ffd166'; rrect(W - pad - w, 32 * k, Math.max(6 * k, w * G.fuel / (c.fuel * 0.4)), 6 * k, 3 * k); ctx.fill(); ctx.shadowBlur = 5; }
+  // call-outs
+  ctx.textAlign = 'center'; ctx.strokeStyle = 'rgba(8,20,36,.75)';
+  for (const m of G.msgs) {
+    const a = 1 - Math.max(0, (m.t - m.dur * 0.6) / (m.dur * 0.4)), pop = m.t < 0.12 ? 1 + 0.4 * (1 - m.t / 0.12) : 1, fs = Math.round(Math.min(W * 0.115, 46) * m.size * pop), yy = H * m.y + (behindMirror(G) && m.y < 0.3 ? 78 * k : 0);
+    ctx.globalAlpha = a; ctx.font = `${fs}px ${BN}`; ctx.lineWidth = Math.max(3, fs * 0.14); ctx.shadowBlur = 0; ctx.strokeText(m.text, W / 2, yy, W * 0.94); ctx.fillStyle = m.color; ctx.fillText(m.text, W / 2, yy, W * 0.94);
+  }
+  ctx.globalAlpha = 1;
+  if (!live) { if (G.ft > 0.9) { ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; ctx.globalAlpha = 0.6 + 0.25 * Math.sin(now * 5); ctx.fillStyle = '#fff'; ctx.fillText('Tap to continue', W / 2, H * 0.92); ctx.globalAlpha = 1; } ctx.restore(); return; }
+  const cl = coachLine(G);
+  if (cl) { ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; const tw = ctx.measureText(cl).width + 26 * k; ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(8,20,36,.62)'; rrect(W / 2 - tw / 2, H * 0.715 - 14 * k, tw, 28 * k, 14 * k); ctx.fill(); ctx.fillStyle = '#ffd166'; ctx.fillText(cl, W / 2, H * 0.715 + 1); }
+  ctx.shadowBlur = 0;
+  // left thumb: the stick
+  const st = IN.sId != null, ox = st ? IN.ox : BTN.sx, oy = st ? IN.oy : BTN.sy, R0 = 46 * k;
+  ctx.strokeStyle = st ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.28)'; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.arc(ox, oy, R0, 0, TAU); ctx.stroke();
+  ctx.fillStyle = st ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.arc(ox + G.in.sx * R0 * 0.8, oy - G.in.sy * R0 * 0.8, 17 * k, 0, TAU); ctx.fill();
+  if (!st && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.font = `700 ${Math.round(11.5 * k)}px ${BC}`; ctx.fillText('FLY', ox, oy + R0 + 12 * k); }
+  // right thumb: FIRE, and FLARE with the ring that tells you when
+  const ready = me.lock >= 1 && me.shots > 0 && f.alive, pu = 0.5 + 0.5 * Math.sin(now * 16);
+  ctx.fillStyle = ready ? `rgba(255,${120 + 60 * pu},50,.92)` : IN.fId != null ? 'rgba(255,255,255,.34)' : 'rgba(8,20,36,.42)'; ctx.beginPath(); ctx.arc(BTN.fx, BTN.fy, BTN.fr * (ready ? 1 + 0.05 * pu : 1), 0, TAU); ctx.fill();
+  ctx.strokeStyle = ready ? '#fff' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 2 * k; ctx.stroke();
+  if (me.heat > 0.02) { ctx.strokeStyle = me.gunHot ? '#ff5a4a' : '#ffd166'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.arc(BTN.fx, BTN.fy, BTN.fr + 5 * k, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(me.heat, 0, 1)); ctx.stroke(); }
+  ctx.fillStyle = '#fff'; ctx.font = `${Math.round(21 * k)}px ${BN}`; ctx.fillText('FIRE', BTN.fx, BTN.fy + 1.5 * k);
+  for (let i = 0; i < 2; i++) { ctx.fillStyle = i < me.shots ? '#ffd166' : 'rgba(255,255,255,.25)'; rrect(BTN.fx - 13 * k + i * 15 * k, BTN.fy - BTN.fr - 15 * k, 11 * k, 5 * k, 2.5 * k); ctx.fill(); }
+  const th = G.threat, lo = c.myLo, hi = c.myHi, inWin = th && G.tti <= hi && G.tti >= lo;
+  ctx.fillStyle = inWin ? `rgba(120,240,150,${0.75 + 0.25 * pu})` : th ? `rgba(255,90,74,${0.5 + 0.3 * pu})` : 'rgba(8,20,36,.42)'; ctx.beginPath(); ctx.arc(BTN.lx, BTN.ly, BTN.lr, 0, TAU); ctx.fill();
+  ctx.strokeStyle = th ? '#fff' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 2 * k; ctx.stroke();
+  if (th) { const far = clamp((G.tti - hi) / 1.3, 0, 1.6); ctx.strokeStyle = inWin ? '#b8ffc8' : '#fff'; ctx.lineWidth = (inWin ? 4.5 : 3) * k; ctx.beginPath(); ctx.arc(BTN.lx, BTN.ly, BTN.lr * (1.12 + far * 1.5), 0, TAU); ctx.stroke(); }
+  ctx.fillStyle = inWin ? '#0b1a2e' : '#fff'; ctx.font = `${Math.round(16 * k)}px ${BN}`; ctx.fillText(inWin ? 'NOW' : 'FLARE', BTN.lx, BTN.ly + 1.5 * k);
+  for (let i = 0; i < me.flareMax; i++) { ctx.fillStyle = i < me.flares ? '#ffd166' : 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(BTN.lx - 11 * k + i * 11 * k, BTN.ly - BTN.lr - 10 * k, 3.6 * k, 0, TAU); ctx.fill(); }
+  // your own jet: how much more it can take
+  const hp = clamp(me.hp / me.hpMax, 0, 1), bw = 96 * k, bx0 = W / 2 - bw / 2, by0 = H - 34 * k;
+  if (hp < 1) { ctx.fillStyle = 'rgba(8,20,36,.5)'; rrect(bx0, by0, bw, 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = me.hurtT < 0.25 && Math.sin(now * 45) > 0 ? '#fff' : hp < 0.36 ? (Math.sin(now * 14) > 0 ? '#ff5a4a' : '#ffb03a') : hp < 0.7 ? '#ffd166' : '#9ff0b0'; rrect(bx0, by0, Math.max(7 * k, bw * hp), 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.font = `700 ${Math.round(10.5 * k)}px ${BC}`; ctx.fillText(hp < 0.36 ? 'JET FAILING' : 'JET DAMAGED', W / 2, by0 - 9 * k); }
+  ctx.restore();
+}
+function behindMirror(G) { const me = G.me, f = G.foe; return G.phase === 'fight' && (G.threat || (f.alive && me.r && me.r.off > 2.2 && me.r.d < 1700)); }
+function draw(now) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!G) { ctx.fillStyle = '#0b1a2e'; ctx.fillRect(0, 0, W, H); return; }
+  drawWorld(G, now);
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash})`; ctx.fillRect(0, 0, W, H); }
+  if (G.phase !== 'home' && G.phase !== 'done') drawHud(G, now);
+}
+
+// ---------- two thumbs ----------
+const IN = { sId: null, ox: 0, oy: 0, x: 0, y: 0, fId: null }, KEY = { l: 0, r: 0, u: 0, d: 0 };
+function readInput() {
+  let x = 0, y = 0;
+  if (IN.sId != null) {                        // left thumb: push it the way the nose should go, from wherever it first touched
+    const full = 54 * k; let dx = IN.x - IN.ox, dy = IN.y - IN.oy; const l = Math.hypot(dx, dy);
+    if (l > full) { IN.ox = IN.x - dx / l * full; IN.oy = IN.y - dy / l * full; dx = dx / l * full; dy = dy / l * full; }
+    const m = Math.min(1, l / full), q = m < 0.08 ? 0 : Math.pow((m - 0.08) / 0.92, 1.15); if (l > 0) { x = dx / l * q; y = -dy / l * q; }
+  }
+  if (KEY.l) x = -1; if (KEY.r) x = 1; if (KEY.u) y = 1; if (KEY.d) y = -1;
+  G.in.sx = x; G.in.sy = y;
+}
+cv.addEventListener('pointerdown', e => {
+  audio(); ensureLoops();
+  if (!G || paused) return;
+  if (G.phase === 'won' || G.phase === 'lost') { if (G.ft > 0.9) showEnd(); return; }
+  if (G.phase !== 'fight') return;
+  if (e.clientX < W * 0.5) { if (IN.sId == null) { IN.sId = e.pointerId; IN.ox = IN.x = e.clientX; IN.oy = IN.y = e.clientY; } }
+  else {                                       // right thumb: whichever button is nearer, so a thumb anywhere on that side counts
+    const dF = Math.hypot(e.clientX - BTN.fx, e.clientY - BTN.fy), dL = Math.hypot(e.clientX - BTN.lx, e.clientY - BTN.ly);
+    if (dL < dF) G.in.flare = true; else if (IN.fId == null) { IN.fId = e.pointerId; G.in.fire = true; G.in.press = true; }
+  }
+  try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+});
+cv.addEventListener('pointermove', e => { if (e.pointerId === IN.sId) { IN.x = e.clientX; IN.y = e.clientY; } });
+function release(e) { if (e.pointerId === IN.sId) IN.sId = null; else if (e.pointerId === IN.fId) { IN.fId = null; if (G) G.in.fire = false; } }
+cv.addEventListener('pointerup', release);
+cv.addEventListener('pointercancel', release);
+addEventListener('keydown', e => {             // laptop: arrows fly, space fires, F drops a flare
+  if (e.repeat) { if (e.code === 'Space') e.preventDefault(); return; }
+  if (e.code === 'ArrowLeft') KEY.l = 1; else if (e.code === 'ArrowRight') KEY.r = 1; else if (e.code === 'ArrowUp') KEY.u = 1; else if (e.code === 'ArrowDown') KEY.d = 1;
+  else if (e.code === 'Space') { e.preventDefault(); audio(); ensureLoops(); if (G && (G.phase === 'won' || G.phase === 'lost')) { if (G.ft > 0.9) showEnd(); } else if (G && !paused && G.phase === 'fight') { G.in.fire = true; G.in.press = true; } }
+  else if (e.code === 'KeyF' && G && !paused && G.phase === 'fight') G.in.flare = true;
+});
+addEventListener('keyup', e => { if (e.code === 'ArrowLeft') KEY.l = 0; else if (e.code === 'ArrowRight') KEY.r = 0; else if (e.code === 'ArrowUp') KEY.u = 0; else if (e.code === 'ArrowDown') KEY.d = 0; else if (e.code === 'Space' && G) G.in.fire = false; });
+
+// ---------- screens ----------
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+function showHome() {
+  savedLevel();
+  G = makeFight(level, { help: helpOn() }); G.phase = 'home'; G.foe.alive = false; G.foe.y = -500; paused = false; loopsOff(); PT.length = 0;
+  $('pauseBtn').classList.add('hidden');
+  const c = G.cfg, lk = foeLook(level, 0);
+  $('hLvl').textContent = level; $('hFoe').textContent = '“' + lk.call + '”';
+  $('hJet').textContent = `${lk.rank} ${lk.surn} · ${lk.squad} · ${FRAME_NAME[lk.frame]}`;
+  $('hPills').innerHTML = (c.boss ? '<span class="pill" style="background:#ffb347;color:#2b1602">ACE</span>' : '') + `<span class="pill">${c.bandits} bandit${c.bandits > 1 ? 's' : ''}</span><span class="pill">${!c.foeShots ? 'He does not shoot back' : c.gunDps ? 'Missiles and cannon' : 'He fires missiles'}</span>`;
+  $('hStat').innerHTML = [bestTime[level] ? `Your best here: <b>${fmtT(bestTime[level])}</b>` : '', kills ? `Bandits shot down: <b>${kills}</b>` : '', bestRun > 1 ? `Best run: <b>${bestRun}</b> sorties` : ''].filter(Boolean).join(' · ') + (c.help ? `<br><span class="help">Help on: he is slower to lock on and his missiles fly slower until you get through.</span>` : '');
+  camFollow(G, 0, true); show('ovHome');
+}
+function startFight() {
+  audio(); ensureLoops();
+  if (G && G.phase === 'fight' && !HEADLESS) { run = 0; store.set('run', 0); }     // walking out of a sortie ends the run, as losing it would
+  if (!HEADLESS) store.set('level', level);
+  G = makeFight(level, { help: helpOn(), seed: Math.floor(Math.random() * 1e6) }); paused = false; PT.length = 0; G.tagT = 2.8;
+  IN.sId = IN.fId = null; FX.shake = FX.stop = FX.slow = FX.flash = FX.red = FX.gold = FX.kx = FX.ky = 0; CUE.seek = CUE.warn = CUE.alarm = 0;
+  if (!HEADLESS) { camFollow(G, 0, true); $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now();
+}
+function showEnd() {
+  if (!G || (G.phase !== 'won' && G.phase !== 'lost')) return; const res = G.res, c = G.cfg, L = G.L; G.phase = 'done'; loopsOff();
+  $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = res.win ? (c.bandits > 1 ? 'SKY CLEAR' : c.boss ? 'ACE DOWN' : 'SPLASH ONE') : res.why === 'fuel' ? 'OUT OF FUEL' : 'SHOT DOWN'; $('eTitle').style.color = res.win ? '#ffd166' : '#ffb4a8';
+  $('eStars').innerHTML = res.win ? [1, 2, 3].map(i => `<span class="${i <= res.stars ? '' : 'off'}">★</span>`).join('') : '';
+  const helpLine = !res.win && (streaks[L] || 0) >= 3 ? `<br><span class="help">Help is on: he will be slower to lock on, and his missiles will fly slower, until you get through.</span>` : '';
+  if (res.win) {
+    $('eSub').innerHTML = `Time <b>${fmtT(res.time)}</b>${res.nb ? ' <b class="nb">NEW BEST</b>' : res.prev ? ` · best ${fmtT(Math.min(res.prev, res.time))}` : ''}` +
+      `<br>Missiles <b>${res.landed}/${res.fired}</b> on target · missiles shaken off <b>${res.evaded}</b> · hits taken <b>${res.hits}</b>` +
+      `<br>Sorties won in a row: <b>${res.run}</b>${res.nbRun ? ' <b class="nb">NEW BEST</b>' : ''}` + (res.stars < 3 ? '<br>Take no missile hits for three stars.' : '');
+  } else {
+    const hp = Math.round(res.foeHp * 100), near = res.left > 1 ? `${res.left} bandits were still up.` : hp < 100 ? `He had <b>${hp}%</b> of his jet left.` : 'He was untouched.';
+    const tip = res.why === 'fuel' ? 'Get behind him and close in: the nearer you are when you fire, the less time he has.' : res.why === 'gun' ? 'His cannon got you: when he is close behind, turn hard and keep turning.' : G.flareRes === 'early' ? 'Your last flare was too early: wait for the ring to reach the button.' : G.flareRes === 'late' ? 'Your last flare was too late: tap as the ring reaches the button.' : G.flareRes === 'straight' ? 'A flare only works while you are turning hard.' : 'When MISSILE! shows, turn hard and tap FLARE as the ring closes.';
+    $('eSub').innerHTML = `${near} ${tip}` + helpLine;
+  }
+  $('eMain').textContent = res.win ? 'NEXT SORTIE' : 'TRY AGAIN'; $('eMain').dataset.act = res.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !res.win);
+  show('ovEnd');
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startFight(); };
+// The feed's instant start (a tap on its card in the Game Feed app): the sortie he was on, in the air at once. Play does the same: there is no intro to skip.
+window.gameFeedStart = () => { savedLevel(); audio(); sfx.click(); startFight(); };
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+// Back from the level list goes to where it was opened from: the pause menu, the screen underneath, or home.
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && fightOn()) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home';
+  lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;      // the screen that waits underneath
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h;
+  $('lvSub').textContent = unlocked > 1 ? `${unlocked - 1} sortie${unlocked === 2 ? '' : 's'} flown. Every tenth sortie is against an ace.` : 'Shoot down the bandit to unlock the next sortie.';
+  show('ovLevels');
+}
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => { showLevels('home'); };
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startFight(); }      // picked from the pause menu: that sortie starts at once
+});
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, level + 1); startFight(); };
+$('eAlt').onclick = () => startFight();
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false);
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) { ensureLoops(); sfx.click(); } else loopsOff(); };
+sndIcon();
+// ---------- pause menu: resume, restart this sortie, or pick a lower level (the same in every game) ----------
+const fightOn = () => !!G && G.phase === 'fight';
+function openPause() {
+  paused = true; loopsOff(); IN.sId = IN.fId = null; G.in.fire = false; G.in.sx = G.in.sy = 0;
+  $('pLvl').textContent = `Sortie ${G.L} · “${G.foe.look.call}”`;
+  show('ovPause');
+}
+$('pauseBtn').onclick = () => { if (fightOn()) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); startFight(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => { if (fightOn()) { run = 0; store.set('run', 0); } showHome(); };
+// The feed's "Levels" button on its Paused card: the level list opens over the fight (Back returns to the pause menu).
+// On the home or result screen the list opens over it and Back closes it again.
+window.gameFeedLevels = () => { if (fightOn()) { openPause(); showLevels('pause'); } else showLevels('feed'); };
+document.addEventListener('visibilitychange', () => { if (document.hidden && fightOn() && !paused) openPause(); });
+
+// ---------- loop ----------
+function loopSounds() {
+  if (!LOOPS || !actx) return;
+  const on = G && !paused && (G.phase === 'fight' || G.phase === 'won' || G.phase === 'lost'), me = on ? G.me : null;
+  LOOPS.eng && LOOPS.eng.set(me && me.alive ? 0.1 + 0.1 * clamp((me.v - 150) / 150, 0, 1) : 0, 0.2);
+  LOOPS.air && LOOPS.air.set(me && me.alive ? 0.02 + 0.07 * me.load + 0.03 * clamp((me.v - 150) / 150, 0, 1) : 0, 0.12);
+}
+let last = performance.now(), slowN = 0;
+function frame(now) {
+  const rdt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (rdt > 0.027 && !paused) { if (++slowN > 45 && QUAL < 2.4) { QUAL += 0.35; slowN = 0; } } else if (slowN > 0) slowN--;      // too slow for this phone: draw the cloud floor in coarser strips
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused) {
+    FX.red = Math.max(0, FX.red - rdt * 1.6); FX.gold = Math.max(0, FX.gold - rdt * 0.9); FX.flash = Math.max(0, FX.flash - rdt * 4);
+    if (G.phase === 'home' || G.phase === 'done') {                       // behind the menus: your jet, cruising
+      const me = G.me; if (!me.alive) { me.alive = true; me.hp = me.hpMax; me.y = Math.max(me.y, 900); me.pitch = 0; } me.sx = 0.34 * Math.sin(now / 2600); me.sy = 0.2 * Math.sin(now / 4100); fly(me, rdt); visuals(G, rdt, rdt); camFollow(G, rdt);
+    } else {
+      let dt = rdt;
+      if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }              // a heartbeat of stillness on a hit
+      else if (FX.slow > 0) { FX.slow -= rdt; dt *= 0.35; }    // slow motion as he comes apart
+      if (G.phase === 'fight') { if (window.__auto) window.__auto(G, dt); else readInput(); step(G, dt); fx(G); cues(G, dt); }
+      else {                                                    // after the last shot: fly on while the card comes up
+        const me = G.me, f = G.foe; G.ft += rdt; cues(G, dt);
+        if (me.alive) { me.sx = 0; me.sy = 0.12; fly(me, dt); } else { me.sx = 0.25; me.sy = -0.5; fly(me, dt); me.y -= 40 * dt; }
+        if (!f.alive && f.y > -200) { f.sx = 0.4; f.sy = -0.7; fly(f, dt); f.y -= 55 * dt; f.roll += 2.2 * dt; }
+        if (G.ft > 2.6) showEnd();
+      }
+      visuals(G, dt, rdt); camFollow(G, rdt);
+    }
+  }
+  loopSounds();
+  draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(L, o) { HEADLESS = true; MUTE = true; level = L; G = makeFight(L, o || {}); },
+  step(dt) { step(G, dt); G.evs.length = 0; },
+  set(sx, sy, fire, flare) { G.in.sx = sx; G.in.sy = sy; if (fire && !G.in.fire) G.in.press = true; G.in.fire = !!fire; if (flare) G.in.flare = true; },
+  place(d) { const me = G.me, f = G.foe; f.x = me.x + Math.sin(me.yaw) * d; f.z = me.z + Math.cos(me.yaw) * d; f.y = me.y; f.yaw = me.yaw; f.pitch = 0; },   // puts him dead ahead (tests)
+  rel, ttiOf, makeCfg, foeLook,
+  live() { HEADLESS = false; last = performance.now(); },
+  go(L) { HEADLESS = false; level = L; startFight(); },
+  PH, FX, CAM,
+  get G() { return G; }
+};
+resize(); layout(); addEventListener('resize', layout);
+HERO = buildJet('twin', '#9aa5b2', '#6d7785', '#e9eef4', true);
+showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

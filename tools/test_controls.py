@@ -59,6 +59,11 @@ LADDER = {
         tick='window.__sim.R.t', obj='window.__sim.R', back='#ovLevels [data-back]', nxt='#eMain', end='#ovEnd', home='#ovHome',
         win="""(() => { const R = window.__sim.R; if (!R || R.phase !== 'race') return; R.me.p = Math.max(R.me.p, R.laps * R.T.L - 3); })()""",
         won="window.__sim.R && (window.__sim.R.phase === 'finish' || window.__sim.R.phase === 'done') && window.__sim.R.res && window.__sim.R.res.place === 1"),
+    'bandit': dict(
+        tick='window.__sim.G.t', obj='window.__sim.G', back='#ovLevels [data-back]', nxt='#eMain', end='#ovEnd', home='#ovHome',
+        win="""(() => { const s = window.__sim, G = s.G; if (!G || G.phase !== 'fight' || !G.foe.alive) return;
+                 G.idx = G.cfg.bandits - 1; G.foe.hp = 0.4; s.place(250); G.in.fire = true; })()""",
+        won="window.__sim.G && (window.__sim.G.phase === 'won' || window.__sim.G.phase === 'done') && window.__sim.G.res && window.__sim.G.res.win"),
 }
 
 
