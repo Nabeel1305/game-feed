@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Makes each game's feed card: a still picture (feed/posters/<id>.webp) and a short silent
-looping clip of real play (feed/previews/<id>.webm). PLAYBOOK P27: a 2-3 s silent preview, tap to play.
+"""Makes each game's feed card: a still picture (feed/posters/<id>.webp), a short silent
+looping clip of real play (feed/previews/<id>.webm) and a small picture for the Games list (feed/pics/<id>.webp). PLAYBOOK P27: a 2-3 s silent preview, tap to play.
 
     python3 tools/previews.py            every game in the feed
     python3 tools/previews.py zenith     just that one (do this when a game is added or its look changes)
@@ -40,6 +40,7 @@ import base64, io, json, os, subprocess, sys, tempfile, threading, http.server, 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 W, Hh, DSF = 390, 788, 2          # the card area of a 390x844 phone with the feed's bar taken off
 FPS, VID_W, POSTER_W = 24, 540, 720
+PIC = (162, 216)                  # the small picture in the Games list (54x72 on screen, three times over for sharp screens)
 
 
 def serve():
@@ -219,6 +220,12 @@ def film(browser, port, g, probe=None):
         im = im.resize((POSTER_W, round(im.height * POSTER_W / im.width)), Image.LANCZOS)
         poster = os.path.join(root, 'feed', 'posters', g['id'] + '.webp')
         im.save(poster, 'WEBP', quality=80, method=6)
+        # a small picture for the Games list (every phone keeps these, so they must stay tiny): the middle of the still
+        os.makedirs(os.path.join(root, 'feed', 'pics'), exist_ok=True)
+        sc = max(PIC[0] / im.width, PIC[1] / im.height)
+        small = im.resize((round(im.width * sc), round(im.height * sc)), Image.LANCZOS)
+        px, py = (small.width - PIC[0]) // 2, (small.height - PIC[1]) // 2
+        small.crop((px, py, px + PIC[0], py + PIC[1])).save(os.path.join(root, 'feed', 'pics', g['id'] + '.webp'), 'WEBP', quality=62, method=6)
         # a sheet of twelve frames to look over
         N = 12
         cells = [Image.open(os.path.join(tmp, f'{int(j * (n - 1) / (N - 1)):04d}.jpg')).convert('RGB').resize((156, 315)) for j in range(N)]

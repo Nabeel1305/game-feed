@@ -205,6 +205,9 @@ def main():
         print('Swiping and order:')
         errs = []
         ctx, pg = open_feed(b, base, errs)
+        pg.wait_for_timeout(500)
+        note = pg.evaluate("(() => { const t = document.querySelector('#toast'), r = t.getBoundingClientRect(); return {on: t.classList.contains('on'), bottom: r.bottom}; })()")
+        ok(not note['on'] and note['bottom'] <= 0, 'the note at the top is fully off the screen while there is nothing to say', str(note))
         t = Touch(pg)
         seen = [state(pg)['id']]
         for i in range(len(games) - 1):
@@ -235,6 +238,8 @@ def main():
         pg.screenshot(path=os.path.join(root, 'out', 'feed', 'paused.png'))
         pg.click('.slide.halt [data-act="continue"]'); pg.wait_for_timeout(1900)
         ok(state(pg)['state'] == 'playing' and not fr.evaluate('window.GameFeed.debug().paused'), 'Resume carries on')
+        # the hosted page has every game next to it: nothing to fetch, nothing to save, nothing to check for
+        ok(not pg.evaluate('window.__feed.canFetch') and all(pg.evaluate(f"window.__feed.isHere('{g['id']}')") for g in games), 'on the hosted page every game is right there')
         # a stray thumb on the bar mid-game does nothing; a second tap works
         pg.click('#libBtn'); pg.wait_for_timeout(200)
         ok(not pg.evaluate("document.querySelector('#lib').classList.contains('open')") and state(pg)['state'] == 'playing', 'one stray tap on the bar mid-game opens nothing')
@@ -245,6 +250,8 @@ def main():
         # 3. search, pin, jump
         print('Search and pin:')
         ok(pg.locator('#list .row').count() == len(games), 'the list shows every game')
+        ok(pg.locator('#list .save').count() == 0 and pg.locator('#list .recheck').count() == 0, 'the hosted page has no Save buttons and no "Check for new games": those are for the phone app')
+        ok(pg.evaluate("Array.from(document.querySelectorAll('#list .thumb')).every(i => i.tagName === 'IMG' && /pics\\//.test(i.getAttribute('src')))"), 'each row shows the game\'s small list picture')
         pg.fill('#q', games[-1]['name'][:5].lower()); pg.wait_for_timeout(100)
         rows = pg.locator('#list .row')
         ok(rows.count() >= 1 and rows.first.get_attribute('data-id') == games[-1]['id'], 'search by name finds the game')

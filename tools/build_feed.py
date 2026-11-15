@@ -7,13 +7,17 @@ The app is the feed page plus every game in games.json that Nabeel has asked to 
     games.js              the list of games, made from games.json
     games/<id>/index.html each game, with the feed plug (feed/plug.js) put at the top of its page
     posters/, previews/   the still and the short silent clip shown on each game's card
+    pics/                 a small picture of each game for the Games list (every phone keeps these: they are tiny)
     fonts/                the games' fonts, so nothing waits on the internet
     manifest.txt          every file with its fingerprint: the phone app reads this to see what is new
 
 The same folder is what gets published as the feed page, what goes inside the phone app, and what GitHub
 puts on the app-v2 branch, where every installed phone app looks for new games (see android/ Sync.java).
 Setting "in_app": true on a game in games.json (when he says "put it on the app") is all it takes for it to show up here.
-Run: python3 tools/build_feed.py [--out DIR]"""
+With --core only the core games' own files are put in (the ones marked "core": true): that is what goes inside
+the phone app. The list still names every game on the app; the others are fetched when their card comes up, or
+kept on the phone when he saves them from the Games list (see android/ Sync.java).
+Run: python3 tools/build_feed.py [--out DIR] [--core]"""
 import hashlib, json, os, re, shutil, sys
 
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,8 +68,16 @@ def first_sentence(text, limit=70):
     return s if len(s) <= limit else s[:limit - 1].rstrip() + '…'
 
 
-def build(out, reg=None, build_number=None):
-    """reg and build_number are only given by the tests; normally they come from games.json and BUILD_NUMBER."""
+def game_of(rel):
+    """The game a file belongs to (its page, card picture or clip), or None for a file every phone keeps. Same rule as Sync.gameOf."""
+    m = re.fullmatch(r'games/([a-z0-9][a-z0-9-]{0,63})/.+|(?:posters|previews)/([a-z0-9][a-z0-9-]{0,63})\.[a-z0-9]{2,5}', rel)
+    return (m.group(1) or m.group(2)) if m else None
+
+
+def build(out, reg=None, build_number=None, core_only=False, cards_from=None):
+    """reg and build_number are only given by the tests; normally they come from games.json and BUILD_NUMBER.
+    core_only leaves out the files of games that are not core (for the inside of the phone app).
+    cards_from (tests only) gives a made-up game the card pictures of a real one: {made-up id: real id}."""
     if reg is None:
         reg = json.load(open(os.path.join(root, 'games.json'), encoding='utf-8'))
     plug = open(os.path.join(root, 'feed', 'plug.js'), encoding='utf-8').read()
@@ -75,10 +87,16 @@ def build(out, reg=None, build_number=None):
         shutil.rmtree(out)
     os.makedirs(out)
     shutil.copy(os.path.join(root, 'feed', 'index.html'), os.path.join(out, 'index.html'))
-    for d in ('fonts', 'posters', 'previews'):
+    shutil.copytree(os.path.join(root, 'feed', 'fonts'), os.path.join(out, 'fonts'))
+    on_app = [g['id'] for g in reg['games'] if in_app(g)]
+    for d in ('posters', 'previews', 'pics'):            # card pictures, clips and list pictures: only for games that are on the app
         src = os.path.join(root, 'feed', d)
-        if os.path.isdir(src):
-            shutil.copytree(src, os.path.join(out, d))
+        os.makedirs(os.path.join(out, d))
+        for f in sorted(os.listdir(src)) if os.path.isdir(src) else []:
+            if f.rsplit('.', 1)[0] in on_app:
+                shutil.copy(os.path.join(src, f), os.path.join(out, d, f))
+            for new, real in (cards_from or {}).items():
+                if f.rsplit('.', 1)[0] == real: shutil.copy(os.path.join(src, f), os.path.join(out, d, new + '.' + f.rsplit('.', 1)[1]))
     for g in reg['games']:
         if not in_app(g):
             continue
@@ -108,13 +126,18 @@ def build(out, reg=None, build_number=None):
             'font': feed.get('font', ''), 'status': g['status'], 'v': g.get('version', ''), 'mini': bool(feed.get('mini')),
             'levels': 'window.gameFeedLevels' in html,          # the game can open its own level list: the Paused card offers "Levels"
             'words': re.sub(r'\s+', ' ', g.get('summary', ''))[:240],
+            'core': g.get('core') is True,                     # inside the phone app itself, always on the phone
         }
-        for key, folder, exts in (('poster', 'posters', ('webp', 'jpg', 'png')), ('preview', 'previews', ('webm', 'mp4'))):
+        size = len(html.encode('utf-8'))
+        for key, folder, exts in (('poster', 'posters', ('webp', 'jpg', 'png')), ('preview', 'previews', ('webm', 'mp4')), ('pic', 'pics', ('webp', 'jpg'))):
             for ext in exts:
-                if os.path.exists(os.path.join(out, folder, f"{g['id']}.{ext}")):
+                f = os.path.join(out, folder, f"{g['id']}.{ext}")
+                if os.path.exists(f):
                     item[key] = f"{folder}/{g['id']}.{ext}"
+                    if key != 'pic': size += os.path.getsize(f)
                     break
-        if 'poster' not in item:
+        item['kb'] = (size + 1023) // 1024                     # what saving this game to the phone takes
+        if 'poster' not in item or 'pic' not in item:
             notes.append(f"{g['id']}: no card picture yet. Run tools/previews.py {g['id']}.")
         listing.append(item)
     listing.sort(key=lambda x: x['n'])
@@ -137,6 +160,14 @@ def build(out, reg=None, build_number=None):
           'window.GF_BUILD=' + json.dumps({'games': len(listing), 'rev': rev}) + ';\n').encode('utf-8')
     open(os.path.join(out, 'games.js'), 'wb').write(js)
     files['games.js'] = (hashlib.sha256(js).hexdigest(), len(js))
+    if core_only:       # the inside of the phone app: the same list and the same "rev", but only the core games' own files
+        core = [g['id'] for g in reg['games'] if in_app(g) and g.get('core') is True]
+        for rel in [r for r in files if game_of(r) and game_of(r) not in core]:
+            os.remove(os.path.join(out, rel))
+            del files[rel]
+        for g in on_app:
+            d = os.path.join(out, 'games', g)
+            if g not in core and os.path.isdir(d) and not os.listdir(d): os.rmdir(d)
     # the build number only ever goes up (it is GitHub's run number): the phone app never swaps its copy for an older one
     build = int(build_number if build_number is not None else (os.environ.get('BUILD_NUMBER') or 0))
     open(os.path.join(out, 'manifest.txt'), 'w', encoding='utf-8').write(
@@ -148,7 +179,7 @@ if __name__ == '__main__':
     out = os.path.join(root, 'out', 'app')
     if '--out' in sys.argv:
         out = os.path.abspath(sys.argv[sys.argv.index('--out') + 1])
-    listing, notes, problems = build(out)
+    listing, notes, problems = build(out, core_only='--core' in sys.argv)
     size = sum(os.path.getsize(os.path.join(d, f)) for d, _, fs in os.walk(out) for f in fs)
     for n in notes:
         print('note:', n)

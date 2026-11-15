@@ -68,8 +68,13 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .chip.two{border-color:rgba(255,91,58,.6);color:#FFD9CF}
 .oops{display:none;position:absolute;left:28px;right:28px;top:34%;padding:18px 16px;border-radius:16px;border:1px solid var(--line);background:rgba(11,12,16,.86);
   text-align:center;font-size:16px;font-weight:700;line-height:1.4;color:var(--paper);pointer-events:none}
-.slide.failed .oops{display:block}
-.slide.failed .tap,.slide.failed .play{display:none}
+.slide.failed .oops,.slide.nonet .oops{display:block}
+.slide.failed .tap,.slide.failed .play,.slide.nonet .tap,.slide.nonet .play{display:none}
+/* a game that is not on the phone yet: its card waits with a soft picture while the game is fetched */
+.poster.soft{filter:blur(18px);transform:scale(1.15)}
+.slide.fetching .play svg{display:none}
+.slide.fetching .play .spin{display:block}
+.slide.fetching .play::after{animation:none}
 
 /* shown over a game that has been stopped part-way */
 .paused{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;
@@ -150,12 +155,26 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .rn small{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.1em;color:var(--accent);margin-right:7px;font-variant-numeric:tabular-nums}
 .rh{font-size:14px;font-weight:600;line-height:1.3;color:var(--dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rm{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-variant-numeric:tabular-nums}
-.row .pin{flex:none;width:52px;display:grid;place-items:center;border-radius:16px}
+.rm .nw{color:var(--accent);font-weight:700}
+.row .save{flex:none;width:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:16px;
+  font-family:var(--display);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.row .save svg{width:22px;height:22px;fill:none;stroke:var(--faint);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.row .save.on{color:var(--accent)}
+.row .save.on svg{stroke:var(--accent)}
+.row .save.core{pointer-events:none;opacity:.55}
+.row .save .spin{display:none;width:20px;height:20px;border-radius:50%;border:2.5px solid var(--faint);border-top-color:var(--paper);animation:spin .8s linear infinite}
+.row .save.busy svg{display:none}
+.row .save.busy .spin{display:block}
+.row .pin{flex:none;width:40px;display:grid;place-items:center;border-radius:16px}
 .row .pin svg{width:22px;height:22px;fill:none;stroke:var(--faint);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .row .pin.on svg{stroke:var(--accent);fill:var(--accent)}
+.recheck{display:block;margin:22px auto 0;height:44px;padding:0 20px;border-radius:22px;border:1px solid var(--line);font-family:var(--display);font-weight:600;font-size:13px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--paper)}
+.recheck:disabled{color:var(--faint)}
+.recheck + .foot{padding-top:12px}
 .foot{white-space:pre-line;line-height:1.7;padding:22px 10px 4px;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
   font-variant-numeric:tabular-nums;text-align:center}
-#toast{position:absolute;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:4;transform:translate(-50%,-140%);max-width:calc(100% - 32px);padding:10px 18px;
+#toast{position:absolute;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:6;transform:translate(-50%,calc(-100% - 30px - env(safe-area-inset-top,0px)));max-width:calc(100% - 32px);padding:10px 18px;
   border-radius:22px;background:var(--paper);color:var(--ink);font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.12em;text-transform:uppercase;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 24px rgba(0,0,0,.5);transition:transform .35s var(--ease);pointer-events:none}
 #toast.on{transform:translate(-50%,0)}
@@ -207,6 +226,9 @@ const pad3 = n => String(n).padStart(3, '0');
 const ICON = {
   play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5v17l14-8.5z"/></svg>',
   pin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.5h6l-.8 6.2 3.3 3.3v1.5H6.5V13l3.3-3.3z"/><path d="M12 14.5V21"/></svg>',
+  save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></svg>',
+  saved: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8 12.3l2.8 2.8L16.2 9.5"/></svg>',
+  phone: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M11 17.8h2"/></svg>',
   one: '<svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="3.2" fill="currentColor" stroke="none"/><circle cx="7" cy="7" r="6"/></svg>',
   two: '<svg class="w" viewBox="0 0 30 14" aria-hidden="true"><circle cx="7" cy="7" r="3.2" fill="currentColor" stroke="none"/><circle cx="7" cy="7" r="6"/><circle cx="23" cy="7" r="3.2" fill="currentColor" stroke="none"/><circle cx="23" cy="7" r="6"/></svg>'
 };
@@ -238,28 +260,59 @@ const freshQueue = fresh.slice(), freshShown = [];
 const isNew = id => fresh.includes(id);
 function seen(id) { if (!known.includes(id)) { known.push(id); store.set('known', known); } }
 
+/* ---------- which games are on this phone ----------
+   The core games (the first ones) are inside the app and always there. Every other game is fetched when its card
+   comes up, so it needs the internet; one he saves from the Games list stays on the phone and works without.
+   On the hosted page every game sits next to the feed, so all of this does nothing there. */
+const builtIn = /\/android_asset\//.test(location.pathname);
+const canFetch = !!(native && native.fetchGame && native.saveGame && native.onPhone) && !builtIn;
+let phone = null;                 // { here: {id: 1}, saved: [ids] }; null = every game is right here (the hosted page)
+let offline = false;              // the last try to reach the internet failed
+const asked = {};                 // games being fetched right now: id -> 'play' or 'save'
+function readPhone() {
+  if (!native) { phone = null; return; }
+  const here = {};
+  let o = null;
+  try { if (canFetch) o = JSON.parse(native.onPhone()); } catch (e) {}
+  if (o && o.here) o.here.forEach(id => { here[id] = 1; });
+  else GAMES.forEach(g => { if (g.core) here[g.id] = 1; });      // only the app's own copy to run from: the core games
+  phone = { here, saved: (o && o.saved) || [] };
+}
+readPhone();
+const isHere = id => !phone || !!phone.here[id];
+const isSaved = id => !!phone && phone.saved.includes(id);
+let opening = true;               // the first card of all: always a game that is on the phone, so the app opens on something that plays at once
+const reachable = id => isHere(id) || (canFetch && !offline && !opening);       // can its card be shown and played right now?
+function want(id, why) {          // ask the app to fetch a game: to play now, or to keep
+  if (!canFetch || asked[id] === why || asked[id] === 'save') return;
+  asked[id] = why;
+  try { if (why === 'save') native.saveGame(id); else native.fetchGame(id); } catch (e) { delete asked[id]; }
+}
+
 /* ---------- what comes next: a shuffled deck with a little rhythm (P26). The future "what next" brain replaces nextGame(). ---------- */
 let deck = [];
 const recent = [];
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-const hot = id => (byId[id].intensity || 3) >= 4;
+const hot = id => !!byId[id] && (byId[id].intensity || 3) >= 4;
 function nextGame() {
-  if (freshQueue.length) {                // a game that just arrived goes to the front of the line
-    const id = freshQueue.shift(), at = deck.indexOf(id);
+  const f = freshQueue.findIndex(reachable);
+  if (f >= 0) {                           // a game that just arrived goes to the front of the line
+    const id = freshQueue.splice(f, 1)[0], at = deck.indexOf(id);
     if (at >= 0) deck.splice(at, 1);
     freshShown.push(id);
     recent.push(id);
     return id;
   }
-  if (!deck.length) {
-    deck = shuffle(GAMES.map(g => g.id).filter(id => !freshShown.includes(id)));
+  if (!deck.some(reachable)) {            // (with no internet the deck is only the games on the phone)
+    const can = GAMES.map(g => g.id).filter(reachable);
+    deck = shuffle(can.filter(id => !freshShown.includes(id)));
     freshShown.length = 0;
-    if (!deck.length) deck = shuffle(GAMES.map(g => g.id));
+    if (!deck.length) deck = shuffle(can.length ? can : GAMES.map(g => g.id));
     if (deck.length > 1 && deck[0] === recent[recent.length - 1]) deck.push(deck.shift());
   }
-  let k = 0;
+  let k = Math.max(0, deck.findIndex(reachable));
   const run = recent.slice(-3);
-  if (run.length === 3 && run.every(hot)) { const c = deck.findIndex(id => !hot(id)); if (c > 0) k = c; }   // a calmer game after three intense ones
+  if (run.length === 3 && run.every(hot)) { const c = deck.findIndex(id => !hot(id) && reachable(id)); if (c > 0) k = c; }   // a calmer game after three intense ones
   const id = deck.splice(k, 1)[0];
   recent.push(id);
   if (recent.length > 12) recent.shift();
@@ -289,7 +342,12 @@ function buildGame(s) {
   c.type = 'button';
   c.setAttribute('aria-label', 'Play ' + g.name);
   c.style.setProperty('--bg', g.color || 'linear-gradient(160deg,hsl(' + (g.n * 47 % 360) + ' 38% 24%),#14161C 70%)');
-  if (g.poster) { const im = el('img', 'poster'); im.alt = ''; im.decoding = 'async'; im.src = g.poster; im.onerror = () => im.remove(); c.appendChild(im); }
+  if (g.poster) {
+    const im = s.poster = el('img', 'poster'); im.alt = ''; im.decoding = 'async';
+    if (isHere(g.id)) { im.src = g.poster; im.onerror = () => im.remove(); }
+    else if (g.pic) { im.classList.add('soft'); im.src = g.pic; im.onerror = () => { im.removeAttribute('src'); }; }     // until the game is fetched: its small list picture, out of focus
+    c.appendChild(im);
+  }
   if (g.preview && !reduced) {
     const v = s.video = el('video', 'pv');
     v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'none';
@@ -300,15 +358,16 @@ function buildGame(s) {
   }
   c.appendChild(el('span', 'shade'));
   c.appendChild(el('span', 'play', ICON.play + '<span class="spin"></span>'));
-  c.appendChild(el('span', 'tap', 'Tap to play'));
-  c.appendChild(el('span', 'oops', 'This game did not load.<br>Swipe up for another one.'));
+  s.tapEl = c.appendChild(el('span', 'tap', 'Tap to play'));
+  s.oops = c.appendChild(el('span', 'oops', 'This game did not load.<br>Swipe up for another one.'));
   const two = g.thumbs === 2;
   const mood = g.intensity >= 4 ? 'Intense' : g.intensity <= 2 ? 'Calm' : 'Lively';
   c.appendChild(el('span', 'info',
     '<span class="eyebrow"><b>№ ' + pad3(g.n) + '</b>' + (g.genre ? ' · ' + esc(g.genre) : '') + (isNew(g.id) ? '<i class="new">New</i>' : '') + '</span>' +
     '<span class="title">' + esc(g.name) + '</span>' +
     '<span class="hook">' + esc(g.hook || '') + '</span>' +
-    '<span class="chips"><span class="chip' + (two ? ' two' : '') + '">' + (two ? ICON.two + 'Two thumbs' : ICON.one + 'One thumb') + '</span><span class="chip">' + mood + '</span></span>'));
+    '<span class="chips"><span class="chip' + (two ? ' two' : '') + '">' + (two ? ICON.two + 'Two thumbs' : ICON.one + 'One thumb') + '</span><span class="chip">' + mood + '</span>' +
+    (canFetch && !g.core ? '<span class="chip net">' + (isSaved(g.id) ? 'Saved' : 'Online') + '</span>' : '') + '</span>'));
   const p = el('div', 'paused',
     '<span class="eyebrow">Paused</span><h3>' + esc(g.name) + '</h3>' +
     '<button class="big" data-act="continue">Resume</button>' +
@@ -324,12 +383,63 @@ function buildSet(s) {
 }
 function build(i) {
   const en = entry(i);
-  if (en.type === 'game' && !byId[en.id]) en.id = nextGame();           // that game has left the feed since
+  // that game has left the feed since, or it is a card he has not seen yet for a game that cannot be reached now (no internet)
+  if (en.type === 'game' && (!byId[en.id] || (!en.seen && !reachable(en.id)))) en.id = nextGame();
   const s = { i, en, el: el('section', 'slide'), state: 'idle' };
-  if (en.type === 'game') { s.g = byId[en.id]; buildGame(s); } else buildSet(s);
+  if (en.type === 'game') { s.g = byId[en.id]; buildGame(s); if (!isHere(s.g.id)) fetching(s); } else buildSet(s);
   stage.appendChild(s.el);
   slides.set(i, s);
   return s;
+}
+/* A card for a game that is not on the phone: the app fetches it while the card waits (the card before it is usually
+   still on screen, so it is there by the time he swipes). No internet: the card says so, and a tap tries again. */
+function fetching(s) {
+  if (!canFetch) { noNet(s); s.oops.innerHTML = 'This game is not on your phone.<br>Swipe up for another one.'; return; }
+  s.el.classList.remove('nonet');
+  s.el.classList.add('fetching');
+  s.tapEl.textContent = 'Getting the game';
+  want(s.g.id, 'play');
+}
+function noNet(s) {
+  s.el.classList.remove('fetching', 'loading');
+  s.el.classList.add('nonet');
+  s.wantStart = false;
+  s.oops.innerHTML = 'This game needs the internet.<br>Tap to try again, or swipe up for another one.';
+}
+function gotGame(s) {                    // it has arrived: now the card is like any other
+  s.el.classList.remove('fetching', 'nonet');
+  s.tapEl.textContent = 'Tap to play';
+  if (s.poster) { s.poster.classList.remove('soft'); s.poster.onerror = () => s.poster.remove(); s.poster.src = s.g.poster; }
+  if (cur() === s && s.state === 'cover') showOff(s);
+  if (s.wantStart) { s.el.classList.add('loading'); load(s); }
+}
+window.gameFeedGame = r => {             // the app's answer about one game: fetched to play, saved, or let go
+  if (!r || !r.id || !byId[r.id]) return;
+  if (asked[r.id] === r.why || !r.ok) delete asked[r.id];           // (an answer about playing does not end a save that is still on its way)
+  readPhone();
+  const g = byId[r.id], here = isHere(r.id);
+  if (r.ok && r.why !== 'forget') offline = false;
+  nowHere();
+  slides.forEach(s => {
+    if (!s.g || s.g.id !== r.id) return;
+    const chip = s.el.querySelector('.chip.net');
+    if (chip) chip.textContent = isSaved(r.id) ? 'Saved' : 'Online';
+    if (!here && s.el.classList.contains('fetching')) noNet(s);
+  });
+  if (!here && r.why === 'play') { offline = true; dropUnreachable(); }
+  if (r.why === 'save') toast(r.ok ? 'Saved: ' + g.name : 'Could not save. Check your internet.', 2600);
+  else if (r.why === 'forget' && r.ok) toast('No longer saved: ' + g.name, 2600);
+  note(r.id, r.why === 'play' ? 'fetched' : r.why, r.ok ? 1 : 0);
+  if (lib.classList.contains('open')) { const y = list.scrollTop; drawList(); list.scrollTop = y; }
+};
+function nowHere() {                     // any card that was waiting for a game that is on the phone by now
+  slides.forEach(s => { if (s.g && isHere(s.g.id) && (s.el.classList.contains('fetching') || s.el.classList.contains('nonet'))) gotGame(s); });
+}
+function dropUnreachable() {             // no internet: the card waiting next, if he has not seen it and it cannot be fetched, gives way to one that is on the phone
+  const nx = slides.get(pos + 1);
+  if (!nx || !nx.g || nx.en.seen || reachable(nx.g.id) || busy) return;
+  drop(nx);
+  sync();
 }
 function drop(s) {
   unload(s);
@@ -352,7 +462,7 @@ function send(s, cmd, extra) {
 }
 let textMode = false;                    // true once a game had to be handed over as text: later games go that way straight off
 function load(s, viaText) {
-  if (s.frame || !s.g) return;
+  if (s.frame || !s.g || !isHere(s.g.id)) return;
   if (textMode && !viaText && window.fetch) { loadText(s); return; }
   const f = s.frame = document.createElement('iframe');
   f.setAttribute('allow', 'autoplay; fullscreen; gamepad');
@@ -441,6 +551,7 @@ function begin(s) {                      // the game is loaded and he has tapped
   s.el.classList.remove('loading', 'halt');
   s.el.classList.add('live');
   if (s.video) { try { s.video.pause(); } catch (e) {} }
+  clearTimeout(toastT); $('#toast').classList.remove('on');                   // a note still showing must not sit on top of the game
   send(s, 'start', { mode: s.g.mini ? 'mini' : 'full', sound: soundOn });     // mini = the game's instant start: no menus, count or intro
   try { s.frame.focus(); } catch (e) {}
   startClock(s);
@@ -452,6 +563,11 @@ function begin(s) {                      // the game is loaded and he has tapped
 }
 function tapCover(s) {
   if (!s || s.state !== 'cover' || busy) return;
+  if (!isHere(s.g.id)) {                 // still being fetched: play as soon as it is here. (If there was no internet, try again.)
+    if (s.el.classList.contains('nonet')) { offline = false; fetching(s); if (s.el.classList.contains('nonet')) return; }
+    s.wantStart = true;
+    return;
+  }
   if (s.el.classList.contains('failed')) { s.el.classList.remove('failed'); unload(s); }
   s.wantStart = true;
   if (!s.frame) load(s);
@@ -525,20 +641,25 @@ function arrive(s) {
     if (s.state === 'cover') {
       stat(s.g.id).shown++;
       seen(s.g.id);
+      s.en.seen = true;
       note(s.g.id, 'shown');
-      if (s.video) {
-        if (!s.video.getAttribute('src')) s.video.src = s.g.preview;
-        const p = s.video.play();
-        if (p && p.catch) p.catch(() => {});
-      }
-      clearTimeout(s.armT);
-      s.armT = setTimeout(() => { if (cur() === s && s.state === 'cover') load(s); }, 500);   // get the game ready behind its card
+      if (isHere(s.g.id)) showOff(s);
+      else if (!s.el.classList.contains('fetching')) fetching(s);       // (a card he came back to after the internet dropped)
     }
   } else {
     const mins = Math.max(1, Math.round(setSecs / 60));
     s.el.querySelector('.sum').textContent = setPlays + ' games · ' + mins + (mins === 1 ? ' minute' : ' minutes');
   }
   chrome();
+}
+function showOff(s) {                    // the card on screen: play its clip and get the game ready behind it
+  if (s.video) {
+    if (!s.video.getAttribute('src')) s.video.src = s.g.preview;
+    const p = s.video.play();
+    if (p && p.catch) p.catch(() => {});
+  }
+  clearTimeout(s.armT);
+  s.armT = setTimeout(() => { if (cur() === s && s.state === 'cover') load(s); }, 500);
 }
 function leave(s) {
   if (!s) return;
@@ -548,6 +669,7 @@ function leave(s) {
     if (s.state === 'playing') halt(s);
     if (s.state === 'cover') {
       if (performance.now() - s.seenAt < QUICK) { stat(s.g.id).quick++; note(s.g.id, 'quick'); }
+      s.el.classList.remove('loading');
       unload(s);                          // only ever one game waiting behind a card: easier on the phone's memory
       if (s.video) { try { s.video.removeAttribute('src'); s.video.load(); s.video.classList.remove('on'); } catch (e) {} }
     }
@@ -595,10 +717,10 @@ function jump(id) {                       // from the games list: put that game 
   const s = cur();
   if (s && s.g && s.g.id === id) return;
   const after = hist[pos + 1];
-  if (after && after.type === 'game' && after.id === id) { go(1); return; }   // it was coming up next anyway
+  if (after && after.type === 'game' && after.id === id) { after.seen = true; go(1); return; }   // it was coming up next anyway
   const nx = slides.get(pos + 1);
   if (nx) drop(nx);
-  hist.splice(pos + 1, 0, { type: 'game', id });
+  hist.splice(pos + 1, 0, { type: 'game', id, seen: true });      // (seen: he chose it, so it is never swapped for another game)
   const k = deck.indexOf(id);
   if (k >= 0) deck.splice(k, 1);
   recent.push(id);
@@ -766,10 +888,20 @@ function rowHTML(g) {
   if (g.genre) meta.unshift(g.genre);
   if (st && st.starts) meta.push('Played ' + st.starts + (st.starts === 1 ? ' time' : ' times'));
   const on = pins.includes(g.id);
+  let save = '';
+  if (canFetch) {                        // the core games are always on the phone; any other game can be saved to it
+    const kb = g.kb ? (g.kb >= 1000 ? (g.kb / 1024).toFixed(1) + ' MB' : g.kb + ' KB') : '';
+    if (g.core) save = '<span class="save core" aria-label="' + esc(g.name) + ' is always on your phone">' + ICON.phone + 'On phone</span>';
+    else if (asked[g.id] === 'save') save = '<span class="save busy" aria-label="Saving ' + esc(g.name) + '"><span class="spin"></span>Saving</span>';
+    else if (isSaved(g.id)) save = '<button class="save on" aria-pressed="true" aria-label="' + esc(g.name) + ' is saved on your phone. Tap to stop keeping it.">' + ICON.saved + 'Saved</button>';
+    else save = '<button class="save" aria-pressed="false" aria-label="Save ' + esc(g.name) + ' to your phone' + (kb ? ', ' + kb : '') + ', so it plays without internet">' + ICON.save + 'Save</button>';
+  }
+  const pic = g.pic || (isHere(g.id) ? g.poster : '');
   return '<div class="row" data-id="' + g.id + '"><button class="open">' +
-    (g.poster ? '<img class="thumb" loading="lazy" alt="" src="' + esc(g.poster) + '">' : '<span class="thumb"></span>') +
-    '<span class="rt"><span class="rn"><small>№ ' + pad3(g.n) + '</small>' + esc(g.name) + (isNew(g.id) ? '<i class="new">New</i>' : '') + '</span><span class="rh">' + esc(g.hook || '') + '</span><span class="rm">' + esc(meta.join(' · ')) + '</span></span></button>' +
-    '<button class="pin' + (on ? ' on' : '') + '" aria-label="' + (on ? 'Unpin ' : 'Pin ') + esc(g.name) + '" aria-pressed="' + on + '">' + ICON.pin + '</button></div>';
+    (pic ? '<img class="thumb" loading="lazy" alt="" src="' + esc(pic) + '">' : '<span class="thumb"></span>') +
+    '<span class="rt"><span class="rn"><small>№ ' + pad3(g.n) + '</small>' + esc(g.name) + '</span><span class="rh">' + esc(g.hook || '') + '</span><span class="rm">' +
+    (isNew(g.id) ? '<b class="nw">New</b> · ' : '') + esc(meta.join(' · ')) + '</span></span></button>' +
+    save + '<button class="pin' + (on ? ' on' : '') + '" aria-label="' + (on ? 'Unpin ' : 'Pin ') + esc(g.name) + '" aria-pressed="' + on + '">' + ICON.pin + '</button></div>';
 }
 function drawList() {
   const term = q.value.trim().toLowerCase().replace(/^#|^№\s*/, '');
@@ -781,10 +913,14 @@ function drawList() {
   else if (term) html = found.map(rowHTML).join('');
   else {
     const pinned = pins.map(id => byId[id]).filter(Boolean);
+    const kept = canFetch ? phone.saved.map(id => byId[id]).filter(Boolean) : [];       // the games he saved: they play with no internet
+    if (kept.length) html += '<div class="sect">Saved on your phone</div>' + kept.map(rowHTML).join('');
     if (pinned.length) html += '<div class="sect">Pinned</div>' + pinned.map(rowHTML).join('');
-    html += '<div class="sect">' + (pinned.length ? 'All games, newest first' : 'Newest first') + '</div>' + all.map(rowHTML).join('');
+    html += '<div class="sect">' + (pinned.length || kept.length ? 'All games, newest first' : 'Newest first') + '</div>' + all.map(rowHTML).join('');
   }
-  list.innerHTML = html + '<p class="foot">' + esc(footLine()) + '</p>';
+  const canCheck = !!(native && native.check);
+  list.innerHTML = html + (canCheck ? '<button class="recheck"' + (looking ? ' disabled' : '') + '>' + (looking ? 'Checking' : 'Check for new games') + '</button>' : '') +
+    '<p class="foot">' + esc(footLine()) + '</p>';
   $('#count').textContent = GAMES.length + (GAMES.length === 1 ? ' game' : ' games');
 }
 function openLib() {
@@ -805,10 +941,26 @@ function closeLib() {
 $('#libClose').addEventListener('click', closeLib);
 q.addEventListener('input', drawList);
 list.addEventListener('click', e => {
+  if (e.target.closest('.recheck')) {     // look for new games now (the app answers through gameFeedUpdate)
+    if (looking) return;
+    looking = true;
+    clearTimeout(lookingT);
+    lookingT = setTimeout(() => { looking = false; if (lib.classList.contains('open')) drawList(); }, 30000);
+    try { native.check(); } catch (err) { looking = false; }
+    drawList();
+    return;
+  }
   const row = e.target.closest('.row');
   if (!row) return;
   const id = row.dataset.id;
   if (e.target.closest('.pin')) { const y = list.scrollTop; togglePin(id); drawList(); list.scrollTop = y; return; }
+  if (e.target.closest('.save')) {       // save this game to the phone, or stop keeping it
+    if (!canFetch || !byId[id] || byId[id].core || asked[id] === 'save') return;
+    vibe(10);
+    if (isSaved(id)) { try { native.forgetGame(id); } catch (err) {} }
+    else { want(id, 'save'); const y = list.scrollTop; drawList(); list.scrollTop = y; }
+    return;
+  }
   q.value = '';
   closeLib();
   jump(id);
@@ -820,8 +972,7 @@ list.addEventListener('click', e => {
    is simply the new game. (The feed page itself only changes when a new APK is installed.)
    One exception: right after an install the feed is running from the copy inside the APK; to see fetched games it
    has to move over to the fetched folder, which it does once, at a quiet moment, never while a game is in hand. */
-const builtIn = /\/android_asset\//.test(location.pathname);
-let pending = '', lastSync = null, toastT = 0, readingList = false, staleRev = '';
+let pending = '', lastSync = null, toastT = 0, readingList = false, staleRev = '', looking = false, lookingT = 0;
 function gameInHand() { for (const s of slides.values()) if (s.state === 'playing' || s.state === 'paused') return true; return false; }
 function takeUpdate() {
   if (!pending || !native || !native.reload || busy || drag.on || gameInHand() || lib.classList.contains('open')) return;
@@ -832,6 +983,22 @@ function takeUpdate() {
 }
 window.gameFeedUpdate = r => {
   lastSync = r || null;
+  if (looking) {                          // he asked: say what was found (new games announce themselves)
+    looking = false;
+    clearTimeout(lookingT);
+    if (!r || !r.ok) toast('No internet. Try again later.', 2600);
+    else if (!r.rev || r.rev === BUILD.rev) toast('No new games', 2200);
+    if (lib.classList.contains('open')) setTimeout(() => { if (lib.classList.contains('open')) { const y = list.scrollTop; drawList(); list.scrollTop = y; } }, 0);
+  }
+  // the app has just tried the internet: that is the best news there is about whether other games can be fetched
+  const was = offline;
+  offline = !(r && r.ok);
+  if (canFetch) {
+    readPhone();
+    nowHere();
+    if (offline && !was) dropUnreachable();
+    if (was && !offline) slides.forEach(s => { if (s.g && s.el.classList.contains('nonet')) fetching(s); });      // the internet is back: a card that was waiting for it tries again
+  }
   if (!r || !r.ok || !r.rev || r.rev === BUILD.rev || r.rev === staleRev) return;
   if (builtIn) { pending = r.rev; takeUpdate(); }
   else readList(r.rev);
@@ -861,7 +1028,7 @@ function addGames(rev) {
     GAMES.splice(i, 1);
     delete byId[id];
     deck = deck.filter(x => x !== id);
-    [freshQueue, fresh, pins].forEach(a => { const k = a.indexOf(id); if (k >= 0) a.splice(k, 1); });
+    [freshQueue, fresh, pins, recent, freshShown].forEach(a => { for (let k = a.indexOf(id); k >= 0; k = a.indexOf(id)) a.splice(k, 1); });
   }
   GAMES.sort((x, y) => x.n - y.n);
   store.set('pins', pins);
@@ -898,6 +1065,8 @@ function sayWhenQuiet() {
   toast(whenQuiet);
   whenQuiet = '';
 }
+/* with no internet, ask the app now and then whether it is back (it answers through gameFeedUpdate) */
+setInterval(() => { if (canFetch && offline && native.check && !document.hidden) { try { native.check(); } catch (e) {} } }, 45000);
 /* anything that went wrong, kept short, for the line at the bottom of the games list */
 const trouble = { n: 0, last: '' };
 function hadTrouble(what) { trouble.n++; trouble.last = String(what).slice(0, 120); store.set('trouble', trouble.last); }
@@ -905,7 +1074,9 @@ window.addEventListener('error', e => hadTrouble('feed: ' + ((e && e.message) ||
 function footLine() {
   const bits = [];
   if (lastSync) bits.push(pending ? 'New games ready' : lastSync.ok ? 'Up to date' : 'Could not check for new games');
+  if (canFetch && offline) bits.push('No internet');
   if (BUILD.rev) bits.push('Games ' + BUILD.rev);
+  if (phone) bits.push(Object.keys(phone.here).filter(id => byId[id]).length + ' on this phone');
   try { if (native && native.version) bits.push('App ' + native.version()); } catch (e) {}
   let more = '';
   try { const p = native && native.lastProblem ? native.lastProblem() : ''; if (p) more = 'Last problem: ' + p; } catch (e) {}
@@ -944,8 +1115,10 @@ window.addEventListener('resize', measure);
 function start(saved) {
   measure();
   if (!GAMES.length) { stage.innerHTML = '<p class="none">No games yet.</p>'; return; }
-  const want = (saved && saved.id) || decodeURIComponent((location.hash || '').slice(1));
-  if (byId[want]) { hist.push({ type: 'game', id: want }); recent.push(want); }
+  const first = (saved && saved.id) || decodeURIComponent((location.hash || '').slice(1));
+  if (byId[first]) { hist.push({ type: 'game', id: first, seen: true }); recent.push(first); }
+  else hist.push({ type: 'game', id: nextGame() });       // (picked while "opening": a game that is on the phone)
+  opening = false;
   sync();
   arrive(cur());
   if (!store.get('hint', 0)) { bar.classList.add('hint'); chrome(); }
@@ -958,8 +1131,9 @@ try { if (hotApi && hotApi.snapshot) hotApi.snapshot(() => { const s = cur(); re
 if (hotApi && hotApi.ready) hotApi.ready(start); else start((hotApi && hotApi.data) || {});
 
 window.__feed = {
-  games: GAMES, hist, slides, stats, log, fresh, build: BUILD,
-  get pending() { return pending; }, get soundOn() { return soundOn; }, setSound, builtIn, trouble,
+  games: GAMES, hist, slides, stats, log, fresh, recent, build: BUILD,
+  get pending() { return pending; }, get soundOn() { return soundOn; }, setSound, builtIn, trouble, canFetch,
+  get offline() { return offline; }, isHere, isSaved, reachable,
   get pos() { return pos; }, get busy() { return busy; },
   cur, go, jump, tap: () => tapCover(cur()), halt: () => halt(cur()), carryOn: () => carryOn(cur()), countIn: () => countIn(cur()), restart: () => restart(cur()), pickLevel: () => pickLevel(cur()), openLib, closeLib, togglePin,
   state: () => { const s = cur(); return { pos, type: s.en.type, id: s.g ? s.g.id : null, state: s.state, ready: !!s.ready, started: s.started || false, halted: s.el.classList.contains('halt'), frames: Array.from(slides.values()).filter(x => x.frame).length, pins: pins.slice(), setPlays }; }

@@ -53,6 +53,26 @@ public class Bridge {
     @JavascriptInterface
     public void reload(String at) { final String card = at == null ? "" : at; act.runOnUiThread(() -> act.loadFeed(card)); }
 
+    /** Which games are on the phone: {"core":[...],"saved":[...],"here":[...]}. */
+    @JavascriptInterface
+    public String onPhone() { return act.onPhone(); }
+
+    /** A card for a game that is not on the phone has come up: fetch it so it can be played. The answer comes to window.gameFeedGame. */
+    @JavascriptInterface
+    public void fetchGame(String id) { act.wantGame(id, false); }
+
+    /** "Save" in the Games list: fetch the game if need be and keep it on the phone, so it works with no internet. */
+    @JavascriptInterface
+    public void saveGame(String id) { act.wantGame(id, true); }
+
+    /** Stop keeping a saved game. */
+    @JavascriptInterface
+    public void forgetGame(String id) { act.forgetGame(id); }
+
+    /** The feed thinks the internet may be back: look for new games now. */
+    @JavascriptInterface
+    public void check() { act.checkNow(); }
+
     /** The last thing that went wrong (the app or its web engine stopping), for the bottom of the games list. "" if nothing. */
     @JavascriptInterface
     public String lastProblem() { return act.lastProblem(); }

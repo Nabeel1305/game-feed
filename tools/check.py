@@ -20,9 +20,12 @@ for key in ('id', 'path'):
 prefixes = [g['storage_prefix'] for g in games if g.get('storage_prefix')]
 if len(prefixes) != len(set(prefixes)): problems.append('two games share a storage_prefix (their saves would collide)')
 if 'gf.' in prefixes: problems.append("storage_prefix 'gf.' belongs to the feed itself; give the game another")
+if not any(g.get('core') is True for g in games): problems.append('no core games: the phone app would have nothing to play with no internet')
 for g in games:
     if not os.path.exists(os.path.join(root, g['path'])): problems.append(f"{g['id']}: missing {g['path']}")
     if g.get('in_app') not in (None, True, False): problems.append(f"{g['id']}: in_app must be true or false")
+    if g.get('core') not in (None, True, False): problems.append(f"{g['id']}: core must be true or false")
+    if g.get('core') is True and g.get('in_app') is not True: problems.append(f"{g['id']}: a core game (inside the phone app) must be on the app (in_app)")
     if g.get('in_app') is True and g['status'] not in ('approved', 'testing'): problems.append(f"{g['id']}: marked as on the app (in_app) but its status is {g['status']}")
     elif g['status'] in ('approved', 'testing'):
         # the basic controls every game in the feed must have (LESSONS rules 4 and 11); tools/test_controls.py tries them for real

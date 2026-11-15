@@ -4,16 +4,16 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
 **6 games** so far. Next number: **7**.
 
-**Game Feed** (the scrolling app with all the games, version 0.5.0): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 6 games in it.
+**Game Feed** (the scrolling app with all the games, version 0.6.0): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 6 games in it.
 
 | # | Game | Status | On the app | Version | Play / test page | Code |
 |---|------|--------|------------|---------|------------------|------|
-| 1 | **Bottle Cap Flick** | approved | yes | 1.1.0 | [play](https://claude.ai/artifact/KkPZNYvjwLp3vobTWiBhYK) | `games/bottle-cap-flick/index.html` |
-| 2 | **Knockout** | testing | yes | 1.2.0 | [play](https://claude.ai/artifact/NPj7ei6Tm8u6KQkALziov7) | `games/knockout/index.html` |
-| 3 | **High Noon** | testing | yes | 1.2.0 | [play](https://claude.ai/artifact/5dVHkDPdSaN7W65jNVdH3R) | `games/high-noon/index.html` |
-| 4 | **Steel & Honour** | testing | yes | 0.13.0 | [play](https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5) | `games/sword-fight/index.html` |
-| 5 | **Zenith** | testing | yes | 0.2.0 | [play](https://claude.ai/artifact/HQD2KteiP4RFWSZTdH8CRy) | `games/zenith/index.html` |
-| 6 | **Hippodrome** | testing | yes | 0.3.0 | [play](https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM) | `games/hippodrome/index.html` |
+| 1 | **Bottle Cap Flick** | approved | yes: core game, always on the phone | 1.1.0 | [play](https://claude.ai/artifact/KkPZNYvjwLp3vobTWiBhYK) | `games/bottle-cap-flick/index.html` |
+| 2 | **Knockout** | testing | yes: core game, always on the phone | 1.2.0 | [play](https://claude.ai/artifact/NPj7ei6Tm8u6KQkALziov7) | `games/knockout/index.html` |
+| 3 | **High Noon** | testing | yes: core game, always on the phone | 1.2.0 | [play](https://claude.ai/artifact/5dVHkDPdSaN7W65jNVdH3R) | `games/high-noon/index.html` |
+| 4 | **Steel & Honour** | testing | yes: core game, always on the phone | 0.13.0 | [play](https://claude.ai/artifact/Q54gZZGG7ktzcNrMVA69z5) | `games/sword-fight/index.html` |
+| 5 | **Zenith** | testing | yes: core game, always on the phone | 0.2.0 | [play](https://claude.ai/artifact/HQD2KteiP4RFWSZTdH8CRy) | `games/zenith/index.html` |
+| 6 | **Hippodrome** | testing | yes: core game, always on the phone | 0.3.0 | [play](https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM) | `games/hippodrome/index.html` |
 
 ## What each game is
 

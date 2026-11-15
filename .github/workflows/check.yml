@@ -73,7 +73,7 @@ jobs:
           git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" app-v2:app-v2
           echo "Published build ${{ github.run_number }}: $(head -1 manifest.txt)" >> "$GITHUB_STEP_SUMMARY"
 
-  # The phone app: the feed and every game inside one Android app, built after the checks pass.
+  # The phone app: the feed and the core games inside one Android app, built after the checks pass.
   # Every run builds it once unsigned-for-release (a debug build) to prove the app still builds.
   # The real, installable GameFeed.apk needs the KEYSTORE_PASSWORD secret (see android/signing/README.md);
   # without it this job says so and stops there.
@@ -88,10 +88,12 @@ jobs:
       KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
-      - name: Put the feed and the games inside the app
+      # Only the core games go inside the app (games.json: "core": true). Every other game is fetched when its card
+      # comes up, or kept on the phone when he saves it from the Games list (android/.../Sync.java).
+      - name: Put the feed and the core games inside the app
         env:
           BUILD_NUMBER: ${{ github.run_number }}
-        run: python3 tools/build_feed.py --out android/app/src/main/assets
+        run: python3 tools/build_feed.py --out android/app/src/main/assets --core
       - uses: actions/setup-java@v5
         with:
           distribution: temurin

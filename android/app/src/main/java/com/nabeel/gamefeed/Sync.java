@@ -13,8 +13,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +31,14 @@ import java.util.regex.Pattern;
  *
  * One file is never fetched: the feed page itself (index.html). It is always the copy inside the APK. New games
  * arrive by themselves; a change to the app itself only ever arrives when a new APK is installed (Nabeel's rule).
+ *
+ * Not every game is kept on the phone (his design, 15 Nov 2026):
+ *   - the core games, the ones inside the APK, are always there and always kept up to date;
+ *   - every other game is fetched when its card comes up (fetchGame), so it needs the internet, and is cleared
+ *     away the next time the app starts (prune);
+ *   - unless he saved it from the Games list (setKept): a saved game stays, and is kept up to date like a core one.
+ * The list of games, the small list pictures and the fonts are always fetched: they are tiny, and the feed needs
+ * them to show what exists.
  *
  * Plain Java on purpose (nothing from Android), so tools/test_sync.py can test it on any computer.
  */
@@ -102,6 +112,67 @@ final class Sync {
     private static final String PART = ".part";
     private static final String LOCAL = "manifest.txt";
 
+    private static final String KEPT = "kept.txt";
+    private static final Pattern GAME_FILE = Pattern.compile("(?:games/([a-z0-9][a-z0-9-]{0,63})/.+|(?:posters|previews)/([a-z0-9][a-z0-9-]{0,63})\\.[a-z0-9]{2,5})");
+    private static final Pattern GAME_ID = Pattern.compile("[a-z0-9][a-z0-9-]{0,63}");
+
+    /** The game a file belongs to (its page, its card picture, its clip), or null for a file every phone keeps. */
+    static String gameOf(String path) {
+        Matcher m = GAME_FILE.matcher(path);
+        if (!m.matches()) return null;
+        return m.group(1) != null ? m.group(1) : m.group(2);
+    }
+
+    static boolean validId(String id) { return id != null && GAME_ID.matcher(id).matches(); }
+
+    /** The games a manifest carries. For the manifest inside the APK these are the core games. */
+    static Set<String> gamesIn(Manifest m) {
+        Set<String> ids = new LinkedHashSet<>();
+        if (m != null) for (String p : m.files.keySet()) { String g = gameOf(p); if (g != null) ids.add(g); }
+        return ids;
+    }
+
+    /** The games he has saved from the Games list. */
+    static Set<String> kept(File dir) {
+        Set<String> ids = new LinkedHashSet<>();
+        try {
+            File f = new File(dir, KEPT);
+            if (!f.isFile()) return ids;
+            for (String line : new String(readAll(new FileInputStream(f), 1 << 20), StandardCharsets.UTF_8).split("\n")) {
+                String id = line.trim();
+                if (validId(id)) ids.add(id);
+            }
+        } catch (Exception ignored) { }
+        return ids;
+    }
+
+    /** Saves a game (it stays on the phone) or lets it go again (it is cleared the next time the app starts). */
+    static boolean setKept(File dir, String id, boolean on) {
+        if (!validId(id)) return false;
+        try {
+            Set<String> ids = kept(dir);
+            if (on ? !ids.add(id) : !ids.remove(id)) return true;
+            if (!dir.isDirectory() && !dir.mkdirs()) return false;
+            StringBuilder b = new StringBuilder();
+            for (String k : ids) b.append(k).append('\n');
+            write(new File(dir, KEPT), new File(dir, KEPT + PART), b.toString());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /** The games that are on the phone right now, ready to play with no internet. */
+    static Set<String> onPhone(File dir) {
+        Set<String> ids = new LinkedHashSet<>();
+        Manifest local = readLocal(dir);
+        for (String p : local.files.keySet()) {
+            String g = gameOf(p);
+            if (g != null && p.equals("games/" + g + "/index.html") && new File(dir, p).isFile()) ids.add(g);
+        }
+        return ids;
+    }
+
     /** What the phone's copy holds, by its own record. An unreadable or missing record means "nothing yet". */
     static Manifest readLocal(File dir) {
         try {
@@ -145,6 +216,196 @@ final class Sync {
                 && new File(dir, "index.html").isFile() && new File(dir, "games.js").isFile();
     }
 
+    /** The last published list this run of the app has read, so that fetching one game does not have to read it again. */
+    private static Manifest lastRemote = null;
+    private static long lastRemoteAt = 0;
+    private static final long REMOTE_GOOD_FOR_MS = 15 * 60 * 1000L;
+
+    private static Manifest readRemote(String base) throws IOException {
+        String text = new String(get(base + "manifest.txt?t=" + System.currentTimeMillis(), 8 << 20), StandardCharsets.UTF_8);
+        Manifest remote = Manifest.parse(text);
+        lastRemote = remote;
+        lastRemoteAt = System.currentTimeMillis();
+        return remote;
+    }
+
+    /** Puts one file in place: from inside the APK when that is the very same file, otherwise downloaded. Checked either way. */
+    private static void place(String base, File dir, File part, String p, Entry want, Bundled bundled, Manifest inApp, boolean mustBeOwn, Result r) throws IOException {
+        boolean got = false;
+        Entry b = inApp == null ? null : inApp.files.get(p);
+        if (bundled != null && b != null && b.hash.equals(want.hash)) {
+            try {
+                InputStream in = bundled.open(p);
+                try { got = want.hash.equals(save(in, part, want.size)); } finally { in.close(); }
+            } catch (IOException e) { got = false; }
+            if (got) r.fromApp++;
+        }
+        if (!got && mustBeOwn) throw new IOException("cannot copy " + p + " out of the app");
+        if (!got) {
+            if (!want.hash.equals(download(base + p + "?v=" + want.hash.substring(0, 16), part, want.size))) throw new IOException("wrong contents for " + p);
+            r.fetched++;
+        }
+        File dest = new File(dir, p);
+        File parent = dest.getParentFile();
+        if (parent != null && !parent.isDirectory() && !parent.mkdirs()) throw new IOException("cannot make folder for " + p);
+        if (!part.renameTo(dest)) {
+            if (dest.exists() && !dest.delete()) throw new IOException("cannot replace " + p);
+            if (!part.renameTo(dest)) throw new IOException("cannot place " + p);
+        }
+    }
+
+    private static boolean same(File dir, String p, Entry want, Manifest local) {
+        Entry have = local.files.get(p);
+        File f = new File(dir, p);
+        return have != null && have.hash.equals(want.hash) && f.isFile() && f.length() == want.size;
+    }
+
+    private static String why(Exception e) {
+        String msg = e.getMessage();
+        return e.getClass().getSimpleName() + (msg == null ? "" : ": " + msg);
+    }
+
+    /**
+     * Makes the phone's copy at least what came inside the APK, with no internet needed: after an install, or an
+     * update of the app, the folder is brought up to the APK before the feed is shown, so the feed always runs from
+     * the folder and never has to move there later.
+     *   - A folder older than the APK (or not whole) takes everything the APK has.
+     *   - A folder as new as the APK, or newer, keeps its games as they are (they may be newer than the APK's);
+     *     only a file that went missing is put back.
+     *   - The feed page is the APK's own in every case: the moment a new app is installed, its page is the one
+     *     shown, even if the phone had already fetched the games published with it.
+     */
+    static Result seed(File dir, Bundled bundled, Manifest inApp) {
+        Result r = new Result();
+        Manifest local = readLocal(dir);
+        r.build = local.build;
+        r.rev = local.rev;
+        if (bundled == null || inApp == null) { r.error = "nothing inside the app to copy"; return r; }
+        boolean whole = usable(dir, local);
+        boolean older = !whole || local.build < inApp.build;
+        boolean newer = whole && local.build > inApp.build;         // it has already taken games published after this APK was made
+        Manifest now = new Manifest();
+        now.build = local.build;
+        now.rev = local.rev;
+        now.files.putAll(local.files);
+        boolean touched = false;
+        File part = new File(dir, PART);
+        try {
+            if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot make the folder");
+            for (Map.Entry<String, Entry> e : inApp.files.entrySet()) {
+                String p = e.getKey();
+                if (same(dir, p, e.getValue(), local)) continue;
+                if (!older && !p.equals(SHELL)) {
+                    // its own file is kept if it is there; a file it does not list is filled in, unless the folder is
+                    // newer than the APK (then the game was taken off the app since, and must not come back)
+                    if (local.files.containsKey(p) ? new File(dir, p).isFile() : newer) continue;
+                }
+                place("", dir, part, p, e.getValue(), bundled, inApp, true, r);
+                now.files.put(p, e.getValue());
+                touched = true;
+            }
+            if (older) { now.build = inApp.build; now.rev = inApp.rev; }
+            if (touched || older) write(new File(dir, LOCAL), part, now.text());
+            r.changed = touched;
+            r.build = now.build;
+            r.rev = now.rev;
+            r.ok = true;
+        } catch (Exception e) {
+            r.ok = false;
+            r.changed = touched;
+            r.error = why(e);
+            if (touched) { try { write(new File(dir, LOCAL), part, now.text()); } catch (Exception ignored) { } }
+        } finally {
+            part.delete();
+        }
+        return r;
+    }
+
+    /**
+     * Clears away the games that were only fetched to be played: every game on the phone that is neither a core game
+     * nor saved. Done when the app starts, before the feed is shown, so nothing in use is ever taken away.
+     * Returns how many games were cleared.
+     */
+    static int prune(File dir, Set<String> core, Set<String> kept) {
+        int cleared = 0;
+        try {
+            Manifest local = readLocal(dir);
+            Set<String> gone = new LinkedHashSet<>();
+            for (String p : new ArrayList<>(local.files.keySet())) {
+                String g = gameOf(p);
+                if (g == null || core.contains(g) || kept.contains(g)) continue;
+                new File(dir, p).delete();
+                local.files.remove(p);
+                gone.add(g);
+            }
+            for (String g : gone) new File(dir, "games/" + g).delete();          // the empty folder
+            cleared = gone.size();
+            if (cleared > 0) write(new File(dir, LOCAL), new File(dir, PART), local.text());
+        } catch (Exception ignored) { }
+        return cleared;
+    }
+
+    /**
+     * Fetches one game (its page, its card picture and its clip) so it can be played now. Its page goes in last:
+     * a game counts as on the phone once its page is there, and by then its card is too.
+     */
+    static Result fetchGame(String base, File dir, String id, Bundled bundled, Manifest inApp) {
+        Result r = new Result();
+        Manifest local = readLocal(dir);
+        r.build = local.build;
+        r.rev = local.rev;
+        if (!validId(id)) { r.error = "not a game"; return r; }
+        boolean touched = false;
+        File part = new File(dir, PART);
+        Manifest now = new Manifest();
+        now.build = local.build;
+        now.rev = local.rev;
+        now.files.putAll(local.files);
+        try {
+            if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot make the folder");
+            boolean fresh = lastRemote == null || System.currentTimeMillis() - lastRemoteAt > REMOTE_GOOD_FOR_MS;
+            Manifest remote = fresh ? readRemote(base) : lastRemote;
+            for (int attempt = 0; ; attempt++) {
+                List<String> need = new ArrayList<>();
+                String page = "games/" + id + "/index.html";
+                for (Map.Entry<String, Entry> e : remote.files.entrySet()) {
+                    String p = e.getKey();
+                    boolean font = p.startsWith("fonts/");                        // a newer game may use a font this phone has not fetched yet
+                    if (!font && !id.equals(gameOf(p))) continue;
+                    if (p.equals(page) || same(dir, p, e.getValue(), local)) continue;
+                    need.add(p);
+                }
+                try {
+                    if (!remote.files.containsKey(page)) throw new IOException("no such game");
+                    if (!same(dir, page, remote.files.get(page), local)) need.add(page);
+                    for (String p : need) {
+                        if (now.files.containsKey(p) && same(dir, p, remote.files.get(p), now)) continue;
+                        place(base, dir, part, p, remote.files.get(p), bundled, inApp, false, r);
+                        now.files.put(p, remote.files.get(p));
+                        touched = true;
+                    }
+                    break;
+                } catch (IOException e) {
+                    // the list we remembered may be out of date (the game was changed since): read it again, once
+                    if (fresh || attempt > 0) throw e;
+                    remote = readRemote(base);
+                    fresh = true;
+                }
+            }
+            if (touched) write(new File(dir, LOCAL), part, now.text());
+            r.changed = touched;
+            r.ok = true;
+        } catch (Exception e) {
+            r.ok = false;
+            r.changed = touched;
+            r.error = why(e);
+            if (touched) { try { write(new File(dir, LOCAL), part, now.text()); } catch (Exception ignored) { } }
+        } finally {
+            part.delete();
+        }
+        return r;
+    }
+
     /**
      * @param base    where the app is published, ending in "/"
      * @param dir     the phone's copy
@@ -164,54 +425,40 @@ final class Sync {
         File part = new File(dir, PART);
         try {
             if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("cannot make the folder");
-            String text = new String(get(base + "manifest.txt?t=" + System.currentTimeMillis(), 4 << 20), StandardCharsets.UTF_8);
-            Manifest remote = Manifest.parse(text);
+            Manifest remote = readRemote(base);
             // an out-of-date answer from the server, or a published app older than the one inside the APK: keep what we have
             if (remote.build < local.build || (inApp != null && remote.build < inApp.build)) { r.ok = true; return r; }
 
-            // what each file should be: as published, except the feed page, which is the APK's own
+            // What this phone keeps: everything that is not a game's own file (the list, the list pictures, the fonts),
+            // the core games (the ones inside the APK) and the games he has saved. The feed page is the APK's own.
+            // Any other game is fetched only when its card comes up (fetchGame).
+            // (If what is inside the APK is not known, there is no telling which games are core: then every game is kept.)
+            Set<String> core = inApp == null ? null : gamesIn(inApp), saved = kept(dir);
             boolean ownShell = bundled != null && inApp != null && inApp.files.containsKey(SHELL);
-            LinkedHashMap<String, Entry> wanted = new LinkedHashMap<>(remote.files);
+            LinkedHashMap<String, Entry> wanted = new LinkedHashMap<>();
+            for (Map.Entry<String, Entry> e : remote.files.entrySet()) {
+                String g = gameOf(e.getKey());
+                if (g == null || core == null || core.contains(g) || saved.contains(g)) wanted.put(e.getKey(), e.getValue());
+            }
             if (ownShell) wanted.put(SHELL, inApp.files.get(SHELL));
 
             List<String> need = new ArrayList<>();
             List<String> last = new ArrayList<>();
             for (Map.Entry<String, Entry> e : wanted.entrySet()) {
                 String p = e.getKey();
-                Entry want = e.getValue(), have = local.files.get(p);
-                File f = new File(dir, p);
-                if (have != null && have.hash.equals(want.hash) && f.isFile() && f.length() == want.size) continue;
+                if (same(dir, p, e.getValue(), local)) continue;
                 if (p.equals("games.js") || p.equals(SHELL)) last.add(p); else need.add(p);
             }
             need.addAll(last);
 
             for (String p : need) {
-                Entry want = wanted.get(p);
-                boolean got = false;
-                Entry b = inApp == null ? null : inApp.files.get(p);
-                if (bundled != null && b != null && b.hash.equals(want.hash)) {
-                    try {
-                        InputStream in = bundled.open(p);
-                        try { got = want.hash.equals(save(in, part, want.size)); } finally { in.close(); }
-                    } catch (IOException e) { got = false; }
-                    if (got) r.fromApp++;
-                }
-                if (!got && ownShell && p.equals(SHELL)) throw new IOException("cannot copy the feed page out of the app");
-                if (!got) {
-                    if (!want.hash.equals(download(base + p + "?v=" + want.hash.substring(0, 16), part, want.size))) throw new IOException("wrong contents for " + p);
-                    r.fetched++;
-                }
-                File dest = new File(dir, p);
-                File parent = dest.getParentFile();
-                if (parent != null && !parent.isDirectory() && !parent.mkdirs()) throw new IOException("cannot make folder for " + p);
-                if (!part.renameTo(dest)) {
-                    if (dest.exists() && !dest.delete()) throw new IOException("cannot replace " + p);
-                    if (!part.renameTo(dest)) throw new IOException("cannot place " + p);
-                }
-                now.files.put(p, want);
+                place(base, dir, part, p, wanted.get(p), bundled, inApp, ownShell && p.equals(SHELL), r);
+                now.files.put(p, wanted.get(p));
                 touched = true;
             }
 
+            // a file the published app no longer has at all (a game taken off the app) goes; a game that is only here
+            // to be played stays until the app next starts
             for (String p : new ArrayList<>(now.files.keySet())) {
                 if (remote.files.containsKey(p)) continue;
                 new File(dir, p).delete();
@@ -230,8 +477,7 @@ final class Sync {
         } catch (Exception e) {
             r.ok = false;
             r.changed = touched;
-            String msg = e.getMessage();
-            r.error = e.getClass().getSimpleName() + (msg == null ? "" : ": " + msg);
+            r.error = why(e);
             if (touched) {                       // keep a true record of what did arrive, so next time only the rest is fetched
                 try { write(new File(dir, LOCAL), part, now.text()); } catch (Exception ignored) { }
             }

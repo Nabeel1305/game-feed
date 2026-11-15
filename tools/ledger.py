@@ -14,7 +14,8 @@ if fa:
 lines += [
          '| # | Game | Status | On the app | Version | Play / test page | Code |', '|---|------|--------|------------|---------|------------------|------|']
 for g in games:
-    lines.append(f"| {g['number']} | **{g['name']}** | {g['status']} | {'yes' if on_app(g) else 'not yet (he has not said so)'} | {g['version']} | [play]({g['artifact']}) | `{g['path']}` |")
+    where = ('yes: core game, always on the phone' if g.get('core') is True else 'yes: played over the internet, can be saved') if on_app(g) else 'not yet (he has not said so)'
+    lines.append(f"| {g['number']} | **{g['name']}** | {g['status']} | {where} | {g['version']} | [play]({g['artifact']}) | `{g['path']}` |")
 lines += ['', '## What each game is', '']
 for g in games:
     extra = f" APK repo: `{g['apk_repo']}`." if g.get('apk_repo') else ''
