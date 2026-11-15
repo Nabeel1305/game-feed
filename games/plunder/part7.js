@@ -58,7 +58,7 @@ const TUNE = [
   [0, [7, 2], [12, 1], [15, 2], [14, 1]], [3, [12, 2], [10, 1], [7, 3]], [5, [8, 2], [7, 1], [5, 2], [3, 1]], [-5, [2, 2], [3, 1], [5, 1], [7, 2]],
   [0, [7, 2], [12, 1], [15, 2], [14, 1]], [-2, [12, 2], [10, 1], [7, 2], [5, 1]], [0, [3, 2], [7, 1], [5, 2], [2, 1]], [0, [0, 6]]
 ];
-const D4 = 293.66, semi = n => D4 * Math.pow(2, n / 12);
+const D4 = 293.66, semi = n => D4 * Math.pow(2, n / 12), MVOL = 0.28, mvol = m => m === 'off' ? 0.0001 : MVOL * (m === 'calm' ? 1.3 : 1);      // how loud the music is against everything else (S10: quiet, under every effect; measured by __sim.musicCheck)
 const offline = () => typeof OfflineAudioContext !== 'undefined' && actx instanceof OfflineAudioContext;      // the sound check renders each sound on its own: no music or sea in it
 const MUS = { on: false, mode: 'calm', want: 'calm', bar: 0, e: 0, t: 0, g: null, lvl: 0, flat: [] };
 (() => { for (const b of TUNE) { const row = []; for (let i = 1; i < b.length; i++) { row.push({ n: b[i][0], len: b[i][1] }); for (let j = 1; j < b[i][1]; j++) row.push(null); } MUS.flat.push(row); } })();
@@ -85,20 +85,23 @@ function musicStep(run) {      // called every frame: lays down the next third o
   if (!actx || MUTE || !run || HEADLESS || offline()) { MUS.t = 0; return; }
   if (MUS.ctx !== actx) { MUS.ctx = actx; MUS.g = null; }
   if (!MUS.g) { MUS.g = actx.createGain(); MUS.g.gain.value = 0.0001; MUS.g.connect(AMB); }
-  const now = actx.currentTime; if (MUS.t < now - 0.2 || MUS.t > now + 1.5) { MUS.t = now + 0.06; MUS.g.gain.cancelScheduledValues(now); MUS.g.gain.setTargetAtTime(MUS.want === 'off' ? 0.0001 : 1, now, 0.4); }
-  while (MUS.t < now + 0.32) {
-    if (MUS.mode !== MUS.want && MUS.e % 3 === 0) { const was = MUS.mode; MUS.mode = MUS.want; MUS.g.gain.setTargetAtTime(MUS.mode === 'off' ? 0.0001 : 1, MUS.t, 0.25); if (was === 'calm' && MUS.mode !== 'off') { for (let i = 0; i < 3; i++) mDrum(MUS.t + i * 0.09, 0.2 + i * 0.05, i === 2); } }
+  const now = actx.currentTime; if (MUS.t < now - 0.2 || MUS.t > now + 1.5) { MUS.t = now + 0.06; MUS.g.gain.cancelScheduledValues(now); MUS.g.gain.setTargetAtTime(mvol(MUS.want), now, 0.4); }
+  musicFill(now + 0.32);
+}
+function musicFill(until) {
+  while (MUS.t < until) {
+    if (MUS.mode !== MUS.want && MUS.e % 3 === 0) { const was = MUS.mode; MUS.mode = MUS.want; MUS.g.gain.setTargetAtTime(mvol(MUS.mode), MUS.t, 0.25); if (was === 'calm' && MUS.mode !== 'off') { for (let i = 0; i < 3; i++) mDrum(MUS.t + i * 0.09, 0.2 + i * 0.05, i === 2); } }
     const mode = MUS.mode, fast = mode === 'battle' || mode === 'fight', dt = mode === 'fight' ? 0.178 : fast ? 0.195 : 0.335, t = MUS.t, bar = TUNE[MUS.bar], root = bar[0], cell = MUS.flat[MUS.bar][MUS.e], minor = root === 0 || root === 5, third = minor ? 3 : 4;
     if (mode !== 'off') {
       if (cell && cell.n > -90) { const fq = semi(cell.n), dur = cell.len * dt * 0.92;
         if (fast) { mVoice('sawtooth', fq, t, dur, 0.05, 2500, { vib: 1, att: 0.012, rel: 0.05, sus: 0.7 }); mVoice('triangle', fq * 2, t, dur * 0.8, 0.028, 5000, { att: 0.01, rel: 0.04, sus: 0.5 }); }
         else { mVoice('triangle', fq, t, dur, 0.06, 1500, { vib: 0.7, att: 0.05, rel: 0.14, det: -5 }); mVoice('sawtooth', fq, t, dur, 0.017, 1100, { att: 0.06, rel: 0.14, det: 6 }); } }
       if (fast) {
-        if (MUS.e === 0 || MUS.e === 3) { mVoice('triangle', semi(root - 24 + (MUS.e === 3 ? 7 : 0)), t, dt * 2.2, 0.11, 600, { att: 0.01, rel: 0.08, sus: 0.6 }); mDrum(t, 0.3, true); mPluck(semi(root - 12), t, 0.05, 0.5); mPluck(semi(root - 12 + third), t, 0.035, 0.5); mPluck(semi(root - 5), t, 0.04, 0.5); }
+        if (MUS.e === 0 || MUS.e === 3) { mVoice('triangle', semi(root - 12 + (MUS.e === 3 ? -5 : 0)), t, dt * 2.2, 0.11, 700, { att: 0.01, rel: 0.08, sus: 0.6 }); mDrum(t, 0.3, true); mPluck(semi(root - 12), t, 0.05, 0.5); mPluck(semi(root - 12 + third), t, 0.035, 0.5); mPluck(semi(root - 5), t, 0.04, 0.5); }
         else if (MUS.e === 2 || MUS.e === 5) mDrum(t, mode === 'fight' ? 0.17 : 0.12, false);
         else if (mode === 'fight') mDrum(t, 0.07, false);
       } else {
-        if (MUS.e === 0) { mVoice('sine', semi(root - 24), t, dt * 5.4, 0.1, 500, { att: 0.04, rel: 0.3 }); mPluck(semi(root - 12), t, 0.075); }
+        if (MUS.e === 0) { mVoice('triangle', semi(root - 12), t, dt * 5.4, 0.08, 600, { att: 0.04, rel: 0.3 }); mPluck(semi(root - 12), t, 0.075); }
         else if (MUS.e === 2) mPluck(semi(root - 5), t, 0.05); else if (MUS.e === 3) mPluck(semi(root - 12 + third), t, 0.06); else if (MUS.e === 5) mPluck(semi(root - 5), t, 0.045);
       }
     }

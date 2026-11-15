@@ -62,6 +62,7 @@ function showEnd() {
   const res = G.res, N = G.N, my = ++lootRun; $('pauseBtn').classList.add('hidden'); sightCard(false);
   $('eTitle').textContent = res.win ? (G.cfg.boss ? 'Treasure taken!' : 'Plundered!') : res.why === 'sunk' ? 'Sunk' : 'Driven off'; $('eTitle').style.color = res.win ? '#ffd166' : '#ffb4a8';
   $('eStars').innerHTML = res.win ? [1, 2, 3].map(i => `<span class="off" id="st${i}">★</span>`).join('') : '';
+  const mast = $('eMast'); mast.classList.toggle('hidden', !res.win); mast.classList.remove('go'); if (res.win) { $('eTheirs').style.background = G.prize.K.navy ? '#b3271f' : '#2f6a4a'; setTimeout(() => { if (my === lootRun) mast.classList.add('go'); }, 60); }
   const helpLine = !res.win && (streaks[N] || 0) >= 3 ? '<br><span class="help">Help is on: their blows and broadsides will come a little slower until you get through.</span>' : '';
   if (res.win) {
     const h = res.haul; $('eLoot').innerHTML = h.lines.map(l => `<li><span>${l[0]}</span><b>${fmtG(l[1])}</b></li>`).join('') + `<li class="tot"><span>The haul</span><b>${fmtG(h.total)}</b></li>`;
@@ -281,6 +282,16 @@ function frame(now) {
 }
 window.__sim = {
 /*SOUNDCHECK*/
+  async musicCheck(mode, secs = 8) {      // renders the shanty offline, one mood at a time: how loud it is against the effects
+    const keep = [actx, BUS, AMB, MUTE], km = Object.assign({}, MUS), oc = new OfflineAudioContext(1, 44100 * secs, 44100); actx = oc; MUTE = false;
+    const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+    BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+    MUS.g = oc.createGain(); MUS.g.gain.value = mvol(mode); MUS.g.connect(AMB); MUS.ctx = oc; MUS.t = 0.05; MUS.bar = 0; MUS.e = 0; MUS.mode = MUS.want = mode; for (const q in NB) delete NB[q];
+    let err = null; try { musicFill(secs - 0.6); } catch (e) { err = String(e); }
+    const notes = MUS.bar * 6 + MUS.e, buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0, sq = 0; for (const x of ch) { pk = Math.max(pk, Math.abs(x)); sq += x * x; }
+    [actx, BUS, AMB, MUTE] = keep; Object.assign(MUS, km); MUS.t = 0; for (const q in NB) delete NB[q];
+    return { err, peak: +pk.toFixed(3), rms: +Math.sqrt(sq / ch.length).toFixed(4), eighths: notes };
+  },
   start(N, o) { HEADLESS = true; MUTE = true; level = N; G = LIVE = newExp(N, o || {}); },
   step(dt) { stepAll(G, dt); events(); if (G.over) finish(); },
   go(N, mini) { HEADLESS = false; level = N; startExp(!!mini); },

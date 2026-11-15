@@ -287,7 +287,7 @@ function seaEvent(G, e) {
       fx({ k: 'flash', x: e.x, y: e.y, life: 0.12, r0: 3, r1: e.rake ? 11 : 7 }); puff(e.x, e.y, 0, 2, 6, 'dark', 1.2, 2, 7, 0.55);
       if (e.me) { shake = Math.min(14, shake + 6); hurtFlash = 0.5; sfx.hullMe(); hitstop = Math.max(hitstop, 0.04); } else { sfx.hullHer(e.rake); if (e.rake) { hitstop = Math.max(hitstop, 0.05); if (gate('raketxt', 600)) say('RAKED!', e.x, e.y + 10, '#ffd166', 24, 1); } }
       break; }
-    case 'ports': if (e.s.eng) sfx.ports(); break;
+    case 'ports': if (e.s.eng) { sfx.ports(); if (G.N <= 6) tip('red', 'Red is where her guns reach: get out of it', 2.6); } break;
     case 'bump': sfx.bump(); shake = Math.min(10, shake + 4); break;
     case 'sunk': if (e.me) { sfx.sunk(); duck(0.8, 1500); setBanner('Sunk', '', 1.6, '#ff9a8a'); } else { setBanner('Sunk!', e.s.info.name, 1.5, '#ffd9a0'); sfx.sunk(); sfx.cheer(0.6); hitstop = 0.12; vibe(HAP.sharp); for (let i = 0; i < 10; i++) fx({ k: 'foam', x: e.s.x + (Math.random() - 0.5) * e.s.K.len * 0.7, y: e.s.y + (Math.random() - 0.5) * e.s.K.len * 0.7, life: 1.6 + Math.random() * 1.4, r0: 2, r1: 9, a0: 0.8 }); } break;
     case 'struck': setBanner('She strikes!', e.s.info.name + ' hauls down her colours', 1.9, '#ffd166'); sfx.struck(); sfx.cheer(0.9); hitstop = 0.14; vibe(HAP.best); break;

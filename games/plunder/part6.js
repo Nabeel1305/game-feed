@@ -285,7 +285,7 @@ function fightEvent(G, e) {
       if (e.kind === 'ball') { sparks(x, y, 10, '#ffd9a0'); }
       else { const a = e.kind === 'stab' ? Math.random() * TAU : e.ang, L = (e.kind === 'stab' ? 22 : 74) * f; fx({ k: 'line', w: 0, x: x + Math.cos(a) * L, y: y + Math.sin(a) * L, vx: Math.cos(a) * L * 40, vy: Math.sin(a) * L * 40, life: 0.2, r0: (e.rip ? 9 : 6) * f, r1: 1, col: '#ffffff' }); sparks(x, y, e.rip ? 9 : 4, '#ffe9c0'); for (let i = 0; i < 4; i++) fx({ k: 'chip', w: 0, x, y, vx: (Math.random() - 0.5) * 300 * f, vy: (-80 - Math.random() * 200) * f, g: 900 * f, life: 0.5, r0: 4 * f, r1: 2 * f, col: F.man && (F.man.look.coat || F.man.look.shirt) || '#ccc', vr: 20 }); }
       sfx.cut(e.kind, e.rip); hitstop = Math.max(hitstop, e.rip ? 0.11 : e.kind === 'ball' ? 0.12 : 0.05); shake = Math.min(12, shake + (e.rip ? 7 : 3)); vibe(e.rip ? HAP.sharp : HAP.light);
-      if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); break; }
+      if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); else tip('bar', 'Each wound moves the bar. Fill it to take the deck.', 2.6); break; }
     case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say(e.counter ? 'HE TURNS IT: LOOK OUT!' : 'HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.counter) tip('spam', 'Mix your blows: he reads the same one twice', 2.6); break;
     case 'evaded': say('HE SLIPS IT', g.x, g.chest.y - 60 * f, '#cfd8dc', 18); break;
     case 'whiff': break;

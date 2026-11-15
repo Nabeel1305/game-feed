@@ -60,6 +60,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .ship .g{color:#e9b949}.ship .d{color:#ff8a7a}
 .odds{display:flex;justify-content:center;gap:22px;margin-top:11px;font-size:12px;font-weight:800;letter-spacing:1.5px}.odds b{font-size:15px;letter-spacing:2px}
 .odds .g b{color:#e9b949}.odds .d b{color:#ff8a7a}
+.mast{position:relative;width:74px;height:74px;margin:0 auto 6px}.mast.hidden{display:none}
+.mast .pole{position:absolute;left:8px;top:0;width:4px;height:74px;border-radius:2px;background:linear-gradient(90deg,#8a643a,#4a321b)}
+.mast .flag{position:absolute;left:12px;top:4px;width:52px;height:32px;border-radius:2px 5px 5px 2px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.mast .theirs{background:#b3271f;transition:transform 1.1s cubic-bezier(.5,0,.8,.4),opacity 1.1s}.mast.go .theirs{transform:translateY(40px) rotate(8deg);opacity:0}
+.mast .ours{background:#0c0c0e;opacity:0;transform:translateY(40px);transition:transform .9s cubic-bezier(.2,.8,.3,1) .75s,opacity .5s .75s}.mast.go .ours{opacity:1;transform:none}
+.mast .ours:after{content:'';position:absolute;left:20px;top:6px;width:12px;height:12px;border-radius:50%;background:#e8e2d0}
+.mast .ours:before{content:'';position:absolute;left:15px;top:22px;width:22px;height:3px;border-radius:2px;background:#e8e2d0}
 .loot{list-style:none;margin:12px auto 0;padding:0;max-width:300px;text-align:left;font-size:14px}
 .loot li{display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.1);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
 .loot li.in{opacity:1;transform:none}.loot li b{color:#e9b949;font-variant-numeric:tabular-nums}
@@ -127,6 +134,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 
 <div class="ov hidden" id="ovEnd">
   <div class="card">
+    <div class="mast hidden" id="eMast"><i class="pole"></i><i class="flag theirs" id="eTheirs"></i><i class="flag ours"></i></div>
     <h2 class="bn" id="eTitle">Plundered</h2>
     <div class="stars" id="eStars"></div>
     <ul class="loot" id="eLoot"></ul>
@@ -1073,7 +1081,7 @@ function seaEvent(G, e) {
       fx({ k: 'flash', x: e.x, y: e.y, life: 0.12, r0: 3, r1: e.rake ? 11 : 7 }); puff(e.x, e.y, 0, 2, 6, 'dark', 1.2, 2, 7, 0.55);
       if (e.me) { shake = Math.min(14, shake + 6); hurtFlash = 0.5; sfx.hullMe(); hitstop = Math.max(hitstop, 0.04); } else { sfx.hullHer(e.rake); if (e.rake) { hitstop = Math.max(hitstop, 0.05); if (gate('raketxt', 600)) say('RAKED!', e.x, e.y + 10, '#ffd166', 24, 1); } }
       break; }
-    case 'ports': if (e.s.eng) sfx.ports(); break;
+    case 'ports': if (e.s.eng) { sfx.ports(); if (G.N <= 6) tip('red', 'Red is where her guns reach: get out of it', 2.6); } break;
     case 'bump': sfx.bump(); shake = Math.min(10, shake + 4); break;
     case 'sunk': if (e.me) { sfx.sunk(); duck(0.8, 1500); setBanner('Sunk', '', 1.6, '#ff9a8a'); } else { setBanner('Sunk!', e.s.info.name, 1.5, '#ffd9a0'); sfx.sunk(); sfx.cheer(0.6); hitstop = 0.12; vibe(HAP.sharp); for (let i = 0; i < 10; i++) fx({ k: 'foam', x: e.s.x + (Math.random() - 0.5) * e.s.K.len * 0.7, y: e.s.y + (Math.random() - 0.5) * e.s.K.len * 0.7, life: 1.6 + Math.random() * 1.4, r0: 2, r1: 9, a0: 0.8 }); } break;
     case 'struck': setBanner('She strikes!', e.s.info.name + ' hauls down her colours', 1.9, '#ffd166'); sfx.struck(); sfx.cheer(0.9); hitstop = 0.14; vibe(HAP.best); break;
@@ -1530,7 +1538,7 @@ function fightEvent(G, e) {
       if (e.kind === 'ball') { sparks(x, y, 10, '#ffd9a0'); }
       else { const a = e.kind === 'stab' ? Math.random() * TAU : e.ang, L = (e.kind === 'stab' ? 22 : 74) * f; fx({ k: 'line', w: 0, x: x + Math.cos(a) * L, y: y + Math.sin(a) * L, vx: Math.cos(a) * L * 40, vy: Math.sin(a) * L * 40, life: 0.2, r0: (e.rip ? 9 : 6) * f, r1: 1, col: '#ffffff' }); sparks(x, y, e.rip ? 9 : 4, '#ffe9c0'); for (let i = 0; i < 4; i++) fx({ k: 'chip', w: 0, x, y, vx: (Math.random() - 0.5) * 300 * f, vy: (-80 - Math.random() * 200) * f, g: 900 * f, life: 0.5, r0: 4 * f, r1: 2 * f, col: F.man && (F.man.look.coat || F.man.look.shirt) || '#ccc', vr: 20 }); }
       sfx.cut(e.kind, e.rip); hitstop = Math.max(hitstop, e.rip ? 0.11 : e.kind === 'ball' ? 0.12 : 0.05); shake = Math.min(12, shake + (e.rip ? 7 : 3)); vibe(e.rip ? HAP.sharp : HAP.light);
-      if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); break; }
+      if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); else tip('bar', 'Each wound moves the bar. Fill it to take the deck.', 2.6); break; }
     case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say(e.counter ? 'HE TURNS IT: LOOK OUT!' : 'HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.counter) tip('spam', 'Mix your blows: he reads the same one twice', 2.6); break;
     case 'evaded': say('HE SLIPS IT', g.x, g.chest.y - 60 * f, '#cfd8dc', 18); break;
     case 'whiff': break;
@@ -1614,7 +1622,7 @@ const TUNE = [
   [0, [7, 2], [12, 1], [15, 2], [14, 1]], [3, [12, 2], [10, 1], [7, 3]], [5, [8, 2], [7, 1], [5, 2], [3, 1]], [-5, [2, 2], [3, 1], [5, 1], [7, 2]],
   [0, [7, 2], [12, 1], [15, 2], [14, 1]], [-2, [12, 2], [10, 1], [7, 2], [5, 1]], [0, [3, 2], [7, 1], [5, 2], [2, 1]], [0, [0, 6]]
 ];
-const D4 = 293.66, semi = n => D4 * Math.pow(2, n / 12);
+const D4 = 293.66, semi = n => D4 * Math.pow(2, n / 12), MVOL = 0.28, mvol = m => m === 'off' ? 0.0001 : MVOL * (m === 'calm' ? 1.3 : 1);      // how loud the music is against everything else (S10: quiet, under every effect; measured by __sim.musicCheck)
 const offline = () => typeof OfflineAudioContext !== 'undefined' && actx instanceof OfflineAudioContext;      // the sound check renders each sound on its own: no music or sea in it
 const MUS = { on: false, mode: 'calm', want: 'calm', bar: 0, e: 0, t: 0, g: null, lvl: 0, flat: [] };
 (() => { for (const b of TUNE) { const row = []; for (let i = 1; i < b.length; i++) { row.push({ n: b[i][0], len: b[i][1] }); for (let j = 1; j < b[i][1]; j++) row.push(null); } MUS.flat.push(row); } })();
@@ -1641,20 +1649,23 @@ function musicStep(run) {      // called every frame: lays down the next third o
   if (!actx || MUTE || !run || HEADLESS || offline()) { MUS.t = 0; return; }
   if (MUS.ctx !== actx) { MUS.ctx = actx; MUS.g = null; }
   if (!MUS.g) { MUS.g = actx.createGain(); MUS.g.gain.value = 0.0001; MUS.g.connect(AMB); }
-  const now = actx.currentTime; if (MUS.t < now - 0.2 || MUS.t > now + 1.5) { MUS.t = now + 0.06; MUS.g.gain.cancelScheduledValues(now); MUS.g.gain.setTargetAtTime(MUS.want === 'off' ? 0.0001 : 1, now, 0.4); }
-  while (MUS.t < now + 0.32) {
-    if (MUS.mode !== MUS.want && MUS.e % 3 === 0) { const was = MUS.mode; MUS.mode = MUS.want; MUS.g.gain.setTargetAtTime(MUS.mode === 'off' ? 0.0001 : 1, MUS.t, 0.25); if (was === 'calm' && MUS.mode !== 'off') { for (let i = 0; i < 3; i++) mDrum(MUS.t + i * 0.09, 0.2 + i * 0.05, i === 2); } }
+  const now = actx.currentTime; if (MUS.t < now - 0.2 || MUS.t > now + 1.5) { MUS.t = now + 0.06; MUS.g.gain.cancelScheduledValues(now); MUS.g.gain.setTargetAtTime(mvol(MUS.want), now, 0.4); }
+  musicFill(now + 0.32);
+}
+function musicFill(until) {
+  while (MUS.t < until) {
+    if (MUS.mode !== MUS.want && MUS.e % 3 === 0) { const was = MUS.mode; MUS.mode = MUS.want; MUS.g.gain.setTargetAtTime(mvol(MUS.mode), MUS.t, 0.25); if (was === 'calm' && MUS.mode !== 'off') { for (let i = 0; i < 3; i++) mDrum(MUS.t + i * 0.09, 0.2 + i * 0.05, i === 2); } }
     const mode = MUS.mode, fast = mode === 'battle' || mode === 'fight', dt = mode === 'fight' ? 0.178 : fast ? 0.195 : 0.335, t = MUS.t, bar = TUNE[MUS.bar], root = bar[0], cell = MUS.flat[MUS.bar][MUS.e], minor = root === 0 || root === 5, third = minor ? 3 : 4;
     if (mode !== 'off') {
       if (cell && cell.n > -90) { const fq = semi(cell.n), dur = cell.len * dt * 0.92;
         if (fast) { mVoice('sawtooth', fq, t, dur, 0.05, 2500, { vib: 1, att: 0.012, rel: 0.05, sus: 0.7 }); mVoice('triangle', fq * 2, t, dur * 0.8, 0.028, 5000, { att: 0.01, rel: 0.04, sus: 0.5 }); }
         else { mVoice('triangle', fq, t, dur, 0.06, 1500, { vib: 0.7, att: 0.05, rel: 0.14, det: -5 }); mVoice('sawtooth', fq, t, dur, 0.017, 1100, { att: 0.06, rel: 0.14, det: 6 }); } }
       if (fast) {
-        if (MUS.e === 0 || MUS.e === 3) { mVoice('triangle', semi(root - 24 + (MUS.e === 3 ? 7 : 0)), t, dt * 2.2, 0.11, 600, { att: 0.01, rel: 0.08, sus: 0.6 }); mDrum(t, 0.3, true); mPluck(semi(root - 12), t, 0.05, 0.5); mPluck(semi(root - 12 + third), t, 0.035, 0.5); mPluck(semi(root - 5), t, 0.04, 0.5); }
+        if (MUS.e === 0 || MUS.e === 3) { mVoice('triangle', semi(root - 12 + (MUS.e === 3 ? -5 : 0)), t, dt * 2.2, 0.11, 700, { att: 0.01, rel: 0.08, sus: 0.6 }); mDrum(t, 0.3, true); mPluck(semi(root - 12), t, 0.05, 0.5); mPluck(semi(root - 12 + third), t, 0.035, 0.5); mPluck(semi(root - 5), t, 0.04, 0.5); }
         else if (MUS.e === 2 || MUS.e === 5) mDrum(t, mode === 'fight' ? 0.17 : 0.12, false);
         else if (mode === 'fight') mDrum(t, 0.07, false);
       } else {
-        if (MUS.e === 0) { mVoice('sine', semi(root - 24), t, dt * 5.4, 0.1, 500, { att: 0.04, rel: 0.3 }); mPluck(semi(root - 12), t, 0.075); }
+        if (MUS.e === 0) { mVoice('triangle', semi(root - 12), t, dt * 5.4, 0.08, 600, { att: 0.04, rel: 0.3 }); mPluck(semi(root - 12), t, 0.075); }
         else if (MUS.e === 2) mPluck(semi(root - 5), t, 0.05); else if (MUS.e === 3) mPluck(semi(root - 12 + third), t, 0.06); else if (MUS.e === 5) mPluck(semi(root - 5), t, 0.045);
       }
     }
@@ -1735,6 +1746,7 @@ function showEnd() {
   const res = G.res, N = G.N, my = ++lootRun; $('pauseBtn').classList.add('hidden'); sightCard(false);
   $('eTitle').textContent = res.win ? (G.cfg.boss ? 'Treasure taken!' : 'Plundered!') : res.why === 'sunk' ? 'Sunk' : 'Driven off'; $('eTitle').style.color = res.win ? '#ffd166' : '#ffb4a8';
   $('eStars').innerHTML = res.win ? [1, 2, 3].map(i => `<span class="off" id="st${i}">★</span>`).join('') : '';
+  const mast = $('eMast'); mast.classList.toggle('hidden', !res.win); mast.classList.remove('go'); if (res.win) { $('eTheirs').style.background = G.prize.K.navy ? '#b3271f' : '#2f6a4a'; setTimeout(() => { if (my === lootRun) mast.classList.add('go'); }, 60); }
   const helpLine = !res.win && (streaks[N] || 0) >= 3 ? '<br><span class="help">Help is on: their blows and broadsides will come a little slower until you get through.</span>' : '';
   if (res.win) {
     const h = res.haul; $('eLoot').innerHTML = h.lines.map(l => `<li><span>${l[0]}</span><b>${fmtG(l[1])}</b></li>`).join('') + `<li class="tot"><span>The haul</span><b>${fmtG(h.total)}</b></li>`;
@@ -1966,6 +1978,16 @@ window.__sim = {
     }
     [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
     return out;
+  },
+  async musicCheck(mode, secs = 8) {      // renders the shanty offline, one mood at a time: how loud it is against the effects
+    const keep = [actx, BUS, AMB, MUTE], km = Object.assign({}, MUS), oc = new OfflineAudioContext(1, 44100 * secs, 44100); actx = oc; MUTE = false;
+    const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+    BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+    MUS.g = oc.createGain(); MUS.g.gain.value = mvol(mode); MUS.g.connect(AMB); MUS.ctx = oc; MUS.t = 0.05; MUS.bar = 0; MUS.e = 0; MUS.mode = MUS.want = mode; for (const q in NB) delete NB[q];
+    let err = null; try { musicFill(secs - 0.6); } catch (e) { err = String(e); }
+    const notes = MUS.bar * 6 + MUS.e, buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0, sq = 0; for (const x of ch) { pk = Math.max(pk, Math.abs(x)); sq += x * x; }
+    [actx, BUS, AMB, MUTE] = keep; Object.assign(MUS, km); MUS.t = 0; for (const q in NB) delete NB[q];
+    return { err, peak: +pk.toFixed(3), rms: +Math.sqrt(sq / ch.length).toFixed(4), eighths: notes };
   },
   start(N, o) { HEADLESS = true; MUTE = true; level = N; G = LIVE = newExp(N, o || {}); },
   step(dt) { stepAll(G, dt); events(); if (G.over) finish(); },
