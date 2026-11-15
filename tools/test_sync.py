@@ -2,7 +2,7 @@
 """Tests the part of the phone app that fetches new games (android/.../Sync.java), on this computer.
 
 Sync.java is plain Java, so it can be compiled and run here with no phone and no Android tools. This builds
-the feed app twice (as it is now, and with a seventh game added, one game changed and one retired), serves it
+the feed app twice (the core games, and then with a made-up game added, one game changed and one retired), serves it
 from a little web server standing in for GitHub, and runs the real updater against it:
 a first copy, nothing new, a new game, a dropped connection, wrong or cut-off files, an out-of-date or
 nonsense answer, a published app older than the installed one, and a tampered list.
@@ -12,6 +12,8 @@ kept up to date; fetching with no internet or a bad file changes nothing.
 Then it opens the feed from the phone's folder in a phone-sized browser, with the real updater doing the app's
 part: a new game is added while he plays, comes up next marked New, is fetched when its card comes up, plays,
 is saved from the Games list, survives a restart, and is not offered when there is no internet.
+Last, the same for the games really on the app that are not core games (Bandit was the first): each is fetched by the
+real updater exactly as published, plays from the phone's own files inside the feed, freezes, and can be saved.
 Run: python3 tools/test_sync.py      (needs java and javac, and playwright for the last part)"""
 import copy, functools, hashlib, http.server, json, os, shutil, subprocess, sys, tempfile, threading, urllib.parse
 
@@ -87,11 +89,17 @@ def main():
     if r.returncode:
         print('The updater does not compile:\n' + r.stderr); sys.exit(1)
 
-    # two published versions: A = the feed as it is, B = one game added, one changed, one retired
+    # two published versions: A = the core games, B = one game added, one changed, one retired
+    # (The scenarios below are about one made-up game joining the core games, so they start from the core games alone. The games
+    #  really on the app that are not core games, Bandit being the first, have their own part further down, built from the real list.)
     reg = json.load(open(os.path.join(root, 'games.json'), encoding='utf-8'))
+    real_extra = [g for g in reg['games'] if build_feed.in_app(g) and g.get('core') is not True]
+    regA = copy.deepcopy(reg)
+    for g in regA['games']:
+        if build_feed.in_app(g) and g.get('core') is not True: g['in_app'] = False
     A, B = os.path.join(work, 'A'), os.path.join(work, 'B')
-    build_feed.build(A, copy.deepcopy(reg), 5)
-    regB = copy.deepcopy(reg)
+    build_feed.build(A, copy.deepcopy(regA), 5)
+    regB = copy.deepcopy(regA)
     inside = [g for g in regB['games'] if build_feed.in_app(g)]
     donor, retired, changed = inside[1], inside[0], inside[-1]
     seventh = copy.deepcopy(donor)                  # a new game on the app: not a core game, so played over the internet unless saved
@@ -350,6 +358,43 @@ def main():
     ok(r['ok'] and r['fromApp'] == 1 and sha(os.path.join(pn, changed_page)) == sha(os.path.join(apk1, changed_page)), 'a core game missing from a newer folder is put back from the app')
     r = sync(pn, apk=apk1)
     ok(r['ok'] and r['asked'][1:] == [changed_page] and sha(os.path.join(pn, changed_page)) == sha(os.path.join(B, changed_page)), 'and the next look brings it up to date', str(r['asked']))
+
+    # ---- the app as it really is today: the games on it that are not core games (Bandit was the first) ----
+    R, apkR, pr = os.path.join(work, 'R'), os.path.join(work, 'apkR'), phone('real')
+    extra_ids = [g['id'] for g in real_extra]
+    real_core = sorted(g['id'] for g in reg['games'] if build_feed.in_app(g) and g.get('core') is True)
+    if real_extra:
+        print('The games on the app today that are not core games (' + ', '.join(extra_ids) + '):')
+        build_feed.build(R, copy.deepcopy(reg), 7)
+        build_feed.build(apkR, copy.deepcopy(reg), 7, core_only=True)
+        files_of = {x: sorted(k for k in tree(R) if build_feed.game_of(k) == x) for x in extra_ids}       # each one's page, card picture and clip
+        kept = {k: v for k, v in tree(R).items() if build_feed.game_of(k) not in extra_ids}              # what a phone keeps without being asked
+        listR = open(os.path.join(apkR, 'games.js'), encoding='utf-8').read()
+        ok(not any(build_feed.game_of(k) in extra_ids for k in tree(apkR)) and all(f'"id":"{x}"' in listR.replace('": "', '":"') for x in extra_ids)
+           and open(os.path.join(apkR, 'manifest.txt')).readline().split(' rev ')[1] == open(os.path.join(R, 'manifest.txt')).readline().split(' rev ')[1],
+           'the app itself carries the core games only, lists every game, and calls that list by the same name as the published one')
+        ok(all(len(files_of[x]) == 3 and f'games/{x}/index.html' in files_of[x] for x in extra_ids) and all(os.path.exists(os.path.join(R, 'pics', x + '.webp')) for x in extra_ids),
+           'each has its page, its card picture, its clip and its small list picture published', str(files_of))
+        r = cli('seed', pr, apkR)
+        ok(r['ok'] and sorted(r['here']) == real_core and tree(pr) == tree(apkR), 'a new install: the core games come out of the app with no internet', str(r['here']))
+        r = sync(pr, apk=apkR, publish=R)
+        ok(r['ok'] and tree(pr) == kept and sorted(r['here']) == real_core and r['saved'] == [] and not any(f in r['asked'] for x in extra_ids for f in files_of[x]),
+           'looking for new games brings the list and the small list pictures, not those games themselves', str(r['asked']))
+        for x in extra_ids:
+            r = fetch(pr, x, apk=apkR)
+            ok(r['ok'] and sorted(r['asked'][1:]) == files_of[x] and r['asked'][-1] == f'games/{x}/index.html' and x in r['here']
+               and all(sha(os.path.join(pr, f)) == sha(os.path.join(R, f)) for f in files_of[x]),
+               f'{x} is fetched when its card comes up: card picture and clip, then its page, each exactly as published', str(r['asked']))
+        ok(tree(pr) == tree(R), 'and the phone then holds exactly what is published')
+        r = cli('prune', pr, apkR)
+        ok(r['cleared'] == len(extra_ids) and tree(pr) == kept and sorted(r['here']) == real_core, 'when the app next starts they are cleared away again; the core games stay', str(r))
+        fetch(pr, extra_ids[0], apk=apkR); r = cli('keep', pr, extra_ids[0]); r2 = cli('prune', pr, apkR)
+        ok(r['ok'] and r2['cleared'] == 0 and extra_ids[0] in r2['here'] and r2['saved'] == [extra_ids[0]], f'{extra_ids[0]}, saved, stays on the phone through a restart')
+        r = fetch(pr, extra_ids[0], apk=apkR, address='http://127.0.0.1:9/')
+        ok(extra_ids[0] in r['here'], 'and is there with no internet')
+        cli('forget', pr, extra_ids[0]); r = cli('prune', pr, apkR)
+        ok(r['cleared'] == 1 and extra_ids[0] not in r['here'] and r['saved'] == [] and not any(os.path.exists(os.path.join(pr, f)) for f in files_of[extra_ids[0]]),
+           'let go, it is cleared at the next start', str(r))
     srv.shutdown()
 
     # 14. the whole journey, seen in the feed: a new game is published while he plays; the phone fetches it; the feed adds it
@@ -380,34 +425,35 @@ def main():
     r = sync(pj, apk=A, publish=A, address=base2)       # ...and then it looks for new games
     net = {'on': True}
 
-    def phone_now():
-        st = cli('onphone', pj, A)
+    def phone_now(folder=pj, apk=A):
+        st = cli('onphone', folder, apk)
         return json.dumps({'core': st['core'], 'saved': [x for x in st['saved'] if x in st['here']], 'here': st['here']})
 
-    def app_does(pg):
+    def app_does(pg, folder=pj, apk=A):
         """What the phone app does with the page's requests (MainActivity.wantGame / forgetGame), using the real updater."""
         done = []
         for why, gid in pg.evaluate('window.__asked.splice(0)'):
             if why == 'forget':
-                good = cli('forget', pj, gid)['ok']
+                good = cli('forget', folder, gid)['ok']
             else:
-                res = fetch(pj, gid, apk=A, address=base2 if net['on'] else 'http://127.0.0.1:9/')
+                res = fetch(folder, gid, apk=apk, address=base2 if net['on'] else 'http://127.0.0.1:9/')
                 here = res['ok'] or gid in res['here']
                 good = here
-                if why == 'save' and here: good = cli('keep', pj, gid)['ok']
-            now = json.loads(phone_now())
+                if why == 'save' and here: good = cli('keep', folder, gid)['ok']
+            now = json.loads(phone_now(folder, apk))
             answer = {'id': gid, 'why': why, 'ok': good, 'here': gid in now['here'], 'saved': gid in now['saved'], 'error': ''}
             pg.evaluate(f"window.__phone = {json.dumps(json.dumps(now))}; sessionStorage.setItem('phone', window.__phone); window.gameFeedGame({json.dumps(answer)})")
             done.append((why, gid, good))
         return done
 
-    def open_app(b, errs):
+    def open_app(b, errs, folder=pj, apk=A, more=''):
         ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, has_touch=True, is_mobile=True)
         ctx.add_init_script(NATIVE)
-        ctx.add_init_script(f"if (window === top) window.__phone = {json.dumps(phone_now())};")
+        ctx.add_init_script(f"if (window === top) window.__phone = {json.dumps(phone_now(folder, apk))};")
+        if more: ctx.add_init_script(more)
         pg = ctx.new_page()
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        pg.goto('file://' + os.path.join(pj, 'index.html'))
+        pg.goto('file://' + os.path.join(folder, 'index.html'))
         pg.wait_for_function('window.__feed && window.__feed.cur()')
         return ctx, pg
 
@@ -589,6 +635,59 @@ def main():
         at, card = pg.evaluate("[sessionStorage.getItem('reloadAt'), sessionStorage.getItem('reloadCard')]")
         ok(bool(at) and at == card, 'and names the card he is looking at, so the fetched copy opens on it', f'{at} vs {card}')
         ok(not errs, 'no errors there either', '; '.join(errs[:3]))
+        ctx.close()
+
+        # 26. the games really on the app that are not core games, in the feed, from the folder on the phone: picked, fetched by the
+        #     real updater, played from the phone's own files, frozen, and offered a Save button
+        if real_extra:
+            print('In the feed, from the phone: ' + ', '.join(extra_ids))
+            Remote.S.update(dir=R, log=[], fault=None); net['on'] = True
+            sync(pr, apk=apkR, address=base2)
+            errs = []
+            # (a game that paints with the graphics chip is told to do so here, as a phone would: this machine has none. See LESSONS, "How to test")
+            ctx, pg = open_app(b, errs, pr, apkR, more='window.__softGL = true;')
+            F = lambda js: pg.evaluate('window.__feed.' + js)
+            ok(F('games.length') == len(real_core) + len(extra_ids) and all(F(f"isHere('{c}')") for c in real_core) and not any(F(f"isHere('{x}')") for x in extra_ids) and F('canFetch'),
+               'the feed lists every game; the core games are on the phone and the others are not')
+            for g in real_extra:
+                x = g['id']
+                F(f"jump('{x}')"); pg.wait_for_timeout(900)
+                done = app_does(pg, pr, apkR)
+                ok(done == [('play', x, True)] and F(f"isHere('{x}')"), f'{x}: picked from the Games list, the app fetches it with the real updater', str(done))
+                pg.wait_for_function('window.__feed.state().ready'); pg.wait_for_timeout(500)
+                F('tap()')
+                fr = pg.evaluate_handle('window.__feed.cur().frame').as_element().content_frame()
+                t = 0
+                while t < 80 and not (F('state().started') is True and fr.evaluate(g['feed']['live'])): pg.wait_for_timeout(100); t += 1      # (generous: a slow shared machine must not hold a game back)
+                st = F('state()')
+                ok(st['id'] == x and st['state'] == 'playing' and st['started'] is True and bool(fr.evaluate(g['feed']['live'])), f'{x}: it plays from the phone\'s own files, straight into the action', str(st))
+                pg.wait_for_timeout(1500)
+                ok(bool(fr.evaluate(g['feed']['live'])) and fr.evaluate('!!window.GameFeed'), f'{x}: and is still playing a moment later, with the feed\'s plug in its page')
+                F('halt()'); pg.wait_for_timeout(200)
+                c0 = fr.evaluate('performance.now()'); pg.wait_for_timeout(400)
+                ok(fr.evaluate('performance.now()') == c0 and F('state().state') == 'paused', f'{x}: it freezes when the feed pauses it')
+                pg.screenshot(path=os.path.join(root, 'out', 'feed', f'on-phone-{x}.png'))
+            F('openLib()'); pg.wait_for_timeout(400)
+            rows = pg.evaluate("Array.from(document.querySelectorAll('#list .row')).map(r => [r.dataset.id, (r.querySelector('.save') || {}).className || '', (r.querySelector('.save') || {}).textContent || ''])")
+            byrow = {r0[0]: r0 for r0 in rows}
+            ok(all('core' in byrow[c][1] and 'ON PHONE' in byrow[c][2].upper() for c in real_core) and all(byrow[x][1] == 'save' and byrow[x][2].upper() == 'SAVE' for x in extra_ids),
+               'in the Games list the core games say "On phone" and each of the others has a Save button', str(rows))
+            for wide in (360, 390):
+                pg.set_viewport_size({'width': wide, 'height': 844}); pg.wait_for_timeout(150)
+                tidy = pg.evaluate("""(() => {
+                  const names = Array.from(document.querySelectorAll('#list .rn')), bits = Array.from(document.querySelectorAll('#list .rm .ml > span')), tags = Array.from(document.querySelectorAll('#list .row .save'));
+                  return { cut: names.filter(n => n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1).length,
+                           broken: bits.filter(b => b.getBoundingClientRect().height > 22).length,
+                           tall: tags.filter(t => { const r = document.createRange(); r.selectNodeContents(t); return Array.from(r.getClientRects()).filter(x => x.width > 30 && x.height < 20).length > 1; }).length,
+                           spill: Array.from(document.querySelectorAll('#list .row')).filter(r => r.scrollWidth > r.clientWidth + 1).length };
+                })()""")
+                ok(not any(tidy.values()), f'the Games list, with the real games in it, is tidy on a phone {wide} wide', str(tidy))
+            pg.screenshot(path=os.path.join(root, 'out', 'feed', 'games-list-real.png'))
+            pg.click(f'#list .row[data-id="{extra_ids[0]}"] .save'); pg.wait_for_timeout(200)
+            done = app_does(pg, pr, apkR); pg.wait_for_timeout(300)
+            ok(done == [('save', extra_ids[0], True)] and F(f"isSaved('{extra_ids[0]}')"), f'{extra_ids[0]}: Save keeps it on the phone', str(done))
+            ok(not errs, 'no errors with the real games', '; '.join(errs[:3]))
+            ctx.close()
         b.close()
     srv.shutdown()
     finish(work)

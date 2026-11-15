@@ -1,0 +1,37 @@
+{
+  "seed": 7,
+  "slow": 2,
+  "level": "window.__sim.go(12)",
+  "js": "window.__softGL = true; window.__sim.gl(true); window.__sim.finest(); (() => { const S = window.__sim, G = S.G, me = G.me, f = G.foe; S.place(195); f.x += Math.cos(me.yaw) * 38; f.z -= Math.sin(me.yaw) * 38; f.y += 14; f.v = me.v; f.hp = 45; f.flares = 0; f.cool = 9; f.runT = 0; f.chasedT = 0; f.brkT = 0; f.spent = 0; f.wv = 0; f.wvLen = 1.6; G.cfg.jink = 0.14; me.lock = 0; G.tagT = 0; G.msgs.length = 0; })()",
+  "pre": [
+    {
+      "t": 0.1,
+      "press": [
+        0.236,
+        0.843
+      ],
+      "finger": 0
+    },
+    {
+      "t": 0.16,
+      "follow": "(() => { const S = window.__sim, G = S.G; if (!G || G.phase !== 'fight') return [92, 664]; const r = S.rel(G.me, G.foe), c = v => Math.max(-1, Math.min(1, v)), g = G.foe.alive ? 3.2 : 1.5; return [92 + c(r.az * g) * 50, 664 - c(r.el * g) * 50]; })()",
+      "ms": 12000,
+      "finger": 0
+    }
+  ],
+  "anchor": "(() => { const G = window.__sim.G; return !!G && G.phase === 'fight' && G.me.lock >= 1; })()",
+  "from": -0.6,
+  "secs": 3.4,
+  "poster": 2.0,
+  "moves": [
+    {
+      "t": 0.1,
+      "tap": [
+        0.831,
+        0.863
+      ],
+      "ms": 90,
+      "finger": 1
+    }
+  ]
+}

@@ -1355,7 +1355,7 @@ window.__sim = {
   PH, FX, CAM,
   smooth() { return { step: stepN, half, sky: GLX ? 'fast' : 'plain', stuck, vsync: +vsync.toFixed(1), ms: +ftAvg.toFixed(1), dpr: DPR, draws, glows: gqN, smoke: PT.length }; },
   skyq(q, bias, aniso) { GLQ = q; if (bias != null) SKY_BIAS = bias; if (aniso != null) SKY_ANISO = aniso; },      // tests: how finely the sky is painted
-  finest() { stuck = true; stepN = 0; half = 0; applyStep(); },    // tests and card pictures: the finest picture, and leave it there
+  finest(n) { stuck = true; stepN = clamp(n | 0, 0, STEPS.length - 1); half = 0; applyStep(); },    // tests and card pictures: the finest picture (or notch n), and leave it there
   gl(on) { if (on) glTried = false; else { skyOff(); glTried = true; } },       // tests: the sky by the graphics chip, or the slow way
   get G() { return G; }
 };

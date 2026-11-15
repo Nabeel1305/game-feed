@@ -14,6 +14,9 @@ then films a few seconds while playing the moves in games/<id>/preview.json if t
       "poster": 1.5,          which moment of the clip becomes the still
       "seed": 7,              optional: gives the game the same "random" numbers every time, so a clip can be planned
       "level": "js",          optional JavaScript run instead of pressing Play (for example window.__sim.go(12))
+      "slow": 2,              optional: film the game at half speed and play the clip back at full speed. For a heavy game on a
+                              machine with no graphics chip, which cannot draw it 24 times a second: this films twice the frames.
+                              Every time in this file still means the game's own seconds.
       "js": "...",            optional JavaScript run right after the game starts
       "pre":   [ ... ],       touches timed from pressing Play
       "moves": [ {"t": 0.3, "tap": [0.5, 0.6]},                                    touches timed from that moment
@@ -64,9 +67,13 @@ class Touch:
         if f in self.down: self.down[f] = (x, y); self._send('touchMove')
     def lift(self, f):
         if f in self.down:
-            del self.down[f]
-            self._send('touchEnd' if not self.down else 'touchMove')
-            if self.down: pass
+            x, y = self.down.pop(f)
+            if not self.down: self._send('touchEnd'); return
+            # One finger leaves while another stays down (a two-thumb game). The browser has to be told which one left: an end
+            # that names the finger leaving. A move that merely leaves it out lifts nothing (found filming Bandit: the FIRE thumb
+            # was never let go, and the cannon ran for the rest of the clip).
+            try: self.cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': [{'x': x, 'y': y, 'id': f, 'radiusX': 12, 'radiusY': 12, 'force': 1}]})
+            except Exception: self._send('touchMove')
 
 
 def plan(moves):
@@ -105,12 +112,16 @@ def film(browser, port, g, probe=None):
     if os.path.exists(pj):
         cfg = json.load(open(pj, encoding='utf-8'))
     wait, secs, lead = cfg.get('wait', 1.4), cfg.get('secs', 3.0), cfg.get('from', 0)
+    slow = float(cfg.get('slow', 1))
+    clock = lambda: time.monotonic() / slow        # the game's own seconds (it runs `slow` times slower than the wall clock)
     ctx = browser.new_context(viewport={'width': W, 'height': Hh}, device_scale_factor=DSF, has_touch=True, is_mobile=True)
     pg = ctx.new_page()
     errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     if 'seed' in cfg:       # the same "random" numbers every time, so the clip can be planned
         pg.add_init_script("(() => { let a = %d >>> 0; Math.random = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })()" % cfg['seed'])
+    if slow != 1:           # slow the game's clock: what it reads from performance.now() and from its animation frames
+        pg.add_init_script("(() => { const k = %r, p = performance, real = p.now.bind(p), t0 = real(), raf = window.requestAnimationFrame.bind(window); p.now = () => t0 + (real() - t0) / k; window.requestAnimationFrame = cb => raf(t => cb(t0 + (t - t0) / k)); })()" % slow)
     pg.goto(f"http://127.0.0.1:{port}/{g['path']}")
     pg.wait_for_timeout(1200)
     try: pg.evaluate('document.fonts.ready')
@@ -119,7 +130,7 @@ def film(browser, port, g, probe=None):
     touch = Touch(cdp)
     frames = []
     def on_frame(p):
-        frames.append((time.monotonic(), p['data']))
+        frames.append((clock(), p['data']))
         try: cdp.send('Page.screencastFrameAck', {'sessionId': p['sessionId']})
         except Exception: pass
     cdp.on('Page.screencastFrame', on_frame)
@@ -133,7 +144,7 @@ def film(browser, port, g, probe=None):
     if cfg.get('js'):
         pg.evaluate(cfg['js'])
     cdp.send('Page.startScreencast', {'format': 'jpeg', 'quality': 90, 'everyNthFrame': 2})
-    t_start = time.monotonic()
+    t_start = clock()
     pre, ev = plan(cfg.get('pre')), plan(cfg.get('moves'))
     anchor, t0, last_poll = cfg.get('anchor'), None, 0
     if not anchor: t0 = t_start + wait
@@ -144,7 +155,7 @@ def film(browser, port, g, probe=None):
         if kind == 'lift': touch.lift(f)
         elif kind == 'js': pg.evaluate(x)
         elif kind == 'live':
-            m, now = x, time.monotonic()
+            m, now = x, clock()
             if 'follow' in m: live.append({'f': f, 'js': m['follow'], 'end': now + m.get('ms', 1000) / 1000, 'last': 0})
             else:
                 tx, ty = (m['to'][0] * W, m['to'][1] * Hh) if 'to' in m else pg.evaluate(m['to_js'])
@@ -166,13 +177,13 @@ def film(browser, port, g, probe=None):
                 touch.move(f, a['from'][0] + (a['to'][0] - a['from'][0]) * u, a['from'][1] + (a['to'][1] - a['from'][1]) * u)
                 if u >= 1: live.remove(a)
     while True:
-        now = time.monotonic()
+        now = clock()
         while pre and now - t_start >= pre[0][0]: act(pre.pop(0))
         step_live(now)
         if t0 is None:
             if now - last_poll > 0.04:
                 last_poll = now
-                if pg.evaluate(anchor): t0 = time.monotonic()
+                if pg.evaluate(anchor): t0 = clock()
             if now - t_start > cfg.get('timeout', 45): raise RuntimeError(f"{g['id']}: the moment to film never came ({anchor})")
             keep = now + min(lead, 0) - 1.0                 # only keep what could still end up in the clip
             while frames and frames[0][0] < keep: frames.pop(0)
