@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Plunder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pirata+One&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#07161f;color:#eef4fb;font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.bn{font-family:"Pirata One","Barlow Condensed",Georgia,serif;letter-spacing:1.5px;font-weight:400}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(6,14,26,.38);color:#eef4fb;font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(8,30,40,.5),rgba(3,10,14,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:92px;line-height:.86;color:#fff;text-shadow:0 4px 0 #0b2a33,0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:44px;line-height:1;color:#fff;text-shadow:0 3px 0 #0b2a33}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,#e9b949,transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.oname{font-size:32px;line-height:1.05;color:#e9b949}
+.games{font-size:13px;opacity:.85;margin-top:3px}
+.pills{display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:800;padding:5px 10px;border-radius:20px;background:rgba(255,255,255,.13)}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:#e9b949;color:#2a1a02;box-shadow:0 5px 0 #9a6a12;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #9a6a12}
+.btn.ghost{background:transparent;color:#eef4fb;box-shadow:none;border:1.5px solid rgba(238,244,251,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(7,24,32,.94),rgba(3,9,13,.98))} /* menus over a live scene: dark enough that the words are the only thing to read */
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 9px 0;font-size:13.5px;line-height:1.42;opacity:.95}
+.rules b{color:#e9b949}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:#eef4fb;cursor:pointer}
+.lvb small{display:block;font-size:10px;color:#ffd166;min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px #e9b949}
+.lvb.cur{background:#e9b949;color:#2a1a02}.lvb.cur small{color:#2a1a02}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:#ffd166}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:#ffd166}.help{color:#a9e8c0;font-size:12.5px}
+.rank{margin-top:14px;font-size:13px;font-weight:800;letter-spacing:1px}
+.rank b{color:#e9b949}
+.rbar{height:6px;width:210px;margin:7px auto 0;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}.rbar i{display:block;height:100%;background:#e9b949;border-radius:4px}
+#ovSight{pointer-events:none;align-items:flex-end;background:linear-gradient(180deg,rgba(3,10,14,0) 30%,rgba(3,10,14,.55) 52%,rgba(3,10,14,.9))}
+#ovSight .card{pointer-events:auto;padding:0 0 26px}
+#passBtn small{display:block;font-size:11px;font-weight:700;opacity:.7;letter-spacing:1px;margin-top:1px}
+#raidBtn{font-size:22px}
+.ho{font-size:36px;line-height:1.05;color:#fff;text-shadow:0 3px 0 #0b2a33}
+.ships{display:flex;justify-content:center;gap:8px;margin-top:12px}
+.ship{flex:1;max-width:118px;border-radius:12px;padding:9px 6px 8px;background:rgba(255,255,255,.1);font-size:11px;font-weight:800;letter-spacing:.6px;line-height:1.35}
+.ship.navy{box-shadow:inset 0 0 0 1.5px rgba(255,110,90,.75)}.ship.merch{box-shadow:inset 0 0 0 1.5px rgba(233,185,73,.75)}
+.ship .k{font-size:10px;opacity:.75;letter-spacing:1.5px}.ship .n{font-size:13px;margin:2px 0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;letter-spacing:.5px}
+.ship .g{color:#e9b949}.ship .d{color:#ff8a7a}
+.odds{display:flex;justify-content:center;gap:22px;margin-top:11px;font-size:12px;font-weight:800;letter-spacing:1.5px}.odds b{font-size:15px;letter-spacing:2px}
+.odds .g b{color:#e9b949}.odds .d b{color:#ff8a7a}
+.loot{list-style:none;margin:12px auto 0;padding:0;max-width:300px;text-align:left;font-size:14px}
+.loot li{display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px solid rgba(255,255,255,.1);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.loot li.in{opacity:1;transform:none}.loot li b{color:#e9b949;font-variant-numeric:tabular-nums}
+.loot li.tot{border-bottom:0;font-weight:800;font-size:17px;padding-top:9px}
+</style>
+</head>
+<body>
+<canvas id="bg" style="display:none"></canvas>
+<canvas id="cv"></canvas>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="bn">Plunder</h1>
+    <div class="bar"></div>
+    <div class="tag">SAIL · RAID · BOARD</div>
+    <div class="vs">EXPEDITION <span id="hLvl">1</span></div>
+    <div class="oname bn" id="hWhere"></div>
+    <div class="rank" id="hRank"></div>
+    <div class="rbar"><i id="hBar"></i></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">SET SAIL</button>
+    <button class="btn ghost" id="levelsBtn">Choose expedition</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="bn">How to play</h2>
+    <ul class="rules">
+      <li><b>Sailing.</b> Slide your left thumb to steer. When the lookout sights a ship: <b>RAID</b>, or <b>SAIL ON</b> to look for another (twice at most).</li>
+      <li><b>Merchants</b> carry the most loot. <b>Navy ships</b> carry less, fight far harder, and their guns must be beaten before you can board.</li>
+      <li><b>Your guns</b> fire out of your sides. When a ship is in your gold arc, <b>FIRE</b> lights: press it. A ball down her length, through bow or stern, does nearly double.</li>
+      <li><b>Her guns</b> only reach out of her sides: the red. It fills before she fires. Keep out of it: get close on her bow or her stern and turn faster than she can.</li>
+      <li><b>Boarding.</b> Swipe across a man to <b>slice</b>. Tap him to <b>stab</b>: best when he is off balance.</li>
+      <li><b>Block</b> by swiping across his blade as it comes. A late, clean block throws him off balance.</li>
+      <li><b>Dodge</b> a shot or a red blow: pull straight down, low on the screen.</li>
+      <li><b>Pistol:</b> hold it, let the sights settle on him, let go. One ball at a time: hold it again for four seconds to reload. Three balls.</li>
+      <li><b>The bar at the top</b> is the fight. Fight well and your crew takes the ship. Fight badly and they break.</li>
+    </ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="bn">Choose expedition</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovSight">
+  <div class="card">
+    <div class="ho bn" id="sTitle">Sail ho!</div>
+    <div class="ships" id="sShips"></div>
+    <div class="odds"><span class="g">LOOT <b id="sLoot"></b></span><span class="d">DANGER <b id="sDanger"></b></span></div>
+    <p class="sub" id="sSub"></p>
+    <div class="row2"><button class="btn" id="raidBtn">RAID</button><button class="btn ghost" id="passBtn" style="margin-top:16px;font-size:17px;padding:9px 8px">Sail on</button></div>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="bn" id="eTitle">Plundered</h2>
+    <div class="stars" id="eStars"></div>
+    <ul class="loot" id="eLoot"></ul>
+    <p class="sub" id="eSub"></p>
+    <button class="btn" id="eMain">NEXT EXPEDITION</button>
+    <button class="btn ghost" id="eAlt">Sail it again</button>
+    <button class="btn ghost" id="eLevels">Choose expedition</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="bn">Paused</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Back to port</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const PO = '"Pirata One", "Barlow Condensed", Georgia, serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('pl.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('pl.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let unlocked = store.get('unlocked', 1), level = Math.min(store.get('level', 1), unlocked), stars = store.get('stars', {});
+let streaks = store.get('streaks', {}), gold = store.get('gold', 0), bestHaul = store.get('bestHaul', 0), prizes = store.get('prizes', 0), bestChain = store.get('bestChain', 0);
+let HEADLESS = false;
+
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+const TAU = Math.PI * 2;
+const wrapA = a => { a = (a + Math.PI) % TAU; if (a < 0) a += TAU; return a - Math.PI; };
+const fmtG = n => Math.round(n).toLocaleString('en-GB');
+function shade(col, f) { let r, g, b; if (col[0] === '#') { const n = parseInt(col.slice(1), 16); r = n >> 16; g = n >> 8 & 255; b = n & 255; } else { const m = col.match(/\d+/g); r = +m[0]; g = +m[1]; b = +m[2]; } const c = v => clamp(Math.round(v * f), 0, 255); return `rgb(${c(r)},${c(g)},${c(b)})`; }
+
+/*KIT*/

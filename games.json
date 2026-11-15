@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 8,
+  "next_number": 9,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -270,6 +270,40 @@
         "P3 honest near-miss: on a loss, how much of his jet was left and what your last flare did wrong",
         "P13 personal bests: fastest sortie per level, longest run of sorties won",
         "P2 disclosed help after three losses: he locks slower and his missiles fly slower; the rules stay the same"
+      ]
+    },
+    {
+      "number": 8,
+      "id": "plunder",
+      "name": "Plunder",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-15",
+      "summary": "A pirate game in two halves. You set sail on an expedition and steer your sloop from above until the lookout sights a ship or a fleet of up to three, merchant, navy or both: the card shows the loot and the danger, and you raid or sail on. Navy ships must be beaten with cannons first: their guns only reach out of their sides (shown in red before they fire), yours fire when your gold arc is on a ship, and a quick sloop can sit on a heavy ship's bow or stern. Then you come alongside and board: first person, on deck, below deck and in the captain's cabin. Swipe to slice, tap to stab, swipe across his blade to block, pull down to dodge; one pistol ball at a time, slow to reload, three in all. One bar is the tide of the fight: fight well and your crew takes the ship, fight badly and they break. The win screen counts out the loot. Calm shanty while cruising, fast with a drum once a sail is sighted. Expeditions get harder for ever; a treasure fleet every 10th; stars, best haul and pirate rank.",
+      "path": "games/plunder/index.html",
+      "artifact": "https://claude.ai/artifact/1Lwh2BrJQL1DhKb4keBooa",
+      "artifact_slug": "02c8d5e6-4691-4b99-8101-81d2fb4aab85",
+      "apk_repo": null,
+      "storage_prefix": "pl.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Sight a sail. Beat her guns. Board her and take the gold.",
+        "genre": "Pirates",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Pirata One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4 fair readable failure: her gun ports open and the red fan fills before she fires; every blow shows its path (white, then gold when a block will count); after a wound it says why (TOO EARLY, MISSED THE BLOCK, CAUGHT SWINGING)",
+        "P7 hit-stop: a heartbeat of stillness on a clean block, a riposte, the pistol, a broadside striking home",
+        "P12 celebration scaled: a man down, a deck taken, the captain yielding, then the loot counted out line by line with rising coins",
+        "P14 goal-gradient: one bar for the tide of the fight, three parts of the ship, four pips for the expedition",
+        "P18 chains: clean blocks in a row ring higher and sharpen the riposte; best run is kept"
       ]
     }
   ],

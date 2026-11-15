@@ -64,6 +64,13 @@ LADDER = {
         win="""(() => { const s = window.__sim, G = s.G; if (!G || G.phase !== 'fight' || !G.foe.alive) return;
                  G.idx = G.cfg.bandits - 1; G.foe.hp = 0.4; s.place(250); G.in.fire = true; })()""",
         won="window.__sim.G && (window.__sim.G.phase === 'won' || window.__sim.G.phase === 'done') && window.__sim.G.res && window.__sim.G.res.win"),
+    'plunder': dict(
+        tick='window.__sim.G.t', obj='window.__sim.G', back='#ovLevels [data-back]', nxt='#eMain', end='#ovEnd', home='#ovHome',
+        win="""(() => { const s = window.__sim, G = s.G; if (!G || G.over) return;
+                 if (G.phase !== 'board' || G.fight.stage < 2) { s.cabin(); return; }      // straight to the captain
+                 const F = G.fight, m = F.man; if (F.phase !== 'fight' || !m || m.z < 0.9 || m.os === 'yield') return;
+                 m.hp = 0.01; const g = s.geo(); s.poke(g.chest.x, g.chest.y); })()""",
+        won="window.__sim.G && window.__sim.G.over === 'won'"),
 }
 
 
