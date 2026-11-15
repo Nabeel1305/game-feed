@@ -473,6 +473,17 @@ def main():
         ok(all('core' in byrow[g][1] and 'ON PHONE' in byrow[g][2].upper() for g in left) and byrow['test-seventh'][1] == 'save' and byrow['test-seventh'][2].upper() == 'SAVE',
            'in the Games list the core games say "On phone" and the new game has a Save button', str(rows))
         pg.screenshot(path=os.path.join(root, 'out', 'feed', 'games-list-new.png'))
+        # the list stays tidy with the Save column in it, on a narrow phone too: no name cut short, small print in whole pieces, one-line labels
+        for wide in (360, 390):
+            pg.set_viewport_size({'width': wide, 'height': 844}); pg.wait_for_timeout(150)
+            tidy = pg.evaluate("""(() => {
+              const names = Array.from(document.querySelectorAll('#list .rn')), bits = Array.from(document.querySelectorAll('#list .rm .ml > span')), tags = Array.from(document.querySelectorAll('#list .row .save'));
+              return { cut: names.filter(n => n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1).length,
+                       broken: bits.filter(b => b.getBoundingClientRect().height > 22).length,
+                       tall: tags.filter(t => { const r = document.createRange(); r.selectNodeContents(t); return Array.from(r.getClientRects()).filter(x => x.width > 30 && x.height < 20).length > 1; }).length,
+                       spill: Array.from(document.querySelectorAll('#list .row')).filter(r => r.scrollWidth > r.clientWidth + 1).length };
+            })()""")
+            ok(not any(tidy.values()), f'the Games list is tidy on a phone {wide} wide', str(tidy))
         pg.click('#list .row[data-id="test-seventh"] .save'); pg.wait_for_timeout(200)
         ok('busy' in pg.evaluate("document.querySelector('#list .row[data-id=\"test-seventh\"] .save').className") and pg.evaluate('JSON.stringify(window.__asked)') == '[["save","test-seventh"]]'
            and pg.evaluate("document.querySelector('#lib').classList.contains('open')"), 'tapping Save asks the app to keep the game, and the list stays open')

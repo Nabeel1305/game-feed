@@ -252,6 +252,14 @@ def main():
         ok(pg.locator('#list .row').count() == len(games), 'the list shows every game')
         ok(pg.locator('#list .save').count() == 0 and pg.locator('#list .recheck').count() == 0, 'the hosted page has no Save buttons and no "Check for new games": those are for the phone app')
         ok(pg.evaluate("Array.from(document.querySelectorAll('#list .thumb')).every(i => i.tagName === 'IMG' && /pics\\//.test(i.getAttribute('src')))"), 'each row shows the game\'s small list picture')
+        tidy = pg.evaluate("""(() => {
+          const names = Array.from(document.querySelectorAll('#list .rn')), bits = Array.from(document.querySelectorAll('#list .rm .ml > span'));
+          return { names: names.length, cut: names.filter(n => n.scrollHeight > n.clientHeight + 1 || n.scrollWidth > n.clientWidth + 1).length,
+                   bits: bits.length, broken: bits.filter(b => b.getBoundingClientRect().height > 22).length,
+                   spill: Array.from(document.querySelectorAll('#list .row')).filter(r => r.scrollWidth > r.clientWidth + 1).length };
+        })()""")
+        ok(tidy['names'] == len(games) and tidy['cut'] == 0, 'no game name is cut short in the list', str(tidy))
+        ok(tidy['bits'] >= 2 * len(games) and tidy['broken'] == 0 and tidy['spill'] == 0, 'the small print of each row stays in whole pieces', str(tidy))
         pg.fill('#q', games[-1]['name'][:5].lower()); pg.wait_for_timeout(100)
         rows = pg.locator('#list .row')
         ok(rows.count() >= 1 and rows.first.get_attribute('data-id') == games[-1]['id'], 'search by name finds the game')

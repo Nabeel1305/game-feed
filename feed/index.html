@@ -151,13 +151,18 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .row .open:active{background:var(--ink-3)}
 .thumb{flex:none;width:54px;height:72px;border-radius:10px;object-fit:cover;background:var(--ink-3)}
 .rt{min-width:0;display:flex;flex-direction:column;gap:2px}
-.rn{font-size:17px;font-weight:800;line-height:1.2;color:var(--paper);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.rn{font-size:17px;font-weight:800;line-height:1.2;color:var(--paper);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}   /* a long name takes a second line: a name is never cut short */
 .rn small{font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:.1em;color:var(--accent);margin-right:7px;font-variant-numeric:tabular-nums}
 .rh{font-size:14px;font-weight:600;line-height:1.3;color:var(--dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rm{font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-variant-numeric:tabular-nums}
+.rm{overflow:hidden;font-family:var(--display);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);font-variant-numeric:tabular-nums}
+/* the small print of a row: each piece stays whole, and when they do not fit on one line the next piece drops down as
+   a whole. The dot sits in front of each piece, in a strip that is cut off at the left edge, so no line starts or ends with one. */
+.rm .ml{display:flex;flex-wrap:wrap;margin-left:-1.15em}
+.rm .ml > span{position:relative;padding-left:1.15em;white-space:nowrap}
+.rm .ml > span::before{content:'\00B7';position:absolute;left:.4em}
 .rm .nw{color:var(--accent);font-weight:700}
 .row .save{flex:none;width:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:16px;
-  font-family:var(--display);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+  font-family:var(--display);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;color:var(--faint)}
 .row .save svg{width:22px;height:22px;fill:none;stroke:var(--faint);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .row .save.on{color:var(--accent)}
 .row .save.on svg{stroke:var(--accent)}
@@ -168,6 +173,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .row .pin{flex:none;width:40px;display:grid;place-items:center;border-radius:16px}
 .row .pin svg{width:22px;height:22px;fill:none;stroke:var(--faint);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .row .pin.on svg{stroke:var(--accent);fill:var(--accent)}
+@media (max-width:374px){ .row .open{gap:10px;padding-left:6px} .row .save{width:48px;letter-spacing:.08em} .row .pin{width:34px} }      /* narrow phones: a little more room for the words */
 .recheck{display:block;margin:22px auto 0;height:44px;padding:0 20px;border-radius:22px;border:1px solid var(--line);font-family:var(--display);font-weight:600;font-size:13px;
   letter-spacing:.16em;text-transform:uppercase;color:var(--paper)}
 .recheck:disabled{color:var(--faint)}
@@ -899,8 +905,8 @@ function rowHTML(g) {
   const pic = g.pic || (isHere(g.id) ? g.poster : '');
   return '<div class="row" data-id="' + g.id + '"><button class="open">' +
     (pic ? '<img class="thumb" loading="lazy" alt="" src="' + esc(pic) + '">' : '<span class="thumb"></span>') +
-    '<span class="rt"><span class="rn"><small>№ ' + pad3(g.n) + '</small>' + esc(g.name) + '</span><span class="rh">' + esc(g.hook || '') + '</span><span class="rm">' +
-    (isNew(g.id) ? '<b class="nw">New</b> · ' : '') + esc(meta.join(' · ')) + '</span></span></button>' +
+    '<span class="rt"><span class="rn"><small>№ ' + pad3(g.n) + '</small>' + esc(g.name) + '</span><span class="rh">' + esc(g.hook || '') + '</span><span class="rm"><span class="ml">' +
+    (isNew(g.id) ? '<span class="nw">New</span>' : '') + meta.map(m => '<span>' + esc(m) + '</span>').join('') + '</span></span></span></button>' +
     save + '<button class="pin' + (on ? ' on' : '') + '" aria-label="' + (on ? 'Unpin ' : 'Pin ') + esc(g.name) + '" aria-pressed="' + on + '">' + ICON.pin + '</button></div>';
 }
 function drawList() {
