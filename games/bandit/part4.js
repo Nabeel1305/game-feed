@@ -363,13 +363,19 @@ function setPace() { applyStep(); store.set('smooth', stepN); store.set('half', 
     store.set('next', visits + wait); wait = Math.min(wait * 2, 80); store.set('wait', wait);
   }
 })();
-function lowGap() { const n = Math.min(gapN, GAPS.length), a = Array.from(GAPS.subarray(0, n)).sort((x, y) => x - y); return clamp(a[Math.floor(n * 0.15)], 5.5, 50); }
+// How often this screen shows a picture, from the gaps between its refreshes. Missed refreshes leave gaps of twice or three times
+// the true one, so the short gaps are the truth: unless the gaps are just uneven (a jittery clock), when the middle one is.
+function lowGap() {
+  const n = Math.min(gapN, GAPS.length), a = Array.from(GAPS.subarray(0, n)).sort((x, y) => x - y), lo = a[Math.floor(n * 0.15)], mid = a[n >> 1];
+  let fit = 0; for (const g of a) if (Math.abs(g - Math.max(1, Math.round(g / lo)) * lo) < lo * 0.12) fit++;      // how many gaps are a whole number of short ones
+  return clamp(fit >= n * 0.85 ? lo : mid, 5.5, 50);
+}
 function measure(ms, fast) {                   // one frame of a fight took this long
   if (ms > 250) { warm = 20; return; }         // (the app was away: not a slow frame)
   ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06;
   if (warm > 0) { warm--; return; }
   const want = half && fast ? vsync * 2 : vsync;
-  winSum += Math.min(ms, want * 3); winN++;
+  winSum += Math.min(ms, want * 6); winN++;      // (one long hiccup counts for little)
   let avg = winSum / winN; const limit = half && fast ? want * 1.18 : Math.min(want * 1.18, 21);
   if (winN < 30 || (winN < 60 && avg < limit * 1.35)) return;      // judged on 60 frames, or on 30 if it is plainly struggling
   winN = 0; winSum = 0;
@@ -377,7 +383,7 @@ function measure(ms, fast) {                   // one frame of a fight took this
   if (avg <= limit) { trial = ''; dead = 0; if (unsaved) { unsaved = false; wait = 5; store.set('wait', 5); setPace(); } return; }      // keeping up (and a finer notch on trial has earned its place)
   unsaved = false;                             // (a finer notch that was on trial has failed it)
   if (trial === 'S') {
-    if (avg > before * 0.93) { stepN--; avg = before; if (++dead >= 2) { stuck = true; trial = ''; setPace(); return; } }      // that notch was no help: take it back
+    if (avg > before * 0.93 && before < want * 5.4) { stepN--; avg = before; if (++dead >= 2) { stuck = true; trial = ''; setPace(); return; } }      // that notch was no help: take it back (unless it was too slow to tell)
     else dead = 0;
   }
   // a fast screen: halve. (At 90 a second, one notch less fine is tried first, in case that is all it takes to keep all 90;

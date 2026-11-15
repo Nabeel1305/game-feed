@@ -241,7 +241,7 @@
       "id": "bandit",
       "name": "Bandit",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "added": "2026-11-15",
       "summary": "A one-on-one fighter-jet dogfight above the clouds, seen from just behind your own jet. Two thumbs: the left flies (push it where the nose should go; hard turns cost speed), the right fires and drops flares. Get behind the bandit and hold him in your ring to lock on, then fire a missile; up close, hold FIRE for the cannon. He weaves, drops flares, then hauls round and comes for you: a mirror shows him on your tail, and when his missile is in the air you turn hard and tap FLARE as the ring closes on the button. Bandits with their own call signs, jets and paint, an ace every 10th sortie, one to three bandits a sortie, stars for taking no hits, endless levels.",
       "path": "games/bandit/index.html",

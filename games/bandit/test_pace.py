@@ -63,6 +63,11 @@ with sync_playwright() as p:
     s, sv = phone(b, 'a hiccup now and then', "return i % 60 === 7 ? 70 : 16.67")
     ok(s['step'] == 0 and not s['half'], 'a hiccup once a second does not ease anything off', s)
 
+    s, sv = phone(b, 'a phone whose clock jitters', "return 12 + ((i * 7919) % 95) / 10")
+    ok(s['step'] == 0 and not s['half'] and not s['stuck'] and abs(s['vsync'] - 16.7) < 1.2, 'uneven gaps that average 60 a second are read as a 60 screen keeping up', s)
+    s, sv = phone(b, 'a fast screen whose clock jitters', "return 7 + ((i * 7919) % 27) / 10")
+    ok(s['step'] == 0 and not s['half'] and abs(s['vsync'] - 8.3) < 0.8, 'and the same on a fast screen', s)
+
     s, sv = phone(b, 'the app goes away and comes back', "return i % 200 === 150 ? 4000 : 16.67")
     ok(s['step'] == 0, 'a long gap (the app was away) is not counted as a slow frame', s)
 
@@ -81,6 +86,9 @@ with sync_playwright() as p:
     ok(s2['step'] == 0 and s2['stuck'] and s2['draws'] > 0, 'the next visit leaves the picture alone', s2)
     s2, sv2 = phone(b, 'five visits on', "return 16.67", n=300, store={'flat': 1, 'visits': 5, 'next': 6})
     ok(not s2['stuck'], 'five visits on it is willing to try again', s2)
+
+    s, sv = phone(b, 'a very slow phone', "return [170, 130, 90, 60][s.step]", n=700)
+    ok(s['step'] == 3, 'a phone too slow to tell whether a notch helped still eases all the way off', s)
 
     s, sv = phone(b, 'a slow phone with no fast sky', "return s.step >= 1 ? 16.67 : 33.33", glOff=True)
     ok(s['sky'] == 'plain' and s['step'] == 1, 'without the fast sky it eases off just the same', s)
