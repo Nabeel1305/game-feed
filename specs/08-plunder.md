@@ -32,8 +32,10 @@ fights in a row: on deck, below deck (navy ships have their guns there), then th
 2. **Cannon battle** (only if the sighting has navy ships): a turning fight. Guns fire out of the sides. **Hers** only reach out
    of her sides, in a fan drawn in red: faint while a side is loaded, filling while her ports are open (your warning), then she
    fires at wherever you are in it. She comes at you under full sail, then shortens sail and swings a side to you; she is heavy
-   to turn. **Yours** aim themselves: when a ship is inside your gold arc, FIRE lights (right thumb, anywhere on the right half);
-   each side reloads on its own. A ball that runs the length of a ship (through her bow or stern) does nearly double: **RAKED**.
+   to turn. **Yours** aim themselves: when a ship is inside your gold arc **and you have let the wheel go** (amidships for a
+   moment), FIRE lights (right thumb, anywhere on the right half). A broadside fired while you are still turning goes wild, and
+   one fired at nothing is wasted: either puts both batteries out of action for three reloads, and longer each time. Sail
+   straight, or hold the wheel where it is, and she sits on your quarter, where her guns reach you and yours cannot reach her. A ball that runs the length of a ship (through her bow or stern) does nearly double: **RAKED**.
    So: keep out of the red, get close on her bow or stern, and turn faster than she can. Navy ships come in one at a time (two
    from expedition 40) while the others stand off. Hull to nothing = sunk (you) or struck/sunk (them). You can lose here.
    Left alone for twelve seconds, she comes alongside and her gunners find the range: no battle goes on for ever.
@@ -43,11 +45,18 @@ fights in a row: on deck, below deck (navy ships have their guns there), then th
    the **tide of the fight**: your crew's end and theirs. Every wound you give pushes it their way, every man you drop pushes
    it a lot; every wound you take pushes it yours; standing idle lets it slide. All the way = they give up that part of the
    ship. All the way back = your crew breaks and the expedition is lost. In the cabin the tide is the captain himself.
-   - **Slice:** swipe across him (hits what the stroke crosses). **Stab:** tap him (quick; heavy on a man off balance).
-   - **Block:** while he swings, swipe across his blade on the side it comes from (a thrust: swipe through its point).
-     A late, clean block throws him off balance: that is the moment to stab.
-   - **Dodge:** pull straight down near the bottom of the screen: the only answer to a shot or a red (unblockable) blow.
-   - **Pistol** (button, bottom right): hold to raise it, drag to bring the sights onto him as they settle, let go to fire.
+   - **Never strike a man on guard.** He turns your blow aside and cuts you for it, at once, and harder each time you do it
+     again (only time wipes that out). Spamming cannot win (his rule, 15 Nov 2026): your blows land only on a man you have
+     opened up.
+   - **Block:** when his blow comes (its line shows gold), one swipe across his blade, out on the side it comes from. The
+     clash is there and then, and he is open for a moment: one blow. A late block, as the line turns bright, throws him off
+     balance: the riposte, as many stabs as you can fit in. One try for each blow: through the middle of him, on the wrong
+     side, or clean across the screen, it is no block, and the line turns dull red.
+   - **Slice:** swipe across him. **Stab:** tap him (quick; best on a man off balance).
+   - **Dodge:** pull straight down near the bottom of the screen: the answer to a shot, a red (unblockable) blow, or a blow
+     your block missed. It gives a little ground. A dodge saves you; it does not open him (a red blow apart).
+   - **Pistol** (button, bottom right): hold to raise it; the sights come up a thumb's width off him, on any side: drag them
+     on (gold = head or heart) and let go to fire.
      Head or heart drops an ordinary man; it staggers a captain. Then it is empty: hold RELOAD for four seconds without
      doing anything else, or do without. Three balls an expedition.
 5. **The win screen:** the loot from the deck, the hold and the captain's cabin of the prize, plus every other ship beaten;
@@ -66,11 +75,15 @@ fights in a row: on deck, below deck (navy ships have their guns there), then th
 - Boss every 10th: a treasure galleon under a man-o'-war.
 - Stars: 3 = little damage taken (hull and wounds together), 2 = some, 1 = won.
 
-## No easy way to win (proved by `games/plunder/test_play.py`)
-Sea: sailing straight without firing, sailing straight and tapping FIRE, circling, weaving. Boarding: doing nothing, nonstop
-slices, nonstop stabs, scribbling, only blocking, only dodging, pistol only. Each wins the first few expeditions at most (they
-are for learning) and nothing from 8 (boarding) or 12 (sea). A careful player wins early and finds it hard later; a sharp one
-can still win at 100.
+## Spamming cannot win (proved by `games/plunder/test_play.py`, on every expedition from the first)
+Not by a few lazy robots but by search, with players who are not looking at all. Boarding: every string of up to four moves
+(taps, slices, block strokes on either side, strokes that block and cut at once, dodges, waits) on twelve beats from frantic
+to slow, about 300,000 fights; long sparse rhythms; moves at random; the pistol first and then a rhythm. None wins. Sea: every
+two-part plan for the wheel with six beats for FIRE and 900 random plans of up to four parts, about 17,000 battles: about one
+in ten thousand is won, and none goes on for ever. And the plain lazy ones: nothing, only blocking, only dodging, only the
+pistol; sailing straight, the wheel hard over or flung about, a slow circle or a steady wiggle with FIRE mashed or pressed
+whenever it lights. A player who blocks on the right side and then strikes wins the early expeditions even when sloppy; a
+beginner who steers at her, turns a side to her, lets go and fires when it lights wins the first navy fights.
 
 ## Look and sound
 - Sea from above painted by the graphics chip (swell, ripples, glints, foam), plain fallback; ships as wooden hulls with

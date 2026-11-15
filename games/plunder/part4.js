@@ -196,7 +196,10 @@ function fxDraw(world) {
 }
 function txtDraw() {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  for (const t of TXT) { const u = t.t / 1.1, p = t.w ? w2s(t.x, t.y) : [t.x, t.y], pop = u < 0.12 ? 0.6 + u / 0.12 * 0.5 : 1.1 - Math.min(0.1, (u - 0.12) * 0.5); ctx.globalAlpha = u > 0.65 ? (1 - u) / 0.35 : 1; ctx.font = `700 ${Math.round(t.size * k * pop)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(4,14,20,.75)'; const tx = clamp(p[0], 64 * k, W - 64 * k); ctx.strokeText(t.txt, tx, p[1] - u * 34 * k); ctx.fillStyle = t.col; ctx.fillText(t.txt, tx, p[1] - u * 34 * k); }
+  for (const t of TXT) { const u = t.t / 1.1, p = t.w ? w2s(t.x, t.y) : [t.x, t.y], pop = u < 0.12 ? 0.6 + u / 0.12 * 0.5 : 1.1 - Math.min(0.1, (u - 0.12) * 0.5); let fs = t.size * k * pop;
+    if (t.tw == null) { ctx.font = `700 ${Math.round(t.size * k)}px ${BC}`; t.tw = ctx.measureText(t.txt).width / Math.round(t.size * k); }      // how wide it is, measured once: a long line is shrunk and slid to stay on the screen
+    let tw = t.tw * fs; if (tw > W - 16) { fs *= (W - 16) / tw; tw = W - 16; }
+    ctx.globalAlpha = u > 0.65 ? (1 - u) / 0.35 : 1; ctx.font = `700 ${Math.round(fs)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(4,14,20,.75)'; const tx = clamp(p[0], tw / 2 + 8, W - tw / 2 - 8); ctx.strokeText(t.txt, tx, p[1] - u * 34 * k); ctx.fillStyle = t.col; ctx.fillText(t.txt, tx, p[1] - u * 34 * k); }
   ctx.globalAlpha = 1;
   if (banner) { const b = banner, a = Math.min(1, b.t / 0.18, (b.secs - b.t) / 0.35), sc = b.t < 0.2 ? 1.25 - b.t / 0.2 * 0.25 : 1, y = H * 0.2;
     ctx.globalAlpha = Math.max(0, a); let fs = 48 * k * sc; ctx.font = `400 ${Math.round(fs)}px ${PO}`; const tw = ctx.measureText(b.txt).width; if (tw > W - 28) { fs *= (W - 28) / tw; ctx.font = `400 ${Math.round(fs)}px ${PO}`; } ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(3,12,18,.8)'; ctx.strokeText(b.txt, W / 2, y); ctx.fillStyle = b.col; ctx.fillText(b.txt, W / 2, y);
@@ -246,15 +249,15 @@ function drawSea(G) {
     for (const s of G.foes) {
       if (!s.alive || s.gone || s.struck || !s.K.navy || !s.eng) continue;
       for (let side = 0; side < 2; side++) {
-        if (s.aimOn[side]) { const u = clamp(s.aim[side] / c.eAim, 0, 1), [x, y, a, r] = wedge(s, side, SEA.ARC_E, SEA.E_RANGE, `rgba(255,96,72,${0.3 + 0.25 * u})`, `rgba(255,170,150,${0.8 + 0.2 * u})`, 3);
-          ctx.strokeStyle = `rgba(255,236,210,${0.5 + 0.5 * u})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, Math.max(4, r * u), a - SEA.ARC_E, a + SEA.ARC_E); ctx.stroke(); }
-        else if (s.load[side] <= 0.8) wedge(s, side, SEA.ARC_E, SEA.E_RANGE, 'rgba(255,110,90,.13)', 'rgba(255,120,100,.8)', 2, [7, 6]);
+        if (s.aimOn[side]) { const u = clamp(s.aim[side] / c.eAim, 0, 1), [x, y, a, r] = wedge(s, side, Math.min(1.55, fanOf(G)), reachOf(G), `rgba(255,96,72,${0.3 + 0.25 * u})`, `rgba(255,170,150,${0.8 + 0.2 * u})`, 3);
+          ctx.strokeStyle = `rgba(255,236,210,${0.5 + 0.5 * u})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, Math.max(4, r * u), a - Math.min(1.55, fanOf(G)), a + Math.min(1.55, fanOf(G))); ctx.stroke(); }
+        else if (s.load[side] <= 0.8) wedge(s, side, Math.min(1.55, fanOf(G)), reachOf(G), 'rgba(255,110,90,.13)', 'rgba(255,120,100,.8)', 2, [7, 6]);
       }
     }
     if (live) for (let side = 0; side < 2; side++) {
       const ld = me.load[side], lit = G.lit[side];
-      if (ld <= 0) wedge(me, side, SEA.ARC, SEA.RANGE, lit ? 'rgba(255,204,92,.26)' : 'rgba(255,214,130,.06)', lit ? 'rgba(255,226,140,.95)' : 'rgba(255,226,160,.38)', lit ? 2.5 : 1.3);
-      else { const [x, y, a, r] = wedge(me, side, SEA.ARC, SEA.RANGE, null, 'rgba(210,220,225,.1)', 1); ctx.strokeStyle = 'rgba(255,226,160,.45)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 26 * CAM.z, a - SEA.ARC, a - SEA.ARC + 2 * SEA.ARC * (1 - ld / c.myReload)); ctx.stroke(); }
+      if (ld <= 0) { const ease = G.inArc[side] && !lit; wedge(me, side, SEA.ARC, SEA.RANGE, lit ? 'rgba(255,204,92,.26)' : ease ? 'rgba(255,204,92,.1)' : 'rgba(255,214,130,.06)', lit ? 'rgba(255,226,140,.95)' : ease ? 'rgba(255,226,140,.8)' : 'rgba(255,226,160,.38)', lit ? 2.5 : ease ? 2 : 1.3, ease ? [5, 5] : null); }      // dashed gold: she is in front of the guns, but the wheel has not been let go yet
+      else { const [x, y, a, r] = wedge(me, side, SEA.ARC, SEA.RANGE, null, 'rgba(210,220,225,.1)', 1); ctx.strokeStyle = 'rgba(255,226,160,.45)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 26 * CAM.z, a - SEA.ARC, a - SEA.ARC + 2 * SEA.ARC * clamp(1 - ld / c.myReload, 0, 1)); ctx.stroke(); }
     }
   }
   // grapples
@@ -297,7 +300,11 @@ function seaEvent(G, e) {
     case 'sight': sfx.sight(); vibe(HAP.light); break;
     case 'raid': sfx.raid(); break;
     case 'pass': sfx.tap(); break;
-    case 'wasted': if (gate('wasted', 1500)) say('NOTHING IN FRONT OF THE GUNS', me.x, me.y - 30, '#cfd8dc', 14, 1); break;
+    case 'wasted': if (gate('wasted', 1500)) { say(e.n > 1.3 ? 'WASTED AGAIN: SLOWER EACH TIME' : 'WASTED: NO SHIP IN YOUR ARC', me.x, me.y - 30, '#ff9a8a', 15, 1); tip('waste', 'Only FIRE when it lights: a wasted side is slow to reload', 3); } break;
+    case 'wild': if (gate('wild', 900)) { say(e.n > 1.3 ? 'WILD AGAIN: SLOWER EACH TIME' : 'WILD! LET THE WHEEL GO FIRST', me.x, me.y - 30, '#ff9a8a', 15, 1); tip('ease', 'Let go of the wheel, then FIRE when it lights', 3); } break;
+    case 'tells': if (gate('tells', 500)) { say('BROADSIDE!', me.x, me.y + 34, '#ffd166', 22, 1); vibe(HAP.sharp); sfx.tells(); } break;
+    case 'ranged': setBanner('Her gunners have your range', 'Hurt her, or she will sink you', 2.2, '#ff9a8a'); sfx.ports(); break;
+    case 'quarter': if (G.N <= 8 && e.s.eng) tip('quarter', 'She sits where your guns cannot reach: turn on her', 3.2); break;
     case 'empty': if (gate('empty', 500)) sfx.empty(); break;
     case 'engage': if (G.pt > 2 && gate('eng', 1500)) { say('SHE COMES IN', e.s.x, e.s.y + 16, '#ff9a8a', 16, 1); sfx.ports(); } break;
   }

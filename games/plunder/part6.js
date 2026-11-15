@@ -103,7 +103,7 @@ function drawMan(G, F, m) {
   ctx.fillStyle = L.skin; ctx.beginPath(); ctx.ellipse(0, 0, 24, 27, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = 'rgba(40,20,10,.16)'; ctx.beginPath(); ctx.ellipse(9, 2, 15, 25, 0, -Math.PI / 2, Math.PI / 2); ctx.fill();
   if (L.beard) { ctx.globalAlpha = alpha * (L.beard === 2 ? 1 : 0.34); ctx.fillStyle = L.hair; ctx.beginPath(); ctx.moveTo(-24, 0); ctx.quadraticCurveTo(-24, 28, -10, 34 + (L.beard === 2 ? 6 : 0)); ctx.quadraticCurveTo(0, 40 + (L.beard === 2 ? 8 : 0), 10, 34 + (L.beard === 2 ? 6 : 0)); ctx.quadraticCurveTo(24, 28, 24, 0); ctx.quadraticCurveTo(16, 12, 0, 13); ctx.quadraticCurveTo(-16, 12, -24, 0); ctx.closePath(); ctx.fill(); ctx.globalAlpha = alpha; }
-  const shout = (os === 'strike' || (os === 'windup' && A && ot > A.wind * 0.5)), eyeY = os === 'yield' ? -1 : -5;
+  const shout = (os === 'strike' || os === 'riposte' || (os === 'windup' && A && ot > A.wind * 0.5)), eyeY = os === 'yield' ? -1 : -5;
   ctx.strokeStyle = dark; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(-16, -14); ctx.lineTo(-4, -9); ctx.moveTo(16, -14); ctx.lineTo(4, -9); ctx.stroke();
   if (os === 'hurt' || os === 'stagger') { ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(-13, -5); ctx.lineTo(-6, -3); ctx.moveTo(13, -5); ctx.lineTo(6, -3); ctx.stroke(); }
   else { ctx.fillStyle = '#16100c'; ctx.beginPath(); ctx.arc(-9, eyeY, 2.5, 0, TAU); ctx.arc(9, eyeY, 2.5, 0, TAU); ctx.fill(); }
@@ -141,10 +141,12 @@ function drawMan(G, F, m) {
   } else {
     let tH = gH, tT = gT;
     if (os === 'stagger') { tH = up(-98, 74); tT = up(-158, -24); off = lp(off, up(98, 112), Math.min(1, ot / 0.15)); }
+    else if (os === 'recover' && m.open) { tH = up(-92, 128); tT = up(-150, 52); }      // his blade knocked wide: an opening
     else if (os === 'hurt') { tH = up(-44, 164); tT = up(44, 64); }
     else if (os === 'block') { tH = [m.bx + 36 * s, m.by + 24 * s]; tT = [m.bx - 44 * s, m.by - 40 * s]; }
+    else if (os === 'riposte') { const q = Math.min(1, ot / 0.1), r = clamp((ot - 0.14) / 0.1, 0, 1); tH = lp(lp(chest, [c.x, c.y], 0.3), gH, r); tT = lp(lp([m.bx - 44 * s, m.by - 40 * s], [c.x, c.y - 20 * s], easeOut(q)), gT, r); big = 1.3 * q * (1 - r); }
     else if (os === 'yield') { tH = up(-80, -4); off = lp(off, up(80, -4), Math.min(1, ot / 0.35)); drop = true; }
-    const b = easeOut(Math.min(1, ot / (os === 'block' ? 0.08 : 0.24))); hand = lp(m.fromH || gH, tH, b); tip = lp(m.fromT || gT, tT, b);
+    const b = easeOut(Math.min(1, ot / (os === 'block' || os === 'riposte' ? 0.08 : 0.24))); hand = lp(m.fromH || gH, tH, b); tip = lp(m.fromT || gT, tT, b);
   }
   if (m.drawOs !== os + (A ? A.kind + A.chain + A.feinted : '')) { m.drawOs = os + (A ? A.kind + A.chain + A.feinted : ''); m.fromH = m.prevH || gH; m.fromT = m.prevT || gT; }
   m.prevH = hand; m.prevT = tip;
@@ -163,17 +165,17 @@ function drawMan(G, F, m) {
     if (os === 'windup' && A && A.kind !== 'shot') { const gl = lp(hand, tip, 0.8), r = 16 * s * (0.6 + 0.4 * Math.sin(F.t * 30)); ctx.globalAlpha = alpha * 0.9; ctx.drawImage(SPR.flash, gl[0] - r, gl[1] - r, r * 2, r * 2); ctx.globalAlpha = alpha; }
   } else { const p = [X(-70), g.ey + 452 * s]; blade2(p, [p[0] + 118 * s, p[1] + 14 * s], 9 * s, L.sword === 'axe' ? 'axe' : L.sword, false, 0); }
   arm(up(-58 * bw, 60), hand, -1, sleeve);
-  if (os === 'stagger') {      // off balance: this is your moment
+  if (os === 'stagger' || (os === 'recover' && m.open)) {      // open: this is your moment
     const pu = 0.5 + 0.5 * Math.sin(F.t * 16), cc = g.chest; ctx.strokeStyle = `rgba(255,214,102,${0.55 + 0.4 * pu})`; ctx.lineWidth = 3.5 * s; ctx.beginPath(); ctx.arc(cc.x, cc.y, cc.r * (0.75 + 0.12 * pu), 0, TAU); ctx.stroke();
-    ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * s; for (let i = 0; i < 3; i++) { const a = F.t * 6 + i * 2.1; ctx.beginPath(); ctx.arc(hc[0] + Math.cos(a) * 30 * s, hc[1] - 44 * s + Math.sin(a) * 7 * s, 4 * s, 0, TAU); ctx.stroke(); }
+    if (os === 'stagger') { ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * s; for (let i = 0; i < 3; i++) { const a = F.t * 6 + i * 2.1; ctx.beginPath(); ctx.arc(hc[0] + Math.cos(a) * 30 * s, hc[1] - 44 * s + Math.sin(a) * 7 * s, 4 * s, 0, TAU); ctx.stroke(); } }
   }
   ctx.restore();
 }
-// the path of his blow, so that you can read it: white = coming, gold = block now, bright = a clean block
+// the path of his blow, so that you can read it: gold = block it (one stroke across it, on its side), bright = a clean block, dull red = your block missed (dodge)
 function drawTell(G, F) {
   const m = F.man; if (!m || !(m.os === 'windup' || m.os === 'strike') || !m.atk) return;
-  const A = m.atk, c = G.cfg, f = fu(), tl = m.os === 'windup' ? A.wind - m.ot + 0.1 : 0.1 - m.ot, now = tl <= c.parryWin, best = tl <= c.parryWin * 0.38, p = m.os === 'windup' ? clamp(m.ot / A.wind, 0, 1) : 1;
-  const col = A.kind === 'heavy' || A.kind === 'shot' ? '255,70,50' : best ? '255,255,235' : now ? '255,206,90' : '235,240,245', a = (0.22 + 0.5 * p) * (best ? 1.25 : 1);
+  const A = m.atk, c = G.cfg, f = fu(), tl = m.os === 'windup' ? A.wind - m.ot + 0.1 : 0.1 - m.ot, gone = !!A.tried && A.kind !== 'heavy', best = !gone && tl <= c.parryWin * 0.38, p = m.os === 'windup' ? clamp(m.ot / A.wind, 0, 1) : 1;
+  const col = A.kind === 'heavy' || A.kind === 'shot' ? '255,70,50' : gone ? '255,128,104' : best ? '255,255,235' : '255,206,90', a = (0.22 + 0.5 * p) * (best ? 1.25 : 1);
   ctx.lineCap = 'round';
   if (A.kind === 'cut' || A.kind === 'heavy') {
     const e = [lerp(A.sx, A.ex, 0.47), lerp(A.sy, A.ey, 0.47)], s0 = [lerp(A.sx, A.ex, 0.03), lerp(A.sy, A.ey, 0.03)];
@@ -241,7 +243,7 @@ function hudFight(G, F) {
   for (let i = 0; i < 3; i++) { ctx.fillStyle = i < G.shots ? '#1a1a1c' : 'rgba(255,255,255,.14)'; ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(B.x - 12 * k + i * 12 * k, B.y - B.r - 9 * k, 4.2 * k, 0, TAU); ctx.fill(); ctx.stroke(); }
 }
 function hintDraw() {
-  if (!hint) return; const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); if (a <= 0) { hint = null; return; }
+  if (!hint) return; if (hint.t >= hint.secs) { hint = null; return; } const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); if (a <= 0) return;      // (a hint asked for while drawing is brand new, not over: it used to be thrown away at once, and used up)
   ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; let fs = 17 * k; ctx.font = `700 ${Math.round(fs)}px ${BC}`; let tw = ctx.measureText(hint.txt).width; if (tw > W - 44 * k) { fs *= (W - 44 * k) / tw; ctx.font = `700 ${Math.round(fs)}px ${BC}`; tw = W - 44 * k; } const w = tw + 26 * k, y = hint.y || H * 0.8;
   ctx.fillStyle = 'rgba(3,10,14,.72)'; rrect(W / 2 - w / 2, y - 17 * k, w, 34 * k, 10 * k); ctx.fill(); ctx.fillStyle = '#ffe9b0'; ctx.fillText(hint.txt, W / 2, y); ctx.globalAlpha = 1;
 }
@@ -267,18 +269,21 @@ function fightEvent(G, e) {
   const sparks = (x, y, n, col) => { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = (120 + Math.random() * 360) * f; fx({ k: 'line', w: 0, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.18 + Math.random() * 0.25, r0: 2.4 * f, r1: 0.6, col, g: 700 * f, drag: 3 }); } fx({ k: 'flash', w: 0, x, y, life: 0.12, r0: 10 * f, r1: 46 * f }); };
   switch (e.k) {
     case 'stage': setBanner(STAGE_N[e.i].replace('THE ', 'The ').replace("CAPTAIN'S CABIN", "captain's cabin").replace('ON DECK', 'On deck').replace('BELOW DECK', 'Below deck'), e.i === 2 ? F.capt : 'Aboard the ' + F.ship, 1.5); sfx.stage(e.i); TRAIL.length = 0; break;
-    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('slice', 'Swipe across him to slice. Tap him to stab.', 3.2); break;
+    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('loop', 'Never strike first. Block his blow, then strike.', 3.8); break;
     case 'windup': sfx.tell(e.kind, e.wind);
-      if (e.kind === 'cut') tip('block', 'Swipe across his blade to block', 2.4); else if (e.kind === 'thrust') tip('thrust', 'Swipe through the ring to block', 2.4); else if (e.kind === 'heavy') tip('heavy', 'Red blow! Pull down to dodge', 2.4, true); else tip('shot', 'He takes aim! Pull down to dodge', 2.4, true); break;
+      if (e.kind === 'cut') tip('block', N <= 2 ? 'Swipe across his blade, on the side it comes from' : 'Swipe across his blade to block', 2.6); else if (e.kind === 'thrust') tip('thrust', 'Swipe through the ring to block', 2.4); else if (e.kind === 'heavy') tip('heavy', 'Red blow! Pull down to dodge', 2.4, true); else tip('shot', 'He takes aim! Pull down to dodge', 2.4, true); break;
     case 'feint': sfx.feint(); break;
     case 'strike': sfx.swish(0.7); if (e.kind === 'shot') { const x = g.x + 14 * g.s, y = g.ey + 70 * g.s; fx({ k: 'flash', w: 0, x, y, life: 0.14, r0: 20 * f, r1: 120 * f }); for (let i = 0; i < 5; i++) fx({ k: 'smoke', w: 0, x: x + (Math.random() - 0.5) * 30 * f, y: y + (Math.random() - 0.5) * 20 * f, vx: (Math.random() - 0.5) * 60, vy: -30 - Math.random() * 50, life: 1 + Math.random() * 0.6, r0: 20 * f, r1: 90 * f, a0: 0.7 }); sfx.pistol(0.8); } break;
-    case 'guard': sfx.swish(0.9); if (e.heavy) say("CAN'T BLOCK THAT", W / 2, H * 0.62, '#ff9a8a', 20); break;
+    case 'guard': sfx.swish(0.9); if (e.heavy) say("CAN'T BLOCK THAT", W / 2, H * 0.62, '#ff9a8a', 20); else if (!e.ok && e.why === 'side') { say('ON THE SIDE IT COMES FROM', W / 2, H * 0.62, '#ff9a8a', 17); tip('side', 'Meet his blade out on the side it comes from', 2.6); }
+      else if (!e.ok && e.why === 'far') { say('MISSED HIS BLADE', W / 2, H * 0.62, '#ff9a8a', 18); if (N <= 6) tip('once', 'One block for each blow. Missed it? Pull down to dodge.', 2.8); }
+      else if (!e.ok && e.why === 'flail') { say('TOO WILD', W / 2, H * 0.62, '#ff9a8a', 18); if (N <= 6) tip('wild', 'One clean stroke blocks. A flung-about blade does not.', 2.8); }
+      else if (!e.ok && e.why === 'feint') say('A FEINT!', W / 2, H * 0.62, '#ff9a8a', 20); else if (!e.ok && e.why === 'guess') say('TOO SOON', W / 2, H * 0.62, '#ff9a8a', 18); break;
     case 'parry': { const x = e.x == null ? c.x : e.x, y = e.y == null ? c.y - 60 * f : e.y; sparks(x, y, e.perfect ? 16 : 8, e.perfect ? '#fff3c4' : '#ffd166'); sfx.clang(e.perfect, e.chain); shake = Math.min(12, shake + (e.perfect ? 7 : 4)); hitstop = e.perfect ? 0.1 : 0.045; vibe(e.perfect ? HAP.sharp : HAP.light);
       say(e.perfect ? 'CLEAN BLOCK!' : 'BLOCKED', x, y - 26 * f, e.perfect ? '#fff3c4' : '#ffd166', e.perfect ? 26 : 20); if (e.chain >= 2) say('×' + e.chain, x + 64 * f, y - 4 * f, '#ffd166', 22);
-      if (e.perfect) tip('rip', 'He is off balance: stab him!', 2.2); break; }
+      tip(e.perfect ? 'rip' : 'open', e.perfect ? 'He is off balance: stab him!' : 'He is open: strike now!', 2.2); break; }
     case 'hurt': shake = Math.min(18, shake + 12); hurtFlash = 0.85; hitstop = 0.06; sfx.hurt(e.kind); duck(0.4, 400);
-      say(e.kind === 'heavy' || e.kind === 'shot' ? 'DODGE THAT ONE' : e.caught ? 'CAUGHT SWINGING' : e.tooEarly ? 'TOO EARLY' : e.missed ? 'MISSED THE BLOCK' : 'HIT', W / 2, H * 0.66, '#ff8a7a', 22); break;
-    case 'dodged': say('DODGED', W / 2, H * 0.66, '#bfe8ff', 22); sfx.swish(1.2); if (e.kind === 'heavy') tip('rip', 'He is off balance: stab him!', 2.2); break;
+      say(e.kind === 'heavy' || e.kind === 'shot' ? 'DODGE THAT ONE' : e.missed ? 'IT GETS THROUGH' : e.caught ? 'CAUGHT SWINGING' : 'HIT', W / 2, H * 0.66, '#ff8a7a', 22); break;
+    case 'dodged': say('DODGED', W / 2, H * 0.66, '#bfe8ff', 22); sfx.swish(1.2); if (e.kind === 'heavy') tip('rip', 'He is off balance: stab him!', 2.2); else if (e.kind === 'shot') tip('open', 'He is open: strike now!', 2.2); else if (N <= 6) tip('dodgeNo', 'A dodge saves you. A block is what opens him.', 2.6); break;
     case 'dodge': sfx.dodge(); vibe(HAP.tick); break;
     case 'swing': sfx.swish(e.kind === 'stab' ? 1.5 : 1); break;
     case 'cut': { const x = e.x, y = e.y;
@@ -286,13 +291,18 @@ function fightEvent(G, e) {
       else { const a = e.kind === 'stab' ? Math.random() * TAU : e.ang, L = (e.kind === 'stab' ? 22 : 74) * f; fx({ k: 'line', w: 0, x: x + Math.cos(a) * L, y: y + Math.sin(a) * L, vx: Math.cos(a) * L * 40, vy: Math.sin(a) * L * 40, life: 0.2, r0: (e.rip ? 9 : 6) * f, r1: 1, col: '#ffffff' }); sparks(x, y, e.rip ? 9 : 4, '#ffe9c0'); for (let i = 0; i < 4; i++) fx({ k: 'chip', w: 0, x, y, vx: (Math.random() - 0.5) * 300 * f, vy: (-80 - Math.random() * 200) * f, g: 900 * f, life: 0.5, r0: 4 * f, r1: 2 * f, col: F.man && (F.man.look.coat || F.man.look.shirt) || '#ccc', vr: 20 }); }
       sfx.cut(e.kind, e.rip); hitstop = Math.max(hitstop, e.rip ? 0.11 : e.kind === 'ball' ? 0.12 : 0.05); shake = Math.min(12, shake + (e.rip ? 7 : 3)); vibe(e.rip ? HAP.sharp : HAP.light);
       if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); else tip('bar', 'Each wound moves the bar. Fill it to take the deck.', 2.6); break; }
-    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say(e.counter ? 'HE TURNS IT: LOOK OUT!' : 'HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.counter) tip('spam', 'Mix your blows: he reads the same one twice', 2.6); break;
+    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say('HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.rip) tip('guard', 'Never strike a man on guard. Block his blow, then strike.', 3.4); break;
+    case 'turned': { const a = -0.5 + Math.random(), L = 150 * f;      // ...and cuts you for it (P11: no buzz for a failure)
+      fx({ k: 'line', w: 0, x: c.x - Math.cos(a) * L, y: c.y - 30 * f - Math.sin(a) * L, vx: Math.cos(a) * L * 30, vy: Math.sin(a) * L * 30, life: 0.2, r0: 8 * f, r1: 1, col: '#ffb4a4' });
+      shake = Math.min(18, shake + 9 + 2 * Math.min(e.n, 4)); hurtFlash = Math.min(1, 0.6 + 0.1 * e.n); hitstop = 0.05; sfx.hurt('cut'); duck(0.4, 400);
+      say(e.n >= 3 ? 'AND CUTS YOU: HARDER EACH TIME' : e.n === 2 ? 'AND CUTS YOU AGAIN' : 'AND CUTS YOU', W / 2, H * 0.66, '#ff8a7a', e.n >= 3 ? 18 : 22); break; }
+    case 'late': say('BLOCK!', e.x, e.y - 30 * f, '#ff9a8a', 20); break;
     case 'evaded': say('HE SLIPS IT', g.x, g.chest.y - 60 * f, '#cfd8dc', 18); break;
     case 'whiff': break;
     case 'down': sfx.down(); sfx.cheer(0.45); vibe(HAP.thud); say('DOWN!', g.x, g.chest.y - 80 * f, '#ffd166', 30); hitstop = Math.max(hitstop, 0.09); break;
     case 'stagewon': setBanner(e.i === 2 ? 'He yields!' : e.i === 1 ? (F.navy ? 'The gun deck is yours' : 'The hold is yours') : 'The deck is yours', e.i === 2 ? 'The ' + F.ship + ' is yours' : '', 1.8, '#ffd166'); sfx.cheer(e.i === 2 ? 1.3 : 0.9); sfx.won(e.i); duck(0.5, 900); vibe(HAP.best); hitstop = 0.16; break;
     case 'broken': setBanner('Your crew breaks', 'They are driven back to the boats', 1.6, '#ff9a8a'); sfx.lost(); duck(0.7, 1500); break;
-    case 'raise': sfx.cock(); break;
+    case 'raise': sfx.cock(); tip('aim', 'Drag the sights onto his head or heart, then let go', 3); break;
     case 'lower': break;
     case 'spoiled': say('SHOT SPOILED', W / 2, H * 0.72, '#ff9a8a', 18); break;
     case 'shot': { fx({ k: 'flash', w: 0, x: e.x, y: e.y + 40 * f, life: 0.16, r0: 30 * f, r1: 170 * f }); for (let i = 0; i < 7; i++) fx({ k: 'smoke', w: 0, x: W * 0.36 + (Math.random() - 0.5) * 90 * f, y: H * 0.62 + (Math.random() - 0.5) * 60 * f, vx: (Math.random() - 0.5) * 80, vy: -40 - Math.random() * 70, life: 1.2 + Math.random() * 0.8, r0: 30 * f, r1: 130 * f, a0: 0.75 });
@@ -307,5 +317,5 @@ function tip(key, txt, secs, low) {
   const seen = store.get('tips', {}), n = seen[key] || 0; if (n >= 3 && !(LIVE && LIVE.N <= 2 && n < 6)) return;
   if (hint && hint.t < 0.9 && hint.key !== key) return;
   if (!hint || hint.key !== key) { seen[key] = n + 1; store.set('tips', seen); }
-  hint = { key, txt, t: hint && hint.key === key ? Math.min(hint.t, 0.2) : 0, secs, y: low ? H * 0.74 : H * 0.8 };
+  hint = { key, txt, t: hint && hint.key === key ? Math.min(hint.t, 0.2) : 0, secs, y: low ? H * 0.74 : LIVE && LIVE.phase !== 'board' ? Math.min(H * 0.8, H - 190 * k) : H * 0.8 };      // (at sea it sits clear of the FIRE button and its "ease the wheel" label)
 }

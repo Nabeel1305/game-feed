@@ -190,10 +190,11 @@ function seaHud() {
   ctx.save(); ctx.translate(wx, wy); ctx.rotate(me.rud * 1.1); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 3; for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.moveTo(-r - 6 * k, 0); ctx.lineTo(r + 6 * k, 0); ctx.stroke(); } ctx.fillStyle = '#e9b949'; ctx.beginPath(); ctx.arc(0, -r, 5 * k, 0, TAU); ctx.fill(); ctx.restore();
   if (wp) { ctx.fillStyle = 'rgba(233,185,73,.85)'; ctx.beginPath(); ctx.arc(wx + G.in.rud * 56 * k, wy, 13 * k, 0, TAU); ctx.fill(); }
   if (ph === 'sail') return;
-  const fx0 = W - 70 * k, fy0 = H - 86 * k, fr = 46 * k, lit = G.lit[0] || G.lit[1], pu = 0.5 + 0.5 * Math.sin(VT * 9);
+  const fx0 = W - 70 * k, fy0 = H - 86 * k, fr = 46 * k, lit = G.lit[0] || G.lit[1], ease = !lit && (G.inArc[0] || G.inArc[1]), pu = 0.5 + 0.5 * Math.sin(VT * 9);
   ctx.fillStyle = lit ? `rgba(233,185,73,${0.75 + 0.2 * pu})` : 'rgba(3,10,14,.5)'; ctx.beginPath(); ctx.arc(fx0, fy0, fr, 0, TAU); ctx.fill();
-  ctx.strokeStyle = lit ? '#fff3c4' : 'rgba(255,255,255,.4)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(fx0, fy0, fr, 0, TAU); ctx.stroke();
-  for (let s = 0; s < 2; s++) { const ld = me.load[s], a0 = s ? -Math.PI / 2 + 0.25 : Math.PI / 2 + 0.25, a1 = a0 + (Math.PI - 0.5) * (ld <= 0 ? 1 : 1 - ld / G.cfg.myReload); ctx.strokeStyle = ld <= 0 ? '#ffd166' : 'rgba(255,255,255,.6)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(fx0, fy0, fr + 8 * k, a0, a1); ctx.stroke(); }
+  ctx.strokeStyle = lit ? '#fff3c4' : ease ? `rgba(233,185,73,${0.5 + 0.5 * pu})` : 'rgba(255,255,255,.4)'; ctx.lineWidth = 3; if (ease) ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(fx0, fy0, fr, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  if (ease) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(3,10,14,.7)'; ctx.strokeText('LET THE WHEEL GO', fx0, fy0 - fr - 22 * k); ctx.fillStyle = '#ffe9b0'; ctx.fillText('LET THE WHEEL GO', fx0, fy0 - fr - 22 * k); tip('ease', 'Let go of the wheel, then FIRE when it lights', 3); }
+  for (let s = 0; s < 2; s++) { const ld = me.load[s], a0 = s ? -Math.PI / 2 + 0.25 : Math.PI / 2 + 0.25, a1 = a0 + (Math.PI - 0.5) * (ld <= 0 ? 1 : clamp(1 - ld / G.cfg.myReload, 0, 1)); ctx.strokeStyle = ld <= 0 ? '#ffd166' : 'rgba(255,255,255,.6)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(fx0, fy0, fr + 8 * k, a0, a1); ctx.stroke(); }
   ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(26 * k)}px ${PO}`; ctx.fillStyle = lit ? '#2a1a02' : 'rgba(255,255,255,.75)'; ctx.fillText('FIRE', fx0, fy0 + 1);
 }
 
@@ -245,7 +246,7 @@ function tick(dt, rdt) {
     const was = G.phase; stepAll(G, dt); events();
     if (G.phase === 'sight' && !sightUp && !G.choice) { fillSight(); sightCard(true); setBanner(G.sight.ships.length > 1 ? 'Sails ho!' : 'Sail ho!', '', 1.2, '#ffd166'); } else if (G.phase !== 'sight' && sightUp) sightCard(false);
     if (G.phase !== was) { if (G.phase === 'board') { ptrs.clear(); INP.tip = null; G.in.fire = false; G.in.rud = 0; G.in.held = false; }      // (a thumb on the wheel stays on the wheel from one part of the sea to the next)
-      if (G.phase === 'battle' && G.N <= 4) tip('fans', G.N <= 2 ? 'FIRE when your gold arc is on her' : 'Keep out of the red. Get on her bow or stern.', 3.4); if (G.phase === 'chase' && G.N <= 3) tip('chase', 'Steer for her. Your crew will grapple.', 3); }
+      if (G.phase === 'battle' && G.N <= 4) tip('fans', G.N <= 2 ? 'Put her in your gold arc, let the wheel go, FIRE' : 'Keep out of the red. Get on her bow or stern.', 3.6); if (G.phase === 'chase' && G.N <= 3) tip('chase', 'Steer for her. Your crew will grapple.', 3); }
     if (G.over) finish();
   } else { G.t += rdt; if (G.phase !== 'board') { ballsStep(G, dt); G.me.sink += G.me.alive ? 0 : dt; for (const s of G.foes) if (s.alive && !s.gone) sail(s, dt, s.struck ? 0 : s.K.speed * 0.4); } else boardIdle(G, dt); if (endT >= 0) { endT -= rdt; if (endT < 0) showEnd(); } }
   if (G.phase !== 'board') { camStep(G, rdt); wakeStep(G, rdt); smokeStep(G, rdt); }
@@ -300,7 +301,7 @@ window.__sim = {
   stage(i) { if (G.phase !== 'board') this.board(); const F = G.fight; while (F.stage < i) nextStage(G); events(); },
   cabin() { this.stage(2); },
   stroke(ax, ay, bx, by) { fStroke(G, ax, ay, bx, by); }, poke(x, y) { fPoke(G, x, y); }, dodge() { fDodge(G); }, aim(x, y) { return fAim(G, x, y); }, aimMove(x, y) { fAimMove(G, x, y); }, fire() { fFire(G); }, reload(on) { fReload(G, on); },
-  geo() { return manGeo(G.fight); }, aimAt() { return aimAt(G.fight); }, you: YOU, fu, relTo, predict, inArc, SEA, FIGHT, KINDS, DBG, makeCfg, makeSight, haulOf, starsOf, rankOf, wrapA, clamp, fwdX, fwdY, rgtX, rgtY, CAM, MUS, TUNE,
+  geo() { return manGeo(G.fight); }, aimAt() { return aimAt(G.fight); }, you: YOU, fu, judge(A, ax, ay, bx, by) { return judgeBlock(G, A, ax, ay, bx, by); }, makeAtk(kind) { return makeAtk(G, G.fight.man, kind); }, relTo, predict, inArc, SEA, FIGHT, KINDS, DBG, makeCfg, makeSight, haulOf, starsOf, rankOf, wrapA, clamp, fwdX, fwdY, rgtX, rgtY, CAM, MUS, TUNE,
   smooth() { return { step: stepN, half, sea: SEAGL ? 'fast' : 'plain', stuck, vsync: +vsync.toFixed(1), ms: +ftAvg.toFixed(1), dpr: DPR, draws, fx: FXS.length, wake: WAKE.length }; },
   finest(n) { stuck = true; stepN = clamp(n | 0, 0, STEPS.length - 1); half = 0; applyStep(); },      // tests and card pictures: the finest picture (or notch n), and leave it there
   gl(on) { if (on) { seaTried = false; } else { SEAGL = null; seaTried = true; $('bg').style.display = 'none'; } },      // tests: the sea by the graphics chip, or the plain way

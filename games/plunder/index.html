@@ -101,12 +101,12 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <ul class="rules">
       <li><b>Sailing.</b> Slide your left thumb to steer. When the lookout sights a ship: <b>RAID</b>, or <b>SAIL ON</b> to look for another (twice at most).</li>
       <li><b>Merchants</b> carry the most loot. <b>Navy ships</b> carry less, fight far harder, and their guns must be beaten before you can board.</li>
-      <li><b>Your guns</b> fire out of your sides. When a ship is in your gold arc, <b>FIRE</b> lights: press it. A ball down her length, through bow or stern, does nearly double.</li>
-      <li><b>Her guns</b> only reach out of her sides: the red. It fills before she fires. Keep out of it: get close on her bow or her stern and turn faster than she can.</li>
-      <li><b>Boarding.</b> Swipe across a man to <b>slice</b>. Tap him to <b>stab</b>: best when he is off balance.</li>
-      <li><b>Block</b> by swiping across his blade as it comes. A late, clean block throws him off balance.</li>
-      <li><b>Dodge</b> a shot or a red blow: pull straight down, low on the screen.</li>
-      <li><b>Pistol:</b> hold it, let the sights settle on him, let go. One ball at a time: hold it again for four seconds to reload. Three balls.</li>
+      <li><b>Your guns</b> fire out of your sides. Bring her into your gold arc, <b>let the wheel go</b>, and <b>FIRE</b> lights: press it then. Fired at nothing, or while you are still turning, a broadside is wasted, and every wasted one is slower to reload than the last.</li>
+      <li><b>Her guns</b> only reach out of her sides: the red. It fills before she fires. Keep out of it: get close on her bow or her stern and turn faster than she can. Sail straight and she sits where your guns cannot reach.</li>
+      <li><b>Boarding.</b> <b>Never strike a man on guard</b>: he turns it and cuts you, harder each time. Wait for his blow and <b>block it</b>: one swipe across his blade, out on the side it comes from.</li>
+      <li><b>Then strike</b> while he is open: swipe to slice, tap to stab. A late block, as his blade turns bright, throws him off balance: stab, stab, stab.</li>
+      <li><b>Dodge</b> a shot, a red blow, or a blow your block missed: pull straight down, low on the screen. A dodge saves you; only a block opens him.</li>
+      <li><b>Pistol:</b> hold it, drag the sights onto his head or heart, let go. One ball at a time: hold it again for four seconds to reload. Three balls.</li>
       <li><b>The bar at the top</b> is the fight. Fight well and your crew takes the ship. Fight badly and they break.</li>
     </ul>
     <button class="btn" data-back>Got it</button>
@@ -265,7 +265,7 @@ function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNati
 
 // ===================== PART 2: the expedition and the sea (no drawing) =====================
 // Headings: 0 = up the map; forward = (sin h, cos h); starboard (right) = (cos h, -sin h). Sides: 0 = port, 1 = starboard.
-const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.42, ARC_E: 0.55, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5 };
+const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.38, ARC_E: 0.62, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5, STEADY: 0.15, EVEN: 0.25, QUARTER: 0.5 };
 const MYSHIP = { navy: 0, size: 2, cls: 'Your sloop', len: 46, beam: 13, hull: 100, guns: 5, speed: 47, turn: 0.95, masts: 2 };
 const KINDS = {
   trader:   { navy: 0, size: 1, cls: 'Trader',           len: 40, beam: 13,   hull: 30, guns: 0, speed: 27, turn: 0.5,  masts: 2, loot: 1.0,  crew: 0.85 },
@@ -293,19 +293,19 @@ function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), x = (a, b, kk) => a + (b - a) * (1 - Math.exp(-f / kk)), boss = N % 10 === 0;
   const c = { N, f, e, boss, help: !!help,
     // the sea
-    eReload: x(5.0, 2.7, 12) + e * 1.4,            // seconds between one of her broadsides and the next
-    eAim: x(1.25, 0.52, 22) + e * 0.5,              // warning: her gun ports are open this long before she fires
+    eReload: x(5.0, 3.0, 12) + e * 1.4,            // seconds between one of her broadsides and the next
+    eAim: x(1.25, 0.62, 22) + e * 0.5,              // warning: her gun ports are open this long before she fires
     eSpread: x(0.2, 0.07, 24),                     // how far her broadside scatters: wide at range, tight up close
-    eSkill: x(0.25, 0.95, 20) * (1 - 0.5 * e),     // how well she places herself
+    eSkill: x(0.25, 0.88, 20) * (1 - 0.5 * e),     // how well she places herself
     eSide: x(10, 45, 9) * (1 - 0.5 * e),          // what a whole broadside of hers does to your hull if every ball lands (yours is 100)
-    eHull: x(0.8, 2.6, 9) * (1 - 0.35 * e),       // her hull, times her kind's own
+    eHull: Math.max(1.3, x(0.8, 2.6, 9)) + 1.3 * e,       // her hull, times her kind's own (the first navy ships are no sturdier for it than later ones, but they must stand more than two broadsides: two lucky ones used to win)
     maxNavy: boss ? 1 : N < 6 ? 1 : N < 15 ? 2 : 3,
     engage: N < 40 ? 1 : 2,                        // how many navy ships come in to fight you at once; the others stand off and wait their turn
-    myBall: 6, myReload: 3.6,
+    myBall: 7.5, myReload: 3.6,
     // boarding (part 3 turns these into each man)
     windup: 0.3 + 0.6 * Math.exp(-f / 18) + 0.45 * e,          // seconds of warning before a blow lands (never under 0.3)
-    parryWin: 0.14 + 0.46 * Math.exp(-f / 36) + 0.2 * e,       // how early a block still counts
-    gap: (0.5 + 1.6 * Math.exp(-f / 22)) * (1 + 0.4 * e),      // pause between a man's attacks
+    parryWin: 0.14 + 0.46 * Math.exp(-f / 36) + 0.2 * e,       // the last 38% of this, before his blow lands, is a clean block (he is thrown off balance)
+    gap: (0.55 + 1.0 * Math.exp(-f / 22)) * (1 + 0.15 * e),    // pause between a man's attacks (you cannot strike first, so the wait is kept short)
     oParry: Math.min(0.5, 0.06 + f * 0.009),                   // he turns your attacks aside
     oDodge: Math.min(0.22, f * 0.005),
     combo: N >= 4 ? Math.min(0.6, (f - 3) * 0.03) : 0,
@@ -314,7 +314,8 @@ function makeCfg(N, help) {
     shots: N >= 4 ? Math.min(0.5, 0.15 + f * 0.012) : 0,        // marines and captains with a pistol of their own
     read: 1 + Math.min(2.5, (N - 1) * 0.3),                     // how hard a man punishes the same move over and over
     punish: 1.2 + Math.min(0.6, N * 0.05),
-    hit: (0.07 + f * 0.0012) * (1 - 0.4 * e),                  // how far one of his blows pushes the tide against you
+    hit: (0.07 + f * 0.0012) * (1 - 0.3 * e),                  // how far one of his blows pushes the tide against you
+    turn: 0.07 + f * 0.0012,                           // ...and what it costs to strike a man on guard (no kinder early: it is the one thing you must not do)
     hp: (30 + f * 1.2) * (1 - 0.25 * e),                        // one ordinary man
     kill: clamp(0.3 - f * 0.003, 0.16, 0.3),                   // how far dropping a man pushes the tide (so more men later)
     tol: (28 + 30 * Math.exp(-N / 14)) * (1 + 0.6 * e)          // how close your block must pass to his blade (at 390 wide)
@@ -378,7 +379,7 @@ function newExp(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   return { N, cfg, seed, rnd: rng(seed), phase: 'sail', t: 0, pt: 0, me: mkShip(MYSHIP, 0, 0, 0), foes: [], balls: [], ev: [], msgs: [],
     in: { rud: 0, fire: false, held: false }, firePrev: false, choice: null, sightI: 0, passes: N <= 2 || cfg.boss ? 0 : 2, sight: null, prize: null,
-    took: { hull: 0, wounds: 0 }, dealt: 0, lastHit: 0, battleT: 0, shots: 3, fight: null, over: null, nextSight: N === 1 ? 2.4 : 4.0, lit: [false, false], idle: 0, taken: [] };
+    took: { hull: 0, wounds: 0 }, dealt: 0, lastHit: 0, battleT: 0, shots: 3, fight: null, over: null, nextSight: N === 1 ? 2.4 : 4.0, lit: [false, false], inArc: [false, false], straightT: 0, hdgRef: 0, wheelT: 0, wheelRef: 0, waste: 0, evenT: 0, quiet: 0, idle: 0, taken: [] };
 }
 function setPhase(G, p) { G.phase = p; G.pt = 0; G.ev.push({ k: 'phase', p }); }
 function predict(s, T, q) {      // where a ship will be T seconds on if she holds her wheel as it is (q: how much of that the gunners allow for)
@@ -387,11 +388,12 @@ function predict(s, T, q) {      // where a ship will be T seconds on if she hol
   return { x: s.x + (x - s.x) * q, y: s.y + (y - s.y) * q };
 }
 // A broadside goes where the guns point when they fire: straight out of the side, at the ship in front of them. Each ball lands near that spot.
-function broadside(G, s, side, t, spread, dmg, mine, reload) {
-  const n = s.K.guns, sg = side ? 1 : -1, d = t ? relTo(s, t).d : 110, p = t ? predict(t, d / SEA.BALL_V + 0.1, 1) : { x: s.x + rgtX(s) * sg * 110, y: s.y + rgtY(s) * sg * 110 }, scatter = spread * d;
+function broadside(G, s, side, t, spread, dmg, mine, reload, reach = 1) {      // reach: 1 = laid true; a heeling deck throws it long (more) or short (less)
+  const n = s.K.guns, sg = side ? 1 : -1, d = t ? relTo(s, t).d : 110, p = t ? predict(t, d / SEA.BALL_V + 0.1, 1) : { x: s.x + rgtX(s) * sg * 110, y: s.y + rgtY(s) * sg * 110 }, scatter = spread * d, sv = { n, hits: 0 };
+  if (reach !== 1) { p.x = s.x + (p.x - s.x) * reach; p.y = s.y + (p.y - s.y) * reach; }
   for (let i = 0; i < n; i++) {
     const at = (i + 0.5) / n - 0.5, a = G.rnd() * TAU, r = Math.sqrt(G.rnd()) * scatter;
-    G.balls.push({ s, sg, at, wait: i * 0.07 + G.rnd() * 0.03, x1: p.x + fwdX(s) * at * s.K.len * 0.5 + Math.cos(a) * r, y1: p.y + fwdY(s) * at * s.K.len * 0.5 + Math.sin(a) * r, dmg, mine, live: false, t: 0, T: 1 });
+    G.balls.push({ s, sg, at, wait: i * 0.07 + G.rnd() * 0.03, x1: p.x + fwdX(s) * at * s.K.len * 0.5 + Math.cos(a) * r, y1: p.y + fwdY(s) * at * s.K.len * 0.5 + Math.sin(a) * r, dmg, mine, sv, live: false, t: 0, T: 1 });
   }
   s.load[side] = reload; s.fireT = 0; s.aimOn[side] = false; s.aim[side] = 0;
   G.ev.push({ k: 'fire', s, side: sg, mine, n });
@@ -406,7 +408,7 @@ function hitShip(G, t, dmg, b, rake) {
     return;
   }
   if (!t.alive) return;
-  t.hitT = 0; G.dealt += dmg; G.lastHit = G.t;
+  t.hitT = 0; G.dealt += dmg; if (t.K.navy && ++b.sv.hits === Math.ceil(b.sv.n * 0.5)) { G.lastHit = G.t; G.quiet = Math.max(0, G.quiet - 24); G.ev.push({ k: 'tells' }); }      // half a broadside landing is a broadside that tells: only that keeps her gunners from finding the range
   if (!t.K.navy) {            // a merchant has no guns: one ball and she heaves to. But every hole is cargo over the side.
     t.info.loot = Math.max(Math.round(t.info.loot0 * 0.7 / 10) * 10, t.info.loot - Math.round(t.info.loot0 * 0.05 / 10) * 10);
     if (!t.struck) { t.struck = true; G.ev.push({ k: 'hove', s: t }); }
@@ -436,7 +438,7 @@ function ballsStep(G, dt) {
     for (const t of (b.mine ? G.foes : [G.me])) {
       if (!t.alive || t.gone) continue;
       const dx = b.x - t.x, dy = b.y - t.y, lx = dx * rgtX(t) + dy * rgtY(t), ly = dx * fwdX(t) + dy * fwdY(t), hb = t.K.beam * 0.5 + SEA.PAD, hl = t.K.len * 0.5 + 1;
-      if ((lx * lx) / (hb * hb) + (ly * ly) / (hl * hl) <= 1) { const L = Math.hypot(b.x1 - b.x0, b.y1 - b.y0) || 1, rake = Math.abs((b.x1 - b.x0) * fwdX(t) + (b.y1 - b.y0) * fwdY(t)) / L > 0.8; hitShip(G, t, b.dmg * (rake ? SEA.RAKE : 1), b, rake); hit = true; break; }
+      if ((lx * lx) / (hb * hb) + (ly * ly) / (hl * hl) <= 1) { const L = Math.hypot(b.x1 - b.x0, b.y1 - b.y0) || 1, rake = Math.abs((b.x1 - b.x0) * fwdX(t) + (b.y1 - b.y0) * fwdY(t)) / L > 0.8; hitShip(G, t, b.dmg * (rake ? (b.mine ? 1 + (SEA.RAKE - 1) * (1 - G.cfg.e) : SEA.RAKE) : 1), b, rake); hit = true; break; }
     }
     if (!hit) G.ev.push({ k: 'splash', x: b.x, y: b.y });
   }
@@ -449,16 +451,29 @@ function targetFor(G, side) {      // the nearest ship your guns on that side ca
   return best;
 }
 function myFire(G) {
-  const me = G.me; let any = false;
-  for (let side = 0; side < 2; side++) { if (me.load[side] > 0) continue; const t = targetFor(G, side); if (!t) continue; broadside(G, me, side, t, SEA.MY_SPREAD, G.cfg.myBall, true, G.cfg.myReload); any = true; }
-  if (any) return;
+  // Spamming cannot win at sea either. The guns need a level deck: a broadside fired while she is turning, or the instant the wheel
+  // comes back amidships, goes wild (into the sea on one side, over her masts on the other), and one fired at nothing is a side
+  // unloaded for nothing. Bring her into the arc, let the wheel go, and fire when FIRE lights. (While any gentle turn would do,
+  // a wheel left on a slow circle or a steady wiggle, with FIRE tapped on a beat or whenever it lit, won the first navy fights:
+  // her station on your quarter cannot be kept against a ship that never stops turning.)
+  // And it is a habit that ruins you: every side thrown away makes the next one slower still to load (three times as long, then
+  // five, seven, nine), and tells her gunners they have nothing to fear (her "range" clock jumps on). Only time wipes that out
+  // (one step every fifteen seconds). A wheel on a fixed plan with FIRE on a fixed beat used to win the first navy fights.
+  const me = G.me, over = Math.abs(me.rud) - SEA.STEADY, heel = Math.max(over > 0 ? Math.min(1, over / 0.25) : 0, 1 - clamp(G.evenT / SEA.EVEN, 0, 1)), spread = SEA.MY_SPREAD * (1 + 3 * heel), w = Math.min(G.waste, 3); let any = false;
+  for (let side = 0; side < 2; side++) { if (me.load[side] > 0) continue; const t = targetFor(G, side); if (!t) continue; broadside(G, me, side, t, spread, G.cfg.myBall, true, G.cfg.myReload * (heel ? 1 + 2 * heel * (1 + w) : 1), heel ? ((me.rud > 0) === (side === 1) ? 1 + 1.7 * heel : 1 - 0.68 * heel) : 1); any = true; }
+  const both = t => { for (let sd = 0; sd < 2; sd++) me.load[sd] = Math.max(me.load[sd], t); };      // ...and it is the whole ship that pays: both batteries are out of action while the gun crews sort themselves out
+  if (any) { if (heel > 0) { both(G.cfg.myReload * (1 + 2 * heel * (1 + w))); G.waste = w + heel; G.quiet += 9 * heel * (1 + w); G.ev.push({ k: 'wild', n: G.waste }); } return; }
   let side = -1, bd = 1e9;        // nothing in front of the guns: the loaded side nearest a ship fires at the empty sea all the same
   for (const t of G.foes) { if (!t.alive || t.gone) continue; const r = relTo(me, t), sd = r.lx >= 0 ? 1 : 0; if (me.load[sd] <= 0 && r.d < bd) { bd = r.d; side = sd; } }
   if (side < 0) side = me.load[1] <= 0 ? 1 : me.load[0] <= 0 ? 0 : -1;
-  if (side >= 0) { broadside(G, me, side, null, SEA.MY_SPREAD, G.cfg.myBall, true, G.cfg.myReload); G.ev.push({ k: 'wasted' }); } else G.ev.push({ k: 'empty' });
+  if (side >= 0) { broadside(G, me, side, null, spread, G.cfg.myBall, true, G.cfg.myReload * (3 + 2 * w)); both(G.cfg.myReload * (3 + 2 * w)); G.waste = w + 1; G.quiet += 9 * (1 + w); G.ev.push({ k: 'wasted', n: G.waste }); } else G.ev.push({ k: 'empty' });      // thrown away: that side takes three times as long to load again, and longer each time
 }
 // a navy ship: she comes at you under full sail, then shortens sail and turns her side to you; her ports open (that is your warning) and she fires.
 // She is a heavy thing to turn: a quick sloop can stay off her bow or her stern, where no gun of hers will reach.
+// How far her guns reach round, and out. Left alone for long (no broadside of yours telling) her gunners have you cold: the
+// fan opens until it bears wherever you are. (A sloop spinning in tight circles with a few planks left could not be finished off.)
+const coldOf = G => clamp((G.quiet - 60) / 30, 0, 1);      // (a minute without one telling broadside: a captain who is fighting her at all never gets there)
+const fanOf = G => SEA.ARC_E + coldOf(G) * 1.0, reachOf = G => SEA.E_RANGE * (1 + 0.4 * coldOf(G));
 function navyAI(G, s, dt) {
   const c = G.cfg, me = G.me, sk = c.eSkill, pm = sk > 0.3 ? predict(me, 0.9 * sk, 1) : me, r = relTo(s, pm), rn = relTo(s, me);
   s.think -= dt;
@@ -471,20 +486,23 @@ function navyAI(G, s, dt) {
     if (s.eng) { s.close = rn.d > (s.close ? 105 : 128); s.wantBrg = s.close ? side * 0.35 : side * (Math.PI / 2 - (rn.d > 78 ? 0.3 : 0)); }
     else { s.close = rn.d > 215; s.wantBrg = s.close ? side * 0.3 : side * (rn.d < 175 ? 2.2 : Math.PI / 2); }      // standing off: she keeps her distance and watches
   }
-  const idle = Math.max(0, G.t - Math.max(G.lastHit, G.battleT) - 12);      // left alone, she crowds on sail, comes alongside, and her gunners find the range
+  const idle = Math.max(0, G.quiet - 12);      // left alone (no broadside of yours telling), she crowds on sail, takes station, and her gunners find the range
   let rud = clamp(wrapA(r.brg - s.wantBrg) * 2.4, -1, 1), dp = 0;
-  if (idle > 0 && s.eng) {
-    const sm = relTo(me, s).lx >= 0 ? 1 : -1, px = me.x + rgtX(me) * sm * 66 + fwdX(me) * me.v * 0.5, py = me.y + rgtY(me) * sm * 66 + fwdY(me) * me.v * 0.5, dx = px - s.x, dy = py - s.y;
+  const hold = s.eng && (idle > 0 || G.straightT > 2.5 || G.wheelT > 2.5); if (hold && !s.hold) G.ev.push({ k: 'quarter', s }); s.hold = hold;      // sail straight, or fail to hurt her, and she sits on your quarter: where her guns reach you and yours cannot reach her. You have to turn on her.
+  if (hold) {
+    const rm = relTo(me, s), sm = rm.lx >= 0 ? 1 : -1, wide = idle <= 0 && Math.atan2(-rm.ly, Math.abs(rm.lx)) < SEA.ARC + 0.1 ? 172 : 64;      // if she is not yet abaft your guns she swings wide, out of range, and closes on your quarter from astern (but once you have gone twelve seconds without hurting her, she comes straight in)
+    const ox = Math.cos(SEA.QUARTER) * wide * sm, oy = -Math.sin(SEA.QUARTER) * wide, px = me.x + rgtX(me) * ox + fwdX(me) * oy, py = me.y + rgtY(me) * ox + fwdY(me) * oy, dx = px - s.x, dy = py - s.y;
     dp = Math.hypot(dx, dy); const w = clamp((dp - 12) / 50, 0, 1); rud = clamp((wrapA(Math.atan2(dx, dy) - s.hdg) * w + wrapA(me.hdg - s.hdg) * (1 - w)) * 2.4, -1, 1);
   }
   for (const o of G.foes) if (o !== s && o.alive && !o.gone) { const q = relTo(s, o); if (q.d < 62 && q.ly > -10) rud = q.lx > 0 ? -1 : 1; }      // do not run aboard a friend
   if (rn.d < 38 && rn.ly > 0) rud = rn.lx > 0 ? -1 : 1;                                                                                           // nor aboard you
-  const hold = idle > 0 && s.eng, rush = clamp((idle - 15) / 30, 0, 1);      // left alone, even a clumsy captain keeps her station on your beam; left alone for long, she is on you like a hawk (no battle goes on for ever)
+  const rush = clamp((idle - 15) / 30, 0, 1);      // left alone for long, she is on you like a hawk (no battle goes on for ever)
   s.rud += (rud * (hold ? 1 + 0.6 * rush : 0.45 + 0.75 * sk) - s.rud) * Math.min(1, dt * (hold ? 4 : lerp(1.4, 4, sk)));
   const chase = Math.max(s.K.speed, me.v + 6) * 1.2, full = lerp(me.v * 0.75, chase, clamp(sk * 1.7, 0, 1));
-  sail(s, dt, hold ? me.v + clamp(dp * 0.5, 0, 40) : s.close ? full : s.eng ? 24 : Math.min(s.K.speed, me.v));
+  sail(s, dt, hold ? (me.v + Math.min(40, Math.sqrt(26 * Math.max(0, dp - 3)))) / ((1 - 0.22 * Math.abs(s.rud)) * (s.hull < s.hull0 * 0.3 ? 0.86 : 1))      // (no faster than she can take the way off again: she must not run on past her station into your arc)
+    : s.close ? full : s.eng ? 24 : Math.min(s.K.speed, me.v));
   for (let side = 0; side < 2; side++) {
-    if (s.eng && s.load[side] <= 0 && inArc(s, me, side, SEA.ARC_E, SEA.E_RANGE)) {      // you are in front of her guns: her ports open (your warning), and then she fires
+    if (s.eng && s.load[side] <= 0 && inArc(s, me, side, fanOf(G), reachOf(G))) {      // you are in front of her guns: her ports open (your warning), and then she fires
       if (!s.aimOn[side]) { s.aimOn[side] = true; G.ev.push({ k: 'ports', s, side }); }
       s.aim[side] += dt;
       if (s.aim[side] >= c.eAim * (1 - 0.7 * rush)) broadside(G, s, side, me, c.eSpread * (1 - Math.min(0.5, idle * 0.03)), c.eSide * (0.55 + 0.15 * s.K.size) / s.K.guns * (1 + idle * 0.08), false, c.eReload * (0.95 + G.rnd() * 0.2) * (1 - Math.min(0.5, idle * 0.03)));
@@ -514,7 +532,7 @@ function seaStep(G, dt) {
     case 'sight': {
       const slow = dt * 0.12;
       helm(G, slow, false); for (const s of G.foes) merchAI(G, s, slow, false);
-      if (G.choice === 'raid' || (G.choice === 'pass' && G.passes <= 0)) { G.choice = null; G.ev.push({ k: 'raid' }); for (const s of G.foes) s.v = Math.max(s.v, s.K.speed * 0.6); G.battleT = G.lastHit = G.t; setPhase(G, G.sight.navy ? 'battle' : 'chase'); }
+      if (G.choice === 'raid' || (G.choice === 'pass' && G.passes <= 0)) { G.choice = null; G.ev.push({ k: 'raid' }); for (const s of G.foes) s.v = Math.max(s.v, s.K.speed * 0.6); G.battleT = G.lastHit = G.t; G.quiet = 0; G.waste = 0; setPhase(G, G.sight.navy ? 'battle' : 'chase'); }
       else if (G.choice === 'pass') { G.choice = null; G.passes--; G.sightI++; for (const s of G.foes) s.gone = true; G.prize = null; G.nextSight = 3.0; setPhase(G, 'sail'); G.ev.push({ k: 'pass' }); }
       break; }
     case 'battle': case 'chase': case 'close': {
@@ -529,7 +547,12 @@ function seaStep(G, dt) {
       }
       if (fireNow) myFire(G);
       ballsStep(G, dt);
-      for (let side = 0; side < 2; side++) G.lit[side] = me.load[side] <= 0 && !!targetFor(G, side);
+      // is he just holding a course, or just holding the wheel where it is? (then she can take her time and sit where she likes)
+      if (G.phase !== 'battle' || Math.abs(wrapA(me.hdg - G.hdgRef)) > 0.6) { G.hdgRef = me.hdg; G.straightT = 0; } else G.straightT += dt;      // (a wiggle is still a course)
+      if (G.phase !== 'battle' || Math.abs(G.in.rud - G.wheelRef) > 0.25) { G.wheelRef = G.in.rud; G.wheelT = 0; } else G.wheelT += dt;
+      G.evenT = Math.abs(me.rud) <= SEA.STEADY ? G.evenT + dt : 0;      // how long the wheel has been amidships (the deck level): the guns need that
+      if (G.phase === 'battle') { const was = G.quiet; G.quiet += dt; G.waste = Math.max(0, G.waste - dt / 15); if (was <= 12 && G.quiet > 12) G.ev.push({ k: 'ranged' }); }
+      for (let side = 0; side < 2; side++) { G.inArc[side] = me.load[side] <= 0 && !!targetFor(G, side); G.lit[side] = G.inArc[side] && G.evenT >= SEA.EVEN; }      // (inArc: she is in front of loaded guns; lit: and the deck is level, so they will tell)
       if (G.phase !== 'battle' && G.prize && me.alive && relTo(me, G.prize).d < SEA.BOARD_R) { setPhase(G, 'grapple'); G.ev.push({ k: 'grapple' }); }
       break;
     }
@@ -546,7 +569,8 @@ function seaStep(G, dt) {
 
 // ===================== PART 3: boarding (no drawing) =====================
 // One bar, the tide of the fight: 0 = your crew breaks, 1 = they give up this part of the ship. It starts each part at one half.
-const FIGHT = { SLICE: 9, STAB: 6, RIP_STAB: 2.4, RIP_SLICE: 1.6, RELOAD: 4, DODGE: 0.45, DODGE_CD: 0.8, GROUND: 0.02, IDLE: 3.5, SLIDE: 0.02, EYE: 0.27 };
+const FIGHT = { SLICE: 9, STAB: 6, RIP_STAB: 2.4, RIP_SLICE: 1.6, OPEN: 1.5, RELOAD: 4, DODGE: 0.45, DODGE_CD: 0.8, GROUND: 0.02, IDLE: 4.5, SLIDE: 0.02, EYE: 0.27,
+  TURN_UP: 1.5, TURN_MAX: 4, TURN_FADE: 8, GUESS: 0.22 };      // a blow at a man on guard: he turns it and cuts you (a share of one of his blows), harder each time you do it again
 const TYPES = {
   sailor:  { mul: 0.9,  shot: 0,   heavy: 0.6, title: 'Sailor' },
   bosun:   { mul: 1.08, shot: 0,   heavy: 1.4, title: 'Bosun' },
@@ -555,7 +579,12 @@ const TYPES = {
   mcapt:   { mul: 1.25, shot: 0.6, heavy: 1.3, title: 'Captain', capt: 1 },
   ncapt:   { mul: 1.35, shot: 1,   heavy: 1.2, title: 'Captain', capt: 1 }
 };
-const CUTS = [-155, -125, -90, -55, -25];
+// Where his cuts come from (degrees: 180 = from your left, -90 = from above, 0 = from your right; and how far each may stray).
+// The first expeditions have two plain sides. A block must meet the blade on the side it comes from (judgeBlock), so that
+// no one stroke, repeated without looking, blocks them all.
+const SIDES2 = [[-150, 10], [-30, 10]];
+const CUTS = [[-155, 5], [-125, 5], [-90, 6], [-55, 5], [-25, 5]];
+const cutPool = N => N <= 2 ? SIDES2 : N < 6 ? CUTS : N < 14 ? CUTS.concat([[-180, 4], [0, 4]]) : CUTS.concat([[-180, 4], [0, 4], [150, 5], [30, 5]]);
 const STAGE_N = ['ON DECK', 'BELOW DECK', "THE CAPTAIN'S CABIN"];
 const fu = () => Math.min(W, H * 0.6) / 390;
 const YOU = () => ({ x: W / 2, y: H * 0.52 });
@@ -582,7 +611,7 @@ function mkMan(G, type) {
     wind: Math.max(0.3, c.windup / Math.pow(s, 0.6)), gap: c.gap / s, oParry: Math.min(0.6, c.oParry * s), oDodge: Math.min(0.3, c.oDodge * s),
     combo: Math.min(0.7, c.combo * s), feint: Math.min(0.45, c.feint * s), heavy: Math.min(0.42, c.heavy * T.heavy + (capt && c.N >= 3 ? 0.12 : 0)),
     shot: (P.K.navy || capt) && R() < c.shots * T.shot ? 1 : 0, hit: c.hit * (0.85 + 0.15 * s), hp0, hp: hp0, worth: capt ? 0.5 : c.kill,
-    os: 'enter', ot: 0, z: 0.45, next: 0, atk: null, hits: 0, ph: R() * 9, lean: 0, hitT: 9, lastA: null, rec: 0.3, stag: 0.7, counter: false, chainNext: 0, side: R() < 0.5 ? -1 : 1 };
+    os: 'enter', ot: 0, z: 0.45, next: 0, atk: null, hits: 0, ph: R() * 9, lean: 0, hitT: 9, lastA: null, rec: 0.3, stag: 0.7, rip: false, ripD: 0, soft: 0, chainNext: 0, side: R() < 0.5 ? -1 : 1 };
 }
 function manGeo(F) {      // where he is on the screen: everything scales about the eye line as he steps in
   const m = F.man, f = fu(), s = f * (m ? m.z * m.look.tall : 1), ey = H * FIGHT.EYE;
@@ -598,12 +627,12 @@ function spawnMan(G) {
 }
 function startBoarding(G) {
   const P = G.prize;
-  G.fight = { stage: -1, t: 0, tide: 0.5, shown: 0.5, man: null, phase: 'intro', pt: 0, parry: null, dodge: null, dodgeCd: 0, pBusy: 0, pStun: 0, lastSwing: -9, lastStroke: -9, lastTry: 0,
-    aim: null, loaded: true, reload: 0, reloading: false, chain: 0, dropped: 0, recentAtk: [], lastKind: '', sameN: 0, navy: !!P.K.navy, ship: P.info.name, capt: P.info.capt, men: 0, hurtT: 9, pAnim: null };
+  G.fight = { stage: -1, t: 0, tide: 0.5, shown: 0.5, man: null, phase: 'intro', pt: 0, dodge: null, dodgeCd: 0, pBusy: 0, pStun: 0, lastSwing: -9, lastStroke: -9, lastTry: 0,
+    aim: null, loaded: true, reload: 0, reloading: false, chain: 0, dropped: 0, turnN: 0, turnT: -9, recentAtk: [], lastKind: '', sameN: 0, navy: !!P.K.navy, ship: P.info.name, capt: P.info.capt, men: 0, hurtT: 9, pAnim: null };
   nextStage(G);
 }
 function nextStage(G) {
-  const F = G.fight; F.stage++; F.tide = 0.5; F.shown = 0.5; F.peak = 0.5; F.phase = 'intro'; F.pt = 0; F.man = null; F.parry = null; F.dodge = null; F.aim = null; F.men = 0; F.lastTry = F.t; F.recentAtk.length = 0; F.sameN = 0;
+  const F = G.fight; F.stage++; F.tide = 0.5; F.shown = 0.5; F.peak = 0.5; F.phase = 'intro'; F.pt = 0; F.man = null; F.dodge = null; F.aim = null; F.men = 0; F.lastTry = F.t; F.recentAtk.length = 0; F.sameN = 0; F.turnN = 0;
   G.ev.push({ k: 'stage', i: F.stage }); spawnMan(G);
 }
 
@@ -611,9 +640,9 @@ function nextStage(G) {
 function makeAtk(G, m, kind) {
   const R = G.rnd, c = YOU(), rad = Math.min(W, H * 0.6) * 0.5, N = G.N;
   if (kind === 'cut' || kind === 'heavy') {
-    const pool = N <= 2 ? [-125, -90, -55] : N < 6 ? CUTS : N < 14 ? CUTS.concat([-180, 0]) : CUTS.concat([-180, 0, 150, 30]);
-    let a = pick(R, pool); if (a === m.lastA) a = pick(R, pool); m.lastA = a; const q = a * Math.PI / 180;
-    return { ang: q, sx: c.x + Math.cos(q) * rad, sy: c.y + Math.sin(q) * rad, ex: c.x - Math.cos(q) * rad, ey: c.y - Math.sin(q) * rad };
+    const pool = cutPool(N); let i = (R() * pool.length) | 0; if (pool.length > 2 && i === m.lastI) i = (R() * pool.length) | 0; m.lastI = i;      // (two sides: a plain coin each time, nothing to count on)
+    const q = (pool[i][0] + (R() * 2 - 1) * pool[i][1]) * Math.PI / 180;
+    return { ang: q, sec: (N <= 2 ? 45 : 35) * Math.PI / 180, sx: c.x + Math.cos(q) * rad, sy: c.y + Math.sin(q) * rad, ex: c.x - Math.cos(q) * rad, ey: c.y - Math.sin(q) * rad };
   }
   if (kind === 'thrust') return { px: c.x + (R() * 2 - 1) * 75 * fu(), py: c.y - (R() * 0.9 - 0.2) * 90 * fu() };
   return {};
@@ -622,48 +651,49 @@ function startAttack(G, m, o = {}) {
   const R = G.rnd, F = G.fight; let kind = o.kind;
   if (!kind) kind = m.shot && !o.chain && R() < 0.3 ? 'shot' : !o.chain && R() < m.heavy ? 'heavy' : G.N >= 2 && R() < 0.32 ? 'thrust' : 'cut';
   const wind = kind === 'shot' ? Math.max(0.85, m.wind * 1.6) : kind === 'heavy' ? Math.max(0.5, m.wind * 1.4) : Math.max(0.3, m.wind * (o.fast || 1) * (0.9 + 0.2 * R()));
-  m.atk = Object.assign({ kind, wind, mul: o.mul || 1, chain: o.chain || 0, feint: kind === 'cut' && !o.chain && !o.fast && R() < m.feint, feinted: false, result: null }, makeAtk(G, m, kind));
-  m.os = 'windup'; m.ot = 0; m.hits = 0; m.counter = false; m.chainNext = 0; F.parry = null;
+  m.atk = Object.assign({ kind, wind, mul: o.mul || 1, chain: o.chain || 0, feint: kind === 'cut' && !o.chain && !o.fast && R() < m.feint, feinted: false, result: null, tried: false, why: '' }, makeAtk(G, m, kind));
+  m.os = 'windup'; m.ot = 0; m.hits = 0; m.chainNext = 0; m.open = false;
   G.ev.push({ k: 'windup', kind, wind });
 }
-function resolve(G, m) {
-  const F = G.fight, c = G.cfg, A = m.atk; let res;
-  if (F.dodge && F.dodge.t <= FIGHT.DODGE) res = 'dodged';
-  else if (A.kind === 'heavy' || A.kind === 'shot') res = 'hit';
-  else if (F.parry && F.parry.ok && F.t - F.parry.at <= c.parryWin) res = F.t - F.parry.at <= c.parryWin * 0.38 ? 'perfect' : 'parried';
-  else res = 'hit';
-  A.result = res; m.ot = 0; if (A.kind === 'shot') m.shot = 0;
-  if (res === 'dodged') {
-    if (A.kind === 'heavy') { m.os = 'stagger'; m.stag = 0.9; } else { m.os = 'recover'; m.rec = A.kind === 'shot' ? 0.7 : 0.38; }
+function parried(G, m, perfect) {      // your stroke met his blade: the clash happens there and then
+  const F = G.fight, c = G.cfg, A = m.atk; A.result = perfect ? 'perfect' : 'parried'; m.ot = 0; F.chain++; m.chainNext = 0;
+  if (perfect) { m.os = 'stagger'; m.stag = 0.75 + 0.5 * c.e; }      // a late, clean block: he is off balance, time for a riposte
+  else { m.os = 'recover'; m.rec = 0.45 + 0.25 * c.e; m.open = true; if (A.chain < 2 && G.rnd() < m.combo) m.chainNext = A.chain + 1; }      // blocked: he is open for a moment, time for one blow
+  G.ev.push({ k: 'parry', perfect, chain: F.chain, x: A.cx, y: A.cy });
+}
+function resolve(G, m) {      // his blow arrives: you dodged it, or it lands
+  const F = G.fight, c = G.cfg, A = m.atk; A.result = F.dodge && F.dodge.t <= FIGHT.DODGE ? 'dodged' : 'hit'; m.ot = 0; if (A.kind === 'shot') m.shot = 0;
+  if (A.result === 'dodged') {
+    // A dodge saves you; it is the block that opens him. (A dodge thrown without looking is in the right place a third of the
+    // time, whatever side his blow comes from: when it opened him too, dodge-and-cut on a steady beat won the first expedition.)
+    // A red blow cannot be blocked, so dodging that one is what throws him off balance; a dodged shot leaves him fumbling.
+    if (A.kind === 'heavy') { m.os = 'stagger'; m.stag = 0.9; } else { m.os = 'recover'; m.rec = A.kind === 'shot' ? 0.8 : 0.42; m.open = A.kind === 'shot'; }
     G.ev.push({ k: 'dodged', kind: A.kind });
-  } else if (res === 'perfect') {
-    F.chain++; m.os = 'stagger'; m.stag = 0.75 + 0.5 * c.e; G.ev.push({ k: 'parry', perfect: true, chain: F.chain, x: A.cx, y: A.cy });
-  } else if (res === 'parried') {
-    F.chain++; m.os = 'recover'; m.rec = 0.4; if (A.chain < 2 && G.rnd() < m.combo) m.chainNext = A.chain + 1;
-    G.ev.push({ k: 'parry', perfect: false, chain: F.chain, x: A.cx, y: A.cy });
   } else {
-    const caught = F.t - F.lastSwing < 0.3 || !!F.aim || F.reloading, tooEarly = !!(F.parry && F.parry.ok), missed = !!(F.parry && !F.parry.ok);
-    const d = m.hit * A.mul * (A.kind === 'heavy' ? 1.6 : A.kind === 'shot' ? 1.5 : 1) * (caught ? 1.4 : 1);
+    const missed = !!A.tried, caught = F.t - F.lastSwing < 0.3 || missed || !!F.aim || F.reloading;      // swinging at him, or at the air, when his blow lands: it lands hard
+    const d = m.hit * A.mul * (A.kind === 'heavy' ? 1.6 : A.kind === 'shot' ? 1.5 : 1) * (caught ? 1.6 : 1);
     F.tide -= d; G.took.wounds++; F.chain = 0; F.pStun = 0.3; F.hurtT = 0; if (F.aim) { F.aim = null; G.ev.push({ k: 'spoiled' }); }
-    m.os = 'recover'; m.rec = 0.42; if (A.chain < 2 && G.rnd() < m.combo) m.chainNext = A.chain + 1;
-    G.ev.push({ k: 'hurt', kind: A.kind, caught, tooEarly, missed, d });
+    m.os = 'recover'; m.rec = 0.42; m.open = false; if (A.chain < 2 && G.rnd() < m.combo) m.chainNext = A.chain + 1;
+    G.ev.push({ k: 'hurt', kind: A.kind, caught, missed, why: A.why, d });
   }
-  F.parry = null;
 }
 function manThink(G, m, dt) {
   const F = G.fight, R = G.rnd; m.ot += dt; m.hitT += dt; m.lean *= Math.pow(0.02, dt);
   switch (m.os) {
     case 'enter': m.z = Math.min(1, 0.45 + 0.55 * easeOut(Math.min(1, m.ot / 0.9))); if (m.ot >= 0.9 && F.phase === 'fight') { m.z = 1; m.os = 'guard'; m.ot = 0; m.next = m.gap * (0.45 + 0.4 * R()); } break;
-    case 'guard': if (F.phase !== 'fight') break; m.next -= dt; if (m.next <= 0) startAttack(G, m); break;
+    case 'guard': if (F.phase !== 'fight') break; m.soft -= dt; m.next -= dt; if (m.next <= 0) startAttack(G, m); break;
     case 'windup': { const A = m.atk;
-      if (A.feint && !A.feinted && m.ot >= A.wind * 0.45) { A.feinted = true; const keep = m.lastA; let g = makeAtk(G, m, 'cut'), n = 0; while (Math.abs(g.ang - keep * Math.PI / 180) < 0.01 && n++ < 4) g = makeAtk(G, m, 'cut'); Object.assign(A, g); F.parry = null; G.ev.push({ k: 'feint' }); }
+      if (A.feint && !A.feinted && m.ot >= A.wind * 0.45) { A.feinted = true; const keep = A.ang; let g = makeAtk(G, m, 'cut'), n = 0; while (Math.abs(wrapA(g.ang - keep)) < 0.7 && n++ < 6) g = makeAtk(G, m, 'cut'); Object.assign(A, g); A.tried = false; G.ev.push({ k: 'feint' }); }
       if (m.ot >= A.wind) { m.os = 'strike'; m.ot = 0; G.ev.push({ k: 'strike', kind: A.kind }); } break; }
     case 'strike': if (m.ot >= 0.1) resolve(G, m); break;
-    case 'recover': if (m.ot >= m.rec) { if (m.chainNext && F.phase === 'fight') startAttack(G, m, { chain: m.chainNext, fast: 0.74 }); else { m.os = 'guard'; m.ot = 0; m.next = m.gap * (0.75 + 0.5 * R()); } } break;
-    case 'stagger': if (m.ot >= m.stag) { m.os = 'guard'; m.ot = 0; m.next = m.gap * 0.6; } break;
-    case 'hurt': if (m.ot >= 0.22) { m.os = 'guard'; m.ot = 0; m.next = Math.max(m.next, 0.2); } break;
-    case 'block': if (m.ot >= 0.26) { if (m.counter && F.phase === 'fight') startAttack(G, m, { mul: G.cfg.punish, fast: 0.72 }); else { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.25, m.next); } } break;
-    case 'evade': if (m.ot >= 0.32) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.2, m.next); } break;
+    case 'recover': if (m.ot >= m.rec) { m.soft = m.open ? 0.3 : 0; m.open = false; if (m.chainNext && F.phase === 'fight') startAttack(G, m, { chain: m.chainNext, fast: 0.74 }); else { m.os = 'guard'; m.ot = 0; m.next = m.gap * (0.75 + 0.5 * R()); } } break;
+    case 'stagger': if (m.ot >= m.stag) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; m.next = m.gap * (0.4 + 0.4 * R()); } break;
+    case 'hurt': if (m.ot >= 0.22) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; m.next = Math.max(m.next, m.gap * (0.15 + 0.6 * R())); } break;      // when he comes back at you is his secret (it used to be a fixed beat after every hit, and a blind rhythm could ride it)
+    case 'block': if (m.rip) { if (m.ot >= 0.14) { m.os = 'riposte'; m.ot = 0; } } else if (m.ot >= 0.26) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.25, m.next); } break;
+    case 'riposte':      // he turned your blow, and his blade comes straight back along yours: there is no stopping it
+      if (m.rip && m.ot >= 0.1) { m.rip = false; if (F.phase === 'fight') { const d = m.ripD; F.tide -= d; G.took.wounds++; F.chain = 0; F.hurtT = 0; G.ev.push({ k: 'turned', d, n: F.turnN }); } }
+      if (m.ot >= 0.24) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.3, m.next); } break;
+    case 'evade': if (m.ot >= 0.32) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; m.next = Math.max(0.2, m.next); } break;
     case 'down': if (m.ot >= 0.9 && F.phase === 'fight') spawnMan(G); break;
   }
 }
@@ -678,9 +708,19 @@ function strokeVsPath(p1x, p1y, p2x, p2y, ax, ay, bx, by) {      // where your s
   return best;
 }
 function judgeBlock(G, A, ax, ay, bx, by) {
-  const tol = G.cfg.tol * fu();
-  if (A.kind === 'cut') { const q = strokeVsPath(ax, ay, bx, by, A.sx, A.sy, A.ex, A.ey); A.cx = q.x; A.cy = q.y; return q.d <= tol && q.u <= 0.45 + 0.2 * G.cfg.e; }
-  const q = ptSeg(A.px, A.py, ax, ay, bx, by); A.cx = A.px; A.cy = A.py; return q.d <= tol * 1.25;
+  // A block must meet his blade where it is: your stroke has to cross the drawn part of a cut, on the side it comes from, or
+  // pass through the ring of a thrust. "On its side" = the middle of your stroke lies out towards where the cut starts. So a
+  // stroke through the middle of him, or clean across the screen, blocks nothing, and no one stroke blocks both sides.
+  const f = fu(), e = G.cfg.e, c = YOU(), mx = (ax + bx) / 2 - c.x, my = (ay + by) / 2 - c.y;
+  if (A.kind === 'cut') {
+    const q = strokeVsPath(ax, ay, bx, by, A.sx, A.sy, A.ex, A.ey); A.cx = q.x; A.cy = q.y;
+    if (q.d > (14 + 10 * e) * f) { A.why = 'far'; return false; }
+    if (q.u > 0.47 || Math.hypot(mx, my) < 24 * f || Math.abs(wrapA(Math.atan2(my, mx) - A.ang)) > A.sec) { A.why = 'side'; return false; }
+    return true;
+  }
+  const q = ptSeg(A.px, A.py, ax, ay, bx, by), r = (30 + 16 * e) * f; A.cx = A.px; A.cy = A.py;
+  if (q.d > r || Math.hypot((ax + bx) / 2 - A.px, (ay + by) / 2 - A.py) > r * 2.4) { A.why = 'far'; return false; }
+  return true;
 }
 const fightOn = F => F && (F.phase === 'fight' || F.phase === 'intro');
 function fStroke(G, ax, ay, bx, by) {
@@ -688,43 +728,63 @@ function fStroke(G, ax, ay, bx, by) {
   const m = F.man, s = fu(), dx = bx - ax, dy = by - ay; if (Math.hypot(dx, dy) < 30 * s) return;
   if (dy > 60 * s && Math.abs(dx) < dy * 0.6 && ay > H * 0.6) { fDodge(G); return; }
   if (m && (m.os === 'windup' || m.os === 'strike') && m.atk.kind !== 'shot') {      // while his blow is coming, a stroke is a block
-    const flail = F.t - F.lastStroke < (G.cfg.e > 0.5 ? 0.2 : 0.4), A = m.atk, ok = !flail && A.kind !== 'heavy' && judgeBlock(G, A, ax, ay, bx, by);
-    F.lastStroke = F.t;            // a blade that was just flung about is not there to block with
-    if (!F.parry || !F.parry.ok || ok) F.parry = { at: F.t, ok };
-    F.pAnim = { kind: 'guard', t: 0, dur: 0.3, ax, ay, bx, by }; G.ev.push({ k: 'guard', ok, heavy: A.kind === 'heavy' });
+    // One block per blow: the first stroke you make at it is where your blade goes. Meet his blade and the clash happens at
+    // once; miss it and there is no second try at this blow (you can still dodge it). So a string of strokes covering both
+    // sides, thrown without looking, blocks no better than a coin, and a blade that was just flung about blocks nothing.
+    const A = m.atk, flail = F.t - F.lastStroke < (G.cfg.e > 0.5 ? 0.2 : 0.4), first = !A.tried;
+    F.lastStroke = F.t; F.pAnim = { kind: 'guard', t: 0, dur: 0.3, ax, ay, bx, by };
+    if (A.kind === 'heavy') { G.ev.push({ k: 'guard', ok: false, heavy: true }); return; }
+    if (!first) { G.ev.push({ k: 'guard', ok: false, why: 'again' }); return; }
+    // ...and a stroke thrown the instant he starts, before anyone could have seen where his blade is going, is a guess.
+    const guess = m.os === 'windup' && m.ot < Math.min(FIGHT.GUESS, A.wind * 0.3);
+    A.tried = true; A.why = flail ? 'flail' : guess ? 'guess' : '';
+    const ok = !flail && !guess && judgeBlock(G, A, ax, ay, bx, by);
+    if (ok && A.feint && !A.feinted) { A.why = 'feint'; G.ev.push({ k: 'guard', ok: false, why: 'feint' }); return; }      // you bit on a feint
+    G.ev.push({ k: 'guard', ok, why: A.why });
+    if (ok) { const tl = m.os === 'windup' ? A.wind - m.ot + 0.1 : 0.1 - m.ot; parried(G, m, tl <= G.cfg.parryWin * 0.38); }
     return;
   }
   pAttack(G, 'slice', ax, ay, bx, by);
 }
 function fPoke(G, x, y) { const F = G.fight; if (!fightOn(F) || F.aim || F.reloading || F.pStun > 0) return; pAttack(G, 'stab', x, y, x, y); }
 function pAttack(G, kind, ax, ay, bx, by) {
-  const F = G.fight, m = F.man, c = G.cfg, R = G.rnd; if (F.pBusy > 0 || F.phase !== 'fight') return;
+  const F = G.fight, m = F.man, c = G.cfg, R = G.rnd; if (F.phase !== 'fight') return;
+  let where = null, hx = 0, hy = 0;
+  if (m && m.os !== 'down' && m.os !== 'yield' && m.z >= 0.85) { const g = manGeo(F), pad = 10 * g.s;
+    for (const w of ['head', 'chest', 'belly']) { const q = ptSeg(g[w].x, g[w].y, ax, ay, bx, by); if (q.d <= g[w].r + (kind === 'stab' ? pad : 0)) { where = w; hx = q.x; hy = q.y; break; } } }
+  // Your arm is still coming back from your last blow: nothing happens... unless this one reaches a man on guard. That is never
+  // free (a stroke at the air used to keep your arm "busy", and blows thrown under its cover cost nothing).
+  if (F.pBusy > 0 && !(where && m.os === 'guard' && !(m.soft > 0))) return;
   F.pBusy = kind === 'slice' ? 0.42 : 0.3; F.lastSwing = F.lastStroke = F.t; F.pAnim = { kind, t: 0, dur: kind === 'slice' ? 0.3 : 0.24, ax, ay, bx, by };
   G.ev.push({ k: 'swing', kind });
   if (!m || m.os === 'down' || m.os === 'yield' || m.z < 0.85) return;
-  const g = manGeo(F), pad = 10 * g.s; let where = null, hx = 0, hy = 0;
-  for (const w of ['head', 'chest', 'belly']) { const q = ptSeg(g[w].x, g[w].y, ax, ay, bx, by); if (q.d <= g[w].r + (kind === 'stab' ? pad : 0)) { where = w; hx = q.x; hy = q.y; break; } }
   if (!where) { G.ev.push({ k: 'whiff' }); return; }
   F.lastTry = F.t;
   F.recentAtk = F.recentAtk.filter(t => F.t - t < 2.2); F.recentAtk.push(F.t);
   F.sameN = kind === F.lastKind ? F.sameN + 1 : 1; F.lastKind = kind;
   const base = kind === 'slice' ? FIGHT.SLICE : FIGHT.STAB, ang = Math.atan2(by - ay, bx - ax);
+  // Spamming cannot win. Your blows land only on a man you have opened up: for a moment after your block, or while he is off
+  // balance after a late, clean block or after you dodged his red blow (the riposte). A man on guard turns your blow aside
+  // and cuts you as he does it: it costs you, and it costs more each time you do it again. Only time wipes that out (one step
+  // every eight seconds): a slip now and then is cheap, a habit is ruinous, at any speed.
   if (m.os === 'stagger') { land(G, base * (kind === 'stab' ? FIGHT.RIP_STAB : FIGHT.RIP_SLICE) * (1 + 0.08 * Math.min(F.chain, 5)), { kind, where, x: hx, y: hy, ang, rip: true }); return; }
-  if (m.os === 'windup' || m.os === 'strike') { land(G, base * 0.5, { kind, where, x: hx, y: hy, ang, trade: true }); return; }      // it lands, weakly, and it does not stop his blow
-  const spam = F.recentAtk.length >= 4 || F.sameN >= 3 || m.hits >= 3;
-  let p = m.oParry; if (spam) p = Math.min(0.85, p + 0.22 * c.read);
-  if (m.os !== 'hurt' || spam) {
-    if (R() < p) { m.os = 'block'; m.ot = 0; m.hits = 0; m.counter = spam && R() < 0.45 + 0.12 * c.read; m.bx = hx; m.by = hy; G.ev.push({ k: 'blocked', x: hx, y: hy, counter: m.counter }); return; }
-    if (R() < m.oDodge) { m.os = 'evade'; m.ot = 0; m.lean = (bx >= ax ? 1 : -1) * (kind === 'stab' ? (R() < 0.5 ? 1 : -1) : 1); G.ev.push({ k: 'evaded' }); return; }
+  if (m.os === 'recover' && m.open) {
+    if (R() < m.oDodge) { m.open = false; m.os = 'evade'; m.ot = 0; m.lean = (bx >= ax ? 1 : -1) * (kind === 'stab' ? (R() < 0.5 ? 1 : -1) : 1); G.ev.push({ k: 'evaded' }); return; }
+    land(G, base * FIGHT.OPEN, { kind, where, x: hx, y: hy, ang }); return;
   }
-  land(G, base, { kind, where, x: hx, y: hy, ang });
+  if (m.os === 'windup' || m.os === 'strike') { G.ev.push({ k: 'late', x: hx, y: hy }); return; }      // his blow is already coming: yours is knocked aside
+  m.bx = hx; m.by = hy;
+  if (m.os !== 'guard' || m.soft > 0) { if (m.os !== 'block' && m.os !== 'riposte') { m.os = 'block'; m.ot = 0; m.rip = false; } G.ev.push({ k: 'blocked', x: hx, y: hy }); return; }      // he is busy (hurt, slipping, stepping back) or only just back on guard: turned, and no more
+  m.os = 'block'; m.ot = 0; m.rip = true; m.ripD = G.cfg.turn * Math.pow(FIGHT.TURN_UP, Math.min(F.turnN, FIGHT.TURN_MAX)); F.turnN = Math.min(F.turnN, FIGHT.TURN_MAX) + 1; F.turnT = F.t;
+  F.pStun = 0.4; F.pBusy = 0.4;      // your blade is knocked wide: nothing you can do about what comes next
+  G.ev.push({ k: 'blocked', x: hx, y: hy, rip: true, n: F.turnN });
 }
 function land(G, dmg, o) {
   const F = G.fight, m = F.man; if (o.where === 'head') dmg *= 1.2;
   dmg = Math.min(dmg, m.hp); m.hp -= dmg; m.hits++; m.hitT = 0; F.tide = Math.min(1, F.tide + m.worth * dmg / m.hp0);
   G.ev.push(Object.assign({ k: 'cut', dmg }, o));
   if (m.hp <= 0.01) { m.hp = 0; if (m.capt) F.tide = 1; else { m.os = 'down'; m.ot = 0; m.fall = o.x < manGeo(F).x ? 1 : -1; F.dropped++; G.ev.push({ k: 'down' }); } }
-  else if (!o.trade && m.os !== 'stagger') { m.os = 'hurt'; m.ot = 0; }
+  else if (!o.trade && m.os !== 'stagger') { m.os = 'hurt'; m.ot = 0; m.open = false; m.chainNext = 0; }
   stageCheck(G);
 }
 function stageCheck(G) {
@@ -735,10 +795,14 @@ function fDodge(G) {
   const F = G.fight; if (!F || F.phase !== 'fight' || F.dodgeCd > 0 || F.aim || F.reloading || F.pStun > 0) return;
   F.dodge = { t: 0 }; F.dodgeCd = FIGHT.DODGE_CD; F.tide = Math.max(0.01, F.tide - FIGHT.GROUND); G.ev.push({ k: 'dodge' });
 }
-// the pistol: one ball; hold to raise it, the sights settle, let go to fire
-function fAim(G, x, y) { const F = G.fight; if (!F || F.phase !== 'fight' || !F.loaded || F.aim || F.reloading || F.pStun > 0) return false; F.aim = { t: 0, ox: x, oy: y, dx: 0, dy: 0, ph: G.rnd() * 9 }; G.ev.push({ k: 'raise' }); return true; }
+// the pistol: one ball; hold to raise it, drag the sights onto him as they settle, let go to fire. It never comes up pointing at
+// him (it used to: hold, let go, and a man dropped, three times over, without looking): the sights start a little way off,
+// on any side, and it is your thumb that brings them on.
+function fAim(G, x, y) { const F = G.fight; if (!F || F.phase !== 'fight' || !F.loaded || F.aim || F.reloading || F.pStun > 0) return false; let bx = 0, by = 0; const g = manGeo(F), cx = W / 2, cy = H * FIGHT.EYE + 80 * fu(), off = c => Math.hypot(cx + bx - c.x, cy + by - c.y) > c.r + 18 * fu();
+  for (let i = 0; i < 12; i++) { const q = G.rnd() * TAU, r = (66 + 8 * G.rnd()) * fu(); bx = Math.cos(q) * r; by = Math.sin(q) * r; if (off(g.head) && off(g.chest) && off(g.belly)) break; }      // (never on him to begin with)
+  F.aim = { t: 0, ox: x, oy: y, dx: 0, dy: 0, ph: G.rnd() * 9, bx, by }; G.ev.push({ k: 'raise' }); return true; }
 function fAimMove(G, x, y) { const a = G.fight && G.fight.aim; if (a) { a.dx = (x - a.ox) * 1.3; a.dy = (y - a.oy) * 1.3; } }
-function aimAt(F) { const a = F.aim, f = fu(), A = f * (50 * Math.exp(-a.t / 0.5) + 6); return { x: W / 2 + a.dx + A * Math.sin(a.t * 2.9 + a.ph), y: H * FIGHT.EYE + 80 * f + a.dy + A * 0.8 * Math.sin(a.t * 3.7 + a.ph * 1.7), A }; }
+function aimAt(F) { const a = F.aim, f = fu(), A = f * (50 * Math.exp(-a.t / 0.5) + 6); return { x: W / 2 + a.bx + a.dx + A * Math.sin(a.t * 2.9 + a.ph), y: H * FIGHT.EYE + 80 * f + a.by + a.dy + A * 0.8 * Math.sin(a.t * 3.7 + a.ph * 1.7), A }; }
 function fFire(G) {
   const F = G.fight, a = F && F.aim; if (!a) return;
   if (a.t < 0.3 || F.phase !== 'fight') { F.aim = null; G.ev.push({ k: 'lower' }); return; }
@@ -762,7 +826,7 @@ function fReload(G, on) {
 }
 function boardStep(G, dt) {
   const F = G.fight, m = F.man; G.t += dt; G.pt += dt; F.t += dt; F.pt += dt; F.hurtT += dt;
-  F.pBusy = Math.max(0, F.pBusy - dt); F.pStun = Math.max(0, F.pStun - dt); F.dodgeCd = Math.max(0, F.dodgeCd - dt);
+  F.pBusy = Math.max(0, F.pBusy - dt); F.pStun = Math.max(0, F.pStun - dt); F.dodgeCd = Math.max(0, F.dodgeCd - dt); F.turnN = Math.max(0, F.turnN - dt / FIGHT.TURN_FADE);
   if (F.dodge) { F.dodge.t += dt; if (F.dodge.t > 0.6) F.dodge = null; }
   if (F.pAnim) { F.pAnim.t += dt; if (F.pAnim.t >= F.pAnim.dur) F.pAnim = null; }
   if (F.aim) F.aim.t += dt;
@@ -990,7 +1054,10 @@ function fxDraw(world) {
 }
 function txtDraw() {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  for (const t of TXT) { const u = t.t / 1.1, p = t.w ? w2s(t.x, t.y) : [t.x, t.y], pop = u < 0.12 ? 0.6 + u / 0.12 * 0.5 : 1.1 - Math.min(0.1, (u - 0.12) * 0.5); ctx.globalAlpha = u > 0.65 ? (1 - u) / 0.35 : 1; ctx.font = `700 ${Math.round(t.size * k * pop)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(4,14,20,.75)'; const tx = clamp(p[0], 64 * k, W - 64 * k); ctx.strokeText(t.txt, tx, p[1] - u * 34 * k); ctx.fillStyle = t.col; ctx.fillText(t.txt, tx, p[1] - u * 34 * k); }
+  for (const t of TXT) { const u = t.t / 1.1, p = t.w ? w2s(t.x, t.y) : [t.x, t.y], pop = u < 0.12 ? 0.6 + u / 0.12 * 0.5 : 1.1 - Math.min(0.1, (u - 0.12) * 0.5); let fs = t.size * k * pop;
+    if (t.tw == null) { ctx.font = `700 ${Math.round(t.size * k)}px ${BC}`; t.tw = ctx.measureText(t.txt).width / Math.round(t.size * k); }      // how wide it is, measured once: a long line is shrunk and slid to stay on the screen
+    let tw = t.tw * fs; if (tw > W - 16) { fs *= (W - 16) / tw; tw = W - 16; }
+    ctx.globalAlpha = u > 0.65 ? (1 - u) / 0.35 : 1; ctx.font = `700 ${Math.round(fs)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(4,14,20,.75)'; const tx = clamp(p[0], tw / 2 + 8, W - tw / 2 - 8); ctx.strokeText(t.txt, tx, p[1] - u * 34 * k); ctx.fillStyle = t.col; ctx.fillText(t.txt, tx, p[1] - u * 34 * k); }
   ctx.globalAlpha = 1;
   if (banner) { const b = banner, a = Math.min(1, b.t / 0.18, (b.secs - b.t) / 0.35), sc = b.t < 0.2 ? 1.25 - b.t / 0.2 * 0.25 : 1, y = H * 0.2;
     ctx.globalAlpha = Math.max(0, a); let fs = 48 * k * sc; ctx.font = `400 ${Math.round(fs)}px ${PO}`; const tw = ctx.measureText(b.txt).width; if (tw > W - 28) { fs *= (W - 28) / tw; ctx.font = `400 ${Math.round(fs)}px ${PO}`; } ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(3,12,18,.8)'; ctx.strokeText(b.txt, W / 2, y); ctx.fillStyle = b.col; ctx.fillText(b.txt, W / 2, y);
@@ -1040,15 +1107,15 @@ function drawSea(G) {
     for (const s of G.foes) {
       if (!s.alive || s.gone || s.struck || !s.K.navy || !s.eng) continue;
       for (let side = 0; side < 2; side++) {
-        if (s.aimOn[side]) { const u = clamp(s.aim[side] / c.eAim, 0, 1), [x, y, a, r] = wedge(s, side, SEA.ARC_E, SEA.E_RANGE, `rgba(255,96,72,${0.3 + 0.25 * u})`, `rgba(255,170,150,${0.8 + 0.2 * u})`, 3);
-          ctx.strokeStyle = `rgba(255,236,210,${0.5 + 0.5 * u})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, Math.max(4, r * u), a - SEA.ARC_E, a + SEA.ARC_E); ctx.stroke(); }
-        else if (s.load[side] <= 0.8) wedge(s, side, SEA.ARC_E, SEA.E_RANGE, 'rgba(255,110,90,.13)', 'rgba(255,120,100,.8)', 2, [7, 6]);
+        if (s.aimOn[side]) { const u = clamp(s.aim[side] / c.eAim, 0, 1), [x, y, a, r] = wedge(s, side, Math.min(1.55, fanOf(G)), reachOf(G), `rgba(255,96,72,${0.3 + 0.25 * u})`, `rgba(255,170,150,${0.8 + 0.2 * u})`, 3);
+          ctx.strokeStyle = `rgba(255,236,210,${0.5 + 0.5 * u})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, Math.max(4, r * u), a - Math.min(1.55, fanOf(G)), a + Math.min(1.55, fanOf(G))); ctx.stroke(); }
+        else if (s.load[side] <= 0.8) wedge(s, side, Math.min(1.55, fanOf(G)), reachOf(G), 'rgba(255,110,90,.13)', 'rgba(255,120,100,.8)', 2, [7, 6]);
       }
     }
     if (live) for (let side = 0; side < 2; side++) {
       const ld = me.load[side], lit = G.lit[side];
-      if (ld <= 0) wedge(me, side, SEA.ARC, SEA.RANGE, lit ? 'rgba(255,204,92,.26)' : 'rgba(255,214,130,.06)', lit ? 'rgba(255,226,140,.95)' : 'rgba(255,226,160,.38)', lit ? 2.5 : 1.3);
-      else { const [x, y, a, r] = wedge(me, side, SEA.ARC, SEA.RANGE, null, 'rgba(210,220,225,.1)', 1); ctx.strokeStyle = 'rgba(255,226,160,.45)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 26 * CAM.z, a - SEA.ARC, a - SEA.ARC + 2 * SEA.ARC * (1 - ld / c.myReload)); ctx.stroke(); }
+      if (ld <= 0) { const ease = G.inArc[side] && !lit; wedge(me, side, SEA.ARC, SEA.RANGE, lit ? 'rgba(255,204,92,.26)' : ease ? 'rgba(255,204,92,.1)' : 'rgba(255,214,130,.06)', lit ? 'rgba(255,226,140,.95)' : ease ? 'rgba(255,226,140,.8)' : 'rgba(255,226,160,.38)', lit ? 2.5 : ease ? 2 : 1.3, ease ? [5, 5] : null); }      // dashed gold: she is in front of the guns, but the wheel has not been let go yet
+      else { const [x, y, a, r] = wedge(me, side, SEA.ARC, SEA.RANGE, null, 'rgba(210,220,225,.1)', 1); ctx.strokeStyle = 'rgba(255,226,160,.45)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 26 * CAM.z, a - SEA.ARC, a - SEA.ARC + 2 * SEA.ARC * clamp(1 - ld / c.myReload, 0, 1)); ctx.stroke(); }
     }
   }
   // grapples
@@ -1091,7 +1158,11 @@ function seaEvent(G, e) {
     case 'sight': sfx.sight(); vibe(HAP.light); break;
     case 'raid': sfx.raid(); break;
     case 'pass': sfx.tap(); break;
-    case 'wasted': if (gate('wasted', 1500)) say('NOTHING IN FRONT OF THE GUNS', me.x, me.y - 30, '#cfd8dc', 14, 1); break;
+    case 'wasted': if (gate('wasted', 1500)) { say(e.n > 1.3 ? 'WASTED AGAIN: SLOWER EACH TIME' : 'WASTED: NO SHIP IN YOUR ARC', me.x, me.y - 30, '#ff9a8a', 15, 1); tip('waste', 'Only FIRE when it lights: a wasted side is slow to reload', 3); } break;
+    case 'wild': if (gate('wild', 900)) { say(e.n > 1.3 ? 'WILD AGAIN: SLOWER EACH TIME' : 'WILD! LET THE WHEEL GO FIRST', me.x, me.y - 30, '#ff9a8a', 15, 1); tip('ease', 'Let go of the wheel, then FIRE when it lights', 3); } break;
+    case 'tells': if (gate('tells', 500)) { say('BROADSIDE!', me.x, me.y + 34, '#ffd166', 22, 1); vibe(HAP.sharp); sfx.tells(); } break;
+    case 'ranged': setBanner('Her gunners have your range', 'Hurt her, or she will sink you', 2.2, '#ff9a8a'); sfx.ports(); break;
+    case 'quarter': if (G.N <= 8 && e.s.eng) tip('quarter', 'She sits where your guns cannot reach: turn on her', 3.2); break;
     case 'empty': if (gate('empty', 500)) sfx.empty(); break;
     case 'engage': if (G.pt > 2 && gate('eng', 1500)) { say('SHE COMES IN', e.s.x, e.s.y + 16, '#ff9a8a', 16, 1); sfx.ports(); } break;
   }
@@ -1356,7 +1427,7 @@ function drawMan(G, F, m) {
   ctx.fillStyle = L.skin; ctx.beginPath(); ctx.ellipse(0, 0, 24, 27, 0, 0, TAU); ctx.fill();
   ctx.fillStyle = 'rgba(40,20,10,.16)'; ctx.beginPath(); ctx.ellipse(9, 2, 15, 25, 0, -Math.PI / 2, Math.PI / 2); ctx.fill();
   if (L.beard) { ctx.globalAlpha = alpha * (L.beard === 2 ? 1 : 0.34); ctx.fillStyle = L.hair; ctx.beginPath(); ctx.moveTo(-24, 0); ctx.quadraticCurveTo(-24, 28, -10, 34 + (L.beard === 2 ? 6 : 0)); ctx.quadraticCurveTo(0, 40 + (L.beard === 2 ? 8 : 0), 10, 34 + (L.beard === 2 ? 6 : 0)); ctx.quadraticCurveTo(24, 28, 24, 0); ctx.quadraticCurveTo(16, 12, 0, 13); ctx.quadraticCurveTo(-16, 12, -24, 0); ctx.closePath(); ctx.fill(); ctx.globalAlpha = alpha; }
-  const shout = (os === 'strike' || (os === 'windup' && A && ot > A.wind * 0.5)), eyeY = os === 'yield' ? -1 : -5;
+  const shout = (os === 'strike' || os === 'riposte' || (os === 'windup' && A && ot > A.wind * 0.5)), eyeY = os === 'yield' ? -1 : -5;
   ctx.strokeStyle = dark; ctx.lineWidth = 3.4; ctx.beginPath(); ctx.moveTo(-16, -14); ctx.lineTo(-4, -9); ctx.moveTo(16, -14); ctx.lineTo(4, -9); ctx.stroke();
   if (os === 'hurt' || os === 'stagger') { ctx.lineWidth = 2.4; ctx.beginPath(); ctx.moveTo(-13, -5); ctx.lineTo(-6, -3); ctx.moveTo(13, -5); ctx.lineTo(6, -3); ctx.stroke(); }
   else { ctx.fillStyle = '#16100c'; ctx.beginPath(); ctx.arc(-9, eyeY, 2.5, 0, TAU); ctx.arc(9, eyeY, 2.5, 0, TAU); ctx.fill(); }
@@ -1394,10 +1465,12 @@ function drawMan(G, F, m) {
   } else {
     let tH = gH, tT = gT;
     if (os === 'stagger') { tH = up(-98, 74); tT = up(-158, -24); off = lp(off, up(98, 112), Math.min(1, ot / 0.15)); }
+    else if (os === 'recover' && m.open) { tH = up(-92, 128); tT = up(-150, 52); }      // his blade knocked wide: an opening
     else if (os === 'hurt') { tH = up(-44, 164); tT = up(44, 64); }
     else if (os === 'block') { tH = [m.bx + 36 * s, m.by + 24 * s]; tT = [m.bx - 44 * s, m.by - 40 * s]; }
+    else if (os === 'riposte') { const q = Math.min(1, ot / 0.1), r = clamp((ot - 0.14) / 0.1, 0, 1); tH = lp(lp(chest, [c.x, c.y], 0.3), gH, r); tT = lp(lp([m.bx - 44 * s, m.by - 40 * s], [c.x, c.y - 20 * s], easeOut(q)), gT, r); big = 1.3 * q * (1 - r); }
     else if (os === 'yield') { tH = up(-80, -4); off = lp(off, up(80, -4), Math.min(1, ot / 0.35)); drop = true; }
-    const b = easeOut(Math.min(1, ot / (os === 'block' ? 0.08 : 0.24))); hand = lp(m.fromH || gH, tH, b); tip = lp(m.fromT || gT, tT, b);
+    const b = easeOut(Math.min(1, ot / (os === 'block' || os === 'riposte' ? 0.08 : 0.24))); hand = lp(m.fromH || gH, tH, b); tip = lp(m.fromT || gT, tT, b);
   }
   if (m.drawOs !== os + (A ? A.kind + A.chain + A.feinted : '')) { m.drawOs = os + (A ? A.kind + A.chain + A.feinted : ''); m.fromH = m.prevH || gH; m.fromT = m.prevT || gT; }
   m.prevH = hand; m.prevT = tip;
@@ -1416,17 +1489,17 @@ function drawMan(G, F, m) {
     if (os === 'windup' && A && A.kind !== 'shot') { const gl = lp(hand, tip, 0.8), r = 16 * s * (0.6 + 0.4 * Math.sin(F.t * 30)); ctx.globalAlpha = alpha * 0.9; ctx.drawImage(SPR.flash, gl[0] - r, gl[1] - r, r * 2, r * 2); ctx.globalAlpha = alpha; }
   } else { const p = [X(-70), g.ey + 452 * s]; blade2(p, [p[0] + 118 * s, p[1] + 14 * s], 9 * s, L.sword === 'axe' ? 'axe' : L.sword, false, 0); }
   arm(up(-58 * bw, 60), hand, -1, sleeve);
-  if (os === 'stagger') {      // off balance: this is your moment
+  if (os === 'stagger' || (os === 'recover' && m.open)) {      // open: this is your moment
     const pu = 0.5 + 0.5 * Math.sin(F.t * 16), cc = g.chest; ctx.strokeStyle = `rgba(255,214,102,${0.55 + 0.4 * pu})`; ctx.lineWidth = 3.5 * s; ctx.beginPath(); ctx.arc(cc.x, cc.y, cc.r * (0.75 + 0.12 * pu), 0, TAU); ctx.stroke();
-    ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * s; for (let i = 0; i < 3; i++) { const a = F.t * 6 + i * 2.1; ctx.beginPath(); ctx.arc(hc[0] + Math.cos(a) * 30 * s, hc[1] - 44 * s + Math.sin(a) * 7 * s, 4 * s, 0, TAU); ctx.stroke(); }
+    if (os === 'stagger') { ctx.strokeStyle = '#ffd166'; ctx.lineWidth = 3 * s; for (let i = 0; i < 3; i++) { const a = F.t * 6 + i * 2.1; ctx.beginPath(); ctx.arc(hc[0] + Math.cos(a) * 30 * s, hc[1] - 44 * s + Math.sin(a) * 7 * s, 4 * s, 0, TAU); ctx.stroke(); } }
   }
   ctx.restore();
 }
-// the path of his blow, so that you can read it: white = coming, gold = block now, bright = a clean block
+// the path of his blow, so that you can read it: gold = block it (one stroke across it, on its side), bright = a clean block, dull red = your block missed (dodge)
 function drawTell(G, F) {
   const m = F.man; if (!m || !(m.os === 'windup' || m.os === 'strike') || !m.atk) return;
-  const A = m.atk, c = G.cfg, f = fu(), tl = m.os === 'windup' ? A.wind - m.ot + 0.1 : 0.1 - m.ot, now = tl <= c.parryWin, best = tl <= c.parryWin * 0.38, p = m.os === 'windup' ? clamp(m.ot / A.wind, 0, 1) : 1;
-  const col = A.kind === 'heavy' || A.kind === 'shot' ? '255,70,50' : best ? '255,255,235' : now ? '255,206,90' : '235,240,245', a = (0.22 + 0.5 * p) * (best ? 1.25 : 1);
+  const A = m.atk, c = G.cfg, f = fu(), tl = m.os === 'windup' ? A.wind - m.ot + 0.1 : 0.1 - m.ot, gone = !!A.tried && A.kind !== 'heavy', best = !gone && tl <= c.parryWin * 0.38, p = m.os === 'windup' ? clamp(m.ot / A.wind, 0, 1) : 1;
+  const col = A.kind === 'heavy' || A.kind === 'shot' ? '255,70,50' : gone ? '255,128,104' : best ? '255,255,235' : '255,206,90', a = (0.22 + 0.5 * p) * (best ? 1.25 : 1);
   ctx.lineCap = 'round';
   if (A.kind === 'cut' || A.kind === 'heavy') {
     const e = [lerp(A.sx, A.ex, 0.47), lerp(A.sy, A.ey, 0.47)], s0 = [lerp(A.sx, A.ex, 0.03), lerp(A.sy, A.ey, 0.03)];
@@ -1494,7 +1567,7 @@ function hudFight(G, F) {
   for (let i = 0; i < 3; i++) { ctx.fillStyle = i < G.shots ? '#1a1a1c' : 'rgba(255,255,255,.14)'; ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(B.x - 12 * k + i * 12 * k, B.y - B.r - 9 * k, 4.2 * k, 0, TAU); ctx.fill(); ctx.stroke(); }
 }
 function hintDraw() {
-  if (!hint) return; const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); if (a <= 0) { hint = null; return; }
+  if (!hint) return; if (hint.t >= hint.secs) { hint = null; return; } const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); if (a <= 0) return;      // (a hint asked for while drawing is brand new, not over: it used to be thrown away at once, and used up)
   ctx.globalAlpha = a; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; let fs = 17 * k; ctx.font = `700 ${Math.round(fs)}px ${BC}`; let tw = ctx.measureText(hint.txt).width; if (tw > W - 44 * k) { fs *= (W - 44 * k) / tw; ctx.font = `700 ${Math.round(fs)}px ${BC}`; tw = W - 44 * k; } const w = tw + 26 * k, y = hint.y || H * 0.8;
   ctx.fillStyle = 'rgba(3,10,14,.72)'; rrect(W / 2 - w / 2, y - 17 * k, w, 34 * k, 10 * k); ctx.fill(); ctx.fillStyle = '#ffe9b0'; ctx.fillText(hint.txt, W / 2, y); ctx.globalAlpha = 1;
 }
@@ -1520,18 +1593,21 @@ function fightEvent(G, e) {
   const sparks = (x, y, n, col) => { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = (120 + Math.random() * 360) * f; fx({ k: 'line', w: 0, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.18 + Math.random() * 0.25, r0: 2.4 * f, r1: 0.6, col, g: 700 * f, drag: 3 }); } fx({ k: 'flash', w: 0, x, y, life: 0.12, r0: 10 * f, r1: 46 * f }); };
   switch (e.k) {
     case 'stage': setBanner(STAGE_N[e.i].replace('THE ', 'The ').replace("CAPTAIN'S CABIN", "captain's cabin").replace('ON DECK', 'On deck').replace('BELOW DECK', 'Below deck'), e.i === 2 ? F.capt : 'Aboard the ' + F.ship, 1.5); sfx.stage(e.i); TRAIL.length = 0; break;
-    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('slice', 'Swipe across him to slice. Tap him to stab.', 3.2); break;
+    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('loop', 'Never strike first. Block his blow, then strike.', 3.8); break;
     case 'windup': sfx.tell(e.kind, e.wind);
-      if (e.kind === 'cut') tip('block', 'Swipe across his blade to block', 2.4); else if (e.kind === 'thrust') tip('thrust', 'Swipe through the ring to block', 2.4); else if (e.kind === 'heavy') tip('heavy', 'Red blow! Pull down to dodge', 2.4, true); else tip('shot', 'He takes aim! Pull down to dodge', 2.4, true); break;
+      if (e.kind === 'cut') tip('block', N <= 2 ? 'Swipe across his blade, on the side it comes from' : 'Swipe across his blade to block', 2.6); else if (e.kind === 'thrust') tip('thrust', 'Swipe through the ring to block', 2.4); else if (e.kind === 'heavy') tip('heavy', 'Red blow! Pull down to dodge', 2.4, true); else tip('shot', 'He takes aim! Pull down to dodge', 2.4, true); break;
     case 'feint': sfx.feint(); break;
     case 'strike': sfx.swish(0.7); if (e.kind === 'shot') { const x = g.x + 14 * g.s, y = g.ey + 70 * g.s; fx({ k: 'flash', w: 0, x, y, life: 0.14, r0: 20 * f, r1: 120 * f }); for (let i = 0; i < 5; i++) fx({ k: 'smoke', w: 0, x: x + (Math.random() - 0.5) * 30 * f, y: y + (Math.random() - 0.5) * 20 * f, vx: (Math.random() - 0.5) * 60, vy: -30 - Math.random() * 50, life: 1 + Math.random() * 0.6, r0: 20 * f, r1: 90 * f, a0: 0.7 }); sfx.pistol(0.8); } break;
-    case 'guard': sfx.swish(0.9); if (e.heavy) say("CAN'T BLOCK THAT", W / 2, H * 0.62, '#ff9a8a', 20); break;
+    case 'guard': sfx.swish(0.9); if (e.heavy) say("CAN'T BLOCK THAT", W / 2, H * 0.62, '#ff9a8a', 20); else if (!e.ok && e.why === 'side') { say('ON THE SIDE IT COMES FROM', W / 2, H * 0.62, '#ff9a8a', 17); tip('side', 'Meet his blade out on the side it comes from', 2.6); }
+      else if (!e.ok && e.why === 'far') { say('MISSED HIS BLADE', W / 2, H * 0.62, '#ff9a8a', 18); if (N <= 6) tip('once', 'One block for each blow. Missed it? Pull down to dodge.', 2.8); }
+      else if (!e.ok && e.why === 'flail') { say('TOO WILD', W / 2, H * 0.62, '#ff9a8a', 18); if (N <= 6) tip('wild', 'One clean stroke blocks. A flung-about blade does not.', 2.8); }
+      else if (!e.ok && e.why === 'feint') say('A FEINT!', W / 2, H * 0.62, '#ff9a8a', 20); else if (!e.ok && e.why === 'guess') say('TOO SOON', W / 2, H * 0.62, '#ff9a8a', 18); break;
     case 'parry': { const x = e.x == null ? c.x : e.x, y = e.y == null ? c.y - 60 * f : e.y; sparks(x, y, e.perfect ? 16 : 8, e.perfect ? '#fff3c4' : '#ffd166'); sfx.clang(e.perfect, e.chain); shake = Math.min(12, shake + (e.perfect ? 7 : 4)); hitstop = e.perfect ? 0.1 : 0.045; vibe(e.perfect ? HAP.sharp : HAP.light);
       say(e.perfect ? 'CLEAN BLOCK!' : 'BLOCKED', x, y - 26 * f, e.perfect ? '#fff3c4' : '#ffd166', e.perfect ? 26 : 20); if (e.chain >= 2) say('×' + e.chain, x + 64 * f, y - 4 * f, '#ffd166', 22);
-      if (e.perfect) tip('rip', 'He is off balance: stab him!', 2.2); break; }
+      tip(e.perfect ? 'rip' : 'open', e.perfect ? 'He is off balance: stab him!' : 'He is open: strike now!', 2.2); break; }
     case 'hurt': shake = Math.min(18, shake + 12); hurtFlash = 0.85; hitstop = 0.06; sfx.hurt(e.kind); duck(0.4, 400);
-      say(e.kind === 'heavy' || e.kind === 'shot' ? 'DODGE THAT ONE' : e.caught ? 'CAUGHT SWINGING' : e.tooEarly ? 'TOO EARLY' : e.missed ? 'MISSED THE BLOCK' : 'HIT', W / 2, H * 0.66, '#ff8a7a', 22); break;
-    case 'dodged': say('DODGED', W / 2, H * 0.66, '#bfe8ff', 22); sfx.swish(1.2); if (e.kind === 'heavy') tip('rip', 'He is off balance: stab him!', 2.2); break;
+      say(e.kind === 'heavy' || e.kind === 'shot' ? 'DODGE THAT ONE' : e.missed ? 'IT GETS THROUGH' : e.caught ? 'CAUGHT SWINGING' : 'HIT', W / 2, H * 0.66, '#ff8a7a', 22); break;
+    case 'dodged': say('DODGED', W / 2, H * 0.66, '#bfe8ff', 22); sfx.swish(1.2); if (e.kind === 'heavy') tip('rip', 'He is off balance: stab him!', 2.2); else if (e.kind === 'shot') tip('open', 'He is open: strike now!', 2.2); else if (N <= 6) tip('dodgeNo', 'A dodge saves you. A block is what opens him.', 2.6); break;
     case 'dodge': sfx.dodge(); vibe(HAP.tick); break;
     case 'swing': sfx.swish(e.kind === 'stab' ? 1.5 : 1); break;
     case 'cut': { const x = e.x, y = e.y;
@@ -1539,13 +1615,18 @@ function fightEvent(G, e) {
       else { const a = e.kind === 'stab' ? Math.random() * TAU : e.ang, L = (e.kind === 'stab' ? 22 : 74) * f; fx({ k: 'line', w: 0, x: x + Math.cos(a) * L, y: y + Math.sin(a) * L, vx: Math.cos(a) * L * 40, vy: Math.sin(a) * L * 40, life: 0.2, r0: (e.rip ? 9 : 6) * f, r1: 1, col: '#ffffff' }); sparks(x, y, e.rip ? 9 : 4, '#ffe9c0'); for (let i = 0; i < 4; i++) fx({ k: 'chip', w: 0, x, y, vx: (Math.random() - 0.5) * 300 * f, vy: (-80 - Math.random() * 200) * f, g: 900 * f, life: 0.5, r0: 4 * f, r1: 2 * f, col: F.man && (F.man.look.coat || F.man.look.shirt) || '#ccc', vr: 20 }); }
       sfx.cut(e.kind, e.rip); hitstop = Math.max(hitstop, e.rip ? 0.11 : e.kind === 'ball' ? 0.12 : 0.05); shake = Math.min(12, shake + (e.rip ? 7 : 3)); vibe(e.rip ? HAP.sharp : HAP.light);
       if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); else tip('bar', 'Each wound moves the bar. Fill it to take the deck.', 2.6); break; }
-    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say(e.counter ? 'HE TURNS IT: LOOK OUT!' : 'HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.counter) tip('spam', 'Mix your blows: he reads the same one twice', 2.6); break;
+    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say('HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.rip) tip('guard', 'Never strike a man on guard. Block his blow, then strike.', 3.4); break;
+    case 'turned': { const a = -0.5 + Math.random(), L = 150 * f;      // ...and cuts you for it (P11: no buzz for a failure)
+      fx({ k: 'line', w: 0, x: c.x - Math.cos(a) * L, y: c.y - 30 * f - Math.sin(a) * L, vx: Math.cos(a) * L * 30, vy: Math.sin(a) * L * 30, life: 0.2, r0: 8 * f, r1: 1, col: '#ffb4a4' });
+      shake = Math.min(18, shake + 9 + 2 * Math.min(e.n, 4)); hurtFlash = Math.min(1, 0.6 + 0.1 * e.n); hitstop = 0.05; sfx.hurt('cut'); duck(0.4, 400);
+      say(e.n >= 3 ? 'AND CUTS YOU: HARDER EACH TIME' : e.n === 2 ? 'AND CUTS YOU AGAIN' : 'AND CUTS YOU', W / 2, H * 0.66, '#ff8a7a', e.n >= 3 ? 18 : 22); break; }
+    case 'late': say('BLOCK!', e.x, e.y - 30 * f, '#ff9a8a', 20); break;
     case 'evaded': say('HE SLIPS IT', g.x, g.chest.y - 60 * f, '#cfd8dc', 18); break;
     case 'whiff': break;
     case 'down': sfx.down(); sfx.cheer(0.45); vibe(HAP.thud); say('DOWN!', g.x, g.chest.y - 80 * f, '#ffd166', 30); hitstop = Math.max(hitstop, 0.09); break;
     case 'stagewon': setBanner(e.i === 2 ? 'He yields!' : e.i === 1 ? (F.navy ? 'The gun deck is yours' : 'The hold is yours') : 'The deck is yours', e.i === 2 ? 'The ' + F.ship + ' is yours' : '', 1.8, '#ffd166'); sfx.cheer(e.i === 2 ? 1.3 : 0.9); sfx.won(e.i); duck(0.5, 900); vibe(HAP.best); hitstop = 0.16; break;
     case 'broken': setBanner('Your crew breaks', 'They are driven back to the boats', 1.6, '#ff9a8a'); sfx.lost(); duck(0.7, 1500); break;
-    case 'raise': sfx.cock(); break;
+    case 'raise': sfx.cock(); tip('aim', 'Drag the sights onto his head or heart, then let go', 3); break;
     case 'lower': break;
     case 'spoiled': say('SHOT SPOILED', W / 2, H * 0.72, '#ff9a8a', 18); break;
     case 'shot': { fx({ k: 'flash', w: 0, x: e.x, y: e.y + 40 * f, life: 0.16, r0: 30 * f, r1: 170 * f }); for (let i = 0; i < 7; i++) fx({ k: 'smoke', w: 0, x: W * 0.36 + (Math.random() - 0.5) * 90 * f, y: H * 0.62 + (Math.random() - 0.5) * 60 * f, vx: (Math.random() - 0.5) * 80, vy: -40 - Math.random() * 70, life: 1.2 + Math.random() * 0.8, r0: 30 * f, r1: 130 * f, a0: 0.75 });
@@ -1560,7 +1641,7 @@ function tip(key, txt, secs, low) {
   const seen = store.get('tips', {}), n = seen[key] || 0; if (n >= 3 && !(LIVE && LIVE.N <= 2 && n < 6)) return;
   if (hint && hint.t < 0.9 && hint.key !== key) return;
   if (!hint || hint.key !== key) { seen[key] = n + 1; store.set('tips', seen); }
-  hint = { key, txt, t: hint && hint.key === key ? Math.min(hint.t, 0.2) : 0, secs, y: low ? H * 0.74 : H * 0.8 };
+  hint = { key, txt, t: hint && hint.key === key ? Math.min(hint.t, 0.2) : 0, secs, y: low ? H * 0.74 : LIVE && LIVE.phase !== 'board' ? Math.min(H * 0.8, H - 190 * k) : H * 0.8 };      // (at sea it sits clear of the FIRE button and its "ease the wheel" label)
 }
 
 // ===================== PART 7: sound and music =====================
@@ -1571,6 +1652,7 @@ const sfx = {
   splash() { if (!gate('splash', 60)) return; noise(0.45, 1400 * vary(0.2), 0.13, 'bandpass', 0.8); noise(0.22, 5200, 0.045, 'highpass', 0.7, 0.03); },
   hullMe() { if (!gate('hullMe', 50)) return; tone(118 * vary(), 0.3, 0.5, 'triangle', 0, 48); noise(0.32, 700, 0.5, 'lowpass', 1); noise(0.12, 2600, 0.2, 'bandpass', 2); },
   hullHer(rake) { if (!gate('hullHer', 45)) return; const p = vary(0.12); tone(150 * p, 0.2, 0.3, 'triangle', 0, 70); noise(0.22, 1100 * p, 0.32, 'bandpass', 1.2); noise(0.08, 3600, 0.14, 'highpass', 0.7); if (rake) tone(700 * p, 0.2, 0.1, 'sine', 0.03, 1050); },
+  tells() { tone(880, 0.16, 0.12, 'triangle', 0, 1320); tone(1320, 0.22, 0.08, 'sine', 0.07); noise(0.05, 5000, 0.05, 'highpass', 0.7); },
   ports() { if (!gate('ports', 260)) return; tone(196, 0.09, 0.2, 'square', 0, 150, 900); tone(247, 0.1, 0.2, 'square', 0.11, 185, 900); noise(0.08, 700, 0.16, 'lowpass', 1); },
   bump() { if (!gate('bump', 300)) return; tone(80, 0.3, 0.4, 'sine', 0, 46); noise(0.4, 380, 0.4, 'lowpass', 1); noise(0.5, 1500, 0.1, 'bandpass', 3, 0.05); },
   sunk() { tone(96, 1.5, 0.3, 'sawtooth', 0, 38, 420); noise(1.8, 520, 0.24, 'lowpass', 0.8, 0.1, 0.4); for (let i = 0; i < 6; i++) tone(300 + Math.random() * 500, 0.08, 0.05, 'sine', 0.5 + i * 0.16, 700 + Math.random() * 600); },
@@ -1874,10 +1956,11 @@ function seaHud() {
   ctx.save(); ctx.translate(wx, wy); ctx.rotate(me.rud * 1.1); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 3; for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.moveTo(-r - 6 * k, 0); ctx.lineTo(r + 6 * k, 0); ctx.stroke(); } ctx.fillStyle = '#e9b949'; ctx.beginPath(); ctx.arc(0, -r, 5 * k, 0, TAU); ctx.fill(); ctx.restore();
   if (wp) { ctx.fillStyle = 'rgba(233,185,73,.85)'; ctx.beginPath(); ctx.arc(wx + G.in.rud * 56 * k, wy, 13 * k, 0, TAU); ctx.fill(); }
   if (ph === 'sail') return;
-  const fx0 = W - 70 * k, fy0 = H - 86 * k, fr = 46 * k, lit = G.lit[0] || G.lit[1], pu = 0.5 + 0.5 * Math.sin(VT * 9);
+  const fx0 = W - 70 * k, fy0 = H - 86 * k, fr = 46 * k, lit = G.lit[0] || G.lit[1], ease = !lit && (G.inArc[0] || G.inArc[1]), pu = 0.5 + 0.5 * Math.sin(VT * 9);
   ctx.fillStyle = lit ? `rgba(233,185,73,${0.75 + 0.2 * pu})` : 'rgba(3,10,14,.5)'; ctx.beginPath(); ctx.arc(fx0, fy0, fr, 0, TAU); ctx.fill();
-  ctx.strokeStyle = lit ? '#fff3c4' : 'rgba(255,255,255,.4)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(fx0, fy0, fr, 0, TAU); ctx.stroke();
-  for (let s = 0; s < 2; s++) { const ld = me.load[s], a0 = s ? -Math.PI / 2 + 0.25 : Math.PI / 2 + 0.25, a1 = a0 + (Math.PI - 0.5) * (ld <= 0 ? 1 : 1 - ld / G.cfg.myReload); ctx.strokeStyle = ld <= 0 ? '#ffd166' : 'rgba(255,255,255,.6)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(fx0, fy0, fr + 8 * k, a0, a1); ctx.stroke(); }
+  ctx.strokeStyle = lit ? '#fff3c4' : ease ? `rgba(233,185,73,${0.5 + 0.5 * pu})` : 'rgba(255,255,255,.4)'; ctx.lineWidth = 3; if (ease) ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(fx0, fy0, fr, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  if (ease) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(3,10,14,.7)'; ctx.strokeText('LET THE WHEEL GO', fx0, fy0 - fr - 22 * k); ctx.fillStyle = '#ffe9b0'; ctx.fillText('LET THE WHEEL GO', fx0, fy0 - fr - 22 * k); tip('ease', 'Let go of the wheel, then FIRE when it lights', 3); }
+  for (let s = 0; s < 2; s++) { const ld = me.load[s], a0 = s ? -Math.PI / 2 + 0.25 : Math.PI / 2 + 0.25, a1 = a0 + (Math.PI - 0.5) * (ld <= 0 ? 1 : clamp(1 - ld / G.cfg.myReload, 0, 1)); ctx.strokeStyle = ld <= 0 ? '#ffd166' : 'rgba(255,255,255,.6)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(fx0, fy0, fr + 8 * k, a0, a1); ctx.stroke(); }
   ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(26 * k)}px ${PO}`; ctx.fillStyle = lit ? '#2a1a02' : 'rgba(255,255,255,.75)'; ctx.fillText('FIRE', fx0, fy0 + 1);
 }
 
@@ -1929,7 +2012,7 @@ function tick(dt, rdt) {
     const was = G.phase; stepAll(G, dt); events();
     if (G.phase === 'sight' && !sightUp && !G.choice) { fillSight(); sightCard(true); setBanner(G.sight.ships.length > 1 ? 'Sails ho!' : 'Sail ho!', '', 1.2, '#ffd166'); } else if (G.phase !== 'sight' && sightUp) sightCard(false);
     if (G.phase !== was) { if (G.phase === 'board') { ptrs.clear(); INP.tip = null; G.in.fire = false; G.in.rud = 0; G.in.held = false; }      // (a thumb on the wheel stays on the wheel from one part of the sea to the next)
-      if (G.phase === 'battle' && G.N <= 4) tip('fans', G.N <= 2 ? 'FIRE when your gold arc is on her' : 'Keep out of the red. Get on her bow or stern.', 3.4); if (G.phase === 'chase' && G.N <= 3) tip('chase', 'Steer for her. Your crew will grapple.', 3); }
+      if (G.phase === 'battle' && G.N <= 4) tip('fans', G.N <= 2 ? 'Put her in your gold arc, let the wheel go, FIRE' : 'Keep out of the red. Get on her bow or stern.', 3.6); if (G.phase === 'chase' && G.N <= 3) tip('chase', 'Steer for her. Your crew will grapple.', 3); }
     if (G.over) finish();
   } else { G.t += rdt; if (G.phase !== 'board') { ballsStep(G, dt); G.me.sink += G.me.alive ? 0 : dt; for (const s of G.foes) if (s.alive && !s.gone) sail(s, dt, s.struck ? 0 : s.K.speed * 0.4); } else boardIdle(G, dt); if (endT >= 0) { endT -= rdt; if (endT < 0) showEnd(); } }
   if (G.phase !== 'board') { camStep(G, rdt); wakeStep(G, rdt); smokeStep(G, rdt); }
@@ -1997,7 +2080,7 @@ window.__sim = {
   stage(i) { if (G.phase !== 'board') this.board(); const F = G.fight; while (F.stage < i) nextStage(G); events(); },
   cabin() { this.stage(2); },
   stroke(ax, ay, bx, by) { fStroke(G, ax, ay, bx, by); }, poke(x, y) { fPoke(G, x, y); }, dodge() { fDodge(G); }, aim(x, y) { return fAim(G, x, y); }, aimMove(x, y) { fAimMove(G, x, y); }, fire() { fFire(G); }, reload(on) { fReload(G, on); },
-  geo() { return manGeo(G.fight); }, aimAt() { return aimAt(G.fight); }, you: YOU, fu, relTo, predict, inArc, SEA, FIGHT, KINDS, DBG, makeCfg, makeSight, haulOf, starsOf, rankOf, wrapA, clamp, fwdX, fwdY, rgtX, rgtY, CAM, MUS, TUNE,
+  geo() { return manGeo(G.fight); }, aimAt() { return aimAt(G.fight); }, you: YOU, fu, judge(A, ax, ay, bx, by) { return judgeBlock(G, A, ax, ay, bx, by); }, makeAtk(kind) { return makeAtk(G, G.fight.man, kind); }, relTo, predict, inArc, SEA, FIGHT, KINDS, DBG, makeCfg, makeSight, haulOf, starsOf, rankOf, wrapA, clamp, fwdX, fwdY, rgtX, rgtY, CAM, MUS, TUNE,
   smooth() { return { step: stepN, half, sea: SEAGL ? 'fast' : 'plain', stuck, vsync: +vsync.toFixed(1), ms: +ftAvg.toFixed(1), dpr: DPR, draws, fx: FXS.length, wake: WAKE.length }; },
   finest(n) { stuck = true; stepN = clamp(n | 0, 0, STEPS.length - 1); half = 0; applyStep(); },      // tests and card pictures: the finest picture (or notch n), and leave it there
   gl(on) { if (on) { seaTried = false; } else { SEAGL = null; seaTried = true; $('bg').style.display = 'none'; } },      // tests: the sea by the graphics chip, or the plain way

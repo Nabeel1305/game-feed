@@ -7,6 +7,7 @@ const sfx = {
   splash() { if (!gate('splash', 60)) return; noise(0.45, 1400 * vary(0.2), 0.13, 'bandpass', 0.8); noise(0.22, 5200, 0.045, 'highpass', 0.7, 0.03); },
   hullMe() { if (!gate('hullMe', 50)) return; tone(118 * vary(), 0.3, 0.5, 'triangle', 0, 48); noise(0.32, 700, 0.5, 'lowpass', 1); noise(0.12, 2600, 0.2, 'bandpass', 2); },
   hullHer(rake) { if (!gate('hullHer', 45)) return; const p = vary(0.12); tone(150 * p, 0.2, 0.3, 'triangle', 0, 70); noise(0.22, 1100 * p, 0.32, 'bandpass', 1.2); noise(0.08, 3600, 0.14, 'highpass', 0.7); if (rake) tone(700 * p, 0.2, 0.1, 'sine', 0.03, 1050); },
+  tells() { tone(880, 0.16, 0.12, 'triangle', 0, 1320); tone(1320, 0.22, 0.08, 'sine', 0.07); noise(0.05, 5000, 0.05, 'highpass', 0.7); },
   ports() { if (!gate('ports', 260)) return; tone(196, 0.09, 0.2, 'square', 0, 150, 900); tone(247, 0.1, 0.2, 'square', 0.11, 185, 900); noise(0.08, 700, 0.16, 'lowpass', 1); },
   bump() { if (!gate('bump', 300)) return; tone(80, 0.3, 0.4, 'sine', 0, 46); noise(0.4, 380, 0.4, 'lowpass', 1); noise(0.5, 1500, 0.1, 'bandpass', 3, 0.05); },
   sunk() { tone(96, 1.5, 0.3, 'sawtooth', 0, 38, 420); noise(1.8, 520, 0.24, 'lowpass', 0.8, 0.1, 0.4); for (let i = 0; i < 6; i++) tone(300 + Math.random() * 500, 0.08, 0.05, 'sine', 0.5 + i * 0.16, 700 + Math.random() * 600); },
