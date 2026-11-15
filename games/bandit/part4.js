@@ -154,23 +154,22 @@ function drawHud(G, now) {
     }
   }
   // top left: which sortie, how many bandits are left
-  ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = 5; ctx.textAlign = 'left';
-  ctx.font = `${Math.round(24 * k)}px ${BN}`; ctx.fillStyle = '#fff'; ctx.fillText('SORTIE ' + G.L, pad, 26 * k);
+  ctx.textAlign = 'left'; ctx.strokeStyle = 'rgba(8,20,36,.55)'; ctx.lineWidth = 3 * k;        // (dark outlines, not soft shadows: shadows are slow on phones)
+  ctx.font = `${Math.round(24 * k)}px ${BN}`; ctx.strokeText('SORTIE ' + G.L, pad, 26 * k); ctx.fillStyle = '#fff'; ctx.fillText('SORTIE ' + G.L, pad, 26 * k);
   for (let i = 0; i < c.bandits; i++) { ctx.fillStyle = i < G.kills ? '#ffd166' : 'rgba(255,255,255,.35)'; ctx.beginPath(); const x = pad + 7 * k + i * 17 * k, y = 46 * k; ctx.moveTo(x, y - 6 * k); ctx.lineTo(x + 6 * k, y + 5 * k); ctx.lineTo(x, y + 2 * k); ctx.lineTo(x - 6 * k, y + 5 * k); ctx.closePath(); ctx.fill(); }
-  if (c.help) { ctx.shadowBlur = 0; ctx.fillStyle = '#a9e8c0'; rrect(pad, 58 * k, 56 * k, 14 * k, 6 * k); ctx.fill(); ctx.fillStyle = '#0b1a2e'; ctx.font = `800 ${Math.round(9 * k)}px Nunito, sans-serif`; ctx.fillText('HELP ON', pad + 7 * k, 65.5 * k); ctx.shadowBlur = 5; }
+  if (c.help) { ctx.fillStyle = '#a9e8c0'; rrect(pad, 58 * k, 56 * k, 14 * k, 6 * k); ctx.fill(); ctx.fillStyle = '#0b1a2e'; ctx.font = `800 ${Math.round(9 * k)}px Nunito, sans-serif`; ctx.fillText('HELP ON', pad + 7 * k, 65.5 * k); }
   // top right: fuel, only once it is worth worrying about
-  if (live && G.fuel < c.fuel * 0.4) { const low = G.fuel < 20, w = 70 * k; ctx.textAlign = 'right'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = low && Math.sin(now * 12) > 0 ? '#ff6a5a' : '#fff'; ctx.fillText('FUEL', W - pad, 22 * k); ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(8,20,36,.5)'; rrect(W - pad - w, 32 * k, w, 6 * k, 3 * k); ctx.fill(); ctx.fillStyle = low ? '#ff6a5a' : '#ffd166'; rrect(W - pad - w, 32 * k, Math.max(6 * k, w * G.fuel / (c.fuel * 0.4)), 6 * k, 3 * k); ctx.fill(); ctx.shadowBlur = 5; }
+  if (live && G.fuel < c.fuel * 0.4) { const low = G.fuel < 20, w = 70 * k; ctx.textAlign = 'right'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.strokeText('FUEL', W - pad, 22 * k); ctx.fillStyle = low && Math.sin(now * 12) > 0 ? '#ff6a5a' : '#fff'; ctx.fillText('FUEL', W - pad, 22 * k); ctx.fillStyle = 'rgba(8,20,36,.5)'; rrect(W - pad - w, 32 * k, w, 6 * k, 3 * k); ctx.fill(); ctx.fillStyle = low ? '#ff6a5a' : '#ffd166'; rrect(W - pad - w, 32 * k, Math.max(6 * k, w * G.fuel / (c.fuel * 0.4)), 6 * k, 3 * k); ctx.fill(); }
   // call-outs
   ctx.textAlign = 'center'; ctx.strokeStyle = 'rgba(8,20,36,.75)';
   for (const m of G.msgs) {
     const a = 1 - Math.max(0, (m.t - m.dur * 0.6) / (m.dur * 0.4)), pop = m.t < 0.12 ? 1 + 0.4 * (1 - m.t / 0.12) : 1, fs = Math.round(Math.min(W * 0.115, 46) * m.size * pop), yy = H * m.y + (behindMirror(G) && m.y < 0.3 ? 78 * k : 0);
-    ctx.globalAlpha = a; ctx.font = `${fs}px ${BN}`; ctx.lineWidth = Math.max(3, fs * 0.14); ctx.shadowBlur = 0; ctx.strokeText(m.text, W / 2, yy, W * 0.94); ctx.fillStyle = m.color; ctx.fillText(m.text, W / 2, yy, W * 0.94);
+    ctx.globalAlpha = a; ctx.font = `${fs}px ${BN}`; ctx.lineWidth = Math.max(3, fs * 0.14); ctx.strokeText(m.text, W / 2, yy, W * 0.94); ctx.fillStyle = m.color; ctx.fillText(m.text, W / 2, yy, W * 0.94);
   }
   ctx.globalAlpha = 1;
   if (!live) { if (G.ft > 0.9) { ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; ctx.globalAlpha = 0.6 + 0.25 * Math.sin(now * 5); ctx.fillStyle = '#fff'; ctx.fillText('Tap to continue', W / 2, H * 0.92); ctx.globalAlpha = 1; } ctx.restore(); return; }
   const cl = coachLine(G);
-  if (cl) { ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; const tw = ctx.measureText(cl).width + 26 * k; ctx.shadowBlur = 0; ctx.fillStyle = 'rgba(8,20,36,.62)'; rrect(W / 2 - tw / 2, H * 0.715 - 14 * k, tw, 28 * k, 14 * k); ctx.fill(); ctx.fillStyle = '#ffd166'; ctx.fillText(cl, W / 2, H * 0.715 + 1); }
-  ctx.shadowBlur = 0;
+  if (cl) { ctx.font = `800 ${Math.round(13.5 * k)}px Nunito, sans-serif`; const tw = ctx.measureText(cl).width + 26 * k; ctx.fillStyle = 'rgba(8,20,36,.62)'; rrect(W / 2 - tw / 2, H * 0.715 - 14 * k, tw, 28 * k, 14 * k); ctx.fill(); ctx.fillStyle = '#ffd166'; ctx.fillText(cl, W / 2, H * 0.715 + 1); }
   // left thumb: the stick
   const st = IN.sId != null, ox = st ? IN.ox : BTN.sx, oy = st ? IN.oy : BTN.sy, R0 = 46 * k;
   ctx.strokeStyle = st ? 'rgba(255,255,255,.5)' : 'rgba(255,255,255,.28)'; ctx.lineWidth = 2 * k; ctx.beginPath(); ctx.arc(ox, oy, R0, 0, TAU); ctx.stroke();
@@ -261,7 +260,7 @@ function startFight() {
   G = makeFight(level, { help: helpOn(), seed: Math.floor(Math.random() * 1e6) }); paused = false; PT.length = 0; G.tagT = 2.8;
   IN.sId = IN.fId = null; FX.shake = FX.stop = FX.slow = FX.flash = FX.red = FX.gold = FX.kx = FX.ky = 0; CUE.seek = CUE.warn = CUE.alarm = 0;
   if (!HEADLESS) { camFollow(G, 0, true); $('pauseBtn').classList.remove('hidden'); show(null); }
-  last = performance.now();
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;      // (the first half second of a fight is not timed: things are still loading)
 }
 function showEnd() {
   if (!G || (G.phase !== 'won' && G.phase !== 'lost')) return; const res = G.res, c = G.cfg, L = G.L; G.phase = 'done'; loopsOff();
@@ -319,6 +318,7 @@ const fightOn = () => !!G && G.phase === 'fight';
 function openPause() {
   paused = true; loopsOff(); IN.sId = IN.fId = null; G.in.fire = false; G.in.sx = G.in.sy = 0;
   $('pLvl').textContent = `Sortie ${G.L} · “${G.foe.look.call}”`;
+  $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second${half && vsync < 12.5 ? ' (halved)' : ''} · ${GLX ? 'fast' : 'plain'} sky${vsync < 15 ? ' · screen ' + Math.round(1000 / vsync) : ''}${stuck ? ' · fixed' : ''}`;      // if he says it lags, ask him to read this line out (LESSONS, rule 12)
   show('ovPause');
 }
 $('pauseBtn').onclick = () => { if (fightOn()) openPause(); };
@@ -338,10 +338,63 @@ function loopSounds() {
   LOOPS.eng && LOOPS.eng.set(me && me.alive ? 0.1 + 0.1 * clamp((me.v - 150) / 150, 0, 1) : 0, 0.2);
   LOOPS.air && LOOPS.air.set(me && me.alive ? 0.02 + 0.07 * me.load + 0.03 * clamp((me.v - 150) / 150, 0, 1) : 0, 0.12);
 }
-let last = performance.now(), slowN = 0;
+// ---------- keeping it smooth ----------
+// The game times its own frames. If this phone is not keeping up it eases off, one notch at a time, until it is, and remembers
+// where it got to (now and then it tries one notch finer again, in case the phone was only busy that day). The notches:
+//   - on a fast screen (90 or 120 pictures a second): draw on every other one. Even, half the work, nothing lost from the picture
+//   - the picture a little less fine, up to three times: the sky, the sharpness of everything, how much smoke hangs about
+// A notch that makes no difference is taken back, and if it makes no difference twice, something else is setting the pace (a
+// battery saver, say): it stops trying.
+// q: the size the sky is painted at (1 = one dot for each of the page's dots); an, bias: how crisp the far clouds are; dpr: the sharpness of
+// the main canvas; pt: how many puffs of smoke at once; bg: the size of the sky when it is painted the slow way
+const STEPS = [{ q: 1, an: 4, bias: -0.5, dpr: 2, pt: 560, bg: 0.6 }, { q: 0.85, an: 4, bias: -0.5, dpr: 1.5, pt: 420, bg: 0.5 }, { q: 0.7, an: 2, bias: -0.75, dpr: 1.25, pt: 320, bg: 0.45 }, { q: 0.55, an: 1, bias: -1, dpr: 1, pt: 240, bg: 0.4 }];
+let stepN = 0, half = 0, stuck = false, vsync = 16.7, ftAvg = 16.7, warm = 30, winN = 0, winSum = 0, trial = '', before = 0, dead = 0, unsaved = false, draws = 0;
+const GAPS = new Float32Array(90); let gapN = 0;
+function applyStep() { const st = STEPS[stepN]; GLQ = st.q; SKY_ANISO = st.an; SKY_BIAS = st.bias; DPR_CAP = st.dpr; PT_MAX = st.pt; BG_S = st.bg; QUAL = 1 + stepN * 0.45; resize(); layout(); }
+let visits = 1, wait = 5;                      // how many times the game has been opened; how many visits until it next tries a finer notch
+function setPace() { applyStep(); store.set('smooth', stepN); store.set('half', half); store.set('flat', stuck ? 1 : 0); store.set('next', visits + wait); warm = 20; winN = 0; winSum = 0; }
+(() => {
+  visits = (store.get('visits', 0) | 0) + 1; store.set('visits', visits); wait = clamp(store.get('wait', 5) | 0, 5, 80);
+  stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1); half = store.get('half', 0) ? 1 : 0; stuck = !!store.get('flat', 0);
+  // Now and then an eased-off phone is tried one notch finer again, in case it was only busy the day it eased off: five visits
+  // later, and if it has to ease off again, ten visits after that, then twenty, forty, eighty.
+  if ((stepN > 0 || half || stuck) && visits >= (store.get('next', visits + 1) | 0)) {
+    unsaved = stepN > 0 || !!half; stuck = false; if (stepN > 0) stepN--; else half = 0;
+    store.set('next', visits + wait); wait = Math.min(wait * 2, 80); store.set('wait', wait);
+  }
+})();
+function lowGap() { const n = Math.min(gapN, GAPS.length), a = Array.from(GAPS.subarray(0, n)).sort((x, y) => x - y); return clamp(a[Math.floor(n * 0.15)], 5.5, 50); }
+function measure(ms, fast) {                   // one frame of a fight took this long
+  if (ms > 250) { warm = 20; return; }         // (the app was away: not a slow frame)
+  ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06;
+  if (warm > 0) { warm--; return; }
+  const want = half && fast ? vsync * 2 : vsync;
+  winSum += Math.min(ms, want * 3); winN++;
+  let avg = winSum / winN; const limit = half && fast ? want * 1.18 : Math.min(want * 1.18, 21);
+  if (winN < 30 || (winN < 60 && avg < limit * 1.35)) return;      // judged on 60 frames, or on 30 if it is plainly struggling
+  winN = 0; winSum = 0;
+  if (stuck) return;
+  if (avg <= limit) { trial = ''; dead = 0; if (unsaved) { unsaved = false; wait = 5; store.set('wait', 5); setPace(); } return; }      // keeping up (and a finer notch on trial has earned its place)
+  unsaved = false;                             // (a finer notch that was on trial has failed it)
+  if (trial === 'S') {
+    if (avg > before * 0.93) { stepN--; avg = before; if (++dead >= 2) { stuck = true; trial = ''; setPace(); return; } }      // that notch was no help: take it back
+    else dead = 0;
+  }
+  // a fast screen: halve. (At 90 a second, one notch less fine is tried first, in case that is all it takes to keep all 90;
+  // if it is not, the halving has room to spare and the picture goes back to its finest.)
+  if (fast && !half && (vsync < 9.5 || stepN >= 1 || trial === 'S')) { half = 1; stepN = 0; trial = 'H'; dead = 0; }
+  else if (stepN < STEPS.length - 1) { stepN++; trial = 'S'; before = avg; }
+  else { stuck = true; trial = ''; }           // nothing left to ease off
+  setPace();
+}
+let last = performance.now(), lastRaf = last;
 function frame(now) {
-  const rdt = Math.min(0.05, (now - last) / 1000); last = now;
-  if (rdt > 0.027 && !paused) { if (++slowN > 45 && QUAL < 2.4) { QUAL += 0.35; slowN = 0; } } else if (slowN > 0) slowN--;      // too slow for this phone: draw the cloud floor in coarser strips
+  const gap = now - lastRaf; lastRaf = now;
+  if (gap > 5.5 && gap < 100) { GAPS[gapN++ % GAPS.length] = gap; if (gapN % 30 === 0) vsync = lowGap(); }      // how often this screen shows a picture
+  const fast = vsync < 12.5;
+  if (half && fast && now - last < vsync * 1.5) { requestAnimationFrame(frame); return; }       // eased off on a fast screen: sit this one out
+  const ms = now - last, rdt = Math.min(0.05, ms / 1000); last = now;
+  if (!HEADLESS && !paused && G && G.phase === 'fight') measure(ms, fast);
   if (HEADLESS) { requestAnimationFrame(frame); return; }
   if (G && !paused) {
     FX.red = Math.max(0, FX.red - rdt * 1.6); FX.gold = Math.max(0, FX.gold - rdt * 0.9); FX.flash = Math.max(0, FX.flash - rdt * 4);
@@ -362,7 +415,7 @@ function frame(now) {
     }
   }
   loopSounds();
-  draw(now / 1000);
+  draw(now / 1000); draws++;
   requestAnimationFrame(frame);
 }
 window.__sim = {
@@ -375,9 +428,13 @@ window.__sim = {
   live() { HEADLESS = false; last = performance.now(); },
   go(L) { HEADLESS = false; level = L; startFight(); },
   PH, FX, CAM,
+  smooth() { return { step: stepN, half, sky: GLX ? 'fast' : 'plain', stuck, vsync: +vsync.toFixed(1), ms: +ftAvg.toFixed(1), dpr: DPR, draws, glows: gqN, smoke: PT.length }; },
+  skyq(q, bias, aniso) { GLQ = q; if (bias != null) SKY_BIAS = bias; if (aniso != null) SKY_ANISO = aniso; },      // tests: how finely the sky is painted
+  finest() { stuck = true; stepN = 0; half = 0; applyStep(); },    // tests and card pictures: the finest picture, and leave it there
+  gl(on) { if (on) glTried = false; else { skyOff(); glTried = true; } },       // tests: the sky by the graphics chip, or the slow way
   get G() { return G; }
 };
-resize(); layout(); addEventListener('resize', layout);
+applyStep(); addEventListener('resize', layout);
 HERO = buildJet('twin', '#9aa5b2', '#6d7785', '#e9eef4', true);
 showHome(); requestAnimationFrame(frame);
 })();

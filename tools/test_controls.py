@@ -95,6 +95,10 @@ def open_game(browser, base, g, errs, seed):
     ctx = browser.new_context(viewport={'width': W, 'height': H}, device_scale_factor=2, has_touch=True, is_mobile=True)
     pg = ctx.new_page()
     pg.on('pageerror', lambda e: errs.append(g['id'] + ': ' + str(e)))
+    # A game that paints with the phone's graphics chip (WebGL) falls back to plain drawing on a machine without one, as this
+    # test machine is. Here it is told to use the chip's way all the same, so the way phones run it is the way that is tested.
+    # (tools/check.py loads every game without this, so the plain way is tested too.)
+    pg.add_init_script("window.__softGL = true")
     # a game on the app is tested as the app carries it (plug and all); one he is still play-testing, straight from the project
     url = f"{base[0]}/games/{g['id']}/index.html" if build_feed.in_app(g) else f"{base[1]}/{g['path']}"
     pg.goto(url)

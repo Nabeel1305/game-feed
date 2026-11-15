@@ -48,6 +48,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 </style>
 </head>
 <body>
+<canvas id="bg" style="display:none"></canvas>
 <canvas id="cv"></canvas>
 <button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
 
@@ -111,6 +112,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <button class="btn" id="pResume">RESUME</button>
     <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
     <button class="btn ghost quiet" id="pQuit">Return to base</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
   </div>
 </div>
 
@@ -120,8 +122,8 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
 const BN = '"Bebas Neue", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
-let W = 390, H = 844, DPR = 1, k = 1;
-function resize() { DPR = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
 addEventListener('resize', resize);
 
 const store = {

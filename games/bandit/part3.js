@@ -55,6 +55,7 @@ function makeTex() {
     dark: soft(64, [[0, 'rgba(52,50,52,.9)'], [0.5, 'rgba(70,68,72,.45)'], [1, 'rgba(90,90,96,0)']]),
     fire: soft(64, [[0, 'rgba(255,246,200,1)'], [0.3, 'rgba(255,180,60,.85)'], [0.7, 'rgba(230,80,20,.35)'], [1, 'rgba(160,30,10,0)']]),
     hot: soft(64, [[0, 'rgba(255,255,255,1)'], [0.2, 'rgba(255,244,210,.95)'], [0.5, 'rgba(255,190,90,.4)'], [1, 'rgba(255,140,40,0)']]),
+    flash: soft(64, [[0, 'rgba(255,255,255,1)'], [0.2, 'rgba(255,252,240,.95)'], [0.5, 'rgba(255,246,224,.4)'], [1, 'rgba(255,240,212,0)']]),      // 'hot' as it looks against a bright sky (see drawParticle)
     burn: soft(64, [[0, 'rgba(255,255,255,1)'], [0.25, 'rgba(190,225,255,.9)'], [0.6, 'rgba(90,150,255,.35)'], [1, 'rgba(60,110,255,0)']]),
     sun: soft(256, [[0, 'rgba(255,255,255,1)'], [0.06, 'rgba(255,252,236,1)'], [0.12, 'rgba(255,240,200,.55)'], [0.4, 'rgba(255,230,180,.16)'], [1, 'rgba(255,225,170,0)']])
   };
@@ -142,18 +143,34 @@ function drawModel(m, j, sc, alpha) {
   }
   vis.sort((a, b) => b.z - a.z);
   if (alpha != null) ctx.globalAlpha = alpha;
-  ctx.lineWidth = 0.7; ctx.lineJoin = 'round';
   for (const q of vis) {
-    const v = q.f.v; ctx.beginPath(); ctx.moveTo(SXv[v[0]], SYv[v[0]]); for (let i = 1; i < v.length; i++) ctx.lineTo(SXv[v[i]], SYv[v[i]]); ctx.closePath();
-    ctx.fillStyle = q.s; ctx.fill(); ctx.strokeStyle = q.s; ctx.stroke();
+    const v = q.f.v, n = fat(v); ctx.beginPath(); ctx.moveTo(EXv[0], EYv[0]); for (let i = 1; i < n; i++) ctx.lineTo(EXv[i], EYv[i]); ctx.closePath();
+    ctx.fillStyle = q.s; ctx.fill();
   }
   ctx.globalAlpha = 1;
+}
+// Each flat piece is drawn a hair bigger than it is, so that no sky shows through the joins. (It used to be filled and then outlined
+// in the same colour: twice the drawing, and outlines are about the slowest thing a phone can be asked to draw.)
+const EXv = new Float32Array(64), EYv = new Float32Array(64);
+function fat(v) {
+  const n = Math.min(v.length, 64); let area = 0;
+  for (let i = 0; i < n; i++) { const a = v[i], b = v[(i + 1) % n]; area += SXv[a] * SYv[b] - SXv[b] * SYv[a]; }
+  const sg = area < 0 ? -0.45 : 0.45;          // which way is out, and how far (under half a dot of the screen)
+  for (let i = 0; i < n; i++) {
+    const p = v[(i + n - 1) % n], c = v[i], q = v[(i + 1) % n];
+    let ax = SXv[c] - SXv[p], ay = SYv[c] - SYv[p], bx = SXv[q] - SXv[c], by = SYv[q] - SYv[c];
+    const al = Math.hypot(ax, ay) || 1, bl = Math.hypot(bx, by) || 1; ax /= al; ay /= al; bx /= bl; by /= bl;
+    const kk = sg / Math.max(0.35, 1 + ax * bx + ay * by);       // both edges that meet here move out by the same amount
+    EXv[i] = SXv[c] + (ay + by) * kk; EYv[i] = SYv[c] - (ax + bx) * kk;
+  }
+  return n;
 }
 function partPos(j, p, sc) { const [R, U, Fw] = jetAxes(j); return [j.x + (p[0] * R[0] + p[1] * U[0] + p[2] * Fw[0]) * sc, j.y + (p[0] * R[1] + p[1] * U[1] + p[2] * Fw[1]) * sc, j.z + (p[0] * R[2] + p[1] * U[2] + p[2] * Fw[2]) * sc]; }
 
 // ----- smoke, fire, sparks -----
 const PT = [];
-function puff(x, y, z, vx, vy, vz, life, s0, s1, kind, a) { if (PT.length > 560) PT.splice(0, 40); PT.push({ x, y, z, vx, vy, vz, age: 0, life, s0, s1, kind, a: a == null ? 1 : a }); }
+let PT_MAX = 560, GLQ = 1;                    // how much smoke at once, and how finely the sky is painted (see STEPS in part 4)
+function puff(x, y, z, vx, vy, vz, life, s0, s1, kind, a) { if (PT.length > PT_MAX) PT.splice(0, 40); PT.push({ x, y, z, vx, vy, vz, age: 0, life, s0, s1, kind, a: a == null ? 1 : a }); }
 function burst(x, y, z, big) {
   const n = big ? 1 : 0.5;
   puff(x, y, z, 0, 0, 0, 0.2, 30 * n, 70 * n, 3, 1);
@@ -162,11 +179,13 @@ function burst(x, y, z, big) {
   if (big) for (let i = 0; i < 12; i++) { const a = Math.random() * TAU, e = Math.random() * 1.6 - 0.6, v = 60 + Math.random() * 110; puff(x, y, z, Math.cos(a) * v, e * v, Math.sin(a) * v, 0.8 + Math.random() * 0.9, 1.2, 0.6, 4, 1); }
 }
 const SC_ME = 1, SC_FOE = 2.3;      // he is drawn bigger than life, so a jet half a kilometre off still reads as a jet
+let trailT = 0;
 function visuals(G, dt, rdt) {                // what trails behind things, frame by frame (never changes the fight)
   const me = G.me, f = G.foe;
   for (const p of PT) { p.age += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; const dr = p.kind === 4 ? 0.4 : 2.2; p.vx *= 1 - dr * dt; p.vz *= 1 - dr * dt; p.vy = p.kind === 4 ? p.vy - 60 * dt : p.vy * (1 - dr * dt); }
   for (let i = PT.length - 1; i >= 0; i--) if (PT[i].age >= PT[i].life) PT.splice(i, 1);
   if (dt <= 0) return;
+  trailT += rdt; if (trailT < 0.0146) return; trailT = Math.min(trailT - 1 / 60, 1 / 60);      // trails are laid 60 times a second on any screen (a fast screen used to make twice the smoke)
   for (const s of G.shots) if (!s.dead) puff(s.x - s.d[0] * 4, s.y - s.d[1] * 4, s.z - s.d[2] * 4, (Math.random() - 0.5) * 3, 1.5, (Math.random() - 0.5) * 3, 1.5, 1.6, 7.5, 0, 0.6);
   for (const fl of G.flares) if (fl.age < 1.9 && Math.random() < 0.6) puff(fl.x, fl.y, fl.z, 0, 3, 0, 0.9, 1, 4.5, 0, 0.35);
   for (const [j, m, sc] of [[me, HERO, SC_ME], [f, f.look ? modelFor(f.look) : HERO, SC_FOE]]) {
@@ -190,47 +209,169 @@ function camFollow(G, rdt, snap) {
 }
 
 // ----- sky and cloud floor, drawn with the horizon level and then turned by the bank -----
-function drawSky(c, rad, floorTex) {
-  ctx.save(); ctx.translate(c.cx, c.cy); ctx.rotate(-c.roll);
-  const F = c.F, yh = F * Math.tan(c.pitch), sky = ctx.createLinearGradient(0, yh, 0, yh - F * 1.5);
+// The sky and the cloud floor are drawn small, on a canvas of their own, and stretched onto the screen. Clouds are soft, so it
+// looks the same, and it is a fraction of the work: at full size the floor alone was three quarters of every frame.
+let BGC = null, bgx = null, BG_S = 0.6;
+function bgSize() { if (!BGC) { BGC = document.createElement('canvas'); bgx = BGC.getContext('2d'); } const w = Math.ceil(W * BG_S), h = Math.ceil(H * BG_S); if (BGC.width !== w || BGC.height !== h) { BGC.width = w; BGC.height = h; } }
+const MAT = new DOMMatrix();
+function drawSky(g, c, q, rad, floorTex) {     // g: the canvas to draw on; q: how many of its pixels make one screen pixel
+  g.save(); g.translate(c.cx * q, c.cy * q); g.rotate(-c.roll); rad *= q;
+  const F = c.F * q, yh = F * Math.tan(c.pitch), sky = g.createLinearGradient(0, yh, 0, yh - F * 1.5);
   sky.addColorStop(0, '#cfe4f5'); sky.addColorStop(0.1, '#a9cdee'); sky.addColorStop(0.36, '#5f9be0'); sky.addColorStop(0.7, '#2a66bd'); sky.addColorStop(1, '#123f8c');
-  ctx.fillStyle = sky; ctx.fillRect(-rad, -rad, rad * 2, rad + yh + 1);
-  ctx.fillStyle = HAZE; ctx.fillRect(-rad, yh, rad * 2, rad - yh + 1);
+  g.fillStyle = sky; g.fillRect(-rad, -rad, rad * 2, rad + yh + 1);
+  g.fillStyle = HAZE; g.fillRect(-rad, yh, rad * 2, rad - yh + 1);
   const h = Math.max(40, c.y);
   if (floorTex && TEX) {
-    const rx = c.cyw, rz = -c.syw, fx = c.syw, fz = c.cyw, tp = Math.tan(c.pitch);
-    let y = yh + 1.2;
+    const rx = c.cyw, rz = -c.syw, fx = c.syw, fz = c.cyw;
+    let y = yh + 1;
     while (y < rad) {
-      const a = Math.atan(y / F) - c.pitch, stepY = clamp((y - yh) * 0.05 * QUAL, 1.2 * QUAL, 5 * QUAL);
+      const a = Math.atan(y / F) - c.pitch, stepY = clamp((y - yh) * 0.06 * QUAL, QUAL, 4 * QUAL);
       if (a > 0.004) {
         const D = h / Math.tan(a), Z = D * c.cp - h * c.sp;
         if (Z > 1 && D < 60000) {
-          const s = Z / F, ca = Math.cos(c.pitch + a), g = F * h / ((D * D + h * h) * ca * ca), lv = s > TEX.mpt[1] * 0.9 ? 2 : s > TEX.mpt[0] * 1.6 ? 1 : 0, mpt = TEX.mpt[lv];
+          const s = Z / F, ca = Math.cos(c.pitch + a), gg = F * h / ((D * D + h * h) * ca * ca), lv = s > TEX.mpt[1] * 0.9 ? 2 : s > TEX.mpt[0] * 1.6 ? 1 : 0, mpt = TEX.mpt[lv];
           const X0 = ((c.x + fx * D) % TW + TW) % TW, Z0 = ((c.z + fz * D) % TW + TW) % TW, p = TEX.pat[lv];
-          p.setTransform(new DOMMatrix([mpt * rx / s, -mpt * fx * g, mpt * rz / s, -mpt * fz * g, -(X0 * rx + Z0 * rz) / s, y + (X0 * fx + Z0 * fz) * g]));
-          ctx.fillStyle = p; ctx.fillRect(-rad, y, rad * 2, stepY + 0.7);
+          MAT.a = mpt * rx / s; MAT.b = -mpt * fx * gg; MAT.c = mpt * rz / s; MAT.d = -mpt * fz * gg; MAT.e = -(X0 * rx + Z0 * rz) / s; MAT.f = y + (X0 * fx + Z0 * fz) * gg;
+          p.setTransform(MAT);
+          g.fillStyle = p; g.fillRect(-rad, y, rad * 2, stepY + 0.6);
         }
       }
       y += stepY;
     }
-  } else { const fl = ctx.createLinearGradient(0, yh, 0, yh + F); fl.addColorStop(0, HAZE); fl.addColorStop(1, '#b9cfe6'); ctx.fillStyle = fl; ctx.fillRect(-rad, yh, rad * 2, rad - yh + 1); }
-  const hz = ctx.createLinearGradient(0, yh, 0, yh + F * 0.42); hz.addColorStop(0, 'rgba(214,231,244,1)'); hz.addColorStop(0.25, 'rgba(214,231,244,.72)'); hz.addColorStop(1, 'rgba(214,231,244,0)');
-  ctx.fillStyle = hz; ctx.fillRect(-rad, yh - 1, rad * 2, F * 0.42 + 1);
-  ctx.restore();
+  } else { const fl = g.createLinearGradient(0, yh, 0, yh + F); fl.addColorStop(0, HAZE); fl.addColorStop(1, '#b9cfe6'); g.fillStyle = fl; g.fillRect(-rad, yh, rad * 2, rad - yh + 1); }
+  const hz = g.createLinearGradient(0, yh, 0, yh + F * 0.42); hz.addColorStop(0, 'rgba(214,231,244,1)'); hz.addColorStop(0.25, 'rgba(214,231,244,.72)'); hz.addColorStop(1, 'rgba(214,231,244,0)');
+  g.fillStyle = hz; g.fillRect(-rad, yh - 1, rad * 2, F * 0.42 + 1);
+  g.restore();
 }
 
-let QUAL = 1;                                 // 1 = finest cloud floor; a phone that cannot keep up gets a coarser one (see frame())
+// ----- the fast way: the phone's graphics chip (WebGL) paints the sky, the sun and the cloud floor in one go, on a canvas of its
+// own that sits behind the main one: every dot of it works out which bit of sky or cloud it is looking at. The main canvas, in
+// front, is see-through wherever nothing is drawn, so nothing has to be copied from one to the other.
+// Glows (engines, fire, flares, missiles) add light to whatever is behind them. On the main canvas that works as it always did,
+// except where there is only sky behind: there, the glow would hide a little of the sky instead of adding to it. So for each glow
+// the sky canvas is made exactly that much brighter in the same place (glQuad), and the two together come out the same as adding.
+// If a phone cannot do this, drawSky above paints the sky the slow way on the main canvas, and nothing else changes.
+let GLX = null, glTried = false, GLOW = false;   // GLOW: this view's glows are made up for on the sky canvas (the main view, the fast way)
+function skyOff() { GLX = null; $('bg').style.display = 'none'; }
+let SKY_BIAS = 0, SKY_ANISO = 1;
+const GQ_MAX = 400, GQ = new Float32Array(GQ_MAX * 30); let gqN = 0;
+function glInit() {
+  glTried = true;
+  const c = $('bg'); let gl = null;
+  try { gl = c.getContext('webgl', { antialias: false, alpha: false, depth: false, stencil: false, powerPreference: 'high-performance', failIfMajorPerformanceCaveat: !window.__softGL }); } catch (e) {}
+  if (!gl || gl.isContextLost()) return;
+  // Where there is no graphics chip and WebGL is only pretended, slowly, by the processor, the slow way is the quicker one.
+  // (Test machines are like that: a test sets window.__softGL to try the fast way all the same.)
+  if (!window.__softGL) { let who = ''; try { const e = gl.getExtension('WEBGL_debug_renderer_info'); who = gl.getParameter(gl.RENDERER) + ' ' + (e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''); } catch (e) {} if (/swiftshader|llvmpipe|software|basic render/i.test(who)) return; }
+  const hp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT); if (!hp || !hp.precision) return;      // a chip that cannot count finely enough for this: the slow way
+  // For each corner of the screen: which way that corner of the view is looking (the chip spreads it smoothly across the screen).
+  const SKYV = `precision highp float;
+attribute vec2 p; varying vec3 vV; varying float vB; varying vec2 vS;
+uniform vec2 uRes, uC, uRoll; uniform float uF, uTanP; uniform vec3 uR, uU, uFw;
+void main() {
+  float dx = (p.x * 0.5 + 0.5) * uRes.x - uC.x, up = uC.y - (0.5 - p.y * 0.5) * uRes.y;
+  float X = dx * uRoll.x + up * uRoll.y, Y = -dx * uRoll.y + up * uRoll.x;      // undo the bank
+  vV = X * uR + Y * uU + uF * uFw; vB = -Y / uF - uTanP; vS = vec2(dx, -up);       // vB: how far under the horizon; vS: where on the screen, from its middle
+  gl_Position = vec4(p, 0.0, 1.0);
+}`;
+  // For each dot: sky above the horizon, cloud floor below it (where a line from the eye meets the floor), haze between, and the sun's glare.
+  const SKY = `precision highp float;
+varying vec3 vV; varying float vB; varying vec2 vS;
+uniform vec2 uCam2, uSunS; uniform float uF, uH, uTW, uBias; uniform sampler2D uTex;
+vec3 sky(float t) {
+  vec3 c0 = vec3(0.812, 0.894, 0.961), c1 = vec3(0.663, 0.804, 0.933), c2 = vec3(0.373, 0.608, 0.878), c3 = vec3(0.165, 0.4, 0.741), c4 = vec3(0.071, 0.247, 0.549);
+  if (t < 0.1) return mix(c0, c1, t / 0.1); if (t < 0.36) return mix(c1, c2, (t - 0.1) / 0.26); if (t < 0.7) return mix(c2, c3, (t - 0.36) / 0.34); return mix(c3, c4, (t - 0.7) / 0.3);
+}
+void main() {
+  vec3 d = normalize(vV), haze = vec3(0.839, 0.906, 0.957), col;
+  float T = uH / max(-d.y, 0.0004);
+  vec3 fl = texture2D(uTex, (uCam2 + d.xz * T) / uTW, uBias).rgb;                  // (looked up for every dot, so the chip always knows how fine to make it)
+  if (vB <= 0.0) col = sky(min(-vB / 1.5, 1.0));
+  else { float x = max(1.0 - vB / 0.42, 0.0); col = mix(d.y < -0.0004 && T < 60000.0 ? fl : haze, haze, x * (0.7 + 0.3 * x)); }
+  float t = length(vS - uSunS) / (uF * 0.62);
+  if (t < 1.0) {                                                                   // inside the sun's glare: the same soft disc the slow way lays on (TEX.sun), ring for ring
+    float i = t < 0.06 ? 0.85 : t < 0.12 ? mix(0.85, 0.4675, (t - 0.06) / 0.06) : t < 0.4 ? mix(0.4675, 0.136, (t - 0.12) / 0.28) : 0.136 * max(1.0 - (t - 0.4) / 0.6, 0.0);
+    col += i * (t < 0.12 ? mix(vec3(1.0, 0.988, 0.925), vec3(1.0, 0.941, 0.784), clamp((t - 0.06) / 0.06, 0.0, 1.0)) : mix(vec3(1.0, 0.941, 0.784), vec3(1.0, 0.882, 0.667), min((t - 0.12) / 0.88, 1.0)));
+  }
+  gl_FragColor = vec4(col, 1.0);
+}`;
+  const prog = (vs, fs, attrs) => {
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return gl.getShaderParameter(o, gl.COMPILE_STATUS) ? o : null; };
+    const v = sh(gl.VERTEX_SHADER, vs), f = sh(gl.FRAGMENT_SHADER, fs); if (!v || !f) return null;
+    const p = gl.createProgram(); gl.attachShader(p, v); gl.attachShader(p, f); attrs.forEach((n, i) => gl.bindAttribLocation(p, i, n)); gl.linkProgram(p);
+    return gl.getProgramParameter(p, gl.LINK_STATUS) ? p : null;
+  };
+  const p1 = prog(SKYV, SKY, ['p']);
+  const p2 = prog('attribute vec2 p; attribute vec3 t; varying vec3 v; void main() { v = t; gl_Position = vec4(p, 0.0, 1.0); }',
+    'precision mediump float; varying vec3 v; uniform sampler2D uTex; void main() { float a = texture2D(uTex, v.xy).a * v.z; gl_FragColor = vec4(vec3(min(a / max(1.0 - a, 0.001), 1.0)), 1.0); }', ['p', 't']);
+  if (!p1 || !p2) return;
+  const b1 = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b1); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const b2 = gl.createBuffer(); gl.enableVertexAttribArray(0);
+  const t1 = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t1);              // the cloud floor: the same tile the slow way uses
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, TEX.lv[0]); gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  const at = document.createElement('canvas'); at.width = 256; at.height = 64; const ax = at.getContext('2d'); [TEX.fire, TEX.hot, TEX.burn].forEach((im, i) => ax.drawImage(im, i * 64, 0));
+  const t2 = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t2); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);      // the three glows, side by side
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, at); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.useProgram(p1); const u = {}; for (const n of ['uRes', 'uC', 'uRoll', 'uCam2', 'uF', 'uTanP', 'uH', 'uTW', 'uBias', 'uR', 'uU', 'uFw', 'uSunS', 'uTex']) u[n] = gl.getUniformLocation(p1, n);
+  gl.uniform1i(u.uTex, 0); gl.uniform1f(u.uTW, TW);
+  gl.useProgram(p2); gl.uniform1i(gl.getUniformLocation(p2, 'uTex'), 0);
+  gl.activeTexture(gl.TEXTURE0); gl.blendFunc(gl.DST_COLOR, gl.ONE);       // (for the glows: the sky is made brighter, not painted over)
+  if (gl.getError() !== gl.NO_ERROR) return;
+  const an = gl.getExtension('EXT_texture_filter_anisotropic');
+  c.style.display = '';
+  GLX = { gl, u, c, p1, p2, b1, b2, t1, t2, an, anMax: an ? gl.getParameter(an.MAX_TEXTURE_MAX_ANISOTROPY_EXT) : 1, anNow: 1, w: 0, h: 0, ok: false };
+  if (!c.__heard) { c.__heard = true;
+    c.addEventListener('webglcontextlost', e => { e.preventDefault(); skyOff(); }, false);      // the slow way takes over
+    c.addEventListener('webglcontextrestored', () => { glTried = false; }, false);
+  }
+}
+function glQuad(cell, x, y, s, a) {             // one glow, for the sky canvas to make up for: which blob (0 fire, 1 white-hot, 2 blue burn), where, how big, how strong
+  if (gqN >= GQ_MAX) return;
+  const x0 = (x - s) / W * 2 - 1, x1 = (x + s) / W * 2 - 1, y0 = 1 - (y - s) / H * 2, y1 = 1 - (y + s) / H * 2, u0 = cell * 0.25, u1 = u0 + 0.25; let i = gqN++ * 30;
+  GQ[i++] = x0; GQ[i++] = y0; GQ[i++] = u0; GQ[i++] = 0; GQ[i++] = a;   GQ[i++] = x1; GQ[i++] = y0; GQ[i++] = u1; GQ[i++] = 0; GQ[i++] = a;   GQ[i++] = x0; GQ[i++] = y1; GQ[i++] = u0; GQ[i++] = 1; GQ[i++] = a;
+  GQ[i++] = x1; GQ[i++] = y0; GQ[i++] = u1; GQ[i++] = 0; GQ[i++] = a;   GQ[i++] = x1; GQ[i++] = y1; GQ[i++] = u1; GQ[i++] = 1; GQ[i++] = a;   GQ[i++] = x0; GQ[i++] = y1; GQ[i++] = u0; GQ[i++] = 1; GQ[i++] = a;
+}
+function glDraw(c) {
+  const X = GLX, gl = X.gl, q = GLQ, w = Math.max(2, Math.round(W * q)), h = Math.max(2, Math.round(H * q));
+  if (X.w !== w || X.h !== h) { X.c.width = X.w = w; X.c.height = X.h = h; gl.viewport(0, 0, w, h); }
+  const u = X.u;
+  gl.disable(gl.BLEND); gl.useProgram(X.p1); gl.bindBuffer(gl.ARRAY_BUFFER, X.b1); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0); gl.disableVertexAttribArray(1); gl.bindTexture(gl.TEXTURE_2D, X.t1);
+  gl.uniform2f(u.uRes, W * q, H * q); gl.uniform2f(u.uC, c.cx * q, c.cy * q); gl.uniform2f(u.uRoll, c.cr, c.sr); gl.uniform1f(u.uF, c.F * q); gl.uniform1f(u.uTanP, Math.tan(c.pitch)); gl.uniform1f(u.uH, Math.max(40, c.y));
+  gl.uniform2f(u.uCam2, ((c.x % TW) + TW) % TW, ((c.z % TW) + TW) % TW); gl.uniform1f(u.uBias, SKY_BIAS);
+  if (X.an) { const want = Math.min(SKY_ANISO, X.anMax); if (want !== X.anNow) { gl.texParameterf(gl.TEXTURE_2D, X.an.TEXTURE_MAX_ANISOTROPY_EXT, want); X.anNow = want; } }
+  gl.uniform3f(u.uR, c.cyw, 0, -c.syw); gl.uniform3f(u.uU, -c.syw * c.sp, c.cp, -c.cyw * c.sp); gl.uniform3f(u.uFw, c.syw * c.cp, c.sp, c.cyw * c.cp);
+  if (P3(c.x + SUN[0] * 1e5, c.y + SUN[1] * 1e5, c.z + SUN[2] * 1e5)) gl.uniform2f(u.uSunS, (PX - c.cx) * q, (PY - c.cy) * q); else gl.uniform2f(u.uSunS, 1e6, 1e6);      // where the sun is on the screen (nowhere, if it is behind)
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  if (!X.ok) {                                   // the first picture: look at three dots down the middle of it. All black means this chip got it wrong: the slow way.
+    const px = new Uint8Array(4 * h); let lit = 0; gl.readPixels(w >> 1, 0, 1, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    for (const fy of [0.12, 0.5, 0.88]) { const i = Math.floor(h * fy) * 4; lit += px[i] + px[i + 1] + px[i + 2]; }
+    if (lit < 90 || gl.getError() !== gl.NO_ERROR) { skyOff(); return; }
+    X.ok = true;
+  }
+  if (gqN) {
+    gl.enable(gl.BLEND); gl.useProgram(X.p2); gl.bindBuffer(gl.ARRAY_BUFFER, X.b2); gl.bufferData(gl.ARRAY_BUFFER, GQ.subarray(0, gqN * 30), gl.DYNAMIC_DRAW);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 20, 0); gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 20, 8);
+    gl.bindTexture(gl.TEXTURE_2D, X.t2); gl.drawArrays(gl.TRIANGLES, 0, gqN * 6);
+  }
+}
+
+let QUAL = 1;                                 // (the slow way only) 1 = finest strips of cloud floor
 const ITEMS = [];
 function drawParticle(p) {
   const t = p.age / p.life, s = (p.s0 + (p.s1 - p.s0) * t) * CC.F / PZ; if (s < 0.4) return;
   const a = p.a * Math.pow(1 - t, 1.3) * clamp((PZ - 12) / 60, 0, 1); if (a < 0.01) return;      // anything right in front of the camera fades, so it never hides the fight
   if (p.kind === 4) { const x1 = PX, y1 = PY; if (!P3(p.x - p.vx * 0.035, p.y - p.vy * 0.035, p.z - p.vz * 0.035)) return; ctx.globalAlpha = a; ctx.strokeStyle = '#ffe9a8'; ctx.lineWidth = Math.max(1, s); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(PX, PY); ctx.stroke(); ctx.globalAlpha = 1; return; }
-  const img = p.kind === 0 || p.kind === 5 ? TEX.smoke : p.kind === 1 ? TEX.dark : p.kind === 2 ? TEX.fire : TEX.hot, add = p.kind === 2 || p.kind === 3;
-  if (add) ctx.globalCompositeOperation = 'lighter';
+  // (the flash of an explosion: added to a bright sky, its orange edge goes white. With the sky on its own canvas that cannot happen, so there the flash is given already whitened)
+  const img = p.kind === 0 || p.kind === 5 ? TEX.smoke : p.kind === 1 ? TEX.dark : p.kind === 2 ? TEX.fire : GLOW ? TEX.flash : TEX.hot, add = p.kind === 2 || p.kind === 3;
+  if (add) { if (GLOW) glQuad(p.kind === 2 ? 0 : 1, PX, PY, s, a); ctx.globalCompositeOperation = 'lighter'; }
   ctx.globalAlpha = a; ctx.drawImage(img, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1;
   if (add) ctx.globalCompositeOperation = 'source-over';
 }
-function glow(img, x, y, z, size, a) { if (!P3(x, y, z)) return; const s = size * CC.F / PZ; if (s < 0.5) return; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a; ctx.drawImage(img, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+function glow(img, x, y, z, size, a) { if (!P3(x, y, z)) return; const s = size * CC.F / PZ; if (s < 0.5) return; if (GLOW) glQuad(img === TEX.fire ? 0 : img === TEX.hot ? 1 : 2, PX, PY, s, a); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = a; ctx.drawImage(img, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
 function drawJetItem(j, m, sc, now) {
   drawModel(m, j, sc);
   const fw = fwdOf(j), seen = (CC.x - j.x) * fw[0] + (CC.y - j.y) * fw[1] + (CC.z - j.z) * fw[2] < 0;      // the burn only shows from behind
@@ -271,9 +412,16 @@ function drawItems(now, mirror) {
 function drawWorld(G, now) {
   if (!TEX) makeTex();
   CC = CAM; const rad = Math.hypot(W, H) * 0.62 + 30;
-  drawSky(CAM, rad, true);
-  if (P3(CAM.x + SUN[0] * 1e5, CAM.y + SUN[1] * 1e5, CAM.z + SUN[2] * 1e5)) { const s = CAM.F * 0.62; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.85; ctx.drawImage(TEX.sun, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  if (GLX && GLX.gl.isContextLost()) skyOff();
+  if (!GLX && !glTried && !window.__noGL) glInit();
+  gqN = 0; GLOW = !!GLX;
+  if (GLX) ctx.clearRect(-1, -1, W + 2, H + 2);                      // the sky is on its own canvas, behind this one
+  else {
+    bgSize(); drawSky(bgx, CAM, BG_S, rad, true); ctx.drawImage(BGC, 0, 0, W, H);
+    if (P3(CAM.x + SUN[0] * 1e5, CAM.y + SUN[1] * 1e5, CAM.z + SUN[2] * 1e5)) { const s = CAM.F * 0.62; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.85; ctx.drawImage(TEX.sun, PX - s, PY - s, s * 2, s * 2); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+  }
   collect(G, false); drawItems(now, false);
+  if (GLOW) { GLOW = false; if (GLX) glDraw(CAM); }
 }
 // the mirror: what is behind you, left and right the way a mirror shows them
 function drawMirror(G, now, x, y, w, h, hot) {
@@ -281,7 +429,7 @@ function drawMirror(G, now, x, y, w, h, hot) {
   const f = G.foe, aim = f.alive && me.r && me.r.off > 1.7 ? f : (G.threat || f), dx = aim.x - me.x, dy = aim.y - me.y - 2.5, dz = aim.z - me.z, dd = Math.hypot(dx, dy, dz) || 1;      // it looks straight at him (or at his missile), so he is always in it
   CAMM.x = me.x; CAMM.y = me.y + 2.5; CAMM.z = me.z; CAMM.yaw = Math.atan2(dx, dz); CAMM.pitch = clamp(Math.asin(clamp(dy / dd, -1, 1)), -0.6, 0.6); CAMM.roll = 0; CAMM.F = w * 1.9; CAMM.cx = w / 2; CAMM.cy = h * 0.5; camSet(CAMM);
   ctx.save(); rrect(x, y, w, h, 12 * k); ctx.clip(); ctx.translate(x + w, y); ctx.scale(-1, 1);
-  CC = CAMM; drawSky(CAMM, w, false); collect(G, true); drawItems(now, true);
+  CC = CAMM; drawSky(ctx, CAMM, 1, w, false); collect(G, true); drawItems(now, true);
   const th = G.threat; if (th && P3(th.x, th.y, th.z)) { const r = (7 + 3 * Math.sin(now * 24)) * k; ctx.strokeStyle = '#ff3b2e'; ctx.lineWidth = 2.2 * k; ctx.beginPath(); ctx.arc(PX, PY, r, 0, TAU); ctx.stroke(); }      // his missile, ringed so it cannot be missed
   CC = CAM;
   ctx.restore();

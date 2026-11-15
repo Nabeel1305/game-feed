@@ -13,5 +13,6 @@ A swipe-up feed of mini-games. See **[LEDGER.md](LEDGER.md)** for every game and
 - `tools/check.py`: loads every game and the feed and checks for problems (runs automatically on GitHub)
 - `tools/build_feed.py`: builds the feed app from `games.json`; `tools/test_feed.py` tests it; `tools/test_controls.py` tests every game's pause, restart and levels; `tools/previews.py` films each game's card; `tools/fonts.py` fetches fonts
 - `tools/test_sync.py`: tests the part of the phone app that fetches new games
+- `tools/speed.py`: times a frame of every game on a slowed-down computer, side by side, so a slow game is caught before it reaches a phone
 - the `app-v2` branch: the built feed app, put there by GitHub after every change; installed phone apps fetch new games from it
 - the `app` branch: the same thing as it stood at build 18, kept frozen for the first installed apps. Do not delete it or push to it
