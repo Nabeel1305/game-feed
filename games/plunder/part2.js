@@ -1,7 +1,7 @@
 
 // ===================== PART 2: the expedition and the sea (no drawing) =====================
 // Headings: 0 = up the map; forward = (sin h, cos h); starboard (right) = (cos h, -sin h). Sides: 0 = port, 1 = starboard.
-const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.38, ARC_E: 0.62, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5, STEADY: 0.15, EVEN: 0.25, QUARTER: 0.5 };
+const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.38, ARC_E: 0.62, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5, STEADY: 0.15, EVEN: 0.2, QUARTER: 0.5 };
 const MYSHIP = { navy: 0, size: 2, cls: 'Your sloop', len: 46, beam: 13, hull: 100, guns: 5, speed: 47, turn: 0.95, masts: 2 };
 const KINDS = {
   trader:   { navy: 0, size: 1, cls: 'Trader',           len: 40, beam: 13,   hull: 30, guns: 0, speed: 27, turn: 0.5,  masts: 2, loot: 1.0,  crew: 0.85 },
@@ -34,7 +34,7 @@ function makeCfg(N, help) {
     eSpread: x(0.2, 0.07, 24),                     // how far her broadside scatters: wide at range, tight up close
     eSkill: x(0.25, 0.88, 20) * (1 - 0.5 * e),     // how well she places herself
     eSide: x(10, 45, 9) * (1 - 0.5 * e),          // what a whole broadside of hers does to your hull if every ball lands (yours is 100)
-    eHull: Math.max(1.3, x(0.8, 2.6, 9)) + 1.3 * e,       // her hull, times her kind's own (the first navy ships are no sturdier for it than later ones, but they must stand more than two broadsides: two lucky ones used to win)
+    eHull: Math.max(1.3, x(0.8, 2.6, 9)) + 0.8 * e,       // her hull, times her kind's own (the first navy ships are no sturdier for it than later ones, but they must stand more than two broadsides: two lucky ones used to win)
     maxNavy: boss ? 1 : N < 6 ? 1 : N < 15 ? 2 : 3,
     engage: N < 40 ? 1 : 2,                        // how many navy ships come in to fight you at once; the others stand off and wait their turn
     myBall: 7.5, myReload: 3.6,
@@ -50,9 +50,9 @@ function makeCfg(N, help) {
     shots: N >= 4 ? Math.min(0.5, 0.15 + f * 0.012) : 0,        // marines and captains with a pistol of their own
     read: 1 + Math.min(2.5, (N - 1) * 0.3),                     // how hard a man punishes the same move over and over
     punish: 1.2 + Math.min(0.6, N * 0.05),
-    hit: (0.07 + f * 0.0012) * (1 - 0.3 * e),                  // how far one of his blows pushes the tide against you
+    hit: (0.07 + f * 0.0012) * (1 - 0.15 * e),                  // how far one of his blows pushes the tide against you
     turn: 0.07 + f * 0.0012,                           // ...and what it costs to strike a man on guard (no kinder early: it is the one thing you must not do)
-    hp: (30 + f * 1.2) * (1 - 0.25 * e),                        // one ordinary man
+    hp: (30 + f * 1.2) * (1 + 0.1 * e),                        // one ordinary man
     kill: clamp(0.3 - f * 0.003, 0.16, 0.3),                   // how far dropping a man pushes the tide (so more men later)
     tol: (28 + 30 * Math.exp(-N / 14)) * (1 + 0.6 * e)          // how close your block must pass to his blade (at 390 wide)
   };

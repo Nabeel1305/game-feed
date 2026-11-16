@@ -146,7 +146,10 @@ function boardBot(kind, o = {}) {
     }
     if (wasOpen) { wasOpen = false; if (R() < (o.greed == null ? 0.2 : o.greed)) { slice(); nextIn = 0.4; return; } }      // (sometimes one blow too many, as people do: he turns it and cuts you for it)
     // he is on guard: nothing will land, and trying costs you. Wait for his blow.
-    if (m.os === 'guard' && o.poke && F.t - lastProvoke > o.poke) { stab(); lastProvoke = F.t; nextIn = 0.4; }      // (an impatient player: a jab at a man on guard every so often)
+    if (m.os === 'guard' && o.poke && F.t - lastProvoke > o.poke) { stab(); lastProvoke = F.t; nextIn = 0.4; }
+    // a player who starts it: a burst of blows at his guard until it breaks (hit him while he reels), then stop and wait
+    if (o.burst && m.os === 'guard' && !(m.set > 0) && !(m.soft > 0) && F.t - lastProvoke > o.burst) { slice(); nextIn = 0.45; if (m.os === 'stagger') lastProvoke = F.t; }
+    if (o.burst && m.os === 'block' && !m.rip && !(m.set > 0)) { nextIn = 0.1; }      // (an impatient player: a jab at a man on guard every so often)
   };
 }
 function runBoard(N, bot, seed, o) {

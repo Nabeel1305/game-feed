@@ -48,6 +48,8 @@ fights in a row: on deck, below deck (navy ships have their guns there), then th
    - **Never strike a man on guard.** He turns your blow aside and cuts you for it, at once, and harder each time you do it
      again (only time wipes that out). Spamming cannot win (his rule, 15 Nov 2026): your blows land only on a man you have
      opened up.
+   - **Attack first (0.2.1):** hammer his sword two or three times and his guard breaks: hit him while he reels. He may answer
+     straight off a parry, so be ready to block. Just after a broken guard he is set: strike him then and he turns it and cuts you.
    - **Block:** when his blow comes (its line shows gold), one swipe across his blade, out on the side it comes from. The
      clash is there and then, and he is open for a moment: one blow. A late block, as the line turns bright, throws him off
      balance: the riposte, as many stabs as you can fit in. One try for each blow: through the middle of him, on the wrong

@@ -38,9 +38,19 @@ with sync_playwright() as p:
         touch('touchStart', [(0, x0, y0)]); pg.wait_for_timeout(hold)
         for i in range(1, steps + 1): touch('touchMove', [(0, x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps)]); pg.wait_for_timeout(12)
         touch('touchEnd', []); pg.wait_for_timeout(30)
-    # never strike a man on guard: he turns the swipe aside and cuts you for it
-    r0 = pg.evaluate("[__sim.G.fight.man.hp, __sim.G.fight.tide, __sim.G.took.wounds]"); swipe(cx - 70, cy - 20, cx + 70, cy + 20); pg.wait_for_timeout(500)
-    r = pg.evaluate("[__sim.G.fight.man.hp, __sim.G.fight.tide, __sim.G.took.wounds]"); ok(r[0] == r0[0], 'a swipe at a man on guard is turned aside', str(r)); ok(r[1] < r0[1] and r[2] == r0[2] + 1, 'and he cuts you for it', str([r0, r]))
+    # attack first: swipes on his sword knock his footing, and two or three break his guard; then a swipe lands
+    hp0 = pg.evaluate("__sim.G.fight.man.hp"); broke = False
+    for _ in range(5):
+        pg.evaluate("(() => { const m = __sim.G.fight.man; m.next = 99; m.cnt = false; })()"); swipe(cx - 70, cy - 20, cx + 70, cy + 20); pg.wait_for_timeout(450)
+        pg.evaluate("__sim.G.fight.man.cnt = false")
+        if pg.evaluate("__sim.G.fight.man.os === 'stagger' && __sim.G.fight.man.broke"): broke = True; break
+    ok(broke and pg.evaluate("__sim.G.fight.man.hp") == hp0, 'swipes at a man on guard hit his sword, and break his guard', '')
+    swipe(cx - 70, cy - 20, cx + 70, cy + 20); pg.wait_for_timeout(80); ok(pg.evaluate("__sim.G.fight.man.hp") < hp0, 'then a swipe lands')
+    # once he is set again, a swipe is turned and he cuts you
+    pg.wait_for_function("__sim.G.fight.man.os === 'guard'", timeout=5000); pg.evaluate("(() => { const m = __sim.G.fight.man; m.next = 99; m.set = 9; })()"); pg.wait_for_timeout(500)
+    r0 = pg.evaluate("[__sim.G.fight.tide, __sim.G.took.wounds]"); swipe(cx - 70, cy - 20, cx + 70, cy + 20); pg.wait_for_timeout(500)
+    r = pg.evaluate("[__sim.G.fight.tide, __sim.G.took.wounds]"); ok(r[0] < r0[0] and r[1] == r0[1] + 1, 'once he is set, a swipe is turned and he cuts you', str([r0, r]))
+    pg.evaluate("__sim.G.fight.man.set = 0")
     pg.evaluate("__sim.G.fight.tide = 0.5"); pg.wait_for_timeout(500)
     # wait for his blow, block it with a real swipe across his blade on the side it comes from: the clash is at once, and he is open
     def his_blow():

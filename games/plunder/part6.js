@@ -269,7 +269,7 @@ function fightEvent(G, e) {
   const sparks = (x, y, n, col) => { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = (120 + Math.random() * 360) * f; fx({ k: 'line', w: 0, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.18 + Math.random() * 0.25, r0: 2.4 * f, r1: 0.6, col, g: 700 * f, drag: 3 }); } fx({ k: 'flash', w: 0, x, y, life: 0.12, r0: 10 * f, r1: 46 * f }); };
   switch (e.k) {
     case 'stage': setBanner(STAGE_N[e.i].replace('THE ', 'The ').replace("CAPTAIN'S CABIN", "captain's cabin").replace('ON DECK', 'On deck').replace('BELOW DECK', 'Below deck'), e.i === 2 ? F.capt : 'Aboard the ' + F.ship, 1.5); sfx.stage(e.i); TRAIL.length = 0; break;
-    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('loop', 'Never strike first. Block his blow, then strike.', 3.8); break;
+    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('loop', 'Block his blow, then strike. Or hammer his sword to break his guard.', 3.8); break;
     case 'windup': sfx.tell(e.kind, e.wind);
       if (e.kind === 'cut') tip('block', N <= 2 ? 'Swipe across his blade, on the side it comes from' : 'Swipe across his blade to block', 2.6); else if (e.kind === 'thrust') tip('thrust', 'Swipe through the ring to block', 2.4); else if (e.kind === 'heavy') tip('heavy', 'Red blow! Pull down to dodge', 2.4, true); else tip('shot', 'He takes aim! Pull down to dodge', 2.4, true); break;
     case 'feint': sfx.feint(); break;
@@ -291,7 +291,9 @@ function fightEvent(G, e) {
       else { const a = e.kind === 'stab' ? Math.random() * TAU : e.ang, L = (e.kind === 'stab' ? 22 : 74) * f; fx({ k: 'line', w: 0, x: x + Math.cos(a) * L, y: y + Math.sin(a) * L, vx: Math.cos(a) * L * 40, vy: Math.sin(a) * L * 40, life: 0.2, r0: (e.rip ? 9 : 6) * f, r1: 1, col: '#ffffff' }); sparks(x, y, e.rip ? 9 : 4, '#ffe9c0'); for (let i = 0; i < 4; i++) fx({ k: 'chip', w: 0, x, y, vx: (Math.random() - 0.5) * 300 * f, vy: (-80 - Math.random() * 200) * f, g: 900 * f, life: 0.5, r0: 4 * f, r1: 2 * f, col: F.man && (F.man.look.coat || F.man.look.shirt) || '#ccc', vr: 20 }); }
       sfx.cut(e.kind, e.rip); hitstop = Math.max(hitstop, e.rip ? 0.11 : e.kind === 'ball' ? 0.12 : 0.05); shake = Math.min(12, shake + (e.rip ? 7 : 3)); vibe(e.rip ? HAP.sharp : HAP.light);
       if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); else tip('bar', 'Each wound moves the bar. Fill it to take the deck.', 2.6); break; }
-    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say('HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.rip) tip('guard', 'Never strike a man on guard. Block his blow, then strike.', 3.4); break;
+    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say(e.rip ? 'HE IS SET: HE TURNS IT' : 'HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.rip) tip('guard', 'Just after a broken guard he is set. Wait, block, then strike.', 3.4); break;
+    case 'knocked': sparks(e.x, e.y, 5, '#e8d9a8'); sfx.clank(); shake = Math.min(14, shake + 3); tip('knock', 'Knocked his sword! Again, and his guard breaks. Watch for his answer.', 3); break;
+    case 'guardbreak': sparks(e.x, e.y, 12, '#ffd36a'); sfx.clank(); shake = Math.min(16, shake + 6); hitstop = 0.05; say('GUARD BROKEN!', e.x, e.y - 40 * f, '#ffd36a', 22); tip('brk', 'Hit him now, then get ready to block', 2.4); break;
     case 'turned': { const a = -0.5 + Math.random(), L = 150 * f;      // ...and cuts you for it (P11: no buzz for a failure)
       fx({ k: 'line', w: 0, x: c.x - Math.cos(a) * L, y: c.y - 30 * f - Math.sin(a) * L, vx: Math.cos(a) * L * 30, vy: Math.sin(a) * L * 30, life: 0.2, r0: 8 * f, r1: 1, col: '#ffb4a4' });
       shake = Math.min(18, shake + 9 + 2 * Math.min(e.n, 4)); hurtFlash = Math.min(1, 0.6 + 0.1 * e.n); hitstop = 0.05; sfx.hurt('cut'); duck(0.4, 400);

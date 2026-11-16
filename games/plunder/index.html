@@ -103,7 +103,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
       <li><b>Merchants</b> carry the most loot. <b>Navy ships</b> carry less, fight far harder, and their guns must be beaten before you can board.</li>
       <li><b>Your guns</b> fire out of your sides. Bring her into your gold arc, <b>let the wheel go</b>, and <b>FIRE</b> lights: press it then. Fired at nothing, or while you are still turning, a broadside is wasted, and every wasted one is slower to reload than the last.</li>
       <li><b>Her guns</b> only reach out of her sides: the red. It fills before she fires. Keep out of it: get close on her bow or her stern and turn faster than she can. Sail straight and she sits where your guns cannot reach.</li>
-      <li><b>Boarding.</b> <b>Never strike a man on guard</b>: he turns it and cuts you, harder each time. Wait for his blow and <b>block it</b>: one swipe across his blade, out on the side it comes from.</li>
+      <li><b>Boarding.</b> <b>Block his blow</b>: one swipe across his blade, out on the side it comes from. Or <b>attack first</b>: hammer his sword two or three times and his guard breaks (hit him, hit him). He may answer straight back, so be ready to block. Just after a broken guard he is set: strike him then and he cuts you, harder each time.</li>
       <li><b>Then strike</b> while he is open: swipe to slice, tap to stab. A late block, as his blade turns bright, throws him off balance: stab, stab, stab.</li>
       <li><b>Dodge</b> a shot, a red blow, or a blow your block missed: pull straight down, low on the screen. A dodge saves you; only a block opens him.</li>
       <li><b>Pistol:</b> hold it, drag the sights onto his head or heart, let go. One ball at a time: hold it again for four seconds to reload. Three balls.</li>
@@ -265,7 +265,7 @@ function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNati
 
 // ===================== PART 2: the expedition and the sea (no drawing) =====================
 // Headings: 0 = up the map; forward = (sin h, cos h); starboard (right) = (cos h, -sin h). Sides: 0 = port, 1 = starboard.
-const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.38, ARC_E: 0.62, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5, STEADY: 0.15, EVEN: 0.25, QUARTER: 0.5 };
+const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.38, ARC_E: 0.62, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5, STEADY: 0.15, EVEN: 0.2, QUARTER: 0.5 };
 const MYSHIP = { navy: 0, size: 2, cls: 'Your sloop', len: 46, beam: 13, hull: 100, guns: 5, speed: 47, turn: 0.95, masts: 2 };
 const KINDS = {
   trader:   { navy: 0, size: 1, cls: 'Trader',           len: 40, beam: 13,   hull: 30, guns: 0, speed: 27, turn: 0.5,  masts: 2, loot: 1.0,  crew: 0.85 },
@@ -298,7 +298,7 @@ function makeCfg(N, help) {
     eSpread: x(0.2, 0.07, 24),                     // how far her broadside scatters: wide at range, tight up close
     eSkill: x(0.25, 0.88, 20) * (1 - 0.5 * e),     // how well she places herself
     eSide: x(10, 45, 9) * (1 - 0.5 * e),          // what a whole broadside of hers does to your hull if every ball lands (yours is 100)
-    eHull: Math.max(1.3, x(0.8, 2.6, 9)) + 1.3 * e,       // her hull, times her kind's own (the first navy ships are no sturdier for it than later ones, but they must stand more than two broadsides: two lucky ones used to win)
+    eHull: Math.max(1.3, x(0.8, 2.6, 9)) + 0.8 * e,       // her hull, times her kind's own (the first navy ships are no sturdier for it than later ones, but they must stand more than two broadsides: two lucky ones used to win)
     maxNavy: boss ? 1 : N < 6 ? 1 : N < 15 ? 2 : 3,
     engage: N < 40 ? 1 : 2,                        // how many navy ships come in to fight you at once; the others stand off and wait their turn
     myBall: 7.5, myReload: 3.6,
@@ -314,9 +314,9 @@ function makeCfg(N, help) {
     shots: N >= 4 ? Math.min(0.5, 0.15 + f * 0.012) : 0,        // marines and captains with a pistol of their own
     read: 1 + Math.min(2.5, (N - 1) * 0.3),                     // how hard a man punishes the same move over and over
     punish: 1.2 + Math.min(0.6, N * 0.05),
-    hit: (0.07 + f * 0.0012) * (1 - 0.3 * e),                  // how far one of his blows pushes the tide against you
+    hit: (0.07 + f * 0.0012) * (1 - 0.15 * e),                  // how far one of his blows pushes the tide against you
     turn: 0.07 + f * 0.0012,                           // ...and what it costs to strike a man on guard (no kinder early: it is the one thing you must not do)
-    hp: (30 + f * 1.2) * (1 - 0.25 * e),                        // one ordinary man
+    hp: (30 + f * 1.2) * (1 + 0.1 * e),                        // one ordinary man
     kill: clamp(0.3 - f * 0.003, 0.16, 0.3),                   // how far dropping a man pushes the tide (so more men later)
     tol: (28 + 30 * Math.exp(-N / 14)) * (1 + 0.6 * e)          // how close your block must pass to his blade (at 390 wide)
   };
@@ -570,7 +570,8 @@ function seaStep(G, dt) {
 // ===================== PART 3: boarding (no drawing) =====================
 // One bar, the tide of the fight: 0 = your crew breaks, 1 = they give up this part of the ship. It starts each part at one half.
 const FIGHT = { SLICE: 9, STAB: 6, RIP_STAB: 2.4, RIP_SLICE: 1.6, OPEN: 1.5, RELOAD: 4, DODGE: 0.45, DODGE_CD: 0.8, GROUND: 0.02, IDLE: 4.5, SLIDE: 0.02, EYE: 0.27,
-  TURN_UP: 1.5, TURN_MAX: 4, TURN_FADE: 8, GUESS: 0.22 };      // a blow at a man on guard: he turns it and cuts you (a share of one of his blows), harder each time you do it again
+  TURN_UP: 1.5, TURN_MAX: 4, TURN_FADE: 8, GUESS: 0,
+  KNOCK: 0.42, FOOT_BACK: 0.3, COUNTER: 0.4, BREAK: 0.65, SET: 1.3, BRK_FADE: 10 };      // hitting his sword: each blow knocks his footing; broken, he reels and is open; then he is set for a moment      // a blow at a man on guard: he turns it and cuts you (a share of one of his blows), harder each time you do it again
 const TYPES = {
   sailor:  { mul: 0.9,  shot: 0,   heavy: 0.6, title: 'Sailor' },
   bosun:   { mul: 1.08, shot: 0,   heavy: 1.4, title: 'Bosun' },
@@ -611,7 +612,7 @@ function mkMan(G, type) {
     wind: Math.max(0.3, c.windup / Math.pow(s, 0.6)), gap: c.gap / s, oParry: Math.min(0.6, c.oParry * s), oDodge: Math.min(0.3, c.oDodge * s),
     combo: Math.min(0.7, c.combo * s), feint: Math.min(0.45, c.feint * s), heavy: Math.min(0.42, c.heavy * T.heavy + (capt && c.N >= 3 ? 0.12 : 0)),
     shot: (P.K.navy || capt) && R() < c.shots * T.shot ? 1 : 0, hit: c.hit * (0.85 + 0.15 * s), hp0, hp: hp0, worth: capt ? 0.5 : c.kill,
-    os: 'enter', ot: 0, z: 0.45, next: 0, atk: null, hits: 0, ph: R() * 9, lean: 0, hitT: 9, lastA: null, rec: 0.3, stag: 0.7, rip: false, ripD: 0, soft: 0, chainNext: 0, side: R() < 0.5 ? -1 : 1 };
+    os: 'enter', ot: 0, z: 0.45, next: 0, atk: null, hits: 0, ph: R() * 9, lean: 0, hitT: 9, lastA: null, rec: 0.3, stag: 0.7, rip: false, ripD: 0, soft: 0, foot: 1, brk: 0, set: 0, broke: false, chainNext: 0, side: R() < 0.5 ? -1 : 1 };
 }
 function manGeo(F) {      // where he is on the screen: everything scales about the eye line as he steps in
   const m = F.man, f = fu(), s = f * (m ? m.z * m.look.tall : 1), ey = H * FIGHT.EYE;
@@ -642,7 +643,7 @@ function makeAtk(G, m, kind) {
   if (kind === 'cut' || kind === 'heavy') {
     const pool = cutPool(N); let i = (R() * pool.length) | 0; if (pool.length > 2 && i === m.lastI) i = (R() * pool.length) | 0; m.lastI = i;      // (two sides: a plain coin each time, nothing to count on)
     const q = (pool[i][0] + (R() * 2 - 1) * pool[i][1]) * Math.PI / 180;
-    return { ang: q, sec: (N <= 2 ? 45 : 35) * Math.PI / 180, sx: c.x + Math.cos(q) * rad, sy: c.y + Math.sin(q) * rad, ex: c.x - Math.cos(q) * rad, ey: c.y - Math.sin(q) * rad };
+    return { ang: q, sec: (N <= 2 ? 50 : 40) * Math.PI / 180, sx: c.x + Math.cos(q) * rad, sy: c.y + Math.sin(q) * rad, ex: c.x - Math.cos(q) * rad, ey: c.y - Math.sin(q) * rad };
   }
   if (kind === 'thrust') return { px: c.x + (R() * 2 - 1) * 75 * fu(), py: c.y - (R() * 0.9 - 0.2) * 90 * fu() };
   return {};
@@ -671,7 +672,7 @@ function resolve(G, m) {      // his blow arrives: you dodged it, or it lands
     G.ev.push({ k: 'dodged', kind: A.kind });
   } else {
     const missed = !!A.tried, caught = F.t - F.lastSwing < 0.3 || missed || !!F.aim || F.reloading;      // swinging at him, or at the air, when his blow lands: it lands hard
-    const d = m.hit * A.mul * (A.kind === 'heavy' ? 1.6 : A.kind === 'shot' ? 1.5 : 1) * (caught ? 1.6 : 1);
+    const d = m.hit * A.mul * (A.kind === 'heavy' ? 1.6 : A.kind === 'shot' ? 1.5 : 1) * (missed ? 2.1 : caught ? 1.6 : 1);
     F.tide -= d; G.took.wounds++; F.chain = 0; F.pStun = 0.3; F.hurtT = 0; if (F.aim) { F.aim = null; G.ev.push({ k: 'spoiled' }); }
     m.os = 'recover'; m.rec = 0.42; m.open = false; if (A.chain < 2 && G.rnd() < m.combo) m.chainNext = A.chain + 1;
     G.ev.push({ k: 'hurt', kind: A.kind, caught, missed, why: A.why, d });
@@ -681,15 +682,15 @@ function manThink(G, m, dt) {
   const F = G.fight, R = G.rnd; m.ot += dt; m.hitT += dt; m.lean *= Math.pow(0.02, dt);
   switch (m.os) {
     case 'enter': m.z = Math.min(1, 0.45 + 0.55 * easeOut(Math.min(1, m.ot / 0.9))); if (m.ot >= 0.9 && F.phase === 'fight') { m.z = 1; m.os = 'guard'; m.ot = 0; m.next = m.gap * (0.45 + 0.4 * R()); } break;
-    case 'guard': if (F.phase !== 'fight') break; m.soft -= dt; m.next -= dt; if (m.next <= 0) startAttack(G, m); break;
+    case 'guard': if (F.phase !== 'fight') break; m.soft -= dt; m.set -= dt; m.foot = Math.min(1, m.foot + dt * FIGHT.FOOT_BACK); m.next -= dt; if (m.next <= 0) startAttack(G, m); break;
     case 'windup': { const A = m.atk;
       if (A.feint && !A.feinted && m.ot >= A.wind * 0.45) { A.feinted = true; const keep = A.ang; let g = makeAtk(G, m, 'cut'), n = 0; while (Math.abs(wrapA(g.ang - keep)) < 0.7 && n++ < 6) g = makeAtk(G, m, 'cut'); Object.assign(A, g); A.tried = false; G.ev.push({ k: 'feint' }); }
       if (m.ot >= A.wind) { m.os = 'strike'; m.ot = 0; G.ev.push({ k: 'strike', kind: A.kind }); } break; }
     case 'strike': if (m.ot >= 0.1) resolve(G, m); break;
     case 'recover': if (m.ot >= m.rec) { m.soft = m.open ? 0.3 : 0; m.open = false; if (m.chainNext && F.phase === 'fight') startAttack(G, m, { chain: m.chainNext, fast: 0.74 }); else { m.os = 'guard'; m.ot = 0; m.next = m.gap * (0.75 + 0.5 * R()); } } break;
-    case 'stagger': if (m.ot >= m.stag) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; m.next = m.gap * (0.4 + 0.4 * R()); } break;
+    case 'stagger': if (m.ot >= m.stag) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; if (m.broke) { m.broke = false; m.set = FIGHT.SET; m.foot = 1; } m.next = m.gap * (0.4 + 0.4 * R()); } break;
     case 'hurt': if (m.ot >= 0.22) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; m.next = Math.max(m.next, m.gap * (0.15 + 0.6 * R())); } break;      // when he comes back at you is his secret (it used to be a fixed beat after every hit, and a blind rhythm could ride it)
-    case 'block': if (m.rip) { if (m.ot >= 0.14) { m.os = 'riposte'; m.ot = 0; } } else if (m.ot >= 0.26) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.25, m.next); } break;
+    case 'block': if (F.phase === 'fight' && !m.rip) m.next -= dt; if (m.cnt && m.ot >= 0.16) { m.cnt = false; if (F.phase === 'fight') { startAttack(G, m, { fast: 0.8 }); break; } } if (m.rip) { if (m.ot >= 0.14) { m.os = 'riposte'; m.ot = 0; } } else if (m.ot >= 0.26) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.25, m.next); } break;
     case 'riposte':      // he turned your blow, and his blade comes straight back along yours: there is no stopping it
       if (m.rip && m.ot >= 0.1) { m.rip = false; if (F.phase === 'fight') { const d = m.ripD; F.tide -= d; G.took.wounds++; F.chain = 0; F.hurtT = 0; G.ev.push({ k: 'turned', d, n: F.turnN }); } }
       if (m.ot >= 0.24) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.3, m.next); } break;
@@ -714,7 +715,7 @@ function judgeBlock(G, A, ax, ay, bx, by) {
   const f = fu(), e = G.cfg.e, c = YOU(), mx = (ax + bx) / 2 - c.x, my = (ay + by) / 2 - c.y;
   if (A.kind === 'cut') {
     const q = strokeVsPath(ax, ay, bx, by, A.sx, A.sy, A.ex, A.ey); A.cx = q.x; A.cy = q.y;
-    if (q.d > (14 + 10 * e) * f) { A.why = 'far'; return false; }
+    if (q.d > (20 + 14 * e) * f) { A.why = 'far'; return false; }
     if (q.u > 0.47 || Math.hypot(mx, my) < 24 * f || Math.abs(wrapA(Math.atan2(my, mx) - A.ang)) > A.sec) { A.why = 'side'; return false; }
     return true;
   }
@@ -754,7 +755,7 @@ function pAttack(G, kind, ax, ay, bx, by) {
     for (const w of ['head', 'chest', 'belly']) { const q = ptSeg(g[w].x, g[w].y, ax, ay, bx, by); if (q.d <= g[w].r + (kind === 'stab' ? pad : 0)) { where = w; hx = q.x; hy = q.y; break; } } }
   // Your arm is still coming back from your last blow: nothing happens... unless this one reaches a man on guard. That is never
   // free (a stroke at the air used to keep your arm "busy", and blows thrown under its cover cost nothing).
-  if (F.pBusy > 0 && !(where && m.os === 'guard' && !(m.soft > 0))) return;
+  if (F.pBusy > 0 && !(where && m.os === 'guard' && !(m.soft > 0) && m.set > 0)) return;
   F.pBusy = kind === 'slice' ? 0.42 : 0.3; F.lastSwing = F.lastStroke = F.t; F.pAnim = { kind, t: 0, dur: kind === 'slice' ? 0.3 : 0.24, ax, ay, bx, by };
   G.ev.push({ k: 'swing', kind });
   if (!m || m.os === 'down' || m.os === 'yield' || m.z < 0.85) return;
@@ -767,6 +768,7 @@ function pAttack(G, kind, ax, ay, bx, by) {
   // balance after a late, clean block or after you dodged his red blow (the riposte). A man on guard turns your blow aside
   // and cuts you as he does it: it costs you, and it costs more each time you do it again. Only time wipes that out (one step
   // every eight seconds): a slip now and then is cheap, a habit is ruinous, at any speed.
+  if (m.os === 'stagger' && m.broke) { land(G, base * 1.1, { kind, where, x: hx, y: hy, ang }); return; }      // his footing broken: hit him, hit him
   if (m.os === 'stagger') { land(G, base * (kind === 'stab' ? FIGHT.RIP_STAB : FIGHT.RIP_SLICE) * (1 + 0.08 * Math.min(F.chain, 5)), { kind, where, x: hx, y: hy, ang, rip: true }); return; }
   if (m.os === 'recover' && m.open) {
     if (R() < m.oDodge) { m.open = false; m.os = 'evade'; m.ot = 0; m.lean = (bx >= ax ? 1 : -1) * (kind === 'stab' ? (R() < 0.5 ? 1 : -1) : 1); G.ev.push({ k: 'evaded' }); return; }
@@ -774,7 +776,19 @@ function pAttack(G, kind, ax, ay, bx, by) {
   }
   if (m.os === 'windup' || m.os === 'strike') { G.ev.push({ k: 'late', x: hx, y: hy }); return; }      // his blow is already coming: yours is knocked aside
   m.bx = hx; m.by = hy;
-  if (m.os !== 'guard' || m.soft > 0) { if (m.os !== 'block' && m.os !== 'riposte') { m.os = 'block'; m.ot = 0; m.rip = false; } G.ev.push({ k: 'blocked', x: hx, y: hy }); return; }      // he is busy (hurt, slipping, stepping back) or only just back on guard: turned, and no more
+  if (m.os !== 'guard' || m.soft > 0) { if (m.os !== 'block' && m.os !== 'riposte') { m.os = 'block'; m.ot = 0; m.rip = false; } G.ev.push({ k: 'blocked', x: hx, y: hy }); return; }
+  // You can start it: a blow at a man on guard hits his sword and knocks him back a step. Two or three in a row and his footing
+  // breaks: he reels, open, for a moment (hit him, hit him). Then he is set again, and while he is set a blow at his guard is
+  // turned and he cuts you for it, harder each time. Each break is harder to win than the last (fading with time). And his own
+  // blows keep coming whenever he likes: swinging when one lands makes it land hard. So: attack in bursts, stop, block.
+  if (!(m.set > 0)) {
+    m.brk = Math.max(0, m.brk - (F.t - (m.brkT || F.t)) / FIGHT.BRK_FADE); m.brkT = F.t;
+    m.foot -= FIGHT.KNOCK / (1 + 0.5 * m.brk) * (1 + 0.3 * G.cfg.e);
+    if (m.foot <= 0) { m.foot = 1; m.brk++; m.os = 'stagger'; m.ot = 0; m.stag = FIGHT.BREAK * (1 + 0.3 * G.cfg.e); m.broke = true; G.ev.push({ k: 'guardbreak', x: hx, y: hy }); return; }
+    m.os = 'block'; m.ot = 0; m.rip = false; G.ev.push({ k: 'knocked', x: hx, y: hy });
+    if (R() < FIGHT.COUNTER) m.cnt = true;      // ...and sometimes he answers straight off the parry: watch for it, and block it
+    return;
+  }      // he is busy (hurt, slipping, stepping back) or only just back on guard: turned, and no more
   m.os = 'block'; m.ot = 0; m.rip = true; m.ripD = G.cfg.turn * Math.pow(FIGHT.TURN_UP, Math.min(F.turnN, FIGHT.TURN_MAX)); F.turnN = Math.min(F.turnN, FIGHT.TURN_MAX) + 1; F.turnT = F.t;
   F.pStun = 0.4; F.pBusy = 0.4;      // your blade is knocked wide: nothing you can do about what comes next
   G.ev.push({ k: 'blocked', x: hx, y: hy, rip: true, n: F.turnN });
@@ -1593,7 +1607,7 @@ function fightEvent(G, e) {
   const sparks = (x, y, n, col) => { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = (120 + Math.random() * 360) * f; fx({ k: 'line', w: 0, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.18 + Math.random() * 0.25, r0: 2.4 * f, r1: 0.6, col, g: 700 * f, drag: 3 }); } fx({ k: 'flash', w: 0, x, y, life: 0.12, r0: 10 * f, r1: 46 * f }); };
   switch (e.k) {
     case 'stage': setBanner(STAGE_N[e.i].replace('THE ', 'The ').replace("CAPTAIN'S CABIN", "captain's cabin").replace('ON DECK', 'On deck').replace('BELOW DECK', 'Below deck'), e.i === 2 ? F.capt : 'Aboard the ' + F.ship, 1.5); sfx.stage(e.i); TRAIL.length = 0; break;
-    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('loop', 'Never strike first. Block his blow, then strike.', 3.8); break;
+    case 'man': if (F.stage < 2) sfx.step(); if (F.men === 1 && F.stage === 0) tip('loop', 'Block his blow, then strike. Or hammer his sword to break his guard.', 3.8); break;
     case 'windup': sfx.tell(e.kind, e.wind);
       if (e.kind === 'cut') tip('block', N <= 2 ? 'Swipe across his blade, on the side it comes from' : 'Swipe across his blade to block', 2.6); else if (e.kind === 'thrust') tip('thrust', 'Swipe through the ring to block', 2.4); else if (e.kind === 'heavy') tip('heavy', 'Red blow! Pull down to dodge', 2.4, true); else tip('shot', 'He takes aim! Pull down to dodge', 2.4, true); break;
     case 'feint': sfx.feint(); break;
@@ -1615,7 +1629,9 @@ function fightEvent(G, e) {
       else { const a = e.kind === 'stab' ? Math.random() * TAU : e.ang, L = (e.kind === 'stab' ? 22 : 74) * f; fx({ k: 'line', w: 0, x: x + Math.cos(a) * L, y: y + Math.sin(a) * L, vx: Math.cos(a) * L * 40, vy: Math.sin(a) * L * 40, life: 0.2, r0: (e.rip ? 9 : 6) * f, r1: 1, col: '#ffffff' }); sparks(x, y, e.rip ? 9 : 4, '#ffe9c0'); for (let i = 0; i < 4; i++) fx({ k: 'chip', w: 0, x, y, vx: (Math.random() - 0.5) * 300 * f, vy: (-80 - Math.random() * 200) * f, g: 900 * f, life: 0.5, r0: 4 * f, r1: 2 * f, col: F.man && (F.man.look.coat || F.man.look.shirt) || '#ccc', vr: 20 }); }
       sfx.cut(e.kind, e.rip); hitstop = Math.max(hitstop, e.rip ? 0.11 : e.kind === 'ball' ? 0.12 : 0.05); shake = Math.min(12, shake + (e.rip ? 7 : 3)); vibe(e.rip ? HAP.sharp : HAP.light);
       if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); else tip('bar', 'Each wound moves the bar. Fill it to take the deck.', 2.6); break; }
-    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say('HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.rip) tip('guard', 'Never strike a man on guard. Block his blow, then strike.', 3.4); break;
+    case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say(e.rip ? 'HE IS SET: HE TURNS IT' : 'HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.rip) tip('guard', 'Just after a broken guard he is set. Wait, block, then strike.', 3.4); break;
+    case 'knocked': sparks(e.x, e.y, 5, '#e8d9a8'); sfx.clank(); shake = Math.min(14, shake + 3); tip('knock', 'Knocked his sword! Again, and his guard breaks. Watch for his answer.', 3); break;
+    case 'guardbreak': sparks(e.x, e.y, 12, '#ffd36a'); sfx.clank(); shake = Math.min(16, shake + 6); hitstop = 0.05; say('GUARD BROKEN!', e.x, e.y - 40 * f, '#ffd36a', 22); tip('brk', 'Hit him now, then get ready to block', 2.4); break;
     case 'turned': { const a = -0.5 + Math.random(), L = 150 * f;      // ...and cuts you for it (P11: no buzz for a failure)
       fx({ k: 'line', w: 0, x: c.x - Math.cos(a) * L, y: c.y - 30 * f - Math.sin(a) * L, vx: Math.cos(a) * L * 30, vy: Math.sin(a) * L * 30, life: 0.2, r0: 8 * f, r1: 1, col: '#ffb4a4' });
       shake = Math.min(18, shake + 9 + 2 * Math.min(e.n, 4)); hurtFlash = Math.min(1, 0.6 + 0.1 * e.n); hitstop = 0.05; sfx.hurt('cut'); duck(0.4, 400);
