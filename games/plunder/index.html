@@ -2167,6 +2167,7 @@ window.__sim = {
   step(dt) { stepAll(G, dt); events(); if (G.over) finish(); },
   go(N, mini) { HEADLESS = false; level = N; startExp(!!mini); },
   playing, choose(c) { if (G && G.phase === 'sight') G.choice = c; },
+  sightAs(kinds) { const S0 = makeSight(G); S0.ships = kinds.map(kind => Object.assign({}, S0.ships[0], { kind, K: KINDS[kind], loot0: S0.ships[0].loot })); S0.navy = kinds.filter(k => KINDS[k].navy).length; G.sight = S0; placeSight(G, false); fillSight && fillSight(); },      // (for filming: a given sighting)
   board() { if (!G.sight) { G.sight = makeSight(G); for (const s of G.sight.ships) s.loot0 = s.loot; placeSight(G, true); } for (const s of G.foes) if (s.K.navy && s !== G.prize) { s.alive = false; s.gone = true; } if (G.prize.K.navy) G.prize.struck = true; sightCard(false); setPhase(G, 'board'); startBoarding(G); events(); },
   stage(i) { if (G.phase !== 'board') this.board(); const F = G.fight; while (F.stage < i) nextStage(G); events(); },
   cabin() { this.stage(2); },

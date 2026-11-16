@@ -1,0 +1,68 @@
+{
+  "seed": 3,
+  "slow": 2,
+  "level": "window.__sim.go(7)",
+  "js": "window.__sim.finest(); window.__sim.G.nextSight = 0.3;",
+  "pre": [
+    {
+      "t": 0.6,
+      "js": "window.__sim.sightAs(['brig'])"
+    },
+    {
+      "t": 1.2,
+      "js": "document.getElementById('raidBtn').click()"
+    }
+  ],
+  "anchor": "(() => { const G = window.__sim.G; return !!G && G.phase === 'battle'; })()",
+  "from": 0.5,
+  "secs": 3.4,
+  "poster": 2.2,
+  "moves": [
+    {
+      "t": 0.1,
+      "js": "(() => { const S = window.__sim, G = S.G, me = G.me, t = G.foes.find(f => f.K.navy && f.alive) || G.foes[0]; for (const o of G.foes) if (o !== t) { o.gone = true; o.alive = false; } t.x = me.x + S.rgtX(me) * 90 + S.fwdX(me) * 4; t.y = me.y + S.rgtY(me) * 90 + S.fwdY(me) * 4; t.hdg = me.hdg; t.v = me.v; t.load = [9, 9]; t.think = 3; t.hull = Math.min(t.hull, 14); me.load = [0, 0]; G.quiet = 0; })()"
+    },
+    {
+      "t": 0.15,
+      "press": [
+        0.22,
+        0.86
+      ],
+      "finger": 0
+    },
+    {
+      "t": 0.2,
+      "to": [
+        0.3,
+        0.86
+      ],
+      "ms": 500,
+      "finger": 0
+    },
+    {
+      "t": 1.4,
+      "to": [
+        0.22,
+        0.86
+      ],
+      "ms": 300,
+      "finger": 0
+    },
+    {
+      "t": 1.7,
+      "js": "(() => { const S = window.__sim, G = S.G, me = G.me, t = G.foes.find(f => f.K.navy && f.alive); const r = S.relTo(me, t); if (Math.abs(Math.atan2(r.ly, Math.abs(r.lx))) > 0.3) { t.x = me.x + S.rgtX(me) * 88 + S.fwdX(me) * 6; t.y = me.y + S.rgtY(me) * 88 + S.fwdY(me) * 6; } t.hdg = me.hdg; t.v = me.v; })()"
+    },
+    {
+      "t": 1.6,
+      "js": "(() => { const S = window.__sim, G = S.G, t = G.foes.find(f => f.K.navy && f.alive); if (t) { t.load = [0.25, 0.25]; t.think = 0; } })()"
+    },
+    {
+      "t": 1.85,
+      "tap": [
+        0.83,
+        0.88
+      ],
+      "finger": 1
+    }
+  ]
+}

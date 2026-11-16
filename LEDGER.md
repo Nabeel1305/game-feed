@@ -4,7 +4,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
 **8 games** so far. Next number: **9**.
 
-**Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 7 games in it.
+**Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
 | # | Game | Status | On the app | Version | Play / test page | Code |
 |---|------|--------|------------|---------|------------------|------|
@@ -15,7 +15,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 5 | **Zenith** | testing | yes: core game, always on the phone | 0.2.0 | [play](https://claude.ai/artifact/HQD2KteiP4RFWSZTdH8CRy) | `games/zenith/index.html` |
 | 6 | **Hippodrome** | testing | yes: core game, always on the phone | 0.3.0 | [play](https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM) | `games/hippodrome/index.html` |
 | 7 | **Bandit** | testing | yes: played over the internet, can be saved | 0.2.2 | [play](https://claude.ai/artifact/4HD7GnZtuVf1ahdLsjefSG) | `games/bandit/index.html` |
-| 8 | **Plunder** | testing | not yet (he has not said so) | 0.4.0 | [play](https://claude.ai/artifact/1Lwh2BrJQL1DhKb4keBooa) | `games/plunder/index.html` |
+| 8 | **Plunder** | approved | yes: played over the internet, can be saved | 0.4.0 | [play](https://claude.ai/artifact/1Lwh2BrJQL1DhKb4keBooa) | `games/plunder/index.html` |
 
 ## What each game is
 
