@@ -14,7 +14,8 @@ with sync_playwright() as p:
     b = p.chromium.launch(); ctx = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=1, has_touch=True, is_mobile=True); pg = ctx.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('file://' + os.path.join(here, 'index.html')); pg.wait_for_timeout(400)
-    pg.evaluate("localStorage.setItem('pl.mute', 'true')"); pg.reload(); pg.wait_for_timeout(400)
+    pg.evaluate("localStorage.setItem('pl.mute', 'true'); localStorage.setItem('pl.taught', '3')"); pg.reload();      # (the lessons are tried in test_lessons.py)
+    pg.wait_for_timeout(400)
     cdp = ctx.new_cdp_session(pg)
     def touch(kind, pts): cdp.send('Input.dispatchTouchEvent', {'type': kind, 'touchPoints': [{'x': x, 'y': y, 'id': i} for (i, x, y) in pts]})
     pg.evaluate("window.gameFeedStart('mini')"); pg.wait_for_timeout(300)

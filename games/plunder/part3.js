@@ -58,6 +58,39 @@ function spawnMan(G) {
   else type = f > 3 && R() < (F.stage ? 0.4 : 0.2) ? 'bosun' : 'sailor';
   F.man = mkMan(G, type); F.men++; G.ev.push({ k: 'man', type });
 }
+
+// ---------- LESSONS: the first three boardings teach every move, and you do not go on until you can do each one ----------
+// (his rule, 16 Nov 2026: "you have to teach people all of this, and you don't let them move past till you're sure they understand
+// ... until they're able to counter all of these at least twice or three times. Make it easy just so they understand.")
+// While a lesson is on, nothing you do or fail to do moves the tide: a miss only says "try again" and shows how. His blows come
+// slowly, one kind at a time, with a pause between. Passed lessons are remembered, so a retry goes straight to the fight.
+const DRILLS = {
+  1: [{ id: 'cutL', kind: 'cut', side: -1, need: 2, ok: w => w === 'parry' || w === 'perfect', title: 'BLOCK HIS SWING', how: 'A gold line shows where his blade comes from. Swipe across it, out on that side.' },
+      { id: 'cutR', kind: 'cut', side: 1, need: 2, ok: w => w === 'parry' || w === 'perfect', title: 'BLOCK HIS SWING', how: 'Now from the other side. Swipe across the gold line, on its side.' },
+      { id: 'stab', kind: 'thrust', need: 3, ok: w => w === 'parry' || w === 'perfect', title: 'BLOCK HIS STAB', how: 'A ring shows where his point will land. Swipe straight through the ring.' },
+      { id: 'red', kind: 'heavy', need: 2, ok: w => w === 'dodge:heavy', title: 'DODGE THE RED BLOW', how: 'Red cannot be blocked. Pull your thumb straight down, low on the screen.' },
+      { id: 'strike', kind: 'cut', need: 3, ok: w => w === 'hit:open' || w === 'hit:rip', title: 'BLOCK, THEN STRIKE', how: 'Block his swing, then swipe across him or tap him while he is open.' }],
+  2: [{ id: 'break', need: 2, ok: w => w === 'hit:broke', title: 'ATTACK FIRST', how: 'Swipe at him two or three times to knock his sword. When his guard breaks, hit him.' },
+      { id: 'late', kind: 'cut', slow: 2.2, need: 2, ok: w => w === 'perfect', title: 'THE LATE BLOCK', how: 'Wait until his line turns bright white, then block. He is thrown off balance: stab, stab!' },
+      { id: 'shot', kind: 'shot', need: 2, ok: w => w === 'dodge:shot', title: 'DODGE HIS PISTOL', how: 'When he aims his pistol (red), pull your thumb straight down, low.' },
+      { id: 'pistol', need: 2, ok: w => w === 'pistol', title: 'YOUR PISTOL', how: 'Hold the pistol button, drag the sights onto his head or chest, let go.' }],
+  3: [{ id: 'mix', kind: 'mix', need: 8, ok: w => w === 'parry' || w === 'perfect' || w.startsWith('dodge:heavy') || w.startsWith('dodge:shot'), title: 'PUT IT ALL TOGETHER', how: 'Anything can come now. Block the gold line or ring, dodge the red.' }],
+};
+function drillGood(G, what) {
+  const F = G.fight, D = F.drill; if (!D || F.phase !== 'fight') return; const st = D.steps[D.i]; if (!st.ok(what)) return;
+  D.n++; const m = F.man; if (m) { m.next = Math.max(m.next, 1.1); m.chainNext = 0; }
+  if (D.n < st.need) { G.ev.push({ k: 'drillok', n: D.n, need: st.need }); return; }
+  D.i++; D.n = 0; D.miss = 0;
+  if (D.i >= D.steps.length) { F.drill = null; F.tide = 0.5; F.lastTry = F.t; if (m) m.next = 1.4; G.ev.push({ k: 'drilldone', N: G.N }); }
+  else G.ev.push({ k: 'drillnext', st: D.steps[D.i] });
+}
+function drillBad(G) { const D = G.fight.drill; if (!D) return; D.miss++; G.ev.push({ k: 'drillmiss', st: D.steps[D.i] }); }
+function drillAttack(G, m) {
+  const D = G.fight.drill, st = D.steps[D.i]; m.next = 9; if (!st.kind) return;
+  const kind = st.kind === 'mix' ? pick(G.rnd, ['cut', 'cut', 'thrust', 'thrust', 'heavy', 'shot']) : st.kind;
+  startAttack(G, m, { kind }); const A = m.atk; A.feint = false; A.wind = Math.max(A.wind, 0.9) * (st.slow || 1.5);
+  if (st.side) for (let n = 0; n < 12 && Math.sign(Math.cos(A.ang)) !== st.side; n++) Object.assign(A, makeAtk(G, m, kind));
+}
 function startBoarding(G) {
   const P = G.prize;
   G.fight = { stage: -1, t: 0, tide: 0.5, shown: 0.5, man: null, phase: 'intro', pt: 0, dodge: null, dodgeCd: 0, pBusy: 0, pStun: 0, lastSwing: -9, lastStroke: -9, lastTry: 0,
@@ -65,8 +98,9 @@ function startBoarding(G) {
   nextStage(G);
 }
 function nextStage(G) {
-  const F = G.fight; F.stage++; F.tide = 0.5; F.shown = 0.5; F.peak = 0.5; F.phase = 'intro'; F.pt = 0; F.man = null; F.dodge = null; F.aim = null; F.men = 0; F.lastTry = F.t; F.recentAtk.length = 0; F.sameN = 0; F.turnN = 0;
+  const F = G.fight; F.stage++; F.drill = null; F.tide = 0.5; F.shown = 0.5; F.peak = 0.5; F.phase = 'intro'; F.pt = 0; F.man = null; F.dodge = null; F.aim = null; F.men = 0; F.lastTry = F.t; F.recentAtk.length = 0; F.sameN = 0; F.turnN = 0;
   G.ev.push({ k: 'stage', i: F.stage }); spawnMan(G);
+  if (F.stage === 0 && G.teach && DRILLS[G.N] && (G.taught | 0) < G.N) { F.drill = { steps: DRILLS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'drillnext', st: F.drill.steps[0], first: true }); }
 }
 
 // ---------- his attacks ----------
@@ -93,6 +127,7 @@ function parried(G, m, perfect) {      // your stroke met his blade: the clash h
   if (perfect) { m.os = 'stagger'; m.stag = 0.75 + 0.5 * c.e; }      // a late, clean block: he is off balance, time for a riposte
   else { m.os = 'recover'; m.rec = 0.45 + 0.25 * c.e; m.open = true; if (A.chain < 2 && G.rnd() < m.combo) m.chainNext = A.chain + 1; }      // blocked: he is open for a moment, time for one blow
   G.ev.push({ k: 'parry', perfect, chain: F.chain, x: A.cx, y: A.cy });
+  if (F.drill) { m.chainNext = 0; drillGood(G, perfect ? 'perfect' : 'parry'); }
 }
 function resolve(G, m) {      // his blow arrives: you dodged it, or it lands
   const F = G.fight, c = G.cfg, A = m.atk; A.result = F.dodge && F.dodge.t <= FIGHT.DODGE ? 'dodged' : 'hit'; m.ot = 0; if (A.kind === 'shot') m.shot = 0;
@@ -101,11 +136,11 @@ function resolve(G, m) {      // his blow arrives: you dodged it, or it lands
     // time, whatever side his blow comes from: when it opened him too, dodge-and-cut on a steady beat won the first expedition.)
     // A red blow cannot be blocked, so dodging that one is what throws him off balance; a dodged shot leaves him fumbling.
     if (A.kind === 'heavy') { m.os = 'stagger'; m.stag = 0.9; } else { m.os = 'recover'; m.rec = A.kind === 'shot' ? 0.8 : 0.42; m.open = A.kind === 'shot'; }
-    G.ev.push({ k: 'dodged', kind: A.kind });
+    G.ev.push({ k: 'dodged', kind: A.kind }); if (F.drill) drillGood(G, 'dodge:' + A.kind);
   } else {
     const missed = !!A.tried, caught = F.t - F.lastSwing < 0.3 || missed || !!F.aim || F.reloading;      // swinging at him, or at the air, when his blow lands: it lands hard
     const d = m.hit * A.mul * (A.kind === 'heavy' ? 1.6 : A.kind === 'shot' ? 1.5 : 1) * (missed ? 2.1 : caught ? 1.6 : 1);
-    F.tide -= d; G.took.wounds++; F.chain = 0; F.pStun = 0.3; F.hurtT = 0; if (F.aim) { F.aim = null; G.ev.push({ k: 'spoiled' }); }
+    if (F.drill) drillBad(G); else { F.tide -= d; G.took.wounds++; } F.chain = 0; F.pStun = 0.3; F.hurtT = 0; if (F.aim) { F.aim = null; G.ev.push({ k: 'spoiled' }); }
     m.os = 'recover'; m.rec = 0.42; m.open = false; if (A.chain < 2 && G.rnd() < m.combo) m.chainNext = A.chain + 1;
     G.ev.push({ k: 'hurt', kind: A.kind, caught, missed, why: A.why, d });
   }
@@ -114,7 +149,7 @@ function manThink(G, m, dt) {
   const F = G.fight, R = G.rnd; m.ot += dt; m.hitT += dt; m.lean *= Math.pow(0.02, dt);
   switch (m.os) {
     case 'enter': m.z = Math.min(1, 0.45 + 0.55 * easeOut(Math.min(1, m.ot / 0.9))); if (m.ot >= 0.9 && F.phase === 'fight') { m.z = 1; m.os = 'guard'; m.ot = 0; m.next = m.gap * (0.45 + 0.4 * R()); } break;
-    case 'guard': if (F.phase !== 'fight') break; m.soft -= dt; m.set -= dt; m.foot = Math.min(1, m.foot + dt * FIGHT.FOOT_BACK); m.next -= dt; if (m.next <= 0) startAttack(G, m); break;
+    case 'guard': if (F.phase !== 'fight') break; m.soft -= dt; m.set -= dt; m.foot = Math.min(1, m.foot + dt * FIGHT.FOOT_BACK); if (F.drill && !F.drill.steps[F.drill.i].kind) { m.next = 9; break; } m.next -= dt; if (m.next <= 0) { if (F.drill) drillAttack(G, m); else startAttack(G, m); } break;
     case 'windup': { const A = m.atk;
       if (A.feint && !A.feinted && m.ot >= A.wind * 0.45) { A.feinted = true; const keep = A.ang; let g = makeAtk(G, m, 'cut'), n = 0; while (Math.abs(wrapA(g.ang - keep)) < 0.7 && n++ < 6) g = makeAtk(G, m, 'cut'); Object.assign(A, g); A.tried = false; G.ev.push({ k: 'feint' }); }
       if (m.ot >= A.wind) { m.os = 'strike'; m.ot = 0; G.ev.push({ k: 'strike', kind: A.kind }); } break; }
@@ -122,9 +157,9 @@ function manThink(G, m, dt) {
     case 'recover': if (m.ot >= m.rec) { m.soft = m.open ? 0.3 : 0; m.open = false; if (m.chainNext && F.phase === 'fight') startAttack(G, m, { chain: m.chainNext, fast: 0.74 }); else { m.os = 'guard'; m.ot = 0; m.next = m.gap * (0.75 + 0.5 * R()); } } break;
     case 'stagger': if (m.ot >= m.stag) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; if (m.broke) { m.broke = false; m.set = FIGHT.SET; m.foot = 1; } m.next = m.gap * (0.4 + 0.4 * R()); } break;
     case 'hurt': if (m.ot >= 0.22) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; m.next = Math.max(m.next, m.gap * (0.15 + 0.6 * R())); } break;      // when he comes back at you is his secret (it used to be a fixed beat after every hit, and a blind rhythm could ride it)
-    case 'block': if (F.phase === 'fight' && !m.rip) m.next -= dt; if (m.cnt && m.ot >= 0.16) { m.cnt = false; if (F.phase === 'fight') { startAttack(G, m, { fast: 0.8 }); break; } } if (m.rip) { if (m.ot >= 0.14) { m.os = 'riposte'; m.ot = 0; } } else if (m.ot >= 0.26) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.25, m.next); } break;
+    case 'block': if (F.phase === 'fight' && !m.rip) m.next -= dt; if (F.drill) m.cnt = false; if (m.cnt && m.ot >= 0.16) { m.cnt = false; if (F.phase === 'fight') { startAttack(G, m, { fast: 0.8 }); break; } } if (m.rip) { if (m.ot >= 0.14) { m.os = 'riposte'; m.ot = 0; } } else if (m.ot >= 0.26) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.25, m.next); } break;
     case 'riposte':      // he turned your blow, and his blade comes straight back along yours: there is no stopping it
-      if (m.rip && m.ot >= 0.1) { m.rip = false; if (F.phase === 'fight') { const d = m.ripD; F.tide -= d; G.took.wounds++; F.chain = 0; F.hurtT = 0; G.ev.push({ k: 'turned', d, n: F.turnN }); } }
+      if (m.rip && m.ot >= 0.1) { m.rip = false; if (F.phase === 'fight') { const d = F.drill ? 0 : m.ripD; if (F.drill) drillBad(G); F.tide -= d; G.took.wounds++; F.chain = 0; F.hurtT = 0; G.ev.push({ k: 'turned', d, n: F.turnN }); } }
       if (m.ot >= 0.24) { m.os = 'guard'; m.ot = 0; m.next = Math.max(0.3, m.next); } break;
     case 'evade': if (m.ot >= 0.32) { m.os = 'guard'; m.ot = 0; m.soft = 0.3; m.next = Math.max(0.2, m.next); } break;
     case 'down': if (m.ot >= 0.9 && F.phase === 'fight') spawnMan(G); break;
@@ -227,6 +262,9 @@ function pAttack(G, kind, ax, ay, bx, by) {
 }
 function land(G, dmg, o) {
   const F = G.fight, m = F.man; if (o.where === 'head') dmg *= 1.2;
+  if (F.drill) { const w = o.kind === 'ball' ? 'pistol' : m.os === 'stagger' && m.broke ? 'hit:broke' : m.os === 'stagger' ? 'hit:rip' : m.os === 'recover' && m.open ? 'hit:open' : 'hit';
+    G.ev.push(Object.assign({ k: 'cut', dmg }, o)); m.hits++; m.hitT = 0; if (!o.trade && m.os !== 'stagger') { m.os = 'hurt'; m.ot = 0; m.open = false; m.chainNext = 0; } else if (m.os === 'stagger') { m.stag = m.ot + 0.25; m.broke = false; }      // (one hit counts for each opening: the next one needs a new block, or a new broken guard)
+    drillGood(G, w); return; }
   dmg = Math.min(dmg, m.hp); m.hp -= dmg; m.hits++; m.hitT = 0; F.tide = Math.min(1, F.tide + m.worth * dmg / m.hp0);
   G.ev.push(Object.assign({ k: 'cut', dmg }, o));
   if (m.hp <= 0.01) { m.hp = 0; if (m.capt) F.tide = 1; else { m.os = 'down'; m.ot = 0; m.fall = o.x < manGeo(F).x ? 1 : -1; F.dropped++; G.ev.push({ k: 'down' }); } }
@@ -252,7 +290,7 @@ function aimAt(F) { const a = F.aim, f = fu(), A = f * (50 * Math.exp(-a.t / 0.5
 function fFire(G) {
   const F = G.fight, a = F && F.aim; if (!a) return;
   if (a.t < 0.3 || F.phase !== 'fight') { F.aim = null; G.ev.push({ k: 'lower' }); return; }
-  const p = aimAt(F), m = F.man; F.aim = null; F.loaded = false; G.shots--; F.pBusy = 0.5; F.lastTry = F.t; let res = 'miss';
+  const p = aimAt(F), m = F.man; F.aim = null; F.loaded = false; G.shots--; if (F.drill) { G.shots++; F.loaded = true; } F.pBusy = 0.5; F.lastTry = F.t; let res = 'miss';
   if (m && m.os !== 'down' && m.os !== 'yield' && m.z >= 0.8) {
     const g = manGeo(F), d = (c) => Math.hypot(p.x - c.x, p.y - c.y);
     if (d(g.head) <= g.head.r) res = 'head'; else if (d(g.chest) <= g.chest.r * 0.62) res = 'heart'; else if (d(g.chest) <= g.chest.r || d(g.belly) <= g.belly.r) res = 'body';
@@ -281,7 +319,7 @@ function boardStep(G, dt) {
   switch (F.phase) {
     case 'intro': if (F.pt >= 1.3) { F.phase = 'fight'; F.pt = 0; F.lastTry = F.t; } break;
     case 'fight':
-      if (F.t - F.lastTry > FIGHT.IDLE && F.man && F.man.os !== 'down' && F.man.os !== 'enter') F.tide -= FIGHT.SLIDE * dt;
+      if (!F.drill && F.t - F.lastTry > FIGHT.IDLE && F.man && F.man.os !== 'down' && F.man.os !== 'enter') F.tide -= FIGHT.SLIDE * dt;
       if (F.tide <= 0) { F.tide = 0; F.phase = 'lost'; F.pt = 0; F.aim = null; F.reloading = false; G.ev.push({ k: 'broken' }); }
       break;
     case 'won': if (F.pt >= 1.9) { if (F.stage < 2) nextStage(G); else if (!G.over) G.over = 'won'; } break;

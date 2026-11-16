@@ -113,7 +113,7 @@ function placeSight(G, near) {      // put the sighted ships on the sea ahead, c
 // ---------- an expedition ----------
 function newExp(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
-  return { N, cfg, seed, rnd: rng(seed), phase: 'sail', t: 0, pt: 0, me: mkShip(MYSHIP, 0, 0, 0), foes: [], balls: [], ev: [], msgs: [],
+  return { N, cfg, seed, teach: !!o.teach, taught: o.taught | 0, rnd: rng(seed), phase: 'sail', t: 0, pt: 0, me: mkShip(MYSHIP, 0, 0, 0), foes: [], balls: [], ev: [], msgs: [],
     in: { rud: 0, fire: false, held: false }, firePrev: false, choice: null, sightI: 0, passes: N <= 2 || cfg.boss ? 0 : 2, sight: null, prize: null,
     took: { hull: 0, wounds: 0 }, dealt: 0, lastHit: 0, battleT: 0, shots: 3, fight: null, over: null, nextSight: N === 1 ? 2.4 : 4.0, lit: [false, false], inArc: [false, false], straightT: 0, hdgRef: 0, wheelT: 0, wheelRef: 0, waste: 0, evenT: 0, quiet: 0, idle: 0, taken: [] };
 }

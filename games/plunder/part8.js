@@ -23,7 +23,7 @@ function startExp(mini) {
   audio();
   if (!HEADLESS) store.set('level', level);
   clearFx(); sightCard(false); endT = -1; paused = false;
-  G = newExp(level, { help: helpOn() }); LIVE = G; if (mini) G.nextSight = Math.min(G.nextSight, 1.1);
+  G = newExp(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); LIVE = G; if (mini) G.nextSight = Math.min(G.nextSight, 1.1);
   CAM.x = G.me.x; CAM.y = G.me.y + 22; CAM.a = 0; CAM.z = k * 2.2; seaMood = 0; MUS.want = 'calm';
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); if (level <= 2) { hint = { key: 'steer', txt: 'Slide your left thumb to steer', t: 0, secs: 3, y: H * 0.8 }; } }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
@@ -300,7 +300,7 @@ window.__sim = {
     [actx, BUS, AMB, MUTE] = keep; Object.assign(MUS, km); MUS.t = 0; for (const q in NB) delete NB[q];
     return { err, peak: +pk.toFixed(3), rms: +Math.sqrt(sq / ch.length).toFixed(4), eighths: notes };
   },
-  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = LIVE = newExp(N, o || {}); },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = LIVE = newExp(N, o || {}); },      // (lessons only when o.teach)
   step(dt) { stepAll(G, dt); events(); if (G.over) finish(); },
   go(N, mini) { HEADLESS = false; level = N; startExp(!!mini); },
   playing, choose(c) { if (G && G.phase === 'sight') G.choice = c; },

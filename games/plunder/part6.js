@@ -222,7 +222,19 @@ function drawMine(G, F) {
   }
 }
 // ---------- the bar, the pistol button, hints ----------
+function drillPanel(F) {      // the lesson on now, how to do it, and how many done
+  const D = F.drill, st = D.steps[D.i], x = 16, w = W - 32, y = 84, f = fu(); ctx.save();
+  ctx.font = `700 ${Math.round(13 * f)}px ${BC}`; const lines = wrapText(st.how, w - 24); const h = 54 * f + lines.length * 17 * f;
+  ctx.fillStyle = 'rgba(3,10,14,.78)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(233,185,73,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#e9b949'; ctx.font = `700 ${Math.round(12 * f)}px ${BC}`;
+  ctx.fillText(`LESSON ${D.i + 1} OF ${D.steps.length}`, x + 12, y + 10 * f); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(18 * f)}px ${BC}`; ctx.fillText(st.title, x + 12, y + 25 * f);
+  ctx.font = `700 ${Math.round(13 * f)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.88)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 48 * f + i * 17 * f));
+  for (let i = 0; i < st.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st.need - 1 - i) * 18 * f, y + 18 * f, 6 * f, 0, TAU); if (i < D.n) { ctx.fillStyle = '#7fd6a0'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
+  ctx.restore();
+}
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function hudFight(G, F) {
+  if (F.drill && F.phase === 'fight') drillPanel(F);
   const x0 = 46 * k, wB = W - 92 * k, y = 54, hB = 13, u = clamp(F.shown, 0, 1), f = fu();
   ctx.fillStyle = 'rgba(3,10,14,.6)'; rrect(x0 - 3, y - 3, wB + 6, hB + 6, 6); ctx.fill();
   const gy = ctx.createLinearGradient(0, y, 0, y + hB); gy.addColorStop(0, '#ffd978'); gy.addColorStop(1, '#c98f24'); ctx.fillStyle = gy; ctx.fillRect(x0, y, wB * u, hB);
@@ -292,6 +304,10 @@ function fightEvent(G, e) {
       sfx.cut(e.kind, e.rip); hitstop = Math.max(hitstop, e.rip ? 0.11 : e.kind === 'ball' ? 0.12 : 0.05); shake = Math.min(12, shake + (e.rip ? 7 : 3)); vibe(e.rip ? HAP.sharp : HAP.light);
       if (e.rip) say('RIPOSTE!', x, y - 44 * f, '#ffd166', 28); else if (e.trade && e.kind !== 'ball') say('GLANCING', x, y - 40 * f, '#d8dee2', 16); else tip('bar', 'Each wound moves the bar. Fill it to take the deck.', 2.6); break; }
     case 'blocked': sparks(e.x, e.y, 6, '#cfd8dc'); sfx.clank(); say(e.rip ? 'HE IS SET: HE TURNS IT' : 'HE TURNS IT', e.x, e.y - 40 * f, '#cfd8dc', 18); if (e.rip) tip('guard', 'Just after a broken guard he is set. Wait, block, then strike.', 3.4); break;
+    case 'drillnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', W / 2, H * 0.5, '#ffd36a', 24); sfx.bell(0.7); break;
+    case 'drillok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.5, '#9be3b5', 24); sfx.coin(e.n); break;
+    case 'drillmiss': say('TRY AGAIN', W / 2, H * 0.58, '#ffd0c4', 22); tip('dm' + e.st.id, e.st.how, 3.4); break;
+    case 'drilldone': say('YOU KNOW IT. NOW TAKE THE SHIP!', W / 2, H * 0.5, '#ffd36a', 22); sfx.fanfare(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'knocked': sparks(e.x, e.y, 5, '#e8d9a8'); sfx.clank(); shake = Math.min(14, shake + 3); tip('knock', 'Knocked his sword! Again, and his guard breaks. Watch for his answer.', 3); break;
     case 'guardbreak': sparks(e.x, e.y, 12, '#ffd36a'); sfx.clank(); shake = Math.min(16, shake + 6); hitstop = 0.05; say('GUARD BROKEN!', e.x, e.y - 40 * f, '#ffd36a', 22); tip('brk', 'Hit him now, then get ready to block', 2.4); break;
     case 'turned': { const a = -0.5 + Math.random(), L = 150 * f;      // ...and cuts you for it (P11: no buzz for a failure)

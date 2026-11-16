@@ -157,6 +157,22 @@ function runBoard(N, bot, seed, o) {
   while (!G.over && n++ < 60 * 400) { b(G); S.step(DT); }
   return { won: G.over === 'won', t: G.t, stage: G.fight.stage, wounds: G.took.wounds, drop: G.fight.dropped, shots: G.shots, navy: G.fight.navy };
 }
+// A player taking the lessons of the first three boardings: the honest robot, plus a burst at his guard when that is the lesson,
+// and the pistol (dragging the sights on) when that is. Returns how long each lesson took, and whether he then took the ship.
+function runLessons(N, seed, o = {}) {
+  RND = rnd32(seed * 31 + 7); S.start(N, { seed, teach: true }); S.board(); const G = S.G, b = boardBot('good', Object.assign({ react: 0.35, acc: 0.85 }, o)); let n = 0, last = -1, t0 = 0; const took = [];
+  while (!G.over && n++ < 60 * 600) { const F = G.fight, D = F.drill;
+    if (D && D.i !== last) { if (last >= 0) took.push(+(F.t - t0).toFixed(1)); last = D.i; t0 = F.t; }
+    if (!D && last >= 0 && took.length < (DRILLS_N(G))) took.push(+(F.t - t0).toFixed(1));
+    const st = D && D.steps[D.i];
+    if (st && st.id === 'break' && F.phase === 'fight' && F.man && F.pBusy <= 0 && (F.man.os === 'guard' || F.man.os === 'block' || F.man.os === 'stagger') && !(F.man.set > 0) && R() < 0.2) { const g = S.geo(); S.stroke(g.chest.x - 70, g.chest.y - 10, g.chest.x + 70, g.chest.y + 10); }
+    else if (st && st.id === 'pistol' && F.phase === 'fight' && F.man && F.man.os === 'guard') { if (!F.aim && F.loaded) S.aim(332, 770); else if (F.aim && F.aim.t > 1.0) { const p = S.aimAt(), g = S.geo(); S.aimMove(332 + (g.chest.x - p.x) / 1.3, 770 + (g.chest.y - p.y) / 1.3); S.step(DT); S.fire(); } }
+    else b(G);
+    S.step(DT); }
+  return { won: G.over === 'won', t: Math.round(G.t), took, left: G.fight.drill ? G.fight.drill.i : -1 };
+}
+const DRILLS_N = G => ({ 1: 5, 2: 4, 3: 1 })[G.N] || 0;
+const R = () => RND();
 function runSea(N, bot, seed, o) {
   RND = rnd32(seed * 31 + 7); S.start(N, { seed }); const G = S.G; G.nextSight = 0.1; const b = bot === 'plan' ? planBot(o) : seaBot(bot, o); let n = 0, res = null;
   while (!G.over && n++ < 60 * 300) { b(G); S.step(DT); if (G.phase === 'board') { res = 'boarded'; break; } }
@@ -241,4 +257,4 @@ function blindSeas(spec) {      // spec = { plans: [[segs, Q], ...], levels, n, 
     out.push(row); }
   return out;
 }
-window.__B = { runBoard, runSea, runAll, seaBot, boardBot, planBot, blindMove, blindBeat, blindRandom, blindGun, blindBeats, blindSea, blindSeas };
+window.__B = { runLessons, runBoard, runSea, runAll, seaBot, boardBot, planBot, blindMove, blindBeat, blindRandom, blindGun, blindBeats, blindSea, blindSeas };
