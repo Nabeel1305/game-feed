@@ -145,6 +145,7 @@ cv.addEventListener('pointerdown', e => {
     ptrs.set(e.pointerId, { kind: 'blade', x0: x, y0: y, t0: performance.now(), fired: false }); INP.tip = { x, y };
   } else if (SEA_PH[G.phase]) {
     if (x < W * 0.5) { for (const [id, p] of ptrs) if (p.kind === 'wheel') ptrs.delete(id); ptrs.set(e.pointerId, { kind: 'wheel', x0: x - G.in.rud * 56 * k, y0: y }); G.in.held = true; }
+    else if (G.phase !== 'sail' && Math.hypot(x - (W - 70 * k), y - (H - 196 * k)) <= 40 * k || G.phase === 'sail' && x > W * 0.5) { ptrs.set(e.pointerId, { kind: 'oars' }); G.in.row = true; }
     else { ptrs.set(e.pointerId, { kind: 'fire' }); G.in.fire = true; }
   }
 });
@@ -158,12 +159,13 @@ function endPtr(e) {
   const p = ptrs.get(e.pointerId); if (!p) return; ptrs.delete(e.pointerId); if (!G) return; const x = e.clientX, y = e.clientY;
   if (p.kind === 'wheel') { G.in.held = false; G.in.rud = 0; }
   else if (p.kind === 'fire') G.in.fire = false;
+  else if (p.kind === 'oars') G.in.row = false;
   else if (p.kind === 'aim') fFire(G);
   else if (p.kind === 'load') fReload(G, false);
   else if (p.kind === 'blade') { INP.tip = null; if (p.fired || paused) return; const d = Math.hypot(x - p.x0, y - p.y0), dt = performance.now() - p.t0; if (d < 22 * Math.max(1, fu()) && dt < 400) fPoke(G, p.x0, p.y0); else if (dt < 700) fStroke(G, p.x0, p.y0, x, y); }
 }
 cv.addEventListener('pointerup', endPtr);
-cv.addEventListener('pointercancel', e => { const p = ptrs.get(e.pointerId); ptrs.delete(e.pointerId); if (!p || !G) return; if (p.kind === 'wheel') { G.in.held = false; G.in.rud = 0; } else if (p.kind === 'fire') G.in.fire = false; else if (p.kind === 'aim') { if (G.fight) G.fight.aim = null; } else if (p.kind === 'load') fReload(G, false); else INP.tip = null; });
+cv.addEventListener('pointercancel', e => { const p = ptrs.get(e.pointerId); ptrs.delete(e.pointerId); if (!p || !G) return; if (p.kind === 'wheel') { G.in.held = false; G.in.rud = 0; } else if (p.kind === 'fire') G.in.fire = false; else if (p.kind === 'oars') G.in.row = false; else if (p.kind === 'aim') { if (G.fight) G.fight.aim = null; } else if (p.kind === 'load') fReload(G, false); else INP.tip = null; });
 const KEYS = {};
 addEventListener('keydown', e => {      // a laptop: arrows steer and swing, space fires or stabs, P the pistol
   if (!playing() || paused || e.repeat) return; audio(); const c = e.code; KEYS[c] = true;
@@ -189,6 +191,11 @@ function seaHud() {
   ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(wx, wy, r, 0, TAU); ctx.stroke();
   ctx.save(); ctx.translate(wx, wy); ctx.rotate(me.rud * 1.1); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 3; for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.moveTo(-r - 6 * k, 0); ctx.lineTo(r + 6 * k, 0); ctx.stroke(); } ctx.fillStyle = '#e9b949'; ctx.beginPath(); ctx.arc(0, -r, 5 * k, 0, TAU); ctx.fill(); ctx.restore();
   if (wp) { ctx.fillStyle = 'rgba(233,185,73,.85)'; ctx.beginPath(); ctx.arc(wx + G.in.rud * 56 * k, wy, 13 * k, 0, TAU); ctx.fill(); }
+  { // ROW: hold for a burst of speed; the ring is the crew's breath
+    const ox = W - 70 * k, oy = ph === 'sail' ? H - 86 * k : H - 196 * k, orr = 30 * k, st = G.stam == null ? 1 : G.stam;
+    ctx.fillStyle = G.rowing ? 'rgba(127,214,160,.7)' : 'rgba(3,10,14,.5)'; ctx.beginPath(); ctx.arc(ox, oy, orr, 0, TAU); ctx.fill();
+    ctx.strokeStyle = G.tired ? 'rgba(255,140,120,.8)' : '#9be3b5'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(ox, oy, orr + 4 * k, -Math.PI / 2, -Math.PI / 2 + TAU * st); ctx.stroke();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = G.tired ? 'rgba(255,190,180,.9)' : 'rgba(255,255,255,.9)'; ctx.fillText(G.tired ? 'TIRED' : 'ROW', ox, oy + 1); }
   if (ph === 'sail') return;
   const fx0 = W - 70 * k, fy0 = H - 86 * k, fr = 46 * k, lit = G.lit[0] || G.lit[1], ease = !lit && (G.inArc[0] || G.inArc[1]), pu = 0.5 + 0.5 * Math.sin(VT * 9);
   ctx.fillStyle = lit ? `rgba(233,185,73,${0.75 + 0.2 * pu})` : 'rgba(3,10,14,.5)'; ctx.beginPath(); ctx.arc(fx0, fy0, fr, 0, TAU); ctx.fill();
@@ -246,7 +253,7 @@ function tick(dt, rdt) {
     const was = G.phase; stepAll(G, dt); events();
     if (G.phase === 'sight' && !sightUp && !G.choice) { fillSight(); sightCard(true); setBanner(G.sight.ships.length > 1 ? 'Sails ho!' : 'Sail ho!', '', 1.2, '#ffd166'); } else if (G.phase !== 'sight' && sightUp) sightCard(false);
     if (G.phase !== was) { if (G.phase === 'board') { ptrs.clear(); INP.tip = null; G.in.fire = false; G.in.rud = 0; G.in.held = false; }      // (a thumb on the wheel stays on the wheel from one part of the sea to the next)
-      if (G.phase === 'battle' && G.N <= 4) tip('fans', G.N <= 2 ? 'Put her in your gold arc, let the wheel go, FIRE' : 'Keep out of the red. Get on her bow or stern.', 3.6); if (G.phase === 'chase' && G.N <= 3) tip('chase', 'Steer for her. Your crew will grapple.', 3); }
+      if (G.phase === 'battle' && G.N <= 4) tip('fans', G.N <= 2 ? 'Put her in your gold arc, then FIRE' : 'Keep out of the red. Get on her bow or stern.', 3.6); if (G.phase === 'chase' && G.N <= 3) tip('chase', 'Steer for her. Your crew will grapple.', 3); }
     if (G.over) finish();
   } else { G.t += rdt; if (G.phase !== 'board') { ballsStep(G, dt); G.me.sink += G.me.alive ? 0 : dt; for (const s of G.foes) if (s.alive && !s.gone) sail(s, dt, s.struck ? 0 : s.K.speed * 0.4); } else boardIdle(G, dt); if (endT >= 0) { endT -= rdt; if (endT < 0) showEnd(); } }
   if (G.phase !== 'board') { camStep(G, rdt); wakeStep(G, rdt); smokeStep(G, rdt); }

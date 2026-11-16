@@ -1,7 +1,7 @@
 
 // ===================== PART 2: the expedition and the sea (no drawing) =====================
 // Headings: 0 = up the map; forward = (sin h, cos h); starboard (right) = (cos h, -sin h). Sides: 0 = port, 1 = starboard.
-const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.38, ARC_E: 0.62, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5, STEADY: 0.15, EVEN: 0.2, QUARTER: 0.5 };
+const SEA = { RANGE: 150, BALL_V: 330, ARC: 0.38, ARC_E: 0.62, E_RANGE: 135, RAKE: 1.8, BOARD_R: 46, MY_SPREAD: 0.055, PAD: 3.5, STEADY: 9, EVEN: 0.001, OAR_UP: 1.35, OAR_FOR: 3, OAR_BACK: 9, QUARTER: 0.5 };
 const MYSHIP = { navy: 0, size: 2, cls: 'Your sloop', len: 46, beam: 13, hull: 100, guns: 5, speed: 47, turn: 0.95, masts: 2 };
 const KINDS = {
   trader:   { navy: 0, size: 1, cls: 'Trader',           len: 40, beam: 13,   hull: 30, guns: 0, speed: 27, turn: 0.5,  masts: 2, loot: 1.0,  crew: 0.85 },
@@ -32,9 +32,9 @@ function makeCfg(N, help) {
     eReload: x(5.0, 3.0, 12) + e * 1.4,            // seconds between one of her broadsides and the next
     eAim: x(1.25, 0.62, 22) + e * 0.5,              // warning: her gun ports are open this long before she fires
     eSpread: x(0.2, 0.07, 24),                     // how far her broadside scatters: wide at range, tight up close
-    eSkill: x(0.25, 0.88, 20) * (1 - 0.5 * e),     // how well she places herself
-    eSide: x(10, 45, 9) * (1 - 0.5 * e),          // what a whole broadside of hers does to your hull if every ball lands (yours is 100)
-    eHull: Math.max(1.3, x(0.8, 2.6, 9)) + 0.8 * e,       // her hull, times her kind's own (the first navy ships are no sturdier for it than later ones, but they must stand more than two broadsides: two lucky ones used to win)
+    eSkill: x(0.25, 0.88, 26) * (1 - 0.5 * e),     // how well she places herself
+    eSide: x(10, 45, 14) * (1 - 0.5 * e),          // what a whole broadside of hers does to your hull if every ball lands (yours is 100)
+    eHull: Math.max(1.3, x(0.8, 2.6, 9)) + 1.6 * e,       // her hull, times her kind's own (the first navy ships are no sturdier for it than later ones, but they must stand more than two broadsides: two lucky ones used to win)
     maxNavy: boss ? 1 : N < 6 ? 1 : N < 15 ? 2 : 3,
     engage: N < 40 ? 1 : 2,                        // how many navy ships come in to fight you at once; the others stand off and wait their turn
     myBall: 7.5, myReload: 3.6,
@@ -187,6 +187,7 @@ function targetFor(G, side) {      // the nearest ship your guns on that side ca
   return best;
 }
 function myFire(G) {
+  // (a quick hard turn spoils the aim a little; going round and round with the wheel hard over, she heels right down and the guns cannot hold a target)
   // Spamming cannot win at sea either. The guns need a level deck: a broadside fired while she is turning, or the instant the wheel
   // comes back amidships, goes wild (into the sea on one side, over her masts on the other), and one fired at nothing is a side
   // unloaded for nothing. Bring her into the arc, let the wheel go, and fire when FIRE lights. (While any gentle turn would do,
@@ -195,7 +196,7 @@ function myFire(G) {
   // And it is a habit that ruins you: every side thrown away makes the next one slower still to load (three times as long, then
   // five, seven, nine), and tells her gunners they have nothing to fear (her "range" clock jumps on). Only time wipes that out
   // (one step every fifteen seconds). A wheel on a fixed plan with FIRE on a fixed beat used to win the first navy fights.
-  const me = G.me, over = Math.abs(me.rud) - SEA.STEADY, heel = Math.max(over > 0 ? Math.min(1, over / 0.25) : 0, 1 - clamp(G.evenT / SEA.EVEN, 0, 1)), spread = SEA.MY_SPREAD * (1 + 3 * heel), w = Math.min(G.waste, 3); let any = false;
+  const me = G.me, over = Math.abs(me.rud) - SEA.STEADY, heel = Math.max(over > 0 ? Math.min(1, over / 0.25) : 0, 1 - clamp(G.evenT / SEA.EVEN, 0, 1)), spread = SEA.MY_SPREAD * (1 + 3 * heel + 0.35 * Math.abs(me.rud) + 5 * clamp(((G.hardAvg || 0) - 0.6) / 0.3, 0, 1)), w = Math.min(G.waste, 3); let any = false;
   // A ship in front of loaded guns but the wheel not let go: the guns hold (they used to fire wild and miss completely, and he saw
   // a ship sitting in the gold arc take nothing). The order stands for a moment: let go of the wheel and they fire as soon as they bear.
   if (heel > 0 && (targetFor(G, 0) && me.load[0] <= 0 || targetFor(G, 1) && me.load[1] <= 0)) { if (!(G.queued > 0)) G.ev.push({ k: 'hold' }); G.queued = 0.8; return; }
@@ -205,7 +206,7 @@ function myFire(G) {
   let side = -1, bd = 1e9;        // nothing in front of the guns: the loaded side nearest a ship fires at the empty sea all the same
   for (const t of G.foes) { if (!t.alive || t.gone) continue; const r = relTo(me, t), sd = r.lx >= 0 ? 1 : 0; if (me.load[sd] <= 0 && r.d < bd) { bd = r.d; side = sd; } }
   if (side < 0) side = me.load[1] <= 0 ? 1 : me.load[0] <= 0 ? 0 : -1;
-  if (side >= 0) { broadside(G, me, side, null, spread, G.cfg.myBall, true, G.cfg.myReload * (3 + 2 * w)); both(G.cfg.myReload * (3 + 2 * w)); G.waste = w + 1; G.quiet += 9 * (1 + w); G.ev.push({ k: 'wasted', n: G.waste }); } else G.ev.push({ k: 'empty' });      // thrown away: that side takes three times as long to load again, and longer each time
+  if (side >= 0) { broadside(G, me, side, null, spread, G.cfg.myBall, true, G.cfg.myReload * (4 + 2 * w)); both(G.cfg.myReload * (4 + 2 * w)); G.waste = w + 1; G.quiet += 12 * (1 + w); G.ev.push({ k: 'wasted', n: G.waste }); } else G.ev.push({ k: 'empty' });      // thrown away: that side takes three times as long to load again, and longer each time
 }
 // a navy ship: she comes at you under full sail, then shortens sail and turns her side to you; her ports open (that is your warning) and she fires.
 // She is a heavy thing to turn: a quick sloop can stay off her bow or her stern, where no gun of hers will reach.
@@ -257,8 +258,13 @@ function merchAI(G, s, dt, flee) {
 function helm(G, dt, auto) {         // your own ship: the thumb, or the helmsman making for the prize when the thumb is off
   const me = G.me; let rud = G.in.rud;
   if (auto && !G.in.held && G.prize) { const r = relTo(me, G.prize); rud = clamp(r.brg * 1.6, -1, 1); if (r.d < 90) me.v = Math.min(me.v, 24 + r.d * 0.26); }
-  me.rud += (rud - me.rud) * Math.min(1, dt * 7);
-  sail(me, dt);
+  me.rud += (rud - me.rud) * Math.min(1, dt * 7); G.hardAvg = (G.hardAvg || 0) + (Math.abs(me.rud) - (G.hardAvg || 0)) * Math.min(1, dt / 2.5);
+  // the oars: hold ROW for a burst of speed; the crew tire in three seconds and need about nine to get their breath back
+  if (G.stam == null) G.stam = 1;
+  const rowing = !!G.in.row && !G.tired && G.stam > 0; G.rowing = rowing;
+  if (rowing) { G.stam = Math.max(0, G.stam - dt / SEA.OAR_FOR); if (G.stam <= 0) { G.tired = true; G.ev.push({ k: 'tired' }); } }
+  else { G.stam = Math.min(1, G.stam + dt / SEA.OAR_BACK); if (G.tired && G.stam >= 0.35) G.tired = false; }
+  sail(me, dt, rowing ? me.K.speed * SEA.OAR_UP : null);
 }
 function seaStep(G, dt) {
   G.t += dt; G.pt += dt;

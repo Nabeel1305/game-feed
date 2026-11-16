@@ -89,16 +89,15 @@ with sync_playwright() as p:
     pg.evaluate("__sim.go(2, true)"); pg.wait_for_function("__sim.G.phase === 'sight'", timeout=9000); pg.wait_for_timeout(300); pg.tap('#raidBtn'); pg.wait_for_timeout(600)
     ok(pg.evaluate("__sim.G.phase") == 'battle', 'the second expedition is a battle')
     place = """(() => { const s = __sim, G = s.G, me = G.me, t = G.foes.find(f => f.K.navy && f.alive); t.x = me.x + s.rgtX(me) * 80; t.y = me.y + s.rgtY(me) * 80; t.hdg = me.hdg; t.v = 0; t.think = 99; t.eng = false; t.load = [9, 9]; me.load = [0, 0]; G.waste = 0; return t.hull; })()"""
-    touch('touchStart', [(0, 90, 700)]); pg.wait_for_timeout(40); touch('touchMove', [(0, 150, 700)]); pg.wait_for_timeout(500); pg.evaluate(place); pg.wait_for_timeout(120)
-    r = pg.evaluate("[__sim.G.inArc[0] || __sim.G.inArc[1], __sim.G.lit[0] || __sim.G.lit[1], __sim.G.me.rud]"); ok(r[0] and not r[1], 'with the wheel held over and a ship on the beam, FIRE stays dark', str(r))
-    touch('touchEnd', []); lit = False
-    for _ in range(14):
-        pg.evaluate(place); pg.wait_for_timeout(70); lit = pg.evaluate("__sim.G.lit[0] || __sim.G.lit[1]")
-        if lit: break
-    ok(lit, 'lift the thumb off the wheel and, a moment later, FIRE lights')
-    h0 = pg.evaluate(place); touch('touchStart', [(1, 320, 720)]); pg.wait_for_timeout(60); touch('touchEnd', [])
+    touch('touchStart', [(0, 90, 700)]); pg.wait_for_timeout(40); touch('touchMove', [(0, 140, 700)]); pg.wait_for_timeout(400); pg.evaluate(place); pg.wait_for_timeout(120)
+    r = pg.evaluate("[__sim.G.lit[0] || __sim.G.lit[1], __sim.G.me.rud]"); ok(r[0], 'with a ship on the beam FIRE lights, thumb still on the wheel', str(r))
+    h0 = pg.evaluate(place); touch('touchStart', [(0, 140, 700), (1, 320, 760)]); pg.wait_for_timeout(60); touch('touchEnd', [])
     for _ in range(10): pg.evaluate("(() => { const t = __sim.G.foes.find(f => f.K.navy); t.v = 0; t.think = 99; })()"); pg.wait_for_timeout(80)
-    h1 = pg.evaluate("__sim.G.foes.find(f => f.K.navy).hull"); ok(h1 < h0, 'tap FIRE then, and the broadside tells', f'{h0:.0f} -> {h1:.0f}')
+    h1 = pg.evaluate("__sim.G.foes.find(f => f.K.navy).hull"); ok(h1 < h0, 'the captain fires from the wheel, and the broadside tells', f'{h0:.0f} -> {h1:.0f}')
+    # ROW: hold the button above FIRE and she speeds up; the crew tire
+    k = pg.evaluate("Math.min(innerWidth, innerHeight * 0.62) / 390"); ox, oy = pg.evaluate("innerWidth") - 70 * k, pg.evaluate("innerHeight") - 196 * k
+    v0 = pg.evaluate("__sim.G.me.v"); touch('touchStart', [(2, ox, oy)]); pg.wait_for_timeout(1500)
+    r = pg.evaluate("[__sim.G.rowing, __sim.G.me.v, __sim.G.stam]"); touch('touchEnd', []); ok(r[0] and r[1] > v0 + 3 and r[2] < 0.8, 'holding ROW speeds her up and tires the crew', str([v0, r]))
     # ...and FIRE tapped with nothing in front of the guns throws the side away: both batteries are out, for three reloads
     pg.evaluate("(() => { const s = __sim, G = s.G, me = G.me, t = G.foes.find(f => f.K.navy); t.x = me.x + s.fwdX(me) * 400; t.y = me.y + s.fwdY(me) * 400; t.v = 0; t.think = 99; me.load = [0, 0]; G.waste = 0; })()")
     touch('touchStart', [(1, 320, 720)]); pg.wait_for_timeout(60); touch('touchEnd', []); pg.wait_for_timeout(120)
