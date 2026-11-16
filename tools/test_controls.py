@@ -33,6 +33,9 @@ def ok(cond, what, detail=''):
 
 # How to read and steer each game. "tick" is a number that only moves while the game is running;
 # "win" is JavaScript that makes the very next thing that happens a real win (the game's own code does the rest).
+# Games made from the starter kit (kit/) all read and win the same way: __sim.winNow() is the shortest real win.
+KIT = dict(tick='window.__sim.G.t', obj='window.__sim.G', back='#ovLevels [data-back]', nxt='#eMain', end='#ovEnd', home='#ovHome',
+           win="(() => { const s = window.__sim; if (s.G && !s.G.over) { s.G.lesson = null; s.winNow(); } })()", won="window.__sim.G && window.__sim.G.over === 'won'")
 LADDER = {
     'knockout': dict(
         tick='window.__sim.G.t', obj='window.__sim.G', back='#lvBack', nxt='#eNext', end='#ovEnd', home='#ovStart',
@@ -117,7 +120,7 @@ def open_game(browser, base, g, errs, seed):
 
 
 def ladder(browser, base, g, errs):
-    gid, c, live, pre = g['id'], LADDER[g['id']], g['feed']['live'], g['storage_prefix']
+    gid, c, live, pre = g['id'], LADDER.get(g['id'], KIT), g['feed']['live'], g['storage_prefix']
     T = lambda s: f'{gid}: {s}'
     ctx, pg = open_game(browser, base, g, errs, {pre + 'unlocked': 5, pre + 'level': 5, pre + 'mute': True})
 
@@ -268,7 +271,7 @@ def main():
     listing, notes, problems = build_feed.build(OUT)
     if problems:
         print('build problems:', problems); sys.exit(1)
-    games = [g for g in json.load(open(os.path.join(root, 'games.json')))['games'] if g['status'] in build_feed.IN_FEED]
+    games = [g for g in json.load(open(os.path.join(root, 'games.json')))['games'] if g['status'] in build_feed.IN_FEED or g['id'] in sys.argv[1:]]      # (a game still being built is tested when named)
     for g in games:
         if 'live' not in (g.get('feed') or {}): print(f"{g['id']}: needs feed.live in games.json (JavaScript that is true once he is in live play)"); sys.exit(1)
     only = sys.argv[1] if len(sys.argv) > 1 else None
@@ -286,7 +289,7 @@ def main():
         for g in games:
             if only and g['id'] != only: continue
             t0 = time.time()
-            if g['id'] in LADDER: ladder(browser, base, g, errs)
+            if g['id'] in LADDER or os.path.exists(os.path.join(root, 'games', g['id'], 'part5.js')) and 'winNow' in open(os.path.join(root, 'games', g['id'], 'part5.js')).read(): ladder(browser, base, g, errs)
             elif g['id'] == 'bottle-cap-flick': bottle_cap(browser, base, g, errs)
             else: ok(False, f"{g['id']}: tools/test_controls.py does not know how to test this game's controls yet")
             print(f"  {g['id']}: done in {time.time() - t0:.0f}s")
