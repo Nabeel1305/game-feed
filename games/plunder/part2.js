@@ -196,6 +196,9 @@ function myFire(G) {
   // five, seven, nine), and tells her gunners they have nothing to fear (her "range" clock jumps on). Only time wipes that out
   // (one step every fifteen seconds). A wheel on a fixed plan with FIRE on a fixed beat used to win the first navy fights.
   const me = G.me, over = Math.abs(me.rud) - SEA.STEADY, heel = Math.max(over > 0 ? Math.min(1, over / 0.25) : 0, 1 - clamp(G.evenT / SEA.EVEN, 0, 1)), spread = SEA.MY_SPREAD * (1 + 3 * heel), w = Math.min(G.waste, 3); let any = false;
+  // A ship in front of loaded guns but the wheel not let go: the guns hold (they used to fire wild and miss completely, and he saw
+  // a ship sitting in the gold arc take nothing). The order stands for a moment: let go of the wheel and they fire as soon as they bear.
+  if (heel > 0 && (targetFor(G, 0) && me.load[0] <= 0 || targetFor(G, 1) && me.load[1] <= 0)) { if (!(G.queued > 0)) G.ev.push({ k: 'hold' }); G.queued = 0.8; return; }
   for (let side = 0; side < 2; side++) { if (me.load[side] > 0) continue; const t = targetFor(G, side); if (!t) continue; broadside(G, me, side, t, spread, G.cfg.myBall, true, G.cfg.myReload * (heel ? 1 + 2 * heel * (1 + w) : 1), heel ? ((me.rud > 0) === (side === 1) ? 1 + 1.7 * heel : 1 - 0.68 * heel) : 1); any = true; }
   const both = t => { for (let sd = 0; sd < 2; sd++) me.load[sd] = Math.max(me.load[sd], t); };      // ...and it is the whole ship that pays: both batteries are out of action while the gun crews sort themselves out
   if (any) { if (heel > 0) { both(G.cfg.myReload * (1 + 2 * heel * (1 + w))); G.waste = w + heel; G.quiet += 9 * heel * (1 + w); G.ev.push({ k: 'wild', n: G.waste }); } return; }
@@ -281,6 +284,7 @@ function seaStep(G, dt) {
           if (G.phase === 'battle' && (!G.bumpT || G.t - G.bumpT > 0.8)) { G.bumpT = G.t; me.v *= 0.75; me.hdg = wrapA(me.hdg + ((ux * fwdY(me) - uy * fwdX(me)) > 0 ? -0.12 : 0.12)); G.ev.push({ k: 'bump', x: me.x + ux * d * 0.5, y: me.y + uy * d * 0.5 }); }
         }
       }
+      G.queued = Math.max(0, (G.queued || 0) - dt); if (G.queued > 0 && (G.lit[0] || G.lit[1])) { G.queued = 0; myFire(G); }      // an order given before the wheel was let go
       if (fireNow) myFire(G);
       ballsStep(G, dt);
       // is he just holding a course, or just holding the wheel where it is? (then she can take her time and sit where she likes)

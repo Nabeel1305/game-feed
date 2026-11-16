@@ -264,8 +264,7 @@ with sync_playwright() as p:
     ok(not r['dodge']['hit'] and not r['dodge']['open'], 'a dodge does save you, and it only saves you: it does not open him', str(r['dodge']))
     ok(r['oneStroke']['best'] <= max(r['oneStroke']['left'], 1 - r['oneStroke']['left']) + 0.001 and r['oneStroke']['any'] > 50, 'no one stroke blocks both sides (3,000 strokes tried against 60 cuts): the best blocks one side, and no more', str(r['oneStroke']))
     ok(r['steady']['lit'] and r['steady']['hurt'] > 0 and max(r['steady']['load']) <= r['steady']['reload'] * 1.05, 'at sea: with the wheel let go, FIRE lights and the broadside tells', str(r['steady']))
-    ok(not r['turning']['lit'] and not r['hardOver']['lit'] and r['hardOver']['hurt'] == 0, 'while she is still turning FIRE does not light, and a broadside fired all the same goes wild', str([r['turning'], r['hardOver']]))
-    ok(min(r['hardOver']['load']) > r['hardOver']['reload'] * 2, 'a wild broadside puts both batteries out of action', str(r['hardOver']['load']))
+    ok(not r['turning']['lit'] and not r['hardOver']['lit'] and max(r['hardOver']['load']) == 0 and r['hardOver']['hurt'] > 0, 'while she is still turning FIRE does not light; pressed all the same the guns hold, and fire (and hit) once the wheel is let go', str([r['turning'], r['hardOver']]))
     w = r['wasted']
     ok(w[0][0] >= 2.9 and w[0][1] >= 2.9 and w[1][0] > w[0][0] * 1.4 and w[2][0] > w[1][0] * 1.2, 'a broadside fired at nothing is wasted: both batteries are slow to reload, and slower each time', str(w))
     ok(r['help']['slower'] and r['help']['same'], 'help after three losses only adds time', str(r['help']))

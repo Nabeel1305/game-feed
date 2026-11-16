@@ -301,6 +301,7 @@ function seaEvent(G, e) {
     case 'raid': sfx.raid(); break;
     case 'pass': sfx.tap(); break;
     case 'wasted': if (gate('wasted', 1500)) { say(e.n > 1.3 ? 'WASTED AGAIN: SLOWER EACH TIME' : 'WASTED: NO SHIP IN YOUR ARC', me.x, me.y - 30, '#ff9a8a', 15, 1); tip('waste', 'Only FIRE when it lights: a wasted side is slow to reload', 3); } break;
+    case 'hold': if (gate('hold', 900)) say('LET GO OF THE WHEEL', me.x, me.y - 30, '#ffe9b0', 15, 1); tip('ease', 'Let go of the wheel: the guns fire as soon as she is steady', 3); break;
     case 'wild': if (gate('wild', 900)) { say(e.n > 1.3 ? 'WILD AGAIN: SLOWER EACH TIME' : 'WILD! LET THE WHEEL GO FIRST', me.x, me.y - 30, '#ff9a8a', 15, 1); tip('ease', 'Let go of the wheel, then FIRE when it lights', 3); } break;
     case 'tells': if (gate('tells', 500)) { say('BROADSIDE!', me.x, me.y + 34, '#ffd166', 22, 1); vibe(HAP.sharp); sfx.tells(); } break;
     case 'ranged': setBanner('Her gunners have your range', 'Hurt her, or she will sink you', 2.2, '#ff9a8a'); sfx.ports(); break;
