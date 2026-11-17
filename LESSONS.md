@@ -281,11 +281,13 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Contextual taps need a cost for the wrong context** (Harvest Valley): one tap on a bed plants, waters, picks or clears, so a tapping thumb would farm by itself; watering a crop that is not thirsty rots it, and carrots need two drinks. Blind 5 in 13,056.
 - **Zombie tag: chasers prefer you** (distance to you counts 0.6), or blind running lasts while they catch the others.
 
-### 29-30. Horde, Mini Golf (set 5)
+### 29-31. Horde, Mini Golf, Penalty Kings (set 5)
 - **A survivor game plays itself unless it asks for a trip** (Horde): weapons that fire by themselves plus a stick held in any direction won early survivor tests. What fixed it: three beacons to light by standing beside them (the boss only comes when all three are lit), crystals that spill a metre or more away and fade after 18 s (you must go and get your level-ups), and a horde that gathers round anyone who stands still. Blind strings: 0 in 46,528.
 - **Breadth-first search: mark each cell once.** Golf's distance map first re-visited cells that got a shorter path and hung the page on big holes; visiting each cell once, in order, is right for a grid with equal steps.
 - **A shape that funnels into the cup is a free hole for random putts** (Golf's diamond: its walls slope in toward the cup, so a random putt rolled in a fair share of the time). It was swapped for a cross with the cup in an arm. Look at which holes random play wins on, not only how often.
 - **After a lesson, return before the gap** so a sink at the end of a lesson never carries on to the real holes.
+- **Penalty Kings (31): a shootout is a coin-flip machine unless blind play is near zero.** Five kicks each has so much luck that a blind thumb scoring 30% won 2% of ties. What fixed it: a red strike always misses (over the bar or scuffed at the keeper), the green sits somewhere new on every kick (a fixed green let a steady beat hit it), only taps on the goal aim (18% of a phone screen, measured with a raycast grid), and a dive before the plant (even while the kicker sets the ball) is seen by the kicker. Blind 0 of 928. The honest robot's accuracy must shrink as the green narrows and the ball speeds up, or the far levels never get harder for it.
+- **Behind-the-goal camera:** hide the net (its lines fill the screen) and keep the camera under the crossbar; pan a little with the keeper's dive so he stays on screen. Turn the scene's environment light down by day (0.25) or the stadium looks washed out.
 
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:

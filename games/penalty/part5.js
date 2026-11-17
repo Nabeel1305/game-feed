@@ -16,29 +16,32 @@ const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contain
 function showHome() {
   savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
   $('hLvl').textContent = level;
-  $('hStat').innerHTML = [best[level] ? `Your best here: <b>${best[level]}</b> in a row` : '', helpOn() ? '<span class="help">Help is on for this level: everything is a little slower.</span>' : ''].filter(Boolean).join('<br>');
+  const bt = best[level], bank = store.get('bank', 0), tot = store.get('earned', 0);
+  $('hStat').innerHTML = [`🪙 <b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${cupOf(level)}: ${stageOf(level)}`, bt ? `Your best here: <b>${'★'.repeat(bt)}</b>` : '', helpOn() ? '<span class="help">Help is on for this level: a wider green zone and a longer reach.</span>' : ''].filter(Boolean).join('<br>');
   show('ovHome');
 }
 function startGame() {
   audio(); if (!HEADLESS) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  PT.length = 0; TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true;
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
 function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
   const r = G.res, L = G.N; if (HEADLESS) return;
   if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
-    if (r.combo > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.combo; store.set('best', best); } }
+    if (!best[L] || r.stars > best[L]) { r.nb = !!best[L]; best[L] = r.stars; store.set('best', best); } }
   else streaks[L] = (streaks[L] || 0) + 1;
+  // coins: every round keeps what it picked up (and a bonus when it is won); the total earned sets your rank
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
   store.set('streaks', streaks);
 }
 function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
-  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'BOSS BEATEN' : 'LEVEL CLEAR') : 'OUT OF LIVES'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eTitle').textContent = r.win ? (stageOf(L) === 'Final' ? 'CUP WINNERS!' : 'THROUGH!') : 'KNOCKED OUT'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
-  $('eSub').innerHTML = r.win ? `Best run <b>${r.combo}</b> in a row${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}` + (r.stars < 3 ? '<br>Lose no lives for three stars.' : '')
-    : `<b>${r.hits}</b> of ${r.goal}. So close.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
+  $('eSub').innerHTML = `Kings <b>${r.a}</b> : <b>${r.b}</b> ${G.team.name} · ${r.goals} scored, ${r.saves} saved · <b>+${r.coins} 🪙</b>` + (r.win ? (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + (r.stars < 3 ? '<br>Goals and saves in the first five kicks make the stars.' : '') : '<br>Spend coins below: they stay.') + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: a wider green zone and a longer reach.</span>' : '');
+  renderShop();
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !r.win);
   show('ovEnd');
@@ -72,7 +75,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -80,15 +83,26 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input: one tap is the action (change this with the game's controls)
-cv.addEventListener('pointerdown', e => {
-  audio(); if (!G || G.over || paused) return; const A = area();
-  tap(G, (e.clientX - A.x) / A.w, (e.clientY - A.y) / A.h);
-});
+// input (easy, taps only): your kick: tap the goal where you want it, then tap anywhere to stop the needle; their kick: tap the
+// left, middle or right of the screen to dive left, stay or dive right
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; tapAt(e.clientX, e.clientY); });
+function tapAt(sx, sy) {
+  if (G.ph === 'aim') { const p = goalAt(sx, sy); if (p) aimAt(G, p.x, p.y); return; }
+  if (G.ph === 'meter') { shootNow(G); return; }
+  if (G.side === 'K') { const u = sx / W, z = u < 1 / 3 ? 1 : u > 2 / 3 ? -1 : 0; dive(G, z); }      // the camera looks out from behind the goal: screen left is world +x
+}
+// ---------- the pro shop: upgrades bought with coins; they stay with you (nothing expires) ----------
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE PRO SHOP</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
-const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections
 let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
-function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function applyStep() { DPR_CAP = Math.min(2, STEPS[stepN].pr + 0.5); resize(); if (W3 && W3.ok) W3.setQuality(stepN); }
 function measure(ms) {
   if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
   winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
@@ -108,7 +122,7 @@ function frame(now) {
     G.ev.length = 0;
     if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
   }
-  fxStep(rdt); draw(now / 1000);
+  fxStep(rdt); draw(now / 1000, rdt); soundStep(G, rdt);
   requestAnimationFrame(frame);
 }
 // ---------- the test hook (robots, tests, card clips) ----------
@@ -116,7 +130,9 @@ window.__sim = {
 /*SOUNDCHECK*/
   start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
   step(dt) { step(G, dt); G.ev.length = 0; },
-  tap(x, y) { tap(G, x, y); },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  frame() { draw(performance.now() / 1000, 1 / 60); },
+  aimAt(x, y) { return aimAt(G, x, y); }, shootNow() { return shootNow(G); }, dive(d) { return dive(G, d); }, tapAt, goalAt, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

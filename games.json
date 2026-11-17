@@ -1060,12 +1060,12 @@
       "number": 31,
       "id": "penalty",
       "name": "Penalty Kings",
-      "status": "in-progress",
+      "status": "testing",
       "version": "0.1.0",
       "added": "2026-11-17",
       "path": "games/penalty/index.html",
-      "artifact": null,
-      "artifact_slug": null,
+      "artifact": "https://claude.ai/artifact/SWBovTEMi7HAMNa2C7ksU5",
+      "artifact_slug": "ce87b275-b094-41b9-90bd-7e70075099e2",
       "apk_repo": null,
       "storage_prefix": "pk.",
       "feed": {
@@ -1081,8 +1081,14 @@
         "font": "Bungee",
         "live": "window.__sim && window.__sim.playing()"
       },
-      "principles": [],
-      "summary": ""
+      "principles": [
+        "P4",
+        "P5",
+        "P12",
+        "P14",
+        "P30"
+      ],
+      "summary": "A cup run of penalty shootouts in a floodlit stadium: tap where to shoot and stop the needle in the green; read the kicker's body when he plants his foot and dive the right way."
     }
   ],
   "planned": [

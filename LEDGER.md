@@ -38,7 +38,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 28 | **Harvest Valley** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/5WA6HWrcvqJUi3qFxDUEBr) | `games/harvest/index.html` |
 | 29 | **Horde** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/K8oHpP4m8x2ewCbCm6VJDP) | `games/horde/index.html` |
 | 30 | **Mini Golf** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/8Hp1ZUv44KnZAHAx8PKa7L) | `games/golf/index.html` |
-| 31 | **Penalty Kings** | in-progress | not yet (he has not said so) | 0.1.0 | [play](None) | `games/penalty/index.html` |
+| 31 | **Penalty Kings** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/SWBovTEMi7HAMNa2C7ksU5) | `games/penalty/index.html` |
 
 ## What each game is
 
@@ -72,7 +72,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 28. **Harvest Valley**: A farm by the day in 3D, all taps: plant, water when a crop asks, pick when it sparkles, collect eggs, shoo crows and fill the cart's orders by sunset; seasons and rain; farm upgrades and rank that stay.
 29. **Horde**: Survive the night horde with one thumb: weapons fire by themselves, you pick an upgrade at every level-up, light three beacons to call the boss and beat it.
 30. **Mini Golf**: Calm 3D mini golf: pull back and let go to putt around windmills, bumpers, slopes and water, under par to win, with a shop and ranks.
-31. **Penalty Kings**: 
+31. **Penalty Kings**: A cup run of penalty shootouts in a floodlit stadium: tap where to shoot and stop the needle in the green; read the kicker's body when he plants his foot and dive the right way.
 
 ## Up next (designed, not built yet)
 
