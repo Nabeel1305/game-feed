@@ -209,6 +209,11 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Steering that a thumb can do:** an angled hull is pushed across by the current (a ferry glide, `u * sin(h) * 0.55`), a light tap is a light stroke (fine corrections), and the robots aim for the heading that gets them to the gap in time (`asin` of the sideways speed needed), not just at the gap. A smash knocks you round the rock (sending you back upstream into it made the game impossible for everyone).
 - A lesson's river is 700 m longer and its gaps 2.5 m wider; if the river runs out before a lesson is learnt, you go back to the top.
 
+### 11. Soar (`games/soar/`)
+- **The land is a function both halves share** (`landOf(seed)` in part2: an island noise written out in the rules, so the robots skim off the same hills the picture shows). Nine coasts (`(N*37) % 9`); the picture builds a coast once and keeps it while the coast stays the same. The near land (4.4 km) sits round the start, which the trail never leaves by 2 km; a far ring of land sits under it where they overlap.
+- **The camera sits over the right shoulder** (2.5 m back, 0.6 m up, 0.5 m to the side), leaning a third of the bank, its field of view widening a little with speed. Further back the flier was a speck.
+- **Calm, and still not spammable:** nothing ends the flight early; a held or rhythmic stick never threads a trail that bends and climbs on its own (0 of 77,504). The calm game is meant to be easy: ordinary players win to level 20.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

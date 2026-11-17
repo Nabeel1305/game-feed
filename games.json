@@ -379,12 +379,12 @@
       "number": 11,
       "id": "soar",
       "name": "Soar",
-      "status": "in-progress",
+      "status": "testing",
       "version": "0.1.0",
       "added": "2026-11-17",
       "path": "games/soar/index.html",
-      "artifact": null,
-      "artifact_slug": null,
+      "artifact": "https://claude.ai/artifact/Weu2fZSYbgxPVNK4xFahTC",
+      "artifact_slug": "f0239abd-bbad-4fe9-b0cc-e46a4c2debb7",
       "apk_repo": null,
       "storage_prefix": "so.",
       "feed": {
@@ -400,8 +400,14 @@
         "font": "Cinzel",
         "live": "window.__sim && window.__sim.playing()"
       },
-      "principles": [],
-      "summary": ""
+      "principles": [
+        "P13",
+        "P14",
+        "P18",
+        "P19",
+        "P30"
+      ],
+      "summary": "The calm one: a 3D flight over a sea of islands, seen from just over your shoulder, arms forward and a scarf streaming, under a real sky that changes by flight (golden hour, dawn, mist, sunset, night with stars). One thumb steers like a little stick wherever you put it down: right to lean and turn, up to climb, down to dive. Follow a trail of golden rings; each ring is a bell note that climbs the scale while the chain lasts. Nothing hurts you: touch the sea or a hillside and you skim off it. Fly through enough rings to finish the flight; all of them for three stars."
     }
   ],
   "planned": []

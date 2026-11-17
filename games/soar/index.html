@@ -5209,7 +5209,7 @@ function draw(now, dt) {
   const sp = V.scarf.geometry.attributes.position; for (let i = 0; i < sp.count; i++) { const y = sp.getY(i), u = -y / 1.7; sp.setZ(i, Math.sin(t * 9 - u * 7) * 0.12 * u + Math.sin(t * 5.3 - u * 4) * 0.05 * u); sp.setX(i, (i % 2 ? 0.07 : -0.07) * (1 - u * 0.3) + Math.sin(t * 6 - u * 5) * 0.06 * u); }
   sp.needsUpdate = true; V.scarf.rotation.x = Math.PI / 2 - 0.15 + Math.sin(t * 3) * 0.04;
   // the camera: a few metres behind and above, leaning a little with the turn, looking well ahead
-  const back = new T.Vector3(-Math.sin(f.yaw) * 3.3 + Math.cos(f.yaw) * 0.55, 0.85 - Math.sin(f.pitch) * 2.2, Math.cos(f.yaw) * 3.3 + Math.sin(f.yaw) * 0.55);      // over the right shoulder
+  const back = new T.Vector3(-Math.sin(f.yaw) * 2.5 + Math.cos(f.yaw) * 0.5, 0.62 - Math.sin(f.pitch) * 1.6, Math.cos(f.yaw) * 2.5 + Math.sin(f.yaw) * 0.5);      // over the right shoulder
   const want = new T.Vector3(f.x, f.y, f.z).add(back);
   if (ui.snap || !V.started) { V.camPos.copy(want); V.started = true; } else V.camPos.lerp(want, Math.min(1, dt * 4));
   const gr = Math.max(-0.5, g.land(V.camPos.x, V.camPos.z)) + 1.2; if (V.camPos.y < gr) V.camPos.y = gr;
