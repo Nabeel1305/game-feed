@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**13 games** so far. Next number: **14**.
+**15 games** so far. Next number: **16**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -21,6 +21,8 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 11 | **Soar** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Weu2fZSYbgxPVNK4xFahTC) | `games/soar/index.html` |
 | 12 | **Vine** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/XhM3zzwfyV75DiLSYwqXUr) | `games/vine/index.html` |
 | 13 | **Hunter** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS) | `games/hunter/index.html` |
+| 14 | **Police Chase** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy) | `games/police/index.html` |
+| 15 | **Pilot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/673SzKv3kg9inkqwy1KHXc) | `games/pilot/index.html` |
 
 ## What each game is
 
@@ -37,3 +39,5 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 11. **Soar**: The calm one: a 3D flight over a sea of islands, seen from just over your shoulder, arms forward and a scarf streaming, under a real sky that changes by flight (golden hour, dawn, mist, sunset, night with stars). One thumb steers like a little stick wherever you put it down: right to lean and turn, up to climb, down to dive. Follow a trail of golden rings; each ring is a bell note that climbs the scale while the chain lasts. Nothing hurts you: touch the sea or a hillside and you skim off it. Fly through enough rings to finish the flight; all of them for three stars.
 12. **Vine**: Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move.
 13. **Hunter**: The intense one: an ice-age hunt in 3D, first person, crouched in tall grass on a steppe under snowy mountains, weather by hunt. Left thumb held creeps forward; lift it to freeze when the animal flicks its ears and looks up, or it sees you and bolts. Right thumb pulls back and lets go to throw a flint spear where the mark on the ground is: the chest brings it down, a haunch only wounds it, and far throws fall short. Sometimes a cave lion growls from one side: swipe toward it and tap the instant it leaps to brace your spear. Deer, horses, boar, bison, and a woolly mammoth every tenth hunt. A heartbeat that quickens as you close in.
+14. **Police Chase**: A three-part police chase in 3D through a city at night. Pursuit: hold the left or right side of the screen to steer your patrol car (both to brake) through traffic, and ram the getaway car's back corner from the side to spin him out. On foot: chase him down a brick alley, swiping round crates, over fences and under pipes, and tap to tackle when you are right behind him. Arrest: when he twists one way, swipe the other way to hold him until the cuffs are on. Lights, siren, rain on the tarmac; weather changes by case.
+15. **Pilot**: Land an airliner in 3D at a countryside airport, seen from just behind the plane, in weather that changes by flight (fog, rain, storm, sunset, night with the runway lights). Right thumb is the control column: left and right to bank, pull back to raise the nose; left thumb is the throttle. Follow the glide-path lights (two white, two red), keep on the centre line in a crosswind, hold the speed, then flare just before the wheels touch for a soft landing. The first three flights teach it a piece at a time.

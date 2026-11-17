@@ -5039,7 +5039,7 @@ function driveStep(G, dt) {
   if ((ahead || ck.nextT <= 0) && !(L && L.id === 'pit')) { const opts = [ck.lane - 1, ck.lane + 1].filter(l => l >= 0 && l < 4 && !G.traffic.some(t => Math.abs(t.x - LANES[l]) < 1 && Math.abs(t.s - ck.s) < 20)); if (opts.length) ck.lane = opts[(R() * opts.length) | 0]; ck.nextT = 2 + R() * 3; }
   ck.x += clamp(LANES[ck.lane] - ck.x, -4 * dt, 4 * dt) + (ck.spin > 0 ? Math.sin(G.t * 20) * 0.05 : 0); ck.s += ck.v * dt;
   // traffic: slower cars in the lanes ahead; some cross at junctions
-  while (G.traffic.length < 60) { const last = G.traffic.length ? Math.max(...G.traffic.map(t => t.s0)) : me.s + 60; const s = last + 1 / (c.traffic * (L && L.id === 'steer' ? (stuck ? 1.2 : 2.2) : L && L.id === 'pit' ? (stuck ? 0.05 : 0.3) : 1)) * (0.5 + R()); G.traffic.push({ x: LANES[(R() * 4) | 0], s, s0: s, v: L && L.id === 'steer' ? 7 + R() * 3 : 11 + R() * 7, col: (R() * 6) | 0, hit: 0 }); }
+  while (G.traffic.length < 60) { const last = G.traffic.length ? Math.max(...G.traffic.map(t => t.s0)) : me.s + 60; const s = last + 1 / (c.traffic * (L && L.id === 'steer' ? (stuck ? 1.2 : 2.2) : L && L.id === 'pit' ? 0.0001 : 1)) * (0.5 + R()); G.traffic.push({ x: LANES[(R() * 4) | 0], s, s0: s, v: L && L.id === 'steer' ? 7 + R() * 3 : 11 + R() * 7, col: (R() * 6) | 0, hit: 0 }); }
   for (const t of G.traffic) { const behind = t.s < me.s && t.s > me.s - 12 && Math.abs(t.x - me.x) < 2.4; t.s += (behind ? Math.min(t.v, me.v - 2) : t.v) * dt; if (t.hit > 0) { t.hit -= dt; t.x += t.hx * dt; } }      // drivers behind you slow down for you
   for (const t of G.traffic) if (!t.passed && t.s < me.s - 3) { t.passed = true; if (!t.hit) { G.passed++; lessonSee(G, 'pass'); } }
   G.traffic = G.traffic.filter(t => t.s > me.s - 30);
@@ -5106,7 +5106,7 @@ const LESSONS = {
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonPhase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
-function lessonPhase(G) { const st = lessonNow(G); if (!st) return; if (st.ph === 'foot' && G.ph !== 'foot') startFoot(G, st.id === 'tackle' ? 7 : 12); if (st.id === 'tackle') G.foot.gap = 7; if (st.ph === 'cuff') startCuff(G); }
+function lessonPhase(G) { const st = lessonNow(G); if (!st) return; if (st.id === "pit") G.traffic.length = 0; if (st.ph === 'foot' && G.ph !== 'foot') startFoot(G, st.id === 'tackle' ? 7 : 12); if (st.id === 'tackle') G.foot.gap = 7; if (st.ph === 'cuff') startCuff(G); }
 function lessonSee(G, what) {
   const D = G.lesson; if (!D) return; const st = D.steps[D.i]; if (!st.ok(what)) return;
   D.n++; if (D.n < st.need) { G.ev.push({ k: 'lessonok', n: D.n, need: st.need }); return; }

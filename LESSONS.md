@@ -229,6 +229,11 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Traffic you cannot see must not hit you:** cars behind you slow down for you (a slow patrol car was being rear-ended); only cars ahead count.
 - The blind search is long here (nine letters: 182,976 games, about 15 minutes).
 
+### 15. Pilot (`games/pilot/`)
+- **Doing nothing must not land.** The plane starts trimmed on the glide path, so a still thumb flew it onto the runway; the glide comes down at 3.8 m/s and the gear now takes at most 2.3 to 3.3, so every landing needs a flare (a blind pull-push still flares by luck now and then: 7 in 100 on flights 1-3).
+- **The column holds what you leave it on** (the trim follows the nose while the thumb is still), pulled back down the screen raises the nose, as a real column does; the lesson says so in capitals.
+- **A one-line function with a `//` comment in the middle swallows the rest of the line** (twice in Police Chase): comments go on their own line or at the very end.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
