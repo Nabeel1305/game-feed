@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**32 games** so far. Next number: **33**.
+**33 games** so far. Next number: **34**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -40,6 +40,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 30 | **Mini Golf** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/8Hp1ZUv44KnZAHAx8PKa7L) | `games/golf/index.html` |
 | 31 | **Penalty Kings** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/SWBovTEMi7HAMNa2C7ksU5) | `games/penalty/index.html` |
 | 32 | **Critter Clash** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/TuMVzQoZa1mLvdrTfXb1iH) | `games/critters/index.html` |
+| 33 | **Rodeo** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/J9F7dBh1m2F7ygUHNic8mQ) | `games/rodeo/index.html` |
 
 ## What each game is
 
@@ -75,7 +76,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 30. **Mini Golf**: Calm 3D mini golf: pull back and let go to putt around windmills, bumpers, slopes and water, under par to win, with a shop and ranks.
 31. **Penalty Kings**: A cup run of penalty shootouts in a floodlit stadium: tap where to shoot and stop the needle in the green; read the kicker's body when he plants his foot and dive the right way.
 32. **Critter Clash**: Turn-by-turn battles between teams of bouncing critters: fire beats leaf, time the ring for a critical, guard the big attacks, and catch wild critters for your collection.
-
-## Up next (designed, not built yet)
-
-33. **Rodeo**: Stay on a bucking bull for eight seconds by leaning against each buck with two thumbs. Spec: `specs/ideas.md`.
+33. **Rodeo**: Eight seconds on a bucking bull with two thumbs: hold left or right to lean, read his head to lean against each buck before it lands, grip the spins, and score with the judges.
