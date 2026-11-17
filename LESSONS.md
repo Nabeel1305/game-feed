@@ -257,6 +257,11 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Transparent things over Water need a renderOrder** (the pool of light, the beam, the surf), or the water draws over them. A cone whose wide end is at the camera washes out the screen: the beam is narrow at the lamp.
 - **The view turns with the beam, so a thumb held still keeps aiming** (`holdAim` each frame): holding near the screen's edge pans.
 
+### 19. Hiring (`games/hiring/`) — 2D on purpose
+- **A choice game beats blind play by the number of choices and decisions, not by tricks:** with four places for each CV (three jobs and the bin, a quarter each) and one mistake allowed, eight CVs still let blind strings win 0.36%; ten or more brings it to 0.
+- **Build every CV from its answer:** make it fit its job (or none), break one need of another job by a hair, then check that exactly one job fits, and try again if not. Then the game never asks an unfair question.
+- **Measure text after laying out:** `layout()` sets its own font, so a text wrapped after calling it was measured too small and ran off the panel.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

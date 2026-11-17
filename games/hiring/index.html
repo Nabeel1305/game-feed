@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hiring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#10141f;--ink:#eef2f8;--acc:#f2b84b;--acc-dark:#a8701a;--ok:#8fe0ab}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Playfair Display","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(16,20,31,.55),rgba(6,8,14,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#1d1204;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#1d1204}.lvb.cur small{color:#1d1204}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf">Hiring</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">READ IT. PLACE IT.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Playfair Display", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('hr.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('hr.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+// ===================== RULES: Hiring (game 19) =====================
+// You run hiring for a busy town agency. Three jobs are open, each pinned at the top with what it needs (two years in a
+// kitchen, a driving licence, a certificate still in date, French, nights...). CVs come in one at a time. Read the CV, then drag
+// it onto the job it fits, or into the bin if it fits none. Every CV fits exactly one job or none. A wrong placement is a
+// complaint; two complaints and the day is over. Later: more needs per job, near misses (two and a half years when three are
+// needed, a certificate that ran out last month), and candidates who will not wait for ever. 2D on purpose: papers read better flat.
+
+const RULES = [
+  '<b>Three jobs are open</b> at the top, each with what it needs.',
+  '<b>Read the CV</b>, then drag it onto the job it fits, everything the job asks for.',
+  '<b>Fits none?</b> Drag it into the bin.',
+  'Certificates run out: check the date against today\'s, top right.',
+  'Two wrong placements and the day is over. Later, candidates will not wait for ever.',
+];
+const TODAY = { d: 17, m: 11, y: 2026 };
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const FEM = ['Amara', 'Grace', 'Sofia', 'Mia', 'Ada', 'Zara', 'Chloe', 'Lucia', 'Hannah', 'Ella', 'Nora', 'Fatima', 'Ngozi', 'Aisha'], MAS = ['Tunde', 'Liam', 'Kofi', 'Omar', 'Noah', 'Ibrahim', 'Emeka', 'Ravi', 'Yusuf', 'Chidi', 'Leo', 'Sam', 'Diego', 'Femi'];
+const LAST = ['Okafor', 'Smith', 'Adeyemi', 'Garcia', 'Mensah', 'Novak', 'Bello', 'Rossi', 'Khan', 'Eze', 'Brown', 'Silva', 'Nwosu', 'Dubois', 'Patel', 'Lee', 'Ibe', 'Moreau'];
+const ABOUT = ['I never give up.', 'Ask me about my sourdough.', 'I have a dog called Biscuit.', 'Calm under pressure.', 'I run every morning.', 'I sing in a choir.', 'Team player, early riser.', 'I once met the mayor.', 'Fluent in sarcasm.', 'I like a tidy desk.', 'I can fix almost anything.', 'People say I am very patient.'];
+// the things a job can need, each a test on a CV and a way to make a CV pass or just fail it
+const LANGS = ['French', 'Spanish', 'Arabic', 'Yoruba', 'German', 'Chinese'];
+const NEEDS = {
+  exp: { say: (n, a) => `${a.n}+ years ${a.as}`, test: (cv, a) => cv.work.filter(w => w.field === a.field).reduce((s, w) => s + w.yrs, 0) >= a.n },
+  cert: { say: (n, a) => `${a.cert} (in date)`, test: (cv, a) => cv.certs.some(c => c.name === a.cert && dateGE(c.until, TODAY)) },
+  licence: { say: (n, a) => a.max != null ? `Driving licence, ${a.max} points at most` : 'Driving licence', test: (cv, a) => cv.licence && (a.max == null || cv.points <= a.max) },
+  lang: { say: (n, a) => `Speaks ${a.lang}`, test: (cv, a) => cv.langs.includes(a.lang) },
+  nights: { say: () => 'Can work nights', test: cv => cv.avail.includes('nights') },
+  weekends: { say: () => 'Can work weekends', test: cv => cv.avail.includes('weekends') },
+  age: { say: (n, a) => `Aged ${a.n} or over`, test: (cv, a) => ageOf(cv) >= a.n },
+  near: { say: (n, a) => `Lives within ${a.km} km`, test: (cv, a) => cv.km <= a.km },
+};
+const JOBS = [
+  { id: 'chef', name: 'Chef', field: 'kitchen', as: 'in a kitchen', cert: 'Food hygiene', extra: ['nights', 'weekends'] },
+  { id: 'driver', name: 'Van driver', field: 'driving', as: 'driving', lic: true, extra: ['near', 'age'] },
+  { id: 'nurse', name: 'Night nurse', field: 'nursing', as: 'nursing', cert: 'Nursing registration', extra: ['nights', 'lang'] },
+  { id: 'guard', name: 'Lifeguard', field: 'lifeguard', as: 'as a lifeguard', cert: 'Pool lifesaving', extra: ['age', 'weekends'] },
+  { id: 'recep', name: 'Hotel reception', field: 'hotel', as: 'in a hotel', lang: true, extra: ['weekends', 'near'] },
+  { id: 'teach', name: 'Teacher', field: 'teaching', as: 'teaching', cert: 'Teaching licence', extra: ['lang', 'near'] },
+  { id: 'mech', name: 'Mechanic', field: 'garage', as: 'in a garage', lic: true, extra: ['weekends', 'age'] },
+  { id: 'guide', name: 'Tour guide', field: 'tours', as: 'guiding tours', lang: true, extra: ['licence', 'weekends'] },
+];
+const FIELDS = ['kitchen', 'driving', 'nursing', 'lifeguard', 'hotel', 'teaching', 'garage', 'tours', 'retail', 'office', 'farming'];
+const WORKAS = { kitchen: ['Line cook', 'Kitchen porter', 'Sous chef'], driving: ['Delivery driver', 'Taxi driver', 'Courier'], nursing: ['Ward nurse', 'Care nurse'], lifeguard: ['Beach lifeguard', 'Pool lifeguard'], hotel: ['Front desk', 'Concierge'], teaching: ['Teaching assistant', 'Maths teacher'], garage: ['Mechanic', 'Tyre fitter'], tours: ['City guide', 'Museum guide'], retail: ['Shop assistant', 'Cashier'], office: ['Office clerk', 'Data entry'], farming: ['Farm hand', 'Gardener'] };
+const CERTS = ['Food hygiene', 'Nursing registration', 'Pool lifesaving', 'Teaching licence', 'First aid'];
+const dateGE = (a, b) => a.y !== b.y ? a.y > b.y : a.m !== b.m ? a.m > b.m : a.d >= b.d;
+const ageOf = cv => TODAY.y - cv.born - (cv.bornM > TODAY.m ? 1 : 0);
+
+function makeCfg(N, help) {
+  const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+  return { N, f, e, boss, help: !!help, lives: 2,
+    cvs: Math.round(x(10, 15, 30)) + (boss ? 2 : 0),
+    needs: N <= 1 ? 1 : N <= 4 ? 2 : Math.min(4, Math.round(x(2, 4.4, 25))),       // needs per job
+    near: clamp((f - 3) / 30, 0, 0.85),                                          // how often a CV misses by a hair
+    patience: N < 8 ? 0 : x(60, 16, 30) * (help ? 1.3 : 1),                         // seconds a candidate will wait (0: for ever)
+    dates: N >= 3 };
+}
+// three jobs for the day, each with its needs
+function makeJobs(G) {
+  const c = G.cfg, R = G.rnd, pool = JOBS.slice(); const jobs = [];
+  for (let i = 0; i < 3; i++) { const J = pool.splice((R() * pool.length) | 0, 1)[0], needs = [];
+    needs.push({ k: 'exp', field: J.field, as: J.as, n: c.needs <= 1 ? 1 : 1 + ((R() * (c.f > 10 ? 4 : 3)) | 0) });
+    if (J.cert && c.dates) needs.push({ k: 'cert', cert: J.cert }); else if (J.lic) needs.push({ k: 'licence', max: c.f > 12 && R() < 0.5 ? 3 + ((R() * 4) | 0) : null }); else if (J.lang) needs.push({ k: 'lang', lang: pick(R, LANGS) });
+    for (const ex of J.extra) { if (needs.length >= c.needs) break; needs.push(ex === 'lang' ? { k: 'lang', lang: pick(R, LANGS) } : ex === 'age' ? { k: 'age', n: pick(R, [18, 21, 25]) } : ex === 'near' ? { k: 'near', km: pick(R, [5, 10, 15, 20]) } : ex === 'licence' ? { k: 'licence', max: null } : { k: ex }); }
+    jobs.push({ id: J.id, name: J.name, needs: needs.slice(0, Math.max(1, c.needs)) }); }
+  return jobs;
+}
+const fits = (cv, job) => job.needs.every(n => NEEDS[n.k].test(cv, n));
+const fitsOf = (G, cv) => G.jobs.map((j, i) => fits(cv, j) ? i : -1).filter(i => i >= 0);
+// a CV made to fit job t (or none: t = -1), failing every other job by at least one need
+function makeCV(G, t) {
+  const c = G.cfg, R = G.rnd;
+  for (let tries = 0; tries < 80; tries++) {
+    const fem = R() < 0.5, cv = { name: pick(R, fem ? FEM : MAS) + ' ' + pick(R, LAST), born: TODAY.y - (19 + ((R() * 30) | 0)), bornM: 1 + ((R() * 12) | 0), km: 1 + ((R() * 30) | 0), licence: R() < 0.5, points: 0, langs: ['English'], avail: [], work: [], certs: [], about: pick(R, ABOUT), face: (R() * 1e6) | 0, female: fem };
+    if (cv.licence) cv.points = R() < 0.6 ? 0 : 3 + ((R() * 7) | 0);
+    if (R() < 0.45) cv.langs.push(pick(R, LANGS));
+    if (R() < 0.5) cv.avail.push('weekends'); if (R() < 0.4) cv.avail.push('nights');
+    // a working life: two or three jobs
+    const fs = []; for (let i = 0; i < 1 + ((R() * 2) | 0); i++) fs.push(pick(R, FIELDS));
+    for (const fl of fs) cv.work.push({ field: fl, as: pick(R, WORKAS[fl]), yrs: 1 + ((R() * 3) | 0) });
+    for (let i = 0; i < ((R() * 2) | 0); i++) { const nm = pick(R, CERTS); cv.certs.push({ name: nm, until: randDate(R, R() < 0.6) }); }
+    // make it meet every need of the target job
+    if (t >= 0) for (const n of G.jobs[t].needs) satisfy(cv, n, R);
+    // near misses: sometimes break one need of a job by a hair (if that job is not the target, it stays a miss)
+    const victims = t >= 0 ? G.jobs.map((j, i) => i).filter(i => i !== t) : [0, 1, 2];
+    if (t < 0 && R() < 0.85) { const v = pick(R, victims), J = G.jobs[v]; for (const n of J.needs) satisfy(cv, n, R); breakOne(cv, pick(R, J.needs), R, R() < c.near); }
+    else if (R() < c.near) { const v = pick(R, victims), J = G.jobs[v]; for (const n of J.needs) satisfy(cv, n, R); breakOne(cv, pick(R, J.needs), R, true); if (t >= 0) for (const n of G.jobs[t].needs) satisfy(cv, n, R); }
+    const f = fitsOf(G, cv); if (t >= 0 ? (f.length === 1 && f[0] === t) : f.length === 0) { cv.work = shuffleW(cv.work, R); return cv; }
+  }
+  return null;
+}
+function shuffleW(a, R) { for (let i = a.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function randDate(R, valid) { if (valid) return { d: 1 + ((R() * 28) | 0), m: 1 + ((R() * 12) | 0), y: TODAY.y + 1 + ((R() * 3) | 0) }; return { d: 1 + ((R() * 28) | 0), m: 1 + ((R() * 12) | 0), y: TODAY.y - 1 - ((R() * 3) | 0) }; }
+function satisfy(cv, n, R) {
+  if (n.k === 'exp') { const have = cv.work.filter(w => w.field === n.field).reduce((s, w) => s + w.yrs, 0); if (have < n.n) cv.work.push({ field: n.field, as: pick(R, WORKAS[n.field]), yrs: n.n - have + ((R() * 2) | 0) }); }
+  if (n.k === 'cert') { cv.certs = cv.certs.filter(c2 => c2.name !== n.cert); cv.certs.push({ name: n.cert, until: randDate(R, true) }); }
+  if (n.k === 'licence') { cv.licence = true; if (n.max != null && cv.points > n.max) cv.points = ((R() * (n.max + 1)) | 0); }
+  if (n.k === 'lang' && !cv.langs.includes(n.lang)) cv.langs.push(n.lang);
+  if (n.k === 'nights' && !cv.avail.includes('nights')) cv.avail.push('nights');
+  if (n.k === 'weekends' && !cv.avail.includes('weekends')) cv.avail.push('weekends');
+  if (n.k === 'age' && ageOf(cv) < n.n) cv.born = TODAY.y - n.n - 1 - ((R() * 15) | 0);
+  if (n.k === 'near' && cv.km > n.km) cv.km = 1 + ((R() * n.km) | 0);
+}
+// fail one need; by a hair if hair (one year short, a certificate that ran out weeks ago, one point too many, a year too young)
+function breakOne(cv, n, R, hair) {
+  if (n.k === 'exp') { const ws = cv.work.filter(w => w.field === n.field); cv.work = cv.work.filter(w => w.field !== n.field); if (hair && n.n > 1) cv.work.push({ field: n.field, as: pick(R, WORKAS[n.field]), yrs: n.n - 1 }); }
+  if (n.k === 'cert') { const c2 = cv.certs.find(q => q.name === n.cert); if (hair || c2) { cv.certs = cv.certs.filter(q => q.name !== n.cert); cv.certs.push({ name: n.cert, until: hair ? { d: 1 + ((R() * 27) | 0), m: TODAY.m - 1 - ((R() * 3) | 0), y: TODAY.y } : randDate(R, false) }); } }
+  if (n.k === 'licence') { if (n.max != null && hair) { cv.licence = true; cv.points = n.max + 1 + ((R() * 3) | 0); } else { cv.licence = false; cv.points = 0; } }
+  if (n.k === 'lang') cv.langs = cv.langs.filter(l => l !== n.lang);
+  if (n.k === 'nights') cv.avail = cv.avail.filter(a => a !== 'nights');
+  if (n.k === 'weekends') cv.avail = cv.avail.filter(a => a !== 'weekends');
+  if (n.k === 'age') { cv.born = TODAY.y - n.n + (hair ? 0 : 3); cv.bornM = hair ? 12 : cv.bornM; }
+  if (n.k === 'near') cv.km = n.km + (hair ? 1 + ((R() * 2) | 0) : 5 + ((R() * 20) | 0));
+}
+function newGame(N, o = {}) {
+  const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null,
+    jobs: null, cv: null, done: 0, right: 0, wrong: 0, lives: cfg.lives, streak: 0, bestStreak: 0, wait: 0, gap: 0.5, placed: [0, 0, 0], binned: 0 };
+  G.jobs = makeJobs(G);
+  if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
+  return G;
+}
+function nextCV(G) {
+  const L = lessonNow(G), R = G.rnd; let t;
+  if (L && L.want != null) t = L.want === 'bin' ? -1 : (R() * 3) | 0; else t = R() < 0.25 ? -1 : (R() * 3) | 0;
+  const cv = makeCV(G, t) || makeCV(G, -1); cv.t = t; cv.fit = fitsOf(G, cv); G.cv = cv; G.wait = 0; G.ev.push({ k: 'cv' });
+}
+// ---------- the thumb ----------
+// place the CV: to = 0, 1, 2 (a job) or -1 (the bin)
+function place(G, to) {
+  const cv = G.cv; if (G.over || !cv || G.gap > 0) return; const c = G.cfg, ok = to < 0 ? cv.fit.length === 0 : cv.fit.includes(to);
+  G.cv = null; G.gap = 0.45; G.done++;
+  if (to >= 0) G.placed[to]++; else G.binned++;
+  if (ok) { G.right++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); G.ev.push({ k: 'right', to, n: G.streak, name: cv.name }); lessonSee(G, to < 0 ? 'bin' : 'hire'); }
+  else { G.streak = 0; G.ev.push({ k: 'wrong', to, fit: cv.fit, why: whyNot(G, cv, to), name: cv.name }); if (G.lesson) { lessonMiss(G, 'wrong'); G.done--; return; } G.wrong++; G.lives--; if (G.lives <= 0) { finish(G, false, 'complaints'); return; } }
+  if (!G.lesson && G.done >= c.cvs) finish(G, true);
+}
+// why it was wrong, in a few words (honest feedback, P4)
+function whyNot(G, cv, to) {
+  if (to < 0) return `fits ${G.jobs[cv.fit[0]].name}`;
+  const n = G.jobs[to].needs.find(q => !NEEDS[q.k].test(cv, q)); if (!n) return '';
+  return { exp: 'not enough experience', cert: cv.certs.some(q => q.name === n.cert) ? 'certificate out of date' : 'no certificate', licence: cv.licence ? 'too many points' : 'no licence', lang: `no ${n.lang}`, nights: 'no nights', weekends: 'no weekends', age: 'too young', near: 'lives too far' }[n.k];
+}
+// ---------- every frame ----------
+function step(G, dt) {
+  if (G.over) return; G.t += dt; const c = G.cfg;
+  if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0 && !G.cv) nextCV(G); return; }
+  if (!G.cv) { nextCV(G); return; }
+  G.wait += dt;
+  if (c.patience && !G.lesson && G.wait >= c.patience) { const cv = G.cv; G.cv = null; G.gap = 0.45; G.done++; G.streak = 0; G.wrong++; G.lives--; G.ev.push({ k: 'left', name: cv.name }); if (G.lives <= 0) { finish(G, false, 'waited'); return; } if (G.done >= c.cvs) finish(G, true); }
+}
+function finish(G, win, why) {
+  G.over = win ? 'won' : 'lost';
+  G.res = { win, why, stars: win ? (G.wrong === 0 ? 3 : 2) : 0, right: G.right, done: G.done, cvs: G.cfg.cvs, wrong: G.wrong, combo: G.bestStreak, time: G.t };
+  G.ev.push({ k: win ? 'won' : 'lost', why });
+}
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'hire', title: 'FIND THE JOB IT FITS', how: 'Read the CV. Which job at the top does it fit? Drag the CV onto that job.', need: 2, ok: w => w === 'hire', want: 'job' },
+      { id: 'bin', title: 'FITS NONE? THE BIN', how: 'This one fits none of the three jobs. Drag it down into the bin.', need: 1, ok: w => w === 'bin', want: 'bin' }],
+  2: [{ id: 'two', title: 'EVERYTHING IT ASKS FOR', how: 'Jobs now need two things. The CV must have both. Drag it onto the job, or the bin.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
+  3: [{ id: 'dates', title: 'IN DATE?', how: 'Certificates run out. Look at the date it runs until, and today\'s date at the top right. Out of date: it does not count.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonSee(G, what) {
+  const D = G.lesson; if (!D) return; const st = D.steps[D.i]; if (!st.ok(what)) return;
+  D.n++; if (D.n < st.need) { G.ev.push({ k: 'lessonok', n: D.n, need: st.need }); return; }
+  D.i++; D.n = 0; D.miss = 0;
+  if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); Object.assign(G, { done: 0, right: 0, wrong: 0, lives: G.cfg.lives, streak: 0, bestStreak: 0 }); }
+  else G.ev.push({ k: 'lessonnext' });
+}
+function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev.push({ k: 'lessonmiss', why, how: D.steps[D.i].how }); }
+
+// ---------- for the robots ----------
+// BLIND: drag the CV to a job (first, second, third) or the bin without reading it.
+const BLIND = { a: G => place(G, 0), b: G => place(G, 1), c: G => place(G, 2), x: G => place(G, -1) };
+// a person who reads: takes time to read (more needs, more time), now and then misses a detail (more often a near miss)
+function honest(G, o, mem) {
+  const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, cv = G.cv; if (!cv) { mem.cv = null; return; }
+  if (mem.cv !== cv) { mem.cv = cv; const n = G.jobs.reduce((s, j) => s + j.needs.length, 0); mem.at = G.t + 0.8 + react * (2 + n * 0.9) + Math.random() * react * 3; mem.slip = Math.random() > Math.pow(acc, 0.2 + G.cfg.needs * 0.12 + G.cfg.near * 0.6); }
+  if (G.t < mem.at) return;
+  let to = cv.fit.length ? cv.fit[0] : -1;
+  if (mem.slip) { const opts = [-1, 0, 1, 2].filter(q => q !== to); to = pick(Math.random, opts); }
+  place(G, to);
+}
+function winNow(G) { if (!G || G.over) return; G.lesson = null; G.done = G.cfg.cvs - 1; G.lives = G.cfg.lives; G.gap = 0; if (!G.cv) nextCV(G); place(G, G.cv.fit.length ? G.cv.fit[0] : -1); }
+// ===================== DRAW: the hiring desk, flat and readable (2D on purpose) =====================
+// A wooden desk under a warm lamp. The three open jobs are cards pinned along the top, each with what it needs. The CV in the
+// middle is a real-looking sheet: a photo, name, age, where they live, experience, certificates with their dates, driving,
+// languages, when they can work, and a line about themselves. Drag it onto a job or into the bin. Right: a stamp and it flies
+// into the tray. Wrong: it shakes, the card shows what was missing.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null;
+const ui = { drag: null, cvY: 0, fly: null, bad: null, hover: null };
+const BODY = '"Nunito", "Segoe UI", sans-serif';
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 3 }); } }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 2.6) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function fxStep(dt) {
+  FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 4); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; p.vx *= 0.98; }
+  for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.4) TXT.shift();
+  if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  ui.cvY = Math.max(0, ui.cvY - dt * 4); if (ui.fly) { ui.fly.t += dt; if (ui.fly.t > 0.5) ui.fly = null; } if (ui.bad) { ui.bad.t += dt; if (ui.bad.t > 2.2) ui.bad = null; }
+}
+// where things are
+function layout(G) {
+  const top = 50 * k, gap = 8 * k, cw = (W - 24 - gap * 2) / 3; ctx.font = `600 ${Math.round(10.5 * k)}px ${BODY}`;
+  let jh = 0; const cards = G.jobs.map((j, i) => { const lines = []; j.needs.forEach(n => wrapText('• ' + NEEDS[n.k].say(n, n), cw - 12 * k).forEach(l => lines.push(l))); jh = Math.max(jh, 30 * k + lines.length * 13.5 * k + 8 * k); return { x: 12 + i * (cw + gap), y: top, w: cw, lines, job: j }; });
+  cards.forEach(c2 => c2.h = jh);
+  const binH = 64 * k, bin = { x: W / 2 - 70 * k, y: H - binH - 14 * k, w: 140 * k, h: binH };
+  const lp = G.lesson ? 112 * k : 0, py = top + jh + 14 * k, paper = { x: 18 * k, y: py, w: W - 36 * k, h: Math.min(bin.y - py - 14 * k - lp, 410 * k) };
+  return { cards, bin, paper, lessonY: bin.y - lp - 6 * k, lessonH: lp - 8 * k };
+}
+function onEvent(G, e) {
+  const Ly = layout(G);
+  switch (e.k) {
+    case 'cv': ui.cvY = 1; sfx.paper(); break;
+    case 'right': { const tg = e.to < 0 ? Ly.bin : Ly.cards[e.to]; ui.fly = { cv: ui.last, to: tg, t: 0, stamp: e.to < 0 ? 'NO' : 'HIRED', from: ui.drop || { x: W / 2, y: Ly.paper.y + Ly.paper.h / 2 } }; sparks(tg.x + tg.w / 2, tg.y + tg.h / 2, 12 + Math.min(10, e.n * 2), e.to < 0 ? '#c9b8a0' : '#9be3b5'); if (e.to < 0) sfx.bin(); else sfx.stamp(e.n); vibe(HAP.light);
+      if (e.n >= 3) say(`${e.n} RIGHT IN A ROW`, W / 2, Ly.paper.y + 20 * k, '#ffe08a', 18); break; }
+    case 'wrong': FX.red = 0.5; FX.shake = 8; sfx.wrong(); ui.bad = { to: e.to, why: e.why, fit: e.fit, t: 0 }; say(e.to < 0 ? 'THEY FIT A JOB!' : 'WRONG JOB', W / 2, Ly.paper.y + 26 * k, '#ffb4a8', 22);
+      tip('wrong', e.to < 0 ? 'Before the bin, check each job: does the CV have everything one of them asks for?' : 'The CV must have everything that job asks for', 3); break;
+    case 'left': FX.red = 0.4; sfx.wrong(); say(`${e.name.toUpperCase()} GAVE UP WAITING`, W / 2, Ly.paper.y + 26 * k, '#ffb4a8', 18); tip('wait', 'Later candidates will not wait for ever: read, then decide', 3); break;
+    case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', W / 2, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
+    case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
+    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessondone': say('THE DESK IS YOURS!', W / 2, H * 0.5, '#ffd36a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': FX.flash = 1; sfx.win(); vibe(HAP.best); break;
+    case 'lost': sfx.lose(); break;
+  }
+}
+const fmtDate = d => `${d.d} ${MON[d.m - 1]} ${d.y}`;
+function face(cv, x, y, s) {
+  const R = rng(cv.face), skin = ['#8d5524', '#c68642', '#e0ac69', '#f1c27d', '#ffdbac', '#5c3a1e'][(R() * 6) | 0], hair = ['#1b1b1b', '#3b2416', '#6a4224', '#a8742c', '#d9c08a', '#7a7a7a'][(R() * 6) | 0], shirt = `hsl(${(R() * 360) | 0},40%,${40 + R() * 25}%)`;
+  ctx.save(); ctx.beginPath(); rrect(x, y, s, s * 1.2, 4); ctx.clip(); ctx.fillStyle = `hsl(${200 + R() * 40},25%,82%)`; ctx.fillRect(x, y, s, s * 1.2);
+  ctx.fillStyle = shirt; ctx.beginPath(); ctx.ellipse(x + s / 2, y + s * 1.25, s * 0.5, s * 0.38, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = skin; ctx.fillRect(x + s * 0.42, y + s * 0.7, s * 0.16, s * 0.2);
+  if (cv.female && R() < 0.8) { ctx.fillStyle = hair; ctx.beginPath(); ctx.ellipse(x + s / 2, y + s * 0.55, s * 0.32, s * 0.42, 0, 0, TAU); ctx.fill(); }
+  ctx.fillStyle = skin; ctx.beginPath(); ctx.ellipse(x + s / 2, y + s * 0.5, s * 0.24, s * 0.29, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = hair; ctx.beginPath(); ctx.ellipse(x + s / 2, y + s * 0.3, s * 0.26, s * 0.14, 0, Math.PI, TAU); ctx.fill(); if (!cv.female && R() < 0.3) { ctx.beginPath(); ctx.ellipse(x + s / 2, y + s * 0.66, s * 0.2, s * 0.1, 0, 0, Math.PI); ctx.fill(); }
+  ctx.fillStyle = '#222'; for (const sx of [-1, 1]) { ctx.beginPath(); ctx.arc(x + s / 2 + sx * s * 0.09, y + s * 0.48, s * 0.025, 0, TAU); ctx.fill(); }
+  ctx.strokeStyle = '#6a3a2a'; ctx.lineWidth = Math.max(1, s * 0.02); ctx.beginPath(); ctx.arc(x + s / 2, y + s * 0.56, s * 0.08, 0.2, Math.PI - 0.2); ctx.stroke();
+  ctx.restore();
+}
+// the CV sheet itself
+function paperLines(cv) {
+  const L = [];
+  L.push(['h', 'EXPERIENCE']); for (const w of cv.work) L.push(['t', `${w.as} · ${w.yrs} year${w.yrs > 1 ? 's' : ''}`]);
+  L.push(['h', 'CERTIFICATES']); if (!cv.certs.length) L.push(['t', 'None']); for (const c2 of cv.certs) L.push(['t', `${c2.name}, until ${fmtDate(c2.until)}`, !dateGE(c2.until, TODAY)]);
+  L.push(['h', 'DRIVING']); L.push(['t', cv.licence ? `Full licence · ${cv.points} point${cv.points === 1 ? '' : 's'}` : 'No licence']);
+  L.push(['h', 'LANGUAGES']); L.push(['t', cv.langs.join(', ')]);
+  L.push(['h', 'CAN WORK']); L.push(['t', ['Weekdays'].concat(cv.avail.map(a => a[0].toUpperCase() + a.slice(1))).join(', ')]);
+  return L;
+}
+function drawCV(G, cv, x, y, w, h, rot = 0, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.translate(-w / 2, -h / 2);
+  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6; ctx.fillStyle = '#fbf8f0'; rrect(0, 0, w, h, 4); ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.fillStyle = '#3a5a7a'; ctx.fillRect(0, 0, w, 5 * k);
+  const ps = Math.min(64 * k, w * 0.2); face(cv, 12 * k, 14 * k, ps);
+  const tx = 22 * k + ps; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#1e2a36'; ctx.font = `700 ${Math.round(19 * k)}px ${TF}`; ctx.fillText(cv.name, tx, 14 * k);
+  ctx.font = `600 ${Math.round(12 * k)}px ${BODY}`; ctx.fillStyle = '#4a5560'; ctx.fillText(`Born ${MON[cv.bornM - 1]} ${cv.born} · age ${ageOf(cv)}`, tx, 40 * k); ctx.fillText(`Lives ${cv.km} km away`, tx, 56 * k);
+  let ly = 14 * k + ps * 1.2 + 10 * k; const lh = Math.min(17 * k, (h - ly - 30 * k) / 12);
+  for (const [kind, txt, warn] of paperLines(cv)) { if (kind === 'h') { ly += lh * 0.25; ctx.font = `800 ${Math.round(10 * k)}px ${BODY}`; ctx.fillStyle = '#3a5a7a'; ctx.fillText(txt, 14 * k, ly); ly += lh * 0.8; }
+    else { ctx.font = `600 ${Math.round(13 * k)}px ${BODY}`; ctx.fillStyle = '#20262c'; ctx.fillText(txt, 22 * k, ly); ly += lh; } }
+  ctx.font = `italic 600 ${Math.round(12 * k)}px ${BODY}`; ctx.fillStyle = '#6a6a6a'; ctx.fillText(`"${cv.about}"`, 14 * k, Math.min(h - 22 * k, ly + 4 * k));
+  ctx.restore();
+}
+function draw(now) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // the desk under a warm lamp
+  const g0 = ctx.createRadialGradient(W * 0.5, H * 0.35, 40, W * 0.5, H * 0.45, H * 0.8); g0.addColorStop(0, '#8a5a34'); g0.addColorStop(1, '#2e1a0e'); ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 0.08; for (let i = 0; i < 26; i++) { ctx.fillStyle = i % 2 ? '#000' : '#fff'; ctx.fillRect(0, i * H / 26 + Math.sin(i * 7) * 6, W, 2 + (i % 3)); } ctx.globalAlpha = 1;
+  const g = G || idleG(); const Ly = layout(g);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  // the jobs
+  Ly.cards.forEach((c2, i) => { const hov = ui.hover === i, bad = ui.bad && ui.bad.to === i && ui.bad.t < 1.2, good = ui.bad && ui.bad.fit && ui.bad.fit[0] === i && ui.bad.t < 2;
+    ctx.save(); ctx.translate(c2.x + c2.w / 2, c2.y + c2.h / 2); ctx.rotate((i - 1) * 0.012); ctx.translate(-c2.w / 2, -c2.h / 2);
+    ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3; ctx.fillStyle = bad ? '#ffd8d0' : hov ? '#fff6c8' : good ? '#d8f5dc' : '#f4ecd6'; rrect(0, 0, c2.w, c2.h, 5); ctx.fill(); ctx.shadowColor = 'transparent';
+    if (hov) { ctx.strokeStyle = '#e8a83a'; ctx.lineWidth = 3; rrect(0, 0, c2.w, c2.h, 5); ctx.stroke(); }
+    ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(c2.w / 2, 6 * k, 4 * k, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#1e2a36'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(13 * k)}px ${TF}`; ctx.fillText(c2.job.name, 6 * k, 12 * k);
+    ctx.font = `600 ${Math.round(10.5 * k)}px ${BODY}`; ctx.fillStyle = '#33404c'; c2.lines.forEach((l, j) => ctx.fillText(l, 6 * k, 30 * k + j * 13.5 * k));
+    if (bad && ui.bad.why) { ctx.fillStyle = '#c0392b'; ctx.font = `800 ${Math.round(10 * k)}px ${BODY}`; ctx.fillText(ui.bad.why.toUpperCase(), 6 * k, c2.h - 14 * k); }
+    ctx.restore(); });
+  // the bin
+  const b = Ly.bin, hb = ui.hover === -1; ctx.fillStyle = hb ? '#6a6a6a' : '#4a4a4a'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + b.w, b.y); ctx.lineTo(b.x + b.w * 0.88, b.y + b.h); ctx.lineTo(b.x + b.w * 0.12, b.y + b.h); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = hb ? '#e8a83a' : '#2a2a2a'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#ddd'; ctx.font = `800 ${Math.round(12 * k)}px ${BODY}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('BIN · FITS NONE', b.x + b.w / 2, b.y + b.h / 2);
+  if (ui.bad && ui.bad.to === -1 && ui.bad.t < 1.5) { ctx.fillStyle = '#ffb4a8'; ctx.fillText(ui.bad.why.toUpperCase(), b.x + b.w / 2, b.y - 12 * k); }
+  // the CV: arriving, dragged, or flying away
+  const P = Ly.paper;
+  if (g.cv) { ui.last = g.cv; const d = ui.drag; let x = P.x, y = P.y + ui.cvY * ui.cvY * H * 0.6, rot = 0, s = 1;
+    if (d && d.moved) { x = P.x + (d.x - d.x0); y = P.y + (d.y - d.y0); rot = (d.x - d.x0) / W * 0.25; s = 0.85; }
+    const w = P.w * s, h = P.h * s; drawCV(g, g.cv, x + (P.w - w) / 2, y + (P.h - h) / 2, w, h, rot);
+    // a candidate who will not wait for ever
+    if (g.cfg.patience && !g.lesson) { const u = 1 - g.wait / g.cfg.patience; ctx.fillStyle = 'rgba(0,0,0,.35)'; rrect(P.x, P.y - 9 * k, P.w, 5 * k, 2); ctx.fill(); ctx.fillStyle = u > 0.5 ? '#6cbf6c' : u > 0.25 ? '#e8b04a' : '#d9534f'; rrect(P.x, P.y - 9 * k, P.w * Math.max(0, u), 5 * k, 2); ctx.fill(); } }
+  if (ui.fly && ui.fly.cv) { const f = ui.fly, u = easeOut(Math.min(1, f.t / 0.45)), tx = f.to.x + f.to.w / 2, ty = f.to.y + f.to.h / 2, sc = 1 - u * 0.85, w = P.w * sc, h = P.h * sc, cx = lerp(f.from.x, tx, u), cy = lerp(f.from.y, ty, u);
+    drawCV(g, f.cv, cx - w / 2, cy - h / 2, w, h, u * (f.stamp === 'NO' ? 2 : 0.4), 1 - u * 0.3);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.2); ctx.globalAlpha = 1 - u * 0.5; ctx.strokeStyle = f.stamp === 'NO' ? '#8a8a8a' : '#2e8b57'; ctx.lineWidth = 4 * sc; ctx.font = `800 ${Math.round(34 * k * sc)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeText(f.stamp, 0, 0); ctx.restore(); }
+  for (const p of PT) { ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * k, 0, TAU); ctx.fill(); }
+  ctx.globalAlpha = 1; ctx.restore();
+  if (G) hud(G);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const t of TXT) { const a = t.t < 1.0 ? 1 : 1 - (t.t - 1.0) / 0.4; ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(t.size * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(t.txt, t.x, t.y - t.t * 26); ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y - t.t * 26); }
+  ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; const lines = wrapText(hint.txt, W - 70), lh = 19 * k, hh = lines.length * lh + 16 * k, ww = Math.max(...lines.map(l => ctx.measureText(l).width)) + 30;
+    ctx.fillStyle = 'rgba(0,0,0,.72)'; rrect(W / 2 - ww / 2, H * 0.55 - hh / 2, ww, hh, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.55 - hh / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.2})`; ctx.fillRect(0, 0, W, H); }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
+}
+let IG = null; function idleG() { if (!IG) { IG = newGame(Math.max(3, store.get('level', 1) | 0), { seed: 7 }); nextCV(IG); } return IG; }
+function hud(G) {
+  const c = G.cfg;
+  ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#f4e6c8';
+  ctx.textAlign = 'right'; ctx.fillText(`TODAY: ${fmtDate(TODAY).toUpperCase()}`, W - 14, 24 * k);
+  if (!G.lesson) { ctx.textAlign = 'left'; ctx.fillText(`CV ${Math.min(G.done + 1, c.cvs)} OF ${c.cvs}`, 14, 24 * k); ctx.fillStyle = '#ff8a7a'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillText('♥'.repeat(Math.max(0, G.lives)) + '♡'.repeat(Math.max(0, c.lives - G.lives)), 82 * k, 24 * k); }
+  else lessonPanel(G);
+}
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lessonPanel(G) {      // the lesson on now, over the CV's lower half
+  const D = G.lesson, st = D.steps[D.i], x = 16, w = W - 32; ctx.save();
+  const Ly = layout(G); ctx.font = `700 ${Math.round(12.5 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), y = Ly.lessonY, h = Ly.lessonH;
+  ctx.fillStyle = 'rgba(0,0,0,.8)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${D.i + 1} OF ${D.steps.length}`, x + 12, y + 10 * k);
+  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(16 * k)}px ${BC}`; ctx.fillText(st.title, x + 12, y + 24 * k);
+  ctx.font = `700 ${Math.round(12.5 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.88)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 44 * k + i * 15 * k));
+  for (let i = 0; i < st.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st.need - 1 - i) * 18 * k, y + 18 * k, 6 * k, 0, TAU); if (i < D.n) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
+  ctx.restore();
+}
+// ===================== SOUND: the office (PLAYBOOK S1-S11) =====================
+// Paper: a sheet sliding in, a rubber stamp (its chime climbing with a run of right calls), a crumple into the bin, a soft
+// buzz for a wrong call. A quiet office hum under it all.
+const sfx = {
+  click() { tone(660, 0.05, 0.08, 'triangle', 0, 880); },
+  tick() { if (!gate('tick', 60)) return; tone(1200 * vary(0.05), 0.03, 0.05, 'square'); },
+  ding() { tone(988, 0.5, 0.1, 'sine'); tone(1480, 0.35, 0.04, 'sine', 0.02); },
+  coin(i = 0) { const b = note(784, Math.min(10, i + 1)); tone(b, 0.18, 0.09, 'triangle'); tone(b * 2, 0.12, 0.03, 'sine', 0.01); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.12, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.12); },
+  paper() { noise(0.22, 3200 * vary(0.1), 0.06, 'bandpass', 0.7, 0, 0.03); },
+  stamp(n = 1) { tone(110, 0.09, 0.16, 'sine', 0, 60); noise(0.05, 1200, 0.1, 'bandpass', 1); tone(note(523, Math.min(9, n + 1)), 0.25, 0.06, 'triangle', 0.06); },
+  bin() { for (let i = 0; i < 5; i++) noise(0.06, 2500 + Math.random() * 2000, 0.05, 'bandpass', 1.5, i * 0.04); tone(140, 0.12, 0.08, 'sine', 0.2, 90); },
+  wrong() { if (!gate('wrong', 250)) return; tone(196, 0.25, 0.09, 'square', 0, 175, 900); tone(185, 0.3, 0.06, 'square', 0.12, 165, 900); },
+  win() { [0, 4, 7, 12].forEach((s, j) => pluck(note(262, s), 1.0, 0.13, j * 0.1)); },
+  lose() { tone(294, 0.5, 0.1, 'triangle', 0, 262); tone(220, 0.8, 0.1, 'triangle', 0.3, 196); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  $('hStat').innerHTML = [best[level] ? `Your best here: <b>${best[level]}</b> right calls in a row` : '', helpOn() ? '<span class="help">Help is on for this level: candidates wait longer.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (!HEADLESS) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; ui.drag = null; ui.fly = null; ui.bad = null; TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.combo > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.combo; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'THE BIG DAY IS DONE' : 'DAY DONE') : 'TWO COMPLAINTS'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = r.win ? `<b>${r.right}</b> of ${r.cvs} placed right · best run <b>${r.combo}</b>${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}` + (r.stars < 3 ? '<br>No wrong calls for three stars.' : '')
+    : `<b>${r.right}</b> placed right before two complaints.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: candidates wait longer until you get through.</span>' : '');
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (made for a desk): pick up the CV and drag it onto a job, or down into the bin
+function targetAt(x, y) { if (!G) return null; const Ly = layout(G); for (let i = 0; i < Ly.cards.length; i++) { const c2 = Ly.cards[i]; if (x > c2.x - 6 && x < c2.x + c2.w + 6 && y < c2.y + c2.h + 24 * k) return i; } const b = Ly.bin; if (y > b.y - 30 * k && x > b.x - 30 * k && x < b.x + b.w + 30 * k) return -1; return null; }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || !G.cv || ui.drag) return; const P = layout(G).paper; if (e.clientY < P.y - 20 || e.clientY > P.y + P.h + 20) return;
+  ui.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id) return; d.x = e.clientX; d.y = e.clientY; if (Math.hypot(d.x - d.x0, d.y - d.y0) > 10 * k) d.moved = true; const t = d.moved ? targetAt(d.x, d.y) : null; if (t !== ui.hover) { ui.hover = t; if (t != null) sfx.tick(); } });
+function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; const t = ui.hover; ui.hover = null; if (!G || G.over || paused || t == null || !d.moved) return; ui.drop = { x: d.x, y: d.y }; ui.last = G.cv; place(G, t); }
+cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = Math.min(0.05, ms / 1000); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e);
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  place(t) { place(G, t); }, layout() { return layout(G); }, ui, adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  get G() { return G; }
+};
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

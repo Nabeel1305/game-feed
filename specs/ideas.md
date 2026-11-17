@@ -3,7 +3,7 @@
 His list of 17 Nov 2026 (his words kept in `ideas-2026-11-17-his-words.txt`). Not started: he wants to ask something first.
 Sets of five; one or two of my own ideas in each; his roll on (CLAUDE.md, "Choosing games").
 
-**His rules for all of these (17 Nov 2026):** every game is **3D**, never 2D (the hunter sees the prey in front of him, not side
+**Later the same day he made 3D my choice, game by game** (see CLAUDE.md). **His first rule (17 Nov 2026):** every game is **3D**, never 2D (the hunter sees the prey in front of him, not side
 by side); weather and light change (sun, rain, dusk, dark); "do the ideas justice, engaging, entertaining, don't lazy out".
 
 | # | Idea | What it is | Intensity (1-5) |
@@ -29,3 +29,6 @@ by side); weather and light change (sun, rain, dusk, dark); "do the ideas justic
 
 Pairs that can share their engine: police chase and on the run (one city, two sides); drone and flying (one flight model);
 caveman, wolf pack and whaling (stalk, chase, strike).
+
+## Set 3 (17 Nov 2026, evening): Whaling, Wolf Pack, Drone Pilot, Hiring, and my Potter's Wheel (calm: shape clay on a
+spinning wheel to match the order). Heaven or Hell (too like Hiring in the same set), On the Run and Tag roll on to set 4.
