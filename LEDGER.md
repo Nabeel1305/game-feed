@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**11 games** so far. Next number: **12**.
+**12 games** so far. Next number: **13**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -19,6 +19,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 9 | **Reel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/BkQTAAhhChhKDsPtkT2JyX) | `games/reel/index.html` |
 | 10 | **Wild Water** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Gj5M8daF6XDMtHkNv1gmW4) | `games/wild-water/index.html` |
 | 11 | **Soar** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Weu2fZSYbgxPVNK4xFahTC) | `games/soar/index.html` |
+| 12 | **Vine** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/XhM3zzwfyV75DiLSYwqXUr) | `games/vine/index.html` |
 
 ## What each game is
 
@@ -33,3 +34,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 9. **Reel**: A fishing game in 3D, seen from the end of a wooden jetty on a mountain lake, with the weather and light changing by level (dawn, rain, mist, storm, sunset, night with a glowing float). Pull your thumb down and let go to cast to where fish are rising; leave the little nibbles and flick up to strike when the float is pulled right under (too soon scares them, too late loses the bait). Then fight it home: hold to reel, let go when it thrashes and runs or the line snaps, and drag against its way to turn it from the reeds and lily pads. Land the fish asked for before the light goes; three lines. The first three levels teach every move. Six kinds of fish plus rare golden carp and a named giant every tenth level; your biggest of each kind is kept.
 10. **Wild Water**: A whitewater kayak game in 3D, seen from the cockpit with the bow in front and the paddle in your gloves. Your two thumbs are the two blades: swipe down on the left for a left stroke (it swings the bow right), on the right for a right stroke; swipe up to back-paddle. The current carries you down a winding river through rows of rocks with one gap each, past fallen trees on the outside of the bends, over ledges you must take straight through the smooth tongue, and between slalom gates for stars. Three smashes or rolls and the boat is done. Weather and light change by run. The first three runs teach every stroke.
 11. **Soar**: The calm one: a 3D flight over a sea of islands, seen from just over your shoulder, arms forward and a scarf streaming, under a real sky that changes by flight (golden hour, dawn, mist, sunset, night with stars). One thumb steers like a little stick wherever you put it down: right to lean and turn, up to climb, down to dive. Follow a trail of golden rings; each ring is a bell note that climbs the scale while the chain lasts. Nothing hurts you: touch the sea or a hillside and you skim off it. Fly through enough rings to finish the flight; all of them for three stars.
+12. **Vine**: Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move.

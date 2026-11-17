@@ -214,6 +214,10 @@ Everything learned building the first games. Every new game must follow the **ru
 - **The camera sits over the right shoulder** (2.5 m back, 0.6 m up, 0.5 m to the side), leaning a third of the bank, its field of view widening a little with speed. Further back the flier was a speck.
 - **Calm, and still not spammable:** nothing ends the flight early; a held or rhythmic stick never threads a trail that bends and climbs on its own (0 of 77,504). The calm game is meant to be easy: ordinary players win to level 20.
 
+### 12. Vine (`games/vine/`)
+- **Make every gap by flying it:** each next vine is placed where the best release from the last one carries the hand (`makeVines`), with its own best release angle, so every gap can be made and no rhythm works; never further to the side than a lean can carry you (an unreachable vine was why the sharp robot lost every far canopy).
+- **A catch starts a full swing at once** (the speed set from the swing's energy, not from how you arrived), so the first forward swing after a catch is already the one to let go on. The robots' thumbs lift within a few hundredths of a second of when they mean to; a perfect robot made every canopy look easy.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
