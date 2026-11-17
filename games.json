@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 11,
+  "next_number": 12,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -374,6 +374,34 @@
         "P18"
       ],
       "summary": "A whitewater kayak game in 3D, seen from the cockpit with the bow in front and the paddle in your gloves. Your two thumbs are the two blades: swipe down on the left for a left stroke (it swings the bow right), on the right for a right stroke; swipe up to back-paddle. The current carries you down a winding river through rows of rocks with one gap each, past fallen trees on the outside of the bends, over ledges you must take straight through the smooth tongue, and between slalom gates for stars. Three smashes or rolls and the boat is done. Weather and light change by run. The first three runs teach every stroke."
+    },
+    {
+      "number": 11,
+      "id": "soar",
+      "name": "Soar",
+      "status": "in-progress",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/soar/index.html",
+      "artifact": null,
+      "artifact_slug": null,
+      "apk_repo": null,
+      "storage_prefix": "so.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Fly over the sea and the mountains, through the golden rings.",
+        "genre": "Flying",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Cinzel",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [],
+      "summary": ""
     }
   ],
   "planned": []
