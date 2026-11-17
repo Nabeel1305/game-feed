@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**16 games** so far. Next number: **17**.
+**17 games** so far. Next number: **18**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -24,6 +24,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 14 | **Police Chase** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy) | `games/police/index.html` |
 | 15 | **Pilot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/673SzKv3kg9inkqwy1KHXc) | `games/pilot/index.html` |
 | 16 | **Short Order** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV) | `games/cook/index.html` |
+| 17 | **Country Vet** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CECaaPJZ5BQ2tkjLCSPYgG) | `games/vet/index.html` |
 
 ## What each game is
 
@@ -43,3 +44,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 14. **Police Chase**: A three-part police chase in 3D through a city at night. Pursuit: hold the left or right side of the screen to steer your patrol car (both to brake) through traffic, and ram the getaway car's back corner from the side to spin him out. On foot: chase him down a brick alley, swiping round crates, over fences and under pipes, and tap to tackle when you are right behind him. Arrest: when he twists one way, swipe the other way to hold him until the cuffs are on. Lights, siren, rain on the tarmac; weather changes by case.
 15. **Pilot**: Land an airliner in 3D at a countryside airport, seen from just behind the plane, in weather that changes by flight (fog, rain, storm, sunset, night with the runway lights). Right thumb is the control column: left and right to bank, pull back to raise the nose; left thumb is the throttle. Follow the glide-path lights (two white, two red), keep on the centre line in a crosswind, hold the speed, then flare just before the wheels touch for a soft landing. The first three flights teach it a piece at a time.
 16. **Short Order**: Run the grill of a small 3D diner kitchen, seen from where the cook stands, with the street's weather and light in the window. Drag food from the trays onto the pans, the board or the plate; tap a pan to flip when the ring turns golden; sweep across the board to chop; drag the plate up to the pass. Pancakes, eggs on toast, burgers, salmon salad, steak and onions: golden, not burnt, before the customer walks out. The first three levels teach it a piece at a time.
+17. **Country Vet**: Be the vet in an old 3D barn, the farmyard's weather and light through the open door. Dogs, cows, sheep, horses, pigs and goats come in with a thorn, an overgrown hoof, a cut, a fever, caked mud or a sore ear. Read the owner's card, look at her to see where, pick the right tool and use it the way it is really used: pull a thorn out slowly, rasp a hoof to the line, spray and wrap a cut, hold the needle in and lift off when she shivers, brush with the hair, drop into a still ear. Rough handling frightens her: stroke her slowly to calm her. The first three levels teach every tool.

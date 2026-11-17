@@ -240,6 +240,15 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Portrait phones see a narrow strip of the counter:** everything the thumb needs (ten trays, bin, plate, board, three pans) must fit inside about ±0.35 m at the counter; check with `__sim.scr` on a 390-wide screen, not only by eye.
 - **A LatheGeometry drawn outward has its face pointing down:** the plate was black from above and vanished on the steel; `side: DoubleSide` fixed it. Indoors, turn the sky's light down (`W3.S.exposure *= 0.72; scene.environmentIntensity = 0.45`) or the steel goes white.
 
+### 17. Country Vet (`games/vet/`)
+- **A calm game still needs a cost for blind moves:** every wrong tool or poke frightens her more than one slow stroke calms her, and strokes made too close together calm less; with that, blind strings win 0.035%.
+- **A robot's thumb picks its speed once per gesture, not every frame:** the honest robot chose a new pull speed each frame, so one frame in seven was "too fast" and every thorn yanked; level 1 looked impossible.
+- **Each patient starts with the camera pulled back** (`G.focus = null` in `newPatient`, and when he picks his hand to stroke her), or the close-up of the last animal's sore leg carries over and the next one's parts are off the screen.
+- **Project from a fresh camera:** `W3.screen` uses the camera's matrices from the last render; in tests (and on a slow phone) that can be the previous frame's, so `spotScreen` calls `cam.updateMatrixWorld()` first.
+- **Frame the whole animal from its parts** (tail to nose, hooves to ears), shifted towards the head; a camera on the body's middle cut the head off at the screen edge.
+- **soundCheck calls every sound with (1, 1):** a sound that takes a name (`voice(animal)`) must fall back to a default for a number, or it renders silence and fails.
+- **A day must fit the 300-second robot limit** (and P24): five patients of two problems, not seven of three.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
