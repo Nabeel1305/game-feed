@@ -311,12 +311,12 @@
       "number": 9,
       "id": "reel",
       "name": "Reel",
-      "status": "in-progress",
+      "status": "testing",
       "version": "0.1.0",
       "added": "2026-11-17",
       "path": "games/reel/index.html",
-      "artifact": null,
-      "artifact_slug": null,
+      "artifact": "https://claude.ai/artifact/BkQTAAhhChhKDsPtkT2JyX",
+      "artifact_slug": "570ad226-ae66-4c7e-aaa7-ed3a7146139a",
       "apk_repo": null,
       "storage_prefix": "rl.",
       "feed": {
@@ -332,8 +332,14 @@
         "font": "Bree Serif",
         "live": "window.__sim && window.__sim.playing()"
       },
-      "principles": [],
-      "summary": ""
+      "principles": [
+        "P4",
+        "P12",
+        "P13",
+        "P17",
+        "P30"
+      ],
+      "summary": "A fishing game in 3D, seen from the end of a wooden jetty on a mountain lake, with the weather and light changing by level (dawn, rain, mist, storm, sunset, night with a glowing float). Pull your thumb down and let go to cast to where fish are rising; leave the little nibbles and flick up to strike when the float is pulled right under (too soon scares them, too late loses the bait). Then fight it home: hold to reel, let go when it thrashes and runs or the line snaps, and drag against its way to turn it from the reeds and lily pads. Land the fish asked for before the light goes; three lines. The first three levels teach every move. Six kinds of fish plus rare golden carp and a named giant every tenth level; your biggest of each kind is kept."
     }
   ],
   "planned": []

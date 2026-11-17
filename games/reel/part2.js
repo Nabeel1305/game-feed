@@ -273,7 +273,7 @@ function honest(G, o, mem) {
 }
 // The shortest way to a real win, for tools/test_controls.py: one fish short, and that fish nearly landed.
 function winNow(G) {
-  if (!G || G.over) return; G.lesson = null;
+  if (!G || G.over || G.ph === 'land' || G.ph === 'fight') return; G.lesson = null;
   while (G.caught.length < G.cfg.goal - 1) G.caught.push({ id: 'perch', name: 'Perch', kg: 0.5 });
   if (!G.spots.length) addSpot(G);
   const s = G.spots[0]; G.ph = 'bite'; G.ph_t = 0; G.bait = true; G.B = { s, delay: 0, dips: [], bit: true, t: 0 }; G.fl.x = s.x; G.fl.z = s.z;

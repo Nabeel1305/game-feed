@@ -29,16 +29,16 @@ function buildWorld() {
     if (h > 255 + n * 40 && sl < 0.55) c = [0.92, 0.93, 0.96];
     return c; };
   const grain = W3.grainTex(256, 9, 205, 50, 1); grain.repeat.set(60, 60);
-  const near = W3.terrain({ size: 640, seg: 190, x: 0, z: -90, height: (x, z) => hAll(x, -z), colour: (x, z, h, s) => colour(x, -z, h, s), map: grain });
+  const near = W3.terrain({ size: 640, seg: 150, x: 0, z: -90, height: (x, z) => hAll(x, -z), colour: (x, z, h, s) => colour(x, -z, h, s), map: grain });
   const grain2 = W3.grainTex(128, 4, 210, 40, 1); grain2.repeat.set(30, 30);
   W3.terrain({ size: 5200, seg: 150, x: 0, z: -90, height: (x, z) => hFar(x, -z), colour: (x, z, h, s) => colour(x, -z, h, s), map: grain2 });
   // forest: pines on the hills (thicker in patches), a few lighter trees by the water
-  const trees = []; for (let i = 0; i < 2600 && trees.length < 1100; i++) { const a = R0() * Math.PI * 2, r = 105 + Math.pow(R0(), 0.8) * 150, x = Math.cos(a) * r * 1.1, z = 95 + Math.sin(a) * r;
+  const trees = []; for (let i = 0; i < 2600 && trees.length < 900; i++) { const a = R0() * Math.PI * 2, r = 105 + Math.pow(R0(), 0.8) * 150, x = Math.cos(a) * r * 1.1, z = 95 + Math.sin(a) * r;
     const h = hAll(x, z); if (h < 0.8 || h > 45 || nz(x, z, 0.025) < -0.15 || Math.abs(x) < 7 && z < -4) continue;
     trees.push({ x, y: h - 0.3, z: -z, s: 0.9 + R0() * 1.1, sy: 0.85 + R0() * 0.5, rot: R0() * 6.3, hue: R0() - 0.5, shade: R0() - 0.5, lean: (R0() - 0.5) * 0.06 }); }
   W3.pines(trees, { shadow: false });
   // far forest belt: smaller, cheap
-  const far = []; for (let i = 0; i < 3000 && far.length < 1400; i++) { const a = R0() * Math.PI * 2, r = 300 + R0() * 380, x = Math.cos(a) * r, z = 95 + Math.sin(a) * r; const h = hFar(x, z); if (h < 0 || h > 200) continue; far.push({ x, y: h - 1, z: -z, s: 2.2 + R0() * 1.5, rot: R0() * 6, hue: R0() - 0.5, shade: R0() - 0.6 }); }
+  const far = []; for (let i = 0; i < 3000 && far.length < 900; i++) { const a = R0() * Math.PI * 2, r = 300 + R0() * 380, x = Math.cos(a) * r, z = 95 + Math.sin(a) * r; const h = hFar(x, z); if (h < 0 || h > 200) continue; far.push({ x, y: h - 1, z: -z, s: 2.2 + R0() * 1.5, rot: R0() * 6, hue: R0() - 0.5, shade: R0() - 0.6 }); }
   W3.pines(far, { layers: 3 });
   // the water
   const water = W3.water({ size: 6000, color: 0x0c262c, distort: 0.35, ripple: 1.6, speed: 0.45 });
@@ -93,7 +93,7 @@ function buildWorld() {
     const g = new T.LatheGeometry(pts, 16); const cnv = document.createElement('canvas'); cnv.width = 8; cnv.height = 64; const c2 = cnv.getContext('2d');
     c2.fillStyle = '#ef3b2c'; c2.fillRect(0, 0, 8, 30); c2.fillStyle = '#111'; c2.fillRect(0, 30, 8, 4); c2.fillStyle = '#f4f2ec'; c2.fillRect(0, 34, 8, 16); c2.fillStyle = '#3a6ad0'; c2.fillRect(0, 50, 8, 14);
     const tx = new T.CanvasTexture(cnv); tx.colorSpace = T.SRGBColorSpace;
-    const body = new T.Mesh(g, new T.MeshStandardMaterial({ map: tx, roughness: 0.35, emissive: 0x000000 })); body.scale.setScalar(2.2); fl.add(body); fl.userData.body = body; }
+    const body = new T.Mesh(g, new T.MeshStandardMaterial({ map: tx, roughness: 0.35, emissive: 0x000000 })); body.scale.setScalar(3.2); fl.add(body); fl.userData.body = body; }
   S.add(fl);
   // the aim: a ring on the water where the cast is pointing
   const aim = new T.Mesh(new T.RingGeometry(0.85, 1, 40), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false })); aim.rotation.x = -Math.PI / 2; aim.visible = false; S.add(aim);
@@ -117,7 +117,7 @@ function buildWorld() {
 }
 // a fish, built from its kind: a body shaped from a sphere, fins, eyes, a painted skin (made once per kind)
 function fishMesh(sp) {
-  const T = THREE, L = sp.look; if (V3.fishes[sp.id]) return V3.fishes[sp.id].clone();
+  const T = THREE, L = sp.look, cl = f => { const c = f.clone(); c.userData = { tail: c.getObjectByName('tail') }; return c; }; if (V3.fishes[sp.id]) return cl(V3.fishes[sp.id]);
   const cv2 = document.createElement('canvas'); cv2.width = 256; cv2.height = 256; const g = cv2.getContext('2d'), hex = c => '#' + c.toString(16).padStart(6, '0'), R0 = W3.rng(sp.id.length * 13 + 5);
   // columns go round the body (0 the back, 0.5 the belly), rows along it (top the head)
   const grad = g.createLinearGradient(0, 0, 256, 0); [[0, L.back], [0.16, L.side], [0.32, L.belly], [0.5, L.belly], [0.68, L.belly], [0.84, L.side], [1, L.back]].forEach(([u, c]) => grad.addColorStop(u, hex(c))); g.fillStyle = grad; g.fillRect(0, 0, 256, 256);
@@ -131,14 +131,14 @@ function fishMesh(sp) {
   const tx = new T.CanvasTexture(cv2); tx.colorSpace = T.SRGBColorSpace; tx.anisotropy = 4;
   const len = 1, deep = L.deep * 1.0, geo = new T.SphereGeometry(0.5, 40, 24), p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) { const xs = p.getX(i) * 2, ys = p.getY(i) * 2, zs = p.getZ(i) * 2, u = (ys + 1) / 2;
-    const prof = Math.pow(Math.max(0, Math.sin(Math.PI * Math.pow(u, 0.72))), 0.85) * (0.22 + 0.78 * Math.min(1, u / 0.32)), h = deep * prof, w = h * 0.42;
-    let up = -xs * h; if (up < 0) up *= 1.08; p.setXYZ(i, ys * len / 2, up, zs * w); }
+    const prof = u >= 0.6 ? Math.sqrt(Math.max(0, 1 - Math.pow((u - 0.6) / 0.4, 2))) * (0.75 + 0.25 * Math.sqrt(Math.max(0, 1 - Math.pow((u - 0.6) / 0.4, 2)))) : u > 0.07 ? 1 - Math.pow((0.6 - u) / 0.53, 1.5) * 0.8 : 0.2 * (0.4 + 0.6 * u / 0.07), h = deep * prof, w = h * (0.36 + 0.12 * Math.min(1, u * 1.6));
+    const rr = Math.hypot(xs, zs) || 1; let up = -xs / rr * h; if (up < 0) up *= 1.08; p.setXYZ(i, ys * len / 2, up, zs / rr * w); }
   geo.computeVertexNormals();
   const skin = new T.MeshStandardMaterial({ map: tx, roughness: sp.gold ? 0.25 : 0.33, metalness: sp.gold ? 0.55 : 0.12, envMapIntensity: 1.3 });
   const body = new T.Mesh(geo, skin); body.castShadow = true;
   const finM = new T.MeshStandardMaterial({ color: L.fins, roughness: 0.6, transparent: true, opacity: 0.88, side: T.DoubleSide });
   const tail = new T.Shape(); tail.moveTo(0, 0); tail.quadraticCurveTo(-0.12, 0.05, -0.2, deep * 0.62); tail.quadraticCurveTo(-0.13, 0, -0.2, -deep * 0.62); tail.quadraticCurveTo(-0.12, -0.05, 0, 0);
-  const tailM = new T.Mesh(new T.ShapeGeometry(tail, 10), finM); tailM.position.x = -len / 2 + 0.03; const tailG = new T.Group(); tailG.add(tailM); tailG.position.x = 0;
+  const tailM = new T.Mesh(new T.ShapeGeometry(tail, 10), finM); tailM.position.x = -len / 2 + 0.03; const tailG = new T.Group(); tailG.name = 'tail'; tailG.add(tailM); tailG.position.x = 0;
   const dor = new T.Shape(); dor.moveTo(0, 0); dor.quadraticCurveTo(0.05, deep * 0.45, 0.2, deep * 0.12); dor.lineTo(0.22, 0); const dM = new T.Mesh(new T.ShapeGeometry(dor, 8), finM); dM.position.set(-0.12, deep * 0.42, 0);
   const pec = new T.Shape(); pec.moveTo(0, 0); pec.quadraticCurveTo(-0.06, -0.04, -0.11, -0.01); pec.quadraticCurveTo(-0.06, 0.02, 0, 0);
   const pA = new T.Mesh(new T.ShapeGeometry(pec, 6), finM); pA.position.set(0.22, -deep * 0.12, deep * 0.2); pA.rotation.y = -0.5; const pB = pA.clone(); pB.position.z *= -1; pB.rotation.y = 0.5;
@@ -147,7 +147,7 @@ function fishMesh(sp) {
   const eye = new T.Group(); for (const s of [-1, 1]) { const r = new T.Mesh(new T.SphereGeometry(deep * 0.075, 12, 8), ringM); r.position.set(len * 0.39, deep * 0.08, s * deep * 0.115); const e = new T.Mesh(new T.SphereGeometry(deep * 0.05, 12, 8), eyeM); e.position.set(len * 0.395, deep * 0.08, s * deep * 0.15); eye.add(r, e); }
   const fish = new T.Group(); fish.add(body, tailG, dM, pA, pB, an, eye);
   if (L.whiskers) { const wm = new T.MeshStandardMaterial({ color: 0x2a2a2a }); for (const s of [-1, 1]) { const w = new T.Mesh(new T.CylinderGeometry(0.003, 0.006, 0.16, 4), wm); w.position.set(len * 0.5, -deep * 0.05, s * 0.05); w.rotation.set(s * 0.6, 0, 1.3); fish.add(w); } }
-  fish.userData.tail = tailG; V3.fishes[sp.id] = fish; return fish.clone();
+  V3.fishes[sp.id] = fish; return cl(fish);
 }
 function weatherName(w) { return { dawn: 'DAWN', morning: 'MORNING', golden: 'GOLDEN HOUR', overcast: 'GREY SKY', rain: 'RAIN', mist: 'MIST ON THE WATER', sunset: 'SUNSET', noon: 'MIDDAY SUN', storm: 'STORM', dusk: 'DUSK', night: 'NIGHT' }[w] || ''; }
 function setWeather(G) {
@@ -155,7 +155,7 @@ function setWeather(G) {
   const az = { dawn: 120, sunset: 200, golden: 210, dusk: 195, morning: 140, noon: 170 }[G.weather] || 160;
   W3.setSky(G.weather, { azim: az, wind: [G.wind, 0.4] }); const night = G.weather === 'night' || G.weather === 'dusk';
   V.lamp.intensity = night ? 6 : 0; V.lgl.material.emissiveIntensity = night ? 2.5 : 0;
-  V.fl.userData.body.material.emissive.set(night ? 0x401008 : 0x000000);
+  V.fl.userData.body.material.emissive.set(night ? 0xff3010 : 0x000000); V.fl.userData.body.material.emissiveIntensity = night ? 0.6 : 0;
   V.water.material.uniforms.distortionScale.value = G.weather === 'storm' ? 0.9 : G.weather === 'rain' ? 0.6 : 0.35;
   W3.S.onBolt = () => { if (!HEADLESS && sfx.thunder) setTimeout(() => sfx.thunder(), 300 + Math.random() * 900); };
 }
@@ -185,7 +185,7 @@ function onEvent(G, e) {
     case 'turned': say('TURNED IT', cx, cy, '#9be3b5', 22); sfx.turned(); vibe(HAP.tick); break;
     case 'turn': break;
     case 'caught': { const f = e.fish, prev = bigs[f.sp.id] || 0; e.fish.nb = f.kg > prev; if (!HEADLESS && f.kg > prev) { bigs[f.sp.id] = f.kg; store.set("bigs", bigs); }
-      sfx.landed(f.kg, f.sp.gold || f.sp.giant); FX.flash = f.sp.gold || f.sp.giant ? 1 : 0.5; vibe(HAP.best); if (V3 && !V3.none) { V3.held = { t: 0, fish: f, m: null }; splash(0.3, 2, 20, 2.6); } break; }
+      sfx.landed(f.kg, f.sp.gold || f.sp.giant); FX.flash = f.sp.gold || f.sp.giant ? 1 : 0.5; vibe(HAP.best); if (V3 && !V3.none) { if (V3.held && V3.held.m) W3.scene.remove(V3.held.m); V3.held = { t: 0, fish: f, m: null }; splash(0.3, 2, 20, 2.6); } break; }
     case 'gone': { const w = { snap: 'SNAP! THE LINE BROKE', off: 'IT SHOOK THE HOOK', snag: 'SNAGGED IN THE WEEDS', spool: 'IT TOOK ALL YOUR LINE' }[e.why];
       say(w, cx, cy, '#ffb4a8', 26); FX.red = 0.5; e.why === 'snap' ? sfx.snap() : sfx.lost(); if (e.why !== 'off') { FX.shake = 8; }
       tip('why_' + e.why, { snap: 'Lift your thumb when it thrashes and runs', off: 'Keep holding: a slack line lets it go', snag: 'Drag your thumb away from the weeds as you reel', spool: 'Reel it in between its runs' }[e.why], 3.2); break; }
@@ -216,9 +216,9 @@ function draw(now, dt) {
   else if (ui.aim) { lx = ui.aim.x * 0.6; lz = Math.max(10, ui.aim.z * 0.8); }
   else if (g.ph === 'wait' || g.ph === 'bite') { lx = g.fl.x * 0.85; lz = Math.max(9, g.fl.z); }
   else lx = 0;
-  V.look.set(lx, 0, -lz); V.lookS.lerp(V.look, Math.min(1, dt * 2.2));
+  V.look.set(lx, 0, -lz); V.lookS.lerp(V.look, ui.snap ? 1 : Math.min(1, dt * 2.2)); ui.snap = false;
   const sway = Math.sin(t * 0.6) * 0.02 + Math.sin(t * 1.3) * 0.008;
-  cam.fov = innerWidth > innerHeight ? 55 : 72; cam.updateProjectionMatrix();
+  const fz = (g.ph === 'wait' || g.ph === 'bite') && !ui.aim ? 0.72 : 1; V.zoom = V.zoom == null ? 1 : V.zoom + (fz - V.zoom) * Math.min(1, dt * 1.5); cam.fov = (innerWidth > innerHeight ? 55 : 72) * V.zoom; cam.updateProjectionMatrix();
   cam.position.set(0.05 + sway, EYE + Math.sin(t * 0.9) * 0.01, 0.9);
   const lookAt = V.lookS.clone(); lookAt.y = -0.25 - 0.02 * V.lookS.length();
   if (V.held) lookAt.set(0.1, EYE - 0.35, -1.4);
@@ -229,7 +229,7 @@ function draw(now, dt) {
   V.bend += (tens - V.bend) * Math.min(1, dt * 10);
   const sideT = g.ph === 'fight' ? g.in.side : 0; V.side += (sideT - V.side) * Math.min(1, dt * 6);
   const castPull = ui.drag && ui.drag.mode === 'cast' ? clamp(ui.drag.pull, 0, 1) : 0, flyU = g.ph === 'fly' ? Math.min(1, g.ph_t / 0.25) : 1;
-  const base = new T.Vector3(0.42, EYE - 0.75, 0.6);
+  const base = new T.Vector3(0.44, EYE - 0.6, 0.15);
   const tgt = F ? g2w(F.X, F.D) : g2w(g.fl.x, g.fl.z);
   const yaw = Math.atan2(tgt.x - base.x, -(tgt.z - base.z)) * 0.75 + V.side * 0.45;
   let pitch = 0.42 - castPull * 0.6 + (1 - flyU) * -0.6 + (g.ph === 'reelin' ? 0.2 : 0) + (F ? 0.15 : 0);
@@ -245,7 +245,7 @@ function draw(now, dt) {
   // the float and the line
   const fl = g.fl; let fy = fl.y;
   const bob = Math.sin(t * 2.1 + fl.x) * 0.012 + Math.sin(t * 3.7) * 0.006 + (g.weather === 'storm' ? Math.sin(t * 4) * 0.02 : 0);
-  if (g.ph === 'wait' || g.ph === 'bite') fy = -0.02 + bob - fl.dip * 0.32;
+  if (g.ph === 'wait' || g.ph === 'bite') fy = -0.03 + bob - fl.dip * 0.55;
   if (g.ph === 'fight' || g.ph === 'land') fy = -1;
   V.fl.position.copy(g2w(fl.x, fl.z, fy)); V.fl.rotation.z = Math.sin(t * 1.7) * 0.06 + fl.dip * 0.2; V.fl.visible = g.ph !== 'fight' && g.ph !== 'land' && !(g.ph === 'idle' && !G);
   if (g.ph === 'idle') V.fl.position.copy(V.tip).add(new T.Vector3(0, -0.6, 0));
@@ -268,9 +268,9 @@ function draw(now, dt) {
     J.m.rotation.set(Math.sin(u * 20) * 0.5, yaw + Math.PI / 2 + Math.sin(u * 13) * 0.6, (0.5 - u) * 2.2); if (J.m.userData.tail) J.m.userData.tail.rotation.y = Math.sin(J.t * 40) * 0.5;
     if (u >= 1) { splash(x, z, 18, 2.6); ripple(x, z, 2.4); sfx.splash(); W3.scene.remove(J.m); V.jump = null; } }
   // the fish in the hand: lifted up in front of the camera, turning in the light
-  if (V.held) { const Hd = V.held; Hd.t += dt; if (!Hd.m) { Hd.m = fishMesh(Hd.fish.sp); Hd.s = 0.55 + Math.pow(Hd.fish.kg, 0.33) * 0.22; W3.scene.add(Hd.m); }
+  if (V.held) { const Hd = V.held; Hd.t += dt; if (!Hd.m) { Hd.m = fishMesh(Hd.fish.sp); Hd.s = 0.42 + Math.pow(Hd.fish.kg, 0.33) * 0.16; W3.scene.add(Hd.m); }
     const u = Math.min(1, Hd.t / 0.5), e = easeOut(u); Hd.m.scale.setScalar(Hd.s * (0.6 + 0.4 * e));
-    Hd.m.position.copy(cam.position).add(new T.Vector3(0.06, -0.32 - (1 - e) * 0.6, -0.95 - Hd.s * 0.3)); Hd.m.rotation.set(0.15, -0.25 + Math.sin(Hd.t * 1.4) * 0.35, -0.12 + Math.sin(Hd.t * 2.6) * 0.06);
+    Hd.m.position.copy(cam.position).add(new T.Vector3(0.04, -0.36 - (1 - e) * 0.6, -1.05 - Hd.s * 0.3)); Hd.m.rotation.set(0.15, -0.25 + Math.sin(Hd.t * 1.4) * 0.35, -0.12 + Math.sin(Hd.t * 2.6) * 0.06);
     if (Hd.m.userData.tail) Hd.m.userData.tail.rotation.y = Math.sin(Hd.t * 9) * 0.35 * Math.max(0, 1 - Hd.t / 2);
     if (!G || G.ph !== 'land') { W3.scene.remove(Hd.m); V.held = null; } }
   W3.setFocus(cam.position.x, 0.5, cam.position.z - 3, 9);

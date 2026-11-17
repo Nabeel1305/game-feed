@@ -105,7 +105,7 @@ function endTouch(e) {
   if (e.pointerId !== touch.id) return; touch.id = null; if (!G) return; const dx = touch.x - touch.x0, dy = touch.y - touch.y0, ms = performance.now() - touch.t0;
   if (G.ph === 'fight') { G.in.hold = false; ui.drag = null; return; }
   if (ui.drag && ui.drag.mode === 'cast' && ui.aim) { const A = ui.aim; if (G.ph === 'reelin') G.ph = 'idle'; cast(G, A.x, A.z); }
-  else if (dy < -30 * k && ms < 600 && -dy > Math.abs(dx) * 0.8) strike(G);
+  else if (dy < -30 * k && ms < 900 && -dy > Math.abs(dx) * 0.8) strike(G);
   ui.aim = null; ui.drag = null;
 }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
@@ -142,7 +142,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  cast(x, z) { return cast(G, x, z); }, strike() { strike(G); }, hold(on, side) { G.in.hold = !!on; if (side != null) G.in.side = side; }, castAim, ui, get V3() { return V3; }, W3,
+  cast(x, z) { return cast(G, x, z); }, SPECIES, GOLDEN, GIANTS, strike() { strike(G); }, hold(on, side) { G.in.hold = !!on; if (side != null) G.in.side = side; }, castAim, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
