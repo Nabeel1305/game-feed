@@ -223,6 +223,12 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Grass at eye height, not over it:** clumps of crossed blades (a canvas of strokes, alpha-tested), swaying by a few lines patched into the chip's drawing (`onBeforeCompile`), under a metre tall so the animal shows above them at 15 m.
 - Animals are built from capsules (`beast(id)`): legs that walk, a neck that lowers to graze, ears that flick on the tell; rotation `PI - face` turns them to face their way.
 
+### 14. Police Chase (`games/police/`)
+- **Three games in one** (`G.ph`: drive, crash, foot, cuff), each with its own input (holds while driving, swipes and a tap on foot and in the arrest). A lesson step names its part (`ph`) and puts you there; while a lesson runs, the next part never starts by itself (a tackle in the dodge lesson stranded the robots in an arrest the lesson never asked for).
+- **The city repeats under you:** road and pavements jump back every 100 m; lines, buildings (a window texture whose lit windows are an emissive map) and lamps are placed by where you are; four real lights hop along with the lamps.
+- **Traffic you cannot see must not hit you:** cars behind you slow down for you (a slow patrol car was being rear-ended); only cars ahead count.
+- The blind search is long here (nine letters: 182,976 games, about 15 minutes).
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

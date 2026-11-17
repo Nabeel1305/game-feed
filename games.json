@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 14,
+  "next_number": 15,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -476,6 +476,40 @@
         "P30"
       ],
       "summary": "The intense one: an ice-age hunt in 3D, first person, crouched in tall grass on a steppe under snowy mountains, weather by hunt. Left thumb held creeps forward; lift it to freeze when the animal flicks its ears and looks up, or it sees you and bolts. Right thumb pulls back and lets go to throw a flint spear where the mark on the ground is: the chest brings it down, a haunch only wounds it, and far throws fall short. Sometimes a cave lion growls from one side: swipe toward it and tap the instant it leaps to brace your spear. Deer, horses, boar, bison, and a woolly mammoth every tenth hunt. A heartbeat that quickens as you close in."
+    },
+    {
+      "number": 14,
+      "id": "police",
+      "name": "Police Chase",
+      "status": "in-progress",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/police/index.html",
+      "artifact": null,
+      "artifact_slug": null,
+      "apk_repo": null,
+      "storage_prefix": "pc.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Lights on. Ram him off the road, then run him down.",
+        "genre": "Chase",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Black Ops One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P7",
+        "P13",
+        "P14",
+        "P30"
+      ],
+      "summary": "A three-part police chase in 3D through a city at night. Pursuit: hold the left or right side of the screen to steer your patrol car (both to brake) through traffic, and ram the getaway car's back corner from the side to spin him out. On foot: chase him down a brick alley, swiping round crates, over fences and under pipes, and tap to tackle when you are right behind him. Arrest: when he twists one way, swipe the other way to hold him until the cuffs are on. Lights, siren, rain on the tarmac; weather changes by case."
     }
   ],
   "planned": []
