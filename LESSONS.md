@@ -249,6 +249,14 @@ Everything learned building the first games. Every new game must follow the **ru
 - **soundCheck calls every sound with (1, 1):** a sound that takes a name (`voice(animal)`) must fall back to a default for a number, or it renders silence and fails.
 - **A day must fit the 300-second robot limit** (and P24): five patients of two problems, not seven of three.
 
+### 18. Lighthouse (`games/lighthouse/`)
+- **Doing nothing must lose:** with three lives and two boats, two wrecks still "won" the night, so the blind robots won half their games by holding still. The night now needs most of its boats home (lifebuoys = the wrecks it can take, plus one). Check what idle play does before tuning anything else.
+- **Everything the player must reach must be inside his reach:** boats drifted to a shore beyond the lamp's arc and could never be lit (a lesson that never ended). Drift targets are clamped inside the arc, and the arc is wide enough for the whole coast.
+- **Rocks stay out of the water where boats appear,** or a boat can wreck before the player can find it.
+- **A good strategy may be one the robot does not know:** all three robots were equally bad at level 40 until the honest robot learned to fetch the next boat with the first in tow; then skill showed. When sharp is no better than sloppy, the robot is the problem.
+- **Transparent things over Water need a renderOrder** (the pool of light, the beam, the surf), or the water draws over them. A cone whose wide end is at the camera washes out the screen: the beam is narrow at the lamp.
+- **The view turns with the beam, so a thumb held still keeps aiming** (`holdAim` each frame): holding near the screen's edge pans.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

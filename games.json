@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 18,
+  "next_number": 19,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -612,6 +612,40 @@
         "P30"
       ],
       "summary": "Be the vet in an old 3D barn, the farmyard's weather and light through the open door. Dogs, cows, sheep, horses, pigs and goats come in with a thorn, an overgrown hoof, a cut, a fever, caked mud or a sore ear. Read the owner's card, look at her to see where, pick the right tool and use it the way it is really used: pull a thorn out slowly, rasp a hoof to the line, spray and wrap a cut, hold the needle in and lift off when she shivers, brush with the hair, drop into a still ear. Rough handling frightens her: stroke her slowly to calm her. The first three levels teach every tool."
+    },
+    {
+      "number": 18,
+      "id": "lighthouse",
+      "name": "Lighthouse",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/lighthouse/index.html",
+      "artifact": "https://claude.ai/artifact/AeoxCPmBDorzB9RTscyEZx",
+      "artifact_slug": "4e29b3d1-cb46-4664-ae10-c02a1f0443fb",
+      "apk_repo": null,
+      "storage_prefix": "lh.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Light the way home. Lead each lost boat past the rocks.",
+        "genre": "Calm",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Cinzel",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P10",
+        "P18",
+        "P20",
+        "P30"
+      ],
+      "summary": "Keep a lighthouse on a wild night, in 3D, from the gallery at the top: a dark moving sea, rain and lightning or stars and a moon. Lost fishing boats drift towards the rocks. Your thumb is the lamp: hold the beam on a boat until its lamp blinks back, then lead it slowly, round rocks that only show in your light, to the harbour's red and green lights. Several boats can follow the one light. The first three levels teach it."
     }
   ],
   "planned": []
