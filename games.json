@@ -815,19 +815,25 @@
   ],
   "planned": [
     {
+      "number": 24,
       "id": "heaven",
       "name": "Heaven or Hell",
-      "why": "his idea; rolled on from set 3 (same card-judging feel as Hiring)"
+      "summary": "His idea, rolled on from set 3 (it plays too like Hiring to share a set): souls arrive with their best and worst deed; you judge.",
+      "spec": "specs/ideas.md"
     },
     {
+      "number": 25,
       "id": "on-the-run",
       "name": "On the Run",
-      "why": "his idea; rolled on from set 3"
+      "summary": "His idea, rolled on from set 3: the other side of Police Chase; you are the one escaping.",
+      "spec": "specs/ideas.md"
     },
     {
+      "number": 26,
       "id": "tag",
       "name": "Tag",
-      "why": "his idea; rolled on from set 3"
+      "summary": "His idea, rolled on from set 3: tap to run, steer, touch someone and they are it; then run.",
+      "spec": "specs/ideas.md"
     }
   ]
 }

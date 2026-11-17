@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**18 games** so far. Next number: **19**.
+**23 games** so far. Next number: **24**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -26,6 +26,11 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 16 | **Short Order** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV) | `games/cook/index.html` |
 | 17 | **Country Vet** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CECaaPJZ5BQ2tkjLCSPYgG) | `games/vet/index.html` |
 | 18 | **Lighthouse** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/AeoxCPmBDorzB9RTscyEZx) | `games/lighthouse/index.html` |
+| 19 | **Hiring** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/YM4XMqenX8UECK8UibNm4Z) | `games/hiring/index.html` |
+| 20 | **Potter's Wheel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4J1d7zq7DnyABhmwHZGTnT) | `games/potter/index.html` |
+| 21 | **Drone Pilot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9) | `games/drone/index.html` |
+| 22 | **Whaling** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4TeG6qyGR33vdfGMxr2WD1) | `games/whaling/index.html` |
+| 23 | **Wolf Pack** | in-progress | not yet (he has not said so) | 0.1.0 | [play](None) | `games/wolf/index.html` |
 
 ## What each game is
 
@@ -47,3 +52,14 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 16. **Short Order**: Run the grill of a small 3D diner kitchen, seen from where the cook stands, with the street's weather and light in the window. Drag food from the trays onto the pans, the board or the plate; tap a pan to flip when the ring turns golden; sweep across the board to chop; drag the plate up to the pass. Pancakes, eggs on toast, burgers, salmon salad, steak and onions: golden, not burnt, before the customer walks out. The first three levels teach it a piece at a time.
 17. **Country Vet**: Be the vet in an old 3D barn, the farmyard's weather and light through the open door. Dogs, cows, sheep, horses, pigs and goats come in with a thorn, an overgrown hoof, a cut, a fever, caked mud or a sore ear. Read the owner's card, look at her to see where, pick the right tool and use it the way it is really used: pull a thorn out slowly, rasp a hoof to the line, spray and wrap a cut, hold the needle in and lift off when she shivers, brush with the hair, drop into a still ear. Rough handling frightens her: stroke her slowly to calm her. The first three levels teach every tool.
 18. **Lighthouse**: Keep a lighthouse on a wild night, in 3D, from the gallery at the top: a dark moving sea, rain and lightning or stars and a moon. Lost fishing boats drift towards the rocks. Your thumb is the lamp: hold the beam on a boat until its lamp blinks back, then lead it slowly, round rocks that only show in your light, to the harbour's red and green lights. Several boats can follow the one light. The first three levels teach it.
+19. **Hiring**: Run the hiring desk of a busy town agency, flat 2D on a wooden desk so the papers read well. Three open jobs are pinned at the top with what each needs; CVs come one at a time (photo, age, where they live, experience, certificates with their dates, licence and points, languages, when they can work). Drag each onto the job it fits, or into the bin. Near misses grow: a year short, a certificate that ran out last month. Two wrong calls end the day. The first three levels teach it.
+20. **Potter's Wheel**: Throw pots on a wheel in a 3D workshop, the yard's weather and light in the window and your fired pots on the shelves. A lump of wet clay spins; the order's outline is dotted on both sides. Touch the side of the clay and move slowly: it follows your fingertip in or out. Too quick and it wobbles and can collapse. Tap FIRE when the match passes the mark. Later the clay dries. The first three levels teach it.
+21. **Drone Pilot**: Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it.
+22. **Whaling**: Hunt whales the old way from a wooden whaleboat on a grey 3D sea. Left thumb steers while the crew rows to her spout; swipe up with the right thumb to throw the harpoon while her back is up (lead her). Then hold on: hold to haul the line and tire her, let go when her flukes rise before a run or the line snaps, keep the bow pointing at her or the boat heels over. The first three levels teach it.
+23. **Wolf Pack**: 
+
+## Up next (designed, not built yet)
+
+24. **Heaven or Hell**: His idea, rolled on from set 3 (it plays too like Hiring to share a set): souls arrive with their best and worst deed; you judge. Spec: `specs/ideas.md`.
+25. **On the Run**: His idea, rolled on from set 3: the other side of Police Chase; you are the one escaping. Spec: `specs/ideas.md`.
+26. **Tag**: His idea, rolled on from set 3: tap to run, steer, touch someone and they are it; then run. Spec: `specs/ideas.md`.
