@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 9,
+  "next_number": 10,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -306,6 +306,34 @@
         "P18 chains: clean blocks in a row ring higher and sharpen the riposte; best run is kept"
       ],
       "in_app": true
+    },
+    {
+      "number": 9,
+      "id": "reel",
+      "name": "Reel",
+      "status": "in-progress",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/reel/index.html",
+      "artifact": null,
+      "artifact_slug": null,
+      "apk_repo": null,
+      "storage_prefix": "rl.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Wait for the float to go under. Then hold on.",
+        "genre": "Fishing",
+        "intensity": 2,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bree Serif",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [],
+      "summary": ""
     }
   ],
   "planned": []

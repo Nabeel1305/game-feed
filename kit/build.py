@@ -17,6 +17,9 @@ snd = """  async soundCheck() {   // renders every sound offline: catches errors
     return out;
   },"""
 s = open(os.path.join(d, 'part1.html')).read().replace('/*KIT*/', kit)
+if '/*THREE*/' in s:      # a 3D game (every game since 17 Nov 2026): three.js and the shared 3D world (tools/world3d.js)
+    s = s.replace('/*THREE*/', open(os.path.join(d, '../../tools/three.min.js')).read().replace('</script', '<\\/script'))
+    s = s.replace('/*WORLD3D*/', open(os.path.join(d, '../../tools/world3d.js')).read())
 for p in sorted(f for f in os.listdir(d) if f.startswith('part') and f.endswith('.js')): s += open(os.path.join(d, p)).read()      # part2.js, part3.js, ... in order
 s = s.replace('/*SOUNDCHECK*/', snd)
 open(os.path.join(d, 'index.html'), 'w').write(s)
