@@ -218,6 +218,11 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Make every gap by flying it:** each next vine is placed where the best release from the last one carries the hand (`makeVines`), with its own best release angle, so every gap can be made and no rhythm works; never further to the side than a lean can carry you (an unreachable vine was why the sharp robot lost every far canopy).
 - **A catch starts a full swing at once** (the speed set from the swing's energy, not from how you arrived), so the first forward swing after a catch is already the one to let go on. The robots' thumbs lift within a few hundredths of a second of when they mean to; a perfect robot made every canopy look easy.
 
+### 13. Hunter (`games/hunter/`)
+- **No luck in a throw.** A random wobble on the spear made every blind throw at an animal's middle a lottery ticket (2% of blind strings won). Now the spear goes exactly where the mark is when you let go; the mark sways with your arm, but never further than the heart is from the middle, so aiming at the middle only wounds; beyond 16 m a throw falls short (the mark turns red). After that, 0 of 77,504.
+- **Grass at eye height, not over it:** clumps of crossed blades (a canvas of strokes, alpha-tested), swaying by a few lines patched into the chip's drawing (`onBeforeCompile`), under a metre tall so the animal shows above them at 15 m.
+- Animals are built from capsules (`beast(id)`): legs that walk, a neck that lowers to graze, ears that flick on the tell; rotation `PI - face` turns them to face their way.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

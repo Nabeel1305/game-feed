@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 13,
+  "next_number": 14,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -442,6 +442,40 @@
         "P18"
       ],
       "summary": "Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move."
+    },
+    {
+      "number": 13,
+      "id": "hunter",
+      "name": "Hunter",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/hunter/index.html",
+      "artifact": "https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS",
+      "artifact_slug": "731a0c97-17ac-4a35-a608-b25619d3759d",
+      "apk_repo": null,
+      "storage_prefix": "hu.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Creep through the grass. Freeze when it looks. Then throw.",
+        "genre": "Hunt",
+        "intensity": 5,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Metal Mania",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P7",
+        "P13",
+        "P17",
+        "P30"
+      ],
+      "summary": "The intense one: an ice-age hunt in 3D, first person, crouched in tall grass on a steppe under snowy mountains, weather by hunt. Left thumb held creeps forward; lift it to freeze when the animal flicks its ears and looks up, or it sees you and bolts. Right thumb pulls back and lets go to throw a flint spear where the mark on the ground is: the chest brings it down, a haunch only wounds it, and far throws fall short. Sometimes a cave lion growls from one side: swipe toward it and tap the instant it leaps to brace your spear. Deer, horses, boar, bison, and a woolly mammoth every tenth hunt. A heartbeat that quickens as you close in."
     }
   ],
   "planned": []

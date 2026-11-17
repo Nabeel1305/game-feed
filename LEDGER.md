@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**12 games** so far. Next number: **13**.
+**13 games** so far. Next number: **14**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -20,6 +20,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 10 | **Wild Water** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Gj5M8daF6XDMtHkNv1gmW4) | `games/wild-water/index.html` |
 | 11 | **Soar** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Weu2fZSYbgxPVNK4xFahTC) | `games/soar/index.html` |
 | 12 | **Vine** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/XhM3zzwfyV75DiLSYwqXUr) | `games/vine/index.html` |
+| 13 | **Hunter** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS) | `games/hunter/index.html` |
 
 ## What each game is
 
@@ -35,3 +36,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 10. **Wild Water**: A whitewater kayak game in 3D, seen from the cockpit with the bow in front and the paddle in your gloves. Your two thumbs are the two blades: swipe down on the left for a left stroke (it swings the bow right), on the right for a right stroke; swipe up to back-paddle. The current carries you down a winding river through rows of rocks with one gap each, past fallen trees on the outside of the bends, over ledges you must take straight through the smooth tongue, and between slalom gates for stars. Three smashes or rolls and the boat is done. Weather and light change by run. The first three runs teach every stroke.
 11. **Soar**: The calm one: a 3D flight over a sea of islands, seen from just over your shoulder, arms forward and a scarf streaming, under a real sky that changes by flight (golden hour, dawn, mist, sunset, night with stars). One thumb steers like a little stick wherever you put it down: right to lean and turn, up to climb, down to dive. Follow a trail of golden rings; each ring is a bell note that climbs the scale while the chain lasts. Nothing hurts you: touch the sea or a hillside and you skim off it. Fly through enough rings to finish the flight; all of them for three stars.
 12. **Vine**: Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move.
+13. **Hunter**: The intense one: an ice-age hunt in 3D, first person, crouched in tall grass on a steppe under snowy mountains, weather by hunt. Left thumb held creeps forward; lift it to freeze when the animal flicks its ears and looks up, or it sees you and bolts. Right thumb pulls back and lets go to throw a flint spear where the mark on the ground is: the chest brings it down, a haunch only wounds it, and far throws fall short. Sometimes a cave lion growls from one side: swipe toward it and tap the instant it leaps to brace your spear. Deer, horses, boar, bison, and a woolly mammoth every tenth hunt. A heartbeat that quickens as you close in.
