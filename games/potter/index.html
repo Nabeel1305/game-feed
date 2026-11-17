@@ -4986,13 +4986,13 @@ function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, e, boss, help: !!help, lives: 3,
     pots: N <= 2 ? 1 : Math.round(x(2, 4, 25)) + (boss ? 1 : 0),
-    pass: x(0.74, 0.93, 30),                                  // match needed to fire
-    ctrl: N <= 1 ? 2 : N <= 4 ? 3 : Math.min(6, Math.round(x(3, 6.4, 25))),     // points shaping the order's outline
-    swing: x(0.08, 0.21, 25),                                // how much the outline goes in and out
+    pass: x(0.82, 0.89, 30),                                  // match needed to fire
+    ctrl: N <= 4 ? 3 : Math.min(6, Math.round(x(3, 6.4, 25))),     // points shaping the order's outline
+    swing: x(0.08, 0.19, 25),                                // how much the outline goes in and out
     follow: 3.2,                                             // how quickly the clay follows the finger (a second)
     reach: x(0.11, 0.08, 30),                                // how far from the clay the finger still touches it
     wobble: x(0.6, 1.4, 30) / (help ? 1.3 : 1),              // how much a hard, quick press makes it wobble
-    dry: N < 6 ? 0 : x(70, 20, 30) * (help ? 1.3 : 1) };     // seconds before the clay is too dry to shape (0: never)
+    dry: N < 6 ? 0 : x(70, 27, 30) * (help ? 1.3 : 1) };     // seconds before the clay is too dry to shape (0: never)
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -5033,7 +5033,7 @@ function fire(G) {
 // ---------- every frame ----------
 function step(G, dt) {
   if (G.over) return; G.t += dt; const c = G.cfg;
-  if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0) { if (!G.lesson && G.made >= c.pots) { finish(G, true); return; } newPot(G); } return; }
+  if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0) { if (!G.lesson && G.good >= c.pots) { finish(G, true); return; } newPot(G); } return; }
   G.potT += dt;
   if (c.dry && !G.lesson && G.potT >= c.dry) { G.ev.push({ k: 'dried' }); G.streak = 0; G.made++; G.ruined++; G.lives--; G.finger = null; if (G.lives <= 0) { finish(G, false, 'dried'); return; } G.gap = 1.2; return; }
   const f = G.finger;
@@ -5096,7 +5096,7 @@ function honest(G, o, mem) {
   const i = Math.round(s.u * (NR - 1)), want = G.target[i] + s.noise + (Math.random() - 0.5) * (1 - acc) * 0.1, have = G.r[i];
   touch(G, s.u, have + clamp(want - have, -c.reach * 0.7, c.reach * 0.7));
 }
-function winNow(G) { if (!G || G.over) return; G.lesson = null; G.made = G.cfg.pots - 1; G.lives = G.cfg.lives; G.gap = 0; G.r = G.target.slice(); fire(G); }
+function winNow(G) { if (!G || G.over || G.gap > 0) return; G.lesson = null; G.good = G.cfg.pots - 1; G.lives = G.cfg.lives; G.gap = 0; G.r = G.target.slice(); fire(G); }
 // ===================== THE VIEW: Potter's Wheel in 3D (three.js through tools/world3d.js) =====================
 // A potter's corner of an old workshop: a brick wall with a window (the level's weather and light), wooden shelves of fired
 // pots (yours join them), a lamp, the wheel on its bench with a splash pan, a bowl of water and a sponge. The clay is wet and
@@ -5232,7 +5232,7 @@ function hud(G, t) {
   // the order card and the match bar
   const ty = G.lesson ? H * 0.24 : 44 * k, bx = 16, bw = W - 32;
   ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(15 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)';
-  const title = `Order: ${G.shape}` + (G.lesson ? '' : `   ·   pot ${Math.min(G.made + 1, c.pots)} of ${c.pots}`); ctx.strokeText(title, bx, ty); ctx.fillText(title, bx, ty);
+  const title = `Order: ${G.shape}` + (G.lesson ? '' : `   ·   pot ${Math.min(G.good + 1, c.pots)} of ${c.pots}`); ctx.strokeText(title, bx, ty); ctx.fillText(title, bx, ty);
   if (!G.lesson) { for (let i = 0; i < c.lives; i++) { ctx.beginPath(); ctx.arc(W - 20 - i * 16 * k, ty + 9 * k, 5 * k, 0, TAU); ctx.fillStyle = i < G.lives ? '#e8a06a' : 'rgba(255,255,255,.25)'; ctx.fill(); } }
   const my = ty + 26 * k, m = G.match; ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(bx, my, bw, 12 * k, 6); ctx.fill();
   ctx.fillStyle = m >= c.pass ? '#8fe0ab' : '#e8b04a'; rrect(bx, my, Math.max(8, bw * m), 12 * k, 6); ctx.fill();

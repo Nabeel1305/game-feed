@@ -133,7 +133,7 @@ function hud(G, t) {
   // the order card and the match bar
   const ty = G.lesson ? H * 0.24 : 44 * k, bx = 16, bw = W - 32;
   ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(15 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)';
-  const title = `Order: ${G.shape}` + (G.lesson ? '' : `   ·   pot ${Math.min(G.made + 1, c.pots)} of ${c.pots}`); ctx.strokeText(title, bx, ty); ctx.fillText(title, bx, ty);
+  const title = `Order: ${G.shape}` + (G.lesson ? '' : `   ·   pot ${Math.min(G.good + 1, c.pots)} of ${c.pots}`); ctx.strokeText(title, bx, ty); ctx.fillText(title, bx, ty);
   if (!G.lesson) { for (let i = 0; i < c.lives; i++) { ctx.beginPath(); ctx.arc(W - 20 - i * 16 * k, ty + 9 * k, 5 * k, 0, TAU); ctx.fillStyle = i < G.lives ? '#e8a06a' : 'rgba(255,255,255,.25)'; ctx.fill(); } }
   const my = ty + 26 * k, m = G.match; ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(bx, my, bw, 12 * k, 6); ctx.fill();
   ctx.fillStyle = m >= c.pass ? '#8fe0ab' : '#e8b04a'; rrect(bx, my, Math.max(8, bw * m), 12 * k, 6); ctx.fill();

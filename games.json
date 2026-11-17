@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 21,
+  "next_number": 24,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -685,12 +685,12 @@
       "number": 20,
       "id": "potter",
       "name": "Potter's Wheel",
-      "status": "in-progress",
+      "status": "testing",
       "version": "0.1.0",
       "added": "2026-11-17",
       "path": "games/potter/index.html",
-      "artifact": null,
-      "artifact_slug": null,
+      "artifact": "https://claude.ai/artifact/4J1d7zq7DnyABhmwHZGTnT",
+      "artifact_slug": "1aab71a1-2985-4900-a873-45f151b3a3cc",
       "apk_repo": null,
       "storage_prefix": "pw.",
       "feed": {
@@ -704,6 +704,109 @@
           "#playBtn"
         ],
         "font": "Cormorant Garamond",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P13",
+        "P20",
+        "P21",
+        "P30"
+      ],
+      "summary": "Throw pots on a wheel in a 3D workshop, the yard's weather and light in the window and your fired pots on the shelves. A lump of wet clay spins; the order's outline is dotted on both sides. Touch the side of the clay and move slowly: it follows your fingertip in or out. Too quick and it wobbles and can collapse. Tap FIRE when the match passes the mark. Later the clay dries. The first three levels teach it."
+    },
+    {
+      "number": 21,
+      "id": "drone",
+      "name": "Drone Pilot",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/drone/index.html",
+      "artifact": "https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9",
+      "artifact_slug": "d7886aaf-b73c-453f-87e3-aff7e1764936",
+      "apk_repo": null,
+      "storage_prefix": "dr.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Two sticks, like a real drone. Thread every hoop.",
+        "genre": "Flying",
+        "intensity": 3,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Orbitron",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P12",
+        "P13",
+        "P14",
+        "P18"
+      ],
+      "summary": "Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it."
+    },
+    {
+      "number": 22,
+      "id": "whaling",
+      "name": "Whaling",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/whaling/index.html",
+      "artifact": "https://claude.ai/artifact/4TeG6qyGR33vdfGMxr2WD1",
+      "artifact_slug": "1c03b76d-4b6c-43a3-ae92-c08405c84be4",
+      "apk_repo": null,
+      "storage_prefix": "wh.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Row to the spout. Throw. Then hold on.",
+        "genre": "Sea hunt",
+        "intensity": 5,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "IM Fell English SC",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P7",
+        "P8",
+        "P10",
+        "P13",
+        "P30"
+      ],
+      "summary": "Hunt whales the old way from a wooden whaleboat on a grey 3D sea. Left thumb steers while the crew rows to her spout; swipe up with the right thumb to throw the harpoon while her back is up (lead her). Then hold on: hold to haul the line and tire her, let go when her flukes rise before a run or the line snaps, keep the bow pointing at her or the boat heels over. The first three levels teach it."
+    },
+    {
+      "number": 23,
+      "id": "wolf",
+      "name": "Wolf Pack",
+      "status": "in-progress",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/wolf/index.html",
+      "artifact": null,
+      "artifact_slug": null,
+      "apk_repo": null,
+      "storage_prefix": "wp.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Run it down with your pack. Strike from the side.",
+        "genre": "Hunt",
+        "intensity": 4,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bebas Neue",
         "live": "window.__sim && window.__sim.playing()"
       },
       "principles": [],

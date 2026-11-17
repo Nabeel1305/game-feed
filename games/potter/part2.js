@@ -21,13 +21,13 @@ function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, e, boss, help: !!help, lives: 3,
     pots: N <= 2 ? 1 : Math.round(x(2, 4, 25)) + (boss ? 1 : 0),
-    pass: x(0.74, 0.93, 30),                                  // match needed to fire
-    ctrl: N <= 1 ? 2 : N <= 4 ? 3 : Math.min(6, Math.round(x(3, 6.4, 25))),     // points shaping the order's outline
-    swing: x(0.08, 0.21, 25),                                // how much the outline goes in and out
+    pass: x(0.82, 0.89, 30),                                  // match needed to fire
+    ctrl: N <= 4 ? 3 : Math.min(6, Math.round(x(3, 6.4, 25))),     // points shaping the order's outline
+    swing: x(0.08, 0.19, 25),                                // how much the outline goes in and out
     follow: 3.2,                                             // how quickly the clay follows the finger (a second)
     reach: x(0.11, 0.08, 30),                                // how far from the clay the finger still touches it
     wobble: x(0.6, 1.4, 30) / (help ? 1.3 : 1),              // how much a hard, quick press makes it wobble
-    dry: N < 6 ? 0 : x(70, 20, 30) * (help ? 1.3 : 1) };     // seconds before the clay is too dry to shape (0: never)
+    dry: N < 6 ? 0 : x(70, 27, 30) * (help ? 1.3 : 1) };     // seconds before the clay is too dry to shape (0: never)
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -68,7 +68,7 @@ function fire(G) {
 // ---------- every frame ----------
 function step(G, dt) {
   if (G.over) return; G.t += dt; const c = G.cfg;
-  if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0) { if (!G.lesson && G.made >= c.pots) { finish(G, true); return; } newPot(G); } return; }
+  if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0) { if (!G.lesson && G.good >= c.pots) { finish(G, true); return; } newPot(G); } return; }
   G.potT += dt;
   if (c.dry && !G.lesson && G.potT >= c.dry) { G.ev.push({ k: 'dried' }); G.streak = 0; G.made++; G.ruined++; G.lives--; G.finger = null; if (G.lives <= 0) { finish(G, false, 'dried'); return; } G.gap = 1.2; return; }
   const f = G.finger;
@@ -131,4 +131,4 @@ function honest(G, o, mem) {
   const i = Math.round(s.u * (NR - 1)), want = G.target[i] + s.noise + (Math.random() - 0.5) * (1 - acc) * 0.1, have = G.r[i];
   touch(G, s.u, have + clamp(want - have, -c.reach * 0.7, c.reach * 0.7));
 }
-function winNow(G) { if (!G || G.over) return; G.lesson = null; G.made = G.cfg.pots - 1; G.lives = G.cfg.lives; G.gap = 0; G.r = G.target.slice(); fire(G); }
+function winNow(G) { if (!G || G.over || G.gap > 0) return; G.lesson = null; G.good = G.cfg.pots - 1; G.lives = G.cfg.lives; G.gap = 0; G.r = G.target.slice(); fire(G); }

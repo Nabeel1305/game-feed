@@ -262,6 +262,14 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Build every CV from its answer:** make it fit its job (or none), break one need of another job by a hair, then check that exactly one job fits, and try again if not. Then the game never asks an unfair question.
 - **Measure text after laying out:** `layout()` sets its own font, so a text wrapped after calling it was measured too small and ran off the panel.
 
+### 20-23. Potter's Wheel, Drone Pilot, Whaling, Wolf Pack (set 3)
+- **A day is won by successes, never by attempts:** Potter's Wheel, Whaling and Wolf Pack each first counted pots made / whales met / hunts tried, so a blind FIRE that cracked, a throw that missed, a kick that lost the hunt still "won" a one-try level (blind strings won 60-100%). Count fired pots, caught whales, hunts won. (Lighthouse had the same hole: doing nothing.)
+- **`winNow` must do nothing while its own win is under way** (`G.gap > 0`): the controls test calls it every 200 ms, and resetting the count each time stopped the level from ever ending.
+- **Behind a chasing camera that looks along +z, the screen's right is the world's -x.** Drone, Whaling and Wolf Pack first turned left when the thumb went right. Mirror the sideways axes in the input (not the rules, so the robots stay right), and test on the screen itself: after a right turn, what was ahead must move left (`drone/test_touch.py`). Games that look along -z (Police, Soar, Pilot) are right as they are.
+- **A strike is a flick towards the target, not just a flick:** a blind flick at the right moment caught the elk too often; now its direction must point at her (within 0.75 rad), and a lunge at nothing makes the wolf stumble.
+- **The honest robot must try the strategy a good player finds:** in Drone the robot's speed limit set the ceiling; in Potter's Wheel, the finger's reach (a ring blurred over ~3 heights) limits how close a curvy outline can get, so the mark tops out at 89%.
+- **`//` comments at the end of a one-line statement swallowed the rest of the line again** (Wolf Pack's input): comments on their own line.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
