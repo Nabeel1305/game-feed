@@ -14,13 +14,14 @@ lead wolf with two packmates; a herd of elk scatters and yours is marked.
 
 ## Levels
 One hunt at first, up to three (four on every tenth); she is faster, tires less, starts further ahead, swerves more often and
-more sharply with a shorter warning; the trees are nearer; the striking window is tighter. Robots: ordinary all of 1 to 20,
-about half of 40; sharp most of 40.
+more sharply with a shorter warning; the trees are nearer; the striking window is tighter. Robots: ordinary all of 1 to 20
+and 9 in 10 of 40; sharp 9 in 10 of 40.
 
 ## Spamming cannot win
 Blind moves: steer hard left, right or straight; burst on, off; flank; strike. First found: blind bursts and strikes caught her
-0.9% of the time and a lost hunt still "won" a one-hunt level. Now a strike at nothing makes you stumble, from behind she kicks
-almost every time, and the level counts hunts won.
+0.9% of the time and a lost hunt still "won" a one-hunt level. Now she runs away from you (so a wolf that only runs straight stays behind her), a strike must be a flick towards her, a lunge at
+nothing makes you stumble, from behind she kicks almost every time, and the level counts hunts won: 25 of 77,504 blind strings,
+random 0 of 480.
 
 ## Lessons
 1: run her down and strike from her side. 2: cut the corner when her head turns. 3: use the pack.

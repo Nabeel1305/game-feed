@@ -788,12 +788,12 @@
       "number": 23,
       "id": "wolf",
       "name": "Wolf Pack",
-      "status": "in-progress",
+      "status": "testing",
       "version": "0.1.0",
       "added": "2026-11-17",
       "path": "games/wolf/index.html",
-      "artifact": null,
-      "artifact_slug": null,
+      "artifact": "https://claude.ai/artifact/HiE7AudF2QT229nzfRKvzR",
+      "artifact_slug": "8753ca4c-a053-4435-b6e2-c1ab8c2dce46",
       "apk_repo": null,
       "storage_prefix": "wp.",
       "feed": {
@@ -809,8 +809,14 @@
         "font": "Bebas Neue",
         "live": "window.__sim && window.__sim.playing()"
       },
-      "principles": [],
-      "summary": ""
+      "principles": [
+        "P4",
+        "P6",
+        "P7",
+        "P13",
+        "P30"
+      ],
+      "summary": "Run as the lead wolf of a small pack across open 3D snow between dark pines (golden dusk, grey morning, falling snow, night). One elk in the fleeing herd is marked. Slide your thumb to steer, push it up for a burst (it tires you), tap FLANK to send a packmate up one side so she swerves towards you, and flick towards her to strike when you are close and beside her; from straight behind she kicks. Reach her before the trees. The first three levels teach it."
     }
   ],
   "planned": [

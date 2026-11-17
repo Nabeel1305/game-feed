@@ -21,9 +21,9 @@ function makeCfg(N, help) {
   return { N, f, e, boss, help: !!help, lives: 3,
     hunts: N <= 3 ? 1 : Math.round(x(1, 3, 25)) + (boss ? 1 : 0),
     run: 9.6, burst: 14.2, stam: 3.2, regen: 0.32, turn: 2.6,                            // the wolf
-    pv: x(10.6, 14.1, 30) * slow, tire: x(0.03, 0.015, 30), tiredMax: x(0.45, 0.25, 30), start: x(22, 38, 25), trees: x(340, 240, 30),   // her speed, how fast she tires, head start, distance to the trees
+    pv: x(10.6, 13.85, 30) * slow, tire: x(0.03, 0.016, 30), tiredMax: x(0.32, 0.26, 30), start: x(22, 36, 25), trees: x(270, 255, 30),   // her speed, how fast she tires, head start, distance to the trees
     jink: [x(2.6, 1.3, 30), x(4.2, 2.4, 30)], tell: x(0.75, 0.38, 30) * (help ? 1.25 : 1), jinkA: x(0.7, 1.15, 30),
-    flankCD: x(3, 5.5, 30), strike: x(4.2, 3.5, 30), side: [x(0.5, 0.7, 30), x(2.1, 1.8, 30)], kick: x(0.8, 0.92, 30) };
+    flankCD: x(3, 5.5, 30), strike: x(4.2, 3.5, 30), side: [x(0.5, 0.7, 30), x(2.1, 1.8, 30)], kick: x(0.88, 0.95, 30) };
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -52,7 +52,7 @@ function strike(G, a = 0) {
   const c = G.cfg, w = G.wolf, p = G.prey; if (G.over || G.ph !== 'chase' || w.stun > 0 || w.lunge > 0) return;
   w.lunge = 0.5; const dx = p.x - w.x, dz = p.z - w.z, d = Math.hypot(dx, dz);
   let aim = Math.atan2(dx, dz) - w.h - a; while (aim > Math.PI) aim -= TAU; while (aim < -Math.PI) aim += TAU;
-  if (Math.abs(aim) > 0.75 && d <= c.strike) { w.stun = 0.45; G.ev.push({ k: 'wide' }); lessonMiss(G, 'wide'); return; }      // a flick away from her: a lunge at nothing
+  if (Math.abs(aim) > 0.6 && d <= c.strike) { w.stun = 0.45; G.ev.push({ k: 'wide' }); lessonMiss(G, 'wide'); return; }      // a flick away from her: a lunge at nothing
   // where the wolf is around her: 0 = straight behind, pi/2 = alongside
   let ang = Math.atan2(-dx, -dz) - (p.h + Math.PI); while (ang > Math.PI) ang -= TAU; while (ang < -Math.PI) ang += TAU; ang = Math.abs(ang);
   if (d > c.strike) { w.stam = Math.max(0, w.stam - 0.8); w.stun = 0.45; G.ev.push({ k: 'short', d }); lessonMiss(G, 'far'); return; }      // a lunge at nothing: a stumble
@@ -74,7 +74,7 @@ function step(G, dt) {
   w.x += Math.sin(w.h) * w.v * dt; w.z += Math.cos(w.h) * w.v * dt; w.bursting = bursting;
   // her: running for the trees, tiring; a swerve every so often, with her head turning first; away from a flanking packmate
   p.tired = Math.min(c.tiredMax, p.tired + c.tire * dt);
-  const base = Math.atan2(-p.x * 0.004, 1);
+  const base = Math.atan2(p.x - w.x, p.z - w.z) * 0.7;      // she runs away from you
   if (p.tell > 0) { p.tell -= dt; if (p.tell <= 0) { p.h = clamp(p.h + p.turnTo, -1.3, 1.3); G.ev.push({ k: 'jink' }); p.next = c.jink[0] + R() * (c.jink[1] - c.jink[0]); } }
   else { p.next -= dt; if (p.next <= 0) { const flk = G.pack.find(q => q.task > 0); let dir = flk ? -Math.sign(flk.x - p.x) || 1 : (R() < 0.5 ? -1 : 1); if (!flk && Math.abs(p.h) > 0.7) dir = -Math.sign(p.h); p.turnTo = dir * c.jinkA * (0.75 + R() * 0.5); p.tell = c.tell; G.ev.push({ k: 'tell', dir }); } }
   p.h += (base - p.h) * Math.min(1, dt * 0.25);

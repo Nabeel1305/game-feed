@@ -30,7 +30,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 20 | **Potter's Wheel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4J1d7zq7DnyABhmwHZGTnT) | `games/potter/index.html` |
 | 21 | **Drone Pilot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9) | `games/drone/index.html` |
 | 22 | **Whaling** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4TeG6qyGR33vdfGMxr2WD1) | `games/whaling/index.html` |
-| 23 | **Wolf Pack** | in-progress | not yet (he has not said so) | 0.1.0 | [play](None) | `games/wolf/index.html` |
+| 23 | **Wolf Pack** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/HiE7AudF2QT229nzfRKvzR) | `games/wolf/index.html` |
 
 ## What each game is
 
@@ -56,7 +56,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 20. **Potter's Wheel**: Throw pots on a wheel in a 3D workshop, the yard's weather and light in the window and your fired pots on the shelves. A lump of wet clay spins; the order's outline is dotted on both sides. Touch the side of the clay and move slowly: it follows your fingertip in or out. Too quick and it wobbles and can collapse. Tap FIRE when the match passes the mark. Later the clay dries. The first three levels teach it.
 21. **Drone Pilot**: Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it.
 22. **Whaling**: Hunt whales the old way from a wooden whaleboat on a grey 3D sea. Left thumb steers while the crew rows to her spout; swipe up with the right thumb to throw the harpoon while her back is up (lead her). Then hold on: hold to haul the line and tire her, let go when her flukes rise before a run or the line snaps, keep the bow pointing at her or the boat heels over. The first three levels teach it.
-23. **Wolf Pack**: 
+23. **Wolf Pack**: Run as the lead wolf of a small pack across open 3D snow between dark pines (golden dusk, grey morning, falling snow, night). One elk in the fleeing herd is marked. Slide your thumb to steer, push it up for a burst (it tires you), tap FLANK to send a packmate up one side so she swerves towards you, and flick towards her to strike when you are close and beside her; from straight behind she kicks. Reach her before the trees. The first three levels teach it.
 
 ## Up next (designed, not built yet)
 
