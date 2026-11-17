@@ -36,3 +36,6 @@ spinning wheel to match the order). Heaven or Hell (too like Hiring in the same 
 ## Set 4 (17 Nov 2026, evening): deeper games, easy controls (his brief: like Plunder, "numerous things to them", as
 addictive as the research allows, controls easy). On the Run, Tag, Heaven or Hell (his), and my Castle Siege (tower
 defence) and Harvest Valley (a farm by the day). Every one with upgrades that carry over, several phases, power-ups.
+
+Set 4 built and published (17 Nov 2026, night): On the Run (24), Castle Siege (25), Tag (26), Heaven or Hell (27), Harvest
+Valley (28). Nothing waits in `planned`: the next set starts from his list above.

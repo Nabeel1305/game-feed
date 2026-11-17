@@ -69,7 +69,7 @@ function paperLines(cv) {
 }
 function drawCV(G, cv, x, y, w, h, rot = 0, alpha = 1) {
   ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x + w / 2, y + h / 2); ctx.rotate(rot); ctx.translate(-w / 2, -h / 2);
-  ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6; ctx.fillStyle = '#fbf8f0'; rrect(0, 0, w, h, 4); ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.fillStyle = 'rgba(0,0,0,.18)'; rrect(2, 6, w, h, 4); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,.12)'; rrect(-1, 3, w + 2, h + 2, 5); ctx.fill(); ctx.fillStyle = '#fbf8f0'; rrect(0, 0, w, h, 4); ctx.fill();      // a drawn shadow: a blurred one cost a slow phone a third of its time
   ctx.fillStyle = '#3a5a7a'; ctx.fillRect(0, 0, w, 5 * k);
   const ps = Math.min(64 * k, w * 0.2); face(cv, 12 * k, 14 * k, ps);
   const tx = 22 * k + ps; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#1e2a36'; ctx.font = `700 ${Math.round(19 * k)}px ${TF}`; ctx.fillText(cv.name, tx, 14 * k);
@@ -90,7 +90,7 @@ function draw(now) {
   // the jobs
   Ly.cards.forEach((c2, i) => { const hov = ui.hover === i, bad = ui.bad && ui.bad.to === i && ui.bad.t < 1.2, good = ui.bad && ui.bad.fit && ui.bad.fit[0] === i && ui.bad.t < 2;
     ctx.save(); ctx.translate(c2.x + c2.w / 2, c2.y + c2.h / 2); ctx.rotate((i - 1) * 0.012); ctx.translate(-c2.w / 2, -c2.h / 2);
-    ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3; ctx.fillStyle = bad ? '#ffd8d0' : hov ? '#fff6c8' : good ? '#d8f5dc' : '#f4ecd6'; rrect(0, 0, c2.w, c2.h, 5); ctx.fill(); ctx.shadowColor = 'transparent';
+    ctx.fillStyle = 'rgba(0,0,0,.2)'; rrect(1, 3, c2.w, c2.h, 5); ctx.fill(); ctx.fillStyle = bad ? '#ffd8d0' : hov ? '#fff6c8' : good ? '#d8f5dc' : '#f4ecd6'; rrect(0, 0, c2.w, c2.h, 5); ctx.fill(); ctx.shadowColor = 'transparent';
     if (hov) { ctx.strokeStyle = '#e8a83a'; ctx.lineWidth = 3; rrect(0, 0, c2.w, c2.h, 5); ctx.stroke(); }
     ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(c2.w / 2, 6 * k, 4 * k, 0, TAU); ctx.fill();
     ctx.fillStyle = '#1e2a36'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(13 * k)}px ${TF}`; ctx.fillText(c2.job.name, 6 * k, 12 * k);

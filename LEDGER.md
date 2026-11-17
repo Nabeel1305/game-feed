@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**26 games** so far. Next number: **27**.
+**28 games** so far. Next number: **29**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -26,14 +26,16 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 16 | **Short Order** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV) | `games/cook/index.html` |
 | 17 | **Country Vet** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CECaaPJZ5BQ2tkjLCSPYgG) | `games/vet/index.html` |
 | 18 | **Lighthouse** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/AeoxCPmBDorzB9RTscyEZx) | `games/lighthouse/index.html` |
-| 19 | **Hiring** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/YM4XMqenX8UECK8UibNm4Z) | `games/hiring/index.html` |
+| 19 | **Hiring** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/YM4XMqenX8UECK8UibNm4Z) | `games/hiring/index.html` |
 | 20 | **Potter's Wheel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4J1d7zq7DnyABhmwHZGTnT) | `games/potter/index.html` |
 | 21 | **Drone Pilot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9) | `games/drone/index.html` |
 | 22 | **Whaling** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4TeG6qyGR33vdfGMxr2WD1) | `games/whaling/index.html` |
 | 23 | **Wolf Pack** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/HiE7AudF2QT229nzfRKvzR) | `games/wolf/index.html` |
 | 24 | **On the Run** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1) | `games/run/index.html` |
 | 25 | **Castle Siege** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/E8f3Rn1gvEYJF1XXhMo9YQ) | `games/castle/index.html` |
-| 26 | **Tag** | in-progress | not yet (he has not said so) | 0.1.0 | [play](None) | `games/tag/index.html` |
+| 26 | **Tag** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/GGtwM2ML7gysoGR62LuQsf) | `games/tag/index.html` |
+| 27 | **Heaven or Hell** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/2TE4VTw2C7bskSt1ioR3rU) | `games/heaven/index.html` |
+| 28 | **Harvest Valley** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/5WA6HWrcvqJUi3qFxDUEBr) | `games/harvest/index.html` |
 
 ## What each game is
 
@@ -62,8 +64,6 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 23. **Wolf Pack**: Run as the lead wolf of a small pack across open 3D snow between dark pines (golden dusk, grey morning, falling snow, night). One elk in the fleeing herd is marked. Slide your thumb to steer, push it up for a burst (it tires you), tap FLANK to send a packmate up one side so she swerves towards you, and flick towards her to strike when you are close and beside her; from straight behind she kicks. Reach her before the trees. The first three levels teach it.
 24. **On the Run**: Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse; a garage of upgrades and a rank that stay.
 25. **Castle Siege**: Tower defence in a 3D valley, all taps: build archers, catapults, mages and frost by the road, upgrade them, drop meteors; eight roads, ten kinds of foe and a boss every tenth siege; royal upgrades and rank that stay.
-26. **Tag**: 
-
-## Up next (designed, not built yet)
-
-27. **Heaven or Hell**: His idea, rolled on from set 3 (it plays too like Hiring to share a set): souls arrive with their best and worst deed; you judge. Spec: `specs/ideas.md`.
+26. **Tag**: Playground tag in 3D with a floating stick and a double-tap dash: chase, run, freeze tag, zombie tag and the big kid, with power-ups, places, a tuck shop of upgrades and a rank that stay.
+27. **Heaven or Hell**: Keep the gate: weigh each soul's best and worst deed, unseal hidden deeds in the Book of Life, mind the day's rule and the liars, and drag them up, down or to Purgatory; blessings and rank that stay.
+28. **Harvest Valley**: A farm by the day in 3D, all taps: plant, water when a crop asks, pick when it sparkles, collect eggs, shoo crows and fill the cart's orders by sunset; seasons and rain; farm upgrades and rank that stay.

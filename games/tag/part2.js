@@ -49,8 +49,8 @@ function makeCfg(N, help) {
   const me = 6.2 * (1 + 0.03 * upLv('shoes'));
   return { N, f, e, mode, help: !!help, me,
     kids: mode === 'run' ? Math.min(4, 2 + Math.round(x(0, 2, 20))) : mode === 'big' ? 1 : Math.min(8, Math.round(x(3, 8, 25))),
-    kidV: 6.2 * x(0.8, 0.96, 40) * (help ? 0.93 : 1), chaseV: 6.2 * (mode === 'big' ? x(0.98, 1.08, 30) : x(0.86, 0.98, 45)) * (help ? 0.93 : 1),
-    time: mode === 'chase' ? x(45, 30, 25) + 4 * upLv('bell') : mode === 'freeze' ? x(55, 40, 25) + 4 * upLv('bell') : mode === 'big' ? x(30, 40, 30) : mode === 'zombie' ? x(40, 55, 30) : x(30, 45, 30),
+    kidV: 6.2 * x(0.8, 0.96, 40) * (help ? 0.93 : 1), chaseV: 6.2 * (mode === 'big' ? x(0.98, 1.08, 30) : x(0.86, 0.98, 45)) * (help ? 0.93 : 1) * (N <= 3 ? 0.97 : 1),
+    time: mode === 'chase' ? x(45, 30, 25) + 4 * upLv('bell') : mode === 'freeze' ? x(55, 40, 25) + 4 * upLv('bell') : mode === 'big' ? x(30, 40, 30) : mode === 'zombie' ? x(40, 55, 30) : x(34, 45, 30),
     hearts: 3 + upLv('heart'), lead: x(0.1, 0.6, 25), smart: x(0.3, 1, 20), kidDash: x(4.5, 2.8, 30), unfreeze: x(1.4, 0.7, 35),
     dashV: 14, dashT: 0.32 * (1 + 0.15 * upLv('spring')), dashCD: 2.2 * (1 - 0.12 * upLv('breath')), powerEvery: x(7, 11, 30) * (1 - 0.12 * upLv('pockets')), powerT: 1 + 0.25 * upLv('pockets'),
     zombies: 1 };
@@ -69,7 +69,7 @@ function setup(G) {
   const c = G.cfg, R = G.rnd, L = lessonNow(G), n = L ? L.kids : c.kids; G.kids = []; G.powers = []; G.me.x = 0; G.me.z = 14; G.me.vx = G.me.vz = 0;
   const mode = L ? L.mode : G.mode; G.mode = mode; G.left = L ? 999 : c.time;
   for (let i = 0; i < n; i++) { let x, z, tries = 0; do { x = (R() - 0.5) * 2 * (HALF_X - 2); z = (R() - 0.5) * 2 * (HALF_Z - 2); tries++; } while ((Math.hypot(x - G.me.x, z - G.me.z) < (mode === 'run' || mode === 'big' ? 14 : 8) || blocked(x, z, 0.6)) && tries < 50);
-    const it = mode === 'run' || mode === 'big' || (mode === 'zombie' && i === 0);
+    const it = mode === 'run' || mode === 'big' || (mode === 'zombie' && i < 2);
     G.kids.push({ id: ++G.id, name: NAMES[(i + G.N * 3) % NAMES.length], x, z, vx: 0, vz: 0, h: 0, it, big: mode === 'big', out: false, frozen: false, stun: 0, dash: 0, cd: R() * 2, wob: R() * TAU, col: (i + G.N) % 8, thaw: 0, juke: 0 }); }
 }
 // ---------- the thumb ----------
@@ -110,17 +110,19 @@ function step(G, dt) {
   if (me.dash > 0) { me.dash -= dt; const dv = c.dashV; me.vx = Math.sin(me.h) * dv; me.vz = Math.cos(me.h) * dv; me.x += me.vx * dt; me.z += me.vz * dt; }
   else move(me, G.in.x, G.in.z, c.me * (G.buff.speed ? 1.4 : 1), dt, 30);
   collide(me, 0.45); me.run += Math.hypot(me.vx, me.vz) * dt;
-  me.tt = (me.tt || 0) - dt; if (me.tt <= 0) { me.tt = 0.25; (me.trail = me.trail || []).push([me.x, me.z, me.run]); if (me.trail.length > 16) me.trail.shift(); }
-  const tr = me.trail || [], loop = tr.length >= 12 && Math.hypot(me.x - tr[0][0], me.z - tr[0][1]) < 0.4 * (me.run - tr[0][2]) && me.run - tr[0][2] > 8;
-  me.loop = loop; if (loop) { me.cx = tr.reduce((a, q) => a + q[0], 0) / tr.length; me.cz = tr.reduce((a, q) => a + q[1], 0) / tr.length; }
+  me.tt = (me.tt || 0) - dt; if (me.tt <= 0) { me.tt = 0.25; (me.trail = me.trail || []).push([me.x, me.z, me.run]); if (me.trail.length > 48) me.trail.shift(); }
+  const tr = me.trail || [], loop = tr.length >= 16 && Math.hypot(me.x - tr[0][0], me.z - tr[0][1]) < 0.45 * (me.run - tr[0][2]) && me.run - tr[0][2] > 10;
+  me.loop = loop; if (loop) { me.cx = tr.reduce((a, q) => a + q[0], 0) / tr.length; me.cz = tr.reduce((a, q) => a + q[1], 0) / tr.length; let far = tr[0], fd = 0; for (const q of tr) { const d = Math.hypot(q[0] - me.x, q[1] - me.z); if (d > fd) { fd = d; far = q; } } me.ax = far[0]; me.az = far[1]; }
   // the kids
   const chasers = G.kids.filter(k => k.it && !k.out), prey = G.kids.filter(k => !k.it && !k.out && !k.frozen);
   for (const k of G.kids) { if (k.out) continue; k.stun = Math.max(0, k.stun - dt); k.cd = Math.max(0, k.cd - dt); if (k.frozen || k.stun > 0 || (G.buff.freezeAll && Math.hypot(k.x - me.x, k.z - me.z) < 7)) { k.vx *= 0.8; k.vz *= 0.8; continue; }
     let dx = 0, dz = 0, v = k.it ? c.chaseV : c.kidV;
     if (k.it) {      // chasing: you (unless a ghost) or, in zombie tag, the nearest kid still free
       const targets = (mode === 'zombie' ? G.kids.filter(q => !q.it && !q.out) : []).concat(G.buff.ghost ? [] : [me]); let tg = null, bd = 1e9;
-      for (const t of targets) { const d = Math.hypot(t.x - k.x, t.z - k.z) * (t === me ? 0.6 : 1); if (d < bd) { bd = d; tg = t; } } if (tg) bd = Math.hypot(tg.x - k.x, tg.z - k.z);
-      if (tg === me && me.loop && bd > 3 && R() < 0.98) { dx = (me.cx + me.x) / 2 - k.x; dz = (me.cz + me.z) / 2 - k.z; }      // you are running in circles: cut across
+      for (const t of targets) { const d = Math.hypot(t.x - k.x, t.z - k.z) * (t === me ? 0.5 : 1); if (d < bd) { bd = d; tg = t; } } if (tg) bd = Math.hypot(tg.x - k.x, tg.z - k.z);
+      const ci = chasers.indexOf(k);
+      if (tg === me && me.loop && bd > 3 && ci % 2 === 1) { dx = me.ax - k.x; dz = me.az - k.z; if (Math.hypot(dx, dz) < 1.5) { dx = me.x - k.x; dz = me.z - k.z; v *= 0.6; } }      // you run a loop: wait for you where the loop comes back
+      else if (tg === me && me.loop && bd > 3) { dx = (me.cx + me.x) / 2 - k.x; dz = (me.cz + me.z) / 2 - k.z; }      // ...or cut across it
       else if (tg) { const t2 = intercept(k, tg, v), lead = Math.min(t2, 1.6) * Math.min(1, 0.4 + c.smart * 0.6); dx = tg.x + tg.vx * lead - k.x; dz = tg.z + tg.vz * lead - k.z; if (bd < 3 && k.cd <= 0 && R() < dt * 3) { k.dash = 0.28; k.cd = c.kidDash; } }
       else { dx = Math.sin(G.t * 0.7 + k.wob) ; dz = Math.cos(G.t * 0.5 + k.wob); v *= 0.5; }
     } else if (mode === 'freeze' && !k.frozen) {      // free kids: run from you; go and thaw a frozen friend when you are far
@@ -191,8 +193,7 @@ function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; if (
 
 // ---------- for the robots ----------
 // BLIND: the stick held one way (eight ways), let go, a dash
-const BLIND = { n: G => stick(G, 0, -1), s: G => stick(G, 0, 1), e: G => stick(G, 1, 0), w: G => stick(G, -1, 0), o: G => stick(G, 0, 0), d: G => dash(G),
-  q: G => stick(G, 0.7, -0.7), z: G => stick(G, -0.7, 0.7) };
+const BLIND = { n: G => stick(G, 0, -1), s: G => stick(G, 0, 1), e: G => stick(G, 1, 0), w: G => stick(G, -1, 0), o: G => stick(G, 0, 0), d: G => dash(G) };
 // a kid who looks: chasing, runs at the nearest free kid where he is going (cuts him off), dashes when close; running away,
 // keeps the chasers behind him, out of corners, round the frame, dashes when one is on him; picks up power-ups on the way
 function honest(G, o, mem) {
@@ -212,12 +213,13 @@ function honest(G, o, mem) {
     // look at sixteen ways to run: where would I be in 0.7 s, how near would they be, how near a wall or a prop?
     let fx = 0, fz = 0, bs = -1e9; for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, ux = Math.sin(a), uz = Math.cos(a), px = me.x + ux * c.me * 0.7, pz = me.z + uz * c.me * 0.7;
       let sc = 0; for (const k of ch) { const kx = k.x + (px - k.x) * 0.35, kz = k.z + (pz - k.z) * 0.35, d = Math.hypot(px - kx, pz - kz); sc -= 12 / Math.max(0.6, d); }
-      const wx = HALF_X - Math.abs(px), wz = HALF_Z - Math.abs(pz); if (wx < 3) sc -= (3 - wx) * 3; if (wz < 3) sc -= (3 - wz) * 3;
+      const wx = HALF_X - Math.abs(px), wz = HALF_Z - Math.abs(pz); if (wx < 4.5) sc -= (4.5 - wx) * 3; if (wz < 4.5) sc -= (4.5 - wz) * 3;
+      sc -= 0.15 * Math.hypot(px, pz) / 10;
       for (const p of PROPS) if (Math.hypot(px - p.x, pz - p.z) < p.r + 0.8) sc -= 6; if (Math.hypot(px - SAND.x, pz - SAND.z) < SAND.r) sc -= 2;
       if (sc > bs) { bs = sc; fx = ux; fz = uz; } }
     const p = G.powers.find(q => near(q, me) < 6); if (p && ch.every(k => near(k, p) > near(me, p) + 2)) { fx = (fx * 0.5) + (p.x - me.x) * 0.3; fz = fz * 0.5 + (p.z - me.z) * 0.3; }
     const m = Math.hypot(fx, fz) || 1; stick(G, fx / m, fz / m);
-    const close = ch.some(k => near(k, me) < 1.9 && k.stun <= 0); if (close && me.cd <= 0) { me.h = Math.atan2(fx, fz); dash(G); }
+    const close = ch.some(k => near(k, me) < 2.6 && k.stun <= 0); if (close && me.cd <= 0) { me.h = Math.atan2(fx, fz); dash(G); }
   }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; const mode = G.mode; if (mode === 'chase' || mode === 'freeze') { for (const k of G.kids) { if (mode === 'chase') k.out = true; else k.frozen = true; } } else G.left = 0.001; }

@@ -64,9 +64,9 @@ function buildWorld() {
   const out = []; const R = W3.rng(8); for (let i = 0; i < 70; i++) { const a = R() * TAU, r = 30 + R() * 50, x = Math.sin(a) * r, z = Math.cos(a) * r * 1.2; out.push({ x, z, y: 0, s: 0.7 + R() * 0.5, hue: R(), shade: R() }); }
   const pines = W3.pines(out, { layers: 4 });
   const glowT = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new T.CanvasTexture(c); })();
-  const me = kidModel(0xf0d020, SKINS[0], HAIR[1], true); S.add(me);
-  const kids = []; for (let i = 0; i < 8; i++) { const k = kidModel(SHIRTS[i], SKINS[i % SKINS.length], HAIR[(i * 3) % HAIR.length]); k.visible = false; S.add(k); kids.push(k); }
-  const big = kidModel(0x6a2a2a, SKINS[2], HAIR[3]); big.scale.setScalar(1.45); big.visible = false; S.add(big);
+  const me = kidModel(0xf0d020, SKINS[0], HAIR[1], true); me.scale.setScalar(1.3); S.add(me);
+  const kids = []; for (let i = 0; i < 8; i++) { const k = kidModel(SHIRTS[i], SKINS[i % SKINS.length], HAIR[(i * 3) % HAIR.length]); k.scale.setScalar(1.3); k.visible = false; S.add(k); kids.push(k); }
+  const big = kidModel(0x6a2a2a, SKINS[2], HAIR[3]); big.scale.setScalar(1.9); big.visible = false; S.add(big);
   const powers = []; for (let i = 0; i < 3; i++) { const g = new T.Group(); const orb = new T.Mesh(new T.IcosahedronGeometry(0.32, 1), new T.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.6, roughness: 0.3 })); orb.position.y = 0.7; const gl = new T.Sprite(new T.SpriteMaterial({ map: glowT, transparent: true, depthWrite: false, blending: T.AdditiveBlending, opacity: 0.8 })); gl.scale.set(2, 2, 1); gl.position.y = 0.7; g.add(orb, gl); g.userData = { orb, gl }; g.visible = false; S.add(g); powers.push(g); }
   const puffs = [];
   V3 = { T, S, ground, groundM, yardM, me, kids, big, props, powers, glowT, puffs, cam: { x: 0, z: 20 }, place: -1, pines };
@@ -129,7 +129,7 @@ function draw(now, dt) {
   for (const p of V.puffs) { p.t += dt; p.sp.scale.setScalar(p.s * (1 + p.t * 2)); p.sp.material.opacity = Math.max(0, 0.9 - p.t * 1.6); }
   for (let i = V.puffs.length - 1; i >= 0; i--) if (V.puffs[i].t > 0.6) { V.S.remove(V.puffs[i].sp); V.puffs.splice(i, 1); }
   // the camera: above and behind you, easing after you, kept over the yard
-  const asp = innerWidth / innerHeight, back = asp < 0.7 ? 1 : 0.8, C = V.cam, tx = clamp(me.x, -HALF_X + 7, HALF_X - 7), tz = clamp(me.z, -HALF_Z + 9, HALF_Z - 7);
+  const asp = innerWidth / innerHeight, back = asp < 0.7 ? 1 : 0.8, C = V.cam, tx = clamp(me.x, -HALF_X + 5.5, HALF_X - 5.5), tz = clamp(me.z, -HALF_Z + 7, HALF_Z - 5);
   const e = ui.snap ? 1 : 1 - Math.exp(-dt * 4); ui.snap = false; C.x += (tx - C.x) * e; C.z += (tz - C.z) * e;
   const cam = W3.cam; cam.fov = 50; cam.updateProjectionMatrix(); cam.position.set(C.x, 28 * back, C.z + 15 * back); cam.lookAt(C.x, 0, C.z - 1.5);
   if (FX.shake > 0) { cam.position.x += (Math.random() - 0.5) * FX.shake * 0.03; cam.position.z += (Math.random() - 0.5) * FX.shake * 0.03; }
