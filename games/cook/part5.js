@@ -1,0 +1,148 @@
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bt = best[level];
+  $('hStat').innerHTML = [bt ? `Your best tips here: <b>${bt}</b>` : '', helpOn() ? '<span class="help">Help is on for this level: everything is a little slower.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (!HEADLESS) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; ui.aim = null; ui.drag = null; hint = null;
+  ui.drag = null;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.tips > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.tips; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'THE BIG RUSH IS DONE' : 'SHIFT DONE') : 'TOO MANY WALKED OUT'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = r.win ? `<b>${r.served}</b> served, <b>${r.perfect}</b> perfect · tips <b>${r.tips}</b>${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}` + (r.stars < 3 ? '<br>No walkouts, mostly perfect, for three stars.' : '')
+    : `<b>${r.served}</b> served before three walked out.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (made for cooking): drag things where they go; tap a pan to flip; swipe across the board to chop.
+function hitAt(x, y) { const sp = spots(G), d = (s, r) => { const p = scr(s.x, s.z, s.y); return Math.hypot(p.x - x, p.y - y) < r * k; };
+  for (let i = 0; i < sp.tray.length; i++) if (d(sp.tray[i], 34)) return { kind: 'tray', i, food: sp.tray[i].food };
+  for (let i = 0; i < G.pans.length; i++) if (d(sp.pans[i], 46)) return { kind: 'pan', i };
+  if (d(sp.board, 50)) return { kind: 'board' }; if (d(sp.plate, 50)) return { kind: 'plate' }; if (d(sp.bin, 40)) return { kind: 'bin' };
+  const pass = scr(0, -0.72, TOP + 0.22); if (y < pass.y + 30 * k && Math.abs(x - pass.x) < W * 0.45) return { kind: 'pass' }; return null; }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const h = hitAt(e.clientX, e.clientY); if (!h) return;
+  ui.drag = { id: e.pointerId, from: h, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, moved: false, t0: performance.now(), lastDir: 0, label: h.kind === 'tray' ? FOOD[h.food].name : h.kind === 'pan' && G.pans[h.i] ? FOOD[G.pans[h.i].food].name : h.kind === 'board' && G.board ? FOOD[G.board.food].name : h.kind === 'plate' && G.plate.length ? 'Plate' : null };
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; if (Math.hypot(d.x - d.x0, d.y - d.y0) > 12 * k) d.moved = true;
+  // chopping: each sweep across the board, back or forth, is one chop
+  if (d.from.kind === 'board' && G.board && G.board.chops < FOOD[G.board.food].chops) { const dx = e.clientX - (d.lx == null ? d.x0 : d.lx); if (Math.abs(dx) > 26 * k) { const dir = Math.sign(dx); if (dir !== d.lastDir) { chop(G); d.lastDir = dir; d.chopped = true; } d.lx = e.clientX; } } });
+function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (!G || G.over || paused) return; const to = hitAt(e.clientX, e.clientY), f = d.from;
+  if (!d.moved) { if (f.kind === 'pan') flip(G, f.i); return; }
+  if (d.chopped) return; if (!to) return;
+  if (f.kind === 'tray') { if (to.kind === 'pan') take(G, f.food, 'pan', G.pans[to.i] ? null : to.i); else if (to.kind === 'board') take(G, f.food, 'board'); else if (to.kind === 'plate') take(G, f.food, 'plate'); }
+  else if (f.kind === 'pan') { if (to.kind === 'plate') panToPlate(G, f.i); else if (to.kind === 'bin') trash(G, 'pan', f.i); }
+  else if (f.kind === 'board') { if (to.kind === 'plate') boardToPlate(G); else if (to.kind === 'bin') trash(G, 'board'); }
+  else if (f.kind === 'plate') { if (to.kind === 'pass') serve(G); else if (to.kind === 'bin') trash(G, 'plate'); } }
+cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = Math.min(2, STEPS[stepN].pr + 0.5); resize(); if (W3 && W3.ok) W3.setQuality(stepN); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = Math.min(0.05, ms / 1000); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e);
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000, rdt); soundStep(G, rdt);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+/*SOUNDCHECK*/
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  frame() { draw(performance.now() / 1000, 1 / 60); },
+  take(f, d, i) { return take(G, f, d, i); }, flip(i) { flip(G, i); }, chop() { chop(G); }, panToPlate(i) { return panToPlate(G, i); }, boardToPlate() { return boardToPlate(G); }, serve() { serve(G); }, spots() { return spots(G); }, scr, ui, get V3() { return V3; }, W3,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  get G() { return G; }
+};
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

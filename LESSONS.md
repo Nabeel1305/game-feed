@@ -234,6 +234,12 @@ Everything learned building the first games. Every new game must follow the **ru
 - **The column holds what you leave it on** (the trim follows the nose while the thumb is still), pulled back down the screen raises the nose, as a real column does; the lesson says so in capitals.
 - **A one-line function with a `//` comment in the middle swallows the rest of the line** (twice in Police Chase): comments go on their own line or at the very end.
 
+### 16. Short Order (`games/cook/`)
+- **A wrong plate must cost, or random serving wins:** a plate sent back (wrong, raw or burnt) takes a life like a walkout; with that, blind and random moves win 0.
+- **The honest robot must play like a person watching the ring:** it moved once every 0.8 s and missed a golden window narrower than that, so level 40 looked impossible while level 80 was easy (it was the robot's rhythm, not the game). Taps (flip) and the drag to the plate now happen as soon as the ring says so; other drags take most of a second. When a robot curve goes the wrong way (harder level, more wins), trace one game before tuning.
+- **Portrait phones see a narrow strip of the counter:** everything the thumb needs (ten trays, bin, plate, board, three pans) must fit inside about ±0.35 m at the counter; check with `__sim.scr` on a 390-wide screen, not only by eye.
+- **A LatheGeometry drawn outward has its face pointing down:** the plate was black from above and vanished on the steel; `side: DoubleSide` fixed it. Indoors, turn the sky's light down (`W3.S.exposure *= 0.72; scene.environmentIntensity = 0.45`) or the steel goes white.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

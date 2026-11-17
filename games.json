@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 16,
+  "next_number": 17,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -544,6 +544,40 @@
         "P30"
       ],
       "summary": "Land an airliner in 3D at a countryside airport, seen from just behind the plane, in weather that changes by flight (fog, rain, storm, sunset, night with the runway lights). Right thumb is the control column: left and right to bank, pull back to raise the nose; left thumb is the throttle. Follow the glide-path lights (two white, two red), keep on the centre line in a crosswind, hold the speed, then flare just before the wheels touch for a soft landing. The first three flights teach it a piece at a time."
+    },
+    {
+      "number": 16,
+      "id": "cook",
+      "name": "Short Order",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/cook/index.html",
+      "artifact": "https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV",
+      "artifact_slug": "3c87195d-3492-49f2-b2d3-96ecdf5bb828",
+      "apk_repo": null,
+      "storage_prefix": "sh.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Golden, not burnt. Get the orders out.",
+        "genre": "Cooking",
+        "intensity": 3,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Pacifico",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P13",
+        "P18",
+        "P21",
+        "P30"
+      ],
+      "summary": "Run the grill of a small 3D diner kitchen, seen from where the cook stands, with the street's weather and light in the window. Drag food from the trays onto the pans, the board or the plate; tap a pan to flip when the ring turns golden; sweep across the board to chop; drag the plate up to the pass. Pancakes, eggs on toast, burgers, salmon salad, steak and onions: golden, not burnt, before the customer walks out. The first three levels teach it a piece at a time."
     }
   ],
   "planned": []
