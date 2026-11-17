@@ -39,3 +39,13 @@ defence) and Harvest Valley (a farm by the day). Every one with upgrades that ca
 
 Set 4 built and published (17 Nov 2026, night): On the Run (24), Castle Siege (25), Tag (26), Heaven or Hell (27), Harvest
 Valley (28). Nothing waits in `planned`: the next set starts from his list above.
+
+## Set 5 (17 Nov 2026, night): his list is all built, so all five are mine, chosen for engagement and a balanced feed
+(his words: "Ok next 5 make it good please"). Deep games, easy controls, built on the PLAYBOOK.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 29 | Horde | survive waves of monsters with one floating stick; you attack by yourself; pick one of three powers at each level-up; a boss | 5 | 1 | 3D |
+| 30 | Mini Golf | drag back and let go; windmills, ramps, water, moving walls; par, coins, balls with powers | 1 | 1 | 3D |
+| 31 | Penalty Kings | a football cup: aim with a tap, time the power; then dive as keeper by reading the kicker's run-up | 3 | 1 | 3D |
+| 32 | Critter Clash | collect critters with types (fire beats leaf...), turn-based battles with taps, catch and train them | 2 | 1 | 3D |
+| 33 | Rodeo | stay on a bucking bull for eight seconds: hold the left or right side to lean against each buck | 4 | 2 | 3D |

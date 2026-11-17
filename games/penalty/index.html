@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Penalty Kings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#10141f;--ink:#eef2f8;--acc:#f2b84b;--acc-dark:#a8701a;--ok:#8fe0ab}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Bungee","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(16,20,31,.55),rgba(6,8,14,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#1d1204;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#1d1204}.lvb.cur small{color:#1d1204}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf">Penalty Kings</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">SHOOT · SAVE · WIN THE CUP</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Bungee", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('pk.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('pk.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: rewrite this part for each game =====================
+// The example game, so the kit runs and passes every check from the first minute: "a ring closes on a target; tap the target
+// while the ring is gold". Replace it, but keep the shape: makeCfg, newGame, step, the player's actions, finish, the lessons,
+// the blind moves and the honest player at the bottom. Everything in part5 (menus, levels, pause, feed, robots) works off these.
+
+const RULES = [      // the "How to play" card: one line each, plain words
+  '<b>Tap the target when its ring turns gold.</b> The ring closes in; it is gold only for a moment.',
+  '<b>Too soon breaks it.</b> A tap before the gold, or on nothing, costs you a life.',
+  '<b>Too late loses it.</b> Let a ring close past the target and it costs a life.',
+  'Hit enough rings to pass the level. Lose no lives for three stars.',
+];
+function makeCfg(N, help) {      // every number that changes with the level, in one place (help after three losses only gives time)
+  const f = curve(N), e = easyOf(N), boss = N % 10 === 0;
+  return { N, f, e, boss, help: !!help,
+    close: (2.3 - 1.4 * (1 - Math.exp(-f / 25))) * (1 + 0.45 * e) * (help ? 1.25 : 1),      // seconds for a ring to close on its target
+    gold: (0.07 + 0.11 * Math.exp(-f / 30) + 0.12 * e) * (help ? 1.3 : 1),                 // how much of that time it is gold
+    gap: (0.95 - 0.45 * (1 - Math.exp(-f / 30))) * (1 + 0.4 * e),                           // pause between rings
+    two: N >= 4 ? Math.min(0.7, 0.08 + f * 0.012) : 0,                                     // chance of two rings at once
+    goal: Math.round(8 + Math.min(14, f * 0.35)) + (boss ? 4 : 0),                          // rings to hit to pass
+    lives: 3 };
+}
+function newGame(N, o = {}) {
+  const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, rings: [], next: 0.7, hits: 0, lives: cfg.lives, lost: 0, combo: 0, bestCombo: 0,
+    wasted: 0, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null };
+  if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
+  return G;
+}
+function spawn(G, slow) {
+  const R = G.rnd, c = G.cfg; let x, y, n = 0;
+  do { x = 0.2 + 0.6 * R(); y = 0.3 + 0.42 * R(); n++; } while (n < 12 && G.rings.some(g => Math.hypot(g.x - x, (g.y - y) * 1.6) < 0.3));
+  G.rings.push({ x, y, t: 0, dur: c.close * (0.85 + 0.3 * R()) * (slow || 1), gold: c.gold, done: false });
+}
+const goldNow = g => { const u = g.t / g.dur; return u >= 1 - g.gold && u <= 1.05; };      // the gold moment (a little grace past the target)
+function step(G, dt) {
+  if (G.over) return; G.t += dt; G.wasted = Math.max(0, G.wasted - dt / 5);
+  G.next -= dt;
+  if (G.next <= 0 && (!G.lesson || G.rings.length === 0)) {
+    const L = G.lesson && lessonNow(G); spawn(G, L ? 1.6 : 1); if (L && L.two || !G.lesson && G.rnd() < G.cfg.two) spawn(G, L ? 1.6 : 1);
+    G.next = G.cfg.gap * (0.8 + 0.4 * G.rnd()) + (G.lesson ? 0.8 : 0);
+  }
+  for (const g of G.rings) { g.t += dt; if (!g.done && g.t > g.dur * 1.05) { g.done = true; fault(G, 'late', g.x, g.y); } }
+  G.rings = G.rings.filter(g => !g.done);
+  if (!G.lesson && G.hits >= G.cfg.goal) finish(G, true);
+  else if (G.lives <= 0) finish(G, false);
+}
+// The player's one action. x, y are fractions of the play area (0..1).
+function tap(G, x, y) {
+  if (G.over) return; let best = null, bd = 0.11;
+  for (const g of G.rings) { const d = Math.hypot(g.x - x, (g.y - y) * 1.6); if (d < bd) { bd = d; best = g; } }
+  if (!best) { G.wasted++; G.ev.push({ k: 'empty', x, y }); if (G.wasted >= 2) { G.wasted = 0; fault(G, 'empty', x, y); } return; }      // a tap on nothing: twice in quick succession costs a life
+  best.done = true; G.rings = G.rings.filter(g => g !== best);
+  if (goldNow(best)) { G.hits++; G.combo++; G.bestCombo = Math.max(G.bestCombo, G.combo); G.ev.push({ k: 'hit', x: best.x, y: best.y, combo: G.combo }); lessonSee(G, 'hit'); }
+  else fault(G, 'soon', best.x, best.y);
+}
+function fault(G, why, x, y) {      // a mistake: in a lesson it costs nothing and says how; otherwise a life
+  G.combo = 0; G.ev.push({ k: 'fault', why, x, y });
+  if (G.lesson) { lessonMiss(G, why); return; }
+  G.lives--; G.lost++;
+}
+function finish(G, win) {
+  const c = G.cfg; G.over = win ? 'won' : 'lost';
+  G.res = { win, stars: win ? (G.lost === 0 ? 3 : G.lost === 1 ? 2 : 1) : 0, hits: G.hits, goal: c.goal, combo: G.bestCombo, lost: G.lost, time: G.t };
+  G.ev.push({ k: win ? 'won' : 'lost' });
+}
+
+// ---------- LESSONS (LESSONS.md rule: the first three levels teach every move, and you do not go on until you can do each one) ----------
+// Each lesson: a title, how to do it in one line, how many times (need), and which events count (ok). While a lesson is on
+// nothing is lost: a mistake says TRY AGAIN and shows how. Passed lessons are saved, so a retry goes straight to play.
+// The game tells the lessons what happened with lessonSee(G, 'what') and lessonMiss(G, why).
+const LESSONS = {
+  1: [{ id: 'gold', title: 'TAP ON GOLD', how: 'A ring closes on the target. Tap the target the moment the ring turns gold.', need: 3, ok: w => w === 'hit' },
+      { id: 'wait', title: 'NOT TOO SOON', how: 'A tap before the gold breaks the ring. Watch it, wait for gold, then tap.', need: 2, ok: w => w === 'hit' }],
+  2: [{ id: 'two', two: true, title: 'TWO AT ONCE', how: 'Two rings, two targets. Tap each one as its own ring turns gold.', need: 4, ok: w => w === 'hit' }],
+  3: [{ id: 'all', two: true, title: 'PUT IT TOGETHER', how: 'Anything can come now. Tap each target on its gold.', need: 6, ok: w => w === 'hit' }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonSee(G, what) {
+  const D = G.lesson; if (!D) return; const st = D.steps[D.i]; if (!st.ok(what)) return;
+  D.n++; if (D.n < st.need) { G.ev.push({ k: 'lessonok', n: D.n, need: st.need }); return; }
+  D.i++; D.n = 0; D.miss = 0;
+  if (D.i >= D.steps.length) { G.lesson = null; G.rings.length = 0; G.next = 1.2; G.ev.push({ k: 'lessondone', N: G.N }); }
+  else G.ev.push({ k: 'lessonnext' });
+}
+function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev.push({ k: 'lessonmiss', why, how: D.steps[D.i].how }); }
+
+// ---------- for the robots (bots.js, test_play.py): the game's own blind moves and its honest player ----------
+// BLIND: each letter is one thing a thumb can do without looking. The search plays every short string of them on every beat,
+// and none may win (spamming cannot win, LESSONS rule 1). Include every kind of input the game has.
+const BLIND = {
+  T: G => { const g = G.rings[G.rings.length - 1]; if (g) tap(G, g.x, g.y); },      // tap the newest target (a thumb that knows where, but not when)
+  O: G => { const g = G.rings[0]; if (g) tap(G, g.x, g.y); },                        // tap the oldest target
+  C: G => tap(G, 0.5, 0.5),                                                          // tap the middle of the screen
+  R: G => tap(G, 0.2 + 0.6 * Math.random(), 0.3 + 0.42 * Math.random()),             // tap anywhere
+};
+// HONEST: a person who looks. react = seconds to see and act; acc = how often a tap lands when meant. Return nothing; just act.
+function honest(G, o, mem) {
+  const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc;
+  for (const g of G.rings) {
+    if (!goldNow(g)) { g.seen = null; continue; }
+    if (g.seen == null) g.seen = G.t;
+    if (G.t - g.seen >= Math.min(react, g.dur * g.gold * 0.9)) { if (Math.random() < acc) tap(G, g.x, g.y); else tap(G, g.x + 0.2, g.y); return; }
+  }
+}
+// The shortest way to a real win, for tools/test_controls.py: one ring short of the goal, a ring at its gold, and a tap on it.
+function winNow(G) { if (!G || G.over || G.lesson) return; G.hits = G.cfg.goal - 1; spawn(G); const g = G.rings[G.rings.length - 1]; g.t = g.dur * (1 - g.gold * 0.5); tap(G, g.x, g.y); }
+
+// ===================== DRAW + JUICE: rewrite the drawing for each game; keep the juice helpers =====================
+// Juice (PLAYBOOK): screen shake, a heartbeat of hit-stop, flashes, sparks, floating words, one-line hints, the lesson panel.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null;
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.3, t: 0, col, r: 2 + Math.random() * 2.5 }); } if (PT.length > 300) PT.splice(0, PT.length - 300); }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 2.6) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function fxStep(dt) {
+  FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 4); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; p.vx *= 0.98; }
+  for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.1) TXT.shift();
+  if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+}
+// how the game reacts to what happened (sounds, sparks, words). Called once per event from the frame loop.
+function onEvent(G, e) {
+  const A = area(), px = A.x + e.x * A.w, py = A.y + e.y * A.h;
+  switch (e.k) {
+    case 'hit': sparks(px, py, 14 + Math.min(10, e.combo * 2), '#ffd36a'); FX.stop = 0.04; FX.shake = Math.min(10, 3 + e.combo); sfx.hit(e.combo); vibe(HAP.light); if (e.combo >= 3) say(`${e.combo} IN A ROW`, px, py - 46 * k, '#ffd36a', 20); break;
+    case 'fault': FX.red = 0.6; FX.shake = 8; sfx.miss(); say(e.why === 'late' ? 'TOO LATE' : e.why === 'empty' ? 'NOTHING THERE' : 'TOO SOON', px, py - 40 * k, '#ff9a8a', 22);
+      tip('fault_' + e.why, e.why === 'soon' ? 'Wait for the ring to turn gold' : e.why === 'late' ? 'Tap as soon as it turns gold' : 'Tap the targets, nothing else', 2.6); break;
+    case 'empty': sfx.tick(); break;
+    case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', W / 2, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
+    case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
+    case 'lessonmiss': say('TRY AGAIN', W / 2, H * 0.58, '#ffd0c4', 24); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessondone': say('YOU KNOW IT. NOW PLAY!', W / 2, H * 0.5, '#ffd36a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': FX.flash = 1; sfx.win(); vibe(HAP.best); break;
+    case 'lost': sfx.lose(); break;      // (P11: never vibrate on failure)
+  }
+}
+// the play area (below the top bar) in pixels
+function area() { const top = 70 * k; return { x: 0, y: top, w: W, h: H - top - 30 * k }; }
+
+function draw(now) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g0 = ctx.createLinearGradient(0, 0, 0, H); g0.addColorStop(0, '#1a2233'); g0.addColorStop(1, '#0b0f18'); ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+  if (!G) return;
+  ctx.save();
+  if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  const A = area();
+  for (const g of G.rings) {
+    const x = A.x + g.x * A.w, y = A.y + g.y * A.h, u = g.t / g.dur, rt = 30 * k, r = rt + (1 - Math.min(1, u)) * 120 * k, gold = goldNow(g);
+    ctx.beginPath(); ctx.arc(x, y, rt, 0, TAU); ctx.fillStyle = gold ? 'rgba(255,211,106,.95)' : 'rgba(255,255,255,.14)'; ctx.fill();
+    ctx.lineWidth = 3 * k; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.lineWidth = (gold ? 7 : 4) * k; ctx.strokeStyle = gold ? '#ffd36a' : 'rgba(200,215,240,.75)'; ctx.stroke();
+    if (gold) { ctx.beginPath(); ctx.arc(x, y, r + 10 * k, 0, TAU); ctx.lineWidth = 2 * k; ctx.strokeStyle = 'rgba(255,211,106,.35)'; ctx.stroke(); }
+  }
+  for (const p of PT) { ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * k, 0, TAU); ctx.fill(); }
+  ctx.globalAlpha = 1; ctx.restore();
+  hud(G);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const t of TXT) { const a = t.t < 0.8 ? 1 : 1 - (t.t - 0.8) / 0.3; ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(t.size * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(t.txt, t.x, t.y - t.t * 30 * k); ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y - t.t * 30 * k); }
+  ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(16 * k)}px ${BC}`; const w = Math.min(W - 24, ctx.measureText(hint.txt).width + 30); ctx.fillStyle = 'rgba(0,0,0,.65)'; rrect(W / 2 - w / 2, H * 0.84 - 18 * k, w, 36 * k, 12); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(hint.txt, W / 2, H * 0.84, W - 40); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.25})`; ctx.fillRect(0, 0, W, H); }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); }
+}
+function hud(G) {
+  const c = G.cfg, x = 16, w = W - 32, y = 48 * k;
+  if (!G.lesson) {      // progress bar to the goal (P14 goal-gradient) and lives
+    ctx.fillStyle = 'rgba(255,255,255,.12)'; rrect(x, y, w * 0.7, 10 * k, 5); ctx.fill();
+    ctx.fillStyle = '#ffd36a'; rrect(x, y, Math.max(10, w * 0.7 * Math.min(1, G.hits / c.goal)), 10 * k, 5); ctx.fill();
+    ctx.font = `700 ${Math.round(16 * k)}px ${BC}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ff8a7a';
+    ctx.fillText('♥'.repeat(Math.max(0, G.lives)) + '♡'.repeat(Math.max(0, c.lives - G.lives)), x + w, y + 5 * k);
+  } else lessonPanel(G);
+}
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lessonPanel(G) {      // the lesson on now, how to do it, a dot for each one done
+  const D = G.lesson, st = D.steps[D.i], x = 16, w = W - 32, y = 44 * k; ctx.save();
+  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 54 * k + lines.length * 17 * k;
+  ctx.fillStyle = 'rgba(0,0,0,.72)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${D.i + 1} OF ${D.steps.length}`, x + 12, y + 10 * k);
+  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(18 * k)}px ${BC}`; ctx.fillText(st.title, x + 12, y + 25 * k);
+  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.88)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 48 * k + i * 17 * k));
+  for (let i = 0; i < st.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st.need - 1 - i) * 18 * k, y + 18 * k, 6 * k, 0, TAU); if (i < D.n) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
+  ctx.restore();
+}
+
+// ===================== SOUND: synthesized from the PLAYBOOK sound kit (S1-S11); give each game its own voice =====================
+// Every sound: varied a little each time, short, through the one bus (the feed's Sound switch reaches it). soundCheck() renders
+// each one offline in the tests: no errors, no clipping.
+const sfx = {
+  click() { tone(660, 0.05, 0.08, 'triangle', 0, 880); },
+  tick() { if (!gate('tick', 60)) return; tone(1200 * vary(0.05), 0.03, 0.05, 'square'); },
+  hit(combo = 1) { const b = note(523.3, Math.min(10, combo - 1)) * vary(0.02); tone(b, 0.16, 0.18, 'triangle'); tone(b * 2, 0.1, 0.06, 'sine', 0.01); noise(0.05, 3200, 0.08, 'highpass', 1); },
+  miss() { if (!gate('miss', 90)) return; tone(220 * vary(0.04), 0.22, 0.2, 'sawtooth', 0, 140, 900); noise(0.12, 500, 0.12); },
+  ding() { tone(988, 0.5, 0.12, 'sine'); tone(1480, 0.35, 0.05, 'sine', 0.02); },
+  coin(i = 0) { const b = note(1046.5, Math.min(12, i)); tone(b, 0.15, 0.12, 'square', 0, b * 1.5, 3000); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.14, 'sine'); },
+  win() { [0, 4, 7, 12].forEach((s, j) => tone(523.3 * Math.pow(2, s / 12), 0.35, 0.13, 'triangle', j * 0.09)); },
+  lose() { tone(330, 0.5, 0.15, 'triangle', 0, 247); tone(247, 0.7, 0.15, 'triangle', 0.25, 185); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  $('hStat').innerHTML = [best[level] ? `Your best here: <b>${best[level]}</b> in a row` : '', helpOn() ? '<span class="help">Help is on for this level: everything is a little slower.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (!HEADLESS) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.combo > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.combo; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'BOSS BEATEN' : 'LEVEL CLEAR') : 'OUT OF LIVES'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = r.win ? `Best run <b>${r.combo}</b> in a row${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}` + (r.stars < 3 ? '<br>Lose no lives for three stars.' : '')
+    : `<b>${r.hits}</b> of ${r.goal}. So close.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input: one tap is the action (change this with the game's controls)
+cv.addEventListener('pointerdown', e => {
+  audio(); if (!G || G.over || paused) return; const A = area();
+  tap(G, (e.clientX - A.x) / A.w, (e.clientY - A.y) / A.h);
+});
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e);
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  tap(x, y) { tap(G, x, y); },
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  get G() { return G; }
+};
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
