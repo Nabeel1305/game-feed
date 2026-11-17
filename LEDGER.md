@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**23 games** so far. Next number: **24**.
+**26 games** so far. Next number: **27**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -31,6 +31,9 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 21 | **Drone Pilot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9) | `games/drone/index.html` |
 | 22 | **Whaling** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4TeG6qyGR33vdfGMxr2WD1) | `games/whaling/index.html` |
 | 23 | **Wolf Pack** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/HiE7AudF2QT229nzfRKvzR) | `games/wolf/index.html` |
+| 24 | **On the Run** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1) | `games/run/index.html` |
+| 25 | **Castle Siege** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/E8f3Rn1gvEYJF1XXhMo9YQ) | `games/castle/index.html` |
+| 26 | **Tag** | in-progress | not yet (he has not said so) | 0.1.0 | [play](None) | `games/tag/index.html` |
 
 ## What each game is
 
@@ -57,9 +60,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 21. **Drone Pilot**: Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it.
 22. **Whaling**: Hunt whales the old way from a wooden whaleboat on a grey 3D sea. Left thumb steers while the crew rows to her spout; swipe up with the right thumb to throw the harpoon while her back is up (lead her). Then hold on: hold to haul the line and tire her, let go when her flukes rise before a run or the line snaps, keep the bow pointing at her or the boat heels over. The first three levels teach it.
 23. **Wolf Pack**: Run as the lead wolf of a small pack across open 3D snow between dark pines (golden dusk, grey morning, falling snow, night). One elk in the fleeing herd is marked. Slide your thumb to steer, push it up for a burst (it tires you), tap FLANK to send a packmate up one side so she swerves towards you, and flick towards her to strike when you are close and beside her; from straight behind she kicks. Reach her before the trees. The first three levels teach it.
+24. **On the Run**: Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse; a garage of upgrades and a rank that stay.
+25. **Castle Siege**: Tower defence in a 3D valley, all taps: build archers, catapults, mages and frost by the road, upgrade them, drop meteors; eight roads, ten kinds of foe and a boss every tenth siege; royal upgrades and rank that stay.
+26. **Tag**: 
 
 ## Up next (designed, not built yet)
 
-24. **Heaven or Hell**: His idea, rolled on from set 3 (it plays too like Hiring to share a set): souls arrive with their best and worst deed; you judge. Spec: `specs/ideas.md`.
-25. **On the Run**: His idea, rolled on from set 3: the other side of Police Chase; you are the one escaping. Spec: `specs/ideas.md`.
-26. **Tag**: His idea, rolled on from set 3: tap to run, steer, touch someone and they are it; then run. Spec: `specs/ideas.md`.
+27. **Heaven or Hell**: His idea, rolled on from set 3 (it plays too like Hiring to share a set): souls arrive with their best and worst deed; you judge. Spec: `specs/ideas.md`.

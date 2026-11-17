@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 24,
+  "next_number": 27,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -817,28 +817,110 @@
         "P30"
       ],
       "summary": "Run as the lead wolf of a small pack across open 3D snow between dark pines (golden dusk, grey morning, falling snow, night). One elk in the fleeing herd is marked. Slide your thumb to steer, push it up for a burst (it tires you), tap FLANK to send a packmate up one side so she swerves towards you, and flick towards her to strike when you are close and beside her; from straight behind she kicks. Reach her before the trees. The first three levels teach it."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 24,
-      "id": "heaven",
-      "name": "Heaven or Hell",
-      "summary": "His idea, rolled on from set 3 (it plays too like Hiring to share a set): souls arrive with their best and worst deed; you judge.",
-      "spec": "specs/ideas.md"
+      "id": "run",
+      "name": "On the Run",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/run/index.html",
+      "artifact": "https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1",
+      "artifact_slug": "df3cccb9-f601-4f74-b6c3-58a235d71032",
+      "apk_repo": null,
+      "storage_prefix": "or.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Swipe to dodge, tap for nitro. Get to the safehouse.",
+        "genre": "Getaway",
+        "intensity": 4,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Black Ops One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P6",
+        "P13",
+        "P14",
+        "P18"
+      ],
+      "summary": "Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse; a garage of upgrades and a rank that stay."
     },
     {
       "number": 25,
-      "id": "on-the-run",
-      "name": "On the Run",
-      "summary": "His idea, rolled on from set 3: the other side of Police Chase; you are the one escaping.",
-      "spec": "specs/ideas.md"
+      "id": "castle",
+      "name": "Castle Siege",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/castle/index.html",
+      "artifact": "https://claude.ai/artifact/E8f3Rn1gvEYJF1XXhMo9YQ",
+      "artifact_slug": "6a5873fd-cf04-453a-9689-69af7becd82d",
+      "apk_repo": null,
+      "storage_prefix": "cs.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Build towers, upgrade them, hold the gate.",
+        "genre": "Strategy",
+        "intensity": 3,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Cinzel Decorative",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P12",
+        "P15",
+        "P18",
+        "P26"
+      ],
+      "summary": "Tower defence in a 3D valley, all taps: build archers, catapults, mages and frost by the road, upgrade them, drop meteors; eight roads, ten kinds of foe and a boss every tenth siege; royal upgrades and rank that stay."
     },
     {
       "number": 26,
       "id": "tag",
       "name": "Tag",
-      "summary": "His idea, rolled on from set 3: tap to run, steer, touch someone and they are it; then run.",
+      "status": "in-progress",
+      "version": "0.1.0",
+      "added": "2026-11-17",
+      "path": "games/tag/index.html",
+      "artifact": null,
+      "artifact_slug": null,
+      "apk_repo": null,
+      "storage_prefix": "tg.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Chase, flee, freeze: the playground's fastest kid.",
+        "genre": "Action",
+        "intensity": 4,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Luckiest Guy",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [],
+      "summary": ""
+    }
+  ],
+  "planned": [
+    {
+      "number": 27,
+      "id": "heaven",
+      "name": "Heaven or Hell",
+      "summary": "His idea, rolled on from set 3 (it plays too like Hiring to share a set): souls arrive with their best and worst deed; you judge.",
       "spec": "specs/ideas.md"
     }
   ]

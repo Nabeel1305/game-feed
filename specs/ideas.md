@@ -32,3 +32,7 @@ caveman, wolf pack and whaling (stalk, chase, strike).
 
 ## Set 3 (17 Nov 2026, evening): Whaling, Wolf Pack, Drone Pilot, Hiring, and my Potter's Wheel (calm: shape clay on a
 spinning wheel to match the order). Heaven or Hell (too like Hiring in the same set), On the Run and Tag roll on to set 4.
+
+## Set 4 (17 Nov 2026, evening): deeper games, easy controls (his brief: like Plunder, "numerous things to them", as
+addictive as the research allows, controls easy). On the Run, Tag, Heaven or Hell (his), and my Castle Siege (tower
+defence) and Harvest Valley (a farm by the day). Every one with upgrades that carry over, several phases, power-ups.

@@ -97,7 +97,7 @@ function measure(ms) {
 // ---------- the frame loop ----------
 let last = performance.now(), endT = 0;
 function frame(now) {
-  const ms = now - last, rdt = Math.min(0.05, ms / 1000); last = now;
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
   if (HEADLESS) { requestAnimationFrame(frame); return; }
   if (G && !paused && !G.over) measure(ms);
   if (G && !paused) {
