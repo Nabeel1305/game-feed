@@ -338,6 +338,29 @@ Everything learned building the first games. Every new game must follow the **ru
   sway that never reaches it (stuck at 300 s).
 - `pick` and `PENTA` are taken by the juice kit (`note(base, step)` counts pentatonic steps, not semitones).
 
+### 38. Pinball (`games/pinball/`): two thumbs, two flippers, missions
+- **Pinball is where blind play is strongest**: fast random flapping keeps a ball alive and makes shots by chance. Three rules
+  made the difference, each a real-feeling rule: a mission shot counts only *straight off a flipper* (no bumper or sling on the
+  way); a flipper pressed again within 0.3 s gives a weak flip; flapping overheats a flipper for 1.6 s (it glows, it sizzles).
+- **Shots you can aim**: a real flip sends the ball at an angle set by where it meets the flipper (near the pivot: up your own
+  side; near the tip: across), not by bounce physics, which made shots depend on a single frame. A cradled ball (hold the
+  flipper up, let it roll, flip) is the reliable way to aim, for a person and for the robot.
+- **Check every target can be reached from a cradle on each flipper** (a sweep of release times): the first orbit lane could
+  not be reached at all; its wall now starts higher.
+- Traps found by robots: a ball balanced on the flipper's pivot, a ball inside a slingshot, a ball rolling back down the shooter
+  lane (now a one-way gate), a ball saver re-given on every serve (blind play lived for ever). "Ball search": a ball still for
+  2 s is nudged; held on a flipper for 5 s, the flipper lets go.
+- Robot speed: the planning robot is slow (a look ahead per possible moment); `test_play.py` takes about 40 minutes. Run it in
+  the background with `python3 -u` so the output shows as it goes.
+
+### 39. Drumline (`games/drumline/`): a rhythm game, the band made on the spot
+- **Taps are timed to the moment of the touch**, not the next frame: `tap(G, lane, ahead)` with the time since the last frame;
+  the backing band is scheduled 0.15 s ahead from the song's own clock, so music and notes cannot drift apart, and a pause
+  stops both.
+- A tap with no note near costs the crowd (less than a miss): blind tapping is never safe.
+- Robots time too well: the ordinary drummer's spread is 15 ms + 80 ms x react, and difficulty comes from a narrowing window
+  and a crowd that forgives less, not only from speed.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

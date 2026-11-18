@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 38,
+  "next_number": 40,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -1293,6 +1293,74 @@
         "P19"
       ],
       "summary": "The calm one: stack river stones on a boulder by a misty 3D lake; tap to drop the swaying stone, pick slabs or round stones from the basket, three perfect drops find a stone; your finished cairns stay in the shallows."
+    },
+    {
+      "number": 38,
+      "id": "pinball",
+      "name": "Pinball",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-18",
+      "path": "games/pinball/index.html",
+      "artifact": "https://claude.ai/artifact/N9X2SHnhm9vdDWEz766jnS",
+      "artifact_slug": "ab405d8d-2586-4b31-a5b8-ce235723b1cb",
+      "apk_repo": null,
+      "storage_prefix": "pb.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Two thumbs, two flippers. Light the whole table.",
+        "genre": "Pinball",
+        "intensity": 3,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Monoton",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P18",
+        "P14",
+        "P13",
+        "P12"
+      ],
+      "summary": "A real 3D pinball table: hold the left or right half for each flipper, catch and aim, finish the missions on the backbox (the ramp, the drop targets, the orbit) before the balls are gone; multiplier, extra ball, multiball, trophies."
+    },
+    {
+      "number": 39,
+      "id": "drumline",
+      "name": "Drumline",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-18",
+      "path": "games/drumline/index.html",
+      "artifact": "https://claude.ai/artifact/HAYPXNMsVWFeNWJt24KU9X",
+      "artifact_slug": "82e74198-f673-489c-95f3-e43d76441c9a",
+      "apk_repo": null,
+      "storage_prefix": "dl.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Two drums, one beat. Keep the crowd on its feet.",
+        "genre": "Rhythm",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee Shade",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P18",
+        "P14",
+        "P3",
+        "P13",
+        "P10"
+      ],
+      "summary": "A rhythm game in a 3D stadium at halftime: notes roll down two lanes to a snare and a tom, tap left and right on the beat, gold notes for both, drum rolls; the crowd meter, FEVER, a new song every level."
     }
   ],
   "planned": []
