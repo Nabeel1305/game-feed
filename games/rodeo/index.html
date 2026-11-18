@@ -48,11 +48,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .stars .off{color:rgba(255,255,255,.2)}
 .snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
 .nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
 </style>
 </head>
 <body>
 <canvas id="gl"></canvas>
 <canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
 <button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
 
 <div class="ov" id="ovHome">
@@ -65,6 +67,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <div class="stat" id="hStat"></div>
     <button class="btn" id="playBtn">PLAY</button>
     <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
     <button class="btn ghost" id="rulesBtn">How to play</button>
   </div>
 </div>
@@ -104,6 +107,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
     <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
     <button class="btn ghost quiet" id="pQuit">Home</button>
     <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
   </div>
@@ -4807,7 +4811,7 @@ const W3 = (() => {
   const Q = [{ pr: 2, shadow: 2048, refl: 512 }, { pr: 1.5, shadow: 2048, refl: 512 }, { pr: 1.2, shadow: 1024, refl: 384 }, { pr: 1, shadow: 1024, refl: 256 }, { pr: 0.8, shadow: 512, refl: 256 }, { pr: 0.66, shadow: 0, refl: 192 }];
   let q = 0, waters = [];
   function init(o = {}) {
-    const canvas = o.canvas;
+    const canvas = o.canvas; if (o.dims) dims = o.dims;
     try { R = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', stencil: false }); } catch (e) { R = null; }
     if (!R) return false;
     R.outputColorSpace = T.SRGBColorSpace; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 0.5;
@@ -4889,7 +4893,8 @@ const W3 = (() => {
     if (s.shadow > 0 && sun.shadow.mapSize.x !== s.shadow) { sun.shadow.mapSize.set(s.shadow, s.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     scene.traverse(o => { if (o.material && o.material.needsUpdate !== undefined && o.receiveShadow) o.material.needsUpdate = true; });
   }
-  function resize() { if (!ok) return; const w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  let dims = () => [innerWidth, innerHeight];      // a game turned sideways inside an upright screen passes its own (o.dims)
+  function resize() { if (!ok) return; const [w, h] = dims(); R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
   addEventListener('resize', resize);
   // every frame: clouds drift, rain falls, lightning, shadows follow, then the picture
   function render(dt) {
@@ -4963,7 +4968,7 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
-  function screen(v) { const p = v.clone().project(cam); return { x: (p.x + 1) / 2 * innerWidth, y: (1 - p.y) / 2 * innerHeight, front: p.z < 1 }; }
+  function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
   return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();
@@ -5332,8 +5337,8 @@ function showHome() {
   show('ovHome');
 }
 function startGame() {
-  audio(); if (!HEADLESS) store.set('level', level);
-  G = newGame(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
   TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; PTR.clear();
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
@@ -5426,7 +5431,7 @@ function frame(now) {
   if (G && !paused) {
     let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
     if (!G.over) step(G, dt);
-    for (const e of G.ev) onEvent(G, e);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
     if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
     G.ev.length = 0;
     if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
@@ -5458,8 +5463,23 @@ window.__sim = {
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }
 };
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
 applyStep(); showHome(); requestAnimationFrame(frame);
 })();
 </script>

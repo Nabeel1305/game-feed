@@ -49,11 +49,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
 .aqgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.aq{border-radius:12px;padding:8px 2px 6px;background:rgba(255,255,255,.08);font-size:11px;line-height:1.25}.aq canvas{position:static;width:64px;height:75px;display:block;margin:0 auto 3px}.aq.off{opacity:.35}.aq.sel{box-shadow:inset 0 0 0 2px var(--acc)}.aq{cursor:pointer}.aq b{display:block;font-size:12px}
 .nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
 </style>
 </head>
 <body>
 <canvas id="gl"></canvas>
 <canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
 <button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
 
 <div class="ov" id="ovHome">
@@ -66,6 +68,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <div class="stat" id="hStat"></div>
     <button class="btn" id="playBtn">PLAY</button>
     <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
     <div class="row2"><button class="btn ghost" id="aquaBtn">🎵 Songs</button><button class="btn ghost" id="rulesBtn">How to play</button></div>
   </div>
 </div>
@@ -114,6 +117,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
     <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
     <button class="btn ghost quiet" id="pQuit">Home</button>
     <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
   </div>

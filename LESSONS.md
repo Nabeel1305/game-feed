@@ -300,6 +300,13 @@ Everything learned building the first games. Every new game must follow the **ru
 - **His verdict on the first build (18 Nov 2026): "the way the football players run is just shit... have a button for the players really sprinting... they get tired."** Rebuilt like the big mobile football games: a held SPRINT button, stamina per player (a bar under your man; tired men are slower, breath comes back jogging and faster walking), weight in every move (a burst off the mark then slower to the top speed, a hard stop takes a stride, the faster he runs the wider he turns, a sharp turn makes him plant first), the ball pushed a couple of metres ahead at a sprint (a defender near the ball can nick it), players kept a shoulder apart, and a real run: thigh and shin with knee bend and heel kick, upper arm and forearm pumping, a lean into the run and into turns, a bob twice a stride, stride length growing with speed, a kick swing on every pass and shot, a slide. AI players sprint into space and to press. Close-up check: `__sim.ui.follow = <player index>` puts the camera beside one man.
 - With runners sprinting in behind, blind lob-spam won (a lob, then a chip over a keeper who had come out: 16 in 100). A chip now needs to be 12-26 m out with the keeper 6 m off his line, and a shot snatched the moment the ball arrives flies wild (take a touch first).
 
+### Tutorials are optional (his rule, 18 Nov 2026)
+- Every game with lessons: a **Skip tutorial ›** button on screen during any lesson (one tap: `taught` = 3, the level starts
+  for real, later levels skip their lessons too), and a **🎓 Tutorial** button on the home card and in the pause menu that plays
+  the lessons of levels 1-3 in a row (without moving his saved level) and then returns him to his level. In the kit's part5
+  (`startTutorial`, `skipTutorial`, `tutForce`); Plunder has its own (skip during the boarding drill). `tools/test_tutorial.py`
+  checks all of it with real taps.
+
 ### 35. Deep Bite (`games/shark/`): his shark idea, the first game built on PLAYBOOK H (longevity)
 - **Hunger is what beats blind play in a grazing game.** A dense sea lets a thumb that does not look eat by accident; what parts
   the two is the rate of eating. Measure it for both robots (eats a second), then set the hunger drain between them: the honest

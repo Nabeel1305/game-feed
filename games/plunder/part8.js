@@ -21,9 +21,9 @@ function showHome() {
 }
 function startExp(mini) {
   audio();
-  if (!HEADLESS) store.set('level', level);
+  if (!HEADLESS && tutForce == null) store.set('level', level);
   clearFx(); sightCard(false); endT = -1; paused = false;
-  G = newExp(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); LIVE = G; if (mini) G.nextSight = Math.min(G.nextSight, 1.1);
+  G = newExp(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); LIVE = G; if (mini) G.nextSight = Math.min(G.nextSight, 1.1);
   CAM.x = G.me.x; CAM.y = G.me.y + 22; CAM.a = 0; CAM.z = k * 2.2; seaMood = 0; MUS.want = 'calm';
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); if (level <= 2) { hint = { key: 'steer', txt: 'Slide your left thumb to steer', t: 0, secs: 3, y: H * 0.8 }; } }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
@@ -313,8 +313,20 @@ window.__sim = {
   smooth() { return { step: stepN, half, sea: SEAGL ? 'fast' : 'plain', stuck, vsync: +vsync.toFixed(1), ms: +ftAvg.toFixed(1), dpr: DPR, draws, fx: FXS.length, wake: WAKE.length }; },
   finest(n) { stuck = true; stepN = clamp(n | 0, 0, STEPS.length - 1); half = 0; applyStep(); },      // tests and card pictures: the finest picture (or notch n), and leave it there
   gl(on) { if (on) { seaTried = false; } else { SEAGL = null; seaTried = true; $('bg').style.display = 'none'; } },      // tests: the sea by the graphics chip, or the plain way
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, inDrill,
   get G() { return G; }
 };
+// ---------- tutorials are optional (his rule, 18 Nov 2026): SKIP TUTORIAL during a boarding drill; Tutorial (home, pause)
+// sails the first expedition again with its drill, whatever level he is on ----------
+let tutForce = null;
+function inDrill() { return !!(G && G.fight && G.fight.drill && !G.over); }
+function skipTutorial() { if (!inDrill()) return; audio(); sfx.tap(); store.set('taught', 3); const F = G.fight; F.drill = null; F.tide = 0.5; F.lastTry = F.t; G.taught = 3; hint = null; }
+function startTutorial() { tutForce = 0; const keep = level; level = 1; startExp(); level = keep; tutForce = null; }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.tap(); startTutorial(); };
+$('pTut').onclick = () => { sfx.tap(); paused = false; startTutorial(); };
+setInterval(() => { $('skipTut').classList.toggle('hidden', !(inDrill() && !paused && !HEADLESS)); }, 150);
 applyStep();
 try { document.fonts && document.fonts.load('48px "Pirata One"'); document.fonts && document.fonts.load('700 20px "Barlow Condensed"'); } catch (e) {}
 showHome(); requestAnimationFrame(frame);

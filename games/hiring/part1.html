@@ -43,10 +43,12 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .stars .off{color:rgba(255,255,255,.2)}
 .snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
 .nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
 <button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
 
 <div class="ov" id="ovHome">
@@ -59,6 +61,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <div class="stat" id="hStat"></div>
     <button class="btn" id="playBtn">PLAY</button>
     <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
     <button class="btn ghost" id="rulesBtn">How to play</button>
   </div>
 </div>
@@ -97,6 +100,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <p class="sub" id="pLvl"></p>
     <button class="btn" id="pResume">RESUME</button>
     <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
     <button class="btn ghost quiet" id="pQuit">Home</button>
     <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
   </div>
