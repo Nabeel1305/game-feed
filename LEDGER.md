@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**40 games** so far. Next number: **41**.
+**41 games** so far. Next number: **42**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -48,6 +48,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 38 | **Pinball** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/N9X2SHnhm9vdDWEz766jnS) | `games/pinball/index.html` |
 | 39 | **Drumline** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/HAYPXNMsVWFeNWJt24KU9X) | `games/drumline/index.html` |
 | 40 | **Strike Alley** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/ApFYRWS11tYL9ypVPduBxT) | `games/bowling/index.html` |
+| 41 | **Bonsai** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/FRzkTn7ah218Nz3tL5ZZ3Y) | `games/bonsai/index.html` |
 
 ## What each game is
 
@@ -91,3 +92,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 38. **Pinball**: A real 3D pinball table: hold the left or right half for each flipper, catch and aim, finish the missions on the backbox (the ramp, the drop targets, the orbit) before the balls are gone; multiplier, extra ball, multiball, trophies.
 39. **Drumline**: A rhythm game in a 3D stadium at halftime: notes roll down two lanes to a snare and a tom, tap left and right on the beat, gold notes for both, drum rolls; the crowd meter, FEVER, a new song every level.
 40. **Strike Alley**: Bowling in a neon alley: touch to line up, pull back and let go; a dotted line shows the curl; spares, strike-outs, balls to collect.
+41. **Bonsai**: Grow a little tree through the seasons into the festival's outline: tap buds to grow, tap branches to prune, flick caterpillars.

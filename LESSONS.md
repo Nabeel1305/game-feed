@@ -379,6 +379,19 @@ Everything learned building the first games. Every new game must follow the **ru
   shows what is standing for spares.
 - Knocked pins that fly off the lane are `gone` to the rules but stay drawn, lying, until the next ball (`ui.swept`).
 
+### 41. Bonsai (`games/bonsai/`): grow, prune, show it
+- **The judge is a grid**: the outline and the leaf pads are sampled on a 5 cm grid; match = (inside - 1.2 x outside) / outline.
+  Blind tapping scores 0-18%, so the target can sit low enough for a calm game (need 50% at level 1) with no blind wins.
+- **Each outline style has its own difficulty** (`STYLES[].d`): an honest robot reaches about 60% on an upright tree but
+  about 42% on Clouds, so the target moves with the style, measured with the robots.
+- **Nursery stock**: a robot (or a person) cannot reach an outline far above the trunk through empty space without
+  leaves outside; every tree starts with bare scaffold branches heading for each part of the outline, which cannot be cut.
+- **A bud and a branch can sit on the same spot**: buds stand 8 cm out from the tip, and a tap goes to whichever is
+  closer for its size (bud radius 10 cm, branch 5 cm from the line or 80% of its pad). Before this a tap on the leaves
+  grew the bud at their centre instead of pruning.
+- The kit's frame-time function is called `measure`: the rules' own scorer is `rate(G)` so they do not clash.
+- In a lesson a tap on nothing starts the lesson again, so blind tapping cannot pass it by luck.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
