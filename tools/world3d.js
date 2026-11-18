@@ -30,7 +30,7 @@ const W3 = (() => {
   const Q = [{ pr: 2, shadow: 2048, refl: 512 }, { pr: 1.5, shadow: 2048, refl: 512 }, { pr: 1.2, shadow: 1024, refl: 384 }, { pr: 1, shadow: 1024, refl: 256 }, { pr: 0.8, shadow: 512, refl: 256 }, { pr: 0.66, shadow: 0, refl: 192 }];
   let q = 0, waters = [];
   function init(o = {}) {
-    const canvas = o.canvas;
+    const canvas = o.canvas; if (o.dims) dims = o.dims;
     try { R = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', stencil: false }); } catch (e) { R = null; }
     if (!R) return false;
     R.outputColorSpace = T.SRGBColorSpace; R.toneMapping = T.ACESFilmicToneMapping; R.toneMappingExposure = 0.5;
@@ -112,7 +112,8 @@ const W3 = (() => {
     if (s.shadow > 0 && sun.shadow.mapSize.x !== s.shadow) { sun.shadow.mapSize.set(s.shadow, s.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
     scene.traverse(o => { if (o.material && o.material.needsUpdate !== undefined && o.receiveShadow) o.material.needsUpdate = true; });
   }
-  function resize() { if (!ok) return; const w = innerWidth, h = innerHeight; R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  let dims = () => [innerWidth, innerHeight];      // a game turned sideways inside an upright screen passes its own (o.dims)
+  function resize() { if (!ok) return; const [w, h] = dims(); R.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
   addEventListener('resize', resize);
   // every frame: clouds drift, rain falls, lightning, shadows follow, then the picture
   function render(dt) {
@@ -186,7 +187,7 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
-  function screen(v) { const p = v.clone().project(cam); return { x: (p.x + 1) / 2 * innerWidth, y: (1 - p.y) / 2 * innerHeight, front: p.z < 1 }; }
+  function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
   return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();

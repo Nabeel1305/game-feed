@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**33 games** so far. Next number: **34**.
+**34 games** so far. Next number: **35**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -41,6 +41,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 31 | **Penalty Kings** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/SWBovTEMi7HAMNa2C7ksU5) | `games/penalty/index.html` |
 | 32 | **Critter Clash** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/TuMVzQoZa1mLvdrTfXb1iH) | `games/critters/index.html` |
 | 33 | **Rodeo** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/J9F7dBh1m2F7ygUHNic8mQ) | `games/rodeo/index.html` |
+| 34 | **Eleven** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1DRGKnNMJY4GBMnoYjB4Wi) | `games/eleven/index.html` |
 
 ## What each game is
 
@@ -77,3 +78,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 31. **Penalty Kings**: A cup run of penalty shootouts in a floodlit stadium: tap where to shoot and stop the needle in the green; read the kicker's body when he plants his foot and dive the right way.
 32. **Critter Clash**: Turn-by-turn battles between teams of bouncing critters: fire beats leaf, time the ring for a critical, guard the big attacks, and catch wild critters for your collection.
 33. **Rodeo**: Eight seconds on a bucking bull with two thumbs: hold left or right to lean, read his head to lean against each buck before it lands, grip the spins, and score with the judges.
+34. **Eleven**: A full eleven-a-side football match played sideways: run with the left thumb, PASS, SHOOT and LOB; beat a team and the next one is better.
