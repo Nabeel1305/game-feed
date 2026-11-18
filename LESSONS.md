@@ -425,6 +425,33 @@ Everything learned building the first games. Every new game must follow the **ru
 - The steering thumb draws its slider with the "drift" zones (the outer 28%) marked, and the drift's spark bar shows
   when the next colour comes.
 
+### 45. The Bench (`games/judge/`): write your own sentence
+- **Free text needs a reader that never fails.** The page asks Claude (the `sample` capability, declared on its artifact)
+  to read the sentence into JSON (custody, suspended, hours, fine, compensation, ban, curfew, probation, treatment,
+  discharge, life with a minimum, acquit), with a 9-second limit; if that is missing or slow, a local parser reads it.
+  Both give the same read-back line in court language, and he confirms it or edits before the gavel falls.
+- **One severity scale for every kind of sentence** (custody on a log scale, life above it, suspended, hours, fines and
+  discharges below), so any sentence can be marked against any offence's range.
+- **Blind sentences won until irrelevant extras cost marks**: a driving ban for a theft, compensation where nothing
+  was lost, compensation far above or below the loss. The council's leans (Stern +6, Mercer -6) stay small.
+- Number words: "two and a half years" is read before anything else; the splitter must not split "3.5" at the dot.
+### 46. Haggle (`games/haggle/`): the dial, the seller, the fake
+- **Deal the day, do not draw it**: the day's customers come from fixed shares of cheap and dear items, conditions and
+  seller kinds, shuffled; and the target is a share of what the day could make. Random days made the target luck.
+- Patience is spent only by offers under what the seller would really take, or the robot walked every seller out.
+  Asks are never under the worth and a first offer is always countered, or blind buys of big items won.
+### 47. Battle Lines (`games/war/`): formations, then orders
+- **Blind play won through the openings** until: openings stop at striking distance; the enemy holds until provoked;
+  a unit standing in a fight turns frontal blows (firm, 1/1.8); flank and rear blows count 2.2 and 3.4; pulling out of a
+  fight turns your back; each unit takes one order every 2 seconds (the messenger).
+- **The lever that finally split looking from not looking: men you send into a fight yourself strike 1.8 times as
+  hard for 10 seconds** (`LED`, said in the first lesson). A careful general gives about 30 orders a minute, a blind
+  thumb 2 to 7, so the enemy could be made stronger without hurting the player who looks.
+- Levels 1-3 never give the enemy a "favourite" unit kind (three spearmen against your swordsmen won blind), and an
+  enemy unit never has fewer men than yours, only fewer units.
+- A lesson must restart when the unit it needs is gone: the flank lesson waited for ever after the horsemen fled.
+- The random-moves test plays 1,440 games here (as in Wild Water): at 480 one lucky level-1 fight decided it.
+- Deploy: a slot spread of min(7, 36 / units) and the camera at height 70 on a phone keep every unit and card on screen.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**44 games** so far. Next number: **45**.
+**47 games** so far. Next number: **48**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -52,6 +52,9 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 42 | **Star Miner** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1brYRfNx8etgzvfCvpxfyF) | `games/miner/index.html` |
 | 43 | **Ghost Lantern** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/PwJQKnzTmyULwZCjM9TWmD) | `games/lantern/index.html` |
 | 44 | **Drift Kings** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy) | `games/kart/index.html` |
+| 45 | **The Bench** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/YCgzobKcQ8zkpCULKaBShb) | `games/judge/index.html` |
+| 46 | **Haggle** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5) | `games/haggle/index.html` |
+| 47 | **Battle Lines** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Dxurc2KCKBwA5BaEWBBjXj) | `games/war/index.html` |
 
 ## What each game is
 
@@ -99,3 +102,6 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 42. **Star Miner**: Fly a little mining ship with one floating stick: the laser cracks rocks by itself, scoop the ore, carry it home before the mothership jumps; meteors and pirates.
 43. **Ghost Lantern**: Walk a haunted house with one floating stick: hold ghosts in your lantern's beam to catch them, turn to the frost of one behind you, keep the oil burning.
 44. **Drift Kings**: Kart racing with two thumbs: slide the left to steer, hold a hard turn to drift and charge a boost, tap the right for your item; a cup of four tracks.
+45. **The Bench**: You are the judge: read the case, write your own sentence in plain words; the clerk (an AI) reads it back; a council of three marks every five, or switch it off and sentence freely. PG or 18+.
+46. **Haggle**: A pawn shop: sellers bring things in, you turn a brass dial to make offers, check for fakes, and learn what things are worth over the days; beat the day's profit target.
+47. **Battle Lines**: A general above the field: pick a formation, swap units, sound BATTLE, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines, and men you send in yourself fight twice as hard.

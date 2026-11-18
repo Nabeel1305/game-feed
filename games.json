@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 45,
+  "next_number": 48,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -1531,6 +1531,107 @@
         "P10"
       ],
       "summary": "Kart racing with two thumbs: slide the left to steer, hold a hard turn to drift and charge a boost, tap the right for your item; a cup of four tracks."
+    },
+    {
+      "number": 45,
+      "id": "judge",
+      "name": "The Bench",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-18",
+      "path": "games/judge/index.html",
+      "artifact": "https://claude.ai/artifact/YCgzobKcQ8zkpCULKaBShb",
+      "artifact_slug": "fcad20f3-8105-496a-81c8-39e1d87a52d6",
+      "apk_repo": null,
+      "storage_prefix": "jd.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "You are the judge: read each case and write your own sentence.",
+        "genre": "Courtroom / decisions",
+        "intensity": 2,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Playfair Display",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P14",
+        "P5",
+        "P22",
+        "P7"
+      ],
+      "summary": "You are the judge: read the case, write your own sentence in plain words; the clerk (an AI) reads it back; a council of three marks every five, or switch it off and sentence freely. PG or 18+."
+    },
+    {
+      "number": 46,
+      "id": "haggle",
+      "name": "Haggle",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-18",
+      "path": "games/haggle/index.html",
+      "artifact": "https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5",
+      "artifact_slug": "30258fb4-9efb-4fcb-9bd2-66caa50deab6",
+      "apk_repo": null,
+      "storage_prefix": "hg.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Run a pawn shop: inspect what they bring, haggle the price down, spot the fakes.",
+        "genre": "Pawn shop / haggling",
+        "intensity": 2,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Alfa Slab One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P7",
+        "P3",
+        "P22",
+        "P14",
+        "P10"
+      ],
+      "summary": "A pawn shop: sellers bring things in, you turn a brass dial to make offers, check for fakes, and learn what things are worth over the days; beat the day's profit target."
+    },
+    {
+      "number": 47,
+      "id": "war",
+      "name": "Battle Lines",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-18",
+      "path": "games/war/index.html",
+      "artifact": "https://claude.ai/artifact/Dxurc2KCKBwA5BaEWBBjXj",
+      "artifact_slug": "68fc24fb-dac1-4b2f-adec-971bb3cdbbee",
+      "apk_repo": null,
+      "storage_prefix": "bl.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Be the general: pick your formation, then tap a unit and tap where it charges.",
+        "genre": "War tactics",
+        "intensity": 4,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "MedievalSharp",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P7",
+        "P14",
+        "P5"
+      ],
+      "summary": "A general above the field: pick a formation, swap units, sound BATTLE, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines, and men you send in yourself fight twice as hard."
     }
   ],
   "planned": []
