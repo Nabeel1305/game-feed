@@ -300,6 +300,21 @@ Everything learned building the first games. Every new game must follow the **ru
 - **His verdict on the first build (18 Nov 2026): "the way the football players run is just shit... have a button for the players really sprinting... they get tired."** Rebuilt like the big mobile football games: a held SPRINT button, stamina per player (a bar under your man; tired men are slower, breath comes back jogging and faster walking), weight in every move (a burst off the mark then slower to the top speed, a hard stop takes a stride, the faster he runs the wider he turns, a sharp turn makes him plant first), the ball pushed a couple of metres ahead at a sprint (a defender near the ball can nick it), players kept a shoulder apart, and a real run: thigh and shin with knee bend and heel kick, upper arm and forearm pumping, a lean into the run and into turns, a bob twice a stride, stride length growing with speed, a kick swing on every pass and shot, a slide. AI players sprint into space and to press. Close-up check: `__sim.ui.follow = <player index>` puts the camera beside one man.
 - With runners sprinting in behind, blind lob-spam won (a lob, then a chip over a keeper who had come out: 16 in 100). A chip now needs to be 12-26 m out with the keeper 6 m off his line, and a shot snatched the moment the ball arrives flies wild (take a touch first).
 
+### 35. Deep Bite (`games/shark/`): his shark idea, the first game built on PLAYBOOK H (longevity)
+- **Hunger is what beats blind play in a grazing game.** A dense sea lets a thumb that does not look eat by accident; what parts
+  the two is the rate of eating. Measure it for both robots (eats a second), then set the hunger drain between them: the honest
+  robot ate 0.6-0.8 a second, blind 0.13, so each bite gives back 0.12 a value and hunger drains 0.057 a second (less on later
+  levels, where the hunters take over the difficulty). Fish dart aside when swum at straight, schools turn as one, the golden fish
+  always runs: a straight line misses, steering catches.
+- **What the camera shows decides the density.** At first the bay was so big that a phone-sized view held one fish; the sea
+  shrank to radius 28 with 70-80 fish, and the floor went 12 m down (darker, fogged) so fish, not coral, catch the eye; fish get a
+  little glow in their own colours (`onBeforeCompile` adds the vertex colour to the emissive).
+- **Fewer hunters while you are small** (`huntersNow`), a hunter only a little bigger than you is a little slower, and a hunter
+  gives up after 4.5 s and rests 6 s: otherwise the robot starved at size 1 just running.
+- A lesson that counts to five needs each one soon after the last (5 s), or blind tapping finishes it.
+- world3d's `render()` resets the fog colour every frame from `setSky` (pass `fog:`); the fog's near and far are the game's own,
+  set every frame from the camera's distance. Hide the sky mesh underwater (the one with `uniforms.sunPosition`).
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
