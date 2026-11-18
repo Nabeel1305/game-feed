@@ -315,6 +315,18 @@ Everything learned building the first games. Every new game must follow the **ru
 - world3d's `render()` resets the fog colour every frame from `setSky` (pass `fog:`); the fog's near and far are the game's own,
   set every frame from the camera's distance. Hide the sky mesh underwater (the one with `uniforms.sunPosition`).
 
+### 36. Powder (`games/powder/`): snowboard against the clock and your own ghost
+- **The ghost is a list of points** (every 2 m: distance, across, time, height), saved for the level whenever a run is the best
+  yet (`ghosts`, `bestTime`); the pale rider and the "ghost" dot on the course bar read it by time, the split at a gate by distance.
+- **Gates must swing for a straight line to miss them**: with a small swing, a thumb that only tapped won level 1 by tucking
+  straight down. The gates swing at least 55% of the half-width, and a miss costs 3 s.
+- **A rock you jump needs a window, not a moment:** an ollie clears 0.7 m from 0.19 s to 0.69 s after the tap, so the robot (and
+  a person) jumps when the rock is 0.22-0.5 s away.
+- **A ribbon of snow built by hand: wind its triangles so the normals point up** (a, b, d / b, e, d); the first build lit the snow
+  from below and it went black at dusk. world3d's render() resets the sky light every frame from `W3.S.hemiI`: change that, not
+  `W3.hemi.intensity`.
+- The spin stops when the thumb lets go (no spin momentum): the landing is a choice you can make, the dial shows when it is safe.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
