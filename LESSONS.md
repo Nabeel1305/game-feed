@@ -412,6 +412,19 @@ Everything learned building the first games. Every new game must follow the **ru
   (breadth first), not by straight-line distance, and keeps its choice until that ghost is caught.
 - A dark scene still needs its hero readable: the player's coat and face have a little glow of their own.
 
+### 44. Drift Kings (`games/kart/`): drift, boost, items
+- **Drifting only matters if the kart has grip.** With free steering the robot won every race without one drift. A grip
+  limit (yaw at most 14 / speed without a drift; asking for more scrubs speed) makes a hot corner run wide and slow, and
+  a drift the way through it.
+- **A drift needs a range, not one radius**: at first a drift always turned like a hairpin and drifting was slower than
+  not. Now the thumb sets it: barely held is a wide drift, pushed all the way is a tight one.
+- Rivals follow a line with their own offset, slow for bends by a factor that shrinks with the level (they corner
+  better later), have a gentle rubber band (plus or minus 5%), and use items with sense (a Zap only with a kart ahead).
+- A sound function called with the check's dummy arguments must still make a sound: `sfx.use(1)` played nothing until
+  an unknown item fell back to the Turbo's sound. Never use `this` inside `sfx`.
+- The steering thumb draws its slider with the "drift" zones (the outer 28%) marked, and the drift's spark bar shows
+  when the next colour comes.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

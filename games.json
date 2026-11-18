@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 44,
+  "next_number": 45,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -1497,6 +1497,40 @@
         "P14"
       ],
       "summary": "Walk a haunted house with one floating stick: hold ghosts in your lantern's beam to catch them, turn to the frost of one behind you, keep the oil burning."
+    },
+    {
+      "number": 44,
+      "id": "kart",
+      "name": "Drift Kings",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-18",
+      "path": "games/kart/index.html",
+      "artifact": "https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy",
+      "artifact_slug": "22179b9c-6f6e-4f90-ba70-ac2bc16ce01c",
+      "apk_repo": null,
+      "storage_prefix": "dk.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Kart racing: hold a hard turn to drift, let go to boost; tap for your item.",
+        "genre": "Racing",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P18",
+        "P7",
+        "P14",
+        "P22",
+        "P10"
+      ],
+      "summary": "Kart racing with two thumbs: slide the left to steer, hold a hard turn to drift and charge a boost, tap the right for your item; a cup of four tracks."
     }
   ],
   "planned": []

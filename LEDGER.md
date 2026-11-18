@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**43 games** so far. Next number: **44**.
+**44 games** so far. Next number: **45**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -51,6 +51,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 41 | **Bonsai** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/FRzkTn7ah218Nz3tL5ZZ3Y) | `games/bonsai/index.html` |
 | 42 | **Star Miner** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1brYRfNx8etgzvfCvpxfyF) | `games/miner/index.html` |
 | 43 | **Ghost Lantern** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/PwJQKnzTmyULwZCjM9TWmD) | `games/lantern/index.html` |
+| 44 | **Drift Kings** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy) | `games/kart/index.html` |
 
 ## What each game is
 
@@ -97,3 +98,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 41. **Bonsai**: Grow a little tree through the seasons into the festival's outline: tap buds to grow, tap branches to prune, flick caterpillars.
 42. **Star Miner**: Fly a little mining ship with one floating stick: the laser cracks rocks by itself, scoop the ore, carry it home before the mothership jumps; meteors and pirates.
 43. **Ghost Lantern**: Walk a haunted house with one floating stick: hold ghosts in your lantern's beam to catch them, turn to the frost of one behind you, keep the oil burning.
+44. **Drift Kings**: Kart racing with two thumbs: slide the left to steer, hold a hard turn to drift and charge a boost, tap the right for your item; a cup of four tracks.
