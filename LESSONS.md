@@ -327,6 +327,17 @@ Everything learned building the first games. Every new game must follow the **ru
   `W3.hemi.intensity`.
 - The spin stops when the thumb lets go (no spin momentum): the landing is a choice you can make, the dial shows when it is safe.
 
+### 37. Cairn (`games/cairn/`): the calm one, stacking stones by a lake
+- **A swinging thing dwells at the ends of its swing:** blind drops land at the extremes far more than the middle. At first the
+  boulder was wide enough that stacks built at the edge stood, and blind tapping won 30%. The boulder's top is now narrower
+  than the sway (0.6 m against 1.2-1.4 m), stones have narrow contact faces, and a stone right on the edge rocks and goes (a
+  margin under 6 cm): blind wins went to none.
+- **The robot's own timing was the bug, not the game:** it tapped when the target lay within the next 50 ms of sway (0.2 m
+  early at speed); checking one frame ahead took a sharp player at level 40 from 10% to 90%.
+- **Ties in "the best spot" need a tie-break toward the middle**, or the robot aims at the edge of a wide boulder and waits for a
+  sway that never reaches it (stuck at 300 s).
+- `pick` and `PENTA` are taken by the juice kit (`note(base, step)` counts pentatonic steps, not semitones).
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

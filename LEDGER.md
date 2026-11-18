@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**36 games** so far. Next number: **37**.
+**37 games** so far. Next number: **38**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -44,6 +44,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 34 | **Eleven** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/1DRGKnNMJY4GBMnoYjB4Wi) | `games/eleven/index.html` |
 | 35 | **Deep Bite** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4yJgakuRwnPQBBTQJFYNxh) | `games/shark/index.html` |
 | 36 | **Powder** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/7HWkUnZpkWQD1iTpZTTn9D) | `games/powder/index.html` |
+| 37 | **Cairn** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/BpPcd8qSV16eTFHjbge8VZ) | `games/cairn/index.html` |
 
 ## What each game is
 
@@ -83,3 +84,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 34. **Eleven**: A full eleven-a-side football match played sideways: run with the left thumb, PASS, SHOOT and LOB; beat a team and the next one is better.
 35. **Deep Bite**: His shark idea in 3D: drag to swim, eat the fish smaller than you, run from the hunters, grow until what chased you becomes lunch; a golden fish beside a hunter, an aquarium of every kind you find.
 36. **Powder**: Snowboard down a 3D mountain against the clock: hold and slide to carve through the gates, tap to jump rocks, spin off kickers and land straight; your best run rides beside you as a ghost; boards to open.
+37. **Cairn**: The calm one: stack river stones on a boulder by a misty 3D lake; tap to drop the swaying stone, pick slabs or round stones from the basket, three perfect drops find a stone; your finished cairns stay in the shallows.
