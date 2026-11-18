@@ -23,7 +23,7 @@ function showHome() {
 function startGame() {
   audio(); if (!HEADLESS) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.stick = null;
+  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.stick = null; PTRS.clear();
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -87,12 +87,12 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // SHOOT and LOB. Screen right is up the pitch (+x); screen up is the far touchline (-z).
 const PTRS = new Map();
 function onDown(e) { audio(); if (!G || G.over || paused) return; const [x, y] = toStage(e.clientX, e.clientY);
-  const b = buttons(G).find(q => Math.hypot(x - q.x, y - q.y) < q.r * 1.15); if (b) { PTRS.set(e.pointerId, { k: 'btn' }); press(b.k); return; }
+  const b = buttons(G).find(q => Math.hypot(x - q.x, y - q.y) < q.r * 1.15); if (b) { PTRS.set(e.pointerId, { k: b.k }); if (b.k === 'sprint') { setSprint(G, true); ui.flash.sprint = 1; } else press(b.k); return; }
   if (x < W * 0.55 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; PTRS.set(e.pointerId, { k: 'stick' }); } }
 function press(k2) { ui.flash[k2] = 1; if (k2 === 'pass') btnPass(G); else if (k2 === 'shoot') btnShoot(G); else btnLob(G); }
 function onMove(e) { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; stickToGame(); }
 function stickToGame() { const s2 = ui.stick; if (!G) return; if (!s2) { setStick(G, 0, 0); return; } const dx = s2.x - s2.x0, dy = s2.y - s2.y0, R = 46 * k, L = Math.hypot(dx, dy); if (L < 6 * k) { setStick(G, 0, 0); return; } const m = Math.min(1, L / R); setStick(G, dx / L * m, dy / L * m); }
-function onUp(e) { const s2 = ui.stick; if (s2 && s2.id === e.pointerId) { ui.stick = null; stickToGame(); } PTRS.delete(e.pointerId); }
+function onUp(e) { const s2 = ui.stick; if (s2 && s2.id === e.pointerId) { ui.stick = null; stickToGame(); } const q = PTRS.get(e.pointerId); PTRS.delete(e.pointerId); if (q && q.k === 'sprint' && G && ![...PTRS.values()].some(v => v.k === 'sprint')) setSprint(G, false); }
 document.addEventListener('pointerdown', e => { if (e.target === cv || e.target === $('gl')) onDown(e); });
 document.addEventListener('pointermove', onMove); document.addEventListener('pointerup', onUp); document.addEventListener('pointercancel', onUp);
 // ---------- the pro shop: upgrades bought with coins; they stay with you (nothing expires) ----------
@@ -136,7 +136,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  stick(x, z) { setStick(G, x, z); }, pass() { return btnPass(G); }, shoot() { return btnShoot(G); }, lob() { return btnLob(G); }, buttons() { return buttons(G); }, toStage, scr, renderShop, ui, get V3() { return V3; }, W3,
+  stick(x, z) { setStick(G, x, z); }, sprint(on) { setSprint(G, on); }, pass() { return btnPass(G); }, shoot() { return btnShoot(G); }, lob() { return btnLob(G); }, buttons() { return buttons(G); }, toStage, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

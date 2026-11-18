@@ -65,7 +65,9 @@ function buildWorld() {
   // the players: blob shadows (one draw for all), rings for the man you control
   // twenty-two players drawn as five instanced shapes (torsos, shorts, heads, legs, arms): a handful of draws, not a hundred and fifty
   const mat = new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75 }), part = (geo, n) => { const im = new T.InstancedMesh(geo, mat, n); im.instanceMatrix.setUsage(T.DynamicDrawUsage); im.frustumCulled = false; S.add(im); return im; };
-  const men = { torso: part(new T.CapsuleGeometry(0.21, 0.42, 3, 8), 22), shorts: part(new T.CylinderGeometry(0.21, 0.22, 0.26, 8), 22), head: part(new T.SphereGeometry(0.16, 10, 8), 22), leg: part(new T.CapsuleGeometry(0.09, 0.68, 2, 6), 44), arm: part(new T.CapsuleGeometry(0.065, 0.48, 2, 6), 44) };
+  const cap = (r, l) => { const g2 = new T.CapsuleGeometry(r, l, 2, 7); g2.translate(0, -(l / 2 + r * 0.6), 0); return g2; };      // limbs hang from their joint
+  const men = { torso: part(new T.CapsuleGeometry(0.2, 0.4, 3, 8), 22), shorts: part(new T.CylinderGeometry(0.2, 0.21, 0.24, 8), 22), head: part(new T.SphereGeometry(0.15, 10, 8), 22), hair: part(new T.SphereGeometry(0.158, 10, 6, 0, TAU, 0, Math.PI * 0.55), 22),
+    thigh: part(cap(0.085, 0.3), 44), shin: part(cap(0.07, 0.32), 44), boot: part(new T.BoxGeometry(0.11, 0.08, 0.26), 44), upper: part(cap(0.06, 0.22), 44), fore: part(cap(0.052, 0.22), 44) };
   const blob = new T.InstancedMesh(new T.CircleGeometry(0.5, 12), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false }), 23), dB = new T.Object3D(); blob.rotation.x = 0; S.add(blob);
   const ring = new T.Mesh(new T.RingGeometry(0.75, 0.95, 24), new T.MeshBasicMaterial({ color: 0xffe060, transparent: true, opacity: 0.95, depthWrite: false })); ring.rotation.x = -Math.PI / 2; S.add(ring);
   const ball = new T.Mesh(new T.SphereGeometry(0.2, 14, 10), M(0xffffff, { roughness: 0.4, emissive: 0x404040 })); ball.castShadow = true; S.add(ball);
@@ -78,9 +80,9 @@ function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2 + x * 6, y: H / 2 
 const CAM = { x: 0, z: 0 };
 function placeCam(g, dt) {
   const cam = W3.cam, b = g.ball, asp = W / H; if (Math.abs(cam.aspect - asp) > 0.001) { cam.aspect = asp; cam.fov = asp > 1.6 ? 30 : 36; cam.updateProjectionMatrix(); }
-  const tx = clamp(b.x + (b.own ? Math.cos(b.own.face) * 5 : b.vx * 0.3), -HL + 12, HL - 12), tz = clamp(b.z * 0.75, -22, 22), k2 = ui.snap ? 1 : 1 - Math.exp(-dt * 3);
+  const fol = ui.follow != null ? g.P[ui.follow] : null, tx = fol ? fol.x : clamp(b.x + (b.own ? Math.cos(b.own.face) * 5 : b.vx * 0.3), -HL + 12, HL - 12), tz = fol ? fol.z : clamp(b.z * 0.75, -22, 22), k2 = ui.snap || fol ? 1 : 1 - Math.exp(-dt * 3);
   CAM.x += (tx - CAM.x) * k2; CAM.z += (tz - CAM.z) * k2; ui.snap = false;
-  cam.position.set(CAM.x + (FX.shake ? (Math.random() - 0.5) * FX.shake * 0.04 : 0), 19, CAM.z + 27); cam.lookAt(CAM.x, 0, CAM.z - 1); cam.updateMatrixWorld();
+  const zm = ui.zoom || 1; cam.position.set(CAM.x + (FX.shake ? (Math.random() - 0.5) * FX.shake * 0.04 : 0), 19 * zm, CAM.z + 27 * zm); cam.lookAt(CAM.x, zm < 1 ? 0.9 : 0, CAM.z - 1 * zm); if (fol) { cam.position.set(fol.x + 2.2, 1.6, fol.z + 4.2); cam.lookAt(fol.x, 0.9, fol.z); } cam.updateMatrixWorld();
 }
 // ---------- events ----------
 function onEvent(G, e) {
@@ -111,14 +113,39 @@ function onEvent(G, e) {
 function animate(g, t, dt) {
   const V = V3, Mn = V.men, [M0, M1, M2, M3] = V.M, c3 = V.col;
   if (V.kit !== g.kit) { V.kit = g.kit; for (let j = 0; j < 22; j++) { const t = j < 11 ? 0 : 1, gk = j % 11 === 0, shirt = t === 0 ? (gk ? 0x3ae07a : 0xf2c14b) : (gk ? 0x1a1a1a : g.kit[0]), shorts = t === 0 ? (gk ? 0x1a1a1a : 0x1a2a5a) : (gk ? 0x1a1a1a : g.kit[1]), skin = SKINC[(j * 3) % 5];
-      Mn.torso.setColorAt(j, c3.setHex(shirt)); Mn.shorts.setColorAt(j, c3.setHex(shorts)); Mn.head.setColorAt(j, c3.setHex(skin)); for (const q of [0, 1]) { Mn.leg.setColorAt(j * 2 + q, c3.setHex(shorts)); Mn.arm.setColorAt(j * 2 + q, c3.setHex(shirt)); } }
+      const sock = t === 0 ? (gk ? 0x1a1a1a : 0xf2c14b) : (gk ? 0x1a1a1a : g.kit[0]);
+      Mn.torso.setColorAt(j, c3.setHex(shirt)); Mn.shorts.setColorAt(j, c3.setHex(shorts)); Mn.head.setColorAt(j, c3.setHex(skin)); Mn.hair.setColorAt(j, c3.setHex([0x1a1a1a, 0x3a2414, 0x6a3a1a, 0xc8a060, 0x111111][(j * 7) % 5]));
+      for (const q of [0, 1]) { Mn.thigh.setColorAt(j * 2 + q, c3.setHex(skin)); Mn.shin.setColorAt(j * 2 + q, c3.setHex(sock)); Mn.boot.setColorAt(j * 2 + q, c3.setHex(0x111111)); Mn.upper.setColorAt(j * 2 + q, c3.setHex(shirt)); Mn.fore.setColorAt(j * 2 + q, c3.setHex(gk ? shirt : skin)); } }
     for (const k3 in Mn) Mn[k3].instanceColor.needsUpdate = true; }
-  const put = (im, i, base, x, y, z, rx, sx, sy, sz, oy) => { M1.makeRotationX(rx || 0).setPosition(x, y, z); M2.makeScale(sx || 1, sy || 1, sz || 1); if (oy) M2.setPosition(0, oy, 0); M3.multiplyMatrices(base, M1).multiply(M2); im.setMatrixAt(i, M3); };
-  g.P.forEach((p, j) => { const sp = Math.hypot(p.vx, p.vz), ph = (t * (4 + sp * 1.4) + j) % TAU, a = Math.min(0.8, sp * 0.11), down = p.down > 0;
-    M0.makeRotationY(Math.PI / 2 - p.face).setPosition(p.x, down ? 0.35 : 0.95, p.z); M1.makeRotationX(down ? 1.2 : sp * 0.02); M0.multiply(M1); const base = M0.clone ? M0 : M0;
-    const B = M0; put(Mn.torso, j, B, 0, 0.36, 0, 0, 1.1, 1, 0.8); put(Mn.shorts, j, B, 0, 0.02, 0); put(Mn.head, j, B, 0, 0.86, 0);
-    put(Mn.leg, j * 2, B, -0.11, 0, 0, Math.sin(ph) * a, 1, 1, 1, -0.43); put(Mn.leg, j * 2 + 1, B, 0.11, 0, 0, -Math.sin(ph) * a, 1, 1, 1, -0.43);
-    put(Mn.arm, j * 2, B, -0.28, 0.58, 0, -Math.sin(ph) * a * 0.8, 1, 1, 1, -0.305); put(Mn.arm, j * 2 + 1, B, 0.28, 0.58, 0, Math.sin(ph) * a * 0.8, 1, 1, 1, -0.305);
+  // the run: stride length and rate grow with speed, knees lift and heels kick up at a sprint, arms pump with bent elbows,
+  // the body leans forward as he accelerates and into his turns, and bobs twice a stride. Standing: knees soft, a little sway.
+  const put = (im, i, M) => im.setMatrixAt(i, M), E = V.E || (V.E = new THREE.Euler()), Q = V.Q || (V.Q = new THREE.Quaternion()), U = V.U || (V.U = new THREE.Vector3(1, 1, 1)), P = V.Pv || (V.Pv = new THREE.Vector3());
+  const tf = (out, parent, x, y, z, rx, ry, rz, sx, sy, sz) => { E.set(rx || 0, ry || 0, rz || 0, 'YXZ'); Q.setFromEuler(E); P.set(x, y, z); U.set(sx || 1, sy || 1, sz || 1); out.compose(P, Q, U); if (parent) out.premultiply(parent); return out; };
+  const HIP = V.HIP || (V.HIP = new THREE.Matrix4()), TH = V.TH || (V.TH = new THREE.Matrix4()), SH = V.SH || (V.SH = new THREE.Matrix4()), TMP = V.TMP || (V.TMP = new THREE.Matrix4()), CH = V.CH || (V.CH = new THREE.Matrix4());
+  g.P.forEach((p, j) => { const sp = Math.hypot(p.vx, p.vz), top = p.t ? g.cfg.oSpd : g.cfg.uSpd, f = clamp(sp / top, 0, 1.1), a = p.anim || (p.anim = { ph: j, lean: 0, roll: 0, v: 0 });
+    const stride = 0.9 + 1.5 * f; a.ph += sp * dt / stride * Math.PI; const ph = a.ph, acc = (sp - a.v) / Math.max(dt, 1e-3); a.v = sp;
+    a.lean += ((0.04 + 0.22 * f * f + clamp(acc * 0.03, -0.1, 0.15)) - a.lean) * Math.min(1, dt * 6); a.roll += ((-(p.turnRate || 0) * f * 0.12) - a.roll) * Math.min(1, dt * 6);
+    const sw = Math.min(1, f * 1.6), down = p.down > 0, slide = down && p.tk > 0.3, bob = Math.abs(Math.sin(ph)) * 0.05 * sw - (sp < 0.3 ? 0.03 : 0.0);
+    // the whole man: position, facing, lean
+    tf(M0, null, p.x, 0, p.z, 0, Math.PI / 2 - p.face, 0);
+    if (down) tf(HIP, M0, 0, slide ? 0.3 : 0.25, 0, slide ? -1.15 : 1.25, 0, 0);
+    else tf(HIP, M0, 0, 0.93 + bob - (sp < 0.3 ? 0.04 : 0), 0, a.lean, 0, a.roll);
+    put(Mn.shorts, j, tf(TMP, HIP, 0, 0.0, 0)); put(Mn.torso, j, tf(TMP, HIP, 0, 0.36, 0, 0, Math.sin(ph) * 0.12 * sw, 0, 1.12, 1, 0.78));
+    tf(CH, HIP, 0, 0, 0, 0, Math.sin(ph) * 0.12 * sw, 0);
+    put(Mn.head, j, tf(TMP, CH, 0, 0.83, 0.01, -a.lean * 0.6)); put(Mn.hair, j, tf(TMP, CH, 0, 0.85, -0.005, -a.lean * 0.6 - 0.25));
+    // legs: hip swing, knee bend (most on the swing-through), the kick
+    const kick = p.kick > 0 ? 1 - p.kick / 0.32 : -1;
+    for (const q of [0, 1]) { const sgn = q ? -1 : 1, s1 = Math.sin(ph + (q ? Math.PI : 0)), c1 = Math.cos(ph + (q ? Math.PI : 0));
+      let hipA = -s1 * (0.25 + 0.55 * sw) * sw, knee = (0.15 + (c1 > 0 ? c1 * (0.5 + 1.3 * f) : 0.1)) * Math.max(0.25, sw);
+      if (sp < 0.3) { hipA = -0.08; knee = 0.18; }
+      if (kick >= 0 && q === 0) { hipA = kick < 0.45 ? 0.6 * (kick / 0.45) : 0.6 - 2.0 * ((kick - 0.45) / 0.55); knee = kick < 0.45 ? 1.2 : 0.3; }
+      if (slide) { hipA = q ? -1.4 : -1.1; knee = q ? 0.1 : 0.9; }
+      tf(TH, HIP, sgn * 0.11, -0.04, 0, hipA, 0, 0); put(Mn.thigh, j * 2 + q, TH);
+      tf(SH, TH, 0, -0.44, 0, knee, 0, 0); put(Mn.shin, j * 2 + q, SH); put(Mn.boot, j * 2 + q, tf(TMP, SH, 0, -0.46, 0.06, -knee * 0.3)); }
+    // arms: opposite to the legs, elbows bent more at a sprint
+    for (const q of [0, 1]) { const sgn = q ? -1 : 1, s1 = Math.sin(ph + (q ? 0 : Math.PI)); let sh = s1 * (0.2 + 0.7 * sw) * sw, el = -(0.35 + 1.05 * f), out = sgn * 0.12;
+      if (sp < 0.3) { sh = 0.05; el = -0.25; } if (p.role === 'gk' && sp < 2) { sh = -0.5; el = -0.9; out = sgn * 0.5; } if (slide) { sh = -0.6; el = -0.4; out = sgn * 0.9; }
+      tf(TH, CH, sgn * 0.27, 0.6, 0, sh, 0, out); put(Mn.upper, j * 2 + q, TH); put(Mn.fore, j * 2 + q, tf(SH, TH, 0, -0.33, 0, el, 0, 0)); }
     V.dB.position.set(p.x, 0.02, p.z); V.dB.rotation.set(-Math.PI / 2, 0, 0); V.dB.scale.setScalar(1); V.dB.updateMatrix(); V.blob.setMatrixAt(j, V.dB.matrix); });
   for (const k3 in Mn) Mn[k3].instanceMatrix.needsUpdate = true;
   const b = g.ball; V.ball.position.set(b.x, b.y + 0.2, b.z); V.ball.rotation.z -= b.vx * dt * 3; V.ball.rotation.x += b.vz * dt * 3;
@@ -147,7 +174,8 @@ function draw(now, dt) {
 }
 // ---------- the 2D layer ----------
 function buttons(G) { const r = 34 * k, x0 = W - 26 * k - r, y0 = H - 26 * k - r, att = haveBall(G);
-  return [{ k: 'shoot', x: x0, y: y0, r: r * 1.15, label: att ? 'SHOOT' : 'TACKLE', col: att ? '#e8402a' : '#e8402a' }, { k: 'pass', x: x0 - r * 2.5, y: y0 + r * 0.25, r, label: att ? 'PASS' : 'SWITCH', col: '#2a8ae8' }, { k: 'lob', x: x0 - r * 0.6, y: y0 - r * 2.4, r, label: att ? 'LOB' : 'SLIDE', col: '#f2c14b' }]; }
+  return [{ k: 'shoot', x: x0, y: y0, r: r * 1.15, label: att ? 'SHOOT' : 'TACKLE', col: '#e8402a' }, { k: 'pass', x: x0 - r * 2.5, y: y0 + r * 0.25, r, label: att ? 'PASS' : 'SWITCH', col: '#2a8ae8' }, { k: 'lob', x: x0 - r * 0.6, y: y0 - r * 2.4, r, label: att ? 'LOB' : 'SLIDE', col: '#f2c14b' },
+    { k: 'sprint', x: x0 - r * 4.9, y: y0 + r * 0.35, r: r * 0.92, label: 'SPRINT', col: '#3ab86a', held: G.sprint }]; }
 function hud(G, t) {
   ctx.textBaseline = 'middle';
   if (!G.lesson) { const y = 22 * k, w = 300 * k; ctx.fillStyle = 'rgba(8,12,24,.75)'; rrect(W / 2 - w / 2, y - 15 * k, w, 30 * k, 10); ctx.fill();
@@ -160,12 +188,13 @@ function hud(G, t) {
     const P = (x, z) => [mx + (x + HL) / 105 * mw, my + (z + HW) / 68 * mh]; for (const p of G.P) { const [a, b2] = P(p.x, p.z); ctx.fillStyle = p.t ? '#ffffff' : '#f2c14b'; ctx.beginPath(); ctx.arc(a, b2, p.t === 0 && p.i === G.ctrl ? 3.2 : 2.2, 0, TAU); ctx.fill(); }
     const [bx, by] = P(G.ball.x, G.ball.z); ctx.fillStyle = '#ff4a3a'; ctx.beginPath(); ctx.arc(bx, by, 2.4, 0, TAU); ctx.fill(); }
   // you: an arrow over your man
+  { const c = me(G), sb = scr(c.x, 0, c.z), st = c.st == null ? 1 : c.st, bw = 34 * k; ctx.fillStyle = 'rgba(0,0,0,.5)'; rrect(sb.x - bw / 2, sb.y + 12 * k, bw, 5 * k, 2.5 * k); ctx.fill(); ctx.fillStyle = st > 0.5 ? '#5ee08a' : st > 0.2 ? '#ffd23a' : '#ff5a4a'; rrect(sb.x - bw / 2, sb.y + 12 * k, Math.max(5 * k, bw * st), 5 * k, 2.5 * k); ctx.fill(); }
   { const c = me(G), s = scr(c.x, 2.4, c.z); ctx.fillStyle = G.ball.own === c ? '#ffe060' : '#9ad8ff'; ctx.beginPath(); ctx.moveTo(s.x, s.y + 8 * k); ctx.lineTo(s.x - 7 * k, s.y - 4 * k); ctx.lineTo(s.x + 7 * k, s.y - 4 * k); ctx.closePath(); ctx.fill(); }
   // the stick
   const s2 = ui.stick; if (s2) { ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, 46 * k, 0, TAU); ctx.stroke(); const dx = s2.x - s2.x0, dy = s2.y - s2.y0, L = Math.hypot(dx, dy), m = Math.min(1, 46 * k / (L || 1)); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(s2.x0 + dx * m, s2.y0 + dy * m, 20 * k, 0, TAU); ctx.fill(); }
   else if (G.N <= 3 || G.lesson) { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(80 * k, H - 80 * k, 46 * k, 0, TAU); ctx.fill(); ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('RUN', 80 * k, H - 80 * k); }
   // the buttons
-  for (const b of buttons(G)) { const f = ui.flash[b.k] || 0; ctx.globalAlpha = 0.85; ctx.fillStyle = b.col; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (1 - f * 0.1), 0, TAU); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = `rgba(255,255,255,${0.4 + f * 0.6})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (1 - f * 0.1), 0, TAU); ctx.stroke();
+  for (const b of buttons(G)) { const f = b.held ? 1 : ui.flash[b.k] || 0; ctx.globalAlpha = 0.85; ctx.fillStyle = b.col; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (1 - f * 0.1), 0, TAU); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = `rgba(255,255,255,${0.4 + f * 0.6})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (1 - f * 0.1), 0, TAU); ctx.stroke();
     ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.font = `${Math.round(12 * k)}px ${TF}`; ctx.fillText(b.label, b.x, b.y); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }

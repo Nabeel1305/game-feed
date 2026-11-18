@@ -10,7 +10,7 @@
 // World: metres. x along the pitch (our goal at -52.5, theirs at +52.5), z across it (the far touchline -34, near +34).
 const RULES = [
   '<b>Turn your phone sideways.</b> You are gold, attacking to the right.',
-  '<b>Left thumb:</b> run with the ball (or without it). <b>PASS</b> to the team-mate you point at, <b>SHOOT</b> at goal (point up or down for the corner), <b>LOB</b> over the top, or chip a keeper who has come out.',
+  '<b>Left thumb:</b> run with the ball (or without it). Hold <b>SPRINT</b> to go flat out: it tires him (the bar under him), and at a sprint the ball runs ahead of him, so a defender can nick it. <b>PASS</b> to the team-mate you point at, <b>SHOOT</b> at goal (point up or down for the corner), <b>LOB</b> over the top, or chip a keeper who has come out.',
   '<b>Defending:</b> SWITCH to the player nearest the ball, TACKLE, or SLIDE (longer, but miss it and you are down).',
   'Two minutes a match. Win to meet the next team: every team is better than the last. Level at the end: golden goal.',
   'Coins for goals and wins buy training that stays: pace, finishing, passing, a better keeper.',
@@ -48,7 +48,7 @@ function makeCfg(N, help) {
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, clock: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null,
-    weather: weatherOf(N), foe: teamName(N), kit: KITS[N % KITS.length], score: [0, 0], P: [], ball: null, ctrl: 9, stick: { x: 0, z: 0 }, pause: 0, golden: false, shots: [0, 0], scorers: [], restartK: null, think: 0 };
+    weather: weatherOf(N), foe: teamName(N), kit: KITS[N % KITS.length], score: [0, 0], P: [], ball: null, ctrl: 9, stick: { x: 0, z: 0 }, sprint: false, pause: 0, golden: false, shots: [0, 0], scorers: [], restartK: null, think: 0 };
   for (let t = 0; t < 2; t++) for (let i = 0; i < 11; i++) G.P.push({ t, i, role: ROLE[i], x: 0, z: 0, vx: 0, vz: 0, face: t ? Math.PI : 0, down: 0, cd: 0, dec: 0, plan: null, tk: 0 });
   G.T = [G.P.slice(0, 11), G.P.slice(11)]; G.rank = [[], []];
   G.ball = { x: 0, z: 0, y: 0, vx: 0, vz: 0, vy: 0, own: null, last: null, kind: null, to: null, from: null, air: 0, shot: null };
@@ -68,8 +68,9 @@ function kickoff(G, t, first) {      // team t kicks off from the centre spot
   for (const p of G.P) { const s = p.t ? -1 : 1, f = FORM[p.i]; p.x = s * Math.min(-1.5, f[0] * 0.9 - 4); p.z = f[1]; p.vx = p.vz = 0; p.down = 0; p.cd = 0; p.face = p.t ? Math.PI : 0; }
   const k = G.P[t * 11 + 9]; k.x = t ? 0.6 : -0.6; k.z = 0; give(G, k); G.pause = first ? 0 : 1.2; if (t === 0) G.ctrl = k.i; G.ev.push({ k: 'kickoff', t });
 }
-function give(G, p) { const b = G.ball; b.own = p; b.last = p; b.kind = null; b.to = null; b.shot = null; b.y = 0; b.vx = b.vz = b.vy = 0; p.cd = 0; if (p.t === 0 && G.ctrl !== p.i) { G.ctrl = p.i; G.ev.push({ k: 'switch', auto: true }); } }
+function give(G, p) { const b = G.ball; p.gotAt = G.t; b.own = p; b.last = p; b.kind = null; b.to = null; b.shot = null; b.y = 0; b.vx = b.vz = b.vy = 0; p.cd = 0; if (p.t === 0 && G.ctrl !== p.i) { G.ctrl = p.i; G.ev.push({ k: 'switch', auto: true }); } }
 // ---------- the controls ----------
+function setSprint(G, on) { G.sprint = !!on; }
 function setStick(G, x, z) { const L = Math.hypot(x, z); G.stick = L > 1 ? { x: x / L, z: z / L } : { x, z }; }
 const haveBall = G => G.ball.own && G.ball.own.t === 0;
 function btnPass(G) { if (G.over || G.pause > 0) return false; if (haveBall(G) && G.ball.own === me(G)) return pass(G, me(G), G.stick, false); return switchNear(G); }
@@ -88,7 +89,7 @@ function bestTarget(G, p, dir, lofted) {
 }
 function openness(G, q) { let m = 99; for (const o of team(G, 1 - q.t)) m = Math.min(m, dist(o, q)); return m; }
 function lineRisk(G, p, q) { let r = 0; const dx = q.x - p.x, dz = q.z - p.z, L2 = dx * dx + dz * dz || 1; for (const o of team(G, 1 - p.t)) { const u = clamp(((o.x - p.x) * dx + (o.z - p.z) * dz) / L2, 0, 1), d = Math.hypot(p.x + dx * u - o.x, p.z + dz * u - o.z); if (d < 3) r += (3 - d); } return r; }
-function release(G, p) { const b = G.ball; b.x = clamp(p.x + Math.cos(p.face) * 0.5, -HL + 0.3, HL - 0.3); b.z = p.z + Math.sin(p.face) * 0.5; b.own = null; b.last = p; b.from = p; p.cd = 0.35; b.air = 0; }
+function release(G, p) { p.kick = 0.32; const b = G.ball; b.x = clamp(p.x + Math.cos(p.face) * 0.5, -HL + 0.3, HL - 0.3); b.z = p.z + Math.sin(p.face) * 0.5; b.own = null; b.last = p; b.from = p; p.cd = 0.35; b.air = 0; }
 function pass(G, p, dir, ai) {
   const q = bestTarget(G, p, dir, false); if (!q) return false; const c = G.cfg, acc = p.t ? c.oPass : c.uPass, b = G.ball;
   const d = dist(p, q), sp = clamp(8 + d * 0.75, 10, 24) * (p.t ? 1 : 1 + 0.04 * upLv('vision')), tt = d / sp, tx = q.x + q.vx * tt * 0.8, tz = q.z + q.vz * tt * 0.8, err = (1 - acc) * 0.25 * (G.rnd() - 0.5) * 2;
@@ -97,7 +98,7 @@ function pass(G, p, dir, ai) {
 }
 function lob(G, p, dir) {
   const s = p.t ? -1 : 1, gx = goalX(p.t), keeper = G.P[(1 - p.t) * 11], dg = Math.hypot(gx - p.x, p.z), b = G.ball;
-  if (dg < 26 && Math.abs(keeper.x - gx) > 3.5) return shoot(G, p, dir.z, true);      // a chip over a keeper who has come out
+  if (dg > 12 && dg < 26 && Math.abs(keeper.x - gx) > 6 && Math.abs(keeper.x - p.x) > 4) return shoot(G, p, dir.z, true);      // a chip over a keeper who has come out
   const q = bestTarget(G, p, dir, true); if (!q) return false;
   const lead = 4, tx = clamp(q.x + s * lead, -HL + 3, HL - 3), tz = clamp(q.z, -HW + 3, HW - 3), d = Math.hypot(tx - p.x, tz - p.z), T = clamp(d / 18, 0.9, 2.0), err = (1 - (p.t ? G.cfg.oPass : G.cfg.uPass)) * 3 * (G.rnd() - 0.5);
   release(G, p); b.vx = (tx - p.x) / T; b.vz = (tz + err - p.z) / T; b.vy = 9.81 * T / 2; b.y = 0.2; b.kind = 'lob'; b.to = q; G.ev.push({ k: 'lob', t: p.t }); if (p.t === 0) { G.ctrl = q.i; lessonSee(G, 'lob'); } return true;
@@ -106,7 +107,7 @@ function shoot(G, p, aimZ, chip) {
   const c = G.cfg, gx = goalX(p.t), b = G.ball, keeper = G.P[(1 - p.t) * 11], dg = Math.hypot(gx - p.x, p.z);
   // the corner: where the stick points, else the side away from the keeper
   let tz = Math.abs(aimZ) > 0.3 ? Math.sign(aimZ) * (GW2 - 0.6) : clamp(keeper.z * 0.7, -1.5, 1.5);      // no aim: it goes where the keeper is
-  const skill = p.t ? c.oShot : c.uShot, press = Math.max(0, 3 - nearestFoe(G, p)) / 3, sdev = (0.04 + dg * 0.0055) * (1.4 - skill) * (1 + press * 0.8);
+  const skill = p.t ? c.oShot : c.uShot, press = Math.max(0, 3 - nearestFoe(G, p)) / 3, sdev = (0.04 + dg * 0.0055) * (1.4 - skill) * (1 + press * 0.8) * (G.t - (p.gotAt || 0) < 0.8 ? 2.2 : 1);      // a shot snatched the moment it arrives flies wild: take a touch
   const a = Math.atan2(tz - p.z, gx - p.x) + gauss(G.rnd) * sdev; release(G, p);
   if (chip) { const T = clamp(dg / 16, 0.8, 1.6), dx = (gx - p.x) * 1.04; b.vx = dx / T; b.vz = Math.tan(a) * dx / T; b.vy = (2.0 + 4.9 * T * T) / T; b.y = 0.2; b.kind = 'chip'; }
   else { const sp = 25 + skill * 5; b.vx = Math.cos(a) * sp; b.vz = Math.sin(a) * sp; b.vy = 1.5 + G.rnd() * 3 + dg * 0.04; b.y = 0.2; b.kind = 'shot'; }
@@ -119,9 +120,31 @@ function tackle(G, p, slide) {
   const b = G.ball; if (p.down > 0 || p.tk > 0) return false; p.tk = slide ? 1.0 : 0.45; const o = b.own; G.ev.push({ k: slide ? 'slide' : 'tackle', t: p.t });
   if (slide) { const L = Math.hypot(p.vx, p.vz) || 1; p.vx = p.vx / L * 9; p.vz = p.vz / L * 9; }
   if (!o || o.t === p.t) { if (slide) p.down = 0.9; return false; }
-  const d = dist(p, o), reach = slide ? 3.0 : 1.7, skill = p.t ? G.cfg.oSkill : G.cfg.uTackle, dodge = o.t ? G.cfg.oSkill : 0.5;
+  const d = Math.min(dist(p, o), Math.hypot(p.x - b.x, p.z - b.z) + 0.3), reach = slide ? 3.0 : 1.7, skill = p.t ? G.cfg.oSkill : G.cfg.uTackle, dodge = o.t ? G.cfg.oSkill : 0.5;
   if (d < reach && G.rnd() < clamp(0.45 + skill * 0.5 - dodge * 0.35 + (slide ? 0.1 : 0) - (d / reach) * 0.25, 0.05, 0.95)) { o.down = slide ? 0.7 : 0.35; give(G, p); G.ev.push({ k: 'won', t: p.t }); lessonSee(G, 'tackle'); return true; }
   if (slide) p.down = 1.0; else p.down = 0.25; return false;
+}
+// ---------- how a footballer moves: weight, turning, sprinting, getting tired ----------
+// Speed builds up (a burst, then slower to the top), a hard stop takes a stride or two, and the faster he runs the wider he
+// turns: a sharp change of direction makes him slow down and plant first. Sprinting drains stamina; a tired man is slower
+// at the top and gets his breath back jogging, faster walking. With the ball at a sprint he pushes it ahead.
+function move(G, p, tx, tz, sp, sprint, jog, top, dt) {
+  const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz), withBall = G.ball.own === p;
+  if (p.st == null) p.st = 1;
+  sprint = sprint && p.st > 0.04 && p.down <= 0;
+  let vd = d < 0.35 || p.down > 0 ? 0 : sprint ? top * (0.62 + 0.38 * p.st) * (withBall ? 0.9 : 1) : Math.min(sp, jog) * (withBall ? 0.92 : 1);
+  if (d < 2.5 && !sprint) vd = Math.min(vd, d * 2.2);      // ease in to the spot
+  let v = Math.hypot(p.vx, p.vz), h = v > 0.2 ? Math.atan2(p.vz, p.vx) : p.face; const hd = d > 0.01 ? Math.atan2(dz, dx) : h, da = Math.atan2(Math.sin(hd - h), Math.cos(hd - h));
+  if (Math.abs(da) > 1.7 && v > 2.2) vd = Math.min(vd, 1.2);      // a sharp turn: plant first
+  const turn = (v < 1.2 ? 14 : 8.5 / (1 + 0.32 * v)) * (withBall ? 0.85 : 1);
+  if (vd > 0.05 || v > 0.2) h += clamp(da, -turn * dt, turn * dt);
+  if (p.down > 0) v = Math.max(0, v - 10 * dt);
+  else if (vd > v) v = Math.min(vd, v + (v < jog * 0.7 ? 7.5 : v < jog ? 4.5 : 2.6) * dt);      // a burst off the mark, then slower to the top
+  else v = Math.max(vd, v - 9 * dt);
+  p.vx = Math.cos(h) * v; p.vz = Math.sin(h) * v; p.x = clamp(p.x + p.vx * dt, -HL - 3, HL + 3); p.z = clamp(p.z + p.vz * dt, -HW - 2, HW + 2);
+  if (v > 0.3) p.face = h; p.spr = sprint && v > jog * 0.95; p.turnRate = clamp(da, -turn, turn);
+  p.st = clamp(p.st + (p.spr ? -0.085 : v > jog * 0.6 ? 0.025 : 0.06) * dt, 0, 1);
+  if (withBall) p.touch = (p.touch || 0) + v * dt / (p.spr ? 2.6 : 1.5);
 }
 // ---------- the match, step by step ----------
 function step(G, dt) {
@@ -129,20 +152,23 @@ function step(G, dt) {
   if (G.lessonWait) { G.lessonWait -= dt; if (G.lessonWait <= 0) { G.lessonWait = 0; if (G.lessonEnd) { G.lessonEnd = false; G.score = [0, 0]; G.clock = 0; G.shots = [0, 0]; kickoff(G, 0, true); } else lessonSetup(G); } return; }
   if (G.pause > 0) { G.pause -= dt; return; }
   if (!G.lesson) { G.clock += dt; if (G.clock >= c.len && !G.golden) { if (G.score[0] !== G.score[1]) return finish(G, G.score[0] > G.score[1]); G.golden = true; G.ev.push({ k: 'golden' }); } if (G.golden && G.clock >= c.len + 60) return finish(G, false, 'draw'); }
-  for (const p of G.P) { if (p.down > 0) p.down -= dt; if (p.cd > 0) p.cd -= dt; if (p.tk > 0) p.tk -= dt; }
+  for (const p of G.P) { if (p.down > 0) p.down -= dt; if (p.cd > 0) p.cd -= dt; if (p.tk > 0) p.tk -= dt; if (p.kick > 0) p.kick -= dt; }
   // movement: you, then everybody else
   G.think -= dt; const thinkNow = G.think <= 0; if (thinkNow) { G.think = 0.1; const o = b.own || b; for (let t = 0; t < 2; t++) { const L = G.rank[t]; L.length = 0; for (const q of G.T[t]) if (q.role !== 'gk' && !(q.t === 0 && q.i === G.ctrl)) L.push(q); L.sort((a, q) => ((a.x - o.x) ** 2 + (a.z - o.z) ** 2) - ((q.x - o.x) ** 2 + (q.z - o.z) ** 2)); } }
-  for (const p of G.P) { let tx, tz, sp;
-    if (p.t === 0 && p.i === G.ctrl) { const s = G.stick, L = Math.hypot(s.x, s.z); sp = c.uSpd * (b.own === p ? 0.88 : 1); tx = p.x + s.x * 5; tz = p.z + s.z * 5; if (L < 0.1) { if (!b.own && b.to === p) [tx, tz, sp] = brain(G, p); else sp = 0; } else sp *= Math.min(1, L * 1.3); }      // thumb off: he runs on to a ball meant for him
-    else { if (thinkNow || !p.plan) p.plan = brain(G, p); [tx, tz, sp] = p.plan; }
-    if (p.down > 0) sp = 0;
-    const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz), want = d < 0.3 ? 0 : sp, ax = (d ? dx / d : 0) * want - p.vx, az = (d ? dz / d : 0) * want - p.vz, acc = p.down > 0 ? 3 : 14, al = Math.hypot(ax, az), k2 = Math.min(1, acc * dt / (al || 1));
-    p.vx += ax * k2; p.vz += az * k2; p.x = clamp(p.x + p.vx * dt, -HL - 3, HL + 3); p.z = clamp(p.z + p.vz * dt, -HW - 2, HW + 2); if (Math.hypot(p.vx, p.vz) > 0.5) p.face = Math.atan2(p.vz, p.vx); }
+  for (const p of G.P) { let tx, tz, sp, sprint = false; const top = p.t ? c.oSpd : c.uSpd, jog = top * 0.66;
+    if (p.t === 0 && p.i === G.ctrl) { const s2 = G.stick, L = Math.hypot(s2.x, s2.z); tx = p.x + s2.x * 5; tz = p.z + s2.z * 5;
+      if (L < 0.1) { if (!b.own && b.to === p) { [tx, tz, sp] = brain(G, p); sprint = G.sprint; } else sp = 0; } else { sprint = G.sprint; sp = sprint ? top : jog * Math.min(1, L * 1.25); } }      // thumb off: he runs on to a ball meant for him
+    else { if (thinkNow || !p.plan) p.plan = brain(G, p); [tx, tz, sp] = p.plan; sprint = sp > top * 0.84; if (!sprint) sp = Math.min(sp, jog); }
+    move(G, p, tx, tz, sp, sprint, jog, top, dt); }
+  // bodies do not pass through each other: two men closer than a shoulder's width are eased apart
+  for (let i = 0; i < 22; i++) { const p = G.P[i]; for (let j = i + 1; j < 22; j++) { const q = G.P[j], dx = q.x - p.x, dz = q.z - p.z, d2 = dx * dx + dz * dz; if (d2 < 0.49 && d2 > 1e-6) { const d = Math.sqrt(d2), push = (0.7 - d) * 0.5 / d; p.x -= dx * push; p.z -= dz * push; q.x += dx * push; q.z += dz * push; } } }
   // the AI on the ball decides; their defenders try to win it
   if (b.own && !(b.own.t === 0 && b.own.i === G.ctrl)) { const p = b.own; p.dec -= dt; if (p.dec <= 0) { p.dec = (p.t ? c.oThink : 0.35) * (0.7 + G.rnd() * 0.6); decide(G, p); } }
   if (b.own) { const o = b.own; for (const p of team(G, 1 - o.t)) { if (p.down > 0 || p.role === 'gk') continue; const d = dist(p, o); if (d < 1.3) { const rate = p.t ? (G.lesson ? 0 : c.oTackle) : (p.i === G.ctrl ? 0 : c.uAiTackle); if (rate && G.rnd() < rate * dt) tackle(G, p, false); } } }
   // the ball
-  if (b.own) { const o = b.own; b.x = clamp(o.x + Math.cos(o.face) * 0.7, -HL + 0.3, HL - 0.3); b.z = o.z + Math.sin(o.face) * 0.7; b.y = 0; b.vx = o.vx; b.vz = o.vz; b.vy = 0; }
+  if (b.own) { const o = b.own, ph = (o.touch || 0) % 1, lead = o.spr ? 0.8 + 1.7 * Math.sin(ph * Math.PI) : 0.6 + 0.25 * Math.sin(ph * Math.PI);      // touches: at a sprint the ball runs a couple of metres ahead
+    b.x = clamp(o.x + Math.cos(o.face) * lead, -HL + 0.3, HL - 0.3); b.z = o.z + Math.sin(o.face) * lead; b.y = 0; b.vx = o.vx; b.vz = o.vz; b.vy = 0; b.lead = lead;
+    if (lead > 1.4) for (const q of team(G, 1 - o.t)) { if (q.down > 0 || q.role === 'gk' || (q.t === 0 && q.i === G.ctrl)) continue; if (Math.hypot(q.x - b.x, q.z - b.z) < 0.9 && G.rnd() < (q.t ? 3 + G.cfg.oSkill * 4 : 2) * dt) { give(G, q); G.ev.push({ k: 'won', t: q.t }); break; } } }
   else { b.air += dt; b.x += b.vx * dt; b.z += b.vz * dt; b.y += b.vy * dt;
     if (b.y > 0) b.vy -= 9.81 * dt; if (b.y <= 0) { b.y = 0; if (b.vy < -2) { b.vy = -b.vy * 0.45; } else b.vy = 0; }
     if (b.y < 0.05) { const f = Math.exp(-0.6 * dt); b.vx *= f; b.vz *= f; const sp = Math.hypot(b.vx, b.vz); if (sp < 0.6) { const k3 = Math.max(0, sp - 2.5 * dt) / (sp || 1); b.vx *= k3; b.vz *= k3; } }
@@ -171,7 +197,7 @@ function keeperWatch(G) {
   const toLine = (gx - b.x) / (b.vx || 1e-6); if (toLine < 0 || toLine > 0.25) { if (s.saveRoll === 0) { kp.face = gx > 0 ? Math.PI : 0; give(G, kp); kp.dec = 0.8; G.ev.push({ k: 'save', t: kp.t, hold: true }); } return; } s.done = true;
   const zAt = b.z + b.vz * toLine, yAt = Math.max(0, b.y + b.vy * toLine - 4.9 * toLine * toLine), onTarget = Math.abs(zAt) < GW2 && yAt < GH && yAt > -0.5;
   if (!onTarget) return;
-  const skill = (s.t === 0 ? G.cfg.oKeep : G.cfg.uKeep) * (G.lesson ? 0.2 : 1), reach = 1.2 + skill * 1.6 - (b.kind === 'chip' && Math.abs(kp.x - gx) > 3.5 ? 3 : 0), gap = Math.abs(zAt - kp.z) - (yAt > 1.6 ? 0.3 : 0), sp = Math.hypot(b.vx, b.vz);
+  const skill = (s.t === 0 ? G.cfg.oKeep : G.cfg.uKeep) * (G.lesson ? 0.2 : 1), reach = 1.2 + skill * 1.6 - (b.kind === 'chip' ? clamp(Math.abs(kp.x - gx) - 3, 0, 4) : 0), gap = Math.abs(zAt - kp.z) - (yAt > 1.6 ? 0.3 : 0), sp = Math.hypot(b.vx, b.vz);
   if (s.dg > 30) { kp.x = gx - Math.sign(gx) * 0.6; kp.z = zAt; kp.face = gx > 0 ? Math.PI : 0; G.ev.push({ k: 'save', t: kp.t, hold: true }); give(G, kp); kp.dec = 0.8; return; }      // from that far, an easy catch
   const far = clamp((s.dg - 12) * 0.045, 0, 0.7), p = gap < reach + far * 2 ? clamp(0.55 + skill * 0.45 - gap / (reach + far * 2) * 0.45 - (sp - 24) * 0.015 + far, 0.1, 0.98) : 0.03;      // a shot from far gives him time
   if (s.saveRoll < p) { const hold = sp < 22 || s.saveRoll < p * 0.5; kp.x = gx - Math.sign(gx) * 0.6; kp.z = zAt; G.ev.push({ k: 'save', t: kp.t, hold });
@@ -195,19 +221,19 @@ function outOfPlay(G, kind) {
 // returns [target x, target z, speed]
 function brain(G, p) {
   const c = G.cfg, b = G.ball, s = p.t ? -1 : 1, spd = (p.t ? c.oSpd : c.uSpd) * (G.lesson && p.t ? 0.45 : 1), own = b.own, att = own ? own.t === p.t : b.last ? b.last.t === p.t : false;
-  if (own === p) { const gx = goalX(p.t), pl = p.carry || [gx, clamp(p.z * 0.6, -12, 12)]; return [pl[0], pl[1], spd * 0.88]; }
+  if (own === p) { const gx = goalX(p.t), pl = p.carry || [gx, clamp(p.z * 0.6, -12, 12)]; return [pl[0], pl[1], nearestFoe(G, p) > 7 && p.t && c.oPress > 1.15 ? spd : spd * 0.7]; }
   if (p.role === 'gk') { const gx = -goalX(p.t), danger = own && own.t !== p.t && Math.hypot(own.x - gx, own.z) < 16; if (danger && Math.hypot(own.x - gx, own.z) < 11) return [gx * 0.97 + (own.x - gx) * 0.35, own.z * 0.5, spd * 0.9];
     return [gx - Math.sign(gx) * 1.2, clamp(b.z * 0.18, -2.5, 2.5), spd * 0.6]; }
   // a ball in flight meant for me: go and meet it
   if (!own && b.to === p) { const T = b.y > 0.3 || b.vy > 0 ? (b.vy + Math.sqrt(b.vy * b.vy + 19.6 * b.y)) / 9.81 : 0.3; return [b.x + b.vx * T, b.z + b.vz * T, spd]; }      // run to where it will come down
   // a loose ball: the nearest of each team goes for it
   if (!own) { const near = G.rank[p.t][0];
-    if (near === p && (b.kind !== 'pass' || b.last.t !== p.t)) return [b.x + b.vx * 0.3, b.z + b.vz * 0.3, spd]; }
+    if (near === p && (b.kind !== 'pass' || b.last.t !== p.t)) return [b.x + b.vx * 0.3, b.z + b.vz * 0.3, Math.hypot(b.x - p.x, b.z - p.z) > 4 ? spd : spd * 0.8]; }
   const h = home(G, p);
-  if (att) { if (p.role === 'fw' && own) { const lineX = s > 0 ? Math.min(own.x + 18, HL - 8) : Math.max(own.x - 18, -HL + 8); return [s > 0 ? Math.max(h[0], lineX) : Math.min(h[0], lineX), h[1], spd * 0.85]; } return [h[0], h[1], spd * 0.75]; }
+  if (att) { if (p.role === 'fw' && own) { const lineX = s > 0 ? Math.min(own.x + 18, HL - 8) : Math.max(own.x - 18, -HL + 8); return [s > 0 ? Math.max(h[0], lineX) : Math.min(h[0], lineX), h[1], Math.abs((s > 0 ? Math.max(h[0], lineX) : Math.min(h[0], lineX)) - p.x) > 8 ? spd : spd * 0.7]; } return [h[0], h[1], spd * 0.75]; }
   // defending: the nearest closes the ball down (them: as hard as their level presses), the next covers, the rest hold the shape
   if (own) { const rank = G.rank[p.t].indexOf(p);
-    if (rank === 0) return [own.x + own.vx * 0.2 + (p.t ? 0 : -3), own.z + own.vz * 0.2, spd * (p.t ? Math.min(1, 0.7 * c.oPress) : 0.6)];      // your team-mates only shadow: winning it is your job
+    if (rank === 0) return [own.x + own.vx * 0.2 + (p.t ? 0 : -3), own.z + own.vz * 0.2, p.t ? (dist(p, own) > 6 && c.oPress > 1.1 ? spd : spd * 0.7) : spd * 0.6];      // your team-mates only shadow: winning it is your job
     if (rank === 1 && p.t === 1 && c.oPress > 1.2) return [own.x + own.vx * 0.3 + s * -3, own.z, spd * 0.85];
     if (rank === 1) { const gx = -goalX(p.t); return [own.x + (gx - own.x) * 0.25, own.z * 0.75, spd * 0.8]; } }
   return [h[0], h[1], spd * 0.7];
@@ -259,11 +285,11 @@ function lessonCount(G) { const D = G.lesson, st = lessonNow(G); D.n++; if (D.n 
   D.i++; D.n = 0; if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.lessonEnd = true; G.lessonWait = 1.4; } else { G.ev.push({ k: 'lessonnext' }); G.lessonWait = 1.4; } }
 // ---------- for the robots ----------
 // BLIND: two thumbs that do not look: hold the stick some way (or let go), tap PASS, SHOOT or LOB
-const BLIND = { m: G => { const R = Math.random; if (R() < 0.2) setStick(G, 0, 0); else { const a = R() * TAU; setStick(G, Math.cos(a), Math.sin(a)); } }, p: G => btnPass(G), k: G => btnShoot(G), l: G => btnLob(G) };
+const BLIND = { m: G => { const R = Math.random; setSprint(G, R() < 0.5); if (R() < 0.2) setStick(G, 0, 0); else { const a = R() * TAU; setStick(G, Math.cos(a), Math.sin(a)); } }, p: G => btnPass(G), k: G => btnShoot(G), l: G => btnLob(G) };
 // a player who looks: plays your man with the team's own football brain, a moment late and a little off (react, acc)
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, b = G.ball, p = me(G), c = G.cfg;
-  if (G.over || G.pause > 0 || G.lessonWait) { setStick(G, 0, 0); return; }
+  if (G.over || G.pause > 0 || G.lessonWait) { setStick(G, 0, 0); setSprint(G, false); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.08 + react * 0.4;
   if (b.own === p) {      // on the ball
     if (p.role === 'gk') { const q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q) pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; }
@@ -271,19 +297,19 @@ function honest(G, o, mem) {
     if (st && st.id === 'pass') { const q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q) { pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } }
     if (st && st.id === 'lob') { lob(G, p, { x: 1, z: 0 }); return; }
     const keeper = G.P[11];
-    if (dg < 24 && Math.abs(keeper.x - gx) > 4 && R() < 0.6) { lob(G, p, { x: 1, z: 0 }); return; }
-    if (dg < 19 && Math.abs(p.z) < 15 && (nf > 1.6 || dg < 11)) { const kz = keeper.z, aim = (kz > p.z * 0.1 ? -1 : 1) * (R() < acc ? 1 : -1); shoot(G, p, aim); return; }
+    if (dg > 12 && dg < 24 && Math.abs(keeper.x - gx) > 6 && Math.abs(keeper.x - p.x) > 4 && R() < 0.6) { lob(G, p, { x: 1, z: (R() - 0.5) * 2 }); return; }
+    if (dg < 19 && Math.abs(p.z) < 15 && (nf > 1.6 || dg < 11) && G.t - (p.gotAt || 0) > 0.8) { const kz = keeper.z, aim = (kz > p.z * 0.1 ? -1 : 1) * (R() < acc ? 1 : -1); shoot(G, p, aim); return; }
     if (nf < 2.6 || (nf < 4 && R() < 0.3)) { let q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q && R() > acc) q = null; if (q) { pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } if (R() < 0.3) { const lq = bestTarget(G, p, { x: 1, z: 0 }, true); if (lq) { lob(G, p, { x: lq.x - p.x, z: lq.z - p.z }); return; } } }
     let ax = 0, az = 0; for (const f of team(G, 1)) { const d = dist(f, p); if (d < 7 && f.x > p.x - 2) { ax += (p.x - f.x) / (d * d); az += (p.z - f.z) / (d * d); } }
-    const tx = 1 + ax * 3, tz = az * 6 - p.z * 0.03 * (1 + (R() - 0.5) * (1 - acc)); setStick(G, tx, tz); return; }
+    const tx = 1 + ax * 3, tz = az * 6 - p.z * 0.03 * (1 + (R() - 0.5) * (1 - acc)); setSprint(G, nf > 4.5 && p.st > 0.35 && dg > 20); setStick(G, tx, tz); return; }
   if (b.own && b.own.t === 1) {      // defending: be the nearest man, then go and win it
     const o2 = b.own; let near = null, nd = 1e9; for (const q of team(G, 0)) { if (q.role === 'gk') continue; const d = dist(q, o2); if (d < nd) { nd = d; near = q; } }
     if (near && near !== p && dist(p, o2) > nd + 4) { switchNear(G); return; }
     const d = dist(p, o2), gx = -HL; if (d < (R() < 0.3 ? 2.6 : 1.5) && R() < acc) { tackle(G, p, d > 1.6); return; }
-    const tx = o2.x + o2.vx * 0.25 + (gx - o2.x) * 0.04, tz = o2.z + o2.vz * 0.25; setStick(G, tx - p.x, tz - p.z); return; }
+    const tx = o2.x + o2.vx * 0.25 + (gx - o2.x) * 0.04, tz = o2.z + o2.vz * 0.25; setSprint(G, d > 5 && p.st > 0.2); setStick(G, tx - p.x, tz - p.z); return; }
   if (!b.own) { const d = Math.hypot(b.x - p.x, b.z - p.z); let near = null, nd = 1e9; for (const q of team(G, 0)) { if (q.role === 'gk') continue; const dd = Math.hypot(q.x - b.x, q.z - b.z); if (dd < nd) { nd = dd; near = q; } }
-    if (b.to && b.to.t === 0 && b.to !== p) { G.ctrl = b.to.i; return; } if (b.to === p) { setStick(G, 0, 0); return; } if (near && near !== p && d > nd + 5) { switchNear(G); return; }
-    setStick(G, b.x + b.vx * 0.3 - p.x, b.z + b.vz * 0.3 - p.z); return; }
+    if (b.to && b.to.t === 0 && b.to !== p) { G.ctrl = b.to.i; return; } if (b.to === p) { setStick(G, 0, 0); setSprint(G, d > 8); return; } if (near && near !== p && d > nd + 5) { switchNear(G); return; }
+    setSprint(G, d > 6 && p.st > 0.2); setStick(G, b.x + b.vx * 0.3 - p.x, b.z + b.vz * 0.3 - p.z); return; }
   setStick(G, 0, 0);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.score[0] = G.score[1] + 1; finish(G, true); }

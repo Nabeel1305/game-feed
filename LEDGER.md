@@ -41,7 +41,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 31 | **Penalty Kings** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/SWBovTEMi7HAMNa2C7ksU5) | `games/penalty/index.html` |
 | 32 | **Critter Clash** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/TuMVzQoZa1mLvdrTfXb1iH) | `games/critters/index.html` |
 | 33 | **Rodeo** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/J9F7dBh1m2F7ygUHNic8mQ) | `games/rodeo/index.html` |
-| 34 | **Eleven** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1DRGKnNMJY4GBMnoYjB4Wi) | `games/eleven/index.html` |
+| 34 | **Eleven** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/1DRGKnNMJY4GBMnoYjB4Wi) | `games/eleven/index.html` |
 
 ## What each game is
 
