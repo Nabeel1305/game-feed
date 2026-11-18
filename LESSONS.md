@@ -392,6 +392,14 @@ Everything learned building the first games. Every new game must follow the **ru
 - The kit's frame-time function is called `measure`: the rules' own scorer is `rate(G)` so they do not clash.
 - In a lesson a tap on nothing starts the lesson again, so blind tapping cannot pass it by luck.
 
+### 42. Star Miner (`games/miner/`): one stick, the laser does the cutting
+- **An automatic laser makes a passive player strong**: what keeps blind play from winning is that ore must be scooped
+  (flown over) and carried home into a small ring before the clock runs out. A drifting ship scoops a little, never enough.
+- **A lesson must not be passable by drifting**: rocks side by side let blind drift chain three scoops. One small rock at
+  a time, six metres off in a new direction, with three scoops needed within five seconds of each other, holds.
+- Lay big flat models flat: cylinders rotated about x stand on end toward a top-down camera and read as giant pillars.
+- Everything dangerous is shown first: a flashing red line along a meteor's path 1.1 s before it comes; pirate bolts are slow.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
