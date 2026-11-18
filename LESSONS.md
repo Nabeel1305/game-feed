@@ -368,6 +368,17 @@ Everything learned building the first games. Every new game must follow the **ru
 - Robots time too well: the ordinary drummer's spread is 15 ms + 80 ms x react, and difficulty comes from a narrowing window
   and a crowd that forgives less, not only from speed.
 
+### 40. Strike Alley (`games/bowling/`): bowling, pull back and let go
+- **Lucky strikes are the blind player's way in.** Random rolls strike about one frame in ten; with short games and a big
+  run multiplier a lucky streak beat the target 3% of the time. Ten frames on every scoring level (the longer the game, the
+  less luck counts) and the run multiplier at x1.5 per strike or spare in a row (up to x3) took blind wins to none while
+  ordinary robots still win levels 1-3 about nine times in ten.
+- A ball that leaves the side **after** reaching the pin deck is not a gutter ball: only call GUTTER before the deck.
+- The dotted line of the roll uses the same physics as the game (`pathPts` copies `landX`), so the line is the truth (P3).
+- A low camera (1 m) with a long lens (fov 40) is what makes the pins big enough on a phone; the pin map at the top right
+  shows what is standing for spares.
+- Knocked pins that fly off the lane are `gone` to the rules but stay drawn, lying, until the next ball (`ui.swept`).
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

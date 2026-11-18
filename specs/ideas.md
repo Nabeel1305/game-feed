@@ -59,3 +59,13 @@ PLAYBOOK section H). His shark idea from those notes, and four of mine for a bal
 | 37 | Cairn | stack river stones into a tower by a misty lake; each stone placed by a tap where it should sit; how high before it falls | 1 | 1 | 3D |
 | 38 | Pinball | a 3D table with two flippers (left and right thumb), ramps, targets and missions that change the table | 3 | 2 | 3D |
 | 39 | Drumline | a rhythm game: notes roll toward two drums, tap left and right on the beat; songs unlock as you play | 4 | 2 | 3D |
+
+## Set 7 (18 Nov 2026, evening): "the next five, keep to the same rules... the controls very easy, very engaging". All mine
+(his list is built), for a balanced feed: one fast racer, a creepy-fun explorer, a space miner, a light sport, a calm craft.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 40 | Strike Alley | bowling: drag to line up, drag back and let go to roll, curve by the angle; spares, splits, oil patterns, balls to collect | 2 | 1 | 3D |
+| 41 | Bonsai | grow a little tree through the seasons: tap a branch to prune it, tap a bud to let it grow; match the shape, show it at the festival | 1 | 1 | 3D |
+| 42 | Star Miner | fly a little mining ship with one floating stick: crack asteroids, scoop the ore, dodge rocks and pirates, upgrade the ship | 3 | 1 | 3D |
+| 43 | Ghost Lantern | walk a haunted house with one floating stick; your lantern shows ghosts; hold on one to pull it into the lantern before it reaches you | 4 | 1 | 3D |
+| 44 | Drift Kings | kart racing: the left thumb steers (hold a hard turn to drift and charge a boost), tap the right for your item; a cup of tracks | 4 | 2 | 3D |

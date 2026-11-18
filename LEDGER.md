@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**39 games** so far. Next number: **40**.
+**40 games** so far. Next number: **41**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -47,6 +47,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 37 | **Cairn** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/BpPcd8qSV16eTFHjbge8VZ) | `games/cairn/index.html` |
 | 38 | **Pinball** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/N9X2SHnhm9vdDWEz766jnS) | `games/pinball/index.html` |
 | 39 | **Drumline** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/HAYPXNMsVWFeNWJt24KU9X) | `games/drumline/index.html` |
+| 40 | **Strike Alley** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/ApFYRWS11tYL9ypVPduBxT) | `games/bowling/index.html` |
 
 ## What each game is
 
@@ -89,3 +90,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 37. **Cairn**: The calm one: stack river stones on a boulder by a misty 3D lake; tap to drop the swaying stone, pick slabs or round stones from the basket, three perfect drops find a stone; your finished cairns stay in the shallows.
 38. **Pinball**: A real 3D pinball table: hold the left or right half for each flipper, catch and aim, finish the missions on the backbox (the ramp, the drop targets, the orbit) before the balls are gone; multiplier, extra ball, multiball, trophies.
 39. **Drumline**: A rhythm game in a 3D stadium at halftime: notes roll down two lanes to a snare and a tom, tap left and right on the beat, gold notes for both, drum rolls; the crowd meter, FEVER, a new song every level.
+40. **Strike Alley**: Bowling in a neon alley: touch to line up, pull back and let go; a dotted line shows the curl; spares, strike-outs, balls to collect.
