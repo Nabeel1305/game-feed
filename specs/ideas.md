@@ -49,3 +49,13 @@ Valley (28). Nothing waits in `planned`: the next set starts from his list above
 | 31 | Penalty Kings | a football cup: aim with a tap, time the power; then dive as keeper by reading the kicker's run-up | 3 | 1 | 3D |
 | 32 | Critter Clash | collect critters with types (fire beats leaf...), turn-based battles with taps, catch and train them | 2 | 1 | 3D |
 | 33 | Rodeo | stay on a bucking bull for eight seconds: hold the left or right side to lean against each buck | 4 | 2 | 3D |
+
+## Set 6 (18 Nov 2026, morning): "make another 5 but remember what makes the games engaging" (his longevity notes, now
+PLAYBOOK section H). His shark idea from those notes, and four of mine for a balanced feed.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 35 | Deep Bite | his: a shark that eats smaller fish to grow and flees bigger ones; a valuable fish near a predator is the choice; an aquarium of everything you have eaten | 3 | 1 | 3D |
+| 36 | Powder | snowboard down an endless mountain: lean to carve, tap to jump, tricks in the air; race the ghost of your best run | 4 | 1 | 3D |
+| 37 | Cairn | stack river stones into a tower by a misty lake; each stone placed by a tap where it should sit; how high before it falls | 1 | 1 | 3D |
+| 38 | Pinball | a 3D table with two flippers (left and right thumb), ramps, targets and missions that change the table | 3 | 2 | 3D |
+| 39 | Drumline | a rhythm game: notes roll toward two drums, tap left and right on the beat; songs unlock as you play | 4 | 2 | 3D |

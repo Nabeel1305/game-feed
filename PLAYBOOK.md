@@ -56,6 +56,36 @@ Design principles for every game, from the research done in Nov 2026 (King/Candy
 - **P29 Personal tuning:** log finishes, replays and quick skips; a calm-mode filter; a periodic "least fun 10" review to fix or retire games.
 - **P30 Signature identity:** one memorable hook per game (a sound, a celebration, a character) so 1,000 games don't blur.
 
+## H. Longevity: a reason to begin, to continue and to return (his notes, 18 Nov 2026)
+He sent these and said "remember what makes the games engaging". They come before everything else in this file: a game must
+pass them before any reward system is added. Each new game's spec says how it meets each one (L1-L10), in a line each.
+- **L1 Immediate understanding.** What you control, what you want, what to avoid: learnt by doing in the first seconds, with at
+  most one short prompt. Harder mechanics arrive later, one at a time.
+- **L2 Responsive, satisfying controls.** Moving and acting must feel good before any score matters: predictable, every success
+  answered with a clear, proportionate effect (sound, a little animation, visible growth).
+- **L3 Fair challenge.** Dangers are visible and consistent, so every loss says what to improve. Never a threat that appears on
+  top of the player. Hard is fine; arbitrary is not.
+- **L4 An achievable next goal, on several timescales.** A near goal on screen ("2 more to grow"), the round, the personal best,
+  the next place to unlock. Each with a satisfying moment of completion, and a natural point to stop.
+- **L5 Visible improvement.** Show the player getting better: further, longer, earlier, a route that used to be impossible.
+  The personal best is always in sight (a marker, a ghost), and "I nearly did it" is shown honestly (how close, from the real
+  game, never faked).
+- **L6 Variety within familiar rules.** Same controls, new situations that change decisions (a fast prey, a school, a current),
+  not just new colours.
+- **L7 Meaningful choices.** Two reasonable options with different consequences: the valuable thing near danger, or the safe
+  small thing. Enough information to judge; no option best every time.
+- **L8 Quick retries.** After a narrow loss: one tap and you are going again, within a second. No menus, no ads, no waiting.
+  Easy to leave too.
+- **L9 Personal attachment.** Something that is yours and stays: a collection, a place you built, a favourite. Progress saved
+  reliably; never taken away to pressure a return.
+- **L10 Friendly competition.** Against your own best first (a ghost), later friends or a shared daily challenge with the same
+  conditions. Comparisons that are close and reachable, never the bottom of a huge table.
+- **First five that matter most:** satisfying controls, immediate understanding, fair difficulty, visible improvement, instant
+  retries. Then variety, attachment, competition and discovery. Test: would he want another round before any reward is offered?
+- **For the feed (later, when he asks):** favourites and recently played so a loved game is easy to find again; recommendations
+  from what he replays, saves and skips (with room for variety); a shared challenge link that opens the same game and challenge.
+  Avoid: slow loading, ads after a loss, daily requirements that punish being away.
+
 ## Genre table (✔ strong, ~ light, ✘ avoid)
 | | Fight | Reaction | Physics | Puzzle | Calm | Runner | Sports |
 |---|---|---|---|---|---|---|---|
@@ -196,6 +226,7 @@ Existing games (1–4) use the older helpers that connect straight to `destinati
 10. **Calm check** (calm games only): no timer, no fail, 3–5 colours, soft feedback.
 11. **Dark-pattern check:** nothing from the AVOID list.
 12. **Signature moment:** one line.
+13. **Longevity (H, L1-L10):** a line each in the spec; the near goal and the personal best visible during play; one-tap retry.
 
 ## AVOID (dark patterns; none of these belong in his feed)
 1. Energy or lives timers. → Unlimited free retries.
