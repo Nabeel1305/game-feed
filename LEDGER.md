@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**42 games** so far. Next number: **43**.
+**43 games** so far. Next number: **44**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -50,6 +50,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 40 | **Strike Alley** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/ApFYRWS11tYL9ypVPduBxT) | `games/bowling/index.html` |
 | 41 | **Bonsai** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/FRzkTn7ah218Nz3tL5ZZ3Y) | `games/bonsai/index.html` |
 | 42 | **Star Miner** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1brYRfNx8etgzvfCvpxfyF) | `games/miner/index.html` |
+| 43 | **Ghost Lantern** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/PwJQKnzTmyULwZCjM9TWmD) | `games/lantern/index.html` |
 
 ## What each game is
 
@@ -95,3 +96,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 40. **Strike Alley**: Bowling in a neon alley: touch to line up, pull back and let go; a dotted line shows the curl; spares, strike-outs, balls to collect.
 41. **Bonsai**: Grow a little tree through the seasons into the festival's outline: tap buds to grow, tap branches to prune, flick caterpillars.
 42. **Star Miner**: Fly a little mining ship with one floating stick: the laser cracks rocks by itself, scoop the ore, carry it home before the mothership jumps; meteors and pirates.
+43. **Ghost Lantern**: Walk a haunted house with one floating stick: hold ghosts in your lantern's beam to catch them, turn to the frost of one behind you, keep the oil burning.

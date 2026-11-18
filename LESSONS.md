@@ -400,6 +400,18 @@ Everything learned building the first games. Every new game must follow the **ru
 - Lay big flat models flat: cylinders rotated about x stand on end toward a top-down camera and read as giant pillars.
 - Everything dangerous is shown first: a flashing red line along a meteor's path 1.1 s before it comes; pirate bolts are slow.
 
+### 43. Ghost Lantern (`games/lantern/`): hold them in the light
+- **One stick, two jobs by distance**: inside 40% of the stick you turn on the spot; beyond it you walk. The stick draws its
+  inner ring and says "turn" or "walk", so the split is seen, not explained.
+- **Ghosts that walk into the beam make blind play win.** They now slide round to your side and back when in front of you
+  (and keep apart from each other, so a sweep cannot catch three at once), and the house stirs after 25 s so a player who
+  hides in one room is found. Walking sways the lantern (a third of the pull): standing to aim is the skill.
+- A lit ghost struggling away must not be able to hide in a wall: ghosts stay inside the house, and the beam test stops
+  35 cm short of the ghost so one half through an inner wall still shows.
+- The robot that plays it walks in to about 3.5 m, then stands and holds; it picks the next room by the number of doorways
+  (breadth first), not by straight-line distance, and keeps its choice until that ghost is caught.
+- A dark scene still needs its hero readable: the player's coat and face have a little glow of their own.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
