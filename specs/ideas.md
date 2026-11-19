@@ -110,3 +110,13 @@ take your time... simple but a little more complicated". Five copies of the most
 | 62 | Paint Drop | his example (mixing colours): drop paint blobs; two the same mix into the next colour; reach the goal colour before the jar fills | 2 | 1 | 2D |
 | 63 | Pour | like Water Sort: tap a glass, tap another, pour; sort every colour into its own glass; hidden layers, undo | 1 | 1 | 2D |
 | 64 | Block Party | like Block Blast: drag pieces onto an 8x8 grid; full rows and columns clear; combos; gems and junk | 1 | 1 | 2D |
+
+## Set 12 (19 Nov 2026): "you're a plumber... go to different people's houses and fix their water... another one like Super
+Mario Kart, a racing game, but one that you can do cool things... make up the rest". His two ideas, three of mine (one calm).
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 65 | Plumber | his idea: a day of call-outs; look, find the fault, fix it with the right tool (21 kinds of job: drips, blocked loos, burst pipes, no pressure, no hot water...) | 2 | 1 | 2D |
+| 66 | Stunt Kart | his idea: kart racing with ramps, flips and spins in the air, gliders, boost pads and items; tricks fill a STAR | 4 | 2 | 3D |
+| 67 | Knife Spin | mine: throw knives into a spinning target that reverses; apples, obstacles, boss targets | 3 | 1 | 2D |
+| 68 | Mow It | mine, the calm one: mow lawns into stripes round flower beds, empty the bag, mind the fuel | 1 | 1 | 2D |
+| 69 | Helix Drop | mine: turn the tower so the ball drops through the gaps; red ends it; three in a row and it smashes through | 3 | 1 | 3D |

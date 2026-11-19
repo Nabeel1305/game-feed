@@ -683,6 +683,16 @@ Everything learned building the first games. Every new game must follow the **ru
 - Static layers (garden, hedge, long grass; beds and bin; trees) are painted once and redrawn only when they change:
   33 to 50 frames a second on the slowed test. `ctx` is a `let` in this game's part1 so a layer can borrow it.
 
+### 69. Helix Drop (`games/helix/`): turn, drop, smash
+- The whole game sits on one mapping: the piece under the ball is the one at angle `-theta - pl.a`; the 3D view turns each
+  piece by `-(pl.a + k*SEG)` and the tower group by `-theta`, so what is drawn under the ball is what the rules say is under
+  it. Check it with a gap turned under the ball before anything else.
+- The robot kept dying on chained drops: the fall gets fast. A top falling speed, no red under the gaps of the platform
+  above, and a robot that only turns while there is time (it reads when the ball will land) made a person who looks win.
+- Blind turning won 2 in 2,000 at 16 platforms with little red: each platform is a coin toss for a thumb that does not look,
+  so the first towers are 20 platforms (survival multiplies). Then 0 of 1,984, and an ordinary player still wins all early.
+- Lessons: red 5 of 12 and one-piece gaps, or blind turning gets through the little tower.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
