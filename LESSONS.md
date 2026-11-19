@@ -474,6 +474,16 @@ Everything learned building the first games. Every new game must follow the **ru
   track shows up as a level the robot can never pass, so look at every level in the quality run.
 - `step` must ignore dt = 0 (the first frame, hit-stop): the ground speed divides by dt and the bike vanished as NaN.
 - Again a `//` comment pasted mid-line killed the page: use `/* */` for comments inside a line.
+### 50. Spellshop (`games/spell/`): the story holds the clues
+- Every trouble is data: jar, IN or OUT, rune, the story with **bold** clue words, an optional second jar and other jars that
+  also work (with their own result). 57 of them; the day is dealt from those the shelf can cure.
+- The side effect a customer comes back with tells you what was wrong (each jar has its own funny effect; wrong stir, wrong
+  rune, too strong), so a mistake teaches instead of just failing.
+- With fixes allowed everyone won every level; a pass mark on the day's average (a fixed spell counts 60) made later
+  levels a real test. The robot's chance of picking the right jar falls as the shelf grows, as a person's would.
+- The first lesson must ask for spells that are just right (jar and rune), three in a row: with "good" two in a row, blind
+  tapping passed it by luck.
+- Words split for bold text must keep punctuation on the word before (". I want" looked wrong).
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

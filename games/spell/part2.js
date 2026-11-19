@@ -1,0 +1,202 @@
+// ===================== RULES: Spellshop (game 50, his idea) =====================
+// You are the town's magician. People come in with their troubles, and the story they tell holds the clues: the words point to
+// the jars (every ingredient always means the same thing: rose is love, moonwater sleep, salt protection...), whether the magic
+// must draw something IN or drive it OUT, what it acts on (the heart, the mind, the body, the home, fortune, the road), and how
+// strong it should be. You brew it by hand: pick the jars, pour as much as they need, stir the right way round, trace the rune,
+// and seal it when the brew glows the right colour. A good spell sends them off happy (and they come back on later days with
+// thanks and new troubles). A spell a little wrong goes funny: they come back the same day with a side effect, and you get one
+// chance to put it right. A spell badly wrong: they come back furious, and the day is lost.
+const RULES = [
+  'Read their <b>story</b>: the words are clues. Every jar always means the same thing (🌹 love, 🌙 sleep, 🧂 protection...).',
+  'Pick the <b>jars</b>, then brew: <b>pour</b> as much as they need, <b>stir</b> clockwise to draw it IN or anticlockwise to drive it OUT.',
+  'Trace the <b>rune</b> for what it acts on: ♥ heart, 👁 mind, ✋ body, ⌂ home, ◎ fortune, ✦ the road. <b>Seal</b> it when it glows the ring\'s colour.',
+  'A spell a little wrong goes <b>funny</b>: they come back and you can fix it. Badly wrong, they <b>complain</b> and the day is lost.',
+  'Your <b>Grimoire</b> keeps every meaning you have learned. Happy customers come back with thanks.',
+];
+// the jars: each always means one thing; rarer ones arrive as the levels go on
+const INGS = [
+  { id: 'rose', name: 'Rose petals', icon: '🌹', means: 'love', n: 1, side: 'everyone at the market keeps proposing to me' },
+  { id: 'moon', name: 'Moonwater', icon: '🌙', means: 'sleep and dreams', n: 1, side: 'I fell asleep in my soup. Twice' },
+  { id: 'thistle', name: 'Thistle', icon: '🌵', means: 'courage', n: 1, side: 'I challenged a goose to a duel. I lost' },
+  { id: 'gold', name: 'Gold leaf', icon: '✨', means: 'luck and fortune', n: 1, side: 'I keep finding buttons. Four hundred buttons' },
+  { id: 'mint', name: 'Mint', icon: '🌿', means: 'health', n: 1, side: 'my breath could freeze a pond' },
+  { id: 'salt', name: 'Sea salt', icon: '🧂', means: 'protection', n: 1, side: 'nothing can touch me. Not even my spoon' },
+  { id: 'ash', name: 'Ash', icon: '⚱️', means: 'forgetting and endings', n: 2, side: 'I forgot my own cat\'s name. And the cat' },
+  { id: 'sage', name: 'Sage', icon: '🍃', means: 'clear thinking and memory', n: 2, side: 'I remember every word of every song. Ever' },
+  { id: 'honey', name: 'Honey', icon: '🍯', means: 'friendship and sweet words', n: 3, side: 'the bees follow me home now' },
+  { id: 'feather', name: 'Feather', icon: '🪶', means: 'travel and freedom', n: 3, side: 'I float a little on windy days' },
+  { id: 'iron', name: 'Iron filings', icon: '⚙️', means: 'strength', n: 5, side: 'I bent the door handle saying good morning' },
+  { id: 'silk', name: 'Spider silk', icon: '🕸️', means: 'keeping and binding', n: 5, side: 'I am stuck to my favourite chair' },
+  { id: 'acorn', name: 'Acorn', icon: '🌰', means: 'growth', n: 7, side: 'my beard grows an inch an hour' },
+  { id: 'rain', name: 'Raindrop', icon: '💧', means: 'rain and tears', n: 7, side: 'a little grey cloud follows me about' },
+  { id: 'mirror', name: 'Mirror shard', icon: '🪞', means: 'truth', n: 9, side: 'I told my mother-in-law what I think of her stew' },
+  { id: 'ember', name: 'Ember', icon: '🕯️', means: 'warmth and passion', n: 9, side: 'my hat has caught fire twice today' },
+];
+const RUNES = [
+  { id: 'heart', icon: '♥', name: 'the heart', n: 1, pts: [[0, 0.35], [-0.42, -0.1], [-0.2, -0.38], [0, -0.15], [0.2, -0.38], [0.42, -0.1], [0, 0.35]] },
+  { id: 'eye', icon: '👁', name: 'the mind', n: 1, pts: [[-0.45, 0], [0, -0.28], [0.45, 0], [0, 0.28], [-0.45, 0]] },
+  { id: 'hand', icon: '✋', name: 'the body', n: 1, pts: [[-0.3, 0.38], [-0.3, -0.38], [0.3, -0.38], [0.3, 0.38]] },
+  { id: 'house', icon: '⌂', name: 'the home', n: 2, pts: [[-0.35, 0.38], [-0.35, -0.05], [0, -0.4], [0.35, -0.05], [0.35, 0.38]] },
+  { id: 'coin', icon: '◎', name: 'fortune and things', n: 4, pts: [[0, -0.4], [0.38, 0], [0, 0.4], [-0.38, 0], [0, -0.4]] },
+  { id: 'star', icon: '✦', name: 'the road and the world', n: 4, pts: [[0, -0.42], [0.12, 0.38], [-0.38, -0.12], [0.38, -0.12], [-0.12, 0.38]] },
+];
+// the troubles: [jar, IN or OUT, rune, the story (**clue words**), a second jar if the spell needs two, other jars that would also
+// work (with what happens then)]. Names and amounts are added when a customer comes in.
+const TROUBLES = [
+  ['rose', 'in', 'heart', 'There\'s a baker I **adore**. I want her to **love** me back.'],
+  ['rose', 'out', 'heart', 'A man follows me everywhere with poems. I need his **love** for me **gone**. Kindly.'],
+  ['rose', 'in', 'house', 'My wife and I just argue at home. I want the **love** back **under our roof**.'],
+  ['moon', 'in', 'eye', 'I haven\'t **slept** in weeks. My **head** won\'t stop spinning.'],
+  ['moon', 'out', 'hand', 'My son **sleeps** all day. I need him **awake** and his **legs** working for the harvest.'],
+  ['moon', 'in', 'heart', 'My little one has **nightmares** and **cries** for me. I want her **dreaming** sweetly.', null, [['salt', 'She sleeps safe now, though she says the dreams still knock']]],
+  ['moon', 'out', 'house', 'Something in my **house** keeps everyone **dozing off**. Even the dog. **Drive it out**.'],
+  ['thistle', 'in', 'heart', 'I\'m too **scared** to speak at my sister\'s wedding. Give me **courage**.'],
+  ['thistle', 'in', 'hand', 'I freeze up when I see the **bull**. My **body** won\'t move. I need **nerve**.'],
+  ['thistle', 'out', 'eye', 'My husband is **brave** to the point of **madness**. He wants to wrestle a bear. **Take the bravery down**.'],
+  ['gold', 'in', 'coin', 'My shop has had no **luck** for a year. Bring **fortune** to my **till**.'],
+  ['gold', 'out', 'coin', 'Everything I touch turns to **gold** coins and I can\'t eat. **Take this luck away**!'],
+  ['gold', 'in', 'star', 'I sail tomorrow for the islands. Give my **voyage** some **luck**.', null, [['feather', 'The winds carried her there quick as a gull']]],
+  ['mint', 'in', 'hand', 'This **cough** has kept me in bed for a month. I want to be **healthy** again.'],
+  ['mint', 'in', 'house', 'Everyone in my **house** has a **fever**. Bring **health** back **home**.'],
+  ['mint', 'out', 'eye', 'I worry about my **health** every minute. I need it **out** of my **head**.'],
+  ['salt', 'in', 'house', 'Thieves came twice this month. **Protect** my **home**.'],
+  ['salt', 'in', 'star', 'I walk the forest road at night. Keep me **safe** on the **road**.'],
+  ['salt', 'out', 'heart', 'I\'ve built **walls** round my **heart** after he left. I want to **let people in** again.'],
+  ['ash', 'in', 'eye', 'I can\'t stop thinking about my **old flame**. Help me **forget**.', null, [['sage', 'He thinks of her more clearly now: not quite what he wanted']]],
+  ['ash', 'out', 'eye', 'I keep **forgetting** where I put things. My keys, my glasses, my horse. Make it **stop**.', null, [['sage', 'Never lost a thing since. Not even a sock']]],
+  ['ash', 'in', 'house', 'The old **feud** with my neighbours has gone on too long. Let it **end**, **house** to **house**.'],
+  ['sage', 'in', 'eye', 'I have my big **exam** tomorrow and I can\'t **think straight**.'],
+  ['sage', 'in', 'coin', 'I hid my savings somewhere and can\'t **remember** where. Help me **recall** my **money**.'],
+  ['honey', 'in', 'heart', 'I\'m new in town and so **lonely**. I want **friends**.'],
+  ['honey', 'in', 'coin', 'I need to **convince** the bank to lend me **money**.'],
+  ['honey', 'out', 'house', 'My cousin is **too charming**; he has talked his way into **living in my house**. **Out**!'],
+  ['feather', 'in', 'star', 'I\'ve never left this valley. I want to be **free** to **travel**.'],
+  ['feather', 'out', 'hand', 'My **feet** keep wanting to **wander** off at night. **Ground** me.'],
+  ['feather', 'in', 'heart', 'I feel so **heavy** inside. I want to feel **light** and **free** again.'],
+  ['iron', 'in', 'hand', 'The blacksmith competition is Saturday. I need **strength** in my **arms**.'],
+  ['iron', 'in', 'house', 'My old **house** creaks and leans. Make its **walls strong**.'],
+  ['iron', 'out', 'hand', 'My new **strength** potion from the travelling quack worked **too well**. I crush teacups. **Undo it**.'],
+  ['silk', 'in', 'heart', 'My dog keeps running off. I want him to **stay** **loyal** to me.'],
+  ['silk', 'out', 'house', 'I made a promise to **stay in this house** forever. I need that **bond broken**.'],
+  ['silk', 'in', 'coin', 'Money runs through my fingers. Help me **keep hold** of my **coins**.'],
+  ['acorn', 'in', 'house', 'My **garden** won\'t **grow** a thing. My **land** is bare.'],
+  ['acorn', 'out', 'hand', 'My **nose** keeps **growing**. Don\'t ask why. **Stop it**.'],
+  ['acorn', 'in', 'coin', 'My little business is too **small**. Help it **grow**.'],
+  ['rain', 'in', 'house', 'The **drought** has dried our **well** and **fields**. We need **rain** at home.'],
+  ['rain', 'out', 'heart', 'I can\'t stop **crying** since the funeral. Help my **tears** **dry**.'],
+  ['rain', 'out', 'star', 'It has **rained** on our **road** for forty days. The carts are stuck. **Send it away**.'],
+  ['mirror', 'in', 'eye', 'My business partner **lies** to me. I want to see the **truth**.'],
+  ['mirror', 'in', 'heart', 'My son keeps **secrets** from me. I want him to tell me the **truth**.'],
+  ['mirror', 'out', 'house', 'Since your mirror spell my parrot tells **every truth** in the house. **Quiet** it.'],
+  ['ember', 'in', 'house', 'Winter has come and my **house** is **freezing**. Bring **warmth** home.'],
+  ['ember', 'in', 'heart', 'After thirty years of marriage the **spark** has gone **cold**. Light it again.', null, [['rose', 'He brings her flowers again. It is sweet, but not quite fire']]],
+  ['ember', 'out', 'eye', 'I have a **burning temper**. I need to **cool** my **head**.'],
+  // two-jar spells (from level 4)
+  ['thistle', 'in', 'heart', 'I **love** her but I\'m too **scared** to tell her.', 'rose'],
+  ['salt', 'in', 'star', 'I carry the king\'s **gold** through **bandit** country. Keep it **safe** and **lucky** on the **road**.', 'gold'],
+  ['mint', 'in', 'hand', 'I\'m old and **weak** and always **sick**. I want my **body** **strong** and **healthy**.', 'iron'],
+  ['honey', 'in', 'heart', 'I\'ve quarrelled with my best **friend** and I want her **back**, and to **keep** her this time.', 'silk'],
+  ['sage', 'in', 'eye', 'I must **remember** my lines for the play and stop being **afraid** of the crowd.', 'thistle'],
+  ['acorn', 'in', 'house', 'Our **fields** are **dry** and nothing will **grow**.', 'rain'],
+  ['mirror', 'in', 'heart', 'I want to tell my husband the **truth** about the broken vase, and still have his **love**.', 'rose'],
+  ['ember', 'in', 'house', 'My **home** is **cold** and the bailiffs keep **coming**. Warm it and **protect** it.', 'salt'],
+];
+const AMT = [null, ['Just a **little**, mind.', 'Only a **drop** of it, please.', 'Nothing too **strong**.'], null, ['Make it **strong**. **Very strong**.', 'As **much** as you can.', 'A **big** dose. It\'s **bad**.']];
+const PEOPLE = ['Mrs Pell', 'Old Bram', 'Tilly the baker', 'Farmer Odo', 'Lady Wren', 'Captain Ruff', 'Young Pip', 'Granny Moss', 'Sir Alden', 'Nell the weaver', 'Doctor Quill', 'Hob the miller', 'Widow Flint', 'Master Crake', 'Rosa the singer', 'Little Jem'];
+const PLACES = [{ name: 'Mossbrook' }, { name: 'Raven Hill' }, { name: 'Saltmarsh' }, { name: 'The Old City' }];
+const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
+const UPGRADES = [
+  { id: 'lamp', name: 'Reading lamp', desc: 'Clue words glow in their stories.', max: 1, cost: l => 50 },
+  { id: 'spoon', name: 'Silver spoon', desc: 'Stirring needs one turn, not two.', max: 1, cost: l => 40 },
+  { id: 'hourglass', name: 'Hourglass', desc: 'The seal glows more slowly.', max: 2, cost: l => 40 + l * 45 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Apprentice'], [40, 'Hedge witch'], [130, 'Conjurer'], [320, 'Enchanter'], [700, 'Sorcerer'], [1500, 'Archmage']];
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+  return { N, f, help: !!help, place: placeOf(N), people: Math.round(x(4, 7, 25)), ings: INGS.filter(i => i.n <= N), runes: RUNES.filter(r => r.n <= N), pour: N >= 2, seal: N >= 3, two: N >= 4 ? x(0.25, 0.5, 30) : 0,
+    dirs: N >= 2, amtOn: N >= 2, pass: Math.round(x(60, 84, 30) - (help ? 8 : 0)), sealSpd: x(0.5, 0.9, 30) / (1 + 0.3 * upLv('hourglass')) * (help ? 0.75 : 1), turns: upLv('spoon') ? 1 : 2 }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, done: [], queue: [], cur: null, known: o.known || {} };
+  planDay(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else { G.ev.push({ k: 'start' }); nextCustomer(G); }
+  return G; }
+// the day's customers are dealt: troubles the jars on the shelf can cure, no two alike, a share of two-jar ones
+function planDay(G) { const c = G.cfg, R = G.rnd, have = new Set(c.ings.map(i => i.id)), runes = new Set(c.runes.map(r => r.id));
+  const ok = t => have.has(t[0]) && runes.has(t[2]) && (!t[4] || (c.two && have.has(t[4]))) && (c.dirs || t[1] === 'in'), pool = TROUBLES.filter(ok), ones = pool.filter(t => !t[4]).sort(() => R() - 0.5), twos = pool.filter(t => t[4]).sort(() => R() - 0.5);
+  const nTwo = Math.min(twos.length, Math.round(c.people * c.two)); G.queue = twos.slice(0, nTwo).concat(ones.slice(0, c.people - nTwo)).sort(() => R() - 0.5).map((t, i) => makeVisit(G, t, i)); G.total = G.queue.length; }
+function makeVisit(G, t, i) { const R = G.rnd, c = G.cfg, amt = c.amtOn ? [1, 2, 3][(R() * 3) | 0] : 2, who = PEOPLE[(G.seed + i * 7 + ((R() * 16) | 0)) % PEOPLE.length];
+  let story = t[3]; if (amt !== 2) story += ' ' + pick(R, AMT[amt]);
+  return { id: i, who, story, need: [t[0]].concat(t[4] ? [t[4]] : []), dir: t[1], rune: t[2], amt, alt: t[5] || [], face: (R() * 6) | 0, hat: (R() * 4) | 0 }; }
+function nextCustomer(G) { const ret = G.done.find((d, i) => d.back && !d.seenBack && (G.done.length > i + 1 || !G.queue.length));      /* they come back after the next customer */
+  if (ret) { ret.seenBack = true; G.cur = Object.assign({}, ret.v, { returning: ret }); G.phase = 'back'; G.ev.push({ k: 'back', d: ret }); return; }
+  if (!G.queue.length) return endDay(G);
+  G.cur = G.queue.shift(); startBrew(G); G.ev.push({ k: 'enter', v: G.cur }); }
+function startBrew(G) { G.phase = 'pick'; G.pick = []; G.amount = 0; G.pouring = false; G.stirA = 0; G.stirDir = 0; G.runeId = null; G.sealT = 0; G.sealAcc = null; }
+const PHASES = c => ['pick'].concat(c.pour ? ['pour'] : [], ['stir', 'rune'], c.seal ? ['seal'] : []);
+function nextPhase(G) { const ph = PHASES(G.cfg), i = ph.indexOf(G.phase); if (i < ph.length - 1) { G.phase = ph[i + 1]; G.ev.push({ k: 'phase', p: G.phase }); if (G.phase === 'seal') { G.sealT = 0; G.sealWant = 0.25 + G.rnd() * 0.5; } } else serve(G); }
+// ---------- what you do ----------
+function pickJar(G, id) { if (G.over || G.wait > 0 || G.phase !== 'pick') return false; if (!G.cfg.ings.some(i => i.id === id)) return false;
+  const k2 = G.pick.indexOf(id); if (k2 >= 0) G.pick.splice(k2, 1); else { if (G.pick.length >= 3) return false; G.pick.push(id); } G.ev.push({ k: 'jar', id, on: k2 < 0 }); return true; }
+function brew(G) { if (G.over || G.wait > 0 || G.phase !== 'pick' || !G.pick.length) return false; nextPhase(G); return true; }
+function pourHold(G, on) { if (G.phase !== 'pour' || G.over || G.wait > 0) return false; if (on) { G.pouring = true; return true; } if (!G.pouring) return false; G.pouring = false; G.ev.push({ k: 'poured', a: G.amount }); nextPhase(G); return true; }
+function stirBy(G, da) { if (G.phase !== 'stir' || G.over || G.wait > 0) return false; G.stirA += da; if (Math.abs(G.stirA) >= TAU * G.cfg.turns) { G.stirDir = Math.sign(G.stirA); G.ev.push({ k: 'stirred', dir: G.stirDir }); nextPhase(G); } return true; }
+function drawRune(G, id) { if (G.phase !== 'rune' || G.over || G.wait > 0 || !G.cfg.runes.some(r => r.id === id)) return false; G.runeId = id; G.ev.push({ k: 'rune', id }); nextPhase(G); return true; }
+function seal(G) { if (G.phase !== 'seal' || G.over || G.wait > 0) return false; const ph = (G.sealT * G.cfg.sealSpd) % 1, d = Math.min(Math.abs(ph - G.sealWant), 1 - Math.abs(ph - G.sealWant)); G.sealAcc = clamp(1 - d / 0.15, 0, 1); G.ev.push({ k: 'sealed', acc: G.sealAcc }); serve(G); return true; }
+const sealPhase = G => (G.sealT * G.cfg.sealSpd) % 1;
+// mark the spell and send them off
+function judge(G, v) { const c = G.cfg, P = G.pick; let s = 0, side = null, alt = null, missing = [];
+  const altHit = v.alt.find(a => P.includes(a[0]) && !P.includes(v.need[0]));
+  for (const n of v.need) { if (P.includes(n)) s += 60 / v.need.length; else if (altHit && n === v.need[0]) { s += 60 / v.need.length; alt = altHit[1]; } else missing.push(n); }
+  const extra = P.filter(p => !v.need.includes(p) && !(altHit && p === altHit[0])); s -= extra.length * 18; if (extra.length) side = extra[0];
+  const dir = G.stirDir > 0 ? 'in' : 'out', dirOk = dir === v.dir; s += dirOk ? 15 : 0;
+  const runeOk = G.runeId === v.rune; s += runeOk ? 15 : 0;
+  const amt = G.amount < 0.67 ? 1 : G.amount < 1.33 ? 2 : 3; s += !c.pour ? 5 : amt === v.amt ? 5 : Math.abs(amt - v.amt) === 1 ? 2 : 0; if (c.pour && G.amount > 1.85) { s -= 10; side = side || 'spill'; }
+  s += !c.seal ? 5 : 5 * (G.sealAcc || 0);
+  return { s: Math.round(clamp(s, 0, 100)), side, alt, missing, dirOk, runeOk, amtOk: !c.pour || amt === v.amt, amt }; }
+function serve(G) { const v = G.cur, J = judge(G, v), grade = J.s >= 85 ? 'perfect' : J.s >= 70 ? 'good' : J.s >= 40 ? 'funny' : 'bad';
+  if (v.returning) { const d = v.returning; d.fix = J; d.fixGrade = grade; G.ev.push({ k: 'fixed', grade, J, v }); lessonSee(G, 'fix', grade); if (grade === 'funny' || grade === 'bad') return complaint(G, d); G.wait = 1.8; G.next = () => nextCustomer(G); return; }
+  const d = { v, J, grade, back: grade === 'funny' || grade === 'bad' }; G.done.push(d); G.ev.push({ k: 'served', grade, J, v }); lessonSee(G, 'served', grade, J);
+  G.wait = 1.8; G.next = () => { if (G.lesson) { lessonNext(G); return; } nextCustomer(G); }; }
+function complaint(G, d) { G.ev.push({ k: 'complain', d }); G.wait = 2.2; G.next = () => endDay(G, d); }
+function endDay(G, why) { if (G.lesson) return; const good = G.done.filter(d => !d.back || d.fixGrade === 'good' || d.fixGrade === 'perfect'), avg = G.done.length ? G.done.reduce((a, d) => a + (d.fix ? Math.min(d.fix.s, 60) : d.J.s), 0) / G.done.length : 0;
+  const win = !why && good.length === G.done.length && G.done.length >= G.total && avg >= G.cfg.pass; G.over = win ? 'won' : 'lost';
+  const stars = win ? (avg >= 90 ? 3 : avg >= 78 ? 2 : 1) : 0;
+  G.res = { win, stars, avg: Math.round(avg), pass: G.cfg.pass, served: G.done.length, total: G.total, perfect: G.done.filter(d => d.grade === 'perfect').length, why: why ? why.v.who : null, list: G.done.map(d => ({ who: d.v.who, grade: d.fixGrade ? 'fixed' : d.grade, need: d.v.need })), coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// a returning customer with a funny side effect: brew it again
+function retryBack(G) { if (G.phase !== 'back' || G.over || G.wait > 0) return false; const d = G.cur.returning; if (d.grade === 'bad') { return complaint(G, d); } startBrew(G); G.ev.push({ k: 'retry' }); return true; }
+function step(G, dt) { if (G.over) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  if (G.phase === 'pour' && G.pouring) { G.amount = Math.min(2.2, G.amount + dt * 0.9); }
+  if (G.phase === 'seal') G.sealT += dt; }
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'read', title: 'READ THE STORY', how: 'Their words point to the jar: "love" is 🌹, "sleep" is 🌙... Pick it, BREW, stir round, then tap the rune for what it acts on (♥ heart, 👁 mind, ✋ body). Three spells in a row that are just right.', need: 3 }],
+  2: [{ id: 'dose', title: 'IN OR OUT, AND HOW MUCH', how: 'Stir clockwise to draw it IN, anticlockwise to drive it OUT. Hold to pour: one line for "a little", two for usual, three for "strong". Two good spells in a row.', need: 2 }],
+  3: [{ id: 'seal', title: 'SEAL IT', how: 'Last of all, tap SEAL when the brew glows the colour of the ring round it. Two good spells in a row.', need: 2 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonNext(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonNext(G) { const st = lessonNow(G); if (!st) return; const R = G.rnd, have = new Set(G.cfg.ings.map(i => i.id)), runes = new Set(G.cfg.runes.map(r => r.id));
+  const pool = TROUBLES.filter(t => have.has(t[0]) && runes.has(t[2]) && !t[4] && (G.cfg.dirs || t[1] === 'in')); const t = pool[(R() * pool.length) | 0]; G.cur = makeVisit(G, t, (R() * 99) | 0); startBrew(G); G.ev.push({ k: 'enter', v: G.cur }); }
+function lessonSee(G, what, grade) { const st = lessonNow(G); if (!st) return; let ok = null;
+  if (what === 'served') ok = grade === 'perfect';      /* in a lesson: the right jar AND the right rune */
+  if (ok == null) return;
+  if (!ok) { G.lesson.n = 0; G.done = []; G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 2.6; G.next = () => lessonNext(G); return; }
+  G.lesson.n++; G.done = []; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
+  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.8; G.next = () => { G.done = []; planDay(G); G.ev.push({ k: 'start' }); nextCustomer(G); }; } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: taps a jar, taps BREW (or the next step: a random amount, a random stir, a random rune, the
+// seal whenever), or taps "try again" for someone who came back
+const BLIND = { j: G => { const ing = G.cfg.ings; pickJar(G, ing[(Math.random() * ing.length) | 0].id); },
+  b: G => { if (G.phase === 'pick') brew(G); else if (G.phase === 'pour') { if (!G.pouring) pourHold(G, true); else pourHold(G, false); } else if (G.phase === 'stir') stirBy(G, (Math.random() < 0.5 ? -1 : 1) * TAU * 2.1); else if (G.phase === 'rune') { const r = G.cfg.runes; drawRune(G, r[(Math.random() * r.length) | 0].id); } else if (G.phase === 'seal') seal(G); else if (G.phase === 'back') retryBack(G); } };
+// a magician who looks: reads the clue words (acc: how surely), picks the jars, pours to the line, stirs the right way, the rune,
+// seals near the colour; for a funny return, brews it again
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, v = G.cur, R = Math.random;
+  if (G.over || G.wait > 0 || !v) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0 && G.phase !== 'pour' && G.phase !== 'seal') return; if (mem.t <= 0) mem.t = 0.5 + react * 1.5;
+  if (mem.vid !== v.id + ':' + G.phase.slice(0, 1) + (v.returning ? 'r' : '')) { mem.vid = v.id + ':' + G.phase.slice(0, 1) + (v.returning ? 'r' : ''); mem.err = (R() - 0.5) * (1 - acc) * 0.8; }
+  if (G.phase === 'back') { retryBack(G); return; }
+  if (G.phase === 'pick') { const want = v.need.map(n => R() < 0.45 + acc * 0.55 - (G.cfg.ings.length - 6) * 0.012 ? n : G.cfg.ings[(R() * G.cfg.ings.length) | 0].id); for (const w of want) if (!G.pick.includes(w)) { pickJar(G, w); return; } brew(G); return; }
+  if (G.phase === 'pour') { const target = [0, 0.33, 1, 1.67][v.amt] + mem.err; if (!G.pouring && G.amount < target) { pourHold(G, true); return; } if (G.pouring && G.amount >= target) pourHold(G, false); return; }
+  if (G.phase === 'stir') { const right = R() < 0.6 + acc * 0.4 ? v.dir : (v.dir === 'in' ? 'out' : 'in'); stirBy(G, (right === 'in' ? 1 : -1) * TAU * 2.05); return; }
+  if (G.phase === 'rune') { drawRune(G, R() < 0.6 + acc * 0.4 ? v.rune : pick(R, G.cfg.runes).id); return; }
+  if (G.phase === 'seal') { const ph = sealPhase(G), d = Math.min(Math.abs(ph - G.sealWant), 1 - Math.abs(ph - G.sealWant)); if (d < 0.03 + (1 - acc) * 0.12 + react * 0.04) seal(G); } }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.done = [{ v: { who: 'x', need: [] }, J: { s: 100 }, grade: 'perfect' }]; G.total = 1; G.queue = []; endDay(G); }

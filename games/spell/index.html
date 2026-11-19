@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Spellshop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#160f24;--ink:#f4eefc;--acc:#b58cff;--acc-dark:#5a3a9a;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Cinzel Decorative","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(16,20,31,.55),rgba(6,8,14,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#1d1204;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#1d1204}.lvb.cur small{color:#1d1204}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:50px">Spellshop</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">Read the story. Pick the jars. Brew it right.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="bookBtn">📖 Grimoire</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">GRIMOIRE</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Cinzel Decorative", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('sp.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('sp.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+// ===================== RULES: Spellshop (game 50, his idea) =====================
+// You are the town's magician. People come in with their troubles, and the story they tell holds the clues: the words point to
+// the jars (every ingredient always means the same thing: rose is love, moonwater sleep, salt protection...), whether the magic
+// must draw something IN or drive it OUT, what it acts on (the heart, the mind, the body, the home, fortune, the road), and how
+// strong it should be. You brew it by hand: pick the jars, pour as much as they need, stir the right way round, trace the rune,
+// and seal it when the brew glows the right colour. A good spell sends them off happy (and they come back on later days with
+// thanks and new troubles). A spell a little wrong goes funny: they come back the same day with a side effect, and you get one
+// chance to put it right. A spell badly wrong: they come back furious, and the day is lost.
+const RULES = [
+  'Read their <b>story</b>: the words are clues. Every jar always means the same thing (🌹 love, 🌙 sleep, 🧂 protection...).',
+  'Pick the <b>jars</b>, then brew: <b>pour</b> as much as they need, <b>stir</b> clockwise to draw it IN or anticlockwise to drive it OUT.',
+  'Trace the <b>rune</b> for what it acts on: ♥ heart, 👁 mind, ✋ body, ⌂ home, ◎ fortune, ✦ the road. <b>Seal</b> it when it glows the ring\'s colour.',
+  'A spell a little wrong goes <b>funny</b>: they come back and you can fix it. Badly wrong, they <b>complain</b> and the day is lost.',
+  'Your <b>Grimoire</b> keeps every meaning you have learned. Happy customers come back with thanks.',
+];
+// the jars: each always means one thing; rarer ones arrive as the levels go on
+const INGS = [
+  { id: 'rose', name: 'Rose petals', icon: '🌹', means: 'love', n: 1, side: 'everyone at the market keeps proposing to me' },
+  { id: 'moon', name: 'Moonwater', icon: '🌙', means: 'sleep and dreams', n: 1, side: 'I fell asleep in my soup. Twice' },
+  { id: 'thistle', name: 'Thistle', icon: '🌵', means: 'courage', n: 1, side: 'I challenged a goose to a duel. I lost' },
+  { id: 'gold', name: 'Gold leaf', icon: '✨', means: 'luck and fortune', n: 1, side: 'I keep finding buttons. Four hundred buttons' },
+  { id: 'mint', name: 'Mint', icon: '🌿', means: 'health', n: 1, side: 'my breath could freeze a pond' },
+  { id: 'salt', name: 'Sea salt', icon: '🧂', means: 'protection', n: 1, side: 'nothing can touch me. Not even my spoon' },
+  { id: 'ash', name: 'Ash', icon: '⚱️', means: 'forgetting and endings', n: 2, side: 'I forgot my own cat\'s name. And the cat' },
+  { id: 'sage', name: 'Sage', icon: '🍃', means: 'clear thinking and memory', n: 2, side: 'I remember every word of every song. Ever' },
+  { id: 'honey', name: 'Honey', icon: '🍯', means: 'friendship and sweet words', n: 3, side: 'the bees follow me home now' },
+  { id: 'feather', name: 'Feather', icon: '🪶', means: 'travel and freedom', n: 3, side: 'I float a little on windy days' },
+  { id: 'iron', name: 'Iron filings', icon: '⚙️', means: 'strength', n: 5, side: 'I bent the door handle saying good morning' },
+  { id: 'silk', name: 'Spider silk', icon: '🕸️', means: 'keeping and binding', n: 5, side: 'I am stuck to my favourite chair' },
+  { id: 'acorn', name: 'Acorn', icon: '🌰', means: 'growth', n: 7, side: 'my beard grows an inch an hour' },
+  { id: 'rain', name: 'Raindrop', icon: '💧', means: 'rain and tears', n: 7, side: 'a little grey cloud follows me about' },
+  { id: 'mirror', name: 'Mirror shard', icon: '🪞', means: 'truth', n: 9, side: 'I told my mother-in-law what I think of her stew' },
+  { id: 'ember', name: 'Ember', icon: '🕯️', means: 'warmth and passion', n: 9, side: 'my hat has caught fire twice today' },
+];
+const RUNES = [
+  { id: 'heart', icon: '♥', name: 'the heart', n: 1, pts: [[0, 0.35], [-0.42, -0.1], [-0.2, -0.38], [0, -0.15], [0.2, -0.38], [0.42, -0.1], [0, 0.35]] },
+  { id: 'eye', icon: '👁', name: 'the mind', n: 1, pts: [[-0.45, 0], [0, -0.28], [0.45, 0], [0, 0.28], [-0.45, 0]] },
+  { id: 'hand', icon: '✋', name: 'the body', n: 1, pts: [[-0.3, 0.38], [-0.3, -0.38], [0.3, -0.38], [0.3, 0.38]] },
+  { id: 'house', icon: '⌂', name: 'the home', n: 2, pts: [[-0.35, 0.38], [-0.35, -0.05], [0, -0.4], [0.35, -0.05], [0.35, 0.38]] },
+  { id: 'coin', icon: '◎', name: 'fortune and things', n: 4, pts: [[0, -0.4], [0.38, 0], [0, 0.4], [-0.38, 0], [0, -0.4]] },
+  { id: 'star', icon: '✦', name: 'the road and the world', n: 4, pts: [[0, -0.42], [0.12, 0.38], [-0.38, -0.12], [0.38, -0.12], [-0.12, 0.38]] },
+];
+// the troubles: [jar, IN or OUT, rune, the story (**clue words**), a second jar if the spell needs two, other jars that would also
+// work (with what happens then)]. Names and amounts are added when a customer comes in.
+const TROUBLES = [
+  ['rose', 'in', 'heart', 'There\'s a baker I **adore**. I want her to **love** me back.'],
+  ['rose', 'out', 'heart', 'A man follows me everywhere with poems. I need his **love** for me **gone**. Kindly.'],
+  ['rose', 'in', 'house', 'My wife and I just argue at home. I want the **love** back **under our roof**.'],
+  ['moon', 'in', 'eye', 'I haven\'t **slept** in weeks. My **head** won\'t stop spinning.'],
+  ['moon', 'out', 'hand', 'My son **sleeps** all day. I need him **awake** and his **legs** working for the harvest.'],
+  ['moon', 'in', 'heart', 'My little one has **nightmares** and **cries** for me. I want her **dreaming** sweetly.', null, [['salt', 'She sleeps safe now, though she says the dreams still knock']]],
+  ['moon', 'out', 'house', 'Something in my **house** keeps everyone **dozing off**. Even the dog. **Drive it out**.'],
+  ['thistle', 'in', 'heart', 'I\'m too **scared** to speak at my sister\'s wedding. Give me **courage**.'],
+  ['thistle', 'in', 'hand', 'I freeze up when I see the **bull**. My **body** won\'t move. I need **nerve**.'],
+  ['thistle', 'out', 'eye', 'My husband is **brave** to the point of **madness**. He wants to wrestle a bear. **Take the bravery down**.'],
+  ['gold', 'in', 'coin', 'My shop has had no **luck** for a year. Bring **fortune** to my **till**.'],
+  ['gold', 'out', 'coin', 'Everything I touch turns to **gold** coins and I can\'t eat. **Take this luck away**!'],
+  ['gold', 'in', 'star', 'I sail tomorrow for the islands. Give my **voyage** some **luck**.', null, [['feather', 'The winds carried her there quick as a gull']]],
+  ['mint', 'in', 'hand', 'This **cough** has kept me in bed for a month. I want to be **healthy** again.'],
+  ['mint', 'in', 'house', 'Everyone in my **house** has a **fever**. Bring **health** back **home**.'],
+  ['mint', 'out', 'eye', 'I worry about my **health** every minute. I need it **out** of my **head**.'],
+  ['salt', 'in', 'house', 'Thieves came twice this month. **Protect** my **home**.'],
+  ['salt', 'in', 'star', 'I walk the forest road at night. Keep me **safe** on the **road**.'],
+  ['salt', 'out', 'heart', 'I\'ve built **walls** round my **heart** after he left. I want to **let people in** again.'],
+  ['ash', 'in', 'eye', 'I can\'t stop thinking about my **old flame**. Help me **forget**.', null, [['sage', 'He thinks of her more clearly now: not quite what he wanted']]],
+  ['ash', 'out', 'eye', 'I keep **forgetting** where I put things. My keys, my glasses, my horse. Make it **stop**.', null, [['sage', 'Never lost a thing since. Not even a sock']]],
+  ['ash', 'in', 'house', 'The old **feud** with my neighbours has gone on too long. Let it **end**, **house** to **house**.'],
+  ['sage', 'in', 'eye', 'I have my big **exam** tomorrow and I can\'t **think straight**.'],
+  ['sage', 'in', 'coin', 'I hid my savings somewhere and can\'t **remember** where. Help me **recall** my **money**.'],
+  ['honey', 'in', 'heart', 'I\'m new in town and so **lonely**. I want **friends**.'],
+  ['honey', 'in', 'coin', 'I need to **convince** the bank to lend me **money**.'],
+  ['honey', 'out', 'house', 'My cousin is **too charming**; he has talked his way into **living in my house**. **Out**!'],
+  ['feather', 'in', 'star', 'I\'ve never left this valley. I want to be **free** to **travel**.'],
+  ['feather', 'out', 'hand', 'My **feet** keep wanting to **wander** off at night. **Ground** me.'],
+  ['feather', 'in', 'heart', 'I feel so **heavy** inside. I want to feel **light** and **free** again.'],
+  ['iron', 'in', 'hand', 'The blacksmith competition is Saturday. I need **strength** in my **arms**.'],
+  ['iron', 'in', 'house', 'My old **house** creaks and leans. Make its **walls strong**.'],
+  ['iron', 'out', 'hand', 'My new **strength** potion from the travelling quack worked **too well**. I crush teacups. **Undo it**.'],
+  ['silk', 'in', 'heart', 'My dog keeps running off. I want him to **stay** **loyal** to me.'],
+  ['silk', 'out', 'house', 'I made a promise to **stay in this house** forever. I need that **bond broken**.'],
+  ['silk', 'in', 'coin', 'Money runs through my fingers. Help me **keep hold** of my **coins**.'],
+  ['acorn', 'in', 'house', 'My **garden** won\'t **grow** a thing. My **land** is bare.'],
+  ['acorn', 'out', 'hand', 'My **nose** keeps **growing**. Don\'t ask why. **Stop it**.'],
+  ['acorn', 'in', 'coin', 'My little business is too **small**. Help it **grow**.'],
+  ['rain', 'in', 'house', 'The **drought** has dried our **well** and **fields**. We need **rain** at home.'],
+  ['rain', 'out', 'heart', 'I can\'t stop **crying** since the funeral. Help my **tears** **dry**.'],
+  ['rain', 'out', 'star', 'It has **rained** on our **road** for forty days. The carts are stuck. **Send it away**.'],
+  ['mirror', 'in', 'eye', 'My business partner **lies** to me. I want to see the **truth**.'],
+  ['mirror', 'in', 'heart', 'My son keeps **secrets** from me. I want him to tell me the **truth**.'],
+  ['mirror', 'out', 'house', 'Since your mirror spell my parrot tells **every truth** in the house. **Quiet** it.'],
+  ['ember', 'in', 'house', 'Winter has come and my **house** is **freezing**. Bring **warmth** home.'],
+  ['ember', 'in', 'heart', 'After thirty years of marriage the **spark** has gone **cold**. Light it again.', null, [['rose', 'He brings her flowers again. It is sweet, but not quite fire']]],
+  ['ember', 'out', 'eye', 'I have a **burning temper**. I need to **cool** my **head**.'],
+  // two-jar spells (from level 4)
+  ['thistle', 'in', 'heart', 'I **love** her but I\'m too **scared** to tell her.', 'rose'],
+  ['salt', 'in', 'star', 'I carry the king\'s **gold** through **bandit** country. Keep it **safe** and **lucky** on the **road**.', 'gold'],
+  ['mint', 'in', 'hand', 'I\'m old and **weak** and always **sick**. I want my **body** **strong** and **healthy**.', 'iron'],
+  ['honey', 'in', 'heart', 'I\'ve quarrelled with my best **friend** and I want her **back**, and to **keep** her this time.', 'silk'],
+  ['sage', 'in', 'eye', 'I must **remember** my lines for the play and stop being **afraid** of the crowd.', 'thistle'],
+  ['acorn', 'in', 'house', 'Our **fields** are **dry** and nothing will **grow**.', 'rain'],
+  ['mirror', 'in', 'heart', 'I want to tell my husband the **truth** about the broken vase, and still have his **love**.', 'rose'],
+  ['ember', 'in', 'house', 'My **home** is **cold** and the bailiffs keep **coming**. Warm it and **protect** it.', 'salt'],
+];
+const AMT = [null, ['Just a **little**, mind.', 'Only a **drop** of it, please.', 'Nothing too **strong**.'], null, ['Make it **strong**. **Very strong**.', 'As **much** as you can.', 'A **big** dose. It\'s **bad**.']];
+const PEOPLE = ['Mrs Pell', 'Old Bram', 'Tilly the baker', 'Farmer Odo', 'Lady Wren', 'Captain Ruff', 'Young Pip', 'Granny Moss', 'Sir Alden', 'Nell the weaver', 'Doctor Quill', 'Hob the miller', 'Widow Flint', 'Master Crake', 'Rosa the singer', 'Little Jem'];
+const PLACES = [{ name: 'Mossbrook' }, { name: 'Raven Hill' }, { name: 'Saltmarsh' }, { name: 'The Old City' }];
+const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
+const UPGRADES = [
+  { id: 'lamp', name: 'Reading lamp', desc: 'Clue words glow in their stories.', max: 1, cost: l => 50 },
+  { id: 'spoon', name: 'Silver spoon', desc: 'Stirring needs one turn, not two.', max: 1, cost: l => 40 },
+  { id: 'hourglass', name: 'Hourglass', desc: 'The seal glows more slowly.', max: 2, cost: l => 40 + l * 45 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Apprentice'], [40, 'Hedge witch'], [130, 'Conjurer'], [320, 'Enchanter'], [700, 'Sorcerer'], [1500, 'Archmage']];
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+  return { N, f, help: !!help, place: placeOf(N), people: Math.round(x(4, 7, 25)), ings: INGS.filter(i => i.n <= N), runes: RUNES.filter(r => r.n <= N), pour: N >= 2, seal: N >= 3, two: N >= 4 ? x(0.25, 0.5, 30) : 0,
+    dirs: N >= 2, amtOn: N >= 2, pass: Math.round(x(60, 84, 30) - (help ? 8 : 0)), sealSpd: x(0.5, 0.9, 30) / (1 + 0.3 * upLv('hourglass')) * (help ? 0.75 : 1), turns: upLv('spoon') ? 1 : 2 }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, done: [], queue: [], cur: null, known: o.known || {} };
+  planDay(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else { G.ev.push({ k: 'start' }); nextCustomer(G); }
+  return G; }
+// the day's customers are dealt: troubles the jars on the shelf can cure, no two alike, a share of two-jar ones
+function planDay(G) { const c = G.cfg, R = G.rnd, have = new Set(c.ings.map(i => i.id)), runes = new Set(c.runes.map(r => r.id));
+  const ok = t => have.has(t[0]) && runes.has(t[2]) && (!t[4] || (c.two && have.has(t[4]))) && (c.dirs || t[1] === 'in'), pool = TROUBLES.filter(ok), ones = pool.filter(t => !t[4]).sort(() => R() - 0.5), twos = pool.filter(t => t[4]).sort(() => R() - 0.5);
+  const nTwo = Math.min(twos.length, Math.round(c.people * c.two)); G.queue = twos.slice(0, nTwo).concat(ones.slice(0, c.people - nTwo)).sort(() => R() - 0.5).map((t, i) => makeVisit(G, t, i)); G.total = G.queue.length; }
+function makeVisit(G, t, i) { const R = G.rnd, c = G.cfg, amt = c.amtOn ? [1, 2, 3][(R() * 3) | 0] : 2, who = PEOPLE[(G.seed + i * 7 + ((R() * 16) | 0)) % PEOPLE.length];
+  let story = t[3]; if (amt !== 2) story += ' ' + pick(R, AMT[amt]);
+  return { id: i, who, story, need: [t[0]].concat(t[4] ? [t[4]] : []), dir: t[1], rune: t[2], amt, alt: t[5] || [], face: (R() * 6) | 0, hat: (R() * 4) | 0 }; }
+function nextCustomer(G) { const ret = G.done.find((d, i) => d.back && !d.seenBack && (G.done.length > i + 1 || !G.queue.length));      /* they come back after the next customer */
+  if (ret) { ret.seenBack = true; G.cur = Object.assign({}, ret.v, { returning: ret }); G.phase = 'back'; G.ev.push({ k: 'back', d: ret }); return; }
+  if (!G.queue.length) return endDay(G);
+  G.cur = G.queue.shift(); startBrew(G); G.ev.push({ k: 'enter', v: G.cur }); }
+function startBrew(G) { G.phase = 'pick'; G.pick = []; G.amount = 0; G.pouring = false; G.stirA = 0; G.stirDir = 0; G.runeId = null; G.sealT = 0; G.sealAcc = null; }
+const PHASES = c => ['pick'].concat(c.pour ? ['pour'] : [], ['stir', 'rune'], c.seal ? ['seal'] : []);
+function nextPhase(G) { const ph = PHASES(G.cfg), i = ph.indexOf(G.phase); if (i < ph.length - 1) { G.phase = ph[i + 1]; G.ev.push({ k: 'phase', p: G.phase }); if (G.phase === 'seal') { G.sealT = 0; G.sealWant = 0.25 + G.rnd() * 0.5; } } else serve(G); }
+// ---------- what you do ----------
+function pickJar(G, id) { if (G.over || G.wait > 0 || G.phase !== 'pick') return false; if (!G.cfg.ings.some(i => i.id === id)) return false;
+  const k2 = G.pick.indexOf(id); if (k2 >= 0) G.pick.splice(k2, 1); else { if (G.pick.length >= 3) return false; G.pick.push(id); } G.ev.push({ k: 'jar', id, on: k2 < 0 }); return true; }
+function brew(G) { if (G.over || G.wait > 0 || G.phase !== 'pick' || !G.pick.length) return false; nextPhase(G); return true; }
+function pourHold(G, on) { if (G.phase !== 'pour' || G.over || G.wait > 0) return false; if (on) { G.pouring = true; return true; } if (!G.pouring) return false; G.pouring = false; G.ev.push({ k: 'poured', a: G.amount }); nextPhase(G); return true; }
+function stirBy(G, da) { if (G.phase !== 'stir' || G.over || G.wait > 0) return false; G.stirA += da; if (Math.abs(G.stirA) >= TAU * G.cfg.turns) { G.stirDir = Math.sign(G.stirA); G.ev.push({ k: 'stirred', dir: G.stirDir }); nextPhase(G); } return true; }
+function drawRune(G, id) { if (G.phase !== 'rune' || G.over || G.wait > 0 || !G.cfg.runes.some(r => r.id === id)) return false; G.runeId = id; G.ev.push({ k: 'rune', id }); nextPhase(G); return true; }
+function seal(G) { if (G.phase !== 'seal' || G.over || G.wait > 0) return false; const ph = (G.sealT * G.cfg.sealSpd) % 1, d = Math.min(Math.abs(ph - G.sealWant), 1 - Math.abs(ph - G.sealWant)); G.sealAcc = clamp(1 - d / 0.15, 0, 1); G.ev.push({ k: 'sealed', acc: G.sealAcc }); serve(G); return true; }
+const sealPhase = G => (G.sealT * G.cfg.sealSpd) % 1;
+// mark the spell and send them off
+function judge(G, v) { const c = G.cfg, P = G.pick; let s = 0, side = null, alt = null, missing = [];
+  const altHit = v.alt.find(a => P.includes(a[0]) && !P.includes(v.need[0]));
+  for (const n of v.need) { if (P.includes(n)) s += 60 / v.need.length; else if (altHit && n === v.need[0]) { s += 60 / v.need.length; alt = altHit[1]; } else missing.push(n); }
+  const extra = P.filter(p => !v.need.includes(p) && !(altHit && p === altHit[0])); s -= extra.length * 18; if (extra.length) side = extra[0];
+  const dir = G.stirDir > 0 ? 'in' : 'out', dirOk = dir === v.dir; s += dirOk ? 15 : 0;
+  const runeOk = G.runeId === v.rune; s += runeOk ? 15 : 0;
+  const amt = G.amount < 0.67 ? 1 : G.amount < 1.33 ? 2 : 3; s += !c.pour ? 5 : amt === v.amt ? 5 : Math.abs(amt - v.amt) === 1 ? 2 : 0; if (c.pour && G.amount > 1.85) { s -= 10; side = side || 'spill'; }
+  s += !c.seal ? 5 : 5 * (G.sealAcc || 0);
+  return { s: Math.round(clamp(s, 0, 100)), side, alt, missing, dirOk, runeOk, amtOk: !c.pour || amt === v.amt, amt }; }
+function serve(G) { const v = G.cur, J = judge(G, v), grade = J.s >= 85 ? 'perfect' : J.s >= 70 ? 'good' : J.s >= 40 ? 'funny' : 'bad';
+  if (v.returning) { const d = v.returning; d.fix = J; d.fixGrade = grade; G.ev.push({ k: 'fixed', grade, J, v }); lessonSee(G, 'fix', grade); if (grade === 'funny' || grade === 'bad') return complaint(G, d); G.wait = 1.8; G.next = () => nextCustomer(G); return; }
+  const d = { v, J, grade, back: grade === 'funny' || grade === 'bad' }; G.done.push(d); G.ev.push({ k: 'served', grade, J, v }); lessonSee(G, 'served', grade, J);
+  G.wait = 1.8; G.next = () => { if (G.lesson) { lessonNext(G); return; } nextCustomer(G); }; }
+function complaint(G, d) { G.ev.push({ k: 'complain', d }); G.wait = 2.2; G.next = () => endDay(G, d); }
+function endDay(G, why) { if (G.lesson) return; const good = G.done.filter(d => !d.back || d.fixGrade === 'good' || d.fixGrade === 'perfect'), avg = G.done.length ? G.done.reduce((a, d) => a + (d.fix ? Math.min(d.fix.s, 60) : d.J.s), 0) / G.done.length : 0;
+  const win = !why && good.length === G.done.length && G.done.length >= G.total && avg >= G.cfg.pass; G.over = win ? 'won' : 'lost';
+  const stars = win ? (avg >= 90 ? 3 : avg >= 78 ? 2 : 1) : 0;
+  G.res = { win, stars, avg: Math.round(avg), pass: G.cfg.pass, served: G.done.length, total: G.total, perfect: G.done.filter(d => d.grade === 'perfect').length, why: why ? why.v.who : null, list: G.done.map(d => ({ who: d.v.who, grade: d.fixGrade ? 'fixed' : d.grade, need: d.v.need })), coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// a returning customer with a funny side effect: brew it again
+function retryBack(G) { if (G.phase !== 'back' || G.over || G.wait > 0) return false; const d = G.cur.returning; if (d.grade === 'bad') { return complaint(G, d); } startBrew(G); G.ev.push({ k: 'retry' }); return true; }
+function step(G, dt) { if (G.over) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  if (G.phase === 'pour' && G.pouring) { G.amount = Math.min(2.2, G.amount + dt * 0.9); }
+  if (G.phase === 'seal') G.sealT += dt; }
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'read', title: 'READ THE STORY', how: 'Their words point to the jar: "love" is 🌹, "sleep" is 🌙... Pick it, BREW, stir round, then tap the rune for what it acts on (♥ heart, 👁 mind, ✋ body). Three spells in a row that are just right.', need: 3 }],
+  2: [{ id: 'dose', title: 'IN OR OUT, AND HOW MUCH', how: 'Stir clockwise to draw it IN, anticlockwise to drive it OUT. Hold to pour: one line for "a little", two for usual, three for "strong". Two good spells in a row.', need: 2 }],
+  3: [{ id: 'seal', title: 'SEAL IT', how: 'Last of all, tap SEAL when the brew glows the colour of the ring round it. Two good spells in a row.', need: 2 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonNext(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonNext(G) { const st = lessonNow(G); if (!st) return; const R = G.rnd, have = new Set(G.cfg.ings.map(i => i.id)), runes = new Set(G.cfg.runes.map(r => r.id));
+  const pool = TROUBLES.filter(t => have.has(t[0]) && runes.has(t[2]) && !t[4] && (G.cfg.dirs || t[1] === 'in')); const t = pool[(R() * pool.length) | 0]; G.cur = makeVisit(G, t, (R() * 99) | 0); startBrew(G); G.ev.push({ k: 'enter', v: G.cur }); }
+function lessonSee(G, what, grade) { const st = lessonNow(G); if (!st) return; let ok = null;
+  if (what === 'served') ok = grade === 'perfect';      /* in a lesson: the right jar AND the right rune */
+  if (ok == null) return;
+  if (!ok) { G.lesson.n = 0; G.done = []; G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 2.6; G.next = () => lessonNext(G); return; }
+  G.lesson.n++; G.done = []; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
+  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.8; G.next = () => { G.done = []; planDay(G); G.ev.push({ k: 'start' }); nextCustomer(G); }; } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: taps a jar, taps BREW (or the next step: a random amount, a random stir, a random rune, the
+// seal whenever), or taps "try again" for someone who came back
+const BLIND = { j: G => { const ing = G.cfg.ings; pickJar(G, ing[(Math.random() * ing.length) | 0].id); },
+  b: G => { if (G.phase === 'pick') brew(G); else if (G.phase === 'pour') { if (!G.pouring) pourHold(G, true); else pourHold(G, false); } else if (G.phase === 'stir') stirBy(G, (Math.random() < 0.5 ? -1 : 1) * TAU * 2.1); else if (G.phase === 'rune') { const r = G.cfg.runes; drawRune(G, r[(Math.random() * r.length) | 0].id); } else if (G.phase === 'seal') seal(G); else if (G.phase === 'back') retryBack(G); } };
+// a magician who looks: reads the clue words (acc: how surely), picks the jars, pours to the line, stirs the right way, the rune,
+// seals near the colour; for a funny return, brews it again
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, v = G.cur, R = Math.random;
+  if (G.over || G.wait > 0 || !v) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0 && G.phase !== 'pour' && G.phase !== 'seal') return; if (mem.t <= 0) mem.t = 0.5 + react * 1.5;
+  if (mem.vid !== v.id + ':' + G.phase.slice(0, 1) + (v.returning ? 'r' : '')) { mem.vid = v.id + ':' + G.phase.slice(0, 1) + (v.returning ? 'r' : ''); mem.err = (R() - 0.5) * (1 - acc) * 0.8; }
+  if (G.phase === 'back') { retryBack(G); return; }
+  if (G.phase === 'pick') { const want = v.need.map(n => R() < 0.45 + acc * 0.55 - (G.cfg.ings.length - 6) * 0.012 ? n : G.cfg.ings[(R() * G.cfg.ings.length) | 0].id); for (const w of want) if (!G.pick.includes(w)) { pickJar(G, w); return; } brew(G); return; }
+  if (G.phase === 'pour') { const target = [0, 0.33, 1, 1.67][v.amt] + mem.err; if (!G.pouring && G.amount < target) { pourHold(G, true); return; } if (G.pouring && G.amount >= target) pourHold(G, false); return; }
+  if (G.phase === 'stir') { const right = R() < 0.6 + acc * 0.4 ? v.dir : (v.dir === 'in' ? 'out' : 'in'); stirBy(G, (right === 'in' ? 1 : -1) * TAU * 2.05); return; }
+  if (G.phase === 'rune') { drawRune(G, R() < 0.6 + acc * 0.4 ? v.rune : pick(R, G.cfg.runes).id); return; }
+  if (G.phase === 'seal') { const ph = sealPhase(G), d = Math.min(Math.abs(ph - G.sealWant), 1 - Math.abs(ph - G.sealWant)); if (d < 0.03 + (1 - acc) * 0.12 + react * 0.04) seal(G); } }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.done = [{ v: { who: 'x', need: [] }, J: { s: 100 }, grade: 'perfect' }]; G.total = 1; G.queue = []; endDay(G); }
+// ===================== DRAW + JUICE: the magician's shop (2D on purpose: words, jars and runes read best flat) =====================
+// Candlelit shop: the customer across the counter (their face shows how they feel), their story in a parchment bubble with the
+// clue words in bold, the cauldron bubbling on its fire in the middle (its brew takes the colour of what is in it), and below it
+// whatever the step needs: the shelf of jars, the pouring gauge, the stirring ring, the runes, the seal with its coloured ring.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, bgC = null, mood = 0, speech = null, trace = null;
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 2.5 }); } }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], s = S1(), x = 10, w = W - 20, y = 42 * s; ctx.save(); ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 40 * s + lines.length * 16 * s;
+  ctx.fillStyle = 'rgba(16,10,4,.9)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText(`LESSON: ${st.title} · ${D.n} OF ${st.need}`, x + 12, y + 8 * s);
+  ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 28 * s + i * 16 * s)); ctx.restore(); }
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g == null ? 300 : p.g) * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 18; } while (TXT.length && TXT[0].t > 1.6) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; } }
+const ingOf = id => INGS.find(i => i.id === id), runeOf = id => RUNES.find(r => r.id === id);
+const knownSet = () => { const k = (typeof HEADLESS !== 'undefined' && HEADLESS) ? {} : (store.get('known', {}) || {}); return k; };
+const knows = id => ingOf(id).n <= 5 || !!knownSet()[id];
+// where everything is
+function lay() { const s = S1(), cx = W / 2, top = 44 * s;
+  const C = { x: cx, y: H * 0.47, r: Math.min(W * 0.26, H * 0.11) }, panelY = H * 0.62, ings = G ? G.cfg.ings : INGS.slice(0, 6), cols = 4, jw = (W - 30) / cols, jh = Math.min(64 * s, (H * 0.27) / Math.ceil(ings.length / cols) - 6);
+  const jars = ings.map((g, i) => ({ id: g.id, x: 15 + (i % cols) * jw + 3, y: panelY + Math.floor(i / cols) * (jh + 6), w: jw - 6, h: jh }));
+  const rs = G ? G.cfg.runes : RUNES.slice(0, 3), rw = Math.min(70 * s, (W - 30) / rs.length - 8), runes = rs.map((r, i) => ({ id: r.id, x: W / 2 + (i - (rs.length - 1) / 2) * (rw + 8) - rw / 2, y: panelY + 30 * s, w: rw, h: rw }));
+  return { s, top, C, panelY, jars, runes, act: { x: 24, y: H - 74 * s, w: W - 48, h: 54 * s }, gauge: { x: W - 56 * s, y: C.y - C.r * 1.4, w: 30 * s, h: C.r * 2.4 }, who: { x: 62 * s, y: H * 0.19, r: 40 * s }, bub: { x: 118 * s, y: top + 30 * s, w: W - 128 * s, h: H * 0.17 } }; }
+const MIXC = { rose: '#ff5a8a', moon: '#6a7aff', thistle: '#b05aff', gold: '#ffd040', mint: '#4ae08a', salt: '#e8eef8', ash: '#8a8a8a', sage: '#8ac06a', honey: '#ffb030', feather: '#c8e0ff', iron: '#7a8a9a', silk: '#e0e0f0', acorn: '#a0703a', rain: '#4ab0ff', mirror: '#d0f0ff', ember: '#ff6a2a' };
+function brewCol(G) { if (!G.pick.length) return '#3a5a3a'; const cs = G.pick.map(id => MIXC[id]); return cs[Math.floor(G.t * 1.5) % cs.length]; }
+function shopBg() { const w = Math.round(W * DPR), h = Math.round(H * DPR); if (bgC && bgC.width === w && bgC.height === h) return bgC; bgC = document.createElement('canvas'); bgC.width = w; bgC.height = h; const g = bgC.getContext('2d'); g.scale(DPR, DPR);
+  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#2a1a3a'); gr.addColorStop(0.55, '#3a2438'); gr.addColorStop(1, '#1a1018'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  g.fillStyle = 'rgba(255,255,255,.03)'; for (let y = 0; y < H * 0.6; y += 30) for (let x = (y / 30) % 2 * 25; x < W; x += 50) g.fillRect(x, y, 48, 28);      // stone wall
+  g.fillStyle = '#4a2e1e'; g.fillRect(0, H * 0.585, W, H * 0.03); g.fillStyle = '#2a1a12'; g.fillRect(0, H * 0.615, W, H);      // the counter
+  // shelves of bottles in the dark behind
+  for (const sy of [0.32]) { g.fillStyle = '#3a2416'; g.fillRect(0, H * sy, W * 0.22, 5); g.fillRect(W * 0.78, H * sy, W * 0.22, 5); for (let i = 0; i < 8; i++) { const x = (i < 4 ? 6 + i * W * 0.05 : W * 0.6 + i * W * 0.05), hh = 14 + (i * 7) % 12; g.fillStyle = ['#5a3a7a', '#3a6a5a', '#7a3a3a', '#6a6a3a'][i % 4]; g.fillRect(x, H * sy - hh, 12, hh); } }
+  return bgC; }
+function drawWho(v, x, y, r, t) { const c = ctx, skin = ['#f0c8a0', '#c8946a', '#8a5a3a', '#e8b890', '#a87050', '#f8d8b8'][v.face % 6], bob = Math.sin(t * 2) * 2; c.save(); c.translate(x, y + bob);
+  c.fillStyle = ['#5a3a7a', '#3a5a3a', '#7a3a2a', '#2a4a6a', '#6a5a2a', '#4a2a4a'][(v.face + v.hat) % 6]; rrect(-r * 1.1, r * 0.75, r * 2.2, r * 1.6, r * 0.5); c.fill();
+  c.fillStyle = skin; c.beginPath(); c.arc(0, 0, r, 0, TAU); c.fill();
+  c.fillStyle = '#2a1a10'; if (v.hat === 0) { c.beginPath(); c.moveTo(-r * 1.1, -r * 0.55); c.lineTo(r * 1.1, -r * 0.55); c.lineTo(r * 0.5, -r * 0.8); c.lineTo(r * 0.45, -r * 1.5); c.lineTo(-r * 0.45, -r * 1.5); c.lineTo(-r * 0.5, -r * 0.8); c.fill(); }
+  else if (v.hat === 1) { c.fillStyle = '#c84a4a'; c.beginPath(); c.arc(0, -r * 0.45, r * 0.9, Math.PI, 0); c.fill(); } else if (v.hat === 2) { c.fillStyle = '#e8e0d0'; c.beginPath(); c.arc(0, -r * 0.2, r * 1.02, Math.PI * 1.05, Math.PI * 1.95); c.lineTo(r * 0.9, r * 0.5); c.lineTo(r * 0.7, r * 0.1); c.lineTo(-r * 0.7, r * 0.1); c.lineTo(-r * 0.9, r * 0.5); c.fill(); } else { c.fillStyle = '#5a3a1a'; c.beginPath(); c.arc(0, -r * 0.3, r * 1.0, Math.PI * 1.1, Math.PI * 1.9); c.fill(); }
+  c.fillStyle = '#1a1010'; for (const sx of [-1, 1]) { c.beginPath(); c.arc(sx * r * 0.35, -r * 0.05, r * 0.09, 0, TAU); c.fill(); }
+  c.strokeStyle = '#1a1010'; c.lineWidth = 3; c.beginPath(); if (mood > 0) c.arc(0, r * 0.25, r * 0.35, 0.2, Math.PI - 0.2); else if (mood < -1) c.arc(0, r * 0.65, r * 0.3, Math.PI + 0.3, -0.3); else if (mood < 0) { c.moveTo(-r * 0.3, r * 0.45); c.quadraticCurveTo(0, r * 0.3, r * 0.3, r * 0.45); } else { c.moveTo(-r * 0.25, r * 0.4); c.lineTo(r * 0.25, r * 0.4); } c.stroke();
+  if (mood === 3) { c.fillStyle = '#ffd040'; c.font = `${r * 0.6}px sans-serif`; c.textAlign = 'center'; c.fillText('✨', r * 0.9, -r * 0.9); } c.restore(); }
+// the story, with **clue words** in bold (glowing with the reading lamp)
+function drawStory(txt, B, s) { const parts = []; String(txt).split('**').forEach((p, i) => p.split(' ').forEach((w, j) => { if (!w) return; if (j === 0 && /^[.,!?;:']/.test(w) && parts.length && !/ $/.test(p.slice(0, 1))) { parts[parts.length - 1].w += w; parts[parts.length - 1].tail = i % 2 === 0; return; } parts.push({ w, b: i % 2 === 1 }); }));
+  ctx.fillStyle = '#f4ead6'; rrect(B.x, B.y, B.w, B.h, 14); ctx.fill(); ctx.beginPath(); ctx.moveTo(B.x + 2, B.y + B.h * 0.55); ctx.lineTo(B.x - 14 * s, B.y + B.h * 0.7); ctx.lineTo(B.x + 2, B.y + B.h * 0.75); ctx.fill();
+  let fs = 15 * s, lines; for (;;) { ctx.font = `600 ${fs}px Nunito,sans-serif`; lines = [[]]; let w = 0; const sp = ctx.measureText(' ').width; for (const p of parts) { ctx.font = `${p.b ? 800 : 600} ${fs}px Nunito,sans-serif`; const pw = ctx.measureText(p.w).width; if (w + pw > B.w - 22 && lines[lines.length - 1].length) { lines.push([]); w = 0; } lines[lines.length - 1].push(Object.assign({ pw }, p)); w += pw + sp; } if (lines.length * fs * 1.3 < B.h - 16 || fs < 10) break; fs -= 1; }
+  ctx.textBaseline = 'top'; ctx.textAlign = 'left'; lines.forEach((ln, i) => { let x = B.x + 11; for (const p of ln) { ctx.font = `${p.b ? 800 : 600} ${fs}px Nunito,sans-serif`; if (p.b && upLv('lamp')) { ctx.fillStyle = 'rgba(255,200,80,.45)'; ctx.fillRect(x - 1, B.y + 9 + i * fs * 1.3, p.pw + 2, fs * 1.15); } ctx.fillStyle = p.b ? '#5a1a6a' : '#3a2a1a'; ctx.fillText(p.w, x, B.y + 9 + i * fs * 1.3); x += p.pw + ctx.measureText(' ').width; } }); }
+function btn(r, txt, on = true, col = '#b58cff') { ctx.fillStyle = on ? col : 'rgba(255,255,255,.12)'; rrect(r.x, r.y, r.w, r.h, 14); ctx.fill(); ctx.fillStyle = on ? '#1a0e2a' : 'rgba(255,255,255,.5)'; ctx.font = `${Math.round(r.h * 0.36)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, r.x + r.w / 2, r.y + r.h / 2 + 1); }
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.drawImage(shopBg(), 0, 0, W, H); const g = G, t = now, L = lay(), s = L.s, C = L.C;
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  // candle glow
+  const cg = ctx.createRadialGradient(C.x, C.y + C.r, 10, C.x, C.y + C.r, W * 0.7); cg.addColorStop(0, `rgba(255,150,60,${0.22 + Math.sin(t * 9) * 0.02})`); cg.addColorStop(1, 'rgba(255,150,60,0)'); ctx.fillStyle = cg; ctx.fillRect(0, 0, W, H);
+  if (g) { const v = g.cur;
+    if (v) { drawWho(v, L.who.x, L.who.y, L.who.r, t); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(v.who.toUpperCase(), L.who.x, L.who.y + L.who.r * 2.45); drawStory(speech || v.story, L.bub, s); }
+    // the cauldron
+    ctx.fillStyle = '#ff7a2a'; for (let i = 0; i < 5; i++) { const fx = C.x + (i - 2) * C.r * 0.3, fh = C.r * (0.35 + 0.15 * Math.sin(t * 11 + i * 2)); ctx.beginPath(); ctx.moveTo(fx - C.r * 0.15, C.y + C.r * 1.05); ctx.quadraticCurveTo(fx, C.y + C.r * 1.05 - fh * 2, fx + C.r * 0.15, C.y + C.r * 1.05); ctx.fill(); }
+    ctx.fillStyle = '#1a1a22'; ctx.beginPath(); ctx.ellipse(C.x, C.y + C.r * 0.15, C.r * 1.08, C.r * 0.95, 0, 0, Math.PI); ctx.fill(); ctx.fillRect(C.x - C.r * 1.08, C.y - C.r * 0.05, C.r * 2.16, C.r * 0.2);
+    const col = g.phase === 'seal' ? `hsl(${Math.round(sealPhase(g) * 360)},80%,58%)` : brewCol(g); ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(C.x, C.y, C.r * 0.98, C.r * 0.28, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#2a2a34'; ctx.lineWidth = 7 * s; ctx.beginPath(); ctx.ellipse(C.x, C.y, C.r * 1.04, C.r * 0.3, 0, 0, TAU); ctx.stroke();
+    if (Math.random() < 0.25) PT.push({ x: C.x + (Math.random() - 0.5) * C.r * 1.4, y: C.y, vx: 0, vy: -40 - Math.random() * 40, g: 0, life: 0.8, t: 0, col: 'rgba(255,255,255,.35)', r: 2 + Math.random() * 4 });
+    // the step's panel
+    const P = g.phase;
+    if (P === 'pick' && v) { for (const J of L.jars) { const I = ingOf(J.id), on = g.pick.includes(J.id); ctx.fillStyle = on ? 'rgba(181,140,255,.55)' : 'rgba(255,255,255,.09)'; rrect(J.x, J.y, J.w, J.h, 10); ctx.fill(); if (on) { ctx.strokeStyle = '#d8c0ff'; ctx.lineWidth = 2; rrect(J.x, J.y, J.w, J.h, 10); ctx.stroke(); }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.font = `${Math.round(J.h * 0.38)}px sans-serif`; ctx.fillText(I.icon, J.x + J.w / 2, J.y + J.h * 0.36); ctx.font = `700 ${Math.round(Math.min(10.5 * s, J.h * 0.17))}px ${BC}`; ctx.fillStyle = '#fff'; ctx.fillText(knows(J.id) ? I.means.split(' ')[0].toUpperCase() : '?', J.x + J.w / 2, J.y + J.h * 0.8); }
+      btn(L.act, g.pick.length ? `BREW (${g.pick.map(id => ingOf(id).icon).join('')})` : 'PICK THE JARS', g.pick.length > 0); }
+    if (P === 'pour') { const Gg = L.gauge, u = clamp(g.amount / 2, 0, 1.1); ctx.fillStyle = 'rgba(255,255,255,.12)'; rrect(Gg.x, Gg.y, Gg.w, Gg.h, 8); ctx.fill(); ctx.fillStyle = brewCol(g); ctx.fillRect(Gg.x + 3, Gg.y + Gg.h * (1 - Math.min(1, u)), Gg.w - 6, Gg.h * Math.min(1, u));
+      [[0.33, 'a little'], [1, 'usual'], [1.67, 'strong']].forEach(([a, l]) => { const y = Gg.y + Gg.h * (1 - a / 2); ctx.fillStyle = '#fff'; ctx.fillRect(Gg.x - 6, y, Gg.w + 12, 2); ctx.font = `700 ${Math.round(10 * s)}px ${BC}`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText(l.toUpperCase(), Gg.x - 9, y); });
+      ctx.fillStyle = 'rgba(255,80,60,.5)'; ctx.fillRect(Gg.x, Gg.y, Gg.w, Gg.h * 0.075); if (g.pouring) { ctx.strokeStyle = brewCol(g); ctx.lineWidth = 6 * s; ctx.beginPath(); ctx.moveTo(C.x + C.r * 0.5, C.y - C.r * 1.6); ctx.lineTo(C.x + C.r * 0.3, C.y); ctx.stroke(); }
+      btn(L.act, g.pouring ? 'POURING... LET GO AT THE LINE' : 'HOLD TO POUR', true, '#ffb030'); }
+    if (P === 'stir') { const a = g.stirA, n = g.cfg.turns; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.ellipse(C.x, C.y, C.r * 0.75, C.r * 0.22, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+      const sx = C.x + Math.cos(a) * C.r * 0.75, sy = C.y + Math.sin(a) * C.r * 0.22; ctx.strokeStyle = '#c8a070'; ctx.lineWidth = 7 * s; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + C.r * 0.2, sy - C.r * 1.3); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = `${Math.round(14 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(`STIR ROUND ${n === 1 ? 'ONCE' : 'TWICE'}`, W / 2, L.panelY + 22 * s);
+      ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillText('↻ CLOCKWISE draws it IN     ↺ ANTICLOCKWISE drives it OUT', W / 2, L.panelY + 48 * s);
+      const u = clamp(Math.abs(a) / (TAU * n), 0, 1); ctx.fillStyle = 'rgba(255,255,255,.12)'; rrect(40, L.panelY + 70 * s, W - 80, 10, 5); ctx.fill(); ctx.fillStyle = a >= 0 ? '#9be3b5' : '#ff9a7a'; rrect(40, L.panelY + 70 * s, (W - 80) * u, 10, 5); ctx.fill();
+      if (Math.abs(a) > 0.3) { ctx.fillText(a > 0 ? '↻ IN' : '↺ OUT', W / 2, L.panelY + 96 * s); } }
+    if (P === 'rune') { ctx.fillStyle = '#fff'; ctx.font = `${Math.round(14 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(trace ? 'TRACE THE RUNE' : 'WHAT DOES IT ACT ON?', W / 2, L.panelY + 10 * s);
+      for (const R of L.runes) { const ru = runeOf(R.id), on = trace && trace.id === R.id; ctx.fillStyle = on ? 'rgba(181,140,255,.6)' : 'rgba(255,255,255,.1)'; rrect(R.x, R.y, R.w, R.h, 12); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(R.w * 0.42)}px sans-serif`; ctx.fillText(ru.icon, R.x + R.w / 2, R.y + R.h * 0.42); ctx.font = `700 ${Math.round(9.5 * s)}px ${BC}`; ctx.fillText(ru.name.split(' ').slice(-1)[0].toUpperCase(), R.x + R.w / 2, R.y + R.h * 0.84); }
+      if (trace) { const ru = runeOf(trace.id), pts = ru.pts.map(([px, py]) => ({ x: C.x + px * C.r * 1.6, y: C.y - C.r * 0.8 + py * C.r * 1.6 })); ctx.strokeStyle = 'rgba(200,170,255,.35)'; ctx.lineWidth = 10 * s; ctx.lineCap = 'round'; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke();
+        ctx.strokeStyle = '#e8d8ff'; ctx.lineWidth = 6 * s; ctx.beginPath(); pts.slice(0, trace.i + 1).forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)); ctx.stroke();
+        pts.forEach((p, i) => { ctx.fillStyle = i < trace.i ? '#e8d8ff' : i === trace.i ? '#ffd040' : 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(p.x, p.y, (i === trace.i ? 11 : 7) * s, 0, TAU); ctx.fill(); }); } }
+    if (P === 'seal') { const want = `hsl(${Math.round(g.sealWant * 360)},80%,58%)`; ctx.strokeStyle = want; ctx.lineWidth = 8 * s; ctx.beginPath(); ctx.ellipse(C.x, C.y, C.r * 1.25, C.r * 0.42, 0, 0, TAU); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = `${Math.round(14 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('SEAL IT WHEN IT GLOWS THE RING\'S COLOUR', W / 2, L.panelY + 24 * s); btn(L.act, 'SEAL ✦', true, want); }
+    if (P === 'back' && v) { const d = v.returning; btn(L.act, d.grade === 'bad' ? '... I\'M SO SORRY' : 'BREW IT AGAIN, PROPERLY', true, d.grade === 'bad' ? '#ff8a7a' : '#ffd040'); }
+    hud(g, L); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1.1 ? 1 : 1 - (q.t - 1.1) / 0.5; ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s)}px ${TF}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30;
+    ctx.fillStyle = 'rgba(20,10,30,.93)'; rrect(W / 2 - ww / 2, H * 0.36 - hh / 2, ww, hh, 10); ctx.fill(); ctx.fillStyle = '#ffe3a0'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.36 - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.2})`; ctx.fillRect(0, 0, W, H); } if (FX.flash > 0) { ctx.fillStyle = `rgba(230,210,255,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
+function hud(G, L) { const s = L.s; if (G.lesson) { lessonPanel(G); return; }
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(8, 10, 92 * s, 26 * s, 9); ctx.fill(); ctx.fillStyle = '#e8d8ff'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(`CUSTOMER ${Math.min(G.total, G.done.length + (G.cur && !G.cur.returning ? 1 : 0))}/${G.total}`, 15, 10 + 13 * s);
+  const backs = G.done.filter(d => d.back && !d.seenBack).length; if (backs) { ctx.fillStyle = 'rgba(255,200,80,.25)'; rrect(W - 100 * s, 10, 92 * s, 26 * s, 9); ctx.fill(); ctx.fillStyle = '#ffd040'; ctx.textAlign = 'right'; ctx.fillText(`${backs} COMING BACK…`, W - 14, 10 + 13 * s); } }
+// what they say when they come back
+function backLine(d) { const J = d.J; if (d.grade === 'bad') return `You! Your spell did nothing but harm. I want my money back, and I\'m telling the whole town.`;
+  if (J.side === 'spill') return 'Your potion was so strong it fizzed out of the bottle and singed my eyebrows. Try again?';
+  if (J.side) return `Well... it sort of worked. But now ${ingOf(J.side).side}. Can you fix it?`;
+  if (!J.dirOk) return 'It did the very opposite of what I asked! Can you put it right?';
+  if (!J.runeOk) return 'It worked... but on the wrong thing entirely. My goat is very confused. Again, please?';
+  if (J.missing.length) return 'Nothing much happened at all. A faint smell of cabbage. Try again?';
+  return 'Not quite right. A little too much, or too little. Once more?'; }
+function goodLine(d) { if (d.J.alt) return d.J.alt + '.'; return pick(Math.random, ['Thank you! I can feel it working already.', 'Oh, that\'s wonderful. Bless you.', 'Marvellous! I\'ll tell everyone.', 'It tingles! In a good way!']); }
+// how the game reacts
+function onEvent(G, e) { const L = lay(), C = L.C;
+  switch (e.k) {
+    case 'start': say(`${PLACES[G.place].name.toUpperCase()}: ${G.total} CUSTOMERS`, W / 2, H * 0.3, '#e8d8ff', 18); sfx.bell(); break;
+    case 'enter': speech = null; mood = 0; sfx.bell(); if (G.N <= 1 && !G.lesson) tip('read', 'The bold words are the clues. Tap the jars they point to, then BREW.', 3.2); break;
+    case 'jar': sfx[e.on ? 'clink' : 'click'](); if (e.on) for (let i = 0; i < 6; i++) PT.push({ x: C.x, y: C.y, vx: (Math.random() - 0.5) * 100, vy: -120 - Math.random() * 80, life: 0.6, t: 0, col: MIXC[e.id], r: 3 }); break;
+    case 'phase': sfx.whoosh(); trace = null; if (e.p === 'pour' && G.N <= 2) tip('pour', 'Hold to pour. Let go at the line they asked for: a little, usual, or strong.', 3); break;
+    case 'poured': sfx.splash(); break;
+    case 'stirred': sfx.swirl(e.dir); break;
+    case 'rune': sfx.rune(); FX.flash = 0.3; break;
+    case 'sealed': sfx.seal(e.acc); break;
+    case 'served': { const gr = e.grade; mood = gr === 'perfect' ? 3 : gr === 'good' ? 1 : gr === 'funny' ? 0 : -1; speech = gr === 'perfect' || gr === 'good' ? goodLine({ J: e.J }) : gr === 'funny' ? 'Hmm. Thank you... I think.' : 'Is it... supposed to smell like that?';
+      say(gr === 'perfect' ? 'PERFECT!' : gr === 'good' ? 'WELL BREWED' : gr === 'funny' ? 'HMM...' : 'UH OH', W / 2, H * 0.33, gr === 'perfect' ? '#ffd040' : gr === 'good' ? '#9be3b5' : '#ffb4a8', 26);
+      if (gr === 'perfect' || gr === 'good') { sfx.good(gr === 'perfect'); for (let i = 0; i < 24; i++) { const a = Math.random() * TAU; PT.push({ x: C.x, y: C.y, vx: Math.cos(a) * 180, vy: Math.sin(a) * 180 - 80, life: 0.9, t: 0, col: i % 2 ? '#ffd040' : '#d8c0ff', r: 2.5 }); } vibe(HAP.light); }
+      else { sfx.fizzle(); FX.shake = 5; } break; }
+    case 'back': { const d = e.d; speech = backLine(d); mood = d.grade === 'bad' ? -2 : -1; sfx.door(); if (d.grade !== 'bad') tip('back', 'A funny side effect: brew it again, properly. Get it right this time.', 3.2); break; }
+    case 'retry': speech = null; break;
+    case 'fixed': mood = e.grade === 'good' || e.grade === 'perfect' ? 3 : -2; speech = e.grade === 'good' || e.grade === 'perfect' ? 'Oh, thank goodness. Much better!' : 'Worse! This is the last straw.'; if (mood > 0) { sfx.good(true); say('FIXED!', W / 2, H * 0.33, '#9be3b5', 26); } break;
+    case 'complain': mood = -2; speech = 'That\'s it. I\'m telling the whole town about this so-called magician!'; FX.red = 0.7; FX.shake = 10; sfx.angry(); break;
+    case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.3, '#ffd040', 22); sfx.bell(); break;
+    case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.3, '#9be3b5', 24); break;
+    case 'lessonmiss': say('TRY AGAIN', W / 2, H * 0.3, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 4 }; break;
+    case 'lessondone': say('THE SHOP IS OPEN!', W / 2, H * 0.3, '#ffd040', 24); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': FX.flash = 0.7; sfx.win(); vibe(HAP.best); break;
+    case 'lost': sfx.lose(); break;
+  } }
+function area() { return { x: 0, y: 0, w: W, h: H }; }
+// ===================== SOUND: the shop (PLAYBOOK S1-S11) =====================
+// The shop bell, glass jars clinking into the cauldron, a pour, a swirl that rises (clockwise) or falls (anticlockwise), a
+// chime as a rune burns in, the seal (brighter the closer you were), a sparkle chord for a good spell (fuller for a perfect
+// one: S4), a sad fizzle for a bad one, the door, and an angry stamp when someone complains.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  bell() { if (!gate('bell', 300)) return; [0, 0.15].forEach(d => tone(1760 * vary(0.01), 0.5, 0.04, 'sine', d)); },
+  clink() { tone(2600 * vary(0.05), 0.12, 0.04, 'sine'); tone(3900 * vary(0.05), 0.08, 0.02, 'sine', 0.01); tone(180, 0.15, 0.04, 'sine', 0.05, 120); },
+  whoosh() { noise(0.25, 1200, 0.03, 'bandpass', 0.8, 0, 0.05); },
+  splash() { noise(0.3, 700, 0.06, 'lowpass', 1); tone(300, 0.2, 0.03, 'sine', 0, 500); },
+  swirl(dir = 1) { tone(dir > 0 ? 300 : 700, 0.45, 0.05, 'triangle', 0, dir > 0 ? 700 : 300, 1600); },
+  rune() { [0, 7, 12].forEach((q, j) => tone(note(587, q), 0.4, 0.04, 'sine', j * 0.06)); },
+  seal(acc = 1) { tone(note(784, Math.round(acc * 7)), 0.3, 0.06, 'triangle'); noise(0.08, 3000, 0.03, 'highpass', 1); },
+  good(perfect = false) { [0, 4, 7, 11, perfect ? 14 : 12].forEach((q, j) => pluck(note(392, q), 0.9, 0.07, j * 0.07)); },
+  fizzle() { noise(0.6, 900, 0.05, 'bandpass', 2); tone(400, 0.5, 0.04, 'sawtooth', 0, 120, 900); },
+  door() { noise(0.12, 320, 0.08, 'lowpass', 1); tone(95, 0.18, 0.06, 'sine', 0, 60); },
+  angry() { tone(140, 0.25, 0.09, 'sawtooth', 0, 110, 700); noise(0.12, 300, 0.1, 'lowpass', 1, 0.2); tone(120, 0.3, 0.08, 'sawtooth', 0.3, 90, 700); },
+  no() { if (!gate('no', 300)) return; tone(260, 0.14, 0.05, 'triangle', 0, 200, 900); },
+  coin(i = 0) { if (!gate('coin', 60)) return; const b = note(784, Math.min(10, i + 1)); tone(b, 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(392, q), 1.0, 0.09, j * 0.12)); },
+  lose() { tone(294, 0.5, 0.08, 'triangle', 0, 262); tone(247, 0.8, 0.08, 'triangle', 0.3, 220); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause', 'ovBook'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level), kn = Object.keys(store.get('known', {}) || {}).length;
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · ${cf.people} customers · ${cf.ings.length} jars`, best[level] ? `Your best day here: <b>${best[level]}%</b>` : '', `Grimoire: <b>${kn}</b> of ${INGS.length} jars mastered`, helpOn() ? '<span class="help">The seal glows more slowly for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.avg > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.avg; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+  const kn = store.get('known', {}) || {}; r.newKnown = []; for (const d of G.done) if (d.grade === 'perfect' || d.grade === 'good' || d.fixGrade === 'good' || d.fixGrade === 'perfect') for (const id of d.v.need) if (!kn[id]) { kn[id] = 1; r.newKnown.push(ingOf(id).name); } store.set('known', kn);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'A GOOD DAY' : 'A COMPLAINT'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = (r.win || !r.why ? (r.win ? `Every customer happy · average spell <b>${r.avg}%</b> (needed ${r.pass}%)` : `Nobody complained, but your spells averaged <b>${r.avg}%</b>; the town expects <b>${r.pass}%</b>.`) : `<b>${r.why || 'A customer'}</b> came back angry and told the whole town.`) + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + `<br>${r.perfect} perfect spell${r.perfect === 1 ? '' : 's'}` + (r.newKnown && r.newKnown.length ? `<br>Grimoire: you mastered <b>${r.newKnown.join(', ')}</b>` : '') + (!r.win ? '<br>Read the bold words again: each jar always means the same thing.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = r.list.map(d => `<div class="ln"><span>${d.who}</span><span>${d.need.map(id => ingOf(id).icon).join('')} ${d.grade === 'perfect' ? '✨ perfect' : d.grade === 'good' ? '✓ happy' : d.grade === 'fixed' ? '↺ fixed' : d.grade === 'funny' ? '😬 funny' : '✗ angry'}</span></div>`).join(''); renderShop();
+  $('eMain').textContent = r.win ? 'NEXT DAY' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): tap a bubble to take that job (tap it again to let it go); tap a job at the bottom to let it go
+// input (one thumb): tap jars and the big button; hold to pour; drag round the cauldron to stir; tap a rune then trace it; seal
+const inR = (b, x, y, pad = 6) => x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad;
+let stirLast = null, holdP = false;
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || G.wait > 0) return; const L = lay(), x = e.clientX, y = e.clientY, P = G.phase;
+  try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+  if (P === 'pick') { for (const J of L.jars) if (inR(J, x, y, 2)) { if (!pickJar(G, J.id)) sfx.no(); return; } if (inR(L.act, x, y)) { if (!brew(G)) sfx.no(); } return; }
+  if (P === 'pour') { if (y > L.top + 60) { pourHold(G, true); holdP = true; } return; }
+  if (P === 'stir') { stirLast = Math.atan2(y - L.C.y, (x - L.C.x) * 0.35); return; }
+  if (P === 'rune') { for (const R of L.runes) if (inR(R, x, y, 2)) { trace = { id: R.id, i: 0 }; sfx.click(); return; } if (trace) traceAt(x, y); return; }
+  if (P === 'seal') { if (inR(L.act, x, y) || Math.hypot(x - L.C.x, y - L.C.y) < L.C.r * 1.4) seal(G); return; }
+  if (P === 'back') { if (inR(L.act, x, y)) retryBack(G); return; } });
+function traceAt(x, y) { const L = lay(), C = L.C, ru = runeOf(trace.id), p = ru.pts[trace.i], px = C.x + p[0] * C.r * 1.6, py = C.y - C.r * 0.8 + p[1] * C.r * 1.6;
+  if (Math.hypot(x - px, y - py) < 30 * L.s) { trace.i++; sfx.tick ? sfx.click() : 0; if (trace.i >= ru.pts.length) { const id = trace.id; trace = null; drawRune(G, id); } } }
+cv.addEventListener('pointermove', e => { if (!G || paused || G.over) return; const L = lay(), x = e.clientX, y = e.clientY;
+  if (G.phase === 'stir' && stirLast != null) { const a = Math.atan2(y - L.C.y, (x - L.C.x) * 0.35); let d = a - stirLast; d = Math.atan2(Math.sin(d), Math.cos(d)); stirLast = a; if (Math.abs(d) < 1.2) stirBy(G, d); if (Math.random() < 0.15) sfx.click(); }
+  if (G.phase === 'rune' && trace) traceAt(x, y); });
+['pointerup', 'pointercancel'].forEach(k2 => cv.addEventListener(k2, () => { stirLast = null; if (holdP && G) { holdP = false; pourHold(G, false); } }));
+$('bookBtn').onclick = () => { sfx.click(); const kn = store.get('known', {}) || {}; $('bookSub').textContent = 'What every jar means. A jar is mastered once it has worked in a good spell.';
+  $('bookList').innerHTML = INGS.map(i => `<div class="ln"${i.n > unlocked ? ' style="opacity:.4"' : ''}><span>${i.icon} <b>${i.name}</b></span><span>${i.n > unlocked ? 'level ' + i.n : knows(i.id) || kn[i.id] ? i.means + (kn[i.id] ? ' ✓' : '') : '?'}</span></div>`).join('') + '<div class="ln"><span><b>Stir</b></span><span>↻ draws IN · ↺ drives OUT</span></div>' + RUNES.map(r => `<div class="ln"><span>${r.icon} rune</span><span>${r.name}</span></div>`).join(''); show('ovBook'); };
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE WORKSHOP</span><span>£ ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' £'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  pickJar(id) { return pickJar(G, id); }, brew() { return brew(G); }, stirBy(a) { return stirBy(G, a); }, drawRune(id) { return drawRune(G, id); }, seal() { return seal(G); }, pourHold(on) { return pourHold(G, on); }, retryBack() { return retryBack(G); }, lay, renderShop, judge(v) { return judge(G, v || G.cur); },
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
