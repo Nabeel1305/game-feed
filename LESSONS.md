@@ -625,6 +625,19 @@ Everything learned building the first games. Every new game must follow the **ru
   stream starts at the mouth. Turned about its middle, the glass swung off the screen.
 - A mark on every colour (● ▲ ■ ...) so the game works without telling colours apart.
 
+### 64. Block Party (`games/blocks/`): block puzzle, one thumb
+- Random fitting placements clear lines by luck, and a lucky long survival with a streak can reach a modest score (the tail
+  is heavy: 1 game in 500 scored 1,100 when the median was 60). Two structural fixes: a second wrong drop within 3 s costs
+  points (25, 50, ...; a person who looks barely ever does it), and score goals sit far above what random play reaches.
+  Gems only from level 3 (after their lesson), never two on one row or column, so each is an aimed clear of its own.
+- The robot must look ahead: a greedy one-placement robot loses with half the board empty. It scores the best few first
+  placements by where the rest of the tray would then go, and judges a board by whether each awkward shape (5-long, 3x3,
+  big L) still has somewhere to go, not by how many places one shape has.
+- Lessons: an empty board must not run the "nothing fits" check (it restarted the lesson for ever); one gem per lesson
+  board and three boards in a row, or a single blind hit on a row of three gems passed it.
+- Drag: the piece rides 2.1 cells above the finger; the shadow and the lines it would clear (lit in the piece's colour)
+  show before the finger lifts, and the drop is where the shadow was. Tray pieces shrink to fit their third of the width.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

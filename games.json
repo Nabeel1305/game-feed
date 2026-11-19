@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 64,
+  "next_number": 65,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2176,6 +2176,40 @@
         "P20"
       ],
       "summary": "Colour sort like Water Sort: tap a glass, tap another, pour; sort every colour into its own glass; solver-made puzzles with a move margin, undo, hidden layers, a mark on every colour."
+    },
+    {
+      "number": 64,
+      "id": "blocks",
+      "name": "Block Party",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-19",
+      "path": "games/blocks/index.html",
+      "artifact": "https://claude.ai/artifact/UaQb7Pkffx2PavfwZ5JVL8",
+      "artifact_slug": "df50d32d-c616-4c43-aea8-481d121258ad",
+      "apk_repo": null,
+      "storage_prefix": "bp.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Drag blocks onto the grid. Fill a row or column and it clears.",
+        "genre": "Block puzzle / calm",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Rubik",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P6",
+        "P18",
+        "P21",
+        "P13"
+      ],
+      "summary": "Block puzzle like Block Blast: drag pieces from a tray of three onto an 8x8 grid; full rows and columns clear; combos multiply; gem and score goals; junk and bigger pieces as levels rise."
     }
   ],
   "planned": []

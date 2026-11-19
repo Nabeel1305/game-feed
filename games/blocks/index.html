@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Block Party</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@700;800;900&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#1a2448;--ink:#f4f7ff;--acc:#ffc23a;--acc-dark:#c07a10;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:Rubik,"Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:900;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(50,80,160,.6),rgba(10,14,36,.94))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#fff;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#fff}.lvb.cur small{color:#fff}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:58px;color:#fff">Block<br><span style="color:#ffc23a">Party</span></h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">DRAG. FILL. CLEAR.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = 'Rubik, "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('bp.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('bp.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: Block Party (game 64, set 11: a block puzzle, like Block Blast) =====================
+// An 8 by 8 grid and a tray of three pieces. Drag a piece onto the grid; when all three are down, three more come. A full
+// row or column clears (several at once score much more). Clearing again within your next few placements builds a COMBO
+// that multiplies the score. It ends when none of the pieces in the tray fits anywhere. Each level has a goal: a score, or
+// GEMS to collect (a gem in a cell is collected when its row or column clears). Later: junk blocks already on the board,
+// bigger and awkward pieces, more gems.
+const RULES = [
+  '<b>Drag</b> a piece from the tray onto the grid. Three placed, three more come.',
+  'Fill a whole <b>row or column</b> and it clears. Several at once score far more.',
+  'Clear again within your next placements for a <b>COMBO</b>.',
+  'Collect <b>gems</b> 💎 by clearing the row or column they sit in.',
+  'It is over when no piece in the tray fits. Keep room for the big ones!',
+];
+const GRID = 8;
+const SHAPES = {      // cells as [row, col]
+  o1: [[0, 0]], i2: [[0, 0], [0, 1]], i3: [[0, 0], [0, 1], [0, 2]], i4: [[0, 0], [0, 1], [0, 2], [0, 3]], i5: [[0, 0], [0, 1], [0, 2], [0, 3], [0, 4]],
+  o2: [[0, 0], [0, 1], [1, 0], [1, 1]], o3: [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0], [2, 1], [2, 2]], r23: [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]],
+  l3: [[0, 0], [1, 0], [1, 1]], l4: [[0, 0], [1, 0], [2, 0], [2, 1]], l5: [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2]], t4: [[0, 0], [0, 1], [0, 2], [1, 1]], s4: [[0, 1], [0, 2], [1, 0], [1, 1]] };
+const rot = cells => { const r = cells.map(([a, b]) => [b, -a]), mr = Math.min(...r.map(c => c[0])), mc = Math.min(...r.map(c => c[1])); return r.map(([a, b]) => [a - mr, b - mc]); };
+const KINDS = []; for (const [k, s] of Object.entries(SHAPES)) { let c = s; const seen = new Set(); for (let i = 0; i < 4; i++) { const key = JSON.stringify(c.slice().sort()); if (!seen.has(key)) { seen.add(key); KINDS.push({ k, cells: c }); } c = rot(c); } }
+const BCOL = ['#ff5a6a', '#ff9a3a', '#ffd23a', '#5ad86a', '#3ac8d8', '#4a8aff', '#a85aff', '#ff6ac8'];
+const PLACES = [{ name: 'The Toy Box', bg: ['#2a3a6a', '#1a2448'] }, { name: 'The Arcade', bg: ['#3a1a5a', '#1a0e30'] }, { name: 'The Beach', bg: ['#1a6a8a', '#0e3a50'] }, { name: 'The Garden', bg: ['#2a5a3a', '#14301e'] }];
+const placeOf = N => Math.floor((N - 1) / 6) % 4;
+const UPGRADES = [
+  { id: 'reroll', name: 'Reroll', desc: 'Once a level: swap the tray for three new pieces.', max: 1, cost: l => 60 },
+  { id: 'bomb', name: 'Bomb', desc: 'Once a level: clear a 3 by 3 square.', max: 1, cost: l => 90 },
+  { id: 'small', name: 'Kind pieces', desc: 'A few more small pieces.', max: 2, cost: l => 40 + l * 50 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Beginner'], [40, 'Stacker'], [130, 'Builder'], [320, 'Architect'], [700, 'Master builder'], [1500, 'Legend']];
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  const goal = N <= 2 ? 'score' : N === 3 ? 'gems' : (N % 3 === 0 ? 'score' : 'gems');      /* gems only once the gem lesson (level 3) has shown them */
+  return { N, f, help: !!help, place: placeOf(N), goal, gems: Math.round(x(4, 10, 30)), target: Math.round(x(700, 2000, 60) / 50) * 50, junk: N >= 4 ? Math.round(x(4, 12, 30)) : 0,
+    big: x(0.06, 0.2, 30) * (help ? 0.7 : 1), small: 0.15 * upLv('small') + 0.15 * e + (help ? 0.15 : 0), reroll: upLv('reroll'), bomb: upLv('bomb') }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null };
+  setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+const idx = (r, c) => r * GRID + c;
+function setup(G, o = {}) { const c = G.cfg, R = G.rnd; G.b = Array(GRID * GRID).fill(null); G.gem = Array(GRID * GRID).fill(false); G.score = 0; G.streak = 0; G.since = 0; G.placed = 0; G.lines = 0; G.gemsGot = 0; G.best = 0; G.rerolls = c.reroll; G.bombs = c.bomb; G.arm = false;
+  if (!o.empty) { for (let j = 0; j < c.junk; j++) { const i = (R() * GRID * GRID) | 0; G.b[i] = { col: 8 }; }      /* junk: grey blocks already there */
+    if (c.goal === 'gems') { G.gemN = c.gems; let put = 0, n = 0; const usedR = new Set(), usedC = new Set(); while (put < Math.min(c.gems, 10) && n++ < 400) { const i = (R() * GRID * GRID) | 0; if (G.gem[i]) continue; if (n < 300 && (usedR.has((i / GRID) | 0) || usedC.has(i % GRID))) continue; usedR.add((i / GRID) | 0); usedC.add(i % GRID);      /* no two gems share a row or column: each one is its own clear */ G.gem[i] = true; if (!G.b[i]) G.b[i] = { col: 9 }; put++; } G.gemPending = c.gems - put; } }
+  G.tray = o.tray || deal(G); if (!o.empty) fullCheck(G, true); }
+// three new pieces; when the board is tight, at least one of them fits (if any piece could)
+function deal(G) { const c = G.cfg, R = G.rnd, pick = () => { let pool = KINDS; const u = R(); if (u < c.small) pool = KINDS.filter(k => k.cells.length <= 3); else if (u > 1 - c.big) pool = KINDS.filter(k => k.cells.length >= 6); else pool = KINDS.filter(k => k.cells.length >= 2 && k.cells.length <= 5); const k = pool[(R() * pool.length) | 0]; return { cells: k.cells, k: k.k, col: (R() * 8) | 0, id: Math.random() }; };
+  let t; for (let n = 0; n < 12; n++) { t = [pick(), pick(), pick()]; if (t.some(p => anyFit(G, p))) break; } G.ev.push({ k: 'deal' }); return t; }
+const fits = (G, p, r, c) => p.cells.every(([a, b]) => { const rr = r + a, cc = c + b; return rr >= 0 && rr < GRID && cc >= 0 && cc < GRID && !G.b[idx(rr, cc)]; });
+function anyFit(G, p) { for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) if (fits(G, p, r, c)) return true; return false; }
+// ---------- what you do ----------
+function place(G, ti, r, c) { if (G.over || G.wait > 0) return false; const p = G.tray[ti]; if (!p) return false;
+  if (!fits(G, p, r, c)) { G.ev.push({ k: 'nofit', ti });
+    // in a lesson a wrong drop comes back once; a second one soon after starts the lesson over (blind dragging can't pass it)
+    // a second wrong drop soon after the first costs points, then more (a person who looks hardly ever does it twice; a thumb
+    // dragging blind does it all the time, so blind luck never adds up to a score)
+    if (!G.lesson) { const quick = G.t - (G.fumT == null ? -9 : G.fumT) < 3; G.fumT = G.t; G.fumble = quick ? (G.fumble | 0) + 1 : 0; if (G.fumble) { const cost = Math.min(G.score, 25 * G.fumble); G.score -= cost; G.ev.push({ k: 'fumble', cost }); } }
+    if (G.lesson) { G.lmiss = G.t - (G.lmissT == null ? -9 : G.lmissT) < 3 ? (G.lmiss | 0) + 1 : 1; G.lmissT = G.t; if (G.lmiss >= 2) { G.lmiss = 0; G.ev.push({ k: 'lessonmiss', how: lessonNow(G).how }); G.wait = 1.2; G.next = () => lessonDeal(G); } }
+    return false; }
+  for (const [a, b] of p.cells) G.b[idx(r + a, c + b)] = { col: p.col, born: G.t };
+  G.tray[ti] = null; G.placed++; G.score += p.cells.length; G.ev.push({ k: 'place', ti, r, c, cells: p.cells, col: p.col });
+  const cleared = clearLines(G); if (cleared) { G.streak++; G.since = 0; } else { G.since++; if (G.since >= 3 && G.streak) { G.ev.push({ k: 'streakend', n: G.streak }); G.streak = 0; } }
+  lessonSee(G, cleared ? 'clear' : 'noclear', cleared);
+  if (G.tray.every(t => !t)) G.tray = deal(G);
+  if (!goalCheck(G)) fullCheck(G); return true; }
+function clearLines(G) { const rows = [], cols = []; for (let r = 0; r < GRID; r++) { let f = true; for (let c = 0; c < GRID; c++) if (!G.b[idx(r, c)]) { f = false; break; } if (f) rows.push(r); }
+  for (let c = 0; c < GRID; c++) { let f = true; for (let r = 0; r < GRID; r++) if (!G.b[idx(r, c)]) { f = false; break; } if (f) cols.push(c); }
+  const n = rows.length + cols.length; if (!n) return 0; const set = new Set(); rows.forEach(r => { for (let c = 0; c < GRID; c++) set.add(idx(r, c)); }); cols.forEach(c => { for (let r = 0; r < GRID; r++) set.add(idx(r, c)); });
+  const cells = [], gems = []; for (const i of set) { cells.push({ i, col: G.b[i].col }); if (G.gem[i]) { G.gem[i] = false; G.gemsGot++; gems.push(i); } G.b[i] = null; }
+  const mult = 1 + G.streak, pts = 10 * n * (n + 1) / 2 * 2 * mult; G.score += pts; G.lines += n; G.best = Math.max(G.best, n);
+  G.ev.push({ k: 'clear', rows, cols, cells, n, pts, streak: G.streak + 1, gems });
+  // more gems appear as some are taken, until the level's number is reached
+  for (let k = 0; k < gems.length && G.gemPending > 0; k++) { const free = []; for (let i = 0; i < GRID * GRID; i++) if (!G.b[i] && !G.gem[i]) free.push(i); if (!free.length) break; const i = free[(G.rnd() * free.length) | 0]; G.gem[i] = true; G.b[i] = { col: 9 }; G.gemPending--; G.ev.push({ k: 'gemnew', i }); }
+  return n; }
+function goalCheck(G) { if (G.lesson || G.over || G.wait > 0) return false; const c = G.cfg; const met = c.goal === 'score' ? G.score >= c.target : G.gemsGot >= c.gems;
+  if (met) { G.ev.push({ k: 'goal' }); G.wait = 1.3; G.next = () => finish(G, true); return true; } return false; }
+function fullCheck(G, first) { if (G.over || G.wait > 0) return; const live = G.tray.filter(Boolean); if (live.some(p => anyFit(G, p))) return;
+  if (G.lesson) { G.ev.push({ k: 'lessonmiss', how: lessonNow(G).how }); G.wait = 1.2; G.next = () => lessonDeal(G); return; }
+  if (G.rerolls > 0 || G.bombs > 0) { G.ev.push({ k: 'stuck' }); return; }
+  G.ev.push({ k: 'full' }); G.wait = 1.2; G.next = () => finish(G, false); }
+function reroll(G) { if (G.rerolls <= 0 || G.over || G.wait > 0) return false; G.rerolls--; G.tray = deal(G); G.ev.push({ k: 'reroll' }); fullCheck(G); return true; }
+function bomb(G, r, c) { if (G.bombs <= 0 || G.over || G.wait > 0) return false; G.bombs--; const cells = []; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const rr = r + a, cc = c + b; if (rr < 0 || cc < 0 || rr >= GRID || cc >= GRID) continue; const i = idx(rr, cc); if (G.b[i]) { if (G.gem[i]) { G.gem[i] = false; G.gemsGot++; } cells.push({ i, col: G.b[i].col }); G.b[i] = null; } }
+  G.ev.push({ k: 'bomb', r, c, cells }); if (!goalCheck(G)) fullCheck(G); return true; }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
+function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const c = G.cfg, ratio = c.goal === 'score' ? G.score / c.target : G.gemsGot / c.gems;
+  const stars = win ? 1 + (G.placed <= (c.goal === 'score' ? c.target / 18 : c.gems * 4.2) ? 1 : 0) + (G.best >= 2 ? 1 : 0) : 0;
+  G.res = { win, stars, score: G.score, gems: G.gemsGot, goal: c.goal, need: c.goal === 'score' ? c.target : c.gems, prog: Math.min(1, ratio), lines: G.lines, best: G.best, placed: G.placed, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + Math.floor(Math.min(1, ratio) * 4) };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- LESSONS: rigged boards; every placement must clear a line, or the lesson starts again ----------
+const LESSONS = {
+  1: [{ id: 'line', title: 'FILL A LINE', how: 'Drag a piece from the tray into the gap: a full row or column clears! Clear three times in a row.', need: 3 }],
+  2: [{ id: 'two', title: 'TWO AT ONCE', how: 'Place the piece where it fills a row AND a column: both clear, for far more points. Do it twice.', need: 2 }],
+  3: [{ id: 'gem', title: 'GEMS', how: 'Clear the rows and columns with gems 💎 in them to collect the gems. Collect three.', need: 3 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+// a board with one row (and for "two" a row and a column) nearly full, the tray holding the piece that finishes it and two others
+function lessonDeal(G, keepN) { const st = lessonNow(G), R = G.rnd; if (!keepN) G.lesson.n = 0; setup(G, { empty: true, tray: [] });
+  const r = 2 + ((R() * 4) | 0), c0 = (R() * 5) | 0, len = st.id === 'line' ? 2 + ((R() * 2) | 0) : 1;
+  for (let c = 0; c < GRID; c++) if (c < c0 || c >= c0 + len) G.b[idx(r, c)] = { col: (c % 7) }; let key = { cells: Array.from({ length: len }, (_, k) => [0, k]), col: 5, id: Math.random() };
+  if (st.id === 'two') { const cc = c0; for (let rr = 0; rr < GRID; rr++) if (rr !== r) G.b[idx(rr, cc)] = { col: (rr % 7) }; }
+  if (st.id === 'gem') { const cs = []; for (let c = 0; c < GRID; c++) if (G.b[idx(r, c)]) cs.push(c); G.gem[idx(r, cs[(R() * cs.length) | 0])] = true; }      /* one gem a board: three boards in a row */
+  const filler = () => ({ cells: KINDS[(R() * KINDS.length) | 0].cells, col: (R() * 8) | 0, id: Math.random() }); G.tray = [filler(), filler(), filler()]; G.tray[(R() * 3) | 0] = key; }
+function lessonSee(G, what, n) { const st = lessonNow(G); if (!st) return; const D = G.lesson;
+  if (what === 'noclear') { G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 1.2; G.next = () => lessonDeal(G); return; }
+  let ok = st.id === 'line' || (st.id === 'two' && n >= 2) || (st.id === 'gem' && G.gemsGot > 0);
+  if (!ok) { G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 1.2; G.next = () => lessonDeal(G); return; }
+  D.n += 1; G.ev.push({ k: 'lessonok', n: Math.min(D.n, st.need), need: st.need });
+  if (D.n >= st.need) { D.i++; G.wait = 1.4; if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.next = () => { G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); }; } else G.next = () => lessonDeal(G); }
+  else { G.wait = 0.8; G.next = () => lessonDeal(G, true); } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: drags a piece from the tray to somewhere on the grid
+const BLIND = { d: G => { const ti = (Math.random() * 3) | 0; place(G, ti, (Math.random() * GRID) | 0, (Math.random() * GRID) | 0); } };
+// a player who looks: tries every piece in every place, judging the board after (lines cleared, gems taken, room left for
+// the big pieces, no lonely holes); a careless one sometimes just puts a piece somewhere it fits
+const PROBES = ['i5', 'o3', 'l5', 'i4', 'r23', 'o2'].flatMap(k => KINDS.filter(q => q.k === k)).map(q => q.cells);
+function boardScore(B) { let v = 0; const at = (r, c) => r < 0 || c < 0 || r >= GRID || c >= GRID || B[idx(r, c)];
+  // room for every awkward shape: some place for each is what matters (log), not many places for one
+  for (const cells of PROBES) { let n = 0; for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) { let ok = true; for (const [a, b] of cells) { const rr = r + a, cc = c + b; if (rr >= GRID || cc >= GRID || B[idx(rr, cc)]) { ok = false; break; } } if (ok) n++; } v += Math.log1p(n) * 2.2; }
+  for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) if (!B[idx(r, c)]) { const n = (at(r - 1, c) ? 1 : 0) + (at(r + 1, c) ? 1 : 0) + (at(r, c - 1) ? 1 : 0) + (at(r, c + 1) ? 1 : 0); if (n >= 3) v -= 2.5; if (n === 4) v -= 3; }
+  let filled = 0; for (let i = 0; i < GRID * GRID; i++) if (B[i]) filled++; v -= filled * 0.12;
+  return v; }
+function tryPlace(G, p, r, c) { const B = G.b.slice(), Gm = G.gem.slice(); for (const [a, b] of p.cells) B[idx(r + a, c + b)] = 1; let n = 0, gems = 0; const full = [];
+  for (let rr = 0; rr < GRID; rr++) { let f = true; for (let cc = 0; cc < GRID; cc++) if (!B[idx(rr, cc)]) { f = false; break; } if (f) { n++; for (let cc = 0; cc < GRID; cc++) full.push(idx(rr, cc)); } }
+  for (let cc = 0; cc < GRID; cc++) { let f = true; for (let rr = 0; rr < GRID; rr++) if (!B[idx(rr, cc)]) { f = false; break; } if (f) { n++; for (let rr = 0; rr < GRID; rr++) full.push(idx(rr, cc)); } }
+  for (const i of full) { if (Gm[i]) { gems++; Gm[i] = false; } B[i] = null; } return { B, n, gems }; }
+// a player who looks a little ahead: for its best few first placements, where would the rest of the tray then go?
+function bestFor(B, Gm, p, gemGoal) { let bv = -1e9, best = null; const G2 = { b: B, gem: Gm };
+  for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) { if (!fits(G2, p, r, c)) continue; const T = tryPlace(G2, p, r, c), v = T.n * 14 + T.n * T.n * 4 + (gemGoal ? T.gems * 30 : 0) + boardScore(T.B); if (v > bv) { bv = v; best = { r, c, T, v }; } }
+  return best; }
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
+  if (G.over || G.wait > 0) { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.5 + react * 2.2) return; mem.t = 0;
+  const gemGoal = G.cfg.goal === 'gems' || (G.lesson && lessonNow(G).id === 'gem'), cands = [];
+  for (let ti = 0; ti < 3; ti++) { const p = G.tray[ti]; if (!p) continue; for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) { if (!fits(G, p, r, c)) continue; const T = tryPlace(G, p, r, c);
+    cands.push({ ti, r, c, T, v: T.n * 14 + T.n * T.n * 4 + (gemGoal ? T.gems * 30 : 0) + boardScore(T.B) + (G.streak && T.n ? 6 : 0) + R() * (1 - acc) * 25 }); } }
+  if (!cands.length) { if (G.rerolls > 0) reroll(G); return; }
+  cands.sort((a, b) => b.v - a.v); let best = cands[0], bv = -1e9;
+  if (R() < acc) for (const cd of cands.slice(0, 8)) { let v = cd.v, B = cd.T.B; const Gm = G.gem.slice(); for (let k = 0; k < 3; k++) { if (k === cd.ti || !G.tray[k]) continue; const b2 = bestFor(B, Gm, G.tray[k], gemGoal); if (!b2) { v -= 60; break; } v += b2.T.n * 10; B = b2.T.B; } v += boardScore(B) * 0.6; if (v > bv) { bv = v; best = cd; } }
+  let { ti, r, c } = best; if (R() > acc + (1 - acc) * 0.5) r += R() < 0.5 ? 1 : -1;      /* a slip of the finger: one off (if it does not fit, it comes back) */
+  place(G, ti, r, c); }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.gemsGot = G.cfg.gems; G.score = Math.max(G.score, G.cfg.target); finish(G, true); }
+
+// ===================== DRAW + JUICE: the toy-box grid (2D on purpose: a block puzzle reads best flat and square, like the originals) =====================
+// A dark, soft board of 64 wells; glossy bevelled blocks in eight bright colours; grey stone for junk; gems are crystal blocks
+// with a diamond that twinkles. The tray sits under the board; a piece being dragged rides above the finger (so the finger
+// never hides it), full size, with a shadow on the grid where it would land and the rows and columns it would clear lit up
+// in advance (the "it's going to clear!" promise, P3/P6). A clear sweeps a white flash along the line, every block pops into
+// sparks of its colour, gems fly to the goal, and the words climb with a double, triple or combo.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, POPS = [], SWEEP = [], FLY = [], BACK = null, born = {}, comboShow = 0, dangerT = 0, lastClearN = 0;
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.45 + Math.random() * 0.35, t: 0, col, r: 2 + Math.random() * 3 }); } if (PT.length > 400) PT.splice(0, PT.length - 400); }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+const rowOf = i => (i / GRID) | 0, colOf = i => i % GRID;
+// where everything is: the HUD at the top, the board, the tray under it, the two power buttons under the tray
+function lay() { const s = S1(), top = 112 * s, trayH = Math.max(130 * s, H * 0.18), cs = Math.min((W - 20) / GRID, (H - top - trayH - 56 * s) / GRID), bw = cs * GRID, bx = (W - bw) / 2,
+    by = top + Math.max(0, (H - top - trayH - 56 * s - bw) * 0.4), ty = by + bw + 22 * s, tcs = Math.min(cs * 0.6, 30 * s);
+  return { s, cs, bx, by, bw, ty, tcs, cx: c => bx + (c + 0.5) * cs, cy: r => by + (r + 0.5) * cs, slot: k => W / 2 + (k - 1) * W * 0.32, py: ty + trayH }; }
+// ---------- the blocks, drawn once per size and colour into little pictures ----------
+let SPR = { key: '', c: {} };
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255, f = v => Math.round(clamp(k > 1 ? v + (255 - v) * (k - 1) : v * k, 0, 255)); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+const colHex = col => col === 8 ? '#7d8597' : col === 9 ? '#bfe9ff' : BCOL[col % 8];
+function block(col, px) { const key = col + ':' + Math.round(px * DPR); if (SPR.c[key]) return SPR.c[key]; const d = Math.max(4, Math.ceil(px * DPR)), cnv = document.createElement('canvas'); cnv.width = cnv.height = d; const x = cnv.getContext('2d'), h = colHex(col), r = d * 0.16, m = d * 0.03;
+  const rr = (a, b, w, hh, q) => { x.beginPath(); x.roundRect(a, b, w, hh, q); };
+  rr(m, m, d - 2 * m, d - 2 * m, r); x.fillStyle = shade(h, 0.62); x.fill();                                  // the dark edge
+  const g = x.createLinearGradient(0, 0, 0, d); g.addColorStop(0, shade(h, 1.18)); g.addColorStop(1, shade(h, 0.92)); rr(m, m, d - 2 * m, d - 2 * m - d * 0.09, r); x.fillStyle = g; x.fill();      // the face
+  rr(d * 0.17, d * 0.15, d * 0.66, d * 0.56, r * 0.7); const g2 = x.createLinearGradient(0, d * 0.15, 0, d * 0.7); g2.addColorStop(0, shade(h, 1.05)); g2.addColorStop(1, shade(h, 0.98)); x.fillStyle = g2; x.fill();      // the raised top
+  x.fillStyle = 'rgba(255,255,255,.55)'; rr(d * 0.2, d * 0.17, d * 0.36, d * 0.1, d * 0.05); x.fill();          // the shine
+  if (col === 8) { x.strokeStyle = 'rgba(40,44,56,.5)'; x.lineWidth = d * 0.04; x.beginPath(); x.moveTo(d * 0.3, d * 0.3); x.lineTo(d * 0.48, d * 0.5); x.lineTo(d * 0.42, d * 0.68); x.moveTo(d * 0.48, d * 0.5); x.lineTo(d * 0.68, d * 0.45); x.stroke(); }
+  return SPR.c[key] = cnv; }
+function gemPic(px) { const key = 'gem:' + Math.round(px * DPR); if (SPR.c[key]) return SPR.c[key]; const d = Math.max(4, Math.ceil(px * DPR)), cnv = document.createElement('canvas'); cnv.width = cnv.height = d; const x = cnv.getContext('2d');
+  const P = [[0.5, 0.18], [0.8, 0.4], [0.5, 0.84], [0.2, 0.4]].map(([a, b]) => [a * d, b * d]); x.beginPath(); P.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); x.closePath();
+  const g = x.createLinearGradient(0, d * 0.18, 0, d * 0.84); g.addColorStop(0, '#ff9ef0'); g.addColorStop(0.5, '#c050ff'); g.addColorStop(1, '#6a20d0'); x.fillStyle = g; x.fill(); x.strokeStyle = '#fff'; x.lineWidth = d * 0.04; x.stroke();
+  x.beginPath(); x.moveTo(d * 0.2, d * 0.4); x.lineTo(d * 0.8, d * 0.4); x.moveTo(d * 0.5, d * 0.18); x.lineTo(d * 0.38, d * 0.4); x.lineTo(d * 0.5, d * 0.84); x.lineTo(d * 0.62, d * 0.4); x.lineTo(d * 0.5, d * 0.18); x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = d * 0.025; x.stroke();
+  return SPR.c[key] = cnv; }
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2); comboShow = Math.max(0, comboShow - dt);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 22; } while (TXT.length && TXT[0].t > 1.4) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  for (const a of [POPS, SWEEP, FLY]) { for (const p of a) p.t += dt; for (let i = a.length - 1; i >= 0; i--) if (a[i].t > a[i].life) { if (a === FLY && a[i].done) a[i].done(); a.splice(i, 1); } }
+  for (const k in born) { born[k] += dt; if (born[k] > 1) delete born[k]; }
+  if (BACK) { BACK.t += dt; if (BACK.t > 0.22) BACK = null; }
+  if (G && !G.over && !G.lesson) { const f = G.b.filter(Boolean).length; dangerT = lerp(dangerT, f > 44 ? 1 : 0, dt * 2); } else dangerT = 0; }
+// ---------- what a piece dragged to here would do ----------
+function dropSpot(L) { const d = ui.drag; if (!d || !G) return null; const p = G.tray[d.ti]; if (!p) return null; const w = 1 + Math.max(...p.cells.map(c => c[1])), h = 1 + Math.max(...p.cells.map(c => c[0]));
+  const px = d.x - w * L.cs / 2, py = d.y - liftOf(L) - h * L.cs / 2, c = Math.round((px - L.bx) / L.cs), r = Math.round((py - L.by) / L.cs); return { p, r, c, px, py, w, h, ok: fits(G, p, r, c) }; }
+const liftOf = L => L.cs * 2.1;
+function wouldClear(G, p, r, c) { const B = G.b.slice(); for (const [a, b] of p.cells) B[idx(r + a, c + b)] = 1; const rows = [], cols = [];
+  for (let rr = 0; rr < GRID; rr++) { let f = true; for (let cc = 0; cc < GRID; cc++) if (!B[idx(rr, cc)]) { f = false; break; } if (f) rows.push(rr); }
+  for (let cc = 0; cc < GRID; cc++) { let f = true; for (let rr = 0; rr < GRID; rr++) if (!B[idx(rr, cc)]) { f = false; break; } if (f) cols.push(cc); } return { rows, cols }; }
+// ---------- the picture ----------
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G;
+  const key = L.cs.toFixed(2) + ':' + DPR; if (SPR.key !== key) SPR = { key, c: {} };
+  const rk = W + 'x' + H + ':' + DPR + ':' + (g ? g.place : 0); if (draw.rk !== rk) { draw.rk = rk; paintBack(L, g); }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(draw.oc, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  if (g) { drawBoard(g, L, now); drawTray(g, L, now); hud(g, L, now); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 - p.t / p.life * 0.5), 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
+  for (const f of FLY) { const u = easeOut(Math.min(1, f.t / f.life)), x = lerp(f.x0, f.x1, u), y = lerp(f.y0, f.y1, u) - Math.sin(u * Math.PI) * 70 * s, sz = L.cs * (1 - u * 0.4); ctx.drawImage(gemPic(L.cs), x - sz / 2, y - sz / 2, sz, sz); }
+  if (g) drawDrag(g, L, now);
+  ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1 ? 1 : 1 - (q.t - 1) / 0.4, pop = 1 + 0.3 * Math.max(0, 1 - q.t * 6); ctx.globalAlpha = Math.max(0, a); ctx.font = `900 ${Math.round(q.size * s * pop)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,16,40,.6)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30, hy = clamp(L.by + L.bw * 0.5, 60, H - hh);
+    ctx.fillStyle = 'rgba(14,20,48,.94)'; rrect(W / 2 - ww / 2, hy - hh / 2, ww, hh, 12); ctx.fill(); ctx.strokeStyle = '#ffc23a'; ctx.lineWidth = 1.5; ctx.stroke(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (dangerT > 0.02) { const gr = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75); gr.addColorStop(0, 'rgba(255,60,60,0)'); gr.addColorStop(1, `rgba(255,60,60,${0.22 * dangerT * (0.75 + 0.25 * Math.sin(now * 4))})`); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
+function paintBack(L, g) { const oc = draw.oc || (draw.oc = document.createElement('canvas')); oc.width = cv.width; oc.height = cv.height; const o = oc.getContext('2d'); o.setTransform(DPR, 0, 0, DPR, 0, 0); const P = PLACES[g ? g.place : 0];
+  const bg = o.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, P.bg[0]); bg.addColorStop(1, P.bg[1]); o.fillStyle = bg; o.fillRect(0, 0, W, H);
+  const R0 = rng(31 + (g ? g.place : 0)); for (let i = 0; i < 34; i++) { const x = R0() * W, y = R0() * H, z = 6 + R0() * 22; o.save(); o.translate(x, y); o.rotate(R0() * TAU); o.globalAlpha = 0.05 + R0() * 0.07; o.fillStyle = BCOL[i % 8]; o.beginPath(); o.roundRect(-z / 2, -z / 2, z, z, z * 0.2); o.fill(); o.restore(); }
+  if (!g) return; const cs = L.cs;
+  // the board: a rounded tray of 64 wells
+  o.fillStyle = 'rgba(5,8,24,.55)'; o.beginPath(); o.roundRect(L.bx - 8, L.by - 8, L.bw + 16, L.bw + 16, 16); o.fill(); o.strokeStyle = 'rgba(255,255,255,.12)'; o.lineWidth = 2; o.stroke();
+  for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) { const x = L.bx + c * cs, y = L.by + r * cs; o.fillStyle = (r + c) % 2 ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.045)'; o.beginPath(); o.roundRect(x + 1.5, y + 1.5, cs - 3, cs - 3, cs * 0.14); o.fill(); } }
+function drawBoard(G, L, now) { const cs = L.cs, sp = dropSpot(L);
+  // what the dragged piece would clear lights up first (the promise)
+  let lit = null; if (sp && sp.ok) { const w = wouldClear(G, sp.p, sp.r, sp.c); lit = w; for (const r of w.rows) { ctx.fillStyle = `rgba(255,214,90,${0.22 + 0.12 * Math.sin(now * 12)})`; rrect(L.bx - 3, L.by + r * cs, L.bw + 6, cs, 8); ctx.fill(); } for (const c of w.cols) { ctx.fillStyle = `rgba(255,214,90,${0.22 + 0.12 * Math.sin(now * 12)})`; rrect(L.bx + c * cs, L.by - 3, cs, L.bw + 6, 8); ctx.fill(); } }
+  // in a lesson the gap glows until it is filled
+  if (G.lesson && !ui.drag) for (let i = 0; i < GRID * GRID; i++) { if (G.b[i]) continue; const r = rowOf(i), c = colOf(i); let nr = 0, nc = 0; for (let k = 0; k < GRID; k++) { if (G.b[idx(r, k)]) nr++; if (G.b[idx(k, c)]) nc++; } if (nr >= 5 || nc >= 6) { ctx.strokeStyle = `rgba(255,214,90,${0.5 + 0.4 * Math.sin(now * 6)})`; ctx.lineWidth = 3; rrect(L.bx + c * cs + 3, L.by + r * cs + 3, cs - 6, cs - 6, cs * 0.15); ctx.stroke(); } }
+  // the blocks
+  for (let i = 0; i < GRID * GRID; i++) { const b = G.b[i]; if (!b) continue; let x = L.bx + colOf(i) * cs, y = L.by + rowOf(i) * cs, z = cs; const bt = born[i];
+    if (bt != null && bt < 0.25) { const u = bt / 0.25, k = 1 + Math.sin(u * Math.PI) * 0.12; z = cs * k; x -= (z - cs) / 2; y -= (z - cs) / 2; }      // a landing squash (P9)
+    const glow = lit && (lit.rows.includes(rowOf(i)) || lit.cols.includes(colOf(i)));
+    ctx.drawImage(block(glow ? b.col === 8 || b.col === 9 ? b.col : (sp.p.col) : b.col, cs), x, y, z, z);
+    if (G.gem[i]) { const tw = 0.88 + 0.08 * Math.sin(now * 3 + i); ctx.drawImage(gemPic(cs), x + z * (1 - tw) / 2, y + z * (1 - tw) / 2 - z * 0.03, z * tw, z * tw); if (Math.sin(now * 2.3 + i * 1.7) > 0.97) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + z * 0.66, y + z * 0.3, 2.2, 0, TAU); ctx.fill(); } } }
+  // the shadow where the piece would land
+  if (sp) { for (const [a, b] of sp.p.cells) { const r = sp.r + a, c = sp.c + b; if (r < 0 || c < 0 || r >= GRID || c >= GRID) continue; const x = L.bx + c * cs, y = L.by + r * cs; if (sp.ok) { ctx.globalAlpha = 0.42; ctx.drawImage(block(sp.p.col, cs), x, y, cs, cs); ctx.globalAlpha = 1; } else if (!G.b[idx(r, c)]) { ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 2; rrect(x + 4, y + 4, cs - 8, cs - 8, 6); ctx.stroke(); } } }
+  // pops and line sweeps
+  for (const p of POPS) { const u = p.t / p.life, z = cs * (1 + u * 0.5); ctx.globalAlpha = 1 - u; ctx.drawImage(block(p.col, cs), p.x - z / 2, p.y - z / 2, z, z); } ctx.globalAlpha = 1;
+  for (const w of SWEEP) { const u = w.t / w.life, a = 1 - u; ctx.globalAlpha = a; ctx.fillStyle = '#fff'; if (w.row != null) { const y = L.by + w.row * cs, x0 = L.bx + (w.from < 0 ? L.bw * (1 - u) : 0); ctx.fillRect(L.bx, y + cs * 0.3 * u, L.bw, cs * (1 - 0.6 * u)); } else { const x = L.bx + w.col * cs; ctx.fillRect(x + cs * 0.3 * u, L.by, cs * (1 - 0.6 * u), L.bw); } ctx.globalAlpha = 1; } }
+function pieceSize(p) { return [1 + Math.max(...p.cells.map(c => c[1])), 1 + Math.max(...p.cells.map(c => c[0]))]; }
+function drawPiece(p, x, y, z, alpha = 1) { ctx.globalAlpha = alpha; for (const [a, b] of p.cells) ctx.drawImage(block(p.col, z), x + b * z, y + a * z, z, z); ctx.globalAlpha = 1; }
+function drawTray(G, L, now) { const s = L.s;
+  ctx.fillStyle = 'rgba(5,8,24,.35)'; rrect(10, L.ty - 4 * s, W - 20, L.py - L.ty - 2 * s, 16); ctx.fill();
+  for (let k = 0; k < 3; k++) { const p = G.tray[k]; if (!p) continue; if (ui.drag && ui.drag.ti === k) continue; const [w, h] = pieceSize(p); let z = Math.min(L.tcs, W * 0.29 / w), x = L.slot(k) - w * z / 2, y = (L.ty + L.py) / 2 - h * z / 2 - 6 * s;
+    if (BACK && BACK.ti === k) { const u = easeOut(BACK.t / 0.22); x = lerp(BACK.x, x, u); y = lerp(BACK.y, y, u); z = lerp(L.cs, L.tcs, u); }
+    const fitsAny = anyFit(G, p); drawPiece(p, x, y, z, fitsAny ? 1 : 0.28);
+    if (G.lesson && !ui.drag && p.cells.length <= 3 && lessonKey(G, k)) { const b = 1 + 0.06 * Math.sin(now * 7); ctx.strokeStyle = 'rgba(255,214,90,.9)'; ctx.lineWidth = 2.5; rrect(L.slot(k) - (w * z / 2 + 8) * b, y - 8 * b, (w * z + 16) * b, (h * z + 16) * b, 10); ctx.stroke(); } }
+  // the two power-ups (only once bought)
+  for (const pw of powers(G, L)) { const on = pw.n > 0, armed = pw.id === 'bomb' && G.arm; ctx.fillStyle = armed ? '#ff5a5a' : on ? 'rgba(255,194,58,.95)' : 'rgba(255,255,255,.1)'; rrect(pw.x, pw.y, pw.w, pw.h, pw.h / 2); ctx.fill();
+    ctx.fillStyle = on ? '#1a2448' : 'rgba(255,255,255,.35)'; ctx.font = `800 ${Math.round(13 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(armed ? 'TAP THE GRID' : pw.label + (on ? '' : ' (used)'), pw.x + pw.w / 2, pw.y + pw.h / 2 + 1); } }
+function lessonKey(G, k) { const p = G.tray[k]; if (!p) return false; for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) if (fits(G, p, r, c)) { const w = wouldClear(G, p, r, c); if (w.rows.length + w.cols.length) return true; } return false; }
+function powers(G, L) { const out = [], s = L.s, h = 30 * s, y = L.py + 4 * s; if (G.lesson) return out; if (G.cfg.reroll) out.push({ id: 'reroll', label: '🔄 NEW PIECES', n: G.rerolls }); if (G.cfg.bomb) out.push({ id: 'bomb', label: '💣 BOMB', n: G.bombs });
+  const w = Math.min(150 * s, (W - 40) / Math.max(1, out.length) - 10); out.forEach((p, k) => { p.w = w; p.h = h; p.x = W / 2 + (k - out.length / 2) * (w + 12) + 6; p.y = Math.min(y, H - h - 8); }); return out; }
+function drawDrag(G, L, now) { const sp = dropSpot(L); if (!sp) return; const z = L.cs * 0.96;
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 8; drawPiece(sp.p, ui.drag.x - sp.w * z / 2, ui.drag.y - liftOf(L) - sp.h * z / 2, z); ctx.restore(); }
+// ---------- the top: level, score, the goal ----------
+function goalLeft(G) { return G.cfg.goal === 'score' ? Math.max(0, G.cfg.target - G.score) : Math.max(0, G.cfg.gems - G.gemsGot); }
+function progress(G) { return clamp(G.cfg.goal === 'score' ? G.score / G.cfg.target : G.gemsGot / G.cfg.gems, 0, 1); }
+const goalSpot = L => [W - 54 * L.s, 74 * L.s];
+function hud(G, L, now) { const s = L.s;
+  if (G.lesson) { lessonPanel(G, L); return; }
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.textAlign = 'left'; ctx.fillText(`LEVEL ${G.N} · ${PLACES[G.place].name.toUpperCase()}`, 16, 54 * s);
+  ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(34 * s)}px ${TF}`; ctx.fillText(G.score.toLocaleString(), 16, 82 * s);
+  const bst = best[G.N]; if (bst) { ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillStyle = G.score > bst ? '#ffc23a' : 'rgba(255,255,255,.55)'; ctx.fillText(G.score > bst ? 'NEW BEST!' : `BEST ${bst.toLocaleString()}`, 16, 104 * s); }
+  // the goal, top right
+  const [gx, gy] = goalSpot(L), gem = G.cfg.goal === 'gems'; ctx.fillStyle = 'rgba(255,255,255,.12)'; rrect(gx - 44 * s, gy - 30 * s, 88 * s, 60 * s, 14); ctx.fill();
+  if (gem) { const z = 30 * s; ctx.drawImage(gemPic(z), gx - z / 2, gy - 22 * s, z, z); } else { ctx.fillStyle = '#ffc23a'; ctx.font = `800 ${Math.round(12 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('TARGET', gx, gy - 12 * s); }
+  ctx.textAlign = 'center'; ctx.font = `900 ${Math.round(17 * s)}px ${TF}`; const left = goalLeft(G); ctx.fillStyle = left ? '#fff' : '#9be3b5'; ctx.fillText(left ? (gem ? `${G.gemsGot} / ${G.cfg.gems}` : G.cfg.target.toLocaleString()) : '✓', gx, gy + 16 * s);
+  // the bar
+  const bx = 130 * s, bw = W - bx - 110 * s, by = 76 * s, p = progress(G); if (bw > 40) { ctx.fillStyle = 'rgba(255,255,255,.14)'; rrect(bx, by, bw, 10 * s, 5 * s); ctx.fill(); const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0); gr.addColorStop(0, '#3ac8d8'); gr.addColorStop(1, '#ffc23a'); ctx.fillStyle = gr; rrect(bx, by, Math.max(10 * s, bw * p), 10 * s, 5 * s); ctx.fill();
+    if (G.streak > 0) { ctx.fillStyle = '#ff9a3a'; ctx.font = `900 ${Math.round(14 * s * (1 + comboShow * 0.3))}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(`COMBO ×${G.streak + 1}` + (G.since ? ' ' + '●'.repeat(3 - G.since) : ''), bx + bw / 2, by + 26 * s); } } }
+function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20; let y = 46; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 40 * s + lines.length * 17 * s;
+  ctx.fillStyle = 'rgba(14,20,48,.94)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#ffc23a'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffc23a'; ctx.font = `900 ${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n} / ${st.need}` : ''), x + 12, y + 9 * s);
+  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 31 * s + i * 17 * s)); ctx.restore(); }
+// ---------- what each happening looks and sounds like ----------
+const WORDS = ['', '', 'DOUBLE!', 'TRIPLE!', 'QUADRUPLE!', 'INCREDIBLE!', 'UNREAL!'];
+function onEvent(G, e) { const L = lay(), s = L.s, cs = L.cs;
+  switch (e.k) {
+    case 'start': say(`LEVEL ${G.N}`, W / 2, L.by + L.bw * 0.38, '#fff', 34); say(goalLine(G), W / 2, L.by + L.bw * 0.38 + 40 * s, '#ffe9b0', 18); sfx.start(); if (G.N <= 1) tip('how', 'Drag a piece from the tray onto the grid. Fill a row or a column to clear it.', 3.6); break;
+    case 'deal': if (!G.lesson || G.placed) sfx.deal(); break;
+    case 'place': for (const [a, b] of e.cells) born[idx(e.r + a, e.c + b)] = 0; sfx.place(e.cells.length); vibe(HAP.tick); break;
+    case 'nofit': sfx.nope(); break;
+    case 'fumble': if (e.cost) { say(`−${e.cost}`, W / 2, L.ty - 6 * s, '#ff6a6a', 22); } tip('fumble', 'Careful: a second wrong drop soon after the first costs points.', 3); break;
+    case 'clear': { const n = e.n; let sx = 0, sy = 0; for (const c of e.cells) { const x = L.cx(colOf(c.i)), y = L.cy(rowOf(c.i)); sx += x; sy += y; POPS.push({ x, y, col: c.col, t: -Math.random() * 0.12, life: 0.3 }); sparks(x, y, 3, colHex(c.col), 170 * s); }
+      for (const r of e.rows) SWEEP.push({ row: r, t: 0, life: 0.3 }); for (const c of e.cols) SWEEP.push({ col: c, t: 0, life: 0.3 });
+      const mx = sx / e.cells.length, my = sy / e.cells.length; say(`+${e.pts}`, mx, my, '#fff', 20 + Math.min(14, n * 4));
+      if (n >= 2) say(WORDS[Math.min(6, n)], W / 2, L.by + L.bw * 0.42, ['#fff', '#fff', '#ffe08a', '#ff9a3a', '#ff6ac8', '#a8f0ff', '#fff'][Math.min(6, n)], 30 + n * 4);
+      if (e.streak >= 2) { comboShow = 1; say(`COMBO ×${e.streak}`, W / 2, L.by + L.bw * 0.42 + (n >= 2 ? 44 : 0) * s, '#ff9a3a', 24 + Math.min(12, e.streak * 2)); }
+      for (const i of e.gems) { const [tx, ty] = goalSpot(L); FLY.push({ x0: L.cx(colOf(i)), y0: L.cy(rowOf(i)), x1: tx, y1: ty - 8 * s, t: 0, life: 0.6, done: () => sfx.gem() }); }
+      sfx.clear(n, e.streak); FX.stop = n >= 2 ? 0.07 : 0.035; FX.shake = Math.min(16, 4 + n * 3); if (n >= 3) FX.flash = 0.5; vibe(n >= 2 ? HAP.sharp : HAP.light); lastClearN = n; break; }
+    case 'gemnew': born[e.i] = 0; break;
+    case 'streakend': if (e.n >= 2) say('combo over', W / 2, L.by - 4 * s, 'rgba(255,255,255,.6)', 14); break;
+    case 'stuck': tip('stuck', 'Nothing fits! Use a power-up below the tray.', 3); sfx.nope(); break;
+    case 'full': say('NO ROOM!', W / 2, L.by + L.bw * 0.45, '#ff8a8a', 40); FX.red = 1; FX.shake = 8; sfx.full(); vibe(HAP.thud); break;
+    case 'reroll': sfx.deal(); say('NEW PIECES', W / 2, L.ty - 4 * s, '#ffc23a', 18); break;
+    case 'bomb': { const x = L.cx(e.c), y = L.cy(e.r); for (const c of e.cells) { POPS.push({ x: L.cx(colOf(c.i)), y: L.cy(rowOf(c.i)), col: c.col, t: 0, life: 0.3 }); sparks(L.cx(colOf(c.i)), L.cy(rowOf(c.i)), 5, '#ffb43a', 260 * s); } sfx.boom(); FX.shake = 14; FX.flash = 0.4; vibe(HAP.thud); say('BOOM!', x, y, '#ffb43a', 30); break; }
+    case 'goal': say('GOAL!', W / 2, L.by + L.bw * 0.4, '#ffe08a', 46); FX.flash = 0.6; sfx.goal(); vibe(HAP.best); for (let i = 0; i < 46; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: L.by + L.bw * 0.4, vx: Math.cos(a) * 340, vy: Math.sin(a) * 340 - 160, life: 1.1, t: 0, col: BCOL[i % 8], r: 3.5 }); } break;
+    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; sfx.nope(); break;
+    case 'lessonnext': if (e.first) hint = null; break;
+    case 'lessonok': sfx.tick(); say(`${e.n} / ${e.need}`, W / 2, L.by + L.bw * 0.55, '#ffc23a', 26); break;
+    case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.by + L.bw * 0.45, '#ffc23a', 30); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': sfx.win(); break;
+    case 'lost': sfx.lose(); break;
+  } }
+function goalLine(G) { return G.cfg.goal === 'score' ? `Score ${G.cfg.target.toLocaleString()}` : `Collect ${G.cfg.gems} gems 💎`; }
+
+// ===================== SOUND: the toy box (PLAYBOOK S1-S11) =====================
+// Heard hundreds of times, so everything is short, soft and wooden-plastic: putting a piece down is a little "clack" (a
+// filtered knock plus a low pluck, a touch deeper for a bigger piece, never quite the same twice, S2). A clear is a bright
+// chime chord; more lines at once add voices, and each clear in a combo lifts the chord a step up the scale (S5), so a long
+// combo climbs like a tune. A gem rings a crystal bell. New pieces arrive with three quick ticks. A drop that does not fit is
+// a soft hollow knock, never harsh (S8). Out of room is a gentle falling pair.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  start() { [0, 4, 7].forEach((q, j) => pluck(note(392, q + 5), 0.5, 0.07, j * 0.07)); },
+  deal() { if (!gate('deal', 120)) return; for (let j = 0; j < 3; j++) noise(0.025, 2600 + j * 500, 0.035, 'bandpass', 2, j * 0.05); },
+  place(n = 4) { if (!gate('place', 40)) return; const f = 190 * vary(0.06) * (n >= 6 ? 0.8 : n <= 2 ? 1.25 : 1); noise(0.04, 1500 * vary(0.1), 0.09, 'bandpass', 1.6); tone(f, 0.09, 0.09, 'triangle', 0, f * 0.7); pluck(f * 2, 0.18, 0.05, 0.005); },
+  nope() { if (!gate('nope', 160)) return; tone(160, 0.12, 0.06, 'sine', 0, 120); noise(0.06, 600, 0.04, 'lowpass', 1); },
+  clear(n = 1, streak = 1) { const st = Math.min(12, (streak - 1) * 2), base = note(523, st); [0, 4, 7, 12, 16, 19].slice(0, 2 + Math.min(4, n)).forEach((q, j) => tone(base * Math.pow(2, q / 12), 0.45, 0.05, 'sine', j * 0.03)); pluck(base, 0.5, 0.06);
+    noise(0.22, 5000, 0.035, 'highpass', 0.7, 0, 0.01); if (n >= 2) tone(base / 2, 0.3, 0.08, 'triangle', 0, base / 2 * 1.5); },
+  gem() { if (!gate('gem', 70)) return; tone(1976 * vary(0.02), 0.35, 0.05, 'sine'); tone(2637, 0.25, 0.03, 'sine', 0.05); },
+  full() { tone(330, 0.3, 0.07, 'triangle', 0, 294); tone(262, 0.5, 0.07, 'triangle', 0.22, 220); },
+  boom() { tone(80, 0.5, 0.16, 'sine', 0, 45); noise(0.4, 800, 0.1, 'lowpass', 0.8, 0, 0.005); },
+  tick() { if (!gate('tick', 45)) return; tone(1320 + Math.random() * 200, 0.05, 0.03, 'triangle'); },
+  goal() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(392, q), 0.9, 0.08, j * 0.09)); },
+  no() { if (!gate('no', 250)) return; tone(200, 0.1, 0.05, 'triangle', 0, 160, 900); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 1)), 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(523, q), 1.0, 0.08, j * 0.12)); },
+  lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · ${cf.goal === 'score' ? 'score ' + cf.target.toLocaleString() : 'collect ' + cf.gems + ' gems'}`, best[level] ? `Your best score here: <b>${best[level].toLocaleString()}</b>` : '', helpOn() ? '<span class="help">Fewer big pieces for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; ui.drag = null; BACK = null; born = {}; POPS.length = SWEEP.length = FLY.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.score > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.score; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'CLEARED!' : 'NO ROOM LEFT'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  const need = r.goal === 'score' ? `${r.need.toLocaleString()} points` : `${r.need} gems`;
+  $('eSub').innerHTML = `Score <b>${r.score.toLocaleString()}</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + (r.win ? ` · ${r.placed} pieces` : ` · goal <b>${Math.round(r.prog * 100)}%</b> of ${need}` + (r.prog >= 0.8 ? ' · <b>so close!</b>' : ''))
+    + `<br>${r.lines} lines cleared` + (r.best >= 2 ? ` · best: ${r.best} at once` : '') + (r.win && r.stars < 3 ? '<br>Three stars: clear two or more lines at once, and use fewer pieces.' : '') + (!r.win ? '<br>Keep a space free for the long and the big pieces.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): put a finger on a piece in the tray and drag it; it rides above the finger, and its shadow shows where it
+// will land. Let go over the grid to put it down; a drop where it does not fit sends it back to the tray (it costs nothing).
+const ui = { drag: null };
+function trayAt(x, y) { const L = lay(); if (y < L.ty - 20 * L.s || y > L.py + 2) return -1; let k = -1, bd = 1e9; for (let q = 0; q < 3; q++) { if (!G.tray[q]) continue; const d = Math.abs(x - L.slot(q)); if (d < bd && d < W * 0.17) { bd = d; k = q; } } return k; }
+function cellAt(x, y) { const L = lay(), c = Math.floor((x - L.bx) / L.cs), r = Math.floor((y - L.by) / L.cs); return c >= 0 && c < GRID && r >= 0 && r < GRID ? [r, c] : null; }
+function powerAt(x, y) { const L = lay(); return powers(G, L).find(p => x >= p.x - 6 && x <= p.x + p.w + 6 && y >= p.y - 8 && y <= p.y + p.h + 8) || null; }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || G.wait > 0) return; const x = e.clientX, y = e.clientY;
+  const pw = powerAt(x, y); if (pw) { if (pw.n <= 0) { sfx.no(); return; } if (pw.id === 'reroll') { reroll(G); ui.drag = null; } else { G.arm = !G.arm; sfx.click(); } return; }
+  if (G.arm) { const rc = cellAt(x, y); if (rc) { G.arm = false; bomb(G, rc[0], rc[1]); } else G.arm = false; return; }
+  const k = trayAt(x, y); if (k < 0) return; ui.drag = { id: e.pointerId, ti: k, x, y }; sfx.tick(); vibe(HAP.tick); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || d.id !== e.pointerId) return; d.x = e.clientX; d.y = e.clientY; });
+cv.addEventListener('pointerup', e => { const d = ui.drag; if (!d || d.id !== e.pointerId) return; const L = lay(), sp = dropSpot(L); ui.drag = null; if (!G || G.over) return;
+  if (sp && sp.ok) { place(G, d.ti, sp.r, sp.c); return; }
+  const onBoard = d.y - liftOf(L) < L.by + L.bw + L.cs; if (sp && onBoard) place(G, d.ti, sp.r, sp.c);      /* does not fit: the rules say so (and count it in a lesson) */
+  BACK = { ti: d.ti, x: sp ? sp.px : d.x, y: sp ? sp.py : d.y, t: 0 }; });
+cv.addEventListener('pointercancel', () => { if (ui.drag) BACK = { ti: ui.drag.ti, x: ui.drag.x, y: ui.drag.y, t: 0 }; ui.drag = null; });
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE TOY SHOP</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  place(ti, r, c) { return place(G, ti, r, c); }, fits(p, r, c) { return fits(G, p, r, c); }, reroll() { return reroll(G); }, bomb(r, c) { return bomb(G, r, c); }, lay, renderShop, idx, ui, dropSpot,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
