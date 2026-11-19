@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**51 games** so far. Next number: **52**.
+**52 games** so far. Next number: **53**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -59,6 +59,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 49 | **Ramp Riders** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/4c5jxbbj1PNPSZCDFaQQxm) | `games/ramp/index.html` |
 | 50 | **Spellshop** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/YHmHT3EMvkRMWDZYKEw7kp) | `games/spell/index.html` |
 | 51 | **Rex** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ) | `games/rex/index.html` |
+| 52 | **High Wire** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7) | `games/rope/index.html` |
 
 ## What each game is
 
@@ -113,3 +114,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 49. **Ramp Riders**: A trials bike side-on: two thumbs lean it back and forward; off the kickers turn it to the slope you will land on, flip it for a boost, beat the time and your own ghost.
 50. **Spellshop**: The town magician: read the customer's story for clues, pick the jars (each always means one thing), pour, stir in or out, trace the rune, seal; funny mistakes come back to be fixed, bad ones complain.
 51. **Rex**: Be the T-Rex in a 3D valley: one stick to creep or charge, BITE and ROAR; runners, duckbill herds, armoured spikebacks, charging hornfaces and rival rexes, each warning before it strikes.
+52. **High Wire**: Walk a high wire in 3D with one floating stick: slide to swing the pole, push up to walk, pull down to crouch; wind, birds, banners and sandbags; last-second saves; lean out for stars.

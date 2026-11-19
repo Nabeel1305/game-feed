@@ -494,6 +494,16 @@ Everything learned building the first games. Every new game must follow the **ru
 - A charge that runs on past you leaves its "stuck" moment 20 m away; it stops once it has passed you by 4 m.
 - The robot facing its aim point (not the animal) stood frozen beside a target for two minutes: near the aim, face the target.
 - Boss levels (every tenth) have the big rival and one prey only, or a sharp player could not finish before hunger ran out.
+### 52. High Wire (`games/rope/`): an upturned pendulum under one thumb
+- Balance must be possible while standing still: "thumb down to walk" left no way to steer the pole when you stopped. The
+  thumb is a floating stick: sideways is the pole, up walks, the middle stands, down crouches.
+- A local variable named like an action (`walk`) hid the function: "walk is not a function" at load.
+- The robot reaching for a star counted the reach as a wobble and stood leaning for ever: measure the wobble from the lean
+  it wants, and reach only while passing.
+- It waited for a sandbag while standing inside its swing: wait before the swing (0.6-1.8 m ahead), commit once inside.
+- A "save yourself" lesson built on random pushes was all or nothing (every push a fall, or none a danger): the wind lesson
+  teaches stopping instead, which the robot and a person can both do every time.
+- Rock pillars sized up to 36 m must stand at least their own size from the wire, or one fills the screen.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
