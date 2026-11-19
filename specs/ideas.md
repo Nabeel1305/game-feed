@@ -69,3 +69,13 @@ PLAYBOOK section H). His shark idea from those notes, and four of mine for a bal
 | 42 | Star Miner | fly a little mining ship with one floating stick: crack asteroids, scoop the ore, dodge rocks and pirates, upgrade the ship | 3 | 1 | 3D |
 | 43 | Ghost Lantern | walk a haunted house with one floating stick; your lantern shows ghosts; hold on one to pull it into the lantern before it reaches you | 4 | 1 | 3D |
 | 44 | Drift Kings | kart racing: the left thumb steers (hold a hard turn to drift and charge a boost), tap the right for your item; a cup of tracks | 4 | 2 | 3D |
+
+## Set 8 (18 Nov 2026, night): his ideas 2-5 ("make them good and engaging and worth playing"), plus one of mine for the mix.
+His idea 1 did not come through in his message; it goes first in set 9 when he sends it.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 45 | The Bench | his: a judge; read the case, write your own sentence in plain words, the clerk (Claude) reads it back; a council of three marks every five, or switch it off; PG or 18+ | 2 | 1 | 2D |
+| 46 | Haggle | his: a pawn shop; turn the brass dial to make offers, check for fakes, learn what things are worth in the Price Book | 2 | 1 | 2D |
+| 47 | Battle Lines | his: a general above the field; formations, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines | 4 | 1 | 3D |
+| 48 | Grand Hotel | his: the only attendant; tap bubbles to take jobs (bags, food, towels, dirty rooms), hold three, two plates in one trip, keep your promises | 3 | 1 | 2D |
+| 49 | Ramp Riders | mine: a trials bike, two thumbs lean it back and forward; turn it in the air to the slope you land on, flip for a boost, race your ghost | 4 | 2 | 2D |

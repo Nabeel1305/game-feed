@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ramp Riders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#10202e;--ink:#f2f6fa;--acc:#ffb020;--acc-dark:#a0600a;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Bungee","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(16,20,31,.55),rgba(6,8,14,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#1d1204;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#1d1204}.lvb.cur small{color:#1d1204}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:58px">Ramp Riders</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">Hit the ramp. Flip it. Stick the landing.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Bungee", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('rr.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('rr.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+// ===================== RULES: Ramp Riders (game 49, my idea for set 8: two thumbs, fast, a sport) =====================
+// A trials bike on a side-on track of hills, kickers, gaps and drops. The bike drives itself; your two thumbs lean it: hold
+// the left side to lean BACK, the right side to lean FORWARD (both together: brake). On the ground leaning forward pumps
+// speed out of downhills and leaning back slows you. Off a kicker you fly, and in the air a lean turns the bike: you must
+// bring it round to the slope you will land on. Land it close and you ride on; land it badly and you crash and start again
+// from the last flag, the clock running. Turn a whole flip and land it: a boost. Beat the time to win; beat it by more for
+// stars. Your best run rides beside you as a ghost.
+const RULES = [
+  'The bike drives itself. <b>Hold left</b> to lean BACK, <b>hold right</b> to lean FORWARD. Both: brake.',
+  'Off a ramp you fly. In the air, lean to turn the bike to the <b>slope you will land on</b>. Land it straight or crash.',
+  'A crash sends you back to the last <b>flag</b>, and the clock keeps running.',
+  'Turn a whole <b>flip</b> and land it: a <b>boost</b>. A perfect landing: a little more.',
+  'Reach the finish inside the <b>time</b>. Your best run rides with you as a <b>ghost</b>.',
+];
+const GRAV = 22, DX = 0.5;
+const PLACES = [{ name: 'Dust Bowl', sky: ['#f6b25a', '#f8d89a'], ground: '#c8783a', top: '#e8a05a', hills: '#d8905a' }, { name: 'Pine Ridge', sky: ['#5aa0d8', '#c8e8f8'], ground: '#4a6a2a', top: '#7aa83a', hills: '#3a5a4a' },
+  { name: 'Frost Peak', sky: ['#8ab0d8', '#e8f0f8'], ground: '#b8c8d8', top: '#f4f8fc', hills: '#9ab0c8' }, { name: 'Neon Docks', sky: ['#1a1040', '#5a2a6a'], ground: '#2a2a3a', top: '#ff4ab0', hills: '#3a2a5a' }];
+const placeOf = N => Math.min(3, Math.floor((N - 1) / 5) % 4);
+const UPGRADES = [
+  { id: 'engine', name: 'Engine', desc: 'Top speed up 6%.', max: 3, cost: l => 30 + l * 40 },
+  { id: 'shocks', name: 'Shocks', desc: 'Landings forgive a little more.', max: 2, cost: l => 45 + l * 50 },
+  { id: 'nitro', name: 'Nitro tank', desc: 'Flip boosts last longer.', max: 2, cost: l => 40 + l * 45 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Rookie'], [40, 'Rider'], [130, 'Stuntman'], [320, 'Pro'], [700, 'Daredevil'], [1500, 'Legend']];
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  return { N, f, help: !!help, place: placeOf(N), len: Math.round(x(300, 700, 30)), kick: x(0.68, 0.8, 25), big: x(0.2, 1, 30), slack: x(0.06, 0.0, 30) * (1 + 0.5 * e) + (help ? 0.15 : 0),
+    tol: 0.42 + 0.05 * upLv('shocks') + 0.16 * e + (help ? 0.1 : 0), top: 15 * (1 + 0.06 * upLv('engine')), nitro: 1.2 * (1 + 0.3 * upLv('nitro')), par: 0 }; }
+// ---------- the track: a height for every half metre, built from pieces ----------
+function buildTrack(G) { const c = G.cfg, R = G.rnd, hs = [], marks = [], flags = []; let y = 0, x = 0; const push = yy => { hs.push(yy); x += DX; };
+  const flat = m => { for (let i = 0; i < m / DX; i++) push(y); };
+  const hill = (m, h) => { const y0 = y, n = m / DX; for (let i = 1; i <= n; i++) push(y0 + h * (1 - Math.cos(TAU * i / n)) / 2); y = y0; };
+  const slope = (m, dh) => { const y0 = y, n = m / DX; for (let i = 1; i <= n; i++) push(y0 + dh * (1 - Math.cos(Math.PI * i / n)) / 2); y = y0 + dh; };
+  // a kicker: a curved lip up to h, then a gap (a pit), then a landing slope down to the ground beyond
+  const kicker = (h, gap, land, kind = 'down', ex = 1.8) => { const y0 = y, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, ex)); marks.push({ k: 'kick', x, kind });
+    for (let i = 0; i < gap / DX; i++) push(y0 - 3); const m = land / DX;
+    if (kind === 'down') { const top = y0 + h * 0.55; for (let i = 1; i <= m; i++) push(top - (top - (y0 - h * 0.4)) * (1 - Math.cos(Math.PI * i / m)) / 2); y = y0 - h * 0.4; }
+    else if (kind === 'flat') { const top = y0 + h * 0.3; for (let i = 1; i <= m; i++) push(top); y = top; }
+    else { const a = y0 + h * 0.15, b2 = y0 + h * 0.75; for (let i = 1; i <= m; i++) push(a + (b2 - a) * Math.sin(Math.PI / 2 * i / m)); y = b2; } };      // a step-up: you land going uphill
+  flat(24); flags.push(0);
+  while (x < c.len) { const r = R();
+    if (r < c.kick) { const big = R() < c.big, kinds = ['down', 'flat', 'up'], kind = big ? (R() < 0.75 ? 'down' : 'flat') : kinds[(R() * 2) | 0]; kicker(big ? 3.8 + R() * 2 : 1.8 + R() * 1.2, big ? 5 + R() * 4 : (kind === 'up' ? 1.5 : 2.5) + R() * 3, big ? 22 : 14, kind, 1.8 + R() * 0.7); flat(6 + R() * 6); }
+    else if (r < c.kick + 0.2) hill(18 + R() * 16, 2 + R() * 3);
+    else if (r < c.kick + 0.35) { slope(10 + R() * 8, (R() < 0.5 ? -1 : 1) * (2 + R() * 4)); flat(6); }
+    else flat(10 + R() * 10);
+    if (x - (flags[flags.length - 1] || 0) > 110) { flat(6); flags.push(x - 4); } }
+  flat(30); G.track = { hs, marks, flags, end: x - 24 };
+  // the time to beat: the length at a fair speed, with slack that shrinks over the levels
+  c.par = Math.round(x / (c.top * 0.92) * (1 + c.slack)); }
+const groundY = (G, x) => { const hs = G.track.hs, i = x / DX, i0 = Math.max(0, Math.min(hs.length - 2, Math.floor(i))), t = clamp(i - i0, 0, 1); return hs[i0] + (hs[i0 + 1] - hs[i0]) * t; };
+const slopeAt = (G, x) => Math.atan2(groundY(G, x + 0.4) - groundY(G, x - 0.4), 0.8);
+const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(N * 1013 + 7), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, hold: { l: false, r: false }, tl: 0, tr: 0 };
+  buildTrack(G); G.rnd = rng(seed); reset(G, 0);
+  G.clock = 0; G.flips = 0; G.crashes = 0; G.perfects = 0; G.trace = [];
+  if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+// put the bike at a flag
+function reset(G, x) { G.b = { x, y: groundY(G, x), vx: 6, vy: 0, a: slopeAt(G, x), w: 0, air: false, spin: 0, boost: 0, lastFlag: x, airT: 0 }; }
+function leanNow(G) { const l = G.hold.l || G.tl > 0, r = G.hold.r || G.tr > 0; return l && r ? 'brake' : l ? 1 : r ? -1 : 0; }      // +1 nose up (back), -1 nose down (forward)
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.tl = Math.max(0, G.tl - dt); G.tr = Math.max(0, G.tr - dt);
+  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  if (!G.lesson) G.clock += dt;
+  const b = G.b, c = G.cfg, L = leanNow(G), lean = L === 'brake' ? 0 : L;
+  b.boost = Math.max(0, b.boost - dt);
+  if (!b.air) {
+    // on the ground: the bike follows the ground; the engine pulls toward its top speed, slopes help or hinder
+    const th = slopeAt(G, b.x), top = b.boost > 0 ? c.top * 1.4 : c.top; let sp = Math.hypot(b.vx, b.vy) * Math.sign(b.vx || 1);
+    sp += (sp < top ? 9 : -6) * dt - GRAV * Math.sin(th) * dt * 0.55; if (L === 'brake') sp -= 14 * dt; else if (lean === 1) sp -= 3 * dt; else if (lean === -1 && th < -0.05) sp += 5 * dt;
+    sp = clamp(sp, 2, top * 1.25);
+    const nx = b.x + sp * Math.cos(th) * dt, gy = groundY(G, nx), vyG = (gy - b.y) / dt, vyBall = b.vy - GRAV * dt;
+    // the ground falls away faster than gravity can follow (a lip, a drop): you fly
+    if (vyG < vyBall - 2.5 && b.x > 2) { G.jumps = (G.jumps || 0) + 1; b.air = true; b.airT = 0; b.spin = 0; b.w = 0; b.a = Math.atan2(b.vy, b.vx) + (lean === 1 ? 0.2 : 0); /* the bike leaves pointing along the lip */ G.ev.push({ k: 'air' }); b.vy -= GRAV * dt; b.x += b.vx * dt; b.y += b.vy * dt; return; }      // leave with the speed you had on the lip
+    b.vx = sp * Math.cos(th); b.vy = vyG; b.x = nx; b.y = gy; b.a += (th + (lean === 1 ? 0.35 : 0) - b.a) * Math.min(1, dt * 14); b.w = 0;
+  } else {
+    // in the air: gravity; your lean turns the bike
+    b.airT += dt; b.vy -= GRAV * dt; b.x += b.vx * dt; b.y += b.vy * dt; const want = lean * 6; b.w += (want - b.w) * Math.min(1, dt * (lean ? 9 : 6)); b.a += b.w * dt; b.spin += b.w * dt;
+    const gy = groundY(G, b.x);
+    if (b.y <= gy) { const th = slopeAt(G, b.x), diff = Math.abs(wrap(b.a - th)), flips = Math.floor(Math.abs(b.spin) / TAU + 0.25);
+      if (diff > c.tol + (G.lesson ? 0.12 : 0) || Math.abs(th) > 1) return crash(G);      /* or you hit the face of the landing: too short */
+      b.air = false; b.y = gy; const along = b.vx * Math.cos(th) + b.vy * Math.sin(th); b.vx = Math.max(4, along) * Math.cos(th); b.vy = 0; b.a = th; b.w = 0;
+      const perfect = diff < 0.16; if (perfect) { G.perfects++; b.boost = Math.max(b.boost, 0.5); }
+      if (flips > 0) { G.flips += flips; b.boost = Math.max(b.boost, c.nitro * flips); }
+      G.ev.push({ k: 'land', perfect, flips, back: b.spin > 0, air: b.airT }); lessonSee(G, 'land', { perfect, flips }); } }
+  // flags and the finish
+  const tr = G.track; for (const f of tr.flags) if (f > b.lastFlag && b.x >= f) { b.lastFlag = f; G.ev.push({ k: 'flag' }); }
+  if (G.trace.length < 6000 && ((G.t * 10) | 0) !== G.lastTr) { G.lastTr = (G.t * 10) | 0; G.trace.push([+b.x.toFixed(1), +b.y.toFixed(1), +b.a.toFixed(2)]); }
+  if (b.y < -60) return crash(G);
+  if (b.x >= tr.end) { if (G.lesson) { lessonSee(G, 'end'); return; } return finish(G, G.clock <= G.cfg.par); } }
+function crash(G) { const b = G.b; G.crashes++; if (!G.lesson) G.clock += 2;      // a crash costs two seconds on top of the ride back
+  G.ev.push({ k: 'crash', x: b.x, y: b.y, a: b.a }); lessonSee(G, 'crash'); const back = b.lastFlag; b.air = false; b.vx = 0; G.wait = 1.1; G.next = () => reset(G, back); }
+function finish(G, win) { const c = G.cfg; G.over = win ? 'won' : 'lost'; const t = +G.clock.toFixed(2);
+  const stars = win ? 1 + (t <= c.par * 0.9 ? 1 : 0) + (t <= c.par * 0.8 ? 1 : 0) : 0;
+  G.res = { win, stars, time: t, par: c.par, flips: G.flips, crashes: G.crashes, perfects: G.perfects, trace: G.trace, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 + Math.min(6, G.flips) : 1 };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- what you do: hold a side (the screen's halves, for the robots a short press) ----------
+function press(G, side, secs = 0.3) { if (side === 'l') G.tl = secs; else G.tr = secs; }
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'land', title: 'STICK IT', how: 'Off the ramp the bike points up. Hold RIGHT in the air to lean it forward, so it lands flat on the slope. Three clean landings in a row.', need: 3 }],
+  2: [{ id: 'flip', title: 'FLIP', how: 'Big ramp. Hold LEFT in the air to spin a backflip, let go as it comes round, and land it. Twice.', need: 2 }],
+  3: [{ id: 'perfect', title: 'PERFECT', how: 'Land so the wheels meet the slope exactly: a PERFECT gives a boost. Two perfect landings in a row.', need: 2 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonTrack(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonTrack(G) { const st = lessonNow(G), hs = [], flags = [0]; let y = 0; const push = v => hs.push(v); for (let i = 0; i < 40; i++) push(0);
+  for (let k = 0; k < 6; k++) { const h = st.id === 'flip' ? 5.5 : 2.6, y0 = 0, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, 1.8)); const gap = st.id === 'flip' ? 5 : 4; for (let i = 0; i < gap / DX; i++) push(-3);
+    const top = h * 0.55, m = (st.id === 'flip' ? 26 : 14) / DX; for (let i = 1; i <= m; i++) push(top - (top + h * 0.4) * (1 - Math.cos(Math.PI * i / m)) / 2); for (let i = 0; i < 30; i++) push(-h * 0.4 + h * 0.4 * i / 30); for (let i = 0; i < 16; i++) push(0); flags.push((hs.length - 20) * DX); }
+  for (let i = 0; i < 60; i++) push(0); G.track = { hs, marks: [], flags, end: (hs.length - 30) * DX }; reset(G, 0); }
+function lessonSee(G, what, d) { const st = lessonNow(G); if (!st) return; let ok = null;
+  if (what === 'crash') { if (st.id === 'flip') { G.ev.push({ k: 'lessonmiss', how: 'Let go a little earlier, so the spin stops as the wheels meet the slope.' }); return; } ok = false; }
+  if (what === 'end') { G.ev.push({ k: 'lessonmiss', how: st.how }); lessonTrack(G); return; }
+  if (what === 'land') { if (st.id === 'land') ok = true; if (st.id === 'flip') { if (d.flips > 0) ok = true; else return; } if (st.id === 'perfect') ok = !!d.perfect; }
+  if (ok == null) return;
+  if (!ok) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); return; }
+  G.lesson.n++; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
+  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { buildTrack(G); reset(G, 0); G.clock = 0; G.flips = 0; G.crashes = 0; G.perfects = 0; G.trace = []; G.ev.push({ k: 'start' }); }; } else lessonTrack(G); }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look presses the left side, the right side, or both, for a moment
+const BLIND = { l: G => press(G, 'l', 0.15 + Math.random() * 0.4), r: G => press(G, 'r', 0.15 + Math.random() * 0.4), b: G => { press(G, 'l', 0.3); press(G, 'r', 0.3); } };
+// a rider who looks: in the air, works out where it will land and turns the bike to that slope (a flip too if there is
+// time), letting go early enough for the spin to die; on the ground leans forward down hills
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, b = G.b; G.hold.l = G.hold.r = false;
+  if (G.over || G.wait > 0) { mem.plan = null; return; }
+  mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) { G.hold.l = mem.l; G.hold.r = mem.r; return; } mem.t = 0.05 + react * 0.22;
+  let l = false, r = false;
+  if (b.air) { if (!mem.plan || mem.plan.id !== G.jumps) { // where will it land?
+      let x = b.x, y = b.y, vx = b.vx, vy = b.vy, t = 0; while (t < 4) { vy -= GRAV / 60; x += vx / 60; y += vy / 60; t += 1 / 60; if (y <= groundY(G, x)) break; }
+      const th = slopeAt(G, x), err = (Math.random() - 0.5) * (1 - acc) * 3, flip = o.flip !== false && (t > 1.35 + react * 0.4 || (G.lesson && lessonNow(G).id === 'flip' && t > 1.15)) && Math.random() < 0.85;
+      mem.plan = { id: G.jumps, target: th + err + (flip ? TAU : 0) - 0.04 }; }
+    const per = 0.05 + react * 0.22, left = mem.plan.target - (b.a + b.w * per * 0.6), stop = b.w / 6; if (b.w * left > 0 && Math.abs(stop) >= Math.abs(left) - 0.05) { if (Math.abs(stop) > Math.abs(left) + 0.6) { if (stop > 0) r = true; else l = true; } } else if (left > 0.15) l = true; else if (left < -0.15) r = true; }      // coast in, or check a spin that will overshoot a lot
+  else { mem.plan = null; const th = slopeAt(G, b.x + 3); if (th < -0.2) r = true; }
+  mem.wasAir = b.air; mem.l = l; mem.r = r; G.hold.l = l; G.hold.r = r; }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.clock = 1; finish(G, true); }
+// ===================== DRAW + JUICE: side-on, the bike big and the ground ahead readable (2D on purpose) =====================
+// A side-on run: sky with the place's light, two layers of far hills sliding slower, the ground with its bright lip, the ramps'
+// edges striped, flags at the checkpoints and the chequered finish. The bike: two spoked wheels, a frame, the rider leaning with
+// your thumbs. In the air a dotted arc shows where you will come down, and the slope there; a halo turns green when the bike's
+// angle matches it. Your best run rides as a pale ghost. Dust on landing, sparks and a SNAP on a crash, a streak on a boost.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, camX = 0, camY = 0, ghost = null;
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 2.5 }); } }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], s = S1(), x = 10, w = W - 20, y = 42 * s; ctx.save(); ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 40 * s + lines.length * 16 * s;
+  ctx.fillStyle = 'rgba(16,10,4,.9)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText(`LESSON: ${st.title} · ${D.n} OF ${st.need}`, x + 12, y + 8 * s);
+  ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 28 * s + i * 16 * s)); ctx.restore(); }
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 20; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; } }
+const PPM = () => Math.min(W, H * 0.62) / 390 * 20;      // pixels per metre
+const toS = (x, y) => ({ x: (x - camX) * PPM() + W * 0.32, y: H * 0.5 - (y - camY) * PPM() });
+function lay() { const s = S1(); return { s, left: { x: 0, y: H * 0.62, w: W / 2, h: H * 0.38 }, right: { x: W / 2, y: H * 0.62, w: W / 2, h: H * 0.38 } }; }
+function drawBike(x, y, a, s, lean, alpha = 1, col = '#ff3a2a') { const c = ctx, m = PPM(); c.save(); c.globalAlpha = alpha; c.translate(x, y); c.rotate(-a); const r = 0.42 * m, wb = 0.78 * m;
+  for (const wx of [-wb, wb]) { c.strokeStyle = '#111'; c.lineWidth = 0.14 * m; c.beginPath(); c.arc(wx, -r, r, 0, TAU); c.stroke(); c.strokeStyle = 'rgba(200,200,200,.7)'; c.lineWidth = 1; for (let i = 0; i < 4; i++) { const q = i * Math.PI / 4 + x * 0.05; c.beginPath(); c.moveTo(wx + Math.cos(q) * r * 0.85, -r + Math.sin(q) * r * 0.85); c.lineTo(wx - Math.cos(q) * r * 0.85, -r - Math.sin(q) * r * 0.85); c.stroke(); } }
+  c.strokeStyle = col; c.lineWidth = 0.16 * m; c.lineJoin = 'round'; c.beginPath(); c.moveTo(-wb, -r); c.lineTo(-0.1 * m, -r * 2.1); c.lineTo(wb * 0.75, -r * 2.5); c.lineTo(wb, -r); c.moveTo(-0.1 * m, -r * 2.1); c.lineTo(0.15 * m, -r * 1.1); c.lineTo(-wb, -r); c.stroke();
+  c.fillStyle = '#222'; c.fillRect(-0.45 * m, -r * 2.4, 0.5 * m, 0.12 * m);
+  // the rider: leans with your thumbs
+  const lx = lean === 1 ? -0.25 : lean === -1 ? 0.3 : 0; c.strokeStyle = '#1a2a4a'; c.lineWidth = 0.17 * m; c.lineCap = 'round'; c.beginPath(); c.moveTo(-0.15 * m, -r * 2.5); c.lineTo((-0.05 + lx) * m, -r * 4.0); c.lineTo(wb * 0.7, -r * 2.7); c.stroke();
+  c.beginPath(); c.moveTo(-0.15 * m, -r * 2.5); c.lineTo(0.2 * m, -r * 1.5); c.stroke();
+  c.fillStyle = col; c.beginPath(); c.arc((-0.02 + lx) * m, -r * 4.6, 0.26 * m, 0, TAU); c.fill(); c.fillStyle = '#9ad0ff'; c.fillRect((0.05 + lx) * m, -r * 4.75, 0.2 * m, 0.1 * m);
+  c.restore(); }
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, s = S1(), P = PLACES[g ? g.place : 0], m = PPM();
+  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, P.sky[0]); sky.addColorStop(1, P.sky[1]); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  if (!g) return; const b = g.b;
+  camX += (b.x + b.vx * 0.25 - camX) * 0.15; camY += (b.y - camY) * 0.08;
+  // the sun (or moon) and slow clouds
+  { const sx = W * 0.78, sy = H * 0.16; const sg = ctx.createRadialGradient(sx, sy, 4, sx, sy, 70 * s); sg.addColorStop(0, 'rgba(255,255,230,.95)'); sg.addColorStop(0.3, 'rgba(255,240,200,.5)'); sg.addColorStop(1, 'rgba(255,240,200,0)'); ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 70 * s, 0, TAU); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 5; i++) { const cx = ((i * 230 - camX * m * 0.05) % (W + 200) + W + 200) % (W + 200) - 100, cy = H * (0.1 + (i % 3) * 0.07); for (const [dx, r] of [[0, 22], [24, 28], [52, 20]]) { ctx.beginPath(); ctx.arc(cx + dx * s, cy, r * s, 0, TAU); ctx.fill(); } } }
+  // far hills, slower
+  for (const [k2, a, hgt] of [[0.15, 0.35, 0.3], [0.35, 0.6, 0.2]]) { ctx.fillStyle = P.hills; ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(0, H); for (let px = 0; px <= W + 8; px += 8) { const wx = (px + camX * m * k2) / 90; ctx.lineTo(px, H * (0.3 + hgt * 0.5) - (Math.sin(wx) * 0.5 + Math.sin(wx * 2.3) * 0.3 + 0.8) * H * hgt * 0.5 + camY * m * k2 * 0.3); } ctx.lineTo(W, H); ctx.fill(); } ctx.globalAlpha = 1;
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  // the ground
+  const x0 = camX - W * 0.32 / m - 2, x1 = camX + W * 0.7 / m + 2; ctx.beginPath(); ctx.moveTo(toS(x0, -100).x, H + 10);
+  for (let x = Math.max(0, x0); x <= x1; x += DX) { const p = toS(x, groundY(g, x)); ctx.lineTo(p.x, p.y); } ctx.lineTo(toS(x1, 0).x, H + 10); ctx.closePath(); ctx.fillStyle = P.ground; ctx.fill();
+  ctx.strokeStyle = P.top; ctx.lineWidth = 5; ctx.beginPath(); for (let x = Math.max(0, x0); x <= x1; x += DX) { const p = toS(x, groundY(g, x)); if (x === Math.max(0, x0)) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); } ctx.stroke();
+  // flags and the finish
+  for (const f of g.track.flags) { if (f < x0 || f > x1 || f === 0) continue; const p = toS(f, groundY(g, f)); ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - 2.2 * m); ctx.stroke(); ctx.fillStyle = f <= b.lastFlag ? '#4ad06a' : '#ffd020'; ctx.beginPath(); ctx.moveTo(p.x, p.y - 2.2 * m); ctx.lineTo(p.x + 0.9 * m, p.y - 1.9 * m); ctx.lineTo(p.x, p.y - 1.6 * m); ctx.fill(); }
+  { const e = g.track.end; if (e > x0 && e < x1) { const p = toS(e, groundY(g, e)); for (let i = 0; i < 8; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(p.x - 0.3 * m + j * 0.3 * m, p.y - 4 * m + i * 0.5 * m, 0.3 * m, 0.5 * m); } } }
+  // the ghost of your best
+  if (ghost && !g.lesson) { const i = Math.min(ghost.length - 1, Math.floor(g.clock * 10)); if (i >= 0) { const q = ghost[i], p = toS(q[0], q[1]); drawBike(p.x, p.y, q[2], s, 0, 0.3, '#ffffff'); } }
+  // in the air: where you will land, and whether the bike matches it
+  if (b.air && g.wait <= 0) { let x = b.x, y = b.y, vx = b.vx, vy = b.vy; ctx.fillStyle = 'rgba(255,255,255,.7)'; for (let t = 0; t < 3; t += 1 / 30) { vy -= GRAV / 30; x += vx / 30; y += vy / 30; if (y <= groundY(g, x)) break; if (((t * 30) | 0) % 3 === 0) { const p = toS(x, y); ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, TAU); ctx.fill(); } }
+    const th = slopeAt(g, x), p = toS(x, groundY(g, x)), d = Math.abs(wrap(b.a - th)), okc = d < g.cfg.tol * 0.6 ? '#4aff8a' : d < g.cfg.tol ? '#ffd020' : '#ff5a4a'; ctx.strokeStyle = okc; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x - Math.cos(th) * 1.4 * m, p.y + Math.sin(th) * 1.4 * m); ctx.lineTo(p.x + Math.cos(th) * 1.4 * m, p.y - Math.sin(th) * 1.4 * m); ctx.stroke();
+    const bp = toS(b.x, b.y); ctx.strokeStyle = okc; ctx.globalAlpha = 0.5; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(bp.x, bp.y - 0.8 * m, 1.6 * m, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+  // the bike
+  if (!(g.wait > 0 && g.crashed)) { const p = toS(b.x, b.y), L = leanNow(g); if (b.boost > 0) { for (let i = 1; i < 6; i++) { ctx.fillStyle = `rgba(255,${150 + i * 15},40,${0.35 - i * 0.05})`; ctx.beginPath(); ctx.arc(p.x - i * 0.5 * m * Math.cos(b.a), p.y - 0.5 * m + i * 0.5 * m * Math.sin(b.a), (0.5 - i * 0.06) * m, 0, TAU); ctx.fill(); } } drawBike(p.x, p.y, b.a, s, L === 'brake' ? 0 : L); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; ctx.restore();
+  hud(g, s);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1.1 ? 1 : 1 - (q.t - 1.1) / 0.4; ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s)}px ${TF}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30;
+    ctx.fillStyle = 'rgba(10,16,24,.9)'; rrect(W / 2 - ww / 2, H * 0.3 - hh / 2, ww, hh, 10); ctx.fill(); ctx.fillStyle = '#ffe3a0'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.3 - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.25})`; ctx.fillRect(0, 0, W, H); } if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,220,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
+// the top: the clock against the time to beat, the track as a line with you (and your ghost) on it; the bottom: the two thumbs
+function hud(G, s) { const c = G.cfg, L = leanNow(G);
+  // the two thumb pads
+  for (const [side, on, lab] of [['l', G.hold.l || G.tl > 0, '⟲ LEAN BACK'], ['r', G.hold.r || G.tr > 0, 'LEAN FWD ⟳']]) { const x = side === 'l' ? 14 : W / 2 + 7, w = W / 2 - 21, y = H - 74 * s, h = 58 * s;
+    ctx.fillStyle = on ? 'rgba(255,176,32,.55)' : 'rgba(0,0,0,.22)'; rrect(x, y, w, h, 16); ctx.fill(); ctx.fillStyle = on ? '#fff' : 'rgba(255,255,255,.75)'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, x + w / 2, y + h / 2); }
+  if (G.lesson) { lessonPanel(G); return; }
+  const y = 44 * s; ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(8, y, W - 16, 44 * s, 10); ctx.fill();
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.font = `${Math.round(17 * s)}px ${TF}`; ctx.fillStyle = G.clock > c.par ? '#ff8a7a' : G.clock > c.par * 0.85 ? '#ffd020' : '#fff'; ctx.fillText(G.clock.toFixed(1), 18, y + 15 * s);
+  ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText(`BEAT ${c.par}s · ★★ ${(c.par * 0.9).toFixed(0)} · ★★★ ${(c.par * 0.8).toFixed(0)}`, 18, y + 33 * s);
+  ctx.textAlign = 'right'; ctx.fillStyle = '#ffd020'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.fillText(`FLIPS ${G.flips}`, W - 18, y + 15 * s); ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText(`${G.crashes} crash${G.crashes === 1 ? '' : 'es'}`, W - 18, y + 33 * s);
+  // the track line
+  const tx = 18, tw = W - 36, ty = y + 52 * s, u = clamp(G.b.x / G.track.end, 0, 1); ctx.fillStyle = 'rgba(0,0,0,.3)'; rrect(tx, ty, tw, 6, 3); ctx.fill(); ctx.fillStyle = '#ffb020'; rrect(tx, ty, Math.max(6, tw * u), 6, 3); ctx.fill();
+  for (const f of G.track.flags) if (f > 0) { ctx.fillStyle = f <= G.b.lastFlag ? '#4ad06a' : 'rgba(255,255,255,.6)'; ctx.fillRect(tx + tw * f / G.track.end - 1, ty - 3, 2, 12); }
+  if (ghost) { const i = Math.min(ghost.length - 1, Math.floor(G.clock * 10)); if (i >= 0) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(tx + tw * clamp(ghost[i][0] / G.track.end, 0, 1), ty + 3, 4, 0, TAU); ctx.fill(); } } }
+// how the game reacts
+function onEvent(G, e) { const s = S1(), b = G.b, p = toS(b.x, b.y);
+  switch (e.k) {
+    case 'start': say(PLACES[G.place].name.toUpperCase(), W / 2, H * 0.24, '#fff', 18); say(`BEAT ${G.cfg.par}s`, W / 2, H * 0.29, '#ffd020', 26); sfx.go(); if (G.N <= 2) tip('lean', 'Hold the RIGHT side in the air to tip the nose down, the LEFT to lift it. Land along the slope.', 3.6); break;
+    case 'air': sfx.whoosh(); break;
+    case 'land': { const m = PPM(); for (let i = 0; i < (e.perfect ? 16 : 8); i++) PT.push({ x: p.x + (Math.random() - 0.5) * m, y: p.y, vx: (Math.random() - 0.5) * 160, vy: -Math.random() * 160, life: 0.5, t: 0, col: 'rgba(220,200,170,.8)', r: 2 + Math.random() * 3 });
+      FX.shake = Math.min(8, 2 + e.air * 4); sfx.land(e.air);
+      if (e.flips) { say(`${e.flips > 1 ? e.flips + '× ' : ''}${e.back ? 'BACKFLIP' : 'FRONTFLIP'}!`, p.x, p.y - 3.6 * m, '#ffd020', 26); sfx.flip(e.flips); FX.flash = 0.3; vibe(HAP.light); }
+      if (e.perfect) { say('PERFECT', p.x, p.y - (e.flips ? 5.2 : 3.6) * m, '#4aff8a', 20); sfx.perfect(); } break; }
+    case 'crash': { FX.shake = 14; FX.red = 0.6; sfx.crash(); vibe(HAP.best); G.crashed = true; setTimeout(() => { if (G) G.crashed = false; }, 1100); for (let i = 0; i < 24; i++) { const a = Math.random() * TAU; PT.push({ x: p.x, y: p.y - 10, vx: Math.cos(a) * 240, vy: Math.sin(a) * 240 - 100, life: 0.8, t: 0, col: i % 3 ? '#ff3a2a' : '#222', r: 2 + Math.random() * 3 }); } say('CRASH!', W / 2, H * 0.36, '#ff8a7a', 30); break; }
+    case 'flag': sfx.flag(); say('CHECKPOINT', p.x, p.y - 4 * PPM(), '#4ad06a', 16); break;
+    case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.3, '#ffd020', 22); sfx.go(); break;
+    case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.3, '#9be3b5', 24); sfx.perfect(); break;
+    case 'lessonmiss': say('TRY AGAIN', W / 2, H * 0.3, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessondone': say('YOU CAN RIDE!', W / 2, H * 0.3, '#ffd020', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': FX.flash = 0.7; sfx.win(); vibe(HAP.best); break;
+    case 'lost': sfx.lose(); break;
+  } }
+function area() { return { x: 0, y: 0, w: W, h: H }; }
+// ===================== SOUND: the bike (PLAYBOOK S1-S11) =====================
+// The engine is a growl that rises with speed (a filtered noise bed whose pitch follows the bike), and dies in the air to a
+// wind whoosh; a thump on landing that is heavier the longer you flew, a bright chord for a flip (higher for a double: S4), a
+// glassy ping for a PERFECT, a crunch and a clatter on a crash, a two-note chirp at a checkpoint.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  go() { tone(note(523, 0), 0.12, 0.06, 'square', 0, 0, 2400); tone(note(523, 7), 0.25, 0.06, 'square', 0.14, 0, 2400); },
+  whoosh() { if (!gate('whoosh', 200)) return; noise(0.5, 900, 0.05, 'bandpass', 0.8, 0, 0.08); },
+  land(air = 0.5) { noise(0.12, 260, Math.min(0.14, 0.05 + air * 0.06), 'lowpass', 1); tone(70, 0.18, Math.min(0.12, 0.04 + air * 0.05), 'sine', 0, 45); },
+  flip(n = 1) { [0, 4, 7, 12].forEach((q, j) => tone(note(523, q + Math.min(6, (n - 1) * 3)), 0.22, 0.06, 'triangle', j * 0.05)); },
+  perfect() { tone(note(1046, 7), 0.4, 0.05, 'sine'); tone(note(1046, 12), 0.3, 0.03, 'sine', 0.05); },
+  crash() { noise(0.4, 1800, 0.14, 'bandpass', 0.7); noise(0.25, 300, 0.12, 'lowpass', 1, 0.05); tone(120, 0.3, 0.08, 'sawtooth', 0, 50, 600); for (let i = 0; i < 4; i++) tone(2400 + i * 300, 0.05, 0.02, 'square', 0.1 + i * 0.07, 0, 4000); },
+  flag() { tone(note(784, 4), 0.1, 0.05, 'triangle'); tone(note(784, 9), 0.18, 0.05, 'triangle', 0.09); },
+  no() { if (!gate('no', 300)) return; tone(260, 0.14, 0.05, 'triangle', 0, 200, 900); },
+  coin(i = 0) { if (!gate('coin', 60)) return; const b = note(784, Math.min(10, i + 1)); tone(b, 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(392, q), 1.0, 0.09, j * 0.12)); },
+  lose() { tone(294, 0.5, 0.08, 'triangle', 0, 262); tone(247, 0.8, 0.08, 'triangle', 0.3, 220); },
+};
+const AM = { on: false };
+function soundStep(G, dt) { if (HEADLESS || !actx) return; if (!AM.on) { AM.on = true; AM.eng = bed(160, 3, 0, 0.0, 'bandpass'); AM.wind = bed(700, 0.6, 0, 0.2, 'bandpass'); }
+  const quiet = MUTE || paused || !G || G.over || G.wait > 0, b = G && G.b, sp = b ? Math.hypot(b.vx, b.vy) : 0;
+  if (AM.eng) { AM.eng.set(quiet || !b || b.air ? 0 : 0.05 + (b.boost > 0 ? 0.03 : 0), 0.12); try { AM.eng.f.frequency.setTargetAtTime(110 + sp * 14 + (b && b.boost > 0 ? 120 : 0), actx.currentTime, 0.1); } catch (e) {} }
+  if (AM.wind) AM.wind.set(quiet || !b ? 0 : b.air ? 0.04 : 0.008, 0.2); }
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level), G0 = { cfg: cf, rnd: rng(level * 1013 + 7) }; buildTrack(G0);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · ${Math.round(G0.track.end)} m · beat <b>${cf.par}s</b>`, best[level] ? `Your best here: <b>${best[level].toFixed(1)}s</b> (your ghost rides with you)` : '', helpOn() ? '<span class="help">Landings forgive more for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  downs.clear(); try { ghost = JSON.parse(localStorage.getItem('rr.ghost' + level) || 'null'); } catch (e) { ghost = null; } camX = 0; camY = 0;
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (best[L] == null || r.time < best[L]) { r.nb = best[L] != null; best[L] = r.time; store.set('best', best); try { localStorage.setItem('rr.ghost' + L, JSON.stringify(r.trace)); } catch (e) {} } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'NAILED IT' : 'TOO SLOW'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = `Time <b>${r.time.toFixed(1)}s</b> · to beat ${r.par}s` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + (!r.win && r.time - r.par <= r.par * 0.1 ? ' · <b>so close!</b>' : '') + `<br>${r.flips} flip${r.flips === 1 ? '' : 's'} · ${r.perfects} perfect · ${r.crashes} crash${r.crashes === 1 ? '' : 'es'}` + (!r.win && r.crashes ? '<br>Each crash costs the time back to the flag: land along the slope.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT DAY' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): tap a bubble to take that job (tap it again to let it go); tap a job at the bottom to let it go
+// input (two thumbs): hold the left half to lean back, the right half to lean forward; both together brake
+const downs = new Map();
+function setHold() { if (!G) return; let l = false, r = false; for (const x of downs.values()) { if (x < W / 2) l = true; else r = true; } G.hold.l = l; G.hold.r = r; }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; downs.set(e.pointerId, e.clientX); try { cv.setPointerCapture(e.pointerId); } catch (er) {} setHold(); });
+cv.addEventListener('pointermove', e => { if (downs.has(e.pointerId)) { downs.set(e.pointerId, e.clientX); setHold(); } });
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(k2 => cv.addEventListener(k2, e => { downs.delete(e.pointerId); setHold(); }));
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE GARAGE</span><span>£ ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' £'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000); soundStep(G, rdt);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  press(side, t) { press(G, side, t); }, lay, renderShop, groundY(x) { return groundY(G, x); },
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

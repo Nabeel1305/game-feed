@@ -464,6 +464,16 @@ Everything learned building the first games. Every new game must follow the **ru
 - `G.clock` must not be 0 before the shift is planned: the game ended "won" the instant the lesson finished.
 - A `//` comment pasted mid-line ate the end of a function and the page died with "G already declared": check each part
   with `node --check part2.js` after an edit.
+### 49. Ramp Riders (`games/ramp/`): lean, fly, land
+- **Blind forward presses won** while the bike kept its lagging ground angle at the lip (only a little nose-up) and table
+  landings needed no turn. The bike now leaves pointing along the lip, so every landing needs a turn of the right size.
+- Spin must die quickly when you let go (rate 6 a second), or neither a person nor the robot can stop on the angle: with
+  a slow decay the robot oscillated round the target and crashed. Its rule: coast in when the spin will carry it there.
+- A landing on a face steeper than 1 radian is a crash (you came up short), or the bike "landed" on the wall of a gap.
+- Each level's track is fixed (seeded by the level) so the ghost of your best means something; one bad jump on a fixed
+  track shows up as a level the robot can never pass, so look at every level in the quality run.
+- `step` must ignore dt = 0 (the first frame, hit-stop): the ground speed divides by dt and the bike vanished as NaN.
+- Again a `//` comment pasted mid-line killed the page: use `/* */` for comments inside a line.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
