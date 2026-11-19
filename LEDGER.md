@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**47 games** so far. Next number: **48**.
+**48 games** so far. Next number: **49**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -55,6 +55,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 45 | **The Bench** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/YCgzobKcQ8zkpCULKaBShb) | `games/judge/index.html` |
 | 46 | **Haggle** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5) | `games/haggle/index.html` |
 | 47 | **Battle Lines** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Dxurc2KCKBwA5BaEWBBjXj) | `games/war/index.html` |
+| 48 | **Grand Hotel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/5F7Hwjcmx4qek6qvs3rzfA) | `games/hotel/index.html` |
 
 ## What each game is
 
@@ -105,3 +106,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 45. **The Bench**: You are the judge: read the case, write your own sentence in plain words; the clerk (an AI) reads it back; a council of three marks every five, or switch it off and sentence freely. PG or 18+.
 46. **Haggle**: A pawn shop: sellers bring things in, you turn a brass dial to make offers, check for fakes, and learn what things are worth over the days; beat the day's profit target.
 47. **Battle Lines**: A general above the field: pick a formation, swap units, sound BATTLE, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines, and men you send in yourself fight twice as hard.
+48. **Grand Hotel**: The hotel's only attendant: bubbles pop up over rooms and the desk (bags, room service, towels, dirty rooms); tap to take a job, hold three, fetch two plates in one trip, keep your promises and the stars.

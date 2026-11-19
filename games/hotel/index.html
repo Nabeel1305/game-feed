@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Grand Hotel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Limelight&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#1a1030;--ink:#f6f0fa;--acc:#e8c25a;--acc-dark:#8a6a24;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Limelight","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(16,20,31,.55),rgba(6,8,14,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#1d1204;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#1d1204}.lvb.cur small{color:#1d1204}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:62px">Grand Hotel</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">Bags up, plates hot, rooms clean.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Limelight", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('ht.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('ht.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+// ===================== RULES: Grand Hotel (game 48, his idea) =====================
+// You are the hotel's attendant, the only one on shift. The hotel is a cutaway: the lobby at the bottom (the front desk, the
+// kitchen, the laundry) and floors of rooms above, with a lift up the left side. Requests pop up as bubbles, each with a ring
+// that empties as the guest loses patience: a new guest at the desk (carry their bags up to a clean room), a room ringing for
+// food (fetch it from the kitchen) or towels (from the laundry), and a room left dirty after a check-out (clean it, or the next
+// guest has nowhere to go). Tap a bubble to take the job; you can hold three jobs in your head, done in the order you took
+// them, and your hands carry two things. Fetching two dishes in one kitchen trip, or taking jobs on the same floor together,
+// is how you keep up. Fast service earns big tips; a guest left waiting too long costs the hotel a star. Make the shift's
+// tips target before the clock runs out; if the hotel's rating falls under two stars, the manager sends you home.
+const RULES = [
+  'Requests pop up as <b>bubbles</b>: a guest at the desk 🧳, food 🍝, towels 🧺, a dirty room 🧹. The ring is their <b>patience</b>.',
+  '<b>Tap a bubble</b> to take the job. You hold <b>three jobs</b>, done in the order you took them. Your hands carry <b>two</b> things.',
+  'Food comes from the <b>kitchen</b>, towels from the <b>laundry</b>. Take two of the same and you fetch both in <b>one trip</b>.',
+  'A new guest needs a <b>clean room</b>: clean rooms after check-out. Fast service, <b>big tips</b>; too slow costs a ★.',
+  'Make the <b>tips target</b> by the end of the shift. Under two ★ and the manager sends you home.',
+];
+const FLOOR_W = 1, LIFT = 0.07, COLS = [0.3, 0.55, 0.8], DESK = 0.3, KITCHEN = 0.55, LAUNDRY = 0.8;      // x along a floor, 0..1
+const KINDS = {
+  bags: { icon: '🧳', name: 'Bags up', tip: 9, pat: 30, src: 'desk' },
+  food: { icon: '🍝', name: 'Room service', tip: 12, pat: 34, src: 'kitchen' },
+  towels: { icon: '🧺', name: 'Towels', tip: 7, pat: 30, src: 'laundry' },
+  clean: { icon: '🧹', name: 'Clean room', tip: 5, pat: 44, src: null, work: 2.2 },
+};
+const PLACES = [{ name: 'The Seaview' }, { name: 'The Regent' }, { name: 'The Alpine Lodge' }, { name: 'The Grand Palace' }];
+const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
+const UPGRADES = [
+  { id: 'shoes', name: 'Soft shoes', desc: 'You walk 10% faster.', max: 3, cost: l => 30 + l * 35 },
+  { id: 'trolley', name: 'Trolley', desc: 'Carry three things, not two.', max: 1, cost: l => 70 },
+  { id: 'lift', name: 'Lift service', desc: 'The lift runs 25% faster.', max: 2, cost: l => 40 + l * 45 },
+  { id: 'smile', name: 'Warm smile', desc: 'Guests wait 10% longer.', max: 2, cost: l => 45 + l * 50 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Bellhop'], [40, 'Porter'], [130, 'Concierge'], [320, 'Head Butler'], [700, 'Manager'], [1500, 'Hotelier']];
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  const floors = N >= 12 ? 4 : N >= 3 ? 3 : 2;
+  return { N, f, help: !!help, place: placeOf(N), floors, shift: 100, jobs: Math.round(x(16, 20, 30) * (1 - 0.12 * e)), patK: x(1, 0.93, 30) * (1 + 0.1 * upLv('smile')) * (help ? 1.2 : 1),
+    share: x(0.75, 0.57, 30) * (help ? 0.85 : 1), vip: N >= 4 ? x(0.1, 0.25, 30) : 0, towels: N >= 2, clean: N >= 3, hands: 2 + upLv('trolley'), sp: 0.42 * (1 + 0.1 * upLv('shoes')), lift: 1.1 * (1 + 0.25 * upLv('lift')), target: 0 }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, nid: 1, wait: 0 };
+  setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else { plan(G); G.ev.push({ k: 'start' }); }
+  return G; }
+function setup(G) { const c = G.cfg; G.rooms = []; for (let f = 1; f <= c.floors; f++) COLS.forEach((x, i) => G.rooms.push({ id: G.rooms.length, f, x, no: f * 100 + i + 1, state: 'clean', guest: null }));
+  G.me = { f: 0, x: 0.42, carry: [], work: 0, face: 1, walk: 0 }; G.reqs = []; G.queue = []; G.tips = 0; G.rating = 5; G.served = 0; G.lost = 0; G.combo = 0; G.lastDone = -9; G.clock = 1e9; G.sched = []; G.best = 0;
+  G.rooms.forEach((r, i) => { if (i % 2 === 0) { r.state = 'occ'; r.guest = guestName(G); } }); }
+const NAMES = ['Mr Okafor', 'Mrs Lin', 'Dr Varga', 'Ms Adeyemi', 'Mr Rossi', 'Lady Ashby', 'Mr Haddad', 'Mrs Novak', 'Sir Clive', 'Ms Tanaka', 'Mr Mensah', 'Mme Duval'];
+const guestName = G => NAMES[(G.rnd() * NAMES.length) | 0];
+// the shift is dealt, not drawn: fixed shares of each kind of job, spread through the shift, shuffled a little;
+// the target is a share of what the shift's jobs could tip (so skill decides it, not the luck of the mix)
+function plan(G) { const c = G.cfg, R = G.rnd, n = c.jobs, kinds = [];
+  const w = c.clean ? { bags: 0.3, food: 0.3, towels: 0.18, clean: 0.22 } : c.towels ? { bags: 0.38, food: 0.38, towels: 0.24 } : { bags: 0.5, food: 0.5 };
+  for (const k2 in w) for (let i = 0; i < Math.round(w[k2] * n); i++) kinds.push(k2); while (kinds.length < n) kinds.push('food'); kinds.length = n; kinds.sort(() => R() - 0.5);
+  const span = c.shift - 14; G.sched = kinds.map((k2, i) => ({ k: k2, at: 1.5 + span * (i + R() * 0.8) / n, vip: R() < c.vip }));
+  const pot = G.sched.reduce((a, s) => a + KINDS[s.k].tip * (s.vip ? 2 : 1) * 1.5, 0); c.target = Math.max(20, Math.round(pot * c.share / 5) * 5); G.clock = c.shift; }
+// a request appears: bags at the desk (a guest waiting for a room), or a ring from an occupied room, or a room left dirty
+function spawn(G, s) { const c = G.cfg, R = G.rnd; let room = null, kind = s.k;
+  if (kind === 'clean') { const occ = G.rooms.filter(r => r.state === 'occ' && !G.reqs.some(q => q.room === r.id)); if (occ.length < 2) kind = 'food'; else { room = occ[(R() * occ.length) | 0]; room.state = 'dirty'; room.guest = null; G.ev.push({ k: 'checkout', room: room.id }); } }
+  if (kind === 'bags' && !c.clean && !G.rooms.some(r => r.state === 'clean' && r.hold == null)) { const occ = G.rooms.filter(r => r.state === 'occ' && !G.reqs.some(q => q.room === r.id)); if (occ.length) { const r = occ[(R() * occ.length) | 0]; r.state = 'clean'; r.guest = null; G.ev.push({ k: 'checkout', room: r.id }); } }      // before level 3, housekeeping cleans after a check-out
+  if (kind === 'food' || kind === 'towels') { const occ = G.rooms.filter(r => r.state === 'occ' && !G.reqs.some(q => q.room === r.id)); if (!occ.length) kind = 'bags'; else room = occ[(R() * occ.length) | 0]; }
+  const K = KINDS[kind], q = { id: G.nid++, k: kind, room: room ? room.id : null, f: room ? room.f : 0, x: room ? room.x : DESK - 0.12 + (G.reqs.filter(r => r.k === 'bags').length % 3) * 0.06, vip: s.vip && kind !== 'clean', pat: K.pat * c.patK * (s.vip ? 0.75 : 1), t: 0, got: false, guest: kind === 'bags' ? guestName(G) : room && room.guest };
+  q.max = q.pat; G.reqs.push(q); G.ev.push({ k: 'req', q }); return q; }
+function step(G, dt) { if (G.over) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  const c = G.cfg;
+  if (!G.lesson) { G.clock -= dt; while (G.sched.length && G.sched[0].at <= c.shift - G.clock) spawn(G, G.sched.shift()); }
+  else lessonTick(G, dt);
+  // patience
+  for (const q of G.reqs) { if (q.k === 'clean' && G.reqs.every(r => r.k !== 'bags')) { q.t += dt * 0.3; } else q.t += dt; if (q.t >= q.pat && !q.gone) expire(G, q); }
+  G.reqs = G.reqs.filter(q => !q.gone);
+  move(G, dt);
+  if (!G.lesson) { if (G.rating < 3) return finish(G, false, 'rating'); if (G.clock <= 0) return finish(G, G.tips >= c.target); } }
+function expire(G, q) { q.gone = true; G.lost++; const promised = G.queue.includes(q.id); q.promised = promised; G.queue = G.queue.filter(id => id !== q.id); G.me.carry = G.me.carry.filter(it => it.job !== q.id);
+  if (q.k === 'bags') { const r = G.rooms.find(r2 => r2.hold === q.id); if (r) r.hold = null; }
+  G.rating = Math.max(0, G.rating - (promised ? 1.0 : 0.6) - (q.vip ? 0.4 : 0));      /* a job you took and then failed costs twice: you promised */ G.combo = 0; G.ev.push({ k: 'expire', q }); lessonSee(G, 'expire', q); }
+// ---------- what you can do: tap a request to take the job ----------
+function take(G, id) { if (G.over || G.wait > 0) return false; const q = G.reqs.find(r => r.id === id && !r.gone); if (!q) return false;
+  if (G.queue.includes(id)) return false; if (G.queue.length >= 3) { G.ev.push({ k: 'full' }); return false; }
+  G.queue.push(id); G.ev.push({ k: 'take', q }); return true; }
+function drop(G, id) { const q = G.reqs.find(r => r.id === id); if (!G.queue.includes(id) || !q || q.got || (G.me.work > 0 && G.me.workOn === id)) return false; G.queue = G.queue.filter(j => j !== id); q.t += q.pat * 0.3; G.rating = Math.max(0, G.rating - 0.25); G.ev.push({ k: 'drop', q }); lessonSee(G, 'drop', q); return true; }      // let go of a job not yet started: the guest was told you were coming
+// a tap at a place in the hotel (floor, x): a request there, or nothing
+function tapAt(G, f, x) { const q = G.reqs.filter(r => !r.gone && Math.round(f) === r.f && Math.abs(r.x - x) < 0.085).sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
+  if (q) { if (G.queue.includes(q.id)) return drop(G, q.id); return take(G, q.id); } return false; }
+// where the attendant must go next for the first job (fetching from the kitchen or laundry first, or the bags from the desk)
+function srcX(k2) { return k2 === 'food' ? KITCHEN : k2 === 'towels' ? LAUNDRY : DESK; }
+function goal(G) { const id = G.queue[0], q = G.reqs.find(r => r.id === id); if (!q) { G.queue.shift(); return null; } const K = KINDS[q.k];
+  if (q.k === 'clean') { const r = G.rooms[q.room]; return { f: r.f, x: r.x, act: 'clean', q }; }
+  const has = G.me.carry.find(it => it.job === q.id);
+  if (!has) { if (G.me.carry.length >= G.cfg.hands) return { f: G.me.f, x: G.me.x, act: 'full', q }; if (q.k === 'bags') { return { f: 0, x: q.x, act: 'pickup', q }; } return { f: 0, x: srcX(q.k), act: 'pickup', q }; }
+  if (q.k === 'bags') { let r = G.rooms.find(r2 => r2.hold === q.id); if (!r) { const free = G.rooms.filter(r2 => r2.state === 'clean' && r2.hold == null).sort((a, b) => a.f - b.f); r = free[0]; if (!r) return { f: G.me.f, x: G.me.x, act: 'noroom', q }; r.hold = q.id; } return { f: r.f, x: r.x, act: 'deliver', q, room: r }; }
+  const r = G.rooms[q.room]; return { f: r.f, x: r.x, act: 'deliver', q, room: r }; }
+function move(G, dt) { const me = G.me, c = G.cfg; me.walk = 0;
+  if (me.work > 0) { me.work -= dt; if (me.work <= 0) { const q = G.reqs.find(r => r.id === me.workOn); me.work = 0; if (q) done(G, q); } return; }
+  const g = goal(G); if (!g) return; if (g.act === 'noroom') { if (!G.noroomT || G.t - G.noroomT > 3) { G.noroomT = G.t; G.ev.push({ k: 'noroom' }); } rotate(G); return; } if (g.act === 'full') { rotate(G); return; }
+  // the route: along the floor to the lift, up or down, then along to the place
+  if (Math.abs(me.f - g.f) > 0.001) { if (Math.abs(me.x - LIFT) > 0.005) { walkTo(G, LIFT, dt); return; } const d = g.f - me.f, s = c.lift * dt; me.f = Math.abs(d) <= s ? g.f : me.f + Math.sign(d) * s; me.inLift = true; if (me.f === g.f) G.ev.push({ k: 'ding', f: g.f }); return; }
+  me.inLift = false; me.f = g.f; if (Math.abs(me.x - g.x) > 0.005) { walkTo(G, g.x, dt); return; }
+  // there: do it
+  if (g.act === 'pickup') { const room = c.hands - me.carry.length;
+    if (g.q.k === 'bags') { me.carry.push({ job: g.q.id, k: 'bags' }); g.q.got = true; G.ev.push({ k: 'pickup', q: g.q }); return; }
+    // fetch for every job you hold that needs this place (two dishes, one trip)
+    const want = G.queue.map(id => G.reqs.find(r => r.id === id)).filter(q => q && q.k === g.q.k && !me.carry.some(it => it.job === q.id)).slice(0, room);
+    for (const q of want) { me.carry.push({ job: q.id, k: q.k }); q.got = true; } G.ev.push({ k: 'pickup', q: g.q, n: want.length }); if (want.length > 1) { G.ev.push({ k: 'two', n: want.length }); lessonSee(G, 'two'); } return; }
+  if (g.act === 'deliver') { me.carry = me.carry.filter(it => it.job !== g.q.id); if (g.q.k === 'bags') { g.room.state = 'occ'; g.room.guest = g.q.guest; g.room.hold = null; } done(G, g.q); return; }
+  if (g.act === 'clean') { me.work = KINDS.clean.work; me.workOn = g.q.id; G.ev.push({ k: 'cleaning', q: g.q }); } }
+// a job that cannot be done yet (no clean room, hands full) goes to the back of the list
+function rotate(G) { if (G.queue.length > 1) G.queue.push(G.queue.shift()); }
+function walkTo(G, x, dt) { const me = G.me, s = G.cfg.sp * dt, d = x - me.x; me.face = Math.sign(d) || me.face; me.x = Math.abs(d) <= s ? x : me.x + Math.sign(d) * s; me.walk = 1; }
+function done(G, q) { q.gone = true; G.queue = G.queue.filter(id => id !== q.id); if (q.k === 'clean') G.rooms[q.room].state = 'clean';
+  const K = KINDS[q.k], left = clamp(1 - q.t / q.pat, 0, 1), chain = G.t - G.lastDone < 5 ? G.combo + 1 : 0; G.combo = chain; G.lastDone = G.t;
+  const tip = Math.round(K.tip * (q.vip ? 2 : 1) * (0.3 + left * 1.7) * (1 + Math.min(4, chain) * 0.15)); G.tips += tip; G.served++;
+  if (left > 0.5) G.rating = Math.min(5, G.rating + 0.15);
+  G.ev.push({ k: 'done', q, tip, fast: left > 0.6, chain }); lessonSee(G, 'done', q); }
+function finish(G, win, why) { const c = G.cfg; if (G.lesson) return; G.over = win ? 'won' : 'lost';
+  const stars = win ? 1 + (G.tips >= c.target * 1.25 ? 1 : 0) + (G.rating >= 4.5 ? 1 : 0) : 0;
+  G.res = { win, stars, tips: G.tips, target: c.target, rating: +G.rating.toFixed(1), served: G.served, lost: G.lost, why: why || (win ? '' : 'tips'), coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'bags', title: 'BAGS UP', how: 'Two guests at the desk. Tap the VIP\'s 🧳 (the gold one) first: you carry the bags up to a clean room. Then the other. Twice.', need: 2 }],
+  2: [{ id: 'two', title: 'ONE TRIP', how: 'Two rooms want food. Tap BOTH 🍝 bubbles before you reach the kitchen, and you fetch both plates in one trip. Do it twice.', need: 2 }],
+  3: [{ id: 'clean', title: 'A CLEAN ROOM', how: 'Every room is full or dirty and a guest is waiting. Tap the 🧹 dirty room first, then the guest\'s 🧳. Twice.', need: 2 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonSetup(G) { const st = lessonNow(G); G.reqs = []; G.queue = []; G.me.carry = []; G.me.work = 0;
+  if (st.id === 'bags') { G.rooms.forEach((r, i) => { r.state = i < 3 ? 'occ' : 'clean'; r.hold = null; }); spawn(G, { k: 'bags' }); spawn(G, { k: 'bags', vip: true }); if (G.rnd() < 0.5) { const a = G.reqs[0].x; G.reqs[0].x = G.reqs[1].x; G.reqs[1].x = a; } G.reqs.forEach(q => q.pat = q.max = 60); G.firstDone = null; }
+  if (st.id === 'two') { G.rooms.forEach((r, i) => { r.state = i % 3 === 2 ? 'clean' : 'occ'; r.guest = guestName(G); }); spawn(G, { k: 'food' }); spawn(G, { k: 'food' }); G.reqs.forEach(q => q.pat = q.max = 60); G.me.f = 1; G.me.x = 0.8; G.twoSeen = false; }
+  if (st.id === 'clean') { G.rooms.forEach(r => { r.state = 'occ'; r.guest = guestName(G); r.hold = null; }); spawn(G, { k: 'clean' }); spawn(G, { k: 'bags' }); G.reqs.forEach(q => q.pat = q.max = 70); } }
+function lessonTick(G) { const st = lessonNow(G); if (!G.reqs.length && !G.lessonWait) { G.lessonWait = true; G.wait = 0.8; G.next = () => { G.lessonWait = false; if (lessonNow(G)) lessonSetup(G); }; } }
+function lessonSee(G, what, q) { const st = lessonNow(G); if (!st) return; let ok = null;
+  if (st.id === 'bags') { if (what === 'done' && q.k === 'bags') { if (G.firstDone == null) { G.firstDone = q.vip; if (!q.vip) ok = false; else return; } else if (G.reqs.some(r => !r.gone)) return; else ok = !!G.firstDone; } if (what === 'expire' || what === 'drop') ok = false; }
+  if (st.id === 'two') { if (what === 'two') { G.twoSeen = true; return; } if (what === 'done' && q.k === 'food') { if (G.reqs.some(r => !r.gone && r.k === 'food')) return; ok = !!G.twoSeen; } if (what === 'expire' || what === 'drop') ok = false; }
+  if (st.id === 'clean') { if (what === 'done' && q.k === 'bags') ok = true; if (what === 'expire' || what === 'drop') ok = false; }
+  if (ok == null) return;
+  if (!ok) { G.lesson.n = 0; G.reqs.forEach(r => r.gone = true); G.ev.push({ k: 'lessonmiss', how: what === 'drop' ? 'You let that job go. Tap a bubble once and the job is yours.' : st.id === 'bags' && what === 'done' ? 'The VIP (the gold bubble) goes first: they tip double and wait less.' : st.id === 'two' ? 'Tap both 🍝 bubbles FIRST, then the kitchen gives you both plates at once.' : st.how }); return; }
+  G.lesson.n++; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
+  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.reqs.forEach(r => r.gone = true); G.wait = 1.6; G.lessonEnd = true;
+    G.next = () => { G.lessonEnd = false; setup(G); plan(G); G.ev.push({ k: 'start' }); }; } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look taps somewhere in the hotel (it may land on a bubble and take or drop that job)
+const BLIND = { t: G => tapAt(G, Math.random() * (G.cfg.floors + 0.5) - 0.25, Math.random()) };
+// an attendant who looks: takes the jobs that will run out first and lie on the way, two of a kind together, a dirty room
+// when a guest is waiting for one; holds two jobs, takes a third when it is on the way
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc;
+  if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.3 + react * 1.6;
+  if (G.queue.length >= 3) return; const open = G.reqs.filter(q => !q.gone && !G.queue.includes(q.id)); if (!open.length) return;
+  const held = G.queue.map(id => G.reqs.find(r => r.id === id)).filter(Boolean), me = G.me, cleanFree = G.rooms.some(r => r.state === 'clean' && r.hold == null);
+  if (held.length >= 2 && !open.some(q => held.some(h => h.k === q.k && q.k !== 'bags' && q.k !== 'clean' && !h.got))) return;
+  const tt = (f0, x0, f1, x1) => f0 === f1 ? Math.abs(x1 - x0) / G.cfg.sp : (Math.abs(x0 - LIFT) + Math.abs(x1 - LIFT)) / G.cfg.sp + Math.abs(f1 - f0) / G.cfg.lift + 0.3;
+  const via = q => q.k === 'clean' ? null : q.k === 'bags' ? { f: 0, x: q.x } : { f: 0, x: srcX(q.k) }, roomOf = q => q.k === 'bags' ? (G.rooms.find(r => r.state === 'clean' && r.hold == null) || G.rooms[0]) : G.rooms[q.room];
+  const eta = q => { let f = me.f, x = me.x, T = 0; for (const h of held.concat([q])) { const v = via(h); if (v && !h.got) { T += tt(f, x, v.f, v.x); f = v.f; x = v.x; } const r = roomOf(h); T += tt(f, x, r.f, r.x) + (h.k === 'clean' ? KINDS.clean.work : 0.2); f = r.f; x = r.x; } return T; };
+  const score = q => { const left = q.pat - q.t, d = Math.abs(q.f - me.f) * 1.6 + Math.abs(q.x - me.x) * 2.4; let s = 20 / Math.max(3, left) - d * 0.5 + (q.vip ? 1 : 0);
+    if (held.some(h => h.k === q.k && q.k !== 'bags' && q.k !== 'clean' && !h.got)) s += 3; if (q.k === 'clean' && !cleanFree && G.reqs.some(r => r.k === 'bags')) s += 4; if (q.k === 'bags' && !cleanFree && !held.some(h => h.k === 'clean')) s -= 3; if (eta(q) > left * 0.92) s -= 100; return s; };
+  const best = open.sort((a, b) => score(b) - score(a))[0]; if (score(best) < -50) return;      // nothing it can promise in time
+  if (Math.random() > acc) { BLIND.t(G); return; } take(G, best.id); }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.tips = G.cfg.target + 10; finish(G, true); }
+// ===================== DRAW + JUICE: the hotel as a doll's house (2D on purpose: every room, bubble and ring must read at once) =====================
+// A cutaway of the hotel at dusk: the lobby at the bottom (the front desk with its bell, the kitchen with a steaming pot, the
+// laundry with a turning drum), floors of rooms above (beds, lamps that glow when someone is in, mess when a room is dirty),
+// the lift up the left side with its cabin. Requests are round bubbles above the place, their ring emptying green to red;
+// a gold edge for a VIP; the number of a job you have taken. You are the little attendant in the red jacket and pillbox hat,
+// carrying what you hold. Along the bottom: your three jobs in order and what is in your hands.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, bgC = null;
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 2.5 }); } }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], s = S1(), x = 10, w = W - 20, y = 42 * s; ctx.save(); ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 40 * s + lines.length * 16 * s;
+  ctx.fillStyle = 'rgba(16,10,4,.9)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText(`LESSON: ${st.title} · ${D.n} OF ${st.need}`, x + 12, y + 8 * s);
+  ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 28 * s + i * 16 * s)); ctx.restore(); }
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 22; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; } }
+// where everything is: the building between the HUD and the job bar
+function lay() { const s = S1(), top = 84 * s, bot = H - 96 * s, n = (G ? G.cfg.floors : 3) + 1, fh = (bot - top) / n, mx = 10;
+  return { s, top, bot, fh, n, mx, bw: W - mx * 2, sx: x => mx + x * (W - mx * 2), fy: f => bot - f * fh, chips: [0, 1, 2].map(i => ({ x: 10 + i * (W * 0.62 - 10) / 3, y: H - 82 * s, w: (W * 0.62 - 10) / 3 - 6, h: 60 * s })), hands: { x: W * 0.64, y: H - 82 * s, w: W * 0.36 - 10, h: 60 * s } }; }
+const bubXY = (q, L) => ({ x: L.sx(q.x), y: L.fy(q.f) - L.fh * 0.78 });
+function hotelBg(L) { const w = Math.round(W * DPR), h = Math.round(H * DPR), key = w + 'x' + h + 'x' + L.n; if (bgC && bgC.key === key) return bgC; bgC = document.createElement('canvas'); bgC.key = key; bgC.width = w; bgC.height = h; const g = bgC.getContext('2d'); g.scale(DPR, DPR);
+  const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#1a1440'); sky.addColorStop(0.5, '#4a2a5a'); sky.addColorStop(1, '#2a1a28'); g.fillStyle = sky; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${0.2 + (i % 5) * 0.12})`; g.fillRect((i * 97) % W, (i * 53) % (L.top * 0.9), 1.5, 1.5); }
+  // the building
+  g.fillStyle = '#6a2a2a'; g.fillRect(L.mx - 4, L.top - 14, L.bw + 8, L.bot - L.top + 18); g.fillStyle = '#8a3a30'; g.fillRect(L.mx - 8, L.top - 22, L.bw + 16, 10);
+  for (let f = 0; f < L.n; f++) { const y0 = L.fy(f + 1), y1 = L.fy(f), wall = g.createLinearGradient(0, y0, 0, y1);
+    wall.addColorStop(0, f === 0 ? '#e8d2a8' : '#d8c4a0'); wall.addColorStop(1, f === 0 ? '#c8a878' : '#b8a07a'); g.fillStyle = wall; g.fillRect(L.mx, y0 + 4, L.bw, y1 - y0 - 4);
+    g.fillStyle = '#4a2a1a'; g.fillRect(L.mx, y1 - 5, L.bw, 6); g.fillStyle = f === 0 ? '#8a2a2a' : '#6a4a6a'; g.fillRect(L.mx, y1 - 9, L.bw, 4);      // floor and carpet
+    if (f > 0) COLS.forEach((x, i) => { const cx = L.sx(x), rw = L.bw * 0.2, rh = L.fh * 0.62; g.fillStyle = 'rgba(0,0,0,.08)'; g.fillRect(cx - rw / 2, y1 - 9 - rh, rw, rh); g.strokeStyle = '#7a5a3a'; g.lineWidth = 2; g.strokeRect(cx - rw / 2, y1 - 9 - rh, rw, rh);
+      g.fillStyle = '#4a3a5a'; g.font = `800 ${Math.round(10 * L.s)}px ${BC}`; g.textAlign = 'center'; g.fillText(String(f * 100 + i + 1), cx, y1 - 13 - rh); });
+    else { // the lobby: desk, kitchen, laundry
+      const d = L.sx(DESK), k2 = L.sx(KITCHEN), la = L.sx(LAUNDRY), fl = y1 - 9, u = L.fh;
+      g.fillStyle = '#5a3420'; g.fillRect(d - L.bw * 0.08, fl - u * 0.3, L.bw * 0.16, u * 0.3); g.fillStyle = '#c8962a'; g.fillRect(d - L.bw * 0.085, fl - u * 0.32, L.bw * 0.17, 4); g.fillStyle = '#e8c25a'; g.beginPath(); g.arc(d + L.bw * 0.05, fl - u * 0.34, 5, Math.PI, 0); g.fill();
+      g.fillStyle = '#9aa0a8'; g.fillRect(k2 - L.bw * 0.08, fl - u * 0.34, L.bw * 0.16, u * 0.34); g.fillStyle = '#2a2a2a'; g.fillRect(k2 - L.bw * 0.07, fl - u * 0.36, L.bw * 0.14, 4); g.fillStyle = '#5a5a60'; g.fillRect(k2 - 10, fl - u * 0.5, 20, u * 0.14);
+      g.fillStyle = '#e8e8f0'; g.fillRect(la - L.bw * 0.07, fl - u * 0.42, L.bw * 0.14, u * 0.42); g.fillStyle = '#4a6a9a'; g.beginPath(); g.arc(la, fl - u * 0.22, u * 0.12, 0, TAU); g.fill(); g.fillStyle = '#bcd8f0'; g.beginPath(); g.arc(la, fl - u * 0.22, u * 0.08, 0, TAU); g.fill();
+      g.fillStyle = '#4a3a5a'; g.font = `800 ${Math.round(10 * L.s)}px ${BC}`; g.textAlign = 'center'; [['DESK', d], ['KITCHEN', k2], ['LAUNDRY', la]].forEach(([t, x]) => g.fillText(t, x, fl - u * 0.62)); }
+  }
+  // the lift shaft
+  const lx = L.sx(LIFT); g.fillStyle = '#3a2a2a'; g.fillRect(lx - L.bw * 0.05, L.top - 8, L.bw * 0.1, L.bot - L.top + 4); g.strokeStyle = '#8a7a6a'; g.lineWidth = 1; for (let y = L.top; y < L.bot; y += 10) { g.beginPath(); g.moveTo(lx - L.bw * 0.05, y); g.lineTo(lx + L.bw * 0.05, y + 10); g.stroke(); }
+  g.fillStyle = '#1a1018'; g.fillRect(0, L.bot + 2, W, H - L.bot); return bgC; }
+function drawGuy(x, y, s, t, walk, face, carry) { const c = ctx, b = walk ? Math.abs(Math.sin(t * 12)) * 3 : 0, lg = walk ? Math.sin(t * 12) * 5 : 0; c.save(); c.translate(x, y - b); c.scale(s * face, s);
+  c.strokeStyle = '#1a1a2a'; c.lineWidth = 4; c.lineCap = 'round'; c.beginPath(); c.moveTo(-3, -12); c.lineTo(-3 - lg, 0); c.moveTo(3, -12); c.lineTo(3 + lg, 0); c.stroke();
+  c.fillStyle = '#c8202a'; rrect(-8, -34, 16, 23, 4); c.fill(); c.fillStyle = '#e8c25a'; for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(0, -30 + i * 6, 1.4, 0, TAU); c.fill(); }
+  c.fillStyle = '#e8b890'; c.beginPath(); c.arc(0, -41, 7, 0, TAU); c.fill(); c.fillStyle = '#c8202a'; rrect(-5, -53, 10, 6, 2); c.fill(); c.fillStyle = '#e8c25a'; c.fillRect(-5, -48, 10, 1.5);
+  c.fillStyle = '#1a1a1a'; c.beginPath(); c.arc(3, -42, 1.2, 0, TAU); c.fill(); c.restore();
+  ctx.font = `${Math.round(15 * s)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; carry.forEach((it, i) => ctx.fillText(KINDS[it.k].icon, x + (i - (carry.length - 1) / 2) * 15 * s, y - 64 * s - b)); }
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G, t = now; ctx.drawImage(hotelBg(L), 0, 0, W, H);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  if (g) {
+    // rooms: lamps, guests, mess
+    for (const r of g.rooms) { const cx = L.sx(r.x), fl = L.fy(r.f) - 9, rw = L.bw * 0.2, rh = L.fh * 0.62;
+      if (r.state === 'occ') { const lg = ctx.createRadialGradient(cx, fl - rh * 0.7, 2, cx, fl - rh * 0.7, rw * 0.6); lg.addColorStop(0, 'rgba(255,220,140,.55)'); lg.addColorStop(1, 'rgba(255,220,140,0)'); ctx.fillStyle = lg; ctx.fillRect(cx - rw / 2, fl - rh, rw, rh); }
+      ctx.fillStyle = r.state === 'dirty' ? '#8a7a6a' : '#f4f0f8'; rrect(cx - rw * 0.4, fl - rh * 0.32, rw * 0.6, rh * 0.22, 4); ctx.fill(); ctx.fillStyle = r.state === 'dirty' ? '#6a5a4a' : '#7a5aa8'; ctx.fillRect(cx - rw * 0.4, fl - rh * 0.14, rw * 0.6, rh * 0.14); ctx.fillStyle = '#fff'; rrect(cx - rw * 0.38, fl - rh * 0.4, rw * 0.16, rh * 0.1, 3); ctx.fill();
+      if (r.state === 'occ') { ctx.fillStyle = '#3a2a4a'; ctx.beginPath(); ctx.arc(cx + rw * 0.3, fl - rh * 0.5, rh * 0.09, 0, TAU); ctx.fill(); rrect(cx + rw * 0.22, fl - rh * 0.42, rh * 0.16, rh * 0.32, 4); ctx.fill(); }
+      if (r.state === 'dirty') { ctx.fillStyle = 'rgba(90,70,40,.6)'; for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.arc(cx - rw * 0.3 + i * rw * 0.18, fl - 4 - (i % 2) * 3, 4, 0, TAU); ctx.fill(); } }
+      if (r.hold != null) { ctx.strokeStyle = '#9be3b5'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.strokeRect(cx - rw / 2 + 2, fl - rh + 2, rw - 4, rh - 4); ctx.setLineDash([]); } }
+    // the kitchen pot steams, the drum turns
+    const k2 = L.sx(KITCHEN), fl0 = L.fy(0) - 9; ctx.fillStyle = 'rgba(255,255,255,.25)'; for (let i = 0; i < 3; i++) { const ph = (t * 0.6 + i / 3) % 1; ctx.beginPath(); ctx.arc(k2 + Math.sin(ph * 6 + i) * 6, fl0 - L.fh * (0.52 + ph * 0.25), 5 * (1 - ph) + 2, 0, TAU); ctx.fill(); }
+    // guests waiting at the desk
+    for (const q of g.reqs) if (q.k === 'bags' && !q.got) { const x = L.sx(q.x); ctx.fillStyle = q.vip ? '#e8c25a' : '#3a4a7a'; rrect(x - 6, fl0 - 30 * s, 12, 22 * s, 4); ctx.fill(); ctx.fillStyle = '#e8b890'; ctx.beginPath(); ctx.arc(x, fl0 - 36 * s, 6 * s, 0, TAU); ctx.fill(); ctx.fillStyle = '#6a4a2a'; ctx.fillRect(x + 6, fl0 - 12 * s, 9 * s, 10 * s); }
+    // the lift cabin and you
+    const me = g.me, lx = L.sx(LIFT), myY = L.fy(me.f) - 9; liftF = me.inLift ? me.f : (Math.abs(me.x - LIFT) < 0.03 ? me.f : liftF);
+    { const cy = L.fy(liftF) - 9; ctx.fillStyle = '#c8a060'; ctx.fillRect(lx - L.bw * 0.045, cy - L.fh * 0.7, L.bw * 0.09, L.fh * 0.7); ctx.fillStyle = '#5a3a20'; ctx.fillRect(lx - L.bw * 0.04, cy - L.fh * 0.66, L.bw * 0.08, L.fh * 0.62); }
+    if (me.work > 0) { ctx.strokeStyle = '#9be3b5'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(L.sx(me.x), myY - 28 * s, 22 * s, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - me.work / KINDS.clean.work)); ctx.stroke(); if (Math.random() < 0.3) PT.push({ x: L.sx(me.x) + (Math.random() - 0.5) * 30, y: myY - 10, vx: 0, vy: -60, life: 0.5, t: 0, col: 'rgba(255,255,255,.8)', r: 2 }); }
+    drawGuy(L.sx(me.x), myY, s * Math.min(1.2, L.fh / 70), t, me.walk || me.inLift, me.face, me.carry);
+    // the bubbles
+    for (const q of g.reqs) { if (q.got && q.k === 'bags') continue; const p = bubXY(q, L), r = 19 * s, left = clamp(1 - q.t / q.pat, 0, 1), qi = g.queue.indexOf(q.id), urgent = left < 0.3, wob = urgent ? Math.sin(t * 18) * 2 : 0;
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(p.x, p.y + 3, r + 4, 0, TAU); ctx.fill();
+      ctx.fillStyle = qi >= 0 ? '#fff6dc' : '#ffffff'; ctx.beginPath(); ctx.arc(p.x + wob, p.y, r, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,.15)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(p.x + wob, p.y, r + 3, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = `hsl(${Math.round(left * 120)},80%,48%)`; ctx.beginPath(); ctx.arc(p.x + wob, p.y, r + 3, -Math.PI / 2, -Math.PI / 2 + TAU * left); ctx.stroke();
+      if (q.vip) { ctx.strokeStyle = '#e8c25a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x + wob, p.y, r - 2, 0, TAU); ctx.stroke(); }
+      ctx.font = `${Math.round(19 * s)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(KINDS[q.k].icon, p.x + wob, p.y + 1);
+      if (qi >= 0) { ctx.fillStyle = '#c8202a'; ctx.beginPath(); ctx.arc(p.x + r * 0.85, p.y - r * 0.85, 9 * s, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(12 * s)}px ${BC}`; ctx.fillText(String(qi + 1), p.x + r * 0.85, p.y - r * 0.85 + 1); }
+      if (q.vip) { ctx.fillStyle = '#e8c25a'; ctx.font = `800 ${Math.round(9 * s)}px ${BC}`; ctx.fillText('VIP', p.x, p.y + r + 9 * s); } }
+    hud(g, L); bar(g, L); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1.1 ? 1 : 1 - (q.t - 1.1) / 0.4; ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s)}px ${TF}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30;
+    ctx.fillStyle = 'rgba(20,10,24,.93)'; rrect(W / 2 - ww / 2, H * 0.42 - hh / 2, ww, hh, 10); ctx.fill(); ctx.fillStyle = '#ffe3a0'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.42 - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.2})`; ctx.fillRect(0, 0, W, H); } if (FX.flash > 0) { ctx.fillStyle = `rgba(255,240,200,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
+let liftF = 0;
+// the top: tips against the target (a bar that fills), the clock, the hotel's stars
+function hud(G, L) { const c = G.cfg, s = L.s; if (G.lesson) { lessonPanel(G); return; }
+  const y = 44 * s, w = W - 16; ctx.fillStyle = 'rgba(0,0,0,.5)'; rrect(8, y, w, 34 * s, 10); ctx.fill();
+  const u = clamp(G.tips / c.target, 0, 1); if (u > 0) { ctx.fillStyle = u >= 1 ? '#5a9a6a' : '#8a6a24'; rrect(10, y + 2, Math.max(20, (w - 4) * u * 0.52), 30 * s, 9); ctx.fill(); }
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(14 * s)}px ${BC}`; ctx.fillText(`£${G.tips} / £${c.target}`, 18, y + 17 * s);
+  ctx.textAlign = 'center'; ctx.fillStyle = G.clock < 15 ? '#ffb4a8' : '#fff'; ctx.fillText(`⏱ ${Math.max(0, Math.ceil(G.clock))}`, W * 0.66, y + 17 * s);
+  ctx.textAlign = 'right'; ctx.font = `${Math.round(13 * s)}px sans-serif`; let st = ''; for (let i = 1; i <= 5; i++) st += G.rating >= i - 0.25 ? '★' : '☆'; ctx.fillStyle = G.rating < 2.6 ? '#ff8a7a' : '#ffd36a'; ctx.fillText(st, W - 16, y + 17 * s);
+  if (G.combo > 0 && G.t - G.lastDone < 5) { ctx.fillStyle = '#ffd36a'; ctx.font = `${Math.round(14 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(`STREAK ×${G.combo + 1}`, W / 2, y + 46 * s); } }
+// the bottom: your jobs in order (tap one not started to let it go) and your hands
+function bar(G, L) { const s = L.s; L.chips.forEach((b, i) => { const id = G.queue[i], q = id != null && G.reqs.find(r => r.id === id);
+    ctx.fillStyle = q ? 'rgba(255,246,220,.95)' : 'rgba(255,255,255,.08)'; rrect(b.x, b.y, b.w, b.h, 10); ctx.fill(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (q) { ctx.font = `${Math.round(20 * s)}px sans-serif`; ctx.fillText(KINDS[q.k].icon, b.x + b.w / 2, b.y + b.h * 0.38); ctx.fillStyle = '#4a2a2a'; ctx.font = `800 ${Math.round(10.5 * s)}px ${BC}`; const r = q.room != null ? G.rooms[q.room] : G.rooms.find(r2 => r2.hold === q.id); ctx.fillText(`${i + 1}. ${r ? 'ROOM ' + r.no : 'DESK'}`, b.x + b.w / 2, b.y + b.h * 0.78); }
+    else { ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillText(`JOB ${i + 1}`, b.x + b.w / 2, b.y + b.h / 2); } });
+  const h = L.hands; ctx.fillStyle = 'rgba(255,255,255,.08)'; rrect(h.x, h.y, h.w, h.h, 10); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = `700 ${Math.round(10 * s)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('YOUR HANDS', h.x + h.w / 2, h.y + 12 * s);
+  for (let i = 0; i < G.cfg.hands; i++) { const it = G.me.carry[i], x = h.x + h.w * (i + 0.5) / G.cfg.hands, y = h.y + h.h * 0.62; ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 15 * s, 0, TAU); ctx.stroke(); if (it) { ctx.font = `${Math.round(18 * s)}px sans-serif`; ctx.fillText(KINDS[it.k].icon, x, y + 1); } } }
+// how the game reacts
+function onEvent(G, e) { const L = lay(), s = L.s;
+  switch (e.k) {
+    case 'start': say(`TIPS TARGET £${G.cfg.target}`, W / 2, H * 0.36, '#ffd36a', 22); say(PLACES[G.place].name.toUpperCase(), W / 2, H * 0.31, '#fff', 16); sfx.bell(); if (G.N <= 2) tip('tap', 'Tap a bubble to take the job. The ring is the guest\'s patience.', 3.4); break;
+    case 'req': { const p = bubXY(e.q, L); sparks(p.x, p.y, 6, '#fff', 120); sfx[e.q.k === 'bags' ? 'bell' : e.q.k === 'clean' ? 'door' : 'ring'](); break; }
+    case 'checkout': sfx.door(); break;
+    case 'take': { const p = bubXY(e.q, L); sfx.take(G.queue.length); vibe(HAP.light); sparks(p.x, p.y, 8, '#ffd36a', 140); break; }
+    case 'drop': sfx.no(); break;
+    case 'full': sfx.no(); tip('full', 'You can hold three jobs. Finish one first, or tap a job at the bottom to let it go.', 3); break;
+    case 'noroom': say('NO CLEAN ROOM!', W / 2, H * 0.4, '#ffb4a8', 20); tip('noroom', 'Every room is full or dirty: clean a 🧹 room so the guest has somewhere to go.', 3.2); break;
+    case 'pickup': sfx.pick(e.n || 1); break;
+    case 'two': say(`${e.n} IN ONE TRIP!`, L.sx(G.me.x), L.fy(G.me.f) - L.fh, '#9be3b5', 20); sfx.combo(e.n); break;
+    case 'ding': sfx.ding(); break;
+    case 'cleaning': sfx.scrub(); break;
+    case 'done': { const x = L.sx(G.me.x), y = L.fy(G.me.f) - L.fh * 0.9; sfx.tip(e.chain); sparks(x, y, e.fast ? 16 : 8, '#ffd36a'); say(`+£${e.tip}`, x, y, e.q.vip ? '#ffe9a0' : '#ffd36a', e.fast ? 24 : 19); if (e.chain >= 2) { FX.flash = 0.2; vibe(HAP.light); } break; }
+    case 'expire': { const p = bubXY(e.q, L); FX.shake = 6; FX.red = 0.5; sfx.huff(); say(e.q.vip ? 'VIP LEFT! −★' : 'TOO SLOW −★', p.x, p.y, '#ff8a7a', 18); vibe(HAP.light); break; }
+    case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.36, '#ffd36a', 22); sfx.bell(); break;
+    case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.36, '#9be3b5', 24); sfx.tip(e.n); break;
+    case 'lessonmiss': say('TRY AGAIN', W / 2, H * 0.36, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessondone': say('THE HOTEL IS YOURS!', W / 2, H * 0.36, '#ffd36a', 24); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': FX.flash = 0.7; sfx.win(); vibe(HAP.best); break;
+    case 'lost': sfx.lose(); break;
+  } }
+function area() { return { x: 0, y: 0, w: W, h: H }; }
+// ===================== SOUND: the hotel (PLAYBOOK S1-S11) =====================
+// The desk bell for a new guest, a room's telephone trill for room service, the door for a check-out, the lift's ding at a
+// floor, a soft pick-up clink (two for a double fetch), the brush of a scrub, and the tip: a coin and a little chord that
+// climbs with each job in a streak (S4). A huff when a guest gives up.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  bell() { if (!gate('bell', 200)) return; tone(2093 * vary(0.01), 0.7, 0.06, 'sine'); tone(3140, 0.4, 0.02, 'sine'); },
+  ring() { if (!gate('ring', 300)) return; for (let i = 0; i < 4; i++) { tone(1320, 0.05, 0.035, 'square', i * 0.07, 0, 3000); tone(1660, 0.05, 0.03, 'square', i * 0.07 + 0.035, 0, 3000); } },
+  door() { if (!gate('door', 250)) return; noise(0.12, 320, 0.09, 'lowpass', 1); tone(95, 0.18, 0.07, 'sine', 0, 60); },
+  take(n = 1) { tone(note(659, Math.min(6, n * 2)), 0.08, 0.06, 'triangle', 0, 0, 3500); },
+  pick(n = 1) { for (let i = 0; i < Math.min(3, n); i++) { tone(2200 * vary(0.03), 0.06, 0.04, 'sine', i * 0.07); tone(3300, 0.04, 0.02, 'sine', i * 0.07 + 0.01); } },
+  ding() { if (!gate('ding', 200)) return; tone(1175, 0.45, 0.05, 'sine'); tone(1760, 0.3, 0.02, 'sine', 0.02); },
+  scrub() { noise(0.5, 2600, 0.04, 'bandpass', 1); noise(0.35, 1800, 0.035, 'bandpass', 1, 0.5); },
+  tip(chain = 0) { const b = note(784, Math.min(8, chain * 2)); tone(b, 0.16, 0.07, 'triangle'); tone(b * 2, 0.1, 0.03, 'sine', 0.01); [0, 4, 7].forEach((q, j) => tone(note(b, q), 0.18, 0.035, 'triangle', 0.08 + j * 0.05)); },
+  huff() { noise(0.25, 900, 0.08, 'bandpass', 1); tone(240, 0.3, 0.06, 'sawtooth', 0, 150, 900); },
+  no() { if (!gate('no', 300)) return; tone(260, 0.14, 0.05, 'triangle', 0, 200, 900); },
+  coin(i = 0) { if (!gate('coin', 60)) return; const b = note(784, Math.min(10, i + 1)); tone(b, 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(392, q), 1.0, 0.09, j * 0.12)); },
+  lose() { tone(294, 0.5, 0.08, 'triangle', 0, 262); tone(247, 0.8, 0.08, 'triangle', 0.3, 220); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level), G0 = { cfg: cf, rnd: rng(level * 77 + 1), rooms: [] }; setup(G0); plan(G0);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · ${cf.floors} floors · tips target <b>£${cf.target}</b>`, best[level] ? `Your best shift here: <b>£${best[level]}</b>` : '', helpOn() ? '<span class="help">Guests are more patient for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.tips > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.tips; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'A FINE SHIFT' : r.why === 'rating' ? 'SENT HOME' : 'NOT ENOUGH TIPS'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = `Tips <b>£${r.tips}</b> · target £${r.target}` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + (!r.win && r.why !== 'rating' && r.target - r.tips <= r.target * 0.15 ? ' · <b>so close!</b>' : '') + `<br>${r.served} jobs done · ${r.lost} guests let down · hotel ${'★'.repeat(Math.round(r.rating))}${'☆'.repeat(5 - Math.round(r.rating))}` + (r.why === 'rating' ? '<br>The hotel fell under two stars: take the jobs that are running out first.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT DAY' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): tap a bubble to take that job (tap it again to let it go); tap a job at the bottom to let it go
+const inR = (b, x, y, pad = 6) => x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad;
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || G.wait > 0) return; const L = lay(), x = e.clientX, y = e.clientY;
+  for (let i = 0; i < L.chips.length; i++) if (inR(L.chips[i], x, y) && G.queue[i] != null) { if (!drop(G, G.queue[i])) sfx.no(); return; }
+  let best = null, bd = 34 * L.s; for (const q of G.reqs) { if (q.gone || (q.got && q.k === 'bags')) continue; const p = bubXY(q, L), d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = q; } }
+  if (best) { if (G.queue.includes(best.id)) { if (!drop(G, best.id)) sfx.no(); } else take(G, best.id); } });
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE STAFF ROOM</span><span>£ ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' £'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  take(id) { return take(G, id); }, drop(id) { return drop(G, id); }, tapAt(f, x) { return tapAt(G, f, x); }, lay, bubXY, renderShop,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

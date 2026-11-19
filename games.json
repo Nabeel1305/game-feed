@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 48,
+  "next_number": 49,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -1632,6 +1632,40 @@
         "P5"
       ],
       "summary": "A general above the field: pick a formation, swap units, sound BATTLE, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines, and men you send in yourself fight twice as hard."
+    },
+    {
+      "number": 48,
+      "id": "hotel",
+      "name": "Grand Hotel",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-18",
+      "path": "games/hotel/index.html",
+      "artifact": "https://claude.ai/artifact/5F7Hwjcmx4qek6qvs3rzfA",
+      "artifact_slug": "225cd857-7671-4784-a9fd-0d42726b74f1",
+      "apk_repo": null,
+      "storage_prefix": "ht.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Run the hotel: bags, room service, clean rooms, tips",
+        "genre": "management",
+        "intensity": 3,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Limelight",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P14",
+        "P7",
+        "P5",
+        "P3",
+        "P10"
+      ],
+      "summary": "The hotel's only attendant: bubbles pop up over rooms and the desk (bags, room service, towels, dirty rooms); tap to take a job, hold three, fetch two plates in one trip, keep your promises and the stars."
     }
   ],
   "planned": []

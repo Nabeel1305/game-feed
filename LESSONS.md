@@ -452,6 +452,18 @@ Everything learned building the first games. Every new game must follow the **ru
 - A lesson must restart when the unit it needs is gone: the flank lesson waited for ever after the horsemen fled.
 - The random-moves test plays 1,440 games here (as in Wild Water): at 480 one lucky level-1 fight decided it.
 - Deploy: a slot spread of min(7, 36 / units) and the camera at height 70 on a phone keep every unit and card on screen.
+### 48. Grand Hotel (`games/hotel/`): take the job, keep the promise
+- **"Take everything as it comes" won blind** (a fast thumb grabs every bubble the moment it appears, and the attendant
+  does the walking). What split it: letting a job go costs that guest a third of their patience and the hotel a quarter
+  star; failing a job you took costs a whole star (you promised), one you never took 0.6; under three stars you are sent
+  home. Blind went from a third of games to none; the robot only promises what its route can reach in time.
+- The shift is dealt (fixed shares of kinds, spread through it) and the target is a share of what its jobs could tip.
+- Before cleaning is taught (level 3), housekeeping frees a room on check-in, or guests had nowhere to go.
+- A lesson the blind thumb can pass by luck fails the test: the first lesson has two guests and the VIP must go first,
+  and letting a job go is a miss in every lesson.
+- `G.clock` must not be 0 before the shift is planned: the game ended "won" the instant the lesson finished.
+- A `//` comment pasted mid-line ate the end of a function and the page died with "G already declared": check each part
+  with `node --check part2.js` after an edit.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
