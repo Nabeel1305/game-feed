@@ -484,6 +484,16 @@ Everything learned building the first games. Every new game must follow the **ru
 - The first lesson must ask for spells that are just right (jar and rune), three in a row: with "good" two in a row, blind
   tapping passed it by luck.
 - Words split for bold text must keep punctuation on the word before (". I want" looked wrong).
+### 51. Rex (`games/rex/`): read the warning, punish the miss
+- **Standing still and biting beat the rival**: its lunge hit, then it stood "tired" beside you. Only a lunge that MISSED
+  leaves a rival open, and a hornface that hits you wheels away instead of being stuck. Blind went from 2% to almost none.
+- Warnings must lock: the hornface and the rival stop turning to you for the last part of their warning, or no dodge could
+  work. The rex needed quicker acceleration (4.2) and a tight turn when slow, or the sidestep came too late.
+- A spikeback that always turns its tail to you cannot be bitten: it turns only while you are far, and after a swing it is
+  slow to turn, the moment to run round to its head.
+- A charge that runs on past you leaves its "stuck" moment 20 m away; it stops once it has passed you by 4 m.
+- The robot facing its aim point (not the animal) stood frozen beside a target for two minutes: near the aim, face the target.
+- Boss levels (every tenth) have the big rival and one prey only, or a sharp player could not finish before hunger ran out.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

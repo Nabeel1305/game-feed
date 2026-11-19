@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 51,
+  "next_number": 52,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -1734,6 +1734,40 @@
         "P10"
       ],
       "summary": "The town magician: read the customer's story for clues, pick the jars (each always means one thing), pour, stir in or out, trace the rune, seal; funny mistakes come back to be fixed, bad ones complain."
+    },
+    {
+      "number": 51,
+      "id": "rex",
+      "name": "Rex",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-19",
+      "path": "games/rex/index.html",
+      "artifact": "https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ",
+      "artifact_slug": "01f21b4a-ae60-4f96-a378-3e15e5ed3d69",
+      "apk_repo": null,
+      "storage_prefix": "rx.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Be the T-Rex: hunt the herds, beat the rivals",
+        "genre": "Dinosaur / hunt",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Rammetto One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P7",
+        "P3",
+        "P14",
+        "P1",
+        "P10"
+      ],
+      "summary": "Be the T-Rex in a 3D valley: one stick to creep or charge, BITE and ROAR; runners, duckbill herds, armoured spikebacks, charging hornfaces and rival rexes, each warning before it strikes."
     }
   ],
   "planned": []
