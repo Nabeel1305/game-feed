@@ -649,6 +649,27 @@ Everything learned building the first games. Every new game must follow the **ru
 - Cut-away house: the static house and its pipes drawn once per job into an offscreen picture (redrawn when a step is
   done), the water dashes, parts, people and trouble drawn live on top.
 
+### 66. Stunt Kart (`games/stunt/`): ramps, tricks, glider (built on Drift Kings)
+- Tricks are spam-proof by themselves: each takes 0.38 s and landing during one is a wipeout, so tapping all the time in the
+  air chains tricks into the ground. A tap during a trick does nothing (no queue).
+- Air time must leave room for the lesson's ask: at first a normal ramp gave 0.84 s, too tight for two tricks; now 1.19 s
+  (2 tricks with room, a third only with the springs upgrade); the glider ramp gives about 3 s.
+- Ramps are placed by code where the track stays straight for the whole flight (scored by the sharpest bend over it); the
+  gold ramp on the straightest long run. Air coins follow the glider's own arc, or nobody can reach them.
+- Lessons: a tap on the ground (with no item) in a trick lesson resets the count, so a blind tapper never gets through.
+- Rival skill curve: x(0.8, 1.0, 35); at 1.06 the top end was impossible for every robot.
+- The 3D test_play takes about 13 minutes (blind races last minutes); run it in the background.
+
+### 67. Knife Spin (`games/knife/`): knives into a spinning target
+- A steady tapping beat lays an evenly spaced fan of knives that never collides. Three fixes made it 0 in 1,920: every
+  target turns back now and then (the fan folds onto itself), knives already in from the first level, and a throw rushed
+  within 0.2 s of the last stick wobbles up to 0.34 rad either way.
+- Lesson targets are full of knives except for a few gaps, with obstacle knives at most 0.48 rad apart: at 0.78 apart a
+  knife fitted between them and the lesson was passed by luck.
+- Too many knives per target makes the last ones impossible (random packing leaves gaps narrower than a knife): keep the
+  total at most about 12; the robot aims for the widest gap when no comfortable one is left.
+- A full-screen gradient drawn every frame cost 30% of the frame on a slow phone: paint the background once.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

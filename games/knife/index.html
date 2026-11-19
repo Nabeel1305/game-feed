@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Knife Spin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@700;800;900&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#2a1a10;--ink:#fff8f0;--acc:#ffb020;--acc-dark:#b06a00;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:Bungee,Rubik,"Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(140,80,40,.55),rgba(24,12,6,.94))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#fff;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#fff}.lvb.cur small{color:#fff}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <div style="font-size:56px;line-height:1">🔪</div><h1 class="tf" style="font-size:50px;color:#fff">Knife<br><span style="color:#ffb020">Spin</span></h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">THROW. STICK. SHATTER.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = 'Bungee, Rubik, "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('kn.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('kn.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: Knife Spin (game 67, set 12: one of mine, like Knife Hit) =====================
+// A wooden target spins in front of you. Tap to throw a knife up into it: it sticks where it lands. Stick every knife you
+// are given and the target bursts apart; the next one drops in. Hit a knife that is already there and yours bounces off:
+// that's the round. Apples on the rim are a bonus; knives already in it (and steel studs) are in the way. The spin changes:
+// speeds up, slows, stops, turns back. Every fifth level ends on a boss target. A level is three targets (a boss is a fourth).
+// Angles: the target's own frame; a knife always lands at the bottom of the target (screen angle +PI/2).
+const RULES = [
+  '<b>Tap</b> to throw a knife into the spinning target.',
+  'Stick all your knives and it <b>bursts</b>. Three targets make a level.',
+  'Hit a knife that is already in and you are <b>out</b>. Watch the gap at the bottom!',
+  'Slice the <b>apples</b> on the rim for a bonus. Steel studs block like knives.',
+  'The spin changes: it speeds up, stops, turns back. Every fifth level: a <b>boss</b>.',
+];
+const HIT = Math.PI / 2, KW = 0.27, FLY = 0.09;
+const BOSSES = [{ name: 'The Cheese', col: '#ffcc40' }, { name: 'The Tyre', col: '#2a2a30' }, { name: 'The Shield', col: '#a8b4c0' }, { name: 'The Cake', col: '#ff9ac0' }, { name: 'The Melon', col: '#4ac060' }, { name: 'The Clock', col: '#e8d8b0' }];
+const PLACES = [{ name: 'The Barn', bg: ['#3a2a1e', '#1a120c'] }, { name: 'The Dojo', bg: ['#4a1e1e', '#200c0c'] }, { name: 'The Circus', bg: ['#2a1e4a', '#100c24'] }, { name: 'The Docks', bg: ['#1e3a4a', '#0c1a24'] }];
+const placeOf = N => Math.floor((N - 1) / 5) % 4;
+const UPGRADES = [
+  { id: 'spare', name: 'Spare knife', desc: 'Once a level, a knife that hits another does not end the round.', max: 1, cost: l => 90 },
+  { id: 'fast', name: 'Quick arm', desc: 'Knives fly faster: less to judge.', max: 2, cost: l => 40 + l * 50 },
+  { id: 'slow', name: 'Steady target', desc: 'Targets spin a little slower.', max: 2, cost: l => 50 + l * 60 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Beginner'], [40, 'Thrower'], [130, 'Sharp'], [320, 'Blade'], [700, 'Knife master'], [1500, 'Legend']];
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 5 === 0;
+  return { N, f, help: !!help, place: placeOf(N), boss, logs: boss ? 4 : 3, knives: Math.round(x(6, 8, 30)), obst: Math.round(x(1.6, 3, 30)), apples: Math.round(x(1, 3, 20)),
+    spin: x(1.7, 2.45, 30) * (1 - 0.1 * upLv('slow')) * (help ? 0.85 : 1), wild: x(0.15, 1, 25), fly: FLY / (1 + 0.35 * upLv('fast')), spare: upLv('spare') + (help ? 1 : 0) }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null };
+  setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else { G.ev.push({ k: 'start' }); newLog(G); }
+  return G; }
+function setup(G) { G.li = 0; G.score = 0; G.apples = 0; G.applesAll = 0; G.thrown = 0; G.close = 0; G.combo = 0; G.lastStick = -9; G.spares = G.cfg.spare; G.spareUsed = 0; G.fly = null; G.log = null; }
+// a target: how many knives, what is in it already, apples, and how it spins (a list of moves, each a speed for a time,
+// eased from one to the next; later levels add stops, reverses and sudden changes)
+function newLog(G, o = {}) { const c = G.cfg, R = G.rnd, last = G.li === c.logs - 1, boss = c.boss && last, lv = G.li;
+  const need = o.need != null ? o.need : Math.round(c.knives + lv * 0.4 + (boss ? 2 : 0)), nob = o.obst != null ? o.obst : Math.max(0, Math.round(c.obst + lv * 0.3 - (G.N <= 1 && lv === 0 ? 1 : 0))), items = [];
+  const freeAt = a => items.every(q => Math.abs(angd(q.a, a)) > KW * 1.6);
+  if (o.items) for (const a of o.items) items.push({ a, kind: 'knife' }); else for (let i = 0; i < nob; i++) for (let t = 0; t < 30; t++) { const a = R() * TAU; if (freeAt(a)) { items.push({ a, kind: G.N >= 8 && R() < 0.3 ? 'stud' : 'knife' }); break; } }
+  const apples = (o.appleAt || []).map(a => ({ a, gold: false })); const na = o.appleAt ? 0 : o.apples != null ? o.apples : c.apples; for (let i = 0; i < na; i++) for (let t = 0; t < 30; t++) { const a = R() * TAU; if (freeAt(a) && apples.every(q => Math.abs(angd(q.a, a)) > 0.6)) { apples.push({ a, gold: R() < 0.15 }); break; } }
+  const moves = []; const base = c.spin * (boss ? 1.1 : 1) * (0.9 + R() * 0.2) * (R() < 0.5 ? 1 : -1);
+  for (let i = 0; i < 12; i++) { const u = R(), w = c.wild; let v = base * (0.7 + R() * 0.6), d = 1.2 + R() * 2;
+    if (u < w * 0.25 || i === 1 || i === 4) v = -v * (i === 1 || i === 4 ? 0.8 : 1); else if (u < w * 0.4) { v = 0; d = 0.4 + R() * 0.6; } else if (u < w * 0.55) v *= 1.6; moves.push({ v, d, ease: G.N <= 2 ? 0.8 : Math.max(0.3, 0.4 / (0.5 + w)) }); }      /* every target turns back now and then */
+  if (o.moves) moves.splice(0, moves.length, ...o.moves);
+  G.log = { need, stuck: 0, items, apples, rot: R() * TAU, w: moves[0].v, moves, mi: 0, mt: 0, boss, name: boss ? BOSSES[((G.N / 5) | 0) % BOSSES.length].name : null, shake: 0 }; G.fly = null;
+  G.ev.push({ k: 'log', boss, li: G.li, need }); }
+const angd = (a, b) => { let d = (a - b) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; };
+// ---------- what you do ----------
+// a throw rushed in straight after the last one (within 0.2 s of it sticking) wobbles and can land a little either way
+function throwKnife(G) { if (G.over || G.wait > 0 || !G.log || G.fly) return false; const rushed = G.t - G.lastStick < 0.2 || G.t - (G.lastThrowT || -9) < 0.3;
+  G.fly = { t: 0, err: rushed ? (G.rnd() * 2 - 1) * 0.34 : 0, rushed }; G.lastThrowT = G.t; G.thrown++; G.ev.push({ k: 'throw', rushed }); return true; }
+// where on the target the knife at the bottom would land right now
+const landAt = G => angd(HIT - G.log.rot, 0);
+function arrive(G) { const L = G.log, a = angd(landAt(G) + G.fly.err, 0); G.fly = null;
+  let near = 1e9; for (const q of L.items) near = Math.min(near, Math.abs(angd(q.a, a)));
+  if (near < KW) { const by = L.items.find(q => Math.abs(angd(q.a, a)) < KW); G.ev.push({ k: 'clang', a, stud: by && by.kind === 'stud' });
+    if (G.lesson) { lessonMiss(G); return; }
+    if (G.spares > 0) { G.spares--; G.spareUsed++; G.ev.push({ k: 'spare' }); G.combo = 0; return; }
+    G.wait = 1.0; G.next = () => finish(G, false); return; }
+  L.items.push({ a, kind: 'mine', t: G.t }); L.stuck++; L.shake = 1; G.score += 1; const quick = G.t - G.lastStick < 0.6; G.combo = quick ? G.combo + 1 : 0; G.lastStick = G.t;
+  const close = near < KW * 1.35; if (close) { G.close++; G.score += 2; }
+  for (let i = L.apples.length - 1; i >= 0; i--) { const ap = L.apples[i]; if (Math.abs(angd(ap.a, a)) < 0.3) { L.apples.splice(i, 1); const v = ap.gold ? 5 : 1; G.apples += v; G.applesAll++; G.score += 5 * v; G.ev.push({ k: 'apple', a: ap.a, gold: ap.gold }); } }
+  G.ev.push({ k: 'stick', a, n: L.stuck, need: L.need, close, combo: G.combo });
+  if (G.lesson) lessonSee(G);
+  if (L.stuck >= L.need) { G.ev.push({ k: 'burst', boss: L.boss, li: G.li, apples: L.apples.length }); if (G.lesson) return; G.score += 10 + (L.boss ? 25 : 0);
+    G.li++; G.wait = L.boss ? 1.3 : 0.75; if (G.li >= G.cfg.logs) G.next = () => finish(G, true); else G.next = () => newLog(G); } }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
+  if (G.wait > 0) { G.wait -= dt; if (G.log) spin(G, dt * 0.3); if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  if (!G.log) return; spin(G, dt); if (G.log.shake > 0) G.log.shake = Math.max(0, G.log.shake - dt * 6);
+  if (G.fly) { G.fly.t += dt; if (G.fly.t >= G.cfg.fly) arrive(G); } }
+function spin(G, dt) { const L = G.log, m = L.moves[L.mi]; L.mt += dt; if (L.mt >= m.d) { L.mt = 0; L.mi = (L.mi + 1) % L.moves.length; }
+  const tgt = L.moves[L.mi].v, e = L.moves[L.mi].ease; L.w += (tgt - L.w) * Math.min(1, dt / Math.max(0.05, e)); L.rot = (L.rot + L.w * dt) % TAU; }
+function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const c = G.cfg, L = G.log;
+  const prog = Math.min(1, (G.li + (L ? L.stuck / L.need : 0)) / c.logs), stars = win ? 1 + (G.spareUsed === 0 ? 1 : 0) + (G.applesAll >= Math.max(1, c.apples * c.logs - 1) ? 1 : 0) : 0;
+  G.res = { win, stars, score: G.score, prog, logs: G.li, need: c.logs, apples: G.apples, close: G.close, thrown: G.thrown, coins: Math.round(G.apples * 1.5) + (win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1) };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- LESSONS: a slow target; a hit starts the lesson's target again ----------
+// each lesson target is full of knives except for a few gaps, so only a throw timed for a gap gets in (blind tapping cannot)
+const gapsAt = (n, off) => { const out = [], arc = TAU / n, m = Math.ceil((arc - 0.8) / 0.48) + 1; for (let k = 0; k < n; k++) for (let j = 0; j < m; j++) out.push(off + k * arc + 0.4 + j * (arc - 0.8) / (m - 1)); return out; };      /* knives no more than 0.48 apart: nothing fits between them */
+const LESSONS = {
+  1: [{ id: 'gap', title: 'THROW INTO THE GAPS', how: 'Knives are already in this target. Tap when a GAP is at the bottom: one knife into each of the 3 gaps.', need: 1, log: { need: 3, items: gapsAt(3, 0), moves: [{ v: 1.15, d: 99, ease: 0.5 }] } }],
+  2: [{ id: 'apple', title: 'APPLES', how: 'An apple sits in each gap. Throw when one is at the bottom to slice it: slice both.', need: 1, log: { need: 2, items: gapsAt(2, 0.3), appleAt: [0.3, 0.3 + Math.PI], moves: [{ v: -1.2, d: 99, ease: 0.5 }] } }],
+  3: [{ id: 'turn', title: 'IT TURNS BACK', how: 'This one stops and turns back. Watch it, wait for a gap to settle at the bottom, then throw. Fill the 3 gaps.', need: 1, log: { need: 3, items: gapsAt(3, 1), moves: [{ v: 1.3, d: 2.6, ease: 0.4 }, { v: 0, d: 0.6, ease: 0.3 }, { v: -1.1, d: 1.1, ease: 0.4 }, { v: 0, d: 0.6, ease: 0.3 }] } }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonDeal(G) { const st = lessonNow(G); G.apples = 0; G.applesAll = 0; G.li = 0; newLog(G, st.log); }
+function lessonMiss(G) { const st = lessonNow(G); G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 1.1; G.next = () => lessonDeal(G); }
+function lessonSee(G) { const st = lessonNow(G), L = G.log; if (L.stuck < L.need) return;
+  if (st.id === 'apple' && G.applesAll < 2) { G.ev.push({ k: 'lessonmiss', how: 'Slice 2 apples too: throw when one is at the bottom.' }); G.wait = 1.1; G.next = () => lessonDeal(G); return; }
+  G.ev.push({ k: 'lessonok', n: 1, need: 1 }); G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.4; G.next = () => { G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); newLog(G); }; }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: taps to throw
+const BLIND = { t: G => throwKnife(G) };
+// a player who looks: watches the bottom of the target and throws when the gap that will be there when the knife lands is
+// wide enough (wider for a careful one), a beat late now and then, and goes for an apple when it comes round
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
+  if (G.over || G.wait > 0 || !G.log || G.fly) { mem.t = 0; mem.go = null; return; }
+  if (mem.go != null) { mem.go -= 1 / 60; if (mem.go <= 0) { mem.go = null; throwKnife(G); mem.t = 0; } return; }      /* the thumb moves a moment after the eye decides */
+  const acc2 = mem.w0 == null ? 0 : Math.abs(G.log.w - mem.w0) * 60; mem.w0 = G.log.w;
+  mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.15 + react * 0.4) return; if (acc2 > 2.5 && R() < acc) return;      /* the spin is changing: wait for it to settle */
+  const L = G.log, late = 0.02 + react * 0.08, lag = G.cfg.fly + late, a = angd(HIT - (L.rot + L.w * lag), 0);
+  let near = 1e9; for (const q of L.items) near = Math.min(near, Math.abs(angd(q.a, a))); const apple = L.apples.some(q => Math.abs(angd(q.a, a)) < 0.2);
+  // how wide a gap to wait for: comfortable if there is one, else the middle of the widest there is
+  const as = L.items.map(q => ((q.a % TAU) + TAU) % TAU).sort((p, q) => p - q); let gap = TAU; for (let i = 0; i < as.length; i++) gap = Math.min(TAU, i ? gap : 0) || gap; let wide = 0; for (let i = 0; i < as.length; i++) { const g = ((as[(i + 1) % as.length] - as[i]) + TAU) % TAU || TAU; wide = Math.max(wide, g); }
+  const need = Math.min(KW * (1.3 + (1 - acc) * 0.5), Math.max(KW * 1.04, wide / 2 * 0.8));
+  if (near > need && (apple || R() < 0.05 + acc * 0.08)) mem.go = Math.max(0, late + (R() + R() - 1) * (0.015 + react * 0.06 + (1 - acc) * 0.05)); }
+function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.li = G.cfg.logs; finish(G, true); }
+
+// ===================== DRAW + JUICE: the spinning target (2D on purpose: a target seen face-on reads best flat) =====================
+// A thick wooden round with growth rings and bark, turning; knives stuck in it handle-out; red apples sitting on the rim
+// (gold ones now and then); steel studs. Your knife waits at the bottom and flies up in a blink. A stick: the target jumps,
+// chips fly, a thunk. A hit on another knife: a clang, sparks, your knife spins away, a red flash. The last knife: the
+// target bursts into wedges and the next one drops in. Bosses look like what they are: a cheese wheel, a tyre, a shield...
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, FLYING = [], WEDGES = [], dropIn = 0, HALVES = [];
+const NU = 'Nunito, "Barlow Condensed", "Arial Narrow", sans-serif';
+function sparks(x, y, n, col, sp = 220, g = 520) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.4 + Math.random() * 0.4, t: 0, col, r: 1.5 + Math.random() * 2.5, g }); } if (PT.length > 400) PT.splice(0, PT.length - 400); }
+function say(txt, x, y, col = '#fff', size = 22) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lay() { const s = S1(), R = Math.min(W * 0.31, H * 0.17), cx = W / 2, cy = Math.max(H * 0.36, 110 * s + R + 30 * s), ky = Math.min(H - 110 * s, cy + R + 230 * s); return { s, R, cx, cy, ky, klen: 86 * s }; }
+function fillR(x, y, w, h, r, col) { ctx.fillStyle = col; rrect(x, y, w, h, r); ctx.fill(); }
+function circ(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+// ---------- a knife, drawn pointing up (tip at 0,0) ----------
+function knife(x, y, ang, len, alpha = 1, mine = true) { ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.globalAlpha = alpha; const l = len, w = l * 0.13;
+  const g = ctx.createLinearGradient(-w, 0, w, 0); g.addColorStop(0, '#9aa6b2'); g.addColorStop(0.5, '#f4f8fc'); g.addColorStop(1, '#b8c2cc'); ctx.fillStyle = g;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, l * 0.18); ctx.lineTo(w, l * 0.55); ctx.lineTo(-w, l * 0.55); ctx.lineTo(-w, l * 0.12); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#5a6672'; ctx.fillRect(-w * 1.5, l * 0.55, w * 3, l * 0.05);
+  const hg = ctx.createLinearGradient(-w, 0, w, 0); hg.addColorStop(0, mine ? '#5a2a14' : '#3a3a40'); hg.addColorStop(0.5, mine ? '#a0582a' : '#6a6a74'); hg.addColorStop(1, mine ? '#5a2a14' : '#3a3a40'); ctx.fillStyle = hg; rrect(-w * 1.05, l * 0.6, w * 2.1, l * 0.4, w); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(-w * 0.2, l * 0.64, w * 0.4, l * 0.3); ctx.restore(); ctx.globalAlpha = 1; }
+// ---------- the target ----------
+const LOGPIC = { key: '', c: null };
+function logPic(L, R) { const key = (L.name || 'wood') + ':' + Math.round(R) + ':' + DPR; if (LOGPIC.key === key) return LOGPIC.c; const d = Math.ceil(R * 2.2 * DPR), c = document.createElement('canvas'); c.width = c.height = d; const x = c.getContext('2d'); x.scale(DPR, DPR); x.translate(R * 1.1, R * 1.1);
+  const nm = L.name, ring = (r, col) => { x.fillStyle = col; x.beginPath(); x.arc(0, 0, r, 0, TAU); x.fill(); };
+  if (!nm) { ring(R, '#5a3418'); ring(R * 0.93, '#c88a50'); for (let i = 9; i > 0; i--) { x.strokeStyle = `rgba(110,60,25,${0.18 + (i % 2) * 0.12})`; x.lineWidth = 1.6; x.beginPath(); x.arc(R * 0.02 * Math.sin(i), R * 0.02 * Math.cos(i), R * 0.93 * i / 10, 0, TAU); x.stroke(); }
+    for (let i = 0; i < 26; i++) { const a = i / 26 * TAU; x.strokeStyle = 'rgba(60,30,10,.35)'; x.lineWidth = 2; x.beginPath(); x.moveTo(Math.cos(a) * R * 0.94, Math.sin(a) * R * 0.94); x.lineTo(Math.cos(a) * R, Math.sin(a) * R); x.stroke(); } x.strokeStyle = 'rgba(90,45,15,.4)'; x.lineWidth = 2; x.beginPath(); x.moveTo(-R * 0.1, -R * 0.05); x.lineTo(R * 0.45, R * 0.3); x.stroke(); }
+  else if (nm === 'The Cheese') { ring(R, '#e8a820'); ring(R * 0.92, '#ffd050'); for (let i = 0; i < 9; i++) { const a = i * 2.4, r = R * (0.2 + (i % 4) * 0.18); ring(0, 0); x.fillStyle = '#e8b030'; x.beginPath(); x.arc(Math.cos(a) * r, Math.sin(a) * r, R * (0.06 + (i % 3) * 0.03), 0, TAU); x.fill(); } }
+  else if (nm === 'The Tyre') { ring(R, '#1a1a1e'); for (let i = 0; i < 30; i++) { const a = i / 30 * TAU; x.fillStyle = '#2e2e34'; x.save(); x.rotate(a); x.fillRect(R * 0.86, -R * 0.05, R * 0.14, R * 0.1); x.restore(); } ring(R * 0.62, '#2a2a30'); ring(R * 0.5, '#b8c0c8'); for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; ring(0, 0); x.fillStyle = '#5a6068'; x.beginPath(); x.arc(Math.cos(a) * R * 0.28, Math.sin(a) * R * 0.28, R * 0.06, 0, TAU); x.fill(); } }
+  else if (nm === 'The Shield') { ring(R, '#6a747e'); ring(R * 0.9, '#b8c4ce'); ring(R * 0.62, '#c03a3a'); ring(R * 0.42, '#b8c4ce'); ring(R * 0.2, '#c03a3a'); for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; x.fillStyle = '#5a646e'; x.beginPath(); x.arc(Math.cos(a) * R * 0.95, Math.sin(a) * R * 0.95, R * 0.035, 0, TAU); x.fill(); } }
+  else if (nm === 'The Cake') { ring(R, '#c86a3a'); ring(R * 0.9, '#ffb0d0'); for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; x.fillStyle = '#fff'; x.beginPath(); x.arc(Math.cos(a) * R * 0.86, Math.sin(a) * R * 0.86, R * 0.07, 0, TAU); x.fill(); } for (let i = 0; i < 22; i++) { const a = i * 1.7, r = R * 0.65 * Math.sqrt((i + 1) / 22); x.fillStyle = ['#ff4a5a', '#ffd040', '#4ac0ff', '#7af07a'][i % 4]; x.fillRect(Math.cos(a) * r, Math.sin(a) * r, R * 0.05, R * 0.02); } }
+  else if (nm === 'The Melon') { ring(R, '#2a7a3a'); for (let i = 0; i < 14; i++) { const a = i / 14 * TAU; x.strokeStyle = '#1a5a28'; x.lineWidth = R * 0.05; x.beginPath(); x.arc(0, 0, R * 0.97, a, a + 0.12); x.stroke(); } ring(R * 0.86, '#e8f4c8'); ring(R * 0.8, '#ff5a6a'); for (let i = 0; i < 20; i++) { const a = i * 2.39, r = R * 0.55 * Math.sqrt((i + 1) / 20); x.fillStyle = '#2a1a1a'; x.beginPath(); x.ellipse(Math.cos(a) * r, Math.sin(a) * r, R * 0.025, R * 0.045, a, 0, TAU); x.fill(); } }
+  else { ring(R, '#8a6a3a'); ring(R * 0.9, '#f4ecd8'); for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; x.fillStyle = '#3a2a1a'; x.fillRect(Math.cos(a) * R * 0.78 - 2, Math.sin(a) * R * 0.78 - 2, 4, 4); } x.strokeStyle = '#3a2a1a'; x.lineWidth = 4; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, -R * 0.55); x.moveTo(0, 0); x.lineTo(R * 0.4, 0); x.stroke(); }
+  // a soft shine
+  const g = x.createRadialGradient(-R * 0.35, -R * 0.4, R * 0.1, 0, 0, R); g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.beginPath(); x.arc(0, 0, R, 0, TAU); x.fill();
+  LOGPIC.key = key; LOGPIC.c = c; return c; }
+function drawLog(G, Lg, L, now) { const R = L.R, dy = -Lg.shake * 8 * L.s - Math.max(0, dropIn) * H * 0.6, cx = L.cx, cy = L.cy + dy, sc = 1 + Lg.shake * 0.02;
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(sc, sc);
+  // knives and studs behind first (handles outside the rim), then the target over the blades
+  ctx.save(); ctx.rotate(Lg.rot); for (const q of Lg.items) { if (q.kind === 'stud') continue; const a = q.a; ctx.save(); ctx.rotate(a); knife(R * 0.8, 0, -Math.PI / 2, L.klen, 1, q.kind === 'mine'); ctx.restore(); } ctx.restore();
+  const pic = logPic(Lg, R); ctx.drawImage(pic, -R * 1.1, -R * 1.1, R * 2.2, R * 2.2);
+  ctx.save(); ctx.rotate(Lg.rot); for (const q of Lg.items) if (q.kind === 'stud') { const x = Math.cos(q.a) * R * 0.93, y = Math.sin(q.a) * R * 0.93; circ(x, y, R * 0.085, '#3a4048'); circ(x, y, R * 0.06, '#9aa6b2'); circ(x - R * 0.02, y - R * 0.02, R * 0.02, '#fff'); }
+    for (const ap of Lg.apples) { const x = Math.cos(ap.a) * R * 1.1, y = Math.sin(ap.a) * R * 1.1; ctx.save(); ctx.translate(x, y); ctx.rotate(ap.a + Math.PI / 2); apple(0, 0, R * 0.12, ap.gold, now); ctx.restore(); } ctx.restore();
+  ctx.restore();
+  if (Lg.boss && Lg.name) { ctx.fillStyle = '#ffd040'; ctx.font = `${Math.round(15 * L.s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('BOSS · ' + Lg.name.toUpperCase(), cx, cy - R - 30 * L.s); } }
+function apple(x, y, r, gold, now) { const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r); g.addColorStop(0, gold ? '#fff2a0' : '#ff8a8a'); g.addColorStop(1, gold ? '#d8a020' : '#c81e2a'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x - r * 0.35, y, r * 0.75, 0, TAU); ctx.arc(x + r * 0.35, y, r * 0.75, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = r * 0.15; ctx.beginPath(); ctx.moveTo(x, y - r * 0.5); ctx.lineTo(x + r * 0.1, y - r * 0.95); ctx.stroke(); ctx.fillStyle = '#4ab04a'; ctx.beginPath(); ctx.ellipse(x + r * 0.35, y - r * 0.85, r * 0.3, r * 0.14, -0.4, 0, TAU); ctx.fill();
+  if (gold && Math.sin(now * 3 + x) > 0.8) circ(x + r * 0.3, y - r * 0.3, r * 0.15, '#fff'); }
+// ---------- moment to moment ----------
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2.5);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g || 520) * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 22; } while (TXT.length && TXT[0].t > 1.3) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  for (const a of [FLYING, WEDGES, HALVES]) { for (const p of a) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 1400 * dt; p.ang += p.va * dt; } for (let i = a.length - 1; i >= 0; i--) if (a[i].t > 1.6) a.splice(i, 1); }
+  if (dropIn > 0) dropIn = Math.max(0, dropIn - dt * 3.5); }
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G;
+  // the background is painted once per size and place, then copied (a full-screen gradient every frame is slow on a phone)
+  const bk = [W, H, DPR, g ? g.place : 0].join(':'); if (draw.bk !== bk) { draw.bk = bk; const oc = draw.oc || (draw.oc = document.createElement('canvas')); oc.width = cv.width; oc.height = cv.height; const o = oc.getContext('2d'); o.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const P = PLACES[g ? g.place : 0], bg = o.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, P.bg[0]); bg.addColorStop(1, P.bg[1]); o.fillStyle = bg; o.fillRect(0, 0, W, H);
+    o.globalAlpha = 0.06; for (let i = 0; i < 9; i++) { o.fillStyle = i % 2 ? '#fff' : '#000'; o.fillRect(0, i * H / 9, W, H / 18); } o.globalAlpha = 1;
+    const glow = o.createRadialGradient(L.cx, L.cy, L.R * 0.5, L.cx, L.cy, L.R * 2.6); glow.addColorStop(0, 'rgba(255,220,160,.18)'); glow.addColorStop(1, 'rgba(255,220,160,0)'); o.fillStyle = glow; o.fillRect(0, 0, W, H); }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(draw.oc, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  if (g && g.log && !(g.log.burst)) drawLog(g, g.log, L, now);
+  for (const w of WEDGES) { ctx.save(); ctx.translate(w.x, w.y); ctx.rotate(w.ang); ctx.globalAlpha = Math.max(0, 1 - w.t / 1.4); ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, L.R, w.a0, w.a1); ctx.closePath(); ctx.save(); ctx.clip(); ctx.rotate(-w.ang0); if (LOGPIC.c) ctx.drawImage(LOGPIC.c, -L.R * 1.1, -L.R * 1.1, L.R * 2.2, L.R * 2.2); ctx.restore(); ctx.restore(); ctx.globalAlpha = 1; }
+  for (const f of FLYING) knife(f.x, f.y, f.ang, L.klen, Math.max(0, 1 - f.t / 1.2), f.mine);
+  for (const h of HALVES) { ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(h.ang); ctx.globalAlpha = Math.max(0, 1 - h.t / 1.2); ctx.fillStyle = h.gold ? '#e8b030' : '#d8283a'; ctx.beginPath(); ctx.arc(0, 0, L.R * 0.11, h.side * Math.PI / 2, h.side * Math.PI / 2 + Math.PI); ctx.fill(); ctx.fillStyle = '#fff4d0'; ctx.beginPath(); ctx.arc(0, 0, L.R * 0.08, h.side * Math.PI / 2, h.side * Math.PI / 2 + Math.PI); ctx.fill(); ctx.restore(); ctx.globalAlpha = 1; }
+  // your knife: waiting at the bottom, or flying up
+  if (g && g.log && !g.over) { const ty = L.cy + L.R * 0.78; if (g.fly) { const u = clamp(g.fly.t / g.cfg.fly, 0, 1), y = lerp(L.ky, ty, u); knife(L.cx, y, 0, L.klen); ctx.globalAlpha = 0.35; for (let i = 1; i < 4; i++) knife(L.cx, y + i * 18 * s, 0, L.klen, 0.25 / i); ctx.globalAlpha = 1; }
+    else if (g.wait <= 0) knife(L.cx, L.ky + (1 - Math.min(1, (g.t - (g.lastThrow || -9)) * 8)) * 30 * s, 0, L.klen); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); circ(p.x, p.y, p.r, p.col); } ctx.globalAlpha = 1;
+  ctx.restore();
+  if (g) hud(g, L, now);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 0.9 ? 1 : 1 - (q.t - 0.9) / 0.4, pop = 1 + 0.3 * Math.max(0, 1 - q.t * 6); ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s * pop)}px ${TF}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(10,6,4,.7)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30, hy = L.ky - L.klen * 0.6 - hh;
+    fillR(W / 2 - ww / 2, hy - hh / 2, ww, hh, 12, 'rgba(20,12,8,.92)'); ctx.strokeStyle = '#ffb020'; ctx.lineWidth = 1.5; rrect(W / 2 - ww / 2, hy - hh / 2, ww, hh, 12); ctx.stroke(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,40,40,${FX.red * 0.22})`; ctx.fillRect(0, 0, W, H); }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,235,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
+// ---------- the top and the knives left ----------
+function hud(G, L, now) { const s = L.s; ctx.textBaseline = 'middle';
+  if (G.lesson) lessonPanel(G, L);
+  else { ctx.textAlign = 'left'; ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillText(`LEVEL ${G.N} · ${PLACES[G.place].name.toUpperCase()}`, 14, 52 * s);
+    ctx.fillStyle = '#fff'; ctx.font = `${Math.round(26 * s)}px ${TF}`; ctx.fillText(G.score, 14, 80 * s); const bst = best[G.N]; if (bst) { ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillStyle = G.score > bst ? '#ffd040' : 'rgba(255,255,255,.55)'; ctx.fillText(G.score > bst ? 'NEW BEST!' : `BEST ${bst}`, 14, 102 * s); }
+    ctx.textAlign = 'right'; ctx.fillStyle = '#ff6a6a'; ctx.font = `${Math.round(18 * s)}px ${TF}`; ctx.fillText(`🍎 ${G.apples}`, W - 14, 54 * s);
+    // targets in this level: dots (the boss a skull)
+    const n = G.cfg.logs; for (let i = 0; i < n; i++) { const x = W - 14 - (n - 1 - i) * 22 * s, y = 82 * s, done = i < G.li, cur = i === G.li, boss = G.cfg.boss && i === n - 1; ctx.fillStyle = done ? '#ffd040' : cur ? '#fff' : 'rgba(255,255,255,.25)'; if (boss) { ctx.font = `${Math.round(15 * s)}px sans-serif`; ctx.textAlign = 'center'; ctx.globalAlpha = done || cur ? 1 : 0.45; ctx.fillText('💀', x, y); ctx.globalAlpha = 1; ctx.textAlign = 'right'; } else circ(x, y, (cur ? 6 : 5) * s, ctx.fillStyle); }
+    if (G.spares) { ctx.fillStyle = '#9ae6ff'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillText(`🛡 spare knife`, W - 14, 104 * s); } }
+  // knives left: a column at the bottom left
+  if (G.log) { const left = G.log.need - G.log.stuck - (G.fly ? 1 : 0), x = 22 * s, y0 = H - 40 * s; for (let i = 0; i < G.log.need; i++) { const y = y0 - i * 17 * s, on = i < left; ctx.save(); ctx.translate(x, y); ctx.rotate(-Math.PI / 4); ctx.globalAlpha = on ? 1 : 0.22; fillR(-2 * s, -9 * s, 4 * s, 11 * s, 2 * s, on ? '#e8eef4' : '#888'); fillR(-2.5 * s, 2 * s, 5 * s, 7 * s, 2 * s, on ? '#a0582a' : '#666'); ctx.restore(); } ctx.globalAlpha = 1; }
+  if (G.N <= 1 && !G.lesson && G.thrown === 0 && !G.over) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('TAP TO THROW', W / 2, L.ky + L.klen + 16 * s); ctx.globalAlpha = 1; } }
+function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20, y = 46; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; const lines = wrapText(st.how, w - 24), h = 36 * s + lines.length * 17 * s;
+  fillR(x, y, w, h, 14, 'rgba(20,12,8,.92)'); ctx.strokeStyle = '#ffb020'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffb020'; ctx.font = `${Math.round(14 * s)}px ${TF}`; ctx.fillText('LESSON · ' + st.title, x + 12, y + 9 * s); ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 29 * s + i * 17 * s)); ctx.restore(); }
+// ---------- what each happening looks and sounds like ----------
+function onEvent(G, e) { const L = lay(), s = L.s, bx = L.cx, by = L.cy + L.R;
+  switch (e.k) {
+    case 'start': say(`LEVEL ${G.N}`, W / 2, L.cy - L.R - 40 * s, '#fff', 28); sfx.start(); if (G.N <= 1) tip('how', 'Tap to throw. Don\'t hit a knife that is already in!', 2.6); break;
+    case 'log': dropIn = 1; HALVES.length = 0; LOGPIC.key = ''; if (e.boss) { say('BOSS!', W / 2, L.cy, '#ffd040', 40); sfx.boss(); FX.shake = 8; } else if (e.li > 0) sfx.drop(); break;
+    case 'throw': G.lastThrow = G.t; sfx.throw(); break;
+    case 'stick': { sfx.thunk(e.n); for (let i = 0; i < 6; i++) PT.push({ x: bx + (Math.random() - 0.5) * 10, y: by, vx: (Math.random() - 0.5) * 220, vy: 60 + Math.random() * 160, life: 0.5, t: 0, col: ['#c88a50', '#8a5a2a', '#e8b880'][i % 3], r: 2 + Math.random() * 2, g: 900 }); FX.shake = 2; vibe(HAP.tick);
+      if (e.close) say('CLOSE!', bx + 60 * s, by - 10 * s, '#ffd040', 16); if (e.combo >= 2) say(`×${e.combo + 1}`, bx - 60 * s, by - 10 * s, '#9ae6ff', 16); break; }
+    case 'apple': { const Lg = G.log, a = e.a + Lg.rot, x = L.cx + Math.cos(a) * L.R * 1.1, y = L.cy + Math.sin(a) * L.R * 1.1; for (const side of [-1, 1]) HALVES.push({ x, y, vx: side * 180 + (Math.random() - 0.5) * 60, vy: -260, ang: 0, va: side * 8, t: 0, side: side > 0 ? 0 : 1, gold: e.gold }); sparks(x, y, 14, e.gold ? '#ffd040' : '#ff5a6a', 200); sfx.apple(e.gold); say(e.gold ? '+5 🍎' : '+1 🍎', x, y - 20 * s, e.gold ? '#ffd040' : '#ff8a8a', 16); break; }
+    case 'clang': { sfx.clang(); FX.shake = 14; FX.red = 1; FLYING.push({ x: bx, y: by + L.klen * 0.3, vx: (Math.random() < 0.5 ? -1 : 1) * 260, vy: 380, ang: 0, va: (Math.random() < 0.5 ? -1 : 1) * 14, t: 0, mine: true }); sparks(bx, by, 22, '#ffe08a', 300); break; }
+    case 'spare': say('SPARE KNIFE SAVED YOU', W / 2, L.cy - L.R - 40 * s, '#9ae6ff', 15); break;
+    case 'burst': { const Lg = G.log, n = 7; for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU, am = (a0 + a1) / 2; WEDGES.push({ x: L.cx, y: L.cy, vx: Math.cos(am) * 340, vy: Math.sin(am) * 340 - 220, ang: Lg.rot, ang0: 0, va: (Math.random() - 0.5) * 6, a0: a0, a1: a1, t: 0 }); }
+      for (const q of Lg.items) { if (q.kind === 'stud') continue; const a = q.a + Lg.rot; FLYING.push({ x: L.cx + Math.cos(a) * L.R, y: L.cy + Math.sin(a) * L.R, vx: Math.cos(a) * 420, vy: Math.sin(a) * 420 - 200, ang: a - Math.PI / 2, va: (Math.random() - 0.5) * 16, t: 0, mine: q.kind === 'mine' }); }
+      Lg.burst = true; sfx.burst(e.boss); FX.flash = e.boss ? 0.8 : 0.45; FX.shake = e.boss ? 16 : 9; FX.stop = 0.06; vibe(e.boss ? HAP.best : HAP.sharp); sparks(L.cx, L.cy, 30, '#ffd040', 380); say(e.boss ? 'BOSS DOWN!' : ['NICE!', 'SMASHED!', 'GREAT!', 'BOOM!'][(Math.random() * 4) | 0], W / 2, L.cy, '#ffd040', e.boss ? 34 : 26); break; }
+    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.2 }; break;
+    case 'lessonnext': if (e.first) hint = null; break;
+    case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.cy, '#ffd040', 28); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': sfx.win(); break;
+    case 'lost': sfx.lose(); break;
+  } }
+
+// ===================== SOUND: knives and wood (PLAYBOOK S1-S11) =====================
+// A quick swish for each throw; a solid wooden THUNK as it sticks (a little higher with each knife in the same target, S5,
+// and never quite the same twice, S2); a bright metal CLANG for a knife on a knife; a juicy splat for an apple (a chime for
+// a gold one); a crack and a crash as a target bursts, and a deeper one for a boss; the next target lands with a soft thud.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  start() { [0, 4, 7].forEach((q, j) => pluck(note(392, q), 0.5, 0.07, j * 0.07)); },
+  throw() { if (!gate('throw', 50)) return; noise(0.08, 3200 * vary(0.1), 0.05, 'bandpass', 1.4); },
+  thunk(n = 1) { if (!gate('thunk', 40)) return; const f = note(130, Math.min(10, n)) * vary(0.03); tone(f, 0.12, 0.12, 'triangle', 0, f * 0.7); noise(0.06, 900 * vary(0.1), 0.09, 'lowpass', 1.5); },
+  clang() { tone(1650, 0.5, 0.07, 'square', 0, 1600, 4000); tone(2470, 0.4, 0.05, 'triangle', 0.01); noise(0.15, 6000, 0.05, 'highpass', 1); },
+  apple(gold = false) { noise(0.12, 1400, 0.08, 'bandpass', 1); tone(500, 0.08, 0.05, 'sine', 0, 300); if (gold) [0, 4, 7].forEach((q, j) => tone(note(784, q), 0.2, 0.04, 'sine', 0.04 + j * 0.05)); },
+  burst(boss = false) { noise(0.4, 1800, 0.12, 'lowpass', 0.8); tone(boss ? 70 : 110, 0.4, 0.12, 'sine', 0, boss ? 40 : 60); [0, 4, 7, 12].forEach((q, j) => pluck(note(392, q + (boss ? 0 : 2)), 0.5, 0.06, 0.08 + j * 0.06)); },
+  drop() { tone(90, 0.2, 0.08, 'sine', 0, 60); noise(0.1, 500, 0.05, 'lowpass', 1); },
+  boss() { tone(110, 0.6, 0.1, 'sawtooth', 0, 82, 900); tone(165, 0.6, 0.06, 'sawtooth', 0.05, 123, 900); },
+  goal() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(392, q), 0.9, 0.08, j * 0.09)); },
+  no() { if (!gate('no', 250)) return; tone(200, 0.1, 0.05, 'triangle', 0, 160, 900); },
+  tick() { if (!gate('tick', 45)) return; tone(1320, 0.05, 0.03, 'triangle'); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 1)), 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(523, q), 1.0, 0.08, j * 0.12)); },
+  lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · ${cf.logs} targets${cf.boss ? ' · <b>BOSS</b>' : ''}`, best[level] ? `Your best score here: <b>${best[level]}</b>` : '', `🍎 ${store.get('applesAll', 0)} apples sliced`, helpOn() ? '<span class="help">A spare knife and a slower spin for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; FLYING.length = WEDGES.length = HALVES.length = 0; dropIn = 0; hint = null; LOGPIC.key = ''; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.score > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.score; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'SMASHED IT!' : 'CLANG!'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = `Score <b>${r.score}</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + ` · 🍎 ${r.apples}` + (r.close ? ` · ${r.close} close shaves` : '')
+    + (r.win ? '' : `<br>Target ${Math.min(r.need, r.logs + 1)} of ${r.need}` + (r.prog >= 0.8 ? ' · <b>so close!</b>' : '')) + (r.win && r.stars < 3 ? '<br>Three stars: no spare knife used, and slice the apples.' : '') + (!r.win ? '<br>Watch the bottom of the target: throw when a gap comes round, and wait when the spin changes.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  if (!HEADLESS) store.set('applesAll', store.get('applesAll', 0) + r.apples);
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): a tap anywhere throws
+const ui = {};
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; throwKnife(G); });
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE KNIFE RACK</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  throw() { return throwKnife(G); }, lay, renderShop, ui,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

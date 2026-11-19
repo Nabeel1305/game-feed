@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**65 games** so far. Next number: **66**.
+**68 games** so far. Next number: **69**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -73,6 +73,9 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 63 | **Pour** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QmpG7WcZG2wV2k3XTvGEuY) | `games/pour/index.html` |
 | 64 | **Block Party** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UaQb7Pkffx2PavfwZ5JVL8) | `games/blocks/index.html` |
 | 65 | **Plumber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QspkqDVm5vnfzGjJWVBmzd) | `games/plumber/index.html` |
+| 66 | **Stunt Kart** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1aSgdzNK6JWszpPCLwUKCJ) | `games/stunt/index.html` |
+| 67 | **Knife Spin** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/W9MYa4oFq3bMgN2bi48M6m) | `games/knife/index.html` |
+| 68 | **Mow It** | in-progress | not yet (he has not said so) | 0.1.0 | [play](None) | `games/mow/index.html` |
 
 ## What each game is
 
@@ -141,3 +144,6 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 63. **Pour**: Colour sort like Water Sort: tap a glass, tap another, pour; sort every colour into its own glass; solver-made puzzles with a move margin, undo, hidden layers, a mark on every colour.
 64. **Block Party**: Block puzzle like Block Blast: drag pieces from a tray of three onto an 8x8 grid; full rows and columns clear; combos multiply; gem and score goals; junk and bigger pieces as levels rise.
 65. **Plumber**: His idea: a plumber's day of house calls. Pick calls from the phone, drive there, look at parts of the cut-open house to find the real fault, pick the fix and do it by hand (hold a wrench into the green, plunge on the beat, feed a snake, set a dial, fit a part); floods until the main is shut; 21 kinds of job.
+66. **Stunt Kart**: His idea, Mario Kart with cool things: kart racing in 3D with ramps (tap in the air for flips, spins and rolls; land between them for a boost, mid-trick is a wipeout), a gold glider jump through air coins, boost pads, coins, items and a STAR you fill with tricks.
+67. **Knife Spin**: Like Knife Hit: tap to throw knives into a spinning target that speeds up, stops and turns back; hit a knife already in and you're out; apples on the rim; the target bursts when full; three targets a level and a boss every fifth.
+68. **Mow It**: 
