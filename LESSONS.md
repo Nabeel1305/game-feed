@@ -693,6 +693,20 @@ Everything learned building the first games. Every new game must follow the **ru
   so the first towers are 20 platforms (survival multiplies). Then 0 of 1,984, and an ordinary player still wins all early.
 - Lessons: red 5 of 12 and one-piece gaps, or blind turning gets through the little tower.
 
+### 70. Sinkhole (`games/sinkhole/`): a hole that swallows the town
+- A real hole in 3D: the ground's shader drops every pixel inside each hole (`holes[4]` uniform: x, z, radius, on), and a
+  dark open shaft goes down under it; swallowed things move to the middle, tip and fall, and the ground hides whatever is
+  outside the circle. No stencil needed.
+- Every kind of thing is a list of parts (geometry + colour, tinted or not); each part is one InstancedMesh, so a town of
+  500 things is about 60 draws; only moving and falling things have their matrices written each frame.
+- Growth must match what the town holds: with too steep a ladder the hole stalls at bus size with nothing left to eat
+  (seen at L5); CUM was set from the robot's timeline (size 4 by ~10 s, houses by ~25 s).
+- A meter goal alone fails with three rival holes (they eat the town): with rivals, the biggest eater at time-up also wins,
+  and rivals stop at size 9 so the boss landmark is yours. A respawned hole is safe for 2.5 s.
+- Barrels at size 8+ would be unavoidable: there they are harmless and the late hazard is a fuel tanker that drives.
+- The robot needs a stuck rule (no progress in 1.5 s: drop the target, push off) or it pins between a target and a barrel.
+- Cars: a crossing is crossed strictly once, or a car turns for ever at the same crossing.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

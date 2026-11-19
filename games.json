@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 70,
+  "next_number": 71,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2380,6 +2380,40 @@
         "P30"
       ],
       "summary": "Turn the tower with your thumb so the ball drops through the gaps; red ends it; three drops in a row and the ball catches fire and smashes the next platform."
+    },
+    {
+      "number": 70,
+      "id": "sinkhole",
+      "name": "Sinkhole",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-19",
+      "path": "games/sinkhole/index.html",
+      "artifact": "https://claude.ai/artifact/2PghAkBBXJAifUWkns1UwQ",
+      "artifact_slug": "0b43f687-714b-4001-b88f-bc694ee7799f",
+      "apk_repo": null,
+      "storage_prefix": "sn.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "You are a hole in the road. Swallow the town.",
+        "genre": "Arcade / io",
+        "intensity": 3,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Lilita One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P9",
+        "P18",
+        "P14",
+        "P12",
+        "P30"
+      ],
+      "summary": "You are a hole in the road: slide to swallow everything smaller than you, grow until houses and towers fall in, fill the town meter before the clock; red barrels blow up, other holes race you."
     }
   ],
   "planned": []
