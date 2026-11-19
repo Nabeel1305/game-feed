@@ -514,6 +514,12 @@ Everything learned building the first games. Every new game must follow the **ru
 - The walk-through hides the roof and the door panels (the camera went dark under the roof and into the closed door), with a
   wider lens indoors.
 - A house in progress autosaves; a lost level clears it, so a retry is a fresh start.
+### 54. Fruit Fight (`games/fruit/`): the arc is the aim
+- The pull sets direction only (sideways = yaw, down = higher and further); power is full past a small pull. Pull length as
+  power coupled with pitch made aiming muddy.
+- A robot that solves the ballistics exactly never misses: its error must be a person's (yaw ±0.35 x (1 - acc), pitch
+  ±0.25 x (1 - acc)), and oranges reload in 0.55 s, or nothing could ever reach you and every level was won with full hearts.
+- Shields stop shots that come in flat (vy > -7); a lob or a melon's burst gets past. The big one's eye is the top of its head.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

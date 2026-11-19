@@ -79,3 +79,13 @@ His idea 1 did not come through in his message; it goes first in set 9 when he s
 | 47 | Battle Lines | his: a general above the field; formations, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines | 4 | 1 | 3D |
 | 48 | Grand Hotel | his: the only attendant; tap bubbles to take jobs (bags, food, towels, dirty rooms), hold three, two plates in one trip, keep your promises | 3 | 1 | 2D |
 | 49 | Ramp Riders | mine: a trials bike, two thumbs lean it back and forward; turn it in the air to the slope you land on, flip for a boost, race your ghost | 4 | 2 | 2D |
+
+## Set 9 (19 Nov 2026, night): his ideas 6, 7, 9, 10 and 11 ("do all of them"). Idea 8 (a drone racer) was left out on his
+own condition: Drone Pilot (#21) exists. Idea 1 has still not come through; it goes first in set 10.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 50 | Spellshop | his: the town magician; clues in each customer's story, jars that always mean one thing, pour, stir, trace a rune, seal; funny mistakes come back to be fixed | 2 | 1 | 2D |
+| 51 | Rex | his: a T-Rex in a 3D valley; creep or charge, BITE and ROAR; prey and rivals that warn before they strike | 4 | 2 | 3D |
+| 52 | High Wire | his: a tightrope in 3D; one floating stick to lean, walk and crouch; wind, birds, banners, sandbags, last-second saves | 3 | 1 | 3D |
+| 53 | Homemaker | his: build houses on a plot, a shed first and whole homes later; a checklist, jobs before the family arrives, a walk-through | 1 | 1 | 3D |
+| 54 | Fruit Fight | his: a first-person slingshot; oranges, melons, bananas against five kinds of monster | 4 | 1 | 3D |
