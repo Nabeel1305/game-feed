@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**61 games** so far. Next number: **62**.
+**62 games** so far. Next number: **63**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -69,6 +69,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 59 | **Origami** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6siJikdse6Q1L1G33VsD7i) | `games/origami/index.html` |
 | 60 | **Sugar Swap** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MfW8qp4kMSBbPfsXiK3Awd) | `games/sweets/index.html` |
 | 61 | **Black Keys** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UMMwDhwSGS2btnouYwoTG3) | `games/keys/index.html` |
+| 62 | **Paint Drop** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/31Xpix1yiPxyRQKvzC8rww) | `games/paint/index.html` |
 
 ## What each game is
 
@@ -133,3 +134,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 59. **Origami**: Fold paper animals: drag a corner and the paper folds after your thumb; let go when it fits the dashed outline. Perfect folds, crumples, six animals that come to life on your shelf.
 60. **Sugar Swap**: Match-3 like Candy Crush: swipe sweets into lines; striped, wrapped and colour-bomb specials and their combos; goals (collect, jelly, cherries, frosting, score) with a move limit; the Sugar Rush.
 61. **Black Keys**: Piano Tiles style: tap the black tiles, never the white; each tile plays the next note of a real piece (16 public-domain songs); long tiles to hold, double rows for two thumbs, speeds up, an encore.
+62. **Paint Drop**: Drop-and-merge like the watermelon game, with paint: same colours squash into the next colour; wet paint squashes, dry does not; a palette that dries without squashes; the colour chart up to the goal; don't overflow.

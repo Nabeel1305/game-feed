@@ -600,6 +600,21 @@ Everything learned building the first games. Every new game must follow the **ru
 - A blinking failure mark must start solid (both screenshots caught the blink's dark half).
 - `sfx.soundCheck` calls every sound with numbers: a sound that takes a list needs a default.
 
+### 62. Paint Drop (`games/paint/`): drop and merge, one thumb
+- **Plain drop-and-merge cannot be made spam-proof.** Gravity rolls same colours together by itself; random dropping won
+  most early levels, and a wider jar, bigger goals, a paint allowance and smaller spawns all left lucky random runs as quick
+  as careful ones. What worked, each measured: WET paint (a blob squashes only for a moment after it is dropped or made, so
+  squashes happen where you aim; two dry blobs never squash), the PALETTE (six drops; each drop that leads to no squash
+  dries one, a squash refills all: careful players never go past five, random thumbs usually seven to nine), a queue that
+  rarely repeats a colour (dropping in one spot stacked matches), 0.85 s between drops, and a jar just tight enough that
+  careless clutter spills it.
+- Measure separation as distributions, not averages: careful needed 13 drops on average and random 22, but random's
+  luckiest runs were as quick as careful's typical ones.
+- A fast node harness for the rules (physics included) found most of this; but for the full blind search the browser test
+  is quicker than node (patterns that never drop run to the five-minute limit).
+- Lessons in a drop game: one drop at a time, judged before the next (blind drops squashing each other passed lesson 1),
+  and only for the lessons that judge a drop (the "line" lesson froze after one drop).
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

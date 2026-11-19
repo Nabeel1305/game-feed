@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Paint Drop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#3a2a4a;--ink:#fffaf0;--acc:#7a5aff;--acc-dark:#3a2a9a;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Fredoka","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(90,60,140,.6),rgba(30,16,40,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#fff;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#fff}.lvb.cur small{color:#fff}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:60px;color:#fff">Paint Drop</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">SAME COLOURS SQUASH TOGETHER</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Fredoka", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('pd.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('pd.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: Paint Drop (game 62, set 11: "the game where you take colours and mash them together") =====================
+// A glass jar. Slide your thumb to move the next paint blob along the top; let go to drop it. Blobs fall, roll and stack. Two
+// blobs of the same colour that touch squash together into ONE blob of the next colour, a size bigger (red, orange, yellow,
+// lime, green, teal, sky, blue, violet, pink, then a RAINBOW; two rainbows make a masterpiece and vanish). A squash can set off
+// another (a chain). Each level asks for a colour: make it before your paint runs out, and do not let the jar overflow: a blob
+// that stays above the dashed line for too long ends it. Later: bigger goals, grey STONES that never squash (a squash right
+// beside one cracks it away), a narrower jar.
+const RULES = [
+  '<b>Slide</b> to move the blob along the top, <b>let go</b> to drop it.',
+  'Two blobs of the <b>same colour</b> that touch squash into the <b>next colour</b>, a size bigger. Squashes can chain!',
+  'Make the colour the level asks for before your <b>paint runs out</b>.',
+  'Keep the jar under the <b>dashed line</b>: a blob that stays above it too long ends it.',
+  'Grey <b>stones</b> never squash; a squash right beside one cracks it away.',
+];
+const TIERS = [
+  { n: 'Red', c: '#ff4a4a', r: 0.42 }, { n: 'Orange', c: '#ff9a2a', r: 0.55 }, { n: 'Yellow', c: '#ffd83a', r: 0.71 }, { n: 'Lime', c: '#b8e83a', r: 0.87 },
+  { n: 'Green', c: '#3ac85a', r: 1.04 }, { n: 'Teal', c: '#2ac8b8', r: 1.22 }, { n: 'Sky', c: '#4ab8ff', r: 1.42 }, { n: 'Blue', c: '#3a6aff', r: 1.64 },
+  { n: 'Violet', c: '#9a5aff', r: 1.88 }, { n: 'Pink', c: '#ff6ac8', r: 2.14 }, { n: 'Rainbow', c: '#ffffff', r: 2.44 } ];
+const PLACES = [{ name: 'The Studio', wall: ['#fff3e0', '#ffe0c0'] }, { name: 'The Gallery', wall: ['#e8f0ff', '#d0dcff'] }, { name: 'The Workshop', wall: ['#f0ffe8', '#d8f0c8'] }, { name: 'The Attic', wall: ['#ffe8f4', '#f0d0e8'] }];
+const placeOf = N => Math.floor((N - 1) / 6) % 4;
+const UPGRADES = [
+  { id: 'paint', name: 'More paint', desc: 'Four more drops on every level.', max: 2, cost: l => 40 + l * 50 },
+  { id: 'wide', name: 'Wider jar', desc: 'The jar is a little wider.', max: 1, cost: l => 80 },
+  { id: 'shake', name: 'Shake', desc: 'Once a level: shake the jar to settle it.', max: 1, cost: l => 60 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Dabbler'], [40, 'Painter'], [130, 'Colourist'], [320, 'Artist'], [700, 'Master'], [1500, 'Old master']];
+const GRAV = 30, WET = 1.2, DRYN = 6;      /* wet: seconds a blob stays wet after it is dropped or made; the palette holds six drops */      /* how long a blob stays wet after it is dropped or made */
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  const goal = N <= 9 ? 6 : 7, jw = (N <= 4 ? 10.5 : 10.5 - Math.min(1.1, f / 35)) + 0.6 * upLv('wide') + (help ? 0.5 : 0), par = goal === 6 ? 56 : 96;
+  return { N, f, help: !!help, place: placeOf(N), goal, spawnTop: N <= 9 ? 3 : 4, jw, line: jw - 1.3, stones: N >= 6 ? x(0.03, 0.1, 30) : 0, par,
+    drops: Math.round(par * 1.6) + 4 * upLv('paint'), dry: DRYN + (help ? 1 : 0), shake: upLv('shake') }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null };
+  setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+let BID = 1;
+function setup(G, o = {}) { const c = G.cfg; G.jw = c.jw; G.b = []; G.aim = G.jw / 2; G.cool = 0; G.queue = []; G.drops = o.drops != null ? o.drops : c.drops; G.line = c.line; G.dropsMax = G.drops; G.best = 0; G.score = 0; G.danger = 0; G.chain = 0; G.chainT = 0; G.done = false; G.shakes = c.shake; G.merges = 0; G.idle = 0; G.made = 0; G.dry = 0; G.dropped = false; G.sqSince = false;
+  G.rig = o.rig || null; for (let i = 0; i < 2; i++) G.queue.push(pickTier(G)); }
+function pickTier(G) { if (G.rig && G.rig.length) return G.rig.shift(); const c = G.cfg;
+  if (c.stones && G.rnd() < c.stones && G.b.length > 4) return -1;
+  const last = G.queue.length ? G.queue[G.queue.length - 1] : -9, roll = () => { const w = [0.34, 0.3, 0.22, 0.14, 0.09].slice(0, c.spawnTop + 1), s = w.reduce((a, b) => a + b, 0); let r = G.rnd() * s; for (let t = 0; t < w.length; t++) { r -= w[t]; if (r <= 0) return t; } return 0; };
+  let t = roll(); if (t === last) t = roll(); return t; }      /* the same colour twice in a row only rarely: dropping in one spot over and over must not work */
+const radOf = t => t < 0 ? 0.62 : TIERS[t].r;
+// ---------- what you do ----------
+function aimAt(G, x) { const r = radOf(G.queue[0]); G.aim = clamp(x, r, G.jw - r); }
+function drop(G) { if (G.over || G.wait > 0 || G.cool > 0 || G.done || G.drops <= 0) return false; if (G.lesson && G.lesson.dropAt != null) return false;      /* in a lesson, one drop at a time: it is judged first */ const t = G.queue.shift(); G.queue.push(pickTier(G)); const r = radOf(t);
+  G.b.push({ id: BID++, t, x: clamp(G.aim, r, G.jw - r), y: G.line + 1.2, vx: 0, vy: -2, r, age: 0, sq: 0, wet: WET }); G.drops--; G.cool = 0.85; G.idle = 0;
+  // the palette: a drop that led to no squash dries one of its drops; a squash refills it; all dry and the paint is finished
+  if (G.dropped && !G.sqSince && !G.lesson) { G.dry++; G.ev.push({ k: 'dry', n: G.dry, of: G.cfg.dry }); if (G.dry >= G.cfg.dry) { G.ev.push({ k: 'dried' }); G.wait = 1.2; G.next = () => finish(G, false, 'dried'); } }
+  G.dropped = true; G.sqSince = false; G.ev.push({ k: 'drop', t }); aimAt(G, G.aim); if (G.lesson) { const id = lessonNow(G).id; if (id === 'aim' || id === 'chain') G.lesson.dropAt = G.t; lessonSee(G, 'drop'); } return true; }
+function shake(G) { if (G.shakes <= 0 || G.over || G.done) return false; G.shakes--; for (const b of G.b) { b.vy += 6 + G.rnd() * 4; b.vx += (G.rnd() - 0.5) * 6; } G.ev.push({ k: 'shake' }); return true; }
+// ---------- the physics: circles under gravity in a jar, pushed apart, squashing when they match ----------
+function physics(G, dt) { const B = G.b, jw = G.jw, merges = [];
+  for (const b of B) { b.vy -= GRAV * dt; b.vx *= 0.999; b.x += b.vx * dt; b.y += b.vy * dt; b.age += dt; b.sq = Math.max(0, b.sq - dt * 4); if (b.wet > 0) b.wet -= dt; }
+  for (let it = 0; it < 3; it++) {
+    for (let i = 0; i < B.length; i++) { const a = B[i]; for (let j = i + 1; j < B.length; j++) { const b = B[j]; const dx = b.x - a.x, dy = b.y - a.y, rr = a.r + b.r; if (Math.abs(dx) > rr || Math.abs(dy) > rr) continue; const d2 = dx * dx + dy * dy; if (d2 >= rr * rr) continue;
+        const d = Math.sqrt(d2) || 1e-4, nx = dx / d, ny = dy / d, ov = rr - d, ma = a.r * a.r, mb = b.r * b.r, s = ma + mb;
+        if (a.t === b.t && a.t >= 0 && !a.gone && !b.gone && (a.wet > 0 || b.wet > 0)) { merges.push([a, b]); a.gone = b.gone = true; continue; }      /* wet paint squashes; two dry blobs do not */
+        a.x -= nx * ov * mb / s; a.y -= ny * ov * mb / s; b.x += nx * ov * ma / s; b.y += ny * ov * ma / s;
+        const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny; if (vn < 0) { const jn = -(1.15) * vn / (1 / ma + 1 / mb); a.vx -= jn * nx / ma; a.vy -= jn * ny / ma; b.vx += jn * nx / mb; b.vy += jn * ny / mb; if (-vn > 3) { a.sq = b.sq = Math.min(1, -vn / 12); } }
+        const tx = -ny, ty = nx, vt = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty, f = vt * 0.06; a.vx += tx * f; a.vy += ty * f; b.vx -= tx * f; b.vy -= ty * f; } }
+    for (const b of B) { if (b.x < b.r) { b.x = b.r; if (b.vx < 0) b.vx *= -0.2; } if (b.x > jw - b.r) { b.x = jw - b.r; if (b.vx > 0) b.vx *= -0.2; } if (b.y < b.r) { if (b.vy < -4) b.sq = Math.min(1, -b.vy / 14); b.y = b.r; if (b.vy < 0) b.vy *= -0.15; b.vx *= 0.97; } } }
+  for (const [a, b] of merges) squash(G, a, b); if (merges.length) G.b = G.b.filter(b => !b.gone); }
+function squash(G, a, b) { const t = a.t + 1, x = (a.x * a.r * a.r + b.x * b.r * b.r) / (a.r * a.r + b.r * b.r), y = (a.y + b.y) / 2, vx = (a.vx + b.vx) / 2, vy = (a.vy + b.vy) / 2 + 2;
+  G.sqSince = true; if (G.dry) G.ev.push({ k: 'refill' }); G.dry = 0;
+  G.chain = G.chainT > 0 ? G.chain + 1 : 1; G.chainT = 0.9; G.merges++; const pts = (t + 1) * (t + 2) / 2 * 10 * G.chain; G.score += pts;
+  if (t > 10) { G.ev.push({ k: 'masterpiece', x, y }); G.score += 2000; return; }
+  const nb = { id: BID++, t, x, y, vx, vy, r: TIERS[t].r, age: 1, sq: 1, wet: WET }; nb.x = clamp(nb.x, nb.r, G.jw - nb.r); nb.y = Math.max(nb.r, nb.y); G.b.push(nb);
+  // stones right beside a squash crack away
+  for (const s of G.b) if (s.t < 0 && !s.gone && Math.hypot(s.x - x, s.y - y) < nb.r + s.r + 0.35) { s.gone = true; G.ev.push({ k: 'crack', x: s.x, y: s.y }); }
+  G.best = Math.max(G.best, t); G.made = Math.max(G.made, t); G.ev.push({ k: 'squash', t, x, y, chain: G.chain, pts, from: a.t }); lessonSee(G, 'squash', t); }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
+  if (G.wait > 0) { G.wait -= dt; physicsSteps(G, dt); if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  G.cool = Math.max(0, G.cool - dt); G.chainT = Math.max(0, G.chainT - dt); G.idle += dt; physicsSteps(G, dt);
+  // the line: a blob resting above it too long ends it
+  const over = G.b.some(b => b.age > 1.2 && b.y + b.r > G.line && Math.abs(b.vy) < 3); G.danger = over ? G.danger + dt : Math.max(0, G.danger - dt * 2);
+  if (G.danger > 0 && !G.warned) { G.warned = true; G.ev.push({ k: 'warn' }); } if (!G.danger) G.warned = false;
+  if (G.lesson) { if (G.danger >= 2.5) { G.danger = 0; lessonMiss(G); } lessonSee(G, 'tick'); return; }
+  if (G.danger >= 2.5) { G.ev.push({ k: 'spill' }); G.wait = 1.2; G.next = () => finish(G, false, 'spill'); return; }
+  if (!G.done && G.made >= G.cfg.goal) { G.done = true; G.ev.push({ k: 'goal', t: G.made }); G.wait = 1.4; G.next = () => finish(G, true); return; }
+  if (G.drops <= 0 && G.idle > 2.2) { G.ev.push({ k: 'empty' }); G.wait = 0.8; G.next = () => finish(G, false, 'paint'); } }
+function physicsSteps(G, dt) { const n = 6; for (let i = 0; i < n; i++) physics(G, dt / n); }
+function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const left = G.drops, mx = G.dropsMax;
+  const stars = win ? 1 + (left >= mx * 0.3 ? 1 : 0) + (left >= mx * 0.42 ? 1 : 0) : 0;
+  G.res = { win, why, stars, score: G.score, left, best: G.best, goal: G.cfg.goal, merges: G.merges, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + G.best };
+  G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
+// ---------- LESSONS ----------
+// lesson 1 asks for aim: drop each red right onto the red in the jar, four in a row (a drop that does not squash on landing
+// starts the count again), so it cannot be passed by luck
+const LESSONS = {
+  1: [{ id: 'aim', title: 'SAME COLOURS SQUASH', how: 'Slide to aim, let go to drop. Drop the red right onto the red in the jar: they squash into an ORANGE! Four in a row.', need: 4 }],
+  2: [{ id: 'chain', title: 'CHAINS', how: 'Drop the red on the red: it makes an orange, which squashes into the orange beside it. Make a YELLOW in one drop, three times.', need: 3 }],
+  3: [{ id: 'line', title: 'MIND THE LINE', how: 'The jar is getting full. Keep everything under the dashed line: squash blobs to make room. Drop twelve blobs safely.', need: 12 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonDeal(G, keepN) { const st = lessonNow(G), R0 = G.rnd; if (!keepN) G.lesson.n = 0; G.lesson.dropAt = null;
+  if (st.id === 'aim') { setup(G, { drops: 99, rig: Array(40).fill(0) }); const x = 1 + R0() * (G.jw - 2); G.b.push({ id: BID++, t: 0, x, y: 0.42, vx: 0, vy: 0, r: 0.42, age: 5, sq: 0, target: true }); }
+  if (st.id === 'chain') { setup(G, { drops: 99, rig: Array(40).fill(0) }); const x = 1.6 + R0() * (G.jw - 3.2), s = R0() < 0.5 ? 1 : -1; G.b.push({ id: BID++, t: 1, x: x + s * 0.97, y: 0.55, vx: 0, vy: 0, r: 0.55, age: 5, sq: 0 }); G.b.push({ id: BID++, t: 0, x, y: 0.42, vx: 0, vy: 0, r: 0.42, age: 5, sq: 0, target: true }); }
+  if (st.id === 'line') { setup(G, { drops: 99 }); const R = rng(G.seed + 5); for (let k = 0; k < 18; k++) { const t = (R() * 4) | 0; G.b.push({ id: BID++, t, x: 0.8 + R() * (G.jw - 1.6), y: 1 + k * 0.5, vx: 0, vy: 0, r: TIERS[t].r, age: 5, sq: 0 }); } }
+  G.ev.push({ k: 'lessondeal' }); }
+function lessonMiss(G) { const st = lessonNow(G); G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 1.3; G.next = () => lessonDeal(G); }
+function lessonSee(G, what, t) { const st = lessonNow(G); if (!st || G.wait > 0) return; const D = G.lesson;
+  if ((st.id === 'aim' || st.id === 'chain') && what === 'tick' && D.dropAt != null) { const want = st.id === 'aim' ? 1 : 2;
+    if (G.made >= want && !G.b.some(b => b.target)) { D.dropAt = null; D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: st.need }); if (D.n >= st.need) { G.wait = 1.0; G.next = done; return; } G.wait = 0.8; G.next = () => lessonDeal(G, true); return; }
+    if (G.t - D.dropAt > 1.6) { D.dropAt = null; D.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 1.1; G.next = () => lessonDeal(G, true); } return; }
+  if (st.id === 'line' && what === 'drop') { D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: st.need, quiet: true }); if (D.n >= st.need) { G.wait = 1.4; G.next = done; } return; }
+  function done() { D.i++; if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); }; } else { G.wait = 1.2; G.next = () => lessonDeal(G); } } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: drop where it is; slide somewhere and drop; nudge left or right
+const BLIND = { d: G => drop(G), m: G => aimAt(G, Math.random() * G.jw), l: G => aimAt(G, G.aim - 1.2), r: G => aimAt(G, G.aim + 1.2) };
+// a player who looks: for the blob in hand, tries places along the top and judges where it would land (on a blob of its own
+// colour is best, beside one good; landing high, or on a smaller blob, bad), then drops a little off where it meant to
+function landing(G, x, r) { let top = r, hit = null; for (const b of G.b) { const dx = Math.abs(b.x - x); if (dx >= b.r + r) continue; const y = b.y + Math.sqrt((b.r + r) ** 2 - dx * dx); if (y > top) { top = y; hit = b; } } return { y: top, hit }; }
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
+  if (G.over || G.wait > 0 || G.cool > 0) return; mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.35 + react * 1.6) return; mem.t = 0;
+  const t = G.queue[0], r = radOf(t), top = Math.max(1, G.cfg.goal); let best = G.jw / 2, bv = -1e9;
+  for (let k = 0; k <= 30; k++) { const x = r + (G.jw - 2 * r) * k / 30, L = landing(G, x, r); let v = -L.y * 1.5;
+    if (t < 0) { v -= Math.min(x, G.jw - x) * 2; }      /* stones go to a wall */
+    else { if (L.hit) { if (L.hit.t === t) v += 30 + 3 * t; else if (L.hit.t >= 0 && L.hit.t < t) v -= 6 + 2 * (t - L.hit.t); else if (L.hit.t > t) v -= 1.5 * (L.hit.t - t); }
+      for (const b of G.b) { if (b === L.hit) continue; const d = Math.hypot(b.x - x, b.y - L.y) - b.r - r; if (d < 0.5) { if (b.t === t) v += 18; else if (b.t === t + 1) v += 4; } }
+      v -= Math.abs(x - G.jw * (1 - Math.min(1, t / top)) ) * 0.5; }      /* big ones to the left, small ones to the right */
+    v += gs(R) * (1 - acc) * 10; if (v > bv) { bv = v; best = x; } }
+  aimAt(G, best + gs(R) * (1 - acc) * 0.5); drop(G); }
+const gs = R => { let s = 0; for (let i = 0; i < 4; i++) s += R(); return (s - 2) / 0.577; };
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.made = G.cfg.goal; finish(G, true); }
+// ===================== DRAW + JUICE: the paint jar (2D on purpose: a jar seen side on, like the original drop-and-merge games) =====================
+// A glass jar on a shelf against a soft wall. Paint blobs are glossy and round with little faces; WET blobs glisten (a bright
+// highlight and a drip), DRY ones go matte, so you can see which will still squash. The blob in hand hangs above the jar with
+// a dotted line to where it will land. A squash: the two blobs swell into one, splashing paint of the new colour; chains climb.
+// Down the side, the colour chart: every colour on the way to the goal lights up as you make it. The palette: six drops,
+// one dries with each drop that leads to no squash, all refill on a squash.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, RINGS = [], POP = new Map();
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 80, life: 0.45 + Math.random() * 0.4, t: 0, col, r: 2.5 + Math.random() * 3.5 }); } }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+// the jar on the screen: u pixels per jar unit
+function lay(g = G) { const s = S1(), jw = g ? g.jw : 11, jh = (g ? g.line : 10) + 2.4, side = 38 * s, u = Math.min((W - side - 24) / jw, (H * 0.66) / jh), x0 = side + (W - side - jw * u) / 2 + 4, floor = Math.min(H - 60 * s, (118 * s + H - 24 * s) / 2 + jh * u / 2);
+  return { s, u, x0, floor, jw, jh, sx: x => x0 + x * u, sy: y => floor - y * u, ux: px => (px - x0) / u, side }; }
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 600 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 22; } while (TXT.length && TXT[0].t > 1.4) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  for (const r of RINGS) r.t += dt; RINGS = RINGS.filter(r => r.t < r.life); for (const [k, v] of POP) { const n = v + dt * 3.5; if (n >= 1) POP.delete(k); else POP.set(k, n); } }
+// ---------- a blob ----------
+function blob(x, y, r, t, o = {}) { ctx.save(); ctx.translate(x, y); const sq = o.sq || 0, pop = o.pop != null ? 0.6 + 0.4 * easeOutBack(o.pop) : 1; ctx.scale((1 + sq * 0.14) * pop, (1 - sq * 0.14) * pop); ctx.translate(0, sq * r * 0.1);
+  if (t < 0) { const g = ctx.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r); g.addColorStop(0, '#b8b4ae'); g.addColorStop(1, '#5a5650'); ctx.fillStyle = g; ctx.beginPath(); for (let k = 0; k < 9; k++) { const a = k / 9 * TAU, rr = r * (0.9 + 0.1 * Math.sin(k * 2.7)); ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(40,36,30,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-r * 0.4, -r * 0.2); ctx.lineTo(r * 0.05, r * 0.1); ctx.lineTo(r * 0.3, -r * 0.3); ctx.stroke(); ctx.restore(); return; }
+  const T = TIERS[t], wet = o.wet > 0, dry = !wet && !o.held;
+  let fill; if (t === 10) { fill = ctx.createConicGradient ? ctx.createConicGradient(o.now || 0, 0, 0) : null; if (fill) ['#ff4a4a', '#ffd83a', '#3ac85a', '#4ab8ff', '#9a5aff', '#ff6ac8', '#ff4a4a'].forEach((c, i, a) => fill.addColorStop(i / (a.length - 1), c)); else fill = '#ff6ac8'; }
+  else { fill = ctx.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r * 1.05); fill.addColorStop(0, shade(T.c, dry ? 1.15 : 1.4)); fill.addColorStop(0.6, dry ? shade(T.c, 0.92) : T.c); fill.addColorStop(1, shade(T.c, dry ? 0.62 : 0.7)); }
+  ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill(); ctx.lineWidth = Math.max(1, r * 0.05); ctx.strokeStyle = t === 10 ? 'rgba(255,255,255,.7)' : shade(T.c, 0.55); ctx.stroke();
+  // shine: big and bright while wet, faint when dry
+  ctx.fillStyle = `rgba(255,255,255,${dry ? 0.18 : 0.62})`; ctx.beginPath(); ctx.ellipse(-r * 0.34, -r * 0.42, r * 0.3, r * 0.17, -0.6, 0, TAU); ctx.fill();
+  if (!dry) { ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(r * 0.35, -r * 0.5, r * 0.07, 0, TAU); ctx.fill(); if (wet && r > 0.3) { ctx.fillStyle = t === 10 ? '#ff6ac8' : T.c; ctx.beginPath(); ctx.ellipse(r * 0.15, r * 0.98, r * 0.12, r * 0.2 * (0.6 + 0.4 * Math.min(1, o.wet)), 0, 0, TAU); ctx.fill(); } }
+  // a face
+  if (r > 9) { const ey = -r * 0.08, ex = r * 0.28, er = Math.max(1.6, r * 0.12), look = o.look || 0; ctx.fillStyle = '#fff'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * ex, ey, er * 1.25, 0, TAU); ctx.fill(); } ctx.fillStyle = '#2a1a1a'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * ex + look * er * 0.4, ey + er * 0.15, er * 0.75, 0, TAU); ctx.fill(); }
+    ctx.strokeStyle = '#2a1a1a'; ctx.lineWidth = Math.max(1.2, r * 0.06); ctx.beginPath(); if (o.happy) ctx.arc(0, r * 0.18, r * 0.2, 0.1, Math.PI - 0.1); else ctx.arc(0, r * 0.12, r * 0.14, 0.25, Math.PI - 0.25); ctx.stroke();
+    if (o.happy || wet) { ctx.fillStyle = 'rgba(255,120,140,.45)'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(s * r * 0.48, r * 0.12, r * 0.12, r * 0.07, 0, 0, TAU); ctx.fill(); } } }
+  ctx.restore(); }
+const easeOutBack = t => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255, f = v => Math.round(clamp(k > 1 ? v + (255 - v) * (k - 1) : v * k, 0, 255)); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+// ---------- the picture ----------
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, L = lay(g), s = L.s, P = PLACES[g ? g.place : 0];
+  const rk = W + 'x' + H + ':' + DPR + ':' + (g ? g.place + ':' + g.jw + ':' + g.line : ''); if (draw.rk !== rk) { draw.rk = rk; paintBack(P, L, g); }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(draw.oc, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  if (g) { const u = L.u, jx0 = L.sx(0), jx1 = L.sx(g.jw), jy = L.sy(g.line);
+    // the line
+    const dg = g.danger > 0; ctx.setLineDash([8, 6]); ctx.strokeStyle = dg ? `rgba(255,60,60,${0.6 + 0.4 * Math.sin(now * 14)})` : 'rgba(120,90,140,.5)'; ctx.lineWidth = dg ? 3 : 2; ctx.beginPath(); ctx.moveTo(jx0, jy); ctx.lineTo(jx1, jy); ctx.stroke(); ctx.setLineDash([]);
+    if (dg) { const p = clamp(g.danger / 2.5, 0, 1); ctx.strokeStyle = '#ff3a3a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(jx1 - 16 * s, jy - 18 * s, 11 * s, -Math.PI / 2, -Math.PI / 2 + TAU * p); ctx.stroke(); }
+    // where the blob in hand will land
+    const t0 = g.queue[0], r0 = radOf(t0), ax = L.sx(g.aim), hy = L.sy(g.line + 1.2);
+    if (!g.over && !g.done && g.wait <= 0) { const Ld = landing(g, g.aim, r0); ctx.strokeStyle = 'rgba(90,60,110,.35)'; ctx.lineWidth = 2; ctx.setLineDash([3, 6]); ctx.beginPath(); ctx.moveTo(ax, hy + r0 * u); ctx.lineTo(ax, L.sy(Ld.y)); ctx.stroke(); ctx.setLineDash([]);
+      if (Ld.hit && Ld.hit.t === t0 && t0 >= 0) { ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(L.sx(Ld.hit.x), L.sy(Ld.hit.y), Ld.hit.r * u + 4, 0, TAU); ctx.stroke(); }
+      if (g.cool <= 0) blob(ax, hy, r0 * u, t0, { held: true, now, look: 0 }); }
+    // the blobs
+    for (const b of g.b) { const p = POP.get(b.id); blob(L.sx(b.x), L.sy(b.y), b.r * u, b.t, { sq: b.sq, wet: b.wet, pop: p, now, happy: p != null, look: clamp((g.aim - b.x) / 4, -1, 1) }); }
+    for (const r of RINGS) { const q = r.t / r.life; ctx.strokeStyle = r.col; ctx.globalAlpha = 1 - q; ctx.lineWidth = 6 * (1 - q) + 1; ctx.beginPath(); ctx.arc(r.x, r.y, r.r + q * r.r * 1.4, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+    // the jar's glass in front
+    ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(jx0 - 3, L.sy(L.jh)); ctx.lineTo(jx0 - 3, L.floor + 3); ctx.lineTo(jx1 + 3, L.floor + 3); ctx.lineTo(jx1 + 3, L.sy(L.jh)); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.22)'; ctx.fillRect(jx0 + 6, L.sy(L.jh) + 10, 7 * s, L.jh * u - 30);
+    hud(g, L, now); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1 ? 1 : 1 - (q.t - 1) / 0.4, pop = 1 + 0.25 * Math.max(0, 1 - q.t * 6); ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s * pop)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(60,30,70,.55)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30, hy = H * 0.5;
+    ctx.fillStyle = 'rgba(60,30,70,.92)'; rrect(W / 2 - ww / 2, hy - hh / 2, ww, hh, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,60,${FX.red * 0.2})`; ctx.fillRect(0, 0, W, H); }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
+function paintBack(P, L, g) { const oc = draw.oc || (draw.oc = document.createElement('canvas')); oc.width = cv.width; oc.height = cv.height; const o = oc.getContext('2d'); o.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const bg = o.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, P.wall[0]); bg.addColorStop(1, P.wall[1]); o.fillStyle = bg; o.fillRect(0, 0, W, H);
+  const R0 = rng(31); for (let i = 0; i < 18; i++) { o.fillStyle = TIERS[(R0() * 10) | 0].c + '22'; o.beginPath(); o.arc(R0() * W, R0() * H * 0.8, 6 + R0() * 26, 0, TAU); o.fill(); }
+  o.fillStyle = '#b88a5a'; o.fillRect(0, L.floor + 6, W, 16 * L.s); o.fillStyle = '#8a6040'; o.fillRect(0, L.floor + 6 + 16 * L.s, W, H); o.fillStyle = 'rgba(0,0,0,.15)'; o.fillRect(0, L.floor + 6, W, 3);
+  if (!g) return; const jx0 = L.sx(0), jx1 = L.sx(g.jw), top = L.sy(L.jh); o.fillStyle = 'rgba(220,240,255,.28)'; o.beginPath(); o.roundRect(jx0 - 3, top, jx1 - jx0 + 6, L.floor - top + 6, [4, 4, 18, 18]); o.fill(); o.strokeStyle = 'rgba(150,170,200,.45)'; o.lineWidth = 2; o.stroke();
+  o.fillStyle = 'rgba(0,0,0,.12)'; o.beginPath(); o.ellipse((jx0 + jx1) / 2, L.floor + 8, (jx1 - jx0) / 2 + 8, 6, 0, 0, TAU); o.fill(); }
+// ---------- the side and the top: the colour chart, the palette, the paint, what is next ----------
+function hud(G, L, now) { const s = L.s, c = G.cfg;
+  // colour chart down the left: every colour up to the goal, lit once made
+  const n = c.goal + 1, ch = Math.min(26 * s, (L.floor - 120 * s) / n); for (let t = 0; t < n; t++) { const y = L.floor - 8 - t * ch - ch / 2, x = 20 * s, lit = G.made >= t || t <= c.spawnTop - 1, goal = t === c.goal;
+    ctx.globalAlpha = lit ? 1 : 0.28; blob(x, y, ch * 0.4, t, { held: true, now }); ctx.globalAlpha = 1; if (goal) { ctx.strokeStyle = G.made >= t ? '#2a9a4a' : '#ff6aa8'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, ch * 0.5, 0, TAU); ctx.stroke(); ctx.fillStyle = '#5a2a6a'; ctx.font = `${Math.round(11 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('GOAL', x, y - ch * 0.75); } }
+  if (G.lesson) { lessonPanel(G, L); return; }
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#5a2a6a'; ctx.font = `${Math.round(17 * s)}px ${TF}`; ctx.fillText(`Make a ${TIERS[c.goal].n.toUpperCase()}`, 14, 52 * s);
+  ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillStyle = 'rgba(90,40,100,.75)'; ctx.fillText(`Score ${G.score.toLocaleString()} · paint ${G.drops}`, 14, 74 * s);
+  // the palette: six drops
+  const px = 14, py = 96 * s; for (let k = 0; k < c.dry; k++) { const dry = k >= c.dry - G.dry, x = px + k * 20 * s; ctx.fillStyle = dry ? 'rgba(120,100,110,.35)' : TIERS[k % 10].c; ctx.beginPath(); ctx.moveTo(x + 8 * s, py - 9 * s); ctx.quadraticCurveTo(x + 15 * s, py + 2 * s, x + 8 * s, py + 7 * s); ctx.quadraticCurveTo(x + 1 * s, py + 2 * s, x + 8 * s, py - 9 * s); ctx.fill(); }
+  ctx.font = `700 ${Math.round(10 * s)}px ${BC}`; ctx.fillStyle = G.dry >= c.dry - 2 ? '#e83a4a' : 'rgba(90,40,100,.6)'; ctx.fillText(G.dry >= c.dry - 2 ? 'SQUASH SOON!' : 'PALETTE', px + c.dry * 20 * s + 4, py);
+  // next
+  const nx = W - 34 * s, ny = 58 * s; ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(nx, ny, 22 * s, 0, TAU); ctx.fill(); blob(nx, ny, Math.min(17 * s, radOf(G.queue[1]) * L.u * 0.7), G.queue[1], { held: true, now }); ctx.fillStyle = '#5a2a6a'; ctx.font = `700 ${Math.round(10 * s)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('NEXT', nx, ny + 30 * s);
+  if (G.shakes > 0) { const b = shakeBtn(); ctx.fillStyle = 'rgba(255,255,255,.7)'; rrect(b.x, b.y, b.w, b.h, 12); ctx.fill(); ctx.fillStyle = '#5a2a6a'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.fillText('SHAKE', b.x + b.w / 2, b.y + b.h / 2); } }
+function shakeBtn() { const s = S1(); return { x: W - 84 * s, y: 100 * s, w: 70 * s, h: 30 * s }; }
+function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10 + L.side, w = W - 20 - L.side, y = 44 * s; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 42 * s + lines.length * 17 * s;
+  ctx.fillStyle = 'rgba(60,30,70,.92)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#ffd83a'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd83a'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n} / ${st.need}` : ''), x + 12, y + 9 * s);
+  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * s + i * 17 * s)); ctx.restore(); }
+// ---------- what each happening looks like ----------
+function onEvent(G, e) { const L = lay(G), s = L.s;
+  switch (e.k) {
+    case 'start': say(`Make a ${TIERS[G.cfg.goal].n}!`, W / 2, H * 0.36, TIERS[G.cfg.goal].c, 30); sfx.start(); if (G.N <= 1) tip('how', 'Slide to aim, let go to drop. Wet paint squashes into its own colour.', 3.2); break;
+    case 'drop': sfx.plop(e.t); break;
+    case 'squash': { const x = L.sx(e.x), y = L.sy(e.y), T = TIERS[Math.min(10, e.t)]; const nb = G.b[G.b.length - 1]; if (nb) POP.set(nb.id, 0);
+      sparks(x, y, 10 + e.t * 2, T.c, (140 + e.t * 20) * s); RINGS.push({ x, y, r: T.r * L.u, t: 0, life: 0.45, col: T.c }); sfx.squash(e.t, e.chain); vibe(e.t >= 5 ? HAP.light : HAP.tick);
+      if (e.t >= 3 || e.chain >= 2) say(e.chain >= 2 ? `${T.n.toUpperCase()}! ×${e.chain}` : `${T.n.toUpperCase()}!`, x, y - T.r * L.u - 12, T.c === '#ffffff' ? '#ff6ac8' : shade(T.c, 0.85), 16 + e.t * 1.5 + e.chain * 2); if (e.t >= 6) FX.shake = 4 + e.t; break; }
+    case 'masterpiece': FX.flash = 1; FX.shake = 14; say('MASTERPIECE!', W / 2, H * 0.4, '#ff6ac8', 36); sfx.goal(); break;
+    case 'crack': sparks(L.sx(e.x), L.sy(e.y), 12, '#8a8680', 180 * s); sfx.crack(); break;
+    case 'dry': sfx.dry(e.n, e.of); if (e.n === 1) tip('dry', 'A drop that squashes nothing dries one paint drop of your palette. Squash to refill it!', 3.4); break;
+    case 'refill': sfx.refill(); break;
+    case 'dried': say('THE PAINT DRIED UP', W / 2, H * 0.4, '#8a5a6a', 26); break;
+    case 'warn': sfx.warn(); tip('line', 'Over the line! Squash something quick, or the jar spills.', 2.6); break;
+    case 'spill': FX.red = 1; FX.shake = 10; say('IT SPILLED!', W / 2, H * 0.4, '#e83a4a', 30); break;
+    case 'empty': say('OUT OF PAINT', W / 2, H * 0.4, '#8a5a6a', 26); break;
+    case 'goal': FX.flash = 0.7; sfx.goal(); vibe(HAP.best); say(`${TIERS[e.t].n.toUpperCase()}! DONE!`, W / 2, H * 0.36, TIERS[e.t].c, 34); for (let i = 0; i < 50; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: H * 0.4, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320 - 160, life: 1.2, t: 0, col: TIERS[i % 10].c, r: 4 }); } break;
+    case 'shake': FX.shake = 16; sfx.shake(); break;
+    case 'lessonok': if (!e.quiet) say(`${e.n} / ${e.need}`, W / 2, H * 0.4, '#3ac85a', 26); break;
+    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessondone': say('LOVELY!', W / 2, H * 0.4, '#ff6ac8', 32); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': sfx.win(); break;
+    case 'lost': sfx.lose(); break;
+  } }
+// ===================== SOUND: paint (PLAYBOOK S1-S11) =====================
+// Wet and round. A drop is a soft "plip" (a little lower for a bigger blob); a squash a juicy "splosh": a low wet thump and a
+// plucked note, the note a step higher for every colour up the chart and higher again in a chain (S5), so building up to
+// the goal climbs like a scale. A palette drop drying is a tiny dull tick going down; a refill a bright sparkle. The line in
+// danger is a low soft pulse. A stone cracking a dry crunch. The goal: a bright run.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  start() { [0, 2, 4].forEach((q, j) => pluck(note(392, q + 2), 0.5, 0.06, j * 0.07)); },
+  plop(t = 0) { const f = 900 - Math.max(0, t) * 70; tone(f, 0.09, 0.05, 'sine', 0, f * 0.6); noise(0.04, 1800, 0.02, 'bandpass', 2); },
+  squash(t = 1, chain = 1) { tone(140 - Math.min(8, t) * 6, 0.22, 0.12, 'sine', 0, 70); noise(0.16, 700, 0.06, 'lowpass', 1.2, 0, 0.01); pluck(note(392, Math.min(16, t + (chain - 1) * 2)), 0.6, 0.08, 0.02); if (chain >= 2) tone(note(784, Math.min(14, t + chain)), 0.25, 0.03, 'sine', 0.06); },
+  dry(n = 1, of = 6) { tone(500 - n * 40, 0.08, 0.04, 'triangle', 0, 420 - n * 40); },
+  refill() { if (!gate('refill', 200)) return; [0, 4, 7].forEach((q, j) => tone(note(1046, q), 0.12, 0.025, 'sine', j * 0.03)); },
+  warn() { tone(110, 0.4, 0.06, 'sine', 0, 90); },
+  crack() { for (let i = 0; i < 4; i++) noise(0.03, 3000 - i * 500, 0.05, 'highpass', 1, i * 0.02); },
+  shake() { noise(0.5, 900, 0.06, 'bandpass', 0.8, 0, 0.05); },
+  goal() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(392, q), 0.9, 0.08, j * 0.08)); },
+  no() { if (!gate('no', 250)) return; tone(200, 0.1, 0.05, 'triangle', 0, 160, 900); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 1)), 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(523, q), 1.0, 0.08, j * 0.12)); },
+  lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · make a <b>${TIERS[cf.goal].n.toLowerCase()}</b>${cf.stones ? ' · stones' : ''}`, best[level] ? `Your best score here: <b>${best[level].toLocaleString()}</b>` : '', helpOn() ? '<span class="help">A wider jar and one more palette drop for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; RINGS.length = 0; POP.clear(); ui.id = null; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.score > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.score; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'WHAT A COLOUR!' : r.why === 'spill' ? 'IT SPILLED' : r.why === 'dried' ? 'THE PAINT DRIED' : 'OUT OF PAINT'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = `Score <b>${r.score.toLocaleString()}</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + ` · ${r.merges} squashes` + (r.win ? ` · ${r.left} paint left` : ` · you made <b>${TIERS[Math.max(0, r.best)].n.toLowerCase()}</b>` + (r.goal - r.best === 1 ? ' · <b>so close!</b>' : ''))
+    + (r.why === 'dried' ? '<br>Drop onto a blob of the same colour while it is wet: every squash refills the palette.' : r.why === 'spill' ? '<br>Keep big blobs low and to one side, and squash before the jar fills.' : '') + (r.win && r.stars < 3 ? '<br>Fewer drops for more stars.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): touch to take the blob, slide to aim, let go to drop it; SHAKE (if bought) shakes the jar
+const ui = { id: null };
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.id != null) return; const b = shakeBtn(); if (G.shakes > 0 && e.clientX > b.x && e.clientX < b.x + b.w && e.clientY > b.y && e.clientY < b.y + b.h) { shake(G); return; }
+  ui.id = e.pointerId; aimAt(G, lay(G).ux(e.clientX)); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { if (ui.id !== e.pointerId || !G) return; aimAt(G, lay(G).ux(e.clientX)); });
+cv.addEventListener('pointerup', e => { if (ui.id !== e.pointerId) return; ui.id = null; if (G) { aimAt(G, lay(G).ux(e.clientX)); drop(G); } });
+cv.addEventListener('pointercancel', e => { if (ui.id === e.pointerId) ui.id = null; });
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE ART SHOP</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  aim(x) { aimAt(G, x); }, drop() { return drop(G); }, shake() { return shake(G); }, lay, renderShop,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
