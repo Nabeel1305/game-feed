@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**57 games** so far. Next number: **58**.
+**58 games** so far. Next number: **59**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -65,6 +65,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 55 | **Tri-Peaks** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/LMRVK8AJrKdaFVGBM48Pkz) | `games/peaks/index.html` |
 | 56 | **Oarsmen** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MjBGfJ9nsPc25wSnrLeEz6) | `games/row/index.html` |
 | 57 | **Safecracker** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CguUr26oFcrpa5b977t8Kj) | `games/safe/index.html` |
+| 58 | **Fire Crew** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/LP3oJGfLwpe9djpWjsyR9T) | `games/fire/index.html` |
 
 ## What each game is
 
@@ -125,3 +126,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 55. **Tri-Peaks**: Calm cards: clear three peaks by playing one higher or lower onto the pile; streaks earn jokers, locks need the key card, the stock is short.
 56. **Oarsmen**: Rowing race down a river in 3D: left thumb left oar, right thumb right oar, stroke on the green together to build rhythm, one oar to steer round bends, rocks and logs; beat the rival boats.
 57. **Safecracker**: Crack a safe by feel: drag round the dial slowly, feel the click, turn back to the chalk mark and SET; too fast is noisy, wrong numbers raise the alarm, keep still in the guard's torchlight, open it before dawn.
+58. **Fire Crew**: A building on fire in 3D: hold one thumb to spray the hose just above it, lift to let the tank refill, tap people once their window is clear to send the ladder; gas bottles, backdraft and wind.

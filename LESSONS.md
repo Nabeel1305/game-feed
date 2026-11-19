@@ -547,6 +547,18 @@ Everything learned building the first games. Every new game must follow the **ru
 - Spam is safe by design: a guess is 1 in 40 to 100, and three or four wrong guesses fill the alarm.
 - Speed: the room behind is painted once into a spare canvas (it was a full-screen gradient every frame).
 
+### 58. Fire Crew (`games/fire/`): firefighting in 3D, one thumb
+- Rules in window units (column, row); the view maps them to the building front (`wx`, `wy`) and back (`gridAt`, a ray to
+  the plane z = 0). The water lands 60 px (x k) above the thumb, so the thumb never hides the fire.
+- **Never use `G.saved` in a kit game's rules:** the shared frame loop uses it to mean "the result is saved". Counting
+  rescued people in it stopped a win being saved (the controls test caught it). Same family as draw/step/hud/lay/pick.
+- Spam: on a 3 by 3 building random spraying covered enough to win; at 4 by 4 it cannot. Most people start next to a fire,
+  so random ladder taps do not rescue them for free. Small early buildings burn a little faster (grow x (1 + 0.5 easy)).
+- Fire capacity: one hose against exponential spread. The building is capped at 5 by 6 and the spread slows far on, or
+  level 40 was unwinnable even for the sharp robot.
+- Flames are additive sprites from a canvas glow; keep them orange and under 0.65 opacity or the tone mapping turns them
+  white.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
