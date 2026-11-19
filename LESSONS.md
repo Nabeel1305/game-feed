@@ -504,6 +504,16 @@ Everything learned building the first games. Every new game must follow the **ru
 - A "save yourself" lesson built on random pushes was all or nothing (every push a fall, or none a danger): the wind lesson
   teaches stopping instead, which the robot and a person can both do every time.
 - Rock pillars sized up to 36 m must stand at least their own size from the wire, or one fills the screen.
+### 53. Homemaker (`games/house/`): the checklist is the level
+- The plot is edges ('h:x:z', 'v:x:z') and cells; rooms are found by flooding floor between walls, houses by joining rooms
+  through inner doors. Every check (closed, doors to the outside, windows, rooms by their furniture) comes from that.
+- With no clock a calm builder could never lose and "it gets harder" failed: the crew has a number of jobs before the family
+  arrives (every placement is one; undo is free, the mistake already cost a job), fewer spare as the levels go on.
+- The plan's rooms must fit the plot: plots are at least two squares per room wide plus a margin, or the robot's first-room
+  window landed on the front door.
+- The walk-through hides the roof and the door panels (the camera went dark under the roof and into the closed door), with a
+  wider lens indoors.
+- A house in progress autosaves; a lost level clears it, so a retry is a fresh start.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
