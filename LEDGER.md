@@ -75,7 +75,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 65 | **Plumber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QspkqDVm5vnfzGjJWVBmzd) | `games/plumber/index.html` |
 | 66 | **Stunt Kart** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1aSgdzNK6JWszpPCLwUKCJ) | `games/stunt/index.html` |
 | 67 | **Knife Spin** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/W9MYa4oFq3bMgN2bi48M6m) | `games/knife/index.html` |
-| 68 | **Mow It** | in-progress | not yet (he has not said so) | 0.1.0 | [play](None) | `games/mow/index.html` |
+| 68 | **Mow It** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/TxRAf2ZspQ9BS5m6Gs5156) | `games/mow/index.html` |
 
 ## What each game is
 
@@ -146,4 +146,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 65. **Plumber**: His idea: a plumber's day of house calls. Pick calls from the phone, drive there, look at parts of the cut-open house to find the real fault, pick the fix and do it by hand (hold a wrench into the green, plunge on the beat, feed a snake, set a dial, fit a part); floods until the main is shut; 21 kinds of job.
 66. **Stunt Kart**: His idea, Mario Kart with cool things: kart racing in 3D with ramps (tap in the air for flips, spins and rolls; land between them for a boost, mid-trick is a wipeout), a gold glider jump through air coins, boost pads, coins, items and a STAR you fill with tricks.
 67. **Knife Spin**: Like Knife Hit: tap to throw knives into a spinning target that speeds up, stops and turns back; hit a knife already in and you're out; apples on the rim; the target bursts when full; three targets a level and a boss every fifth.
-68. **Mow It**: 
+68. **Mow It**: The calm one: mow a garden from above into light and dark stripes with a floating thumb; cut the share needed before the fuel runs out, steer round flower beds, empty the grass box at the bin; coins and a treasure in the long grass.

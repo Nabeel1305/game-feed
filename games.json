@@ -2317,12 +2317,12 @@
       "number": 68,
       "id": "mow",
       "name": "Mow It",
-      "status": "in-progress",
+      "status": "testing",
       "version": "0.1.0",
       "added": "2026-11-19",
       "path": "games/mow/index.html",
-      "artifact": null,
-      "artifact_slug": null,
+      "artifact": "https://claude.ai/artifact/TxRAf2ZspQ9BS5m6Gs5156",
+      "artifact_slug": "da4a67d7-5e96-43fa-9c00-44f05f764e4d",
       "apk_repo": null,
       "storage_prefix": "mo.",
       "feed": {
@@ -2338,8 +2338,14 @@
         "font": "Bungee",
         "live": "window.__sim && window.__sim.playing()"
       },
-      "principles": [],
-      "summary": ""
+      "principles": [
+        "P19",
+        "P21",
+        "P20",
+        "P14",
+        "P17"
+      ],
+      "summary": "The calm one: mow a garden from above into light and dark stripes with a floating thumb; cut the share needed before the fuel runs out, steer round flower beds, empty the grass box at the bin; coins and a treasure in the long grass."
     }
   ],
   "planned": []

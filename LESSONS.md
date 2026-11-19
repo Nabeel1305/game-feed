@@ -670,6 +670,19 @@ Everything learned building the first games. Every new game must follow the **ru
   total at most about 12; the robot aims for the widest gap when no comfortable one is left.
 - A full-screen gradient drawn every frame cost 30% of the frame on a slow phone: paint the background once.
 
+### 68. Mow It (`games/mow/`): stripes, beds, the bag
+- **A game function can silently replace a kit function**: `bed()` (drawing a flower bed) replaced the kit's sound `bed()`
+  and the engine hum crashed. Check every part's names against part1 AND tools/juice-kit.js before the first build.
+- Blind driving covered the lawn in time; what stopped it: ramming the fence or a tree at speed stalls the engine and
+  costs fuel (a person who looks barely does it), and lessons have fuel too. 0 of 1,440 beats.
+- Collisions must always allow moving away (and slide along), or the mower gets trapped against a tree for ever.
+- The robot needs a real planner: lanes up and down, a breadth-first path round things, aim just clear of grass hard
+  against a bed, give up a spot it cannot reach. Potential fields orbit and trap.
+- Stripes count only while cutting, on an axis (a little wobble allowed for 0.3 s), measured over the last moment of
+  cutting (cells are cut every other frame at full speed).
+- Static layers (garden, hedge, long grass; beds and bin; trees) are painted once and redrawn only when they change:
+  33 to 50 frames a second on the slowed test. `ctx` is a `let` in this game's part1 so a layer can borrow it.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
