@@ -571,6 +571,21 @@ Everything learned building the first games. Every new game must follow the **ru
 - Lessons with a big room for error can be passed by blind luck: in lessons a drag counts only if it starts on the glowing
   corner, and lesson 1 is a whole model.
 
+### 60. Sugar Swap (`games/sweets/`): match-3, one thumb
+- The rules run in phases with times (swap, pop, fall, then lines again: a cascade), so the robots and the picture see the
+  same thing; the view only chases each sweet's place by its id (gravity for falls, a slide for swaps). A harness that runs
+  part2 alone in node (stubs for curve, rng, store) checked thousands of moves for empty cells and stuck boards before any
+  drawing: it found cells that nothing could reach under cages (now filled directly).
+- **A free "swap back" lets spam win match-3.** A thumb that never looks just retries until something works, then rides
+  lucky cascades. Rule 1's "a slip is cheap, a habit is ruinous": the first miss is free, the next costs a move, then two,
+  fading by one every twenty quiet seconds, shown by the moves. Keep the miss count a whole number with its own timer: a
+  count that decays smoothly reads 0.99 just after a miss and rounds down to free.
+- Early levels: no score goals (lucky cascades reach them) and no small central jelly patch; collect goals with targets a
+  blind thumb cannot reach, and a wide strip of jelly at the bottom.
+- Lessons: in a lesson a second quick miss starts the lesson board again. Rigged lesson boards need every neighbour of the
+  rigged swipe pinned, or the swipe makes an extra line (it made a wrapped sweet instead of the striped one promised).
+- Stars from moves to spare; the Sugar Rush runs 1.6 times as fast, 4 times when he taps.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

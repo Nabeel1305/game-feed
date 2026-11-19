@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**59 games** so far. Next number: **60**.
+**60 games** so far. Next number: **61**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -67,6 +67,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 57 | **Safecracker** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CguUr26oFcrpa5b977t8Kj) | `games/safe/index.html` |
 | 58 | **Fire Crew** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/LP3oJGfLwpe9djpWjsyR9T) | `games/fire/index.html` |
 | 59 | **Origami** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6siJikdse6Q1L1G33VsD7i) | `games/origami/index.html` |
+| 60 | **Sugar Swap** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MfW8qp4kMSBbPfsXiK3Awd) | `games/sweets/index.html` |
 
 ## What each game is
 
@@ -129,3 +130,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 57. **Safecracker**: Crack a safe by feel: drag round the dial slowly, feel the click, turn back to the chalk mark and SET; too fast is noisy, wrong numbers raise the alarm, keep still in the guard's torchlight, open it before dawn.
 58. **Fire Crew**: A building on fire in 3D: hold one thumb to spray the hose just above it, lift to let the tank refill, tap people once their window is clear to send the ladder; gas bottles, backdraft and wind.
 59. **Origami**: Fold paper animals: drag a corner and the paper folds after your thumb; let go when it fits the dashed outline. Perfect folds, crumples, six animals that come to life on your shelf.
+60. **Sugar Swap**: Match-3 like Candy Crush: swipe sweets into lines; striped, wrapped and colour-bomb specials and their combos; goals (collect, jelly, cherries, frosting, score) with a move limit; the Sugar Rush.
