@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Black Keys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#14121a;--ink:#f7f3ea;--acc:#e83a4a;--acc-dark:#8a1a2a;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Playfair Display","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(40,30,50,.7),rgba(8,6,12,.95))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#fff;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#fff}.lvb.cur small{color:#fff}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:58px;color:#fff">Black Keys</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">TAP THE BLACK. NEVER THE WHITE.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Playfair Display", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('bk.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('bk.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: Black Keys (game 61, set 11: "a game like Piano Tiles: tap the black tile, it slowly goes faster") =====================
+// Four lanes; rows of tiles scroll down the screen. Every row has a black tile (sometimes two). Tap the black tiles; each one
+// plays the next note of the song, so as you play, the music plays. Tap a white space, or let a black tile slide off the
+// bottom, and it is over. LONG tiles: hold your thumb on them as they pass for bonus and a held note (letting go early is no
+// failure, you just miss the bonus). DOUBLE rows: two black tiles at once, one for each thumb. The song speeds up as it goes.
+// Tap the START tile to begin. Finish the song and the ENCORE starts: the opening again, faster, for the third star.
+// Levels are songs (all old enough to belong to everyone); later levels play them faster.
+const RULES = [
+  'Tap <b>START</b>, then tap every <b>black tile</b>. Each one plays the next note of the song.',
+  'Never tap the <b>white</b>, and never let a black tile slide off the bottom.',
+  '<b>Long tiles</b>: hold your thumb on them as they pass (letting go early only loses the bonus). <b>Double</b> rows: tap both.',
+  'It gets faster as the song goes. Finish it for the <b>ENCORE</b>: the opening again, faster still.',
+  'Stars: finish the song · hold every long tile · survive the encore.',
+];
+// ---------- the songs (the melody; ":" after a note makes it a long tile of two rows, "::" three) ----------
+const SONGS = [
+  { name: 'Twinkle, Twinkle', by: 'traditional', tempo: 1.0, m: 'C4 C4 G4 G4 A4 A4 G4: F4 F4 E4 E4 D4 D4 C4: G4 G4 F4 F4 E4 E4 D4: G4 G4 F4 F4 E4 E4 D4: C4 C4 G4 G4 A4 A4 G4: F4 F4 E4 E4 D4 D4 C4:' },
+  { name: 'Ode to Joy', by: 'Beethoven', tempo: 1.0, m: 'E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4 D4 D4: E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4 C4 C4: D4 D4 E4 C4 D4 E4 F4 E4 C4 D4 E4 F4 E4 D4 C4 D4 G3: E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4 C4 C4:' },
+  { name: 'Frère Jacques', by: 'traditional', tempo: 1.05, m: 'C4 D4 E4 C4 C4 D4 E4 C4 E4 F4 G4: E4 F4 G4: G4 A4 G4 F4 E4 C4 G4 A4 G4 F4 E4 C4 C4 G3 C4: C4 G3 C4:' },
+  { name: 'Jingle Bells', by: 'Pierpont', tempo: 1.1, m: 'E4 E4 E4: E4 E4 E4: E4 G4 C4 D4 E4:: F4 F4 F4 F4 F4 E4 E4 E4 E4 D4 D4 E4 D4: G4: E4 E4 E4: E4 E4 E4: E4 G4 C4 D4 E4:: F4 F4 F4 F4 F4 E4 E4 E4 G4 G4 F4 D4 C4::' },
+  { name: 'Brahms\' Lullaby', by: 'Brahms', tempo: 0.95, m: 'E4 E4 G4: E4 E4 G4: E4 G4 C5 B4: A4 A4 G4: D4 E4 F4: D4 D4 E4 F4: D4 F4 B4 A4 G4 B4 C5::' },
+  { name: 'Minuet in G', by: 'Petzold', tempo: 1.1, m: 'D5 G4 A4 B4 C5 D5 G4 G4 E5 C5 D5 E5 F#5 G5 G4 G4 C5 D5 C5 B4 A4 B4 C5 B4 A4 G4 F#4 G4 A4 B4 G4 A4: D5 G4 A4 B4 C5 D5 G4 G4 E5 C5 D5 E5 F#5 G5 G4 G4 C5 D5 C5 B4 A4 B4 C5 B4 A4 G4 A4 B4 A4 G4 F#4 G4:' },
+  { name: 'Für Elise', by: 'Beethoven', tempo: 1.15, m: 'E5 D#5 E5 D#5 E5 B4 D5 C5 A4: C4 E4 A4 B4: E4 G#4 B4 C5: E4 E5 D#5 E5 D#5 E5 B4 D5 C5 A4: C4 E4 A4 B4: E4 C5 B4 A4: E5 D#5 E5 D#5 E5 B4 D5 C5 A4: C4 E4 A4 B4: E4 G#4 B4 C5: E4 E5 D#5 E5 D#5 E5 B4 D5 C5 A4: C4 E4 A4 B4: E4 C5 B4 A4:' },
+  { name: 'Can-Can', by: 'Offenbach', tempo: 1.25, m: 'C4 D4 F4 E4 D4 G4 G4 G4 A4 E4 F4 D4 G4 G4 G4 A4 E4 F4 D4 G4 F4 E4 D4 C4: C4 D4 F4 E4 D4 G4 G4 G4 A4 E4 F4 D4 G4 G4 G4 A4 E4 F4 D4 G4 F4 E4 D4 C4:' },
+  { name: 'Greensleeves', by: 'traditional', tempo: 1.0, m: 'A4 C5 D5: E5 F5 E5 D5: B4 G4 A4 B4 C5: A4 A4 G#4 A4 B4: G#4 E4: A4 C5 D5: E5 F5 E5 D5: B4 G4 A4 B4 C5 B4 A4 G#4 F#4 G#4 A4: A4::' },
+  { name: 'The Entertainer', by: 'Joplin', tempo: 1.2, m: 'D4 D#4 E4 C5 E4 C5 E4 C5: C5 D5 D#5 E5 C5 D5 E5 B4 D5 C5: D4 D#4 E4 C5 E4 C5 E4 C5: A4 G4 F#4 A4 C5 E5 D5 C5 A4 D5: D4 D#4 E4 C5 E4 C5 E4 C5: C5 D5 D#5 E5 C5 D5 E5 B4 D5 C5: C5 D5 E5 C5 D5 E5 C5 D5 C5 E5 C5 D5 E5 C5 D5 C5 E5 C5 D5 E5 B4 D5 C5:' },
+  { name: 'Mountain King', by: 'Grieg', tempo: 1.3, m: 'A3 B3 C4 D4 E4 C4 E4: D#4 B3 D#4: D4 A#3 D4: A3 B3 C4 D4 E4 C4 E4 A4 G4 E4 C4 E4 G4: A4 B4 C5 D5 E5 C5 E5: D#5 B4 D#5: D5 A#4 D5: A4 B4 C5 D5 E5 C5 E5 A5 G5 E5 C5 E5 G5:' },
+  { name: 'Turkish March', by: 'Mozart', tempo: 1.3, m: 'B4 A4 G#4 A4 C5: D5 C5 B4 C5 E5: F5 E5 D#5 E5 B5 A5 G#5 A5 B5 A5 G#5 A5 C6: A5 B5 C6 B5 A5 G#5 A5 E5 F5 D5 C5 B4 A4: B4 A4 G#4 A4 C5: D5 C5 B4 C5 E5: F5 E5 D#5 E5 B5 A5 G#5 A5 B5 A5 G#5 A5 C6: A5 B5 C6 B5 A5 G#5 A5 E5 F5 D5 C5 B4 A4:' },
+  { name: 'Prelude in C', by: 'Bach', tempo: 1.4, m: 'C4 E4 G4 C5 E5 G4 C5 E5 C4 E4 G4 C5 E5 G4 C5 E5 C4 D4 A4 D5 F5 A4 D5 F5 C4 D4 A4 D5 F5 A4 D5 F5 B3 D4 G4 D5 F5 G4 D5 F5 B3 D4 G4 D5 F5 G4 D5 F5 C4 E4 G4 C5 E5 G4 C5 E5 C4 E4 G4 C5 E5 G4 C5 E5 C4 E4 A4 E5 A5 A4 E5 A5 C4 E4 A4 E5 A5 A4 E5 A5 C4 D4 F#4 A4 D5 F#4 A4 D5 B3 D4 G4 D5 G5 G4 D5 G5 C4::' },
+  { name: 'Spring', by: 'Vivaldi', tempo: 1.25, m: 'E5 G#5 G#5 G#5 F#5 E5 B5: B5 A5 G#5 G#5 G#5 F#5 E5 B5: B5 A5 G#5 A5 B5 A5 G#5 F#5 D#5 B4: E5 G#5 G#5 G#5 F#5 E5 B5: B5 A5 G#5 G#5 G#5 F#5 E5 B5: B5 A5 G#5 A5 B5 A5 G#5 F#5 E5::' },
+  { name: 'Morning Mood', by: 'Grieg', tempo: 1.05, m: 'G4 E4 D4 C4 D4 E4 G4 E4 D4 C4 D4 E4 D4 E4 G4 E4 G4 A4 E4 A4 G4 E4 D4 C4: G4 E4 D4 C4 D4 E4 G4 E4 D4 C4 D4 E4 D4 E4 G4 E4 G4 A4 E4 A4 B4 G#4 F#4 E4:' },
+  { name: 'When the Saints', by: 'traditional', tempo: 1.15, m: 'C4 E4 F4 G4:: C4 E4 F4 G4:: C4 E4 F4 G4: E4: C4: E4: D4:: E4 E4 D4 C4: C4 E4: G4 G4 F4:: E4 F4 G4: E4: C4: D4: C4::' },
+];
+const PLACES = [{ name: 'The Recital Room', glow: '#ffd38a' }, { name: 'The Jazz Club', glow: '#ff8a5a' }, { name: 'The Concert Hall', glow: '#a8c8ff' }, { name: 'The Opera House', glow: '#e8a8ff' }];
+const placeOf = N => Math.floor((N - 1) / SONGS.length) % 4;
+const UPGRADES = [
+  { id: 'wide', name: 'Wide fingers', desc: 'Taps just beside a tile still count.', max: 2, cost: l => 40 + l * 50 },
+  { id: 'calm', name: 'Steady hands', desc: 'Songs speed up a little less.', max: 1, cost: l => 70 },
+  { id: 'grace', name: 'Second chance', desc: 'Once a song, a missed tile slides back for another try.', max: 1, cost: l => 90 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Beginner'], [40, 'Pupil'], [130, 'Player'], [320, 'Pianist'], [700, 'Virtuoso'], [1500, 'Maestro']];
+const NAMES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const midiOf = t => { const m = /^([A-G])(#|b)?(-?\d)$/.exec(t); return 12 * (+m[3] + 1) + NAMES[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); };
+function parseSong(s) { return s.m.split(/\s+/).filter(Boolean).map(t => { const n = (t.match(/:/g) || []).length; return { midi: midiOf(t.replace(/:/g, '')), len: n ? n + 1 : 1 }; }); }
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N), si = (N - 1) % SONGS.length, song = SONGS[si];
+  return { N, f, help: !!help, place: placeOf(N), si, song, v0: x(1.8, 8.5, 45) * (1 + (song.tempo - 1) * 0.5) * (1 - 0.15 * e) * (help ? 0.85 : 1), ramp: 0.25 * (1 - 0.3 * upLv('calm')),
+    dbl: N <= 2 ? 0 : x(0.06, 0.2, 30), longs: true, tol: 0.14 + 0.16 * e + 0.06 * upLv('wide'), grace: upLv('grace') > 0 ? 1 : 0, encore: 16 }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null };
+  build(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+// lay the song out as rows of tiles: a START row, the song, then the encore (the opening again)
+function build(G, notes0) { const c = G.cfg, R = rng(G.N * 7717 + 11), notes = notes0 || parseSong(c.song); G.rows = []; let at = 0, last = -1;
+  const lane = (avoid) => { let l; do l = (R() * 4) | 0; while (l === last || (avoid != null && l === avoid)); return l; };
+  const add = (n, enc) => { const kind = n.len > 1 && c.longs ? 'long' : (!enc || true) && R() < c.dbl && n.len === 1 ? 'double' : 'tap', l1 = lane(); let lanes = [l1], ms = [n.midi];
+    if (kind === 'double') { let l2; do l2 = (R() * 4) | 0; while (l2 === l1); lanes = [l1, l2]; ms = [n.midi, n.midi - 12]; }
+    last = lanes[lanes.length - 1]; G.rows.push({ i: at, len: kind === 'long' ? n.len : 1, kind, lanes, notes: ms, tapped: lanes.map(() => false), hold: 0, held: false, enc: !!enc }); at += kind === 'long' ? n.len : 1; };
+  G.rows.push({ i: 0, len: 1, kind: 'start', lanes: [(R() * 4) | 0], notes: [], tapped: [false], hold: 0, enc: false }); last = G.rows[0].lanes[0]; at = 1;
+  for (const n of notes) add(n, false); G.songEnd = at; G.songRows = G.rows.length - 1;
+  if (!notes0) { const enc = notes.slice(0, c.encore); G.encAt = at + 1; at += 1; for (const n of enc) add(n, true); }
+  G.total = at; G.pos = 0; G.v = c.v0; G.go = false; G.score = 0; G.tiles = 0; G.holdsAll = true; G.holdsN = 0; G.songDone = false; G.encDone = false; G.holds = {}; G.grace = c.grace; G.miss = null; G.ri = 0; }
+const rowsAt = (G, y) => { for (let k = Math.max(0, G.ri - 2); k < G.rows.length; k++) { const r = G.rows[k]; if (r.i > y) break; if (y >= r.i && y < r.i + r.len) return r; } return null; };
+// ---------- what you do: touch at lane (0-3) and height (in rows, from the bottom of the screen), lift ----------
+function press(G, lane, yScreen, pid = 0) { if (G.over || G.wait > 0 || G.miss) return false; const y = G.pos + yScreen, tol = G.cfg.tol;
+  if (!G.go) { const r0 = G.rows[0], hit = y >= 0 && y < 1 && (lane === r0.lanes[0] || Math.abs(G.lx - (r0.lanes[0] + 0.5)) < 0.5 + tol); if (!hit) return false; r0.tapped[0] = true; G.go = true; G.ev.push({ k: 'tap', row: r0, lane: r0.lanes[0], notes: [], kind: 'start' }); G.ev.push({ k: 'go' }); return true; }      /* before the start: only the START tile does anything */
+  let row = rowsAt(G, y), k = row ? row.lanes.indexOf(lane) : -1;
+  if (row && k >= 0 && row.tapped[k]) return true;      /* a grey tile already played: harmless */
+  if (!row || k < 0) {      /* not on a black tile: is one just beside it (a fat finger)? */
+    const near = []; for (const [dl, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { const l2 = lane + dl, y2 = y + dy * tol * 1.6, r2 = rowsAt(G, y2); if (!r2 || l2 < 0 || l2 > 3) continue; const k2 = r2.lanes.indexOf(l2); if (k2 < 0 || r2.tapped[k2]) continue; const fx = yScreen % 1; if (dl && Math.abs(G.lx - (l2 + (dl > 0 ? 0 : 1))) > tol) continue; near.push([r2, k2]); }
+    if (near.length) { [row, k] = near[0]; } else { wrong(G, lane, y); return false; } }
+  row.tapped[k] = true; G.ev.push({ k: 'tap', row, lane: row.lanes[k], notes: [row.notes[k]], kind: row.kind });
+  G.tiles++; G.score += 1; lessonSee(G, 'tap', row);
+  if (row.kind === 'long') { row.held = true; G.holds[pid] = row; }
+  if (row.kind === 'double' && row.tapped.every(Boolean)) lessonSee(G, 'double', row);
+  return true; }
+function lift(G, pid = 0) { const row = G.holds[pid]; if (!row) return; delete G.holds[pid]; if (row.held && row.hold < 1) { row.held = false; G.holdsAll = false; G.ev.push({ k: 'letgo', row }); } }
+// a wrong touch, or a tile that got away: it is over (in a lesson: back to the start of the lesson)
+function wrong(G, lane, y, missed) { if (G.over || G.miss) return; G.miss = { lane, y, missed: !!missed, t: 0 }; G.ev.push({ k: missed ? 'missed' : 'white', lane, y });
+  if (G.lesson) { G.wait = 1.3; G.next = () => { G.ev.push({ k: 'lessonmiss', how: lessonNow(G).how }); lessonDeal(G); }; return; }
+  if (missed && G.grace > 0) { G.grace--; G.wait = 1.0; G.next = () => { G.miss = null; G.pos = Math.max(0, y - 1.2); G.ev.push({ k: 'grace' }); }; return; }
+  G.wait = 1.2; G.next = () => finish(G, G.songDone); }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
+  if (G.wait > 0) { G.wait -= dt; if (G.miss) G.miss.t += dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  if (!G.go || G.miss) return;
+  const c = G.cfg, p = Math.min(1, G.pos / Math.max(1, G.songEnd)); G.v = (G.lesson ? 1.7 : c.v0) * (1 + (G.lesson ? 0 : c.ramp) * p) * (G.songDone ? 1.2 : 1); G.pos += G.v * dt;
+  while (G.ri < G.rows.length && G.rows[G.ri].i + G.rows[G.ri].len < G.pos - 1) G.ri++;
+  // long tiles held: fill, and finish when their top reaches the bottom
+  for (const pid in G.holds) { const r = G.holds[pid]; r.hold = clamp((G.pos - r.i) / Math.max(0.5, r.len - 0.9), 0, 1); if (r.hold >= 1 && r.held) { r.held = false; G.holdsN++; G.score += r.len; G.ev.push({ k: 'held', row: r }); lessonSee(G, 'held', r); delete G.holds[pid]; } }
+  // a black tile slid off the bottom
+  for (let k = G.ri; k < G.rows.length; k++) { const r = G.rows[k]; if (r.i > G.pos) break; if (G.pos > r.i + 0.62 && r.tapped.some(t => !t)) { const l = r.lanes[r.tapped.indexOf(false)]; wrong(G, l, r.i + 0.3, true); return; } }
+  if (!G.songDone && G.pos >= G.songEnd + 0.7) { G.songDone = true; const was = !!G.lesson; G.ev.push({ k: 'songdone' }); lessonSee(G, 'end'); if (was) return; }      /* a lesson's end is the lesson's business */
+  if (G.songDone && !G.lesson && G.pos >= G.total + 0.7) { G.encDone = true; G.ev.push({ k: 'encoredone' }); G.wait = 0.8; G.next = () => finish(G, true); } }
+function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const songTiles = G.rows.filter(r => !r.enc && r.kind !== 'start').reduce((a, r) => a + r.lanes.length, 0);
+  const stars = win ? 1 + (G.holdsAll ? 1 : 0) + (G.encDone ? 1 : 0) : 0, prog = Math.min(1, G.pos / G.songEnd);
+  G.res = { win, stars, score: G.score, tiles: G.tiles, prog, song: G.cfg.song.name, by: G.cfg.song.by, enc: G.encDone, holds: G.holdsAll, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + Math.floor(prog * 4) };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- LESSONS: slow, no song to lose; a mistake starts the lesson again ----------
+const LESSONS = {
+  1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
+  2: [{ id: 'hold', title: 'LONG TILES', how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
+  3: [{ id: 'double', title: 'TWO AT ONCE', how: 'Some rows have two black tiles: tap both, one thumb each. Play three double rows.', need: 3 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonDeal(G) { const st = lessonNow(G), c = G.cfg, keep = [c.v0, c.dbl, c.longs]; G.lesson.n = 0;
+  const tune = parseSong(SONGS[0]).slice(0, 14).map(n => ({ midi: n.midi, len: 1 }));
+  if (st.id === 'hold') { const t = parseSong(SONGS[1]).slice(0, 15); t.forEach((n, j) => { if (j % 4 === 3) n.len = 2; }); c.dbl = 0; build(G, t); }
+  else if (st.id === 'double') { c.dbl = 0.45; c.longs = false; build(G, parseSong(SONGS[2]).slice(0, 18)); }
+  else { c.dbl = 0; build(G, tune); }
+  [c.v0, c.dbl, c.longs] = keep; G.v = 1.7; }
+function lessonSee(G, what, row) { const st = lessonNow(G); if (!st) return;
+  if (st.id === 'hold' && what === 'held') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); }
+  if (st.id === 'double' && what === 'double') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); }
+  if (what === 'end') { if (st.id === 'tap' || G.lesson.n >= st.need) done(); else { G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 1.2; G.next = () => lessonDeal(G); } }
+  function done() { G.lesson.i++; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { build(G); G.ev.push({ k: 'start' }); }; } else { G.wait = 1.2; G.next = () => lessonDeal(G); } } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: a tap somewhere on the screen; a press held; a lift
+const BLIND = { t: G => { G.lx = Math.random() * 4; press(G, Math.floor(G.lx), Math.random() * 4, 0); lift(G, 0); }, h: G => { G.lx = Math.random() * 4; press(G, Math.floor(G.lx), Math.random() * 4, 1); }, r: G => lift(G, 1) };
+// a player who looks: two thumbs, each needing a moment between taps (quicker when sharp); sees a tile once it has been on
+// screen a moment, taps it when it is in the lower part of the screen, a little off centre (more so the faster it goes),
+// holds long tiles until they pass (a careless one lets go early), and taps both tiles of a double row
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, dt = 1 / 60;
+  if (G.over || G.wait > 0 || G.miss) { mem.th = null; return; } if (!mem.th) mem.th = [{ free: 0, hold: null }, { free: 0, hold: null }]; mem.t = (mem.t || 0) + dt;
+  const gap = 0.12 + react * 0.35;
+  for (const [k, th] of mem.th.entries()) if (th.hold) { if (!G.holds[k + 2] || (R() > acc + (1 - acc) * 0.97 && th.hold.hold > 0.3)) { lift(G, k + 2); th.hold = null; th.free = mem.t + gap; } }
+  if (!G.go) { const r = G.rows[0]; if (mem.t > 0.4 + react) { G.lx = r.lanes[0] + 0.5; press(G, r.lanes[0], 0.5, 0); lift(G, 0); } return; }
+  for (let k = G.ri; k < G.rows.length; k++) { const r = G.rows[k], yb = r.i - G.pos;      /* yb: how far the row's bottom is above the bottom of the screen, in rows */
+    if (yb > 4 - G.v * react || yb > 2.4) break;      /* not seen yet, or not low enough to tap yet */
+    for (let j = 0; j < r.lanes.length; j++) { if (r.tapped[j]) continue; const th = mem.th.find(t => !t.hold && t.free <= mem.t); if (!th) return; const ti = mem.th.indexOf(th);
+      const sd = (1 - acc) * 0.6 * (1 + G.v / 5), lx = r.lanes[j] + 0.5 + gs(R) * sd, ly = Math.max(0.05, yb + 0.5 + gs(R) * sd * 0.6); G.lx = lx;
+      const ok = press(G, Math.floor(clamp(lx, 0, 3.999)), ly, r.kind === 'long' ? ti + 2 : 0);
+      if (r.kind === 'long' && ok) th.hold = r; else lift(G, 0); th.free = mem.t + gap * (0.8 + 0.4 * R()); if (G.miss) return; } } }
+const gs = R => { let s = 0; for (let i = 0; i < 4; i++) s += R(); return (s - 2) / 0.577; };
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.songDone = true; G.encDone = true; G.pos = G.songEnd; finish(G, true); }
+// ===================== DRAW + JUICE: the keys (2D on purpose: tiles on a page, like the original) =====================
+// Four ivory lanes and glossy black tiles, a soft glow at the top in the colour of the room. A tapped tile goes grey with a
+// ripple and a little note floats up; a long tile fills with gold while it is held and sparkles when it is done; the START
+// tile is blue and breathes. A wrong tap flashes red where it landed; a tile that got away: the page rolls back to show it,
+// blinking red. The score is the number of tiles played, big at the top, with the song's name and a bar with its three stars.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, RIP = [], NOTES = [], SPARK = [];
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 6) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lay() { return { s: S1(), lw: W / 4, rh: H / 4 }; }
+function fxStep(dt) { FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 20; } while (TXT.length && TXT[0].t > 1.3) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  for (const a of [RIP, NOTES, SPARK]) { for (const p of a) { p.t += dt; if (p.vy != null) { p.x += (p.vx || 0) * dt; p.y += p.vy * dt; p.vy += (p.g || 0) * dt; } } for (let i = a.length - 1; i >= 0; i--) if (a[i].t > a[i].life) a.splice(i, 1); } }
+// where the page is: rolled back after a miss so the tile that got away is in sight
+function viewPos(G) { if (G.miss && G.miss.missed) { const u = Math.min(1, G.miss.t * 3); return lerp(G.pos, Math.max(0, G.miss.y - 0.9), easeOut(u)); } return G.pos; }
+const yOf = (G, rowY, vp) => H - (rowY - vp) * (H / 4);      /* screen y of a point rowY rows up the song */
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G, P = PLACES[g ? g.place : 0];
+  // the page: ivory lanes, faint row lines, a glow at the top
+  ctx.fillStyle = '#f7f3ea'; ctx.fillRect(0, 0, W, H);
+  const gl = ctx.createLinearGradient(0, 0, 0, H * 0.35); gl.addColorStop(0, P.glow + '55'); gl.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = gl; ctx.fillRect(0, 0, W, H * 0.35);
+  ctx.fillStyle = 'rgba(0,0,0,.12)'; for (let l = 1; l < 4; l++) ctx.fillRect(l * L.lw - 0.5, 0, 1, H);
+  if (g) { const vp = viewPos(g);
+    ctx.fillStyle = 'rgba(0,0,0,.05)'; for (let r = Math.floor(vp); r < vp + 5; r++) ctx.fillRect(0, yOf(g, r, vp), W, 1);
+    // the encore banner
+    if (g.encAt && !g.lesson) { const y = yOf(g, g.encAt - 0.5, vp); if (y > -L.rh && y < H + L.rh) { ctx.fillStyle = 'rgba(232,184,48,.18)'; ctx.fillRect(0, y - L.rh / 2, W, L.rh); ctx.fillStyle = '#b8862a'; ctx.font = `${Math.round(26 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('♪  ENCORE  ♪', W / 2, y); } }
+    // the tiles
+    for (let k = Math.max(0, g.ri - 1); k < g.rows.length; k++) { const r = g.rows[k]; if (r.i > vp + 4.2) break; if (r.i + r.len < vp - 0.2) continue;
+      const yTop = yOf(g, r.i + r.len, vp), yBot = yOf(g, r.i, vp), h = yBot - yTop;
+      r.lanes.forEach((ln, j) => { const x = ln * L.lw, done = r.tapped[j], blink = g.miss && g.miss.missed && !done && Math.abs(g.miss.y - (r.i + 0.3)) < 0.01 && (g.miss.t < 0.5 || Math.sin(g.miss.t * 16) > -0.4);
+        if (r.kind === 'start') { const br = done ? 0.35 : 0.85 + 0.15 * Math.sin(now * 4); ctx.fillStyle = `rgba(58,122,255,${br})`; rrect(x + 2, yTop + 2, L.lw - 4, h - 4, 6); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(18 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(done ? '♪' : 'START', x + L.lw / 2, yTop + h / 2); return; }
+        if (blink) { ctx.fillStyle = '#ff3a3a'; rrect(x + 2, yTop + 2, L.lw - 4, h - 4, 6); ctx.fill(); return; }
+        if (done && r.kind !== 'long') { ctx.fillStyle = 'rgba(30,30,40,.16)'; rrect(x + 2, yTop + 2, L.lw - 4, h - 4, 6); ctx.fill(); return; }
+        const gr = ctx.createLinearGradient(x, yTop, x + L.lw, yBot); gr.addColorStop(0, '#2c2c36'); gr.addColorStop(0.5, '#101016'); gr.addColorStop(1, '#000'); ctx.fillStyle = done ? 'rgba(30,30,40,.3)' : gr; rrect(x + 2, yTop + 2, L.lw - 4, h - 4, 6); ctx.fill();
+        if (!done) { ctx.fillStyle = 'rgba(255,255,255,.1)'; rrect(x + 6, yTop + 6, L.lw * 0.35, h - 12, 4); ctx.fill(); }
+        if (r.kind === 'long') { const cx = x + L.lw / 2; ctx.strokeStyle = done ? 'rgba(232,184,48,.7)' : 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, yBot - 14 * s); ctx.lineTo(cx, yTop + 14 * s); ctx.stroke();
+          if (done) { const fh = h * r.hold; const fg = ctx.createLinearGradient(0, yBot - fh, 0, yBot); fg.addColorStop(0, '#ffe08a'); fg.addColorStop(1, '#e8a830'); ctx.fillStyle = fg; rrect(x + 2, yBot - fh, L.lw - 4, Math.max(0, fh - 2), 6); ctx.fill(); if (r.held) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, yBot - fh, 7 * s + 2 * Math.sin(now * 20), 0, TAU); ctx.fill(); } }
+          else { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(cx, yBot - 16 * s, 5 * s, 0, TAU); ctx.fill(); } } }); }
+    // a wrong tap: red where it landed
+    if (g.miss && !g.miss.missed) { const x = g.miss.lane * L.lw, y0 = yOf(g, Math.floor(g.miss.y) + 1, vp), on = g.miss.t < 0.4 || Math.sin(g.miss.t * 16) > -0.4; if (on) { ctx.fillStyle = 'rgba(255,58,58,.85)'; rrect(x + 2, y0 + 2, L.lw - 4, L.rh - 4, 6); ctx.fill(); } }
+    // ripples, notes, sparkles
+    for (const r of RIP) { const u = r.t / r.life; ctx.strokeStyle = `rgba(255,255,255,${0.8 * (1 - u)})`; ctx.lineWidth = 3 * (1 - u) + 1; ctx.beginPath(); ctx.arc(r.x, r.y, 10 + u * L.lw * 0.55, 0, TAU); ctx.stroke(); }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const n of NOTES) { const u = n.t / n.life; ctx.globalAlpha = 1 - u; ctx.fillStyle = n.col; ctx.font = `${Math.round(22 * s)}px serif`; ctx.fillText(n.ch, n.x + Math.sin(n.t * 6) * 6, n.y); } ctx.globalAlpha = 1;
+    for (const p of SPARK) { ctx.globalAlpha = 1 - p.t / p.life; ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
+    hud(g, L, now); }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 0.9 ? 1 : 1 - (q.t - 0.9) / 0.4, pop = 1 + 0.2 * Math.max(0, 1 - q.t * 6); ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s * pop)}px ${TF}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30;
+    ctx.fillStyle = 'rgba(20,20,30,.9)'; rrect(W / 2 - ww / 2, H * 0.62 - hh / 2, ww, hh, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.62 - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,236,170,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
+function hud(G, L, now) { const s = L.s;
+  if (G.lesson) { lessonPanel(G, L); return; }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.fillStyle = '#e83a4a'; ctx.font = `${Math.round(46 * s)}px ${TF}`; ctx.strokeText(G.tiles, W / 2, 74 * s); ctx.fillText(G.tiles, W / 2, 74 * s);
+  ctx.font = `italic 700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = 'rgba(40,30,40,.75)'; ctx.fillText(`${G.cfg.song.name} · ${G.cfg.song.by}`, W / 2, 106 * s);
+  // the bar with the three stars: the song, every long tile held, the encore
+  const bw = W * 0.6, bx = (W - bw) / 2, by = 122 * s, tot = G.total, u = clamp(G.pos / tot, 0, 1), m1 = G.songEnd / tot; ctx.fillStyle = 'rgba(0,0,0,.1)'; rrect(bx, by, bw, 6 * s, 3); ctx.fill(); ctx.fillStyle = '#e83a4a'; rrect(bx, by, bw * u, 6 * s, 3); ctx.fill();
+  const star = (x, on, dim) => { ctx.font = `${Math.round(18 * s)}px sans-serif`; ctx.fillStyle = on ? '#e8b830' : dim ? 'rgba(0,0,0,.12)' : 'rgba(0,0,0,.25)'; ctx.fillText('★', x, by + 3 * s); };
+  star(bx + bw * m1 - 12 * s, G.songDone, false); star(bx + bw * m1 + 10 * s, G.songDone && G.holdsAll, !G.holdsAll); star(bx + bw, G.encDone, false);
+  if (!G.go && !G.miss) { ctx.fillStyle = 'rgba(40,30,40,.6)'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText('Tap START', W / 2, H * 0.62); } }
+function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20, y = 50 * s; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 42 * s + lines.length * 17 * s;
+  ctx.fillStyle = 'rgba(20,20,30,.9)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#e8b830'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#e8b830'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n} / ${st.need}` : ''), x + 12, y + 9 * s);
+  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * s + i * 17 * s)); ctx.restore(); }
+function onEvent(G, e) { const L = lay(), s = L.s, vp = viewPos(G);
+  switch (e.k) {
+    case 'start': say(G.cfg.song.name, W / 2, H * 0.45, '#2a2030', 26); say(G.cfg.song.by, W / 2, H * 0.45 + 30 * s, '#8a7a8a', 16); sfx.chord([60, 64, 67]); if (G.N <= 1) tip('how', 'Tap START, then every black tile. Never the white!', 3); break;
+    case 'go': sfx.chord([48, 55, 60]); break;
+    case 'tap': { const x = (e.lane + 0.5) * L.lw, y = yOf(G, e.row.i + 0.5, vp); RIP.push({ x, y, t: 0, life: 0.35 });
+      if (e.kind !== 'start') { NOTES.push({ x, y: y - 10, vy: -90, t: 0, life: 0.8, ch: ['♪', '♫', '♩'][(G.tiles + e.lane) % 3], col: ['#e83a4a', '#3a7aff', '#e8a830', '#8a4ae8'][e.lane] }); const n = e.notes[0], len = e.kind === 'long' ? e.row.len / Math.max(1, G.v) + 0.4 : 0; sfx.key(n, len, G.tiles); }
+      break; }
+    case 'held': { const x = (e.row.lanes[0] + 0.5) * L.lw, y = H * 0.75; for (let i = 0; i < 14; i++) { const a = Math.random() * TAU; SPARK.push({ x, y, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160 - 80, g: 300, t: 0, life: 0.6, col: '#e8b830', r: 2.5 }); } say(`+${e.row.len}`, x, y - 30 * s, '#e8a830', 22); sfx.chime(); vibe(HAP.light); break; }
+    case 'letgo': sfx.letgo(); break;
+    case 'white': case 'missed': sfx.wrong(); FX.red = 0.6; break;
+    case 'grace': say('ONE MORE TRY', W / 2, H * 0.45, '#3a7aff', 24); break;
+    case 'songdone': if (!G.lesson) { say('★ SONG COMPLETE ★', W / 2, H * 0.4, '#e8a830', 26); FX.flash = 0.5; sfx.fanfare(); vibe(HAP.best); } break;
+    case 'encoredone': say('★ ENCORE! ★', W / 2, H * 0.4, '#e83a4a', 30); sfx.fanfare(); break;
+    case 'lessonnext': if (e.first) hint = null; break;
+    case 'lessonok': say(`${e.n} / ${e.need}`, W / 2, H * 0.45, '#e8a830', 26); break;
+    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessondone': say('BRAVO!', W / 2, H * 0.45, '#e8a830', 32); sfx.fanfare(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': break;
+    case 'lost': sfx.lose(); break;
+  } }
+// ===================== SOUND: a piano (PLAYBOOK S1-S11) =====================
+// The song is the sound: every tile plays its note on a small synthesized piano (a warm body, a brighter octave, a touch of
+// the hammer), never exactly the same twice (a hair of detune and level, S4). Every fourth tile a soft low note underneath
+// (the left hand). A long tile rings for as long as it is held. A wrong tap is a soft dull cluster, not a buzzer; the song's
+// end a bright chord run; a long tile completed a little chime.
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  key(m, hold = 0, n = 0) { if (m == null) return; const f = hz(m) * (1 + (Math.random() - 0.5) * 0.004), v = 0.11 * (0.92 + Math.random() * 0.16), d = Math.max(1.1, hold);
+    tone(f, d, v, 'triangle', 0, 0, 2600); tone(f * 2, d * 0.6, v * 0.35, 'sine'); tone(f * 3, 0.25, v * 0.12, 'sine'); noise(0.02, 4000, v * 0.25, 'highpass', 1);
+    if (n % 4 === 1) tone(hz(m - 24), 1.4, v * 0.5, 'triangle', 0, 0, 900); },
+  chord(ms) { if (!Array.isArray(ms)) ms = [60, 64, 67]; ms.forEach((m, j) => sfx.key(m, 0, 2 + j)); },
+  chime() { tone(hz(84), 0.5, 0.05, 'sine'); tone(hz(91), 0.6, 0.04, 'sine', 0.06); },
+  letgo() { tone(hz(57), 0.2, 0.03, 'triangle'); },
+  wrong() { tone(hz(47), 0.6, 0.09, 'triangle', 0, 0, 900); tone(hz(48), 0.6, 0.08, 'triangle', 0, 0, 900); noise(0.15, 300, 0.08, 'lowpass', 1); },
+  fanfare() { [60, 64, 67, 72, 76].forEach((m, j) => pluck(hz(m), 1.0, 0.07, j * 0.07)); },
+  no() { if (!gate('no', 250)) return; tone(200, 0.1, 0.05, 'triangle', 0, 160, 900); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 1)), 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [60, 64, 67, 72].forEach((m, j) => pluck(hz(m), 1.0, 0.08, j * 0.12)); },
+  lose() { tone(hz(55), 0.8, 0.07, 'triangle'); tone(hz(52), 1.0, 0.06, 'triangle', 0.25); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `<i>${cf.song.name}</i> · ${cf.song.by}`, `${PLACES[cf.place].name}`, best[level] ? `Your best here: <b>${best[level]}</b> tiles` : '', helpOn() ? '<span class="help">A little slower for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; RIP.length = NOTES.length = SPARK.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.tiles > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.tiles; store.set('best', best); } }
+  else { streaks[L] = (streaks[L] || 0) + 1; if (r.tiles > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.tiles; store.set('best', best); } }
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? (r.enc ? 'ENCORE!' : 'BRAVO!') : 'OOPS'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = `<i>${r.song}</i> · <b>${r.tiles}</b> tiles` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + (r.win ? '' : ` · <b>${Math.round(r.prog * 100)}%</b> of the song` + (r.prog >= 0.85 ? ' · <b>so close!</b>' : ''))
+    + (r.win ? `<br>${r.holds ? 'Every long tile held' : 'Hold every long tile for the second star'} · ${r.enc ? 'encore played!' : 'survive the encore for the third'}` : '<br>Watch the next tile, not the one you are tapping.') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (two thumbs): every finger is its own touch; a touch on a tile plays it, a touch held on a long tile holds it
+const ui = {};
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const L = lay(); G.lx = e.clientX / L.lw; press(G, clamp(Math.floor(e.clientX / L.lw), 0, 3), (H - e.clientY) / L.rh, e.pointerId); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+const endTouch = e => { if (G) lift(G, e.pointerId); };
+cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE MUSIC SHOP</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  press(l, y, p) { return press(G, l, y, p || 0); }, lift(p) { lift(G, p || 0); }, lay, renderShop,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -586,6 +586,20 @@ Everything learned building the first games. Every new game must follow the **ru
   rigged swipe pinned, or the swipe makes an extra line (it made a wrapped sweet instead of the striped one promised).
 - Stars from moves to spare; the Sugar Rush runs 1.6 times as fast, 4 times when he taps.
 
+### 61. Black Keys (`games/keys/`): piano tiles, two thumbs
+- Rules in rows: a row's bottom is `r.i` rows up the song, the screen shows `pos` to `pos + 4`. A touch gives a lane and a
+  height in rows; a tap just beside a tile counts (tolerance, bigger on the first levels: fingers are fat). Before START
+  a stray tap does nothing, so the instant start is not lost to a slip.
+- Songs are melody strings ("E4 E4 F4 G4:"; a colon makes a long tile); all pre-1929. Every tile plays its note; every
+  fourth a soft low note underneath.
+- The robot player needs to be as human as the game is hard: two thumbs, each needing a moment before the next tap, aim
+  that wobbles more the faster it goes, a held long tile tying up a thumb. A too-perfect robot showed no difficulty until a
+  cliff at level 30. Song tempo is only half-weighted, or the level number barely mattered against the song.
+- A lesson's end must stop the frame: the "song done" check ran on into "encore done" and won the level the moment the
+  first lesson finished.
+- A blinking failure mark must start solid (both screenshots caught the blink's dark half).
+- `sfx.soundCheck` calls every sound with numbers: a sound that takes a list needs a default.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
