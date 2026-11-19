@@ -39,9 +39,10 @@ Drag round the dial; tap SET. Lifting your thumb is how you keep still.
 1. FEEL THE CLICK: turn slowly, find the click, turn back to the chalk mark, SET. 2. SOFTLY: open two bolts without the
 noise bar filling. 3. KEEP STILL: let the guard's torch pass.
 
-## Engagement factors chosen
-P5 calm flow (a quiet, focused job); P3 a moment that feels good (the click, felt and heard); P7 risk (turn faster for time,
-or softly for the click); P14 the near goal (bolts left, time to dawn); P10 sound (the click is the game).
+## Engagement factors chosen (PLAYBOOK numbers)
+P6 every input answers (the dial turns under the thumb); P11 haptics (the click is felt as well as heard); P14 the near
+goal (bolts left, time to dawn); P10 sound (the click is the game); P1 just hard enough (turn faster for time, or softly for
+the click).
 
 ## Longevity (PLAYBOOK H)
 - L1: turn the dial, listen for the click: everyone has seen it in a film.

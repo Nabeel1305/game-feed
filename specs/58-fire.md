@@ -38,10 +38,10 @@ Hold and slide one thumb; tap a person. Nothing else.
 1. THE HOSE: put out every fire. 2. THE LADDER: clear a person's window, then tap them. 3. THE TANK: lift to refill;
 put every fire out.
 
-## Engagement factors chosen
-P1 juice (steam, flames, the glow on the street, BOOM); P7 risk and choice (which fire, when to send the ladder); P13
-escalation (fire climbs and spreads); P14 the near goal (people, blaze meter); P10 sound (the hiss climbing a note per
-fire in a row, the roar of the fire under it all).
+## Engagement factors chosen (PLAYBOOK numbers)
+P8 shake and permanence (steam, flames, the glow on the street, BOOM, the scorch left behind); P18 streaks (the hiss
+climbs a note per fire in a row); P14 the near goal (people, blaze meter); P10 sound (the roar under it all); P1 just hard
+enough (fire climbs and spreads; which fire, when to send the ladder).
 
 ## Longevity (PLAYBOOK H)
 - L1: fire, hose, people: no explaining needed.

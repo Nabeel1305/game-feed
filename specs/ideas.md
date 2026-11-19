@@ -99,3 +99,14 @@ picked for a balanced feed: one intense (Fire Crew, 4), two calm (Tri-Peaks, Ori
 | 57 | Safecracker | mine: turn the dial slowly, feel the click, SET on the chalk mark; noise, alarm, the guard's torch, dawn | 2 | 1 | 2D |
 | 58 | Fire Crew | mine: a burning building; hold to spray, lift to refill, tap people to send the ladder; gas, backdraft, wind | 4 | 1 | 3D |
 | 59 | Origami | mine: drag a corner and the paper folds after your thumb; six animals that come to life on your shelf | 1 | 1 | 2D |
+
+## Set 11 (19 Nov 2026): "really simple games... like Candy Crush, the game where you mash colours together, Piano Master...
+take your time... simple but a little more complicated". Five copies of the most addictive simple games, each made deeper
+(goals, specials, upgrades) and spam-proof; all 2D, because each reads best flat, like the original.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 60 | Sugar Swap | his example (Candy Crush): swap sweets into lines of three; striped, wrapped and colour-bomb specials; jelly, frosting, cherries | 2 | 1 | 2D |
+| 61 | Black Keys | his example (Piano Tiles): tap the black tiles to the beat of a real tune; it slowly speeds up; long and double tiles | 4 | 2 | 2D |
+| 62 | Paint Drop | his example (mixing colours): drop paint blobs; two the same mix into the next colour; reach the goal colour before the jar fills | 2 | 1 | 2D |
+| 63 | Pour | like Water Sort: tap a glass, tap another, pour; sort every colour into its own glass; hidden layers, undo | 1 | 1 | 2D |
+| 64 | Block Party | like Block Blast: drag pieces onto an 8x8 grid; full rows and columns clear; combos; gems and junk | 1 | 1 | 2D |

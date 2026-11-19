@@ -1897,11 +1897,11 @@
         "live": "window.__sim && window.__sim.playing()"
       },
       "principles": [
-        "P5",
-        "P7",
-        "P2",
+        "P18",
         "P14",
-        "P10"
+        "P6",
+        "P10",
+        "P20"
       ],
       "summary": "Calm cards: clear three peaks by playing one higher or lower onto the pile; streaks earn jokers, locks need the key card, the stock is short."
     },
@@ -1931,11 +1931,11 @@
         "live": "window.__sim && window.__sim.playing()"
       },
       "principles": [
-        "P3",
-        "P2",
-        "P11",
-        "P8",
-        "P10"
+        "P6",
+        "P18",
+        "P14",
+        "P10",
+        "P12"
       ],
       "summary": "Rowing race down a river in 3D: left thumb left oar, right thumb right oar, stroke on the green together to build rhythm, one oar to steer round bends, rocks and logs; beat the rival boats."
     },
@@ -1965,11 +1965,11 @@
         "live": "window.__sim && window.__sim.playing()"
       },
       "principles": [
-        "P5",
-        "P3",
-        "P7",
+        "P6",
+        "P11",
         "P14",
-        "P10"
+        "P10",
+        "P1"
       ],
       "summary": "Crack a safe by feel: drag round the dial slowly, feel the click, turn back to the chalk mark and SET; too fast is noisy, wrong numbers raise the alarm, keep still in the guard's torchlight, open it before dawn."
     },
@@ -1999,11 +1999,11 @@
         "live": "window.__sim && window.__sim.playing()"
       },
       "principles": [
-        "P1",
-        "P7",
-        "P13",
+        "P8",
+        "P18",
         "P14",
-        "P10"
+        "P10",
+        "P1"
       ],
       "summary": "A building on fire in 3D: hold one thumb to spray the hose just above it, lift to let the tank refill, tap people once their window is clear to send the ladder; gas bottles, backdraft and wind."
     },
@@ -2033,10 +2033,10 @@
         "live": "window.__sim && window.__sim.playing()"
       },
       "principles": [
-        "P5",
-        "P3",
-        "P9",
-        "P2",
+        "P19",
+        "P6",
+        "P15",
+        "P18",
         "P10"
       ],
       "summary": "Fold paper animals: drag a corner and the paper folds after your thumb; let go when it fits the dashed outline. Perfect folds, crumples, six animals that come to life on your shelf."

@@ -27,9 +27,9 @@ Peek at the next stock card), ranks from Newcomer to Grand master.
 1. ONE UP, ONE DOWN: a run of four. 2. CHOOSE WELL: of two cards that fit, the one with the longer run (five without drawing).
 3. TO THE TOP: clear a peak.
 
-## Engagement factors chosen
-P5 calm flow; P7 risk (play this card or that, draw now or later); P2 streaks that build; P14 the near goal (cards left, stock);
-P10 sound (a flick that climbs a note per card in the streak).
+## Engagement factors chosen (PLAYBOOK numbers)
+P18 combos and streaks (the streak builds card by card, the chime climbs); P14 the near goal (cards left, the stock);
+P6 every input answers (each flick lands with a snap); P10 sound (a note per card in the streak); P20 gentle palettes.
 
 ## Longevity (PLAYBOOK H)
 - L1: higher or lower: everyone knows it.

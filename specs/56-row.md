@@ -35,9 +35,9 @@ Tap the left half or the right half of the screen. Nothing else: no aiming, no d
 1. TOGETHER: six perfect strokes together. 2. STEER: 150 m of bends without touching the bank (one oar turns you).
 3. RHYTHM: reach a rhythm of 5.
 
-## Engagement factors chosen
-P3 timing that feels good (the green window, a perfect stroke's surge); P2 rhythm that builds; P11 rivals in sight;
-P8 places and weather that change; P10 sound (the splash and pull, a rising note with the rhythm).
+## Engagement factors chosen (PLAYBOOK numbers)
+P6 every input answers (the green window, a perfect stroke's surge); P18 a rhythm that builds; P14 the near goal (rivals
+in sight, the finish line); P10 sound (the splash and pull, a rising note with the rhythm); P12 celebrations scaled to the win.
 
 ## Longevity (PLAYBOOK H)
 - L1: two oars, two thumbs: you see the boat and the rings.

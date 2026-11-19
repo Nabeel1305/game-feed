@@ -35,10 +35,10 @@ Drag one thumb. That is all.
 1. YOUR FIRST FOX: glowing corner onto the dot, three times. 2. MATCH THE OUTLINE: a whole puppy, fitting the outline.
 3. NEAT AND PERFECT: two perfect folds.
 
-## Engagement factors chosen
-P5 calm flow (no clock, no enemies); P3 a moment that feels good (the paper following the thumb, the crisp crease); P9
-collection (the shelf); P2 a run that builds (perfects in a row climb a note); P10 sound (soft paper, the crease, the koto run
-when the animal comes to life).
+## Engagement factors chosen (PLAYBOOK numbers)
+P19 no clock, no fail pressure (no clock, no enemies); P6 every input answers (the paper follows the thumb, the crisp
+crease); P15 nested goals (the shelf of animals); P18 a run that builds (perfects in a row climb a note); P10 sound (soft
+paper, the crease, the koto run when the animal comes to life).
 
 ## Longevity (PLAYBOOK H)
 - L1: drag a corner: the paper does exactly what paper does.
