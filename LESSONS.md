@@ -638,6 +638,17 @@ Everything learned building the first games. Every new game must follow the **ru
 - Drag: the piece rides 2.1 cells above the finger; the shadow and the lines it would clear (lit in the piece's colour)
   show before the finger lifts, and the drop is where the shadow was. Tray pieces shrink to fit their third of the width.
 
+### 65. Plumber (`games/plumber/`): house calls, one thumb
+- A job game is spam-proof by its choices: the fix must match what the look found, and every wrong one costs patience
+  (escalating). The hands-on parts add the rest: the plunger's beat changes every push (a steady tap fails), a hold has a
+  random rate and a random green, the snake kinks if held on red. Blind earned ~$10 of a $590 day; 77,504 strings won 0.
+- The robot is "a person who looks" only if it reads: give it seconds to read a call and what a look says, or it does a
+  day's work in a third of the day and the targets come out far too high for people.
+- The kit's part1 defines `pick(R, a)`: a game function called `pick` silently replaces it. Check part2's names against
+  part1 (a short script does it) before the first build.
+- Cut-away house: the static house and its pipes drawn once per job into an offscreen picture (redrawn when a step is
+  done), the water dashes, parts, people and trouble drawn live on top.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

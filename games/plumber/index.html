@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Plumber</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@700;800;900&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#123a5a;--ink:#f4f9ff;--acc:#ffb21e;--acc-dark:#b86e00;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:Bungee,Rubik,"Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(40,110,170,.6),rgba(8,24,40,.94))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#fff;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#fff}.lvb.cur small{color:#fff}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <div style="font-size:64px;line-height:1">🔧</div><h1 class="tf" style="font-size:52px;color:#fff">Plumber</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">FIX IT. GET PAID.</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = 'Bungee, Rubik, "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('pu.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('pu.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: Plumber (game 65, set 12: his idea) =====================
+// "You're a plumber. People have problems with pressure, no water... you go to different people's houses and fix their water."
+// A working day is a level. Calls come in on the phone (who, what's wrong, the pay, how far, some urgent). Pick one, drive
+// there, and you see the whole house cut open: pipes in the walls, every tap, toilet, boiler and valve. The customer says
+// what's wrong, which is not always where it's wrong: tap a part to walk over and look (what you find says what to do), then
+// pick the fix. Each fix is a small hands-on moment: HOLD a wrench and let go in the green, PLUNGE in time with the water,
+// FEED the snake and ease off when it snags, SET a dial, FIT a new part. A burst pipe floods the room until you shut the
+// main off. Happy customers pay more and tip; a wrong fix costs time and their patience. Make the day's money before five.
+const RULES = [
+  'Pick a <b>call</b> from the phone and drive there. Make the day\'s money before <b>5 pm</b>.',
+  '<b>Tap a part</b> of the house to look at it: it tells you what is wrong. Then pick the fix.',
+  '<b>Hold</b> and let go in the green. <b>Plunge</b> as the ring closes. <b>Feed</b> the snake, ease off on red.',
+  'A burst pipe floods the room: <b>shut off the main</b> (by the meter) first!',
+  'The wrong fix costs time and the customer\'s patience. Quick, tidy work earns tips.',
+];
+// ---------- the parts of a house, and what you can do to each ----------
+const FIX = {
+  ksink: { name: 'Kitchen sink', acts: ['New washer', 'Tighten trap', 'Plunge', 'Clean aerator'] },
+  basin: { name: 'Basin', acts: ['New washer', 'Tighten trap', 'Plunge', 'Snake drain'] },
+  wc: { name: 'Toilet', acts: ['Plunge', 'Set the float', 'Snake it'] },
+  shower: { name: 'Shower', acts: ['Descale head', 'Snake drain', 'New cartridge'] },
+  heater: { name: 'Boiler', acts: ['Light pilot', 'Set thermostat', 'Top up pressure'] },
+  rad: { name: 'Radiator', acts: ['Bleed air', 'Set valve'] },
+  main: { name: 'Stopcock & meter', acts: ['Shut off', 'Open fully', 'Thaw pipe'] },
+  prv: { name: 'Pressure valve', acts: ['Set pressure', 'Tighten union'] },
+  wm: { name: 'Washing machine', acts: ['New hose', 'Tighten hose', 'Clean filter'] },
+  otap: { name: 'Outside tap', acts: ['New section', 'Thaw', 'New washer'] },
+  vent: { name: 'Roof vent', acts: ['Clear vent', 'New cap'] },
+  sewer: { name: 'Drain cover', acts: ['Auger the sewer', 'Lift and look'] },
+  pipe: { name: 'Burst pipe', acts: ['Fit new section', 'Solder joints', 'Tape it up'] },
+};
+// how each fix is done: hold (let go in the green; 'end' ones just need turning all the way), pump, feed, set, fit
+const HOW = {
+  'New washer': ['hold', 'Hold to tighten the new washer; let go in the green.'], 'Tighten trap': ['hold', 'Hold to tighten the nut; let go in the green.'],
+  'Clean aerator': ['hold', 'Hold to scrub; let go in the green.'], 'Descale head': ['hold', 'Hold to scrub off the scale; let go in the green.'],
+  'Light pilot': ['hold', 'Hold the igniter; let go when the flame is steady (green).'], 'Top up pressure': ['hold', 'Hold the filling loop open; let go in the green.'],
+  'Bleed air': ['hold', 'Hold the bleed key open; let go when water comes (green).'], 'Thaw pipe': ['hold', 'Hold the heat on; let go in the green. Too long and it bursts!'],
+  Thaw: ['hold', 'Hold the heat on; let go in the green.'], 'Tighten hose': ['hold', 'Hold to tighten; let go in the green.'], 'Clean filter': ['hold', 'Hold to unscrew and clean; let go in the green.'],
+  'Solder joints': ['hold', 'Hold the torch on the joint; let go in the green. Two joints.'], 'Tighten union': ['hold', 'Hold to tighten; let go in the green.'],
+  'Shut off': ['end', 'Hold to turn the stopcock all the way off.'], 'Open fully': ['end', 'Hold to turn the stopcock all the way open.'],
+  Plunge: ['pump', 'TAP each time the ring closes on the circle. Off-beat taps push the water back.'],
+  'Snake drain': ['feed', 'HOLD to feed the snake in. When the needle goes RED, let go until it is green again.'], 'Snake it': ['feed', 'HOLD to feed the snake in. Let go on RED.'],
+  'Auger the sewer': ['feed', 'HOLD to feed the auger through the roots. Let go on RED.'], 'Clear vent': ['feed', 'HOLD to push the rod down the vent. Let go on RED.'],
+  'Set the float': ['set', 'Drag the float to the green line, then let go.'], 'Set thermostat': ['set', 'Drag the dial into the green, then let go.'],
+  'Set pressure': ['set', 'Drag the dial into the green (3 bar), then let go.'], 'Set valve': ['set', 'Drag the valve into the green, then let go.'],
+  'New hose': ['fit', 'Drag the new hose onto the machine.'], 'New section': ['fit', 'Drag the new pipe into the gap.'], 'Fit new section': ['fit', 'Drag the new pipe into the gap.'],
+  'New cartridge': ['fit', 'Drag the new cartridge into the valve.'], 'New cap': ['fit', 'Drag the new cap on.'], 'Tape it up': ['hold', ''], 'Lift and look': ['hold', ''],
+};
+// ---------- the jobs (the long list he asked for), the level each first appears on, and what is really wrong ----------
+// steps: [part, fix]. A job can have more than one possible cause; the look tells you which.
+const JOBS = [
+  { id: 'drip', lv: 1, at: ['ksink', 'basin'], say: ['My tap won\'t stop dripping!', 'Drip, drip, drip all night. Help!', 'The tap drips even turned right off.'], causes: [{ cause: 'The washer is worn out.', steps: [['@', 'New washer']] }], pay: 55 },
+  { id: 'trap', lv: 1, at: ['ksink', 'basin'], say: ['There\'s water under my sink.', 'The cupboard under the sink is soaked!', 'Something\'s leaking under the sink.'], causes: [{ cause: 'The trap nut is loose.', steps: [['@', 'Tighten trap']] }], pay: 55 },
+  { id: 'sinkclog', lv: 1, at: ['ksink', 'basin'], say: ['My sink won\'t drain.', 'The sink is full of grey water!', 'Water just sits in the sink.'], causes: [{ cause: 'Grease and gunk blocking the pipe.', steps: [['@', 'Plunge']] }], pay: 60 },
+  { id: 'wcclog', lv: 2, at: ['wc'], say: ['The toilet\'s blocked!', 'Toilet\'s about to overflow!', 'Please hurry, the loo is blocked!'], causes: [{ cause: 'The bowl is blocked.', steps: [['wc', 'Plunge']] }], pay: 70, urgent: true },
+  { id: 'wcrun', lv: 2, at: ['wc'], say: ['The toilet keeps running all night.', 'I can hear the toilet filling all day.', 'Water won\'t stop running in the toilet.'], causes: [{ cause: 'The float is set too high.', steps: [['wc', 'Set the float']] }], pay: 60 },
+  { id: 'burst', lv: 3, at: ['pipe'], say: ['Water\'s pouring through the ceiling!!', 'A pipe burst! There\'s water everywhere!', 'HELP! The ceiling is raining!'], causes: [{ cause: 'A split pipe.', steps: [['main', 'Shut off'], ['pipe', 'Fit new section'], ['pipe', 'Solder joints']] }], pay: 150, urgent: true, flood: true },
+  { id: 'nowater', lv: 4, at: ['ksink'], say: ['No water at all!', 'Nothing comes out of any tap!', 'The water just stopped.'], causes: [{ cause: 'Someone shut the stopcock.', at: 'main', steps: [['main', 'Open fully']] }, { cause: 'The pipe by the meter is frozen solid.', at: 'main', steps: [['main', 'Thaw pipe']], cold: true }], pay: 70 },
+  { id: 'lowpress', lv: 5, at: ['shower'], say: ['The shower\'s just a trickle.', 'Barely any pressure in the shower.', 'My shower is so weak!'], causes: [{ cause: 'Limescale in the shower head.', at: 'shower', steps: [['shower', 'Descale head']] }, { cause: 'The stopcock is only half open.', at: 'main', steps: [['main', 'Open fully']], weak: true }, { cause: 'The pressure valve is set too low.', at: 'prv', steps: [['prv', 'Set pressure']], weak: true }], pay: 75 },
+  { id: 'nohot', lv: 6, at: ['heater'], say: ['No hot water!', 'Cold showers for two days!', 'The hot tap runs cold.'], causes: [{ cause: 'The pilot light is out.', steps: [['heater', 'Light pilot']] }, { cause: 'The thermostat is turned right down.', steps: [['heater', 'Set thermostat']] }], pay: 80 },
+  { id: 'radcold', lv: 7, at: ['rad'], say: ['The radiator is cold at the top.', 'One radiator won\'t warm up.', 'The radiator gurgles and stays cold.'], causes: [{ cause: 'Air trapped in the radiator.', steps: [['rad', 'Bleed air']] }, { cause: 'The radiator valve is shut.', steps: [['rad', 'Set valve']] }], pay: 65 },
+  { id: 'boiler', lv: 7, at: ['heater'], say: ['The boiler says low pressure.', 'No heating, and the boiler is beeping!', 'Boiler stopped. Gauge says nearly zero.'], causes: [{ cause: 'The boiler pressure is too low.', steps: [['heater', 'Top up pressure']] }], pay: 75 },
+  { id: 'bang', lv: 8, at: ['ksink'], say: ['The pipes BANG when I shut a tap!', 'Loud knocking in the walls!', 'Every tap makes the pipes shudder.'], causes: [{ cause: 'The water pressure is far too high.', at: 'prv', steps: [['prv', 'Set pressure']] }], pay: 80 },
+  { id: 'wmflood', lv: 8, at: ['wm'], say: ['The washing machine flooded the kitchen!', 'Water pouring out of the washing machine!'], causes: [{ cause: 'The fill hose has split.', steps: [['wm', 'New hose'], ['wm', 'Tighten hose']] }], pay: 110, urgent: true, flood: true, slow: true },
+  { id: 'smell', lv: 9, at: ['basin'], say: ['A horrible smell from the drains.', 'The bathroom stinks of sewer!', 'The drains gurgle and smell.'], causes: [{ cause: 'The roof vent is blocked by a nest.', at: 'vent', steps: [['vent', 'Clear vent']] }], pay: 85 },
+  { id: 'sewer', lv: 9, at: ['wc'], say: ['Every drain in the house is backing up!', 'Sewage coming up the shower drain!'], causes: [{ cause: 'Tree roots in the sewer pipe.', at: 'sewer', steps: [['sewer', 'Auger the sewer']] }], pay: 130, urgent: true },
+  { id: 'showerslow', lv: 11, at: ['shower'], say: ['The shower drain is like a bath.', 'I\'m standing in water in the shower.'], causes: [{ cause: 'Hair clogging the drain.', steps: [['shower', 'Snake drain']] }], pay: 65 },
+  { id: 'otap', lv: 12, at: ['otap'], say: ['The outside tap sprays everywhere.', 'Garden tap is gushing!'], causes: [{ cause: 'Frost split the pipe.', steps: [['main', 'Shut off'], ['otap', 'New section']] }], pay: 95 },
+  { id: 'cartridge', lv: 13, at: ['shower'], say: ['The shower drips day and night.', 'Shower won\'t turn off properly.'], causes: [{ cause: 'The valve cartridge is worn.', steps: [['main', 'Shut off'], ['shower', 'New cartridge']] }], pay: 90 },
+  { id: 'aerator', lv: 14, at: ['ksink'], say: ['The kitchen tap just splutters.', 'Tap spits and sprays sideways.'], causes: [{ cause: 'The aerator is clogged.', steps: [['ksink', 'Clean aerator']] }], pay: 55 },
+  { id: 'wmdrain', lv: 15, at: ['wm'], say: ['The washing machine won\'t drain.', 'Washer full of water and stuck.'], causes: [{ cause: 'The drain filter is blocked.', steps: [['wm', 'Clean filter']] }], pay: 70 },
+  { id: 'otapfrozen', lv: 16, at: ['otap'], say: ['The garden tap won\'t run.', 'Nothing from the outside tap.'], causes: [{ cause: 'The outside tap is frozen.', steps: [['otap', 'Thaw']] }], pay: 60 },
+];
+// healthy parts say so (and give a reading where it helps)
+const FINE = { ksink: 'Tap and drain working fine.', basin: 'Tap and drain working fine.', wc: 'Flushes and fills fine.', shower: 'Head and drain look fine.', heater: 'Lit, pressure 1.2 bar: fine.',
+  rad: 'Warm all over: fine.', main: 'Stopcock fully open, meter turning: fine.', prv: 'Set to 3 bar: fine.', wm: 'Hoses and filter fine.', otap: 'Outside tap fine.', vent: 'Vent clear.', sewer: 'Drain running clear.', pipe: '' };
+const FIRST = ['Ada', 'Bola', 'Carl', 'Dina', 'Emeka', 'Fay', 'Gus', 'Hana', 'Ivo', 'Jade', 'Kofi', 'Lena', 'Musa', 'Nell', 'Omar', 'Pia', 'Quinn', 'Rosa', 'Sam', 'Tunde', 'Uma', 'Vic', 'Wale', 'Xena', 'Yusuf', 'Zara', 'Aunty Grace', 'Old Mr Pike', 'Dr Okafor', 'Mrs Bell'];
+const LAST = ['Adeyemi', 'Brown', 'Clarke', 'Diaz', 'Eze', 'Fischer', 'Green', 'Hughes', 'Ito', 'Jones', 'Khan', 'Lopez', 'Mensah', 'Novak', 'Obi', 'Patel', 'Reyes', 'Silva', 'Taylor', 'Usman', 'Walsh', 'Young'];
+const STREETS = ['Mill Lane', 'Oak Road', 'Harbour St', 'Kings Way', 'Elm Close', 'Bridge St', 'Station Rd', 'Orchard Row', 'High St', 'Canal Walk', 'Chapel Hill', 'Rose Court'];
+const HOUSES = ['cottage', 'semi', 'bungalow', 'townhouse', 'flat'];
+const PLACES = [{ name: 'Brookside', sky: ['#9fd4f0', '#e8f4fa'] }, { name: 'Old Town', sky: ['#f0c89a', '#faecd8'] }, { name: 'Harbour', sky: ['#8ec5d8', '#dbeef4'] }, { name: 'Hilltop', sky: ['#b8c8ea', '#eef0fa'] }];
+const placeOf = N => Math.floor((N - 1) / 5) % 4;
+const UPGRADES = [
+  { id: 'wrench', name: 'Torque wrench', desc: 'Wider green on every hold and dial.', max: 3, cost: l => 50 + l * 60 },
+  { id: 'camera', name: 'Pipe camera', desc: 'See what is wrong at a glance: no waiting to look.', max: 1, cost: l => 120 },
+  { id: 'van', name: 'Faster van', desc: 'Shorter drives between houses.', max: 2, cost: l => 80 + l * 80 },
+  { id: 'vac', name: 'Wet-vac', desc: 'Floods rise half as fast.', max: 1, cost: l => 100 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Apprentice'], [40, 'Plumber\'s mate'], [130, 'Plumber'], [320, 'Master plumber'], [700, 'Pipe wizard'], [1500, 'Legend of the pipes']];
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N), boss = N % 10 === 0;
+  return { N, f, help: !!help, place: placeOf(N), boss, day: Math.round(x(150, 190, 30)) + (help ? 25 : 0) + (boss ? 30 : 0),
+    target: Math.round(x(550, 1650, 25) * (boss ? 1.25 : 1) / 10) * 10, band: x(0.24, 0.12, 25) * (1 + 0.18 * upLv('wrench')) * (help ? 1.2 : 1), win: x(0.17, 0.1, 25) * (help ? 1.2 : 1),
+    pumps: Math.round(x(4, 7, 30)), feed: x(0.24, 0.16, 30), snag: x(0.7, 1.4, 30), patience: x(70, 42, 30), floodT: x(30, 16, 25) * (upLv('vac') ? 2 : 1) * (help ? 1.3 : 1),
+    look: upLv('camera') ? 0.05 : x(0.8, 1.0, 30), drive: (1 - 0.2 * upLv('van')), urgent: x(0.1, 0.35, 30), ttl: x(26, 16, 30), calls: boss ? 4 : N >= 3 ? 3 : 2,
+    jobs: JOBS.filter(j => j.lv <= N) }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null };
+  setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+function setup(G) { G.clock = G.cfg.day; G.cash = 0; G.jobsDone = 0; G.starsSum = 0; G.calls = []; G.phase = 'board'; G.job = null; G.drive = 0; G.spawnT = 0.3; G.fumble = 0; G.fumT = -99; G.done = []; G.lost = 0; G.callN = 0;
+  for (let i = 0; i < G.cfg.calls; i++) G.calls.push(newCall(G, i === 0)); }
+// a new call: a job this level knows, one of its causes, a house, a customer, the pay and the drive
+function newCall(G, easyFirst) { const R = G.rnd, c = G.cfg; let pool = c.jobs; if (easyFirst) pool = pool.filter(j => !j.flood);
+  // newer jobs come up more often on the level they appear, so each day has something new to learn
+  const w = pool.map(j => (j.lv === G.N ? 3 : 1)); let u = R() * w.reduce((a, b) => a + b, 0), j = pool[0]; for (let i = 0; i < pool.length; i++) { u -= w[i]; if (u <= 0) { j = pool[i]; break; } }
+  const cz = j.causes[(R() * j.causes.length) | 0], urgent = !!j.urgent || R() < c.urgent * 0.5, dist = 2 + R() * 4, at = j.at[(R() * j.at.length) | 0];
+  const steps = cz.steps.map(([p, a]) => [p === '@' ? at : p, a]), pay = Math.round((j.pay + steps.length * 10 + dist * 3) * (urgent ? 1.35 : 1) * (0.9 + R() * 0.25) / 5) * 5;
+  G.callN++; return { id: G.callN, job: j, cause: cz, at, steps, pay, dist, urgent, ttl: urgent ? c.ttl * 0.7 : c.ttl, age: 0, say: j.say[(R() * j.say.length) | 0],
+    who: FIRST[(R() * FIRST.length) | 0] + ' ' + LAST[(R() * LAST.length) | 0], addr: (1 + ((R() * 98) | 0)) + ' ' + STREETS[(R() * STREETS.length) | 0], house: HOUSES[(R() * HOUSES.length) | 0], mirror: R() < 0.5, hue: (R() * 360) | 0, style: (R() * 4) | 0 }; }
+// ---------- the house: where each part is (0..1 across, 0..1 down) ----------
+const LAYOUT = { ksink: [0.2, 0.77], wm: [0.4, 0.79], main: [0.66, 0.83], prv: [0.79, 0.83], heater: [0.86, 0.67], basin: [0.14, 0.44], wc: [0.3, 0.46], shower: [0.47, 0.39], rad: [0.76, 0.46], vent: [0.36, 0.08], otap: [0.955, 0.76], sewer: [0.975, 0.9], pipe: [0.36, 0.555] };
+function spot(G, id) { const p = LAYOUT[id], m = G.job && G.job.call.mirror; return [m && id !== 'otap' && id !== 'sewer' ? 0.96 - p[0] : p[0], p[1]]; }
+function arrive(G, call) { const R = G.rnd, c = G.cfg;
+  const parts = Object.keys(FIX).filter(k => k !== 'pipe' || call.job.id === 'burst');
+  G.job = { call, steps: call.steps, si: 0, parts, mood: 1, t: 0, water: call.job.flood ? 0.08 : 0, flooding: !!call.job.flood, spray: false, mist: 0, me: 'main', walk: null, look: null, fix: null, busy: 0, tries: 0 };
+  G.job.me = call.mirror ? 'heater' : 'ksink'; G.phase = 'job'; G.ev.push({ k: 'arrive', call }); }
+const curStep = G => G.job && G.job.steps[G.job.si];
+// ---------- what you do ----------
+function takeCall(G, i) { if (G.over || G.wait > 0 || G.phase !== 'board') return false; const call = G.calls[i]; if (!call) return false;
+  G.calls.splice(i, 1); G.phase = 'drive'; G.drive = call.dist * G.cfg.drive * 0.7; G.driveT = G.drive; G.driving = call; G.ev.push({ k: 'drive', call }); return true; }
+// tap a part: walk to it, then look (a moment, or none with the camera)
+function tapPart(G, id) { const J = G.job; if (G.over || G.wait > 0 || G.phase !== 'job' || !J || J.fix || J.busy > 0) return false; if (!J.parts.includes(id)) return false;
+  if (J.look && J.look.id === id) return true; const a = spot(G, J.me), b = spot(G, id), d = Math.hypot(a[0] - b[0], (a[1] - b[1]) * 1.4);
+  J.look = null; J.walk = { id, t: 0, dur: 0.25 + d * 1.1 }; G.ev.push({ k: 'walk', id }); return true; }
+function closeLook(G) { const J = G.job; if (!J || J.fix) return; J.look = null; }
+// pick one of the fixes on the part you are looking at
+function act(G, k) { const J = G.job; if (G.over || G.wait > 0 || !J || J.fix || !J.look || J.busy > 0) return false; const id = J.look.id, name = FIX[id].acts[k]; if (!name) return false;
+  const st = curStep(G);
+  if (st && st[0] === id && st[1] === name) { startFix(G, name); return true; }
+  // skipping the shut-off: water everywhere
+  const later = J.steps.slice(J.si + 1).some(s => s[0] === id && s[1] === name);
+  if (later && st[1] === 'Shut off') { mistake(G, 'spray', name); J.flooding = true; J.spray = true; if (!J.water) J.water = 0.05; return false; }
+  mistake(G, 'wrong', name); return false; }
+function mistake(G, why, name) { const J = G.job; if (G.lesson) { lessonMiss(G); return; }
+  const quick = G.t - G.fumT < 8; G.fumT = G.t; G.fumble = quick ? G.fumble + 1 : 0;
+  J.mood -= 0.12 * (1 + G.fumble); J.busy = 1.2 + 0.6 * G.fumble; J.tries++; G.ev.push({ k: 'mistake', why, name, n: G.fumble }); moodCheck(G); }
+function moodCheck(G) { const J = G.job; if (J && J.mood <= 0 && G.phase === 'job') jobLost(G, 'angry'); }
+function startFix(G, name) { const J = G.job, R = G.rnd, c = G.cfg, kind = HOW[name][0];
+  const F = { name, kind, how: HOW[name][1], t: 0, ok: 0, need: name === 'Solder joints' ? 2 : 1 };
+  if (kind === 'hold' || kind === 'end') { F.m = 0; F.rate = 0.45 + R() * 0.25; F.held = false; const w = c.band; F.a = kind === 'end' ? 0.9 : 0.5 + R() * (0.42 - w); F.b = kind === 'end' ? 1.0 : F.a + w; }
+  if (kind === 'pump') { F.p = 0; F.T = 0.8 + R() * 0.35; F.hits = 0; F.need = c.pumps; F.prevEnd = -9; F.cyc = 0; }
+  if (kind === 'feed') { F.prog = 0; F.st = 'ok'; F.stT = 0.8 + R() * 1.0; F.kinkT = 0; F.stall = 0; F.held = false; }
+  if (kind === 'set') { F.v = R() < 0.5 ? 0.06 + R() * 0.12 : 0.82 + R() * 0.12; F.tgt = 0.3 + R() * 0.4; F.w = c.band * 0.85; F.drag = false; }
+  if (kind === 'fit') { F.placed = false; }
+  J.fix = F; J.look = null; G.phase = 'fix'; G.ev.push({ k: 'fix', name, kind }); }
+// the hands-on controls (the view turns touches into these)
+function press(G) { const F = G.job && G.job.fix; if (!F || G.over || G.wait > 0) return; if (F.kind === 'hold' || F.kind === 'end' || F.kind === 'feed') { F.held = true; G.ev.push({ k: 'press' }); } else if (F.kind === 'pump') pump(G); }
+function lift(G) { const F = G.job && G.job.fix; if (!F || !F.held || G.over) return; F.held = false;
+  if (F.kind === 'end') return;      /* turning a stopcock: let go and carry on later, it stays where it is */
+  if (F.kind === 'hold') { if (F.m <= 0.02) return; if (F.m >= F.a && F.m <= F.b) fixGood(G); else if (F.m < F.a) { fixMiss(G, 'short'); F.m = 0; } else fixOver(G); } }
+// a hit is a tap within a moment of the ring closing (just before or just after); one per beat; anything else pushes back
+function pump(G) { const F = G.job.fix, w = G.cfg.win, early = (1 - F.p) * F.T, late = G.t - F.prevEnd;
+  if (G.t - (F.lastHit == null ? -9 : F.lastHit) < 0.35 || !(early <= w || late <= w)) { F.hits = Math.max(0, F.hits - 1); fixMiss(G, 'beat'); return; }
+  F.lastHit = G.t; F.hits++; G.ev.push({ k: 'plunge', n: F.hits, need: F.need }); if (F.hits >= F.need) fixGood(G); }
+function dial(G, v) { const F = G.job && G.job.fix; if (!F || F.kind !== 'set' || G.over || G.wait > 0) return; F.v = clamp(v, 0, 1); F.drag = true; }
+function dialDone(G) { const F = G.job && G.job.fix; if (!F || F.kind !== 'set' || !F.drag) return; F.drag = false; if (Math.abs(F.v - F.tgt) <= F.w / 2) fixGood(G); else fixMiss(G, 'off'); }
+function drop(G, d) { const F = G.job && G.job.fix; if (!F || F.kind !== 'fit' || G.over || G.wait > 0) return; if (d < 0.6) { F.placed = true; fixGood(G); } else fixMiss(G, 'drop'); }
+function fixMiss(G, why) { const J = G.job, F = J.fix; G.ev.push({ k: 'fixmiss', why, kind: F.kind });
+  if (G.lesson) { if (why === 'short' || why === 'off' || why === 'drop') { lessonMiss(G, true); return; } lessonMiss(G); return; }
+  const quick = G.t - G.fumT < 3; G.fumT = G.t; G.fumble = quick ? G.fumble + 1 : 0; J.mood -= 0.04 * (1 + G.fumble); moodCheck(G); }
+function fixGood(G) { const J = G.job, F = J.fix; F.ok++; if (F.ok < F.need) { G.ev.push({ k: 'fixpart', n: F.ok, need: F.need }); if (F.kind === 'hold') { F.m = 0; F.rate = 0.45 + G.rnd() * 0.25; const w = G.cfg.band; F.a = 0.5 + G.rnd() * (0.42 - w); F.b = F.a + w; } return; }
+  const st = curStep(G); G.ev.push({ k: 'fixed', name: F.name, part: st[0] }); if (st[1] === 'Shut off') { J.flooding = false; J.spray = false; } J.fix = null; J.si++; G.phase = 'job'; if (G.lesson) lessonSee(G, F.name);
+  if (J.si >= J.steps.length) jobDone(G); }
+function fixOver(G) { const J = G.job, F = J.fix; G.ev.push({ k: 'over', name: F.name }); if (G.lesson) { lessonMiss(G, true); return; }
+  J.mood -= 0.15; J.busy = 1.0; F.m = 0; F.held = false; F.rate = 0.45 + G.rnd() * 0.25; moodCheck(G); }
+function jobDone(G) { const J = G.job, call = J.call; if (G.lesson) return;
+  const mood = clamp(J.mood, 0, 1), stars = mood > 0.78 ? 3 : mood > 0.5 ? 2 : 1, tip = stars === 3 ? Math.round(call.pay * 0.15 / 5) * 5 : 0, pay = Math.round(call.pay * (0.45 + 0.55 * mood) / 5) * 5 + tip;
+  G.cash += pay; G.jobsDone++; G.starsSum += stars; G.done.push({ who: call.who, job: call.job.id, stars }); G.ev.push({ k: 'paid', pay, tip, stars, who: call.who, job: call.job.id });
+  G.phase = 'paid'; G.wait = 1.6; G.next = () => { G.job = null; G.phase = 'board'; if (!goalCheck(G)) refill(G); }; }
+function jobLost(G, why) { const J = G.job; G.lost++; G.ev.push({ k: 'joblost', why, who: J.call.who }); J.fix = null; G.phase = 'paid'; G.wait = 1.6; G.next = () => { G.job = null; G.phase = 'board'; refill(G); }; }
+function refill(G) { while (G.calls.length < G.cfg.calls) G.calls.push(newCall(G)); }
+function goalCheck(G) { if (G.lesson || G.over) return false; if (G.cash >= G.cfg.target) { G.ev.push({ k: 'goal' }); G.wait = 1.4; G.next = () => finish(G, true); return true; } return false; }
+// walk away from a job you cannot do (it costs the call)
+function leave(G) { const J = G.job; if (!J || G.phase !== 'job' || G.over || G.wait > 0 || G.lesson) return false; jobLost(G, 'left'); return true; }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
+  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  if (!G.lesson) { G.clock -= dt; if (G.clock <= 0) { G.clock = 0; G.ev.push({ k: 'five' }); G.wait = 1.2; G.next = () => finish(G, false); return; } }
+  // calls on the phone wait only so long
+  if (!G.lesson) for (let i = G.calls.length - 1; i >= 0; i--) { const c = G.calls[i]; c.age += dt; if (c.age > c.ttl) { G.calls.splice(i, 1); G.ev.push({ k: 'expired', who: c.who }); } }
+  if (!G.lesson && G.calls.length < G.cfg.calls) { G.spawnT -= dt; if (G.spawnT <= 0) { G.calls.push(newCall(G)); G.spawnT = 2 + G.rnd() * 3; G.ev.push({ k: 'ring' }); } }
+  if (G.phase === 'drive') { G.drive -= dt; if (G.drive <= 0) { const c = G.driving; G.driving = null; arrive(G, c); } return; }
+  const J = G.job; if (!J || (G.phase !== 'job' && G.phase !== 'fix')) return;
+  J.t += dt; if (J.busy > 0) J.busy -= dt;
+  if (!G.lesson) { J.mood -= dt / G.cfg.patience * 0.5; moodCheck(G); if (!G.job || G.phase === 'paid') return; }
+  if (J.flooding) { J.water += dt / G.cfg.floodT; J.mood = Math.min(J.mood, 1.08 - J.water * 0.7); if (J.water >= 1) { if (G.lesson) { lessonMiss(G, true); return; } J.water = 1; jobLost(G, 'flood'); return; } }
+  if (J.walk) { J.walk.t += dt; if (J.walk.t >= J.walk.dur) { J.me = J.walk.id; J.look = { id: J.walk.id, t: 0, seen: false }; J.walk = null; G.ev.push({ k: 'look', id: J.me }); } }
+  if (J.look && !J.look.seen) { J.look.t += dt; if (J.look.t >= G.cfg.look) { J.look.seen = true; const lt = lookText(G, J.look.id); J.seenParts = J.seenParts || {}; J.seenParts[J.look.id] = lt.bad ? 'bad' : 'ok'; J.found = J.found || []; if (!J.found.includes(lt.txt)) J.found.push(lt.txt); G.ev.push({ k: 'seen', id: J.look.id, bad: lt.bad, txt: lt.txt }); } }
+  const F = J.fix; if (!F) return; F.t += dt;
+  if ((F.kind === 'hold' || F.kind === 'end') && F.held) { F.m += F.rate * dt; if (F.kind === 'end' && F.m >= 1) { F.m = 1; F.held = false; fixGood(G); } else if (F.m > 1) { F.m = 1; F.held = false; fixOver(G); } }
+  if (F.kind === 'pump') { F.p += dt / F.T; if (F.p >= 1) { F.p -= 1; F.prevEnd = G.t; F.T = 0.75 + G.rnd() * 0.45; F.cyc = (F.cyc | 0) + 1; } }
+  if (F.kind === 'feed') { if (F.stall > 0) { F.stall -= dt; return; } F.stT -= dt;
+    if (F.stT <= 0) { if (F.st === 'ok') { F.st = 'warn'; F.stT = 0.4; } else if (F.st === 'warn') { F.st = 'snag'; F.stT = 0.55 + G.rnd() * 0.5; G.ev.push({ k: 'snag' }); } else { F.st = 'ok'; F.stT = 0.6 + G.rnd() * (2.2 - G.cfg.snag); } }
+    if (F.held) { if (F.st === 'snag') { F.kinkT += dt; if (F.kinkT > 0.18) { F.kinkT = 0; F.prog = Math.max(0, F.prog - 0.34); F.stall = 0.7; F.st = 'ok'; F.stT = 0.6 + G.rnd(); F.held = false; G.ev.push({ k: 'kink' }); fixMiss(G, 'kink'); } }
+      else { F.prog += G.cfg.feed * dt; if (F.prog >= 1) { F.prog = 1; F.held = false; fixGood(G); } } } else F.kinkT = 0; } }
+// what you find when you look at a part
+function lookText(G, id) { const J = G.job, st = curStep(G); if (!J) return { txt: '', bad: false };
+  if (st && st[0] === id) return { txt: st[1] === 'Shut off' ? 'The stopcock. Turn it off to stop the water.' : J.si === 0 ? J.call.cause.cause : (st[1] === 'Solder joints' ? 'New section in. Now solder the joints.' : st[1] === 'Tighten hose' ? 'Hose on. Tighten it.' : 'Next: ' + st[1].toLowerCase() + '.'), bad: true };
+  if (J.steps.slice(J.si).some(s => s[0] === id)) return { txt: id === 'pipe' ? 'Water spraying everywhere. Shut the main off first!' : 'Water still on here. Shut the main off first.', bad: true };
+  if (id === J.call.at && J.call.cause.weak) return { txt: 'Weak here, and at the other taps too. The problem is further back.', bad: false };
+  if (id === J.call.at && J.call.job.id === 'bang') return { txt: 'The pipe jumps when the tap shuts. Pressure is too high somewhere.', bad: false };
+  if (id === J.call.at && J.call.job.id === 'smell') return { txt: 'Trap is full of water. The smell is coming from the vent pipe.', bad: false };
+  if (id === J.call.at && J.call.job.id === 'sewer') return { txt: 'Backing up from below. The blockage is further down the drain.', bad: false };
+  if (id === J.call.at && J.call.job.id === 'nowater') return { txt: 'Nothing comes out. Check where the water comes in.', bad: false };
+  if (id === 'main' && J.call.cause.weak && J.call.cause.at !== 'main') return { txt: 'Stopcock fully open. Pressure low after the valve.', bad: false };
+  return { txt: FINE[id], bad: false }; }
+function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const c = G.cfg, avg = G.jobsDone ? G.starsSum / G.jobsDone : 0;
+  const stars = win ? 1 + (avg >= 2.6 ? 1 : 0) + (G.clock >= c.day * 0.25 ? 1 : 0) : 0;
+  G.res = { win, stars, cash: G.cash, need: c.target, prog: Math.min(1, G.cash / c.target), jobs: G.jobsDone, avg, lost: G.lost, done: G.done, score: G.cash, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + Math.floor(Math.min(1, G.cash / c.target) * 4) };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- LESSONS: a single rigged job; any slip starts it again ----------
+const LESSONS = {
+  1: [{ id: 'washer', title: 'A DRIPPING TAP', how: 'Tap the dripping kitchen tap to look at it. Pick NEW WASHER, then HOLD and let go in the green. Twice.', need: 2, job: 'drip' }],
+  2: [{ id: 'plunge', title: 'PLUNGE IT', how: 'Tap the toilet, pick PLUNGE, then TAP each time the ring closes on the circle. Off-beat taps push the water back.', need: 1, job: 'wcclog' }],
+  3: [{ id: 'burst', title: 'BURST PIPE!', how: 'Water everywhere! First SHUT OFF the main (the stopcock by the meter, downstairs), then fit a new section and solder it.', need: 1, job: 'burst' }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonDeal(G, keepN) { const st = lessonNow(G); if (!keepN) G.lesson.n = 0; G.calls = []; G.fumble = 0;
+  const j = JOBS.find(q => q.id === st.job), call = { id: 0, job: j, cause: j.causes[0], at: j.at[0], steps: j.causes[0].steps.map(([p, a]) => [p === '@' ? j.at[0] : p, a]), pay: 0, dist: 0, urgent: false, ttl: 99, age: 0, say: j.say[0], who: 'Mrs Bell', addr: '12 Mill Lane', house: 'semi', mirror: false, hue: 30, style: 0 };
+  arrive(G, call); }
+function lessonMiss(G, slip) { const st = lessonNow(G); G.ev.push({ k: 'lessonmiss', how: st.how }); if (G.job) G.job.fix = null; G.phase = 'paid'; G.wait = 1.4; G.next = () => lessonDeal(G); }
+function lessonSee(G, name) { const st = lessonNow(G); if (!st) return; const D = G.lesson, J = G.job; if (J.si < J.steps.length) return;      // the whole job must be done
+  D.n += 1; G.ev.push({ k: 'lessonok', n: Math.min(D.n, st.need), need: st.need }); G.phase = 'paid';
+  if (D.n >= st.need) { D.i++; G.wait = 1.5; if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.next = () => { G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); }; } else G.next = () => lessonDeal(G); }
+  else { G.wait = 0.9; G.next = () => lessonDeal(G, true); } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: taps a call, a part of the house, a fix on the card; presses and lets go; drags a dial
+// somewhere; drops a part somewhere
+const BLIND = {
+  c: G => takeCall(G, (Math.random() * 3) | 0),
+  f: G => { const J = G.job; if (J) tapPart(G, J.parts[(Math.random() * J.parts.length) | 0]); },
+  o: G => act(G, (Math.random() * 4) | 0),
+  h: G => press(G), r: G => lift(G),
+  d: G => { dial(G, Math.random()); dialDone(G); },
+  x: G => drop(G, Math.random() * 3),
+};
+// a player who looks: picks a good call, goes to the part the complaint points at (or straight to the real one, if they know
+// the trade), reads what the look says, picks the fix, and does it with a human hand (late, early, shaky)
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
+  if (G.over || G.wait > 0) { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60;
+  if (G.phase === 'board') { if (mem.t < 1.6 + react * 4) return;      /* reading the calls */ mem.t = 0; let bi = -1, bv = -1e9; G.calls.forEach((c, i) => { const v = c.pay / (c.dist + 8 + c.steps.length * 5) + (c.ttl - c.age < 6 ? -2 : 0) + (R() - 0.5) * (1 - acc) * 4; if (v > bv) { bv = v; bi = i; } }); if (bi >= 0) takeCall(G, bi); return; }
+  const J = G.job; if (!J || G.phase === 'paid') return;
+  if (G.phase === 'job') { if (J.walk || J.busy > 0) return; const st = curStep(G); if (!st) return;
+    if (!J.look) { if (mem.t < 0.8 + react * 2.5) return; mem.t = 0; mem.plan = mem.plan && mem.plan.job === J ? mem.plan : { job: J, tried: [] };
+      // where to look: a sharp one goes straight to the cause; otherwise the part the customer named first, then the main, then the rest
+      let tgt = st[0]; const know = 0.45 + acc * 0.45; if (R() > know) { const order = [J.call.at, 'main', 'prv', 'heater', 'vent', 'sewer'].filter(p => J.parts.includes(p) && !mem.plan.tried.includes(p)); if (order.length) tgt = order[0]; }
+      mem.plan.tried.push(tgt); tapPart(G, tgt); return; }
+    if (!J.look.seen) return; if (mem.t < 1.0 + react * 3) return;      /* reading what the look says */ mem.t = 0;
+    if (J.look.id !== st[0]) { J.look = null; return; }
+    const acts = FIX[st[0]].acts, k = R() < acc + (1 - acc) * 0.6 ? acts.indexOf(st[1]) : (R() * acts.length) | 0; act(G, k); return; }
+  if (G.phase === 'fix') { const F = J.fix; if (!F) return; const sl = 0.05 + (1 - acc) * 0.25 + react * 0.08;
+    if (F.kind === 'hold' || F.kind === 'end') { if (!F.held) { if (mem.t < 0.3 + react) return; mem.t = 0; mem.aim = (F.a + F.b) / 2 + (R() - 0.5) * 2 * (F.b - F.a) * sl * 2.2 + react * 0.04; press(G); } else if (F.m >= mem.aim) lift(G); return; }
+    if (F.kind === 'pump') { if (mem.jit == null) mem.jit = 0.02; const lead = (1 - F.p) * F.T; if (mem.cyc !== F.cyc && lead < mem.jit) { mem.cyc = F.cyc; pump(G); mem.jit = Math.abs((R() + R() + R() - 1.5) * sl * 0.6) + 0.01; } return; }
+    if (F.kind === 'feed') { const lag = 0.12 + react * 0.4; if (F.st === 'ok') { if (!F.held) { mem.rel = (mem.rel || 0) + 1 / 60; if (mem.rel > lag) { press(G); mem.rel = 0; } } } else if (F.held) { mem.cut = (mem.cut || 0) + 1 / 60; if (mem.cut > lag * (F.st === 'warn' ? 1 : 0.5)) { lift(G); mem.cut = 0; } } else mem.cut = 0; return; }
+    if (F.kind === 'set') { if (mem.t < 0.5 + react * 1.5) return; mem.t = 0; dial(G, F.tgt + (R() - 0.5) * 2 * F.w * (0.25 + sl * 1.6)); dialDone(G); return; }
+    if (F.kind === 'fit') { if (mem.t < 0.6 + react * 1.5) return; mem.t = 0; drop(G, R() < acc ? R() * 0.4 : 0.3 + R() * 0.8); return; } } }
+function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.cash = Math.max(G.cash, G.cfg.target); finish(G, true); }
+
+// ===================== DRAW (1 of 2): the house cut open, its pipes and parts =====================
+// 2D on purpose: a house cut open like a doll's house shows every pipe, valve and tap at once, which is the whole puzzle
+// (where is it really wrong?). Clean flat drawing: wallpapered rooms, wooden floors, cold pipes blue, hot pipes red, drains
+// grey, water moving along the pipes (slow when the pressure is low, none when there is no water). The fault shows itself:
+// drips, a puddle, spray, a rising flood, stink lines, a frosted pipe, a cold radiator, a jumping pressure needle.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null;
+const SHORT = { ksink: 'Sink', basin: 'Basin', wc: 'Toilet', shower: 'Shower', heater: 'Boiler', rad: 'Radiator', main: 'Stopcock', prv: 'Valve', wm: 'Washer', otap: 'Tap', vent: 'Vent', sewer: 'Drain', pipe: 'Pipe' };
+const NU = 'Nunito, "Barlow Condensed", "Arial Narrow", sans-serif';
+function sparks(x, y, n, col, sp = 200) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.45 + Math.random() * 0.35, t: 0, col, r: 2 + Math.random() * 2.5, g: 520 }); } if (PT.length > 420) PT.splice(0, PT.length - 420); }
+function drops(x, y, n, sp = 120) { for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col: '#7cc8ff', r: 1.6 + Math.random() * 2, g: 700 }); } }
+function say(txt, x, y, col = '#fff', size = 22) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3.2) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+// ---------- where everything is on the screen ----------
+function lay() { const s = S1(), top = 66 * s, sheetH = Math.round(clamp(H * 0.4, 250 * s, 340 * s)), sy = H - sheetH, aH = sy - top - 6;
+  const bw = Math.min(W - 10, aH / 1.02), bh = bw * 1.02, bx = (W - bw) / 2, by = top + Math.max(0, (aH - bh) * 0.5);
+  return { s, top, sheetH, sy, bx, by, bw, bh, X: u => bx + u * bw, Y: v => by + v * bh }; }
+const floorOf = (id, y) => id === 'vent' ? 0.2 : (id === 'otap' || id === 'sewer') ? 0.885 : y < 0.52 ? 0.515 : 0.875;
+// ---------- small things ----------
+function fillR(x, y, w, h, r, col) { ctx.fillStyle = col; rrect(x, y, w, h, r); ctx.fill(); }
+function circ(x, y, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+function line(pts, col, w) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); }
+const hsl = (h, s, l, a = 1) => `hsla(${h},${s}%,${l}%,${a})`;
+// ---------- the parts, drawn at (x, y) with size u (about the height of the part) ----------
+// st: what is wrong with it, for the look of it (frozen, cold, burst...)
+function drawPart(id, x, y, u, st = {}, now = 0) { ctx.save(); ctx.translate(x, y); const k = u / 40;
+  ctx.scale(k, k); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const steel = '#c9d3dc', dark = '#5a6672', white = '#f6f8fa', brass = '#d9a441';
+  switch (id) {
+    case 'ksink': fillR(-26, -2, 52, 22, 3, '#c98d55'); fillR(-26, -4, 52, 5, 2, '#e8dccb'); fillR(-15, -4, 26, 6, 2, '#9aa6b2'); fillR(-20, 3, 18, 15, 2, '#b07a46'); fillR(2, 3, 18, 15, 2, '#b07a46'); circ(-4, 10, 1.4, '#6a4a2a'); circ(6, 10, 1.4, '#6a4a2a');
+      line([[4, -4], [4, -20], [-6, -20], [-6, -14]], steel, 3.2); fillR(1, -9, 7, 3, 1.5, dark); break;
+    case 'basin': fillR(-14, -6, 28, 8, 4, white); ctx.strokeStyle = '#c8d0d8'; ctx.lineWidth = 1.2; rrect(-14, -6, 28, 8, 4); ctx.stroke(); fillR(-4, 2, 8, 18, 2, white); line([[0, -6], [0, -14], [-6, -14]], steel, 2.6); fillR(-17, -34, 34, 22, 3, '#dfeaf2'); ctx.strokeStyle = '#a8b8c4'; ctx.lineWidth = 1.5; rrect(-17, -34, 34, 22, 3); ctx.stroke(); break;
+    case 'wc': fillR(-6, -24, 18, 14, 2, white); ctx.strokeStyle = '#c8d0d8'; ctx.lineWidth = 1.2; rrect(-6, -24, 18, 14, 2); ctx.stroke(); fillR(-14, -10, 26, 6, 3, white); ctx.beginPath(); ctx.moveTo(-12, -4); ctx.quadraticCurveTo(-10, 12, 2, 14); ctx.lineTo(8, 20); ctx.lineTo(-6, 20); ctx.lineTo(-4, 14); ctx.quadraticCurveTo(-14, 8, -14, -4); ctx.closePath(); ctx.fillStyle = white; ctx.fill(); ctx.stroke(); fillR(-2, -27, 8, 3, 1.5, steel); break;
+    case 'shower': fillR(-18, 14, 36, 6, 2, white); line([[12, 14], [12, -28], [2, -32]], steel, 2.4); fillR(-6, -36, 12, 5, 2.5, steel); fillR(9, -6, 6, 6, 3, dark); ctx.globalAlpha = 0.35; fillR(-18, -30, 36, 44, 2, '#bfe4ff'); ctx.globalAlpha = 1;
+      if (!st.weak) for (let i = 0; i < 5; i++) { const yy = ((now * 60 + i * 9) % 40) - 28; ctx.globalAlpha = st.on ? 0.7 : 0; line([[-4 + i * 2, yy], [-4 + i * 2, yy + 5]], '#7cc8ff', 1.2); } ctx.globalAlpha = 1; break;
+    case 'heater': fillR(-14, -22, 28, 40, 3, white); ctx.strokeStyle = '#c8d0d8'; ctx.lineWidth = 1.2; rrect(-14, -22, 28, 40, 3); ctx.stroke(); fillR(-8, -2, 16, 10, 2, '#2a3038');
+      if (!st.out) { const fl = 0.7 + 0.3 * Math.sin(now * 14); ctx.fillStyle = '#4aa8ff'; ctx.beginPath(); ctx.ellipse(0, 6 - 3 * fl, 3, 4 * fl, 0, 0, TAU); ctx.fill(); }
+      circ(0, -12, 5, '#eef2f6'); ctx.strokeStyle = dark; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, -12, 5, 0, TAU); ctx.stroke(); { const a = -Math.PI * 0.9 + (st.low ? 0.3 : 1.1) * Math.PI * 0.8; line([[0, -12], [Math.cos(a) * 4, -12 + Math.sin(a) * 4]], '#d03a3a', 1.2); }
+      line([[-8, 18], [-8, 24]], '#d04a3a', 3); line([[8, 18], [8, 24]], '#3a8ad0', 3); break;
+    case 'rad': for (let i = 0; i < 6; i++) { const g = ctx.createLinearGradient(0, -12, 0, 12); g.addColorStop(0, st.cold ? '#bcd4ea' : '#f4e2d8'); g.addColorStop(0.5, st.cold ? '#e8eef4' : '#f8ece4'); g.addColorStop(1, '#f6e6dc'); ctx.fillStyle = g; rrect(-21 + i * 7, -12, 6, 26, 2.5); ctx.fill(); }
+      ctx.strokeStyle = '#c8b8ac'; ctx.lineWidth = 0.8; for (let i = 0; i < 6; i++) { rrect(-21 + i * 7, -12, 6, 26, 2.5); ctx.stroke(); } fillR(19, -14, 5, 4, 1, brass); fillR(-25, 10, 5, 5, 1, st.shut ? '#c03030' : brass); break;
+    case 'main': line([[-24, 8], [24, 8]], '#3a8ad0', 5); circ(-8, 0, 9, '#f2f2ee'); ctx.strokeStyle = dark; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(-8, 0, 9, 0, TAU); ctx.stroke(); { const a = now * (st.flow || 0) * 5; line([[-8, 0], [-8 + Math.cos(a) * 6, Math.sin(a) * 6]], '#d03a3a', 1.4); } fillR(-12, -12, 8, 4, 1, dark);
+      fillR(10, 3, 8, 10, 2, brass); line([[14, 3], [14, -6]], dark, 2); fillR(st.shut ? 6 : 8, -10, st.shut ? 16 : 12, 5, 2.5, '#d83a3a'); if (st.ice) { ctx.globalAlpha = 0.85; fillR(-24, 4, 22, 8, 3, '#e0f4ff'); ctx.globalAlpha = 1; } break;
+    case 'prv': line([[-22, 8], [22, 8]], '#3a8ad0', 5); fillR(-8, 0, 16, 16, 3, brass); fillR(-5, -10, 10, 11, 2, '#c08a30'); circ(0, -16, 7, '#f2f2ee'); ctx.strokeStyle = dark; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(0, -16, 7, 0, TAU); ctx.stroke();
+      { const v = st.hi ? 0.95 : st.lo ? 0.12 : 0.5, a = Math.PI * (0.8 + v * 1.4) + (st.hi ? Math.sin(now * 30) * 0.08 : 0); line([[0, -16], [Math.cos(a) * 5.5, -16 + Math.sin(a) * 5.5]], '#d03a3a', 1.3); } break;
+    case 'wm': fillR(-18, -22, 36, 42, 3, white); ctx.strokeStyle = '#c8d0d8'; ctx.lineWidth = 1.2; rrect(-18, -22, 36, 42, 3); ctx.stroke(); fillR(-18, -22, 36, 8, 3, '#e4e9ee'); circ(0, 2, 12, '#9aa6b2'); circ(0, 2, 9, st.full ? '#6aa8d8' : '#3a4450'); circ(10, -18, 2, '#5ad86a'); line([[18, -16], [26, -16], [26, -28]], st.split ? '#9aa' : '#8a96a2', 2.4); break;
+    case 'otap': fillR(-6, -8, 12, 10, 2, brass); line([[0, -8], [0, -14]], dark, 2); fillR(-6, -17, 12, 4, 2, '#d83a3a'); line([[-6, -2], [-12, 6]], brass, 3.5); if (st.ice) { ctx.globalAlpha = 0.85; fillR(-10, -10, 16, 14, 4, '#e0f4ff'); ctx.globalAlpha = 1; } break;
+    case 'vent': line([[0, 18], [0, -14]], '#8a96a2', 6); fillR(-7, -20, 14, 6, 2, '#5a6672'); if (st.nest) { ctx.fillStyle = '#8a5a2a'; ctx.beginPath(); ctx.ellipse(0, -21, 9, 4, 0, Math.PI, 0); ctx.fill(); for (let i = 0; i < 6; i++) line([[-8 + i * 3, -21], [-6 + i * 3, -25]], '#6a4018', 0.8); } break;
+    case 'sewer': ctx.fillStyle = '#4a5058'; ctx.beginPath(); ctx.ellipse(0, 0, 16, 6, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#2a3038'; ctx.lineWidth = 1; for (let i = -2; i <= 2; i++) line([[i * 5, -4], [i * 5, 4]], '#2a3038', 0.8); break;
+    case 'pipe': line([[-26, 0], [-4, 0]], '#3a8ad0', 6); line([[4, 0], [26, 0]], '#3a8ad0', 6); if (st.fixed) line([[-6, 0], [6, 0]], '#d9a441', 6); break;
+  }
+  ctx.restore(); }
+// ---------- the house: drawn once per job into its own picture ----------
+const HOUSE = { key: '', oc: null };
+function houseState(G) { const J = G.job; if (!J) return {}; const c = J.call, id = c.job.id, st = {}, si = J.si, cz = c.cause, todo = s => J.steps.slice(si).some(q => q[1] === s);
+  // what each part looks like right now, from what is still wrong
+  st.flow = (id === 'nowater' && si === 0) ? 0 : (cz.weak && si === 0) ? 0.35 : (J.flooding ? 1.6 : 1);
+  st.mainShut = J.steps.some(q => q[1] === 'Shut off') && J.si >= 1 && J.steps.findIndex(q => q[1] === 'Shut off') < J.si;
+  if (id === 'nowater' && si === 0 && cz.cold) st.ice = true; if (id === 'nowater' && si === 0 && !cz.cold) st.mainShutFault = true;
+  if (cz.at === 'prv' && si === 0) st.prv = id === 'bang' ? 'hi' : 'lo'; if (id === 'nohot' && todo('Light pilot')) st.pilotOut = true; if (id === 'boiler' && si === 0) st.boilerLow = true;
+  if (id === 'radcold' && si === 0) st.radCold = true; if (id === 'radcold' && todo('Set valve')) st.radShut = true; if (id === 'smell' && si === 0) st.nest = true; if (id === 'otapfrozen' && si === 0) st.otapIce = true;
+  if ((id === 'wmflood') && si < 2) st.wmSplit = true; if (id === 'wmdrain' && si === 0) st.wmFull = true; if (id === 'burst') st.pipeFixed = si >= 2;
+  return st; }
+function partState(G, id, now) { const S = houseState(G), J = G.job; const o = {};
+  if (id === 'main') { o.flow = S.mainShut ? 0 : S.flow; o.shut = S.mainShut || S.mainShutFault; o.ice = S.ice; }
+  if (id === 'prv') { o.hi = S.prv === 'hi'; o.lo = S.prv === 'lo'; } if (id === 'heater') { o.out = S.pilotOut; o.low = S.boilerLow; } if (id === 'rad') { o.cold = S.radCold; o.shut = S.radShut; }
+  if (id === 'vent') o.nest = S.nest; if (id === 'otap') o.ice = S.otapIce; if (id === 'wm') { o.split = S.wmSplit; o.full = S.wmFull; } if (id === 'pipe') o.fixed = S.pipeFixed;
+  if (id === 'shower') { o.weak = J && J.call.cause.weak && J.si === 0; o.on = J && J.call.job.id === 'lowpress'; }
+  return o; }
+function paintHouse(G, L) { const J = G.job, c = J.call, key = [c.id, W, H, DPR, J.si].join(':'); if (HOUSE.key === key) return; HOUSE.key = key;
+  const oc = HOUSE.oc || (HOUSE.oc = document.createElement('canvas')); oc.width = cv.width; oc.height = cv.height; const o = oc.getContext('2d'), save = ctx; o.setTransform(DPR, 0, 0, DPR, 0, 0);
+  _ctx = o; houseBody(G, L, c); }
+let _ctx = null;
+function houseBody(G, L, c) { const o = _ctx, X = L.X, Y = L.Y, m = c.mirror, mx = u => m ? 0.96 - u : u, h = c.hue;
+  const P = PLACES[G.place]; const sky = o.createLinearGradient(0, L.top, 0, L.Y(0.9)); sky.addColorStop(0, P.sky[0]); sky.addColorStop(1, P.sky[1]); o.fillStyle = sky; o.fillRect(0, L.top - 10, W, L.Y(0.885) - L.top + 10);
+  // far hills and the garden
+  o.fillStyle = '#9cc890'; o.beginPath(); o.moveTo(0, L.Y(0.8)); for (let i = 0; i <= 8; i++) o.quadraticCurveTo(W * (i + 0.5) / 8, L.Y(0.72 + 0.03 * Math.sin(i * 2.1 + c.id)), W * (i + 1) / 8, L.Y(0.8)); o.lineTo(W, L.Y(0.9)); o.lineTo(0, L.Y(0.9)); o.fill();
+  o.fillStyle = '#6aa85a'; o.fillRect(0, L.Y(0.885), W, L.Y(0.92) - L.Y(0.885)); o.fillStyle = '#8a6a4a'; o.fillRect(0, L.Y(0.92), W, L.sy - L.Y(0.92) + 4);
+  o.fillStyle = 'rgba(0,0,0,.08)'; for (let i = 0; i < 40; i++) { const xx = (i * 97.3 + c.id * 13) % W, yy = L.Y(0.94) + ((i * 53) % 40) * L.s; o.fillRect(xx, yy, 3, 2); }
+  // walls and roof
+  const wl = X(0.04), wr = X(0.92); o.fillStyle = '#e9e1d4'; o.fillRect(wl - 5, Y(0.2), wr - wl + 10, Y(0.885) - Y(0.2));
+  o.fillStyle = ['#b5523a', '#5a6a7a', '#7a4a3a', '#3a5a6a'][c.style]; o.beginPath(); o.moveTo(X(0.0), Y(0.215)); o.lineTo(X(0.48), Y(0.0)); o.lineTo(X(0.96), Y(0.215)); o.closePath(); o.fill();
+  o.fillStyle = 'rgba(0,0,0,.12)'; for (let i = 1; i < 6; i++) { o.fillRect(X(0.02 + i * 0.02), Y(0.215 - i * 0.035), X(0.94 - i * 0.04) - X(0.02 + i * 0.04), 1.2); }
+  o.fillStyle = '#f2e8d8'; o.beginPath(); o.moveTo(X(0.07), Y(0.2)); o.lineTo(X(0.48), Y(0.025)); o.lineTo(X(0.89), Y(0.2)); o.closePath(); o.fill();      // the loft, inside
+  const room = (x0, x1, y0, y1, hue, pat) => { const a = X(Math.min(mx(x0), mx(x1))), b = X(Math.max(mx(x0), mx(x1))); o.fillStyle = hsl(hue, 35, 82); o.fillRect(a, Y(y0), b - a, Y(y1) - Y(y0));
+    o.fillStyle = hsl(hue, 30, 74); for (let xx = a + 6; xx < b; xx += pat) o.fillRect(xx, Y(y0), 2, Y(y1) - Y(y0));
+    o.fillStyle = '#b98a5a'; o.fillRect(a, Y(y1) - 5 * L.s, b - a, 5 * L.s); o.fillStyle = 'rgba(0,0,0,.12)'; o.fillRect(a, Y(y1) - 5 * L.s, b - a, 1.2); };
+  room(0.045, 0.58, 0.21, 0.515, (h + 180) % 360, 14 * L.s); room(0.58, 0.915, 0.21, 0.515, (h + 40) % 360, 22 * L.s); room(0.045, 0.5, 0.525, 0.875, (h + 90) % 360, 18 * L.s); room(0.5, 0.915, 0.525, 0.875, h, 26 * L.s);
+  // bathroom tiles, kitchen tiles
+  { const a = X(Math.min(mx(0.045), mx(0.58))), b = X(Math.max(mx(0.045), mx(0.58))); o.fillStyle = 'rgba(255,255,255,.55)'; for (let xx = a; xx < b; xx += 9 * L.s) for (let yy = Y(0.38); yy < Y(0.505); yy += 9 * L.s) o.fillRect(xx + 0.5, yy + 0.5, 8 * L.s, 8 * L.s); }
+  // the floors (thick) and the inner walls
+  o.fillStyle = '#7a5a3a'; o.fillRect(wl - 5, Y(0.515), wr - wl + 10, Y(0.53) - Y(0.515)); o.fillRect(wl - 5, Y(0.2), wr - wl + 10, Y(0.21) - Y(0.2)); o.fillRect(wl - 5, Y(0.875), wr - wl + 10, Y(0.89) - Y(0.875));
+  o.fillStyle = '#d8ccb8'; o.fillRect(X(mx(0.58)) - 3, Y(0.21), 6, Y(0.515) - Y(0.21)); o.fillRect(X(mx(0.5)) - 3, Y(0.53), 6, Y(0.875) - Y(0.53));
+  o.fillStyle = '#c8bca8'; o.fillRect(wl - 5, Y(0.2), 5, Y(0.885) - Y(0.2)); o.fillRect(wr, Y(0.2), 5, Y(0.885) - Y(0.2));
+  // windows and a door, for life
+  const win = (u, v) => { const x = X(mx(u)), y = Y(v), w = 30 * L.s, hh = 36 * L.s; o.fillStyle = '#ffffff'; o.fillRect(x - w / 2 - 3, y - hh / 2 - 3, w + 6, hh + 6); o.fillStyle = P.sky[0]; o.fillRect(x - w / 2, y - hh / 2, w, hh); o.fillStyle = '#fff'; o.fillRect(x - 1, y - hh / 2, 2, hh); o.fillRect(x - w / 2, y - 1, w, 2); };
+  win(0.68, 0.33); win(0.84, 0.33); win(0.1, 0.63); o.fillStyle = '#7a4a2a'; { const x = X(mx(0.88)), y0 = Y(0.6); o.fillRect(x - 10 * L.s, y0, 20 * L.s, Y(0.875) - y0 - 5 * L.s); }
+  // bed, sofa: a few shapes
+  { const x = X(mx(0.82)), y = Y(0.515) - 5 * L.s; o.fillStyle = hsl((h + 200) % 360, 40, 60); o.fillRect(x - 26 * L.s, y - 12 * L.s, 40 * L.s, 12 * L.s); o.fillStyle = '#fff'; o.fillRect(x - 26 * L.s, y - 16 * L.s, 10 * L.s, 6 * L.s); }
+  // the pipes: cold riser from the main, branches to each part; hot from the boiler; drains down to the sewer
+  const at = id => { const p = spot(G, id); return [X(p[0]), Y(p[1])]; }, [mxp, myp] = at('main'), riser = X(mx(0.62)), u = L.s;
+  const cold = '#3a8ad0', hot = '#d04a3a', drain = '#8a96a2';
+  const run = (pts, col, w) => { o.strokeStyle = 'rgba(0,0,0,.18)'; o.lineWidth = w + 2; o.lineCap = 'round'; o.lineJoin = 'round'; o.beginPath(); pts.forEach(([x, y], i) => i ? o.lineTo(x, y) : o.moveTo(x, y)); o.stroke(); o.strokeStyle = col; o.lineWidth = w; o.stroke(); };
+  HOUSE.pipes = [];
+  const add = (pts, col, kind) => { HOUSE.pipes.push({ pts, col, kind }); run(pts, col, kind === 'drain' ? 5 * u : 3.4 * u); };
+  add([[X(1.0), Y(0.9)], [mxp, Y(0.9)], [mxp, myp + 4 * u]], cold, 'in');
+  add([[mxp, Y(0.86)], [riser, Y(0.86)], [riser, Y(0.25)]], cold, 'cold');
+  for (const id of ['ksink', 'wm', 'heater', 'otap']) { const [x, y] = at(id); const yy = id === 'heater' ? y + 20 * u : y + 2 * u; add([[riser, Y(0.86) - (id === 'otap' ? 30 : 8) * u], [x, Y(0.86) - (id === 'otap' ? 30 : 8) * u], [x, yy]], cold, 'cold'); }
+  for (const id of ['basin', 'wc', 'shower']) { const [x, y] = at(id); add([[riser, Y(0.25)], [x, Y(0.25)], [x, y - (id === 'shower' ? 28 : 16) * u]], cold, 'cold'); }
+  { const [hx, hy] = at('heater'), [rx, ry] = at('rad'); add([[hx - 6 * u, hy + 20 * u], [hx - 6 * u, Y(0.535)], [rx, Y(0.535)], [rx, ry + 12 * u]], hot, 'hot'); const [bx2] = at('basin'), [sx] = at('shower'); add([[hx - 6 * u, Y(0.535)], [bx2 + 6 * u, Y(0.535)]], hot, 'hot'); }
+  { const stack = X(mx(0.53)); for (const id of ['basin', 'wc', 'shower']) { const [x, y] = at(id); add([[x, y + 14 * u], [x, Y(0.505)], [stack, Y(0.505)]], drain, 'drain'); } for (const id of ['ksink', 'wm']) { const [x, y] = at(id); add([[x, y + 14 * u], [x, Y(0.868)], [stack, Y(0.868)]], drain, 'drain'); }
+    const [vx, vy] = at('vent'), [sx, sy] = at('sewer'); add([[vx, vy + 10 * u], [vx, Y(0.2)], [stack, Y(0.22)], [stack, Y(0.95)], [sx, Y(0.95)], [sx, sy + 3 * u]], drain, 'drain'); }
+  // the parts that do not change during a job are drawn live (they animate), so nothing more here
+}
+// ---------- live layer: water in the pipes, the parts, the people, the trouble ----------
+function liveHouse(G, L, now) { const J = G.job, c = J.call, X = L.X, Y = L.Y, u = L.s, S = houseState(G);
+  // water moving: dashes along the cold pipes
+  const flow = S.mainShut ? 0 : S.flow; if (flow > 0 && HOUSE.pipes) { ctx.setLineDash([4 * u, 10 * u]); ctx.lineDashOffset = -now * 40 * flow * u; ctx.strokeStyle = 'rgba(210,240,255,.85)'; ctx.lineWidth = 1.4 * u; ctx.lineCap = 'butt';
+    for (const p of HOUSE.pipes) { if (p.kind !== 'cold' && p.kind !== 'in') continue; ctx.beginPath(); p.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); } ctx.setLineDash([]); }
+  if (S.prv === 'hi') { /* banging: the pipes shiver */ }
+  // parts
+  for (const id of J.parts) { const [px, py] = spot(G, id), x = X(px), y = Y(py), big = id === 'heater' || id === 'wm' ? 1.0 : id === 'pipe' ? 0.9 : 0.8;
+    let sh = 0; if (S.prv === 'hi' && (id === 'ksink' || id === 'basin') && Math.sin(now * 2.2) > 0.6) sh = Math.sin(now * 60) * 1.5 * u;
+    drawPart(id, x + sh, y, 40 * u * big * (L.bw / 380), partState(G, id, now), now);
+    { const nm = SHORT[id]; ctx.font = `800 ${Math.round(8.5 * u)}px ${NU}`; const tw = ctx.measureText(nm).width + 8, ly = y + (id === 'vent' ? -30 : id === 'sewer' ? 12 : 24) * u; ctx.fillStyle = 'rgba(8,24,40,.55)'; rrect(x - tw / 2, ly - 6 * u, tw, 12 * u, 6 * u); ctx.fill(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(nm, x, ly + 0.5); }
+    const seen = J.seenParts && J.seenParts[id]; if (seen) { const b = seen === 'bad'; circ(x + 15 * u, y - 18 * u, 7 * u, b ? '#ff5a4a' : '#4ac06a'); ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(10 * u)}px ${NU}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(b ? '!' : '✓', x + 15 * u, y - 17.5 * u); }
+    if (J.look && J.look.id === id) { ctx.strokeStyle = 'rgba(255,200,40,.95)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(x, y, 26 * u, 0, TAU); ctx.stroke(); } }
+  // the trouble, where it is
+  const fault = J.steps[J.si], id0 = c.job.id, [ax, ay] = spot(G, c.at), fx = X(ax), fy = Y(ay);
+  if (id0 === 'drip' && J.si === 0 && Math.random() < 0.05) drops(fx + (c.mirror ? -1 : 1) * -2 * u, fy - 10 * u, 1, 10);
+  if (id0 === 'drip' && J.si === 0) { const t = (now * 1.6) % 1; circ(fx - 6 * u * (c.at === 'ksink' ? -0.3 : 1), fy - 12 * u + t * 14 * u, 2 * u, `rgba(124,200,255,${1 - t})`); }
+  if (id0 === 'trap' && J.si === 0) puddle(fx, Y(floorOf(c.at, ay)) - 5 * u, 22 * u, now);
+  if (id0 === 'sinkclog' && J.si === 0) { ctx.fillStyle = 'rgba(120,130,110,.85)'; ctx.fillRect(fx - 12 * u, fy - 3 * u, 18 * u, 3 * u); }
+  if (id0 === 'wcclog' && J.si === 0) { ctx.fillStyle = 'rgba(140,130,90,.9)'; ctx.beginPath(); ctx.ellipse(fx - 1 * u, fy - 8 * u, 9 * u, 2.5 * u, 0, 0, TAU); ctx.fill(); }
+  if (id0 === 'wcrun' && J.si === 0) { for (let i = 0; i < 3; i++) { const t = ((now * 0.8 + i / 3) % 1); ctx.globalAlpha = 1 - t; line([[fx + 3 * u, fy - 20 * u - t * 12 * u], [fx + 6 * u, fy - 24 * u - t * 12 * u]], '#7cc8ff', 1.5); } ctx.globalAlpha = 1; }
+  if ((id0 === 'smell' || id0 === 'sewer') && J.si === 0) for (let i = 0; i < 3; i++) { const t = (now * 0.5 + i / 3) % 1; ctx.strokeStyle = `rgba(120,170,60,${0.8 * (1 - t)})`; ctx.lineWidth = 2; ctx.beginPath(); for (let k = 0; k <= 8; k++) { const yy = fy - 14 * u - t * 30 * u - k * 2 * u; const xx = fx - 10 * u + i * 8 * u + Math.sin(k * 0.9 + now * 3) * 3 * u; k ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); }
+  if (id0 === 'sewer' && J.si === 0) puddle(fx, Y(0.875) - 5 * u, 16 * u, now, 'rgba(130,120,80,.7)');
+  if ((id0 === 'bang') && J.si === 0 && Math.sin(now * 2.2) > 0.6) { ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(12 * u)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('BANG!', fx + 18 * u, fy - 26 * u); }
+  if (id0 === 'cartridge' && J.si < 2) { const t = (now * 1.4) % 1; circ(fx - 1 * u, fy - 28 * u + t * 40 * u, 1.8 * u, `rgba(124,200,255,${1 - t})`); }
+  if (id0 === 'aerator' && J.si === 0 && Math.random() < 0.2) drops(fx + 2 * u, fy - 12 * u, 1, 60);
+  // spray: a burst pipe, a split hose, a split outside tap, or a fix done before the shut-off
+  const spraying = J.flooding || (id0 === 'otap' && J.si < 1) || J.spray; if (spraying) { const sp = id0 === 'burst' ? spot(G, 'pipe') : id0 === 'wmflood' ? spot(G, 'wm') : id0 === 'otap' ? spot(G, 'otap') : spot(G, J.steps[J.steps.length - 1][0]); if (Math.random() < 0.7) drops(X(sp[0]), Y(sp[1]) - 4 * u, 2, 170); }
+  // the flood: water rising in the room
+  if (J.water > 0) { const id = c.job.id === 'burst' ? 'pipe' : c.at, [px, py] = spot(G, id), fl = Y(floorOf(id === 'pipe' ? 'ksink' : id, py === 0.555 ? 0.6 : py)) - 4 * u, top = Y(id === 'pipe' ? 0.53 : py < 0.52 ? 0.21 : 0.53), lvl = fl - (fl - top) * Math.min(1, J.water) * 0.9;
+    const xr = py < 0.52 ? [0.045, 0.915] : [0.045, 0.915]; ctx.fillStyle = 'rgba(70,150,230,.42)'; ctx.beginPath(); ctx.moveTo(X(xr[0]), fl); for (let xx = X(xr[0]); xx <= X(xr[1]); xx += 6) ctx.lineTo(xx, lvl + Math.sin(xx * 0.08 + now * 4) * 2 * u); ctx.lineTo(X(xr[1]), fl); ctx.closePath(); ctx.fill(); }
+  // the plumber and the customer
+  const me = J.walk ? (() => { const a = spot(G, J.me), b = spot(G, J.walk.id), t = easeOut(clamp(J.walk.t / J.walk.dur, 0, 1)); return [lerp(a[0], b[0], t), lerp(floorOf(J.me, a[1]), floorOf(J.walk.id, b[1]), t), true]; })() : (() => { const a = spot(G, J.me); return [a[0], floorOf(J.me, a[1]), false]; })();
+  const [cx0, cy0] = spot(G, c.at), cust = [clamp(cx0 + (cx0 > 0.5 ? -0.12 : 0.12), 0.08, 0.88), floorOf(c.at, cy0)];
+  person(X(cust[0]), Y(cust[1]) - 5 * u, 30 * u * (L.bw / 380), { hue: c.hue, mood: J.mood, cust: true }, now);
+  person(X(me[0] + 0.035), Y(me[1]) - 5 * u, 32 * u * (L.bw / 380), { walk: me[2], busy: !!J.fix }, now); }
+function puddle(x, y, r, now, col = 'rgba(80,160,230,.55)') { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, r * (1 + 0.04 * Math.sin(now * 2)), r * 0.22, 0, 0, TAU); ctx.fill(); }
+// a little person: the plumber (cap, blue overalls) or the customer (their own colour; a face that shows their patience)
+function person(x, y, h, o, now) { ctx.save(); ctx.translate(x, y); const k = h / 30; ctx.scale(k, k); const sw = o.walk ? Math.sin(now * 14) * 4 : 0, bob = o.busy ? Math.abs(Math.sin(now * 8)) * 1.2 : 0;
+  line([[-2, -10], [-3 - sw * 0.5, 0]], o.cust ? '#3a3a4a' : '#24508a', 3.2); line([[2, -10], [3 + sw * 0.5, 0]], o.cust ? '#3a3a4a' : '#24508a', 3.2);
+  if (o.cust) fillR(-5, -21 - bob, 10, 13, 3, hsl(o.hue, 55, 52)); else { fillR(-5, -21 - bob, 10, 13, 3, '#2a64b0'); fillR(-4, -20 - bob, 8, 4, 1, '#3a78c8'); }
+  line([[-5, -18 - bob], [-8 - (o.busy ? 2 : 0), -11 - bob - (o.busy ? 4 : 0)]], o.cust ? hsl(o.hue, 55, 52) : '#2a64b0', 2.6); line([[5, -18 - bob], [8 + (o.busy ? 3 : 0), -12 - bob - (o.busy ? 3 : 0)]], o.cust ? hsl(o.hue, 55, 52) : '#2a64b0', 2.6);
+  circ(0, -26 - bob, 5, o.cust ? hsl((o.hue * 7) % 40 + 15, 45, 62) : '#e8b088');
+  if (!o.cust) { fillR(-5.5, -32 - bob, 11, 4, 2, '#d83a3a'); fillR(0, -29.5 - bob, 7, 1.6, 0.8, '#d83a3a'); if (o.busy) { line([[9, -13 - bob], [13, -18 - bob]], '#8a96a2', 2); } }
+  else { const m = clamp(o.mood, 0, 1); ctx.strokeStyle = '#3a2a2a'; ctx.lineWidth = 0.9; ctx.beginPath(); const sm = (m - 0.5) * 2.4; ctx.moveTo(-2, -24 - bob); ctx.quadraticCurveTo(0, -24 + sm - bob, 2, -24 - bob); ctx.stroke(); circ(-1.8, -27 - bob, 0.7, '#3a2a2a'); circ(1.8, -27 - bob, 0.7, '#3a2a2a');
+    if (m < 0.4) { ctx.fillStyle = '#ff5a4a'; ctx.font = '900 7px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('!', 7, -32 - bob); } }
+  ctx.restore(); }
+
+// ===================== DRAW (2 of 2): the phone, the street, the job card, the hands-on fixes, the top bar =====================
+const ICON = { drip: '💧', trap: '🪣', sinkclog: '🚰', wcclog: '🚽', wcrun: '🚽', burst: '💦', nowater: '🚱', lowpress: '🚿', nohot: '🥶', radcold: '🌡️', boiler: '🔥', bang: '💥', wmflood: '🌊', smell: '🤢', sewer: '🕳️', showerslow: '🛁', otap: '🌿', cartridge: '🚿', aerator: '🚰', wmdrain: '🧺', otapfrozen: '🧊' };
+let lastPaid = null, ringT = 0, cashShow = 0, POP = [];
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2); ringT = Math.max(0, ringT - dt);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g || 520) * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 22; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  if (G) cashShow = lerp(cashShow, G.cash, Math.min(1, dt * 6)); if (lastPaid) lastPaid.t += dt;
+  const F = G && G.job && G.job.fix; if (F && F.held && !paused) { if (F.kind === 'feed') { if (F.st !== 'snag') sfx.feedTick(); } else sfx.ratchet(); } }
+const clockStr = G => { const m = Math.round((1 - G.clock / G.cfg.day) * 8 * 60), h = 9 + Math.floor(m / 60), mm = m % 60; return `${h > 12 ? h - 12 : h}:${String(mm).padStart(2, '0')} ${h >= 12 ? 'pm' : 'am'}`; };
+// ---------- the top bar: the time, the money, the level ----------
+function hud(G, L, now) { const s = L.s; ctx.fillStyle = 'rgba(8,24,40,.9)'; ctx.fillRect(0, 0, W, L.top); ctx.textBaseline = 'middle';
+  if (G.lesson) { lessonPanel(G, L); return; }
+  const late = G.clock < 25; ctx.textAlign = 'left'; ctx.fillStyle = late ? (Math.sin(now * 8) > 0 ? '#ff8a7a' : '#fff') : '#fff'; ctx.font = `${Math.round(20 * s)}px ${TF}`; ctx.fillText(clockStr(G), 12, 26 * s);
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillText(`DAY ${G.N} · ${PLACES[G.place].name.toUpperCase()}${G.cfg.boss ? ' · BUSY DAY' : ''}`, 12, 48 * s);
+  const p = clamp(G.cash / G.cfg.target, 0, 1), bw = Math.min(150 * s, W * 0.38), bx = W - bw - 12, by = 40 * s;
+  ctx.textAlign = 'right'; ctx.fillStyle = '#ffd36a'; ctx.font = `${Math.round(19 * s)}px ${TF}`; ctx.fillText('$' + Math.round(cashShow), W - 12 - 0, 22 * s); ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.font = `700 ${Math.round(11 * s)}px ${BC}`;
+  ctx.fillText(`of $${G.cfg.target} today` + (best[G.N] ? `  ·  best $${best[G.N]}` : ''), W - 12, by - 2 * s + 14 * s);
+  fillR(bx, by - 8 * s, bw, 7 * s, 3.5 * s, 'rgba(255,255,255,.15)'); fillR(bx, by - 8 * s, Math.max(7 * s, bw * p), 7 * s, 3.5 * s, p >= 1 ? '#7be08a' : '#ffb21e');
+  // the day: a thin bar under the top
+  fillR(0, L.top - 3, W * (1 - G.clock / G.cfg.day), 3, 0, late ? '#ff6a5a' : 'rgba(255,255,255,.35)'); }
+// the lesson: its title in the top bar (clear of the pause and Skip buttons), what to do in a box just under it
+function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffb21e'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.fillText('LESSON', 12, 22 * s); ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n}/${st.need}` : ''), 12, 44 * s);
+  ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; const ls = wrapText(st.how, W - 44), h = ls.length * 16 * s + 14, y = L.top + 6; fillR(10, y, W - 20, h, 12, 'rgba(8,24,40,.92)'); ctx.strokeStyle = '#ffb21e'; ctx.lineWidth = 1.5; rrect(10, y, W - 20, h, 12); ctx.stroke();
+  ctx.fillStyle = '#fff'; ls.forEach((l, i) => ctx.fillText(l, 22, y + 7 + 8 * s + i * 16 * s)); }
+// ---------- the street (between jobs) ----------
+function street(G, L, now, drive) { const s = L.s, P = PLACES[G.place], h = L.sy0 || L.top + 200 * s; const g = ctx.createLinearGradient(0, L.top, 0, h); g.addColorStop(0, P.sky[0]); g.addColorStop(1, P.sky[1]); ctx.fillStyle = g; ctx.fillRect(0, L.top, W, h - L.top);
+  const off = drive ? (now * 260 * s) : now * 6 * s, gy = h - 34 * s;
+  for (let i = -1; i < 9; i++) { const w = 74 * s, x = ((i * w - off) % (w * 8) + w * 8) % (w * 8) - w, hh = (46 + ((i * 37) % 3) * 12) * s, hue = (i * 67 + 20) % 360;
+    fillR(x + 4, gy - hh, w - 8, hh, 2, hsl(hue, 30, 78)); ctx.fillStyle = hsl(hue, 35, 42); ctx.beginPath(); ctx.moveTo(x, gy - hh + 1); ctx.lineTo(x + w / 2, gy - hh - 22 * s); ctx.lineTo(x + w, gy - hh + 1); ctx.fill();
+    fillR(x + 14 * s, gy - hh + 12 * s, 14 * s, 14 * s, 2, '#fff8e0'); fillR(x + w - 30 * s, gy - hh + 12 * s, 14 * s, 14 * s, 2, '#fff8e0'); fillR(x + w / 2 - 6 * s, gy - 20 * s, 12 * s, 20 * s, 2, hsl(hue, 40, 34)); }
+  ctx.fillStyle = '#5a646e'; ctx.fillRect(0, gy, W, 34 * s); ctx.fillStyle = '#fff'; for (let i = 0; i < 12; i++) { const x = ((i * 50 * s - off * 1.0) % (W + 50 * s) + W + 50 * s) % (W + 50 * s) - 50 * s; ctx.fillRect(x, gy + 16 * s, 24 * s, 2.5 * s); }
+  van(W * (drive ? 0.42 + Math.sin(now * 3) * 0.01 : 0.3), gy + 10 * s, 40 * s, now, drive); }
+function van(x, y, z, now, moving) { ctx.save(); ctx.translate(x, y + (moving ? Math.sin(now * 30) * 0.6 : 0)); const k = z / 40; ctx.scale(k, k);
+  fillR(-34, -26, 52, 24, 4, '#f4f6f8'); fillR(18, -18, 18, 16, 4, '#f4f6f8'); fillR(22, -16, 11, 8, 2, '#9fd4f0'); fillR(-34, -12, 70, 6, 0, '#2a64b0');
+  ctx.fillStyle = '#2a64b0'; ctx.font = '900 8px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('PLUMBER', -8, -16); ctx.fillText('🔧', 8, -16);
+  for (const wx of [-22, 22]) { circ(wx, -2, 7, '#2a2a30'); circ(wx, -2, 3, '#aab'); if (moving) line([[wx, -2], [wx + Math.cos(now * 30) * 3, -2 + Math.sin(now * 30) * 3]], '#555', 1); }
+  if (moving) for (let i = 0; i < 3; i++) { ctx.globalAlpha = 0.4 - i * 0.12; circ(-40 - i * 8 - (now * 40 % 8), -6 - i * 2, 3 + i, '#ccc'); } ctx.globalAlpha = 1; ctx.restore(); }
+// ---------- the phone: the calls waiting ----------
+function phoneRect(L) { const s = L.s, y = L.top + 196 * s; return { x: 10, y, w: W - 20, h: H - y - 10 }; }
+function callRect(i, L) { const P = phoneRect(L), s = L.s, n = Math.max(3, G ? G.cfg.calls : 3), ch = Math.min(96 * s, (P.h - 44 * s - (n - 1) * 8) / n); return { x: P.x + 8, y: P.y + 38 * s + i * (ch + 8), w: P.w - 16, h: ch }; }
+function drawCalls(G, L, now) { const s = L.s, P = phoneRect(L); fillR(P.x, P.y, P.w, P.h, 18, 'rgba(10,22,36,.94)'); ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.font = `${Math.round(14 * s)}px ${TF}`; ctx.fillText('📞 CALLS', P.x + 14, P.y + 20 * s); ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillText(G.calls.length ? 'tap one to go' : 'waiting for the phone...', P.x + P.w - 14, P.y + 20 * s);
+  G.calls.forEach((c, i) => { const r = callRect(i, L), born = Math.min(1, c.age / 0.25), x = r.x + (1 - easeOut(born)) * W, left = 1 - c.age / c.ttl, urgent = c.urgent;
+    fillR(x, r.y, r.w, r.h, 12, urgent ? '#3a1a1e' : '#1e3448'); ctx.strokeStyle = urgent ? 'rgba(255,90,74,.8)' : 'rgba(255,255,255,.12)'; ctx.lineWidth = 1.5; rrect(x, r.y, r.w, r.h, 12); ctx.stroke();
+    circ(x + 30 * s, r.y + r.h / 2, 21 * s, 'rgba(255,255,255,.1)'); ctx.font = `${Math.round(22 * s)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText(ICON[c.job.id] || '🔧', x + 30 * s, r.y + r.h / 2 + 1);
+    ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(14 * s)}px ${NU}`; const q = wrapText('“' + c.say + '”', r.w - 150 * s); q.slice(0, 2).forEach((l, k) => ctx.fillText(l, x + 58 * s, r.y + r.h * 0.3 + k * 16 * s));
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(11.5 * s)}px ${BC}`; ctx.fillText(`${c.who} · ${c.addr}`, x + 58 * s, r.y + r.h * 0.3 + Math.min(2, q.length) * 16 * s);
+    ctx.textAlign = 'right'; ctx.fillStyle = '#ffd36a'; ctx.font = `${Math.round(18 * s)}px ${TF}`; ctx.fillText('$' + c.pay, x + r.w - 12, r.y + r.h * 0.34); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(11.5 * s)}px ${BC}`; ctx.fillText(`🚐 ${Math.round(c.dist)} min`, x + r.w - 12, r.y + r.h * 0.62);
+    if (urgent) { fillR(x + r.w - 62 * s, r.y + r.h - 20 * s, 52 * s, 14 * s, 7 * s, '#ff5a4a'); ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(9 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('URGENT', x + r.w - 36 * s, r.y + r.h - 13 * s); }
+    fillR(x + 12, r.y + r.h - 5, (r.w - 24) * clamp(left, 0, 1), 3, 1.5, left < 0.3 ? '#ff6a5a' : 'rgba(255,255,255,.35)'); });
+  if (!G.calls.length) { ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = `700 ${Math.round(14 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('· · ·', W / 2, P.y + P.h / 2); } }
+// ---------- at the house: the card at the bottom (what they said, what you found) ----------
+function leaveRect(L) { const s = L.s; return { x: W - 108 * s - 12, y: H - 40 * s, w: 108 * s, h: 30 * s }; }
+function drawJobCard(G, L, now) { const J = G.job, s = L.s, y = L.sy + 8; fillR(8, y, W - 16, H - y - 8, 16, 'rgba(10,22,36,.94)');
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(16 * s)}px ${NU}`; const q = wrapText('“' + J.call.say + '”', W - 44); q.slice(0, 2).forEach((l, i) => ctx.fillText(l, 20, y + 12 * s + i * 19 * s));
+  let yy = y + 14 * s + Math.min(2, q.length) * 19 * s; ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillText(`— ${J.call.who}, ${J.call.addr}` + (J.call.urgent ? '  ·  URGENT' : ''), 20, yy); yy += 22 * s;
+  if (J.found && J.found.length) { for (const f of J.found.slice(-3)) { ctx.fillStyle = '#9fd4f0'; ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; for (const l of wrapText('🔍 ' + f, W - 44).slice(0, 2)) { ctx.fillText(l, 20, yy); yy += 16 * s; } yy += 3 * s; } }
+  if (J.si > 0) { ctx.fillStyle = '#7be08a'; ctx.font = `800 ${Math.round(13 * s)}px ${NU}`; ctx.fillText(`✓ ${J.steps.slice(0, J.si).map(q => q[1]).join('  ✓ ')}`, 20, yy); yy += 18 * s; }
+  if (!J.walk && !J.look) { ctx.fillStyle = `rgba(255,210,100,${0.75 + 0.25 * Math.sin(now * 4)})`; ctx.font = `800 ${Math.round(13 * s)}px ${NU}`; wrapText(J.flooding ? '⚠ Water everywhere! Find the stopcock and shut it off!' : 'Tap a part of the house to look at it.', W - 44).forEach((l, i) => ctx.fillText(l, 20, Math.min(yy + 4 * s, H - 76 * s) + i * 16 * s)); }
+  // the patience of the customer
+  const m = clamp(J.mood, 0, 1); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillText('PATIENCE', 20, H - 36 * s); fillR(80 * s, H - 35 * s, 110 * s, 8 * s, 4 * s, 'rgba(255,255,255,.14)'); fillR(80 * s, H - 35 * s, 110 * s * m, 8 * s, 4 * s, m > 0.78 ? '#7be08a' : m > 0.5 ? '#ffd36a' : '#ff6a5a');
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillText('★'.repeat(m > 0.78 ? 3 : m > 0.5 ? 2 : 1), 196 * s, H - 37 * s);
+  if (!G.lesson) { const r = leaveRect(L); fillR(r.x, r.y, r.w, r.h, r.h / 2, 'rgba(255,255,255,.08)'); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = `700 ${Math.round(11.5 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('Give up job', r.x + r.w / 2, r.y + r.h / 2); } }
+// ---------- the look: a close-up of the part, what you found, the fixes to pick from ----------
+function actRect(k, n, L) { const s = L.s, cols = 2, bw = (W - 44) / cols, bh = 44 * s, row = Math.floor(k / cols), col = k % cols, y0 = H - 16 - Math.ceil(n / cols) * (bh + 8); return { x: 16 + col * (bw + 12), y: y0 + row * (bh + 8), w: bw, h: bh }; }
+function closeRect(L) { const s = L.s; return { x: W - 50 * s, y: L.sy + 14, w: 38 * s, h: 38 * s }; }
+function drawLook(G, L, now) { const J = G.job, lk = J.look, s = L.s, y = L.sy + 4, id = lk.id; fillR(6, y, W - 12, H - y - 6, 18, '#0e2236'); ctx.strokeStyle = 'rgba(255,178,30,.5)'; ctx.lineWidth = 1.5; rrect(6, y, W - 12, H - y - 6, 18); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffb21e'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(FIX[id].name.toUpperCase(), 20, y + 26 * s);
+  const cr = closeRect(L); circ(cr.x + cr.w / 2, cr.y + cr.h / 2, cr.w / 2, 'rgba(255,255,255,.1)'); ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(16 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('✕', cr.x + cr.w / 2, cr.y + cr.h / 2 + 1);
+  const px = 62 * s, py = y + 96 * s; circ(px, py, 44 * s, 'rgba(255,255,255,.07)'); drawPart(id, px, py + 4 * s, 64 * s, partState(G, id, now), now);
+  ctx.textAlign = 'left'; const tx = 120 * s, tw = W - tx - 20; if (!lk.seen) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(14 * s)}px ${NU}`; ctx.fillText('Looking' + '.'.repeat(1 + ((now * 4) | 0) % 3), tx, py); }
+  else { const lt = lookText(G, id); ctx.fillStyle = lt.bad ? '#ffb4a8' : '#a8f0b8'; ctx.font = `800 ${Math.round(15 * s)}px ${NU}`; const ls = wrapText((lt.bad ? '⚠ ' : '✓ ') + lt.txt, tw); ls.slice(0, 4).forEach((l, i) => ctx.fillText(l, tx, py - (Math.min(4, ls.length) - 1) * 9 * s + i * 18 * s)); }
+  const acts = FIX[id].acts; acts.forEach((a, k) => { const r = actRect(k, acts.length, L), dis = J.busy > 0; fillR(r.x, r.y, r.w, r.h, 12, dis ? 'rgba(255,255,255,.06)' : '#ffb21e'); ctx.fillStyle = dis ? 'rgba(255,255,255,.3)' : '#1a2430'; ctx.font = `800 ${Math.round(14.5 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText(a, r.x + r.w / 2, r.y + r.h / 2 + 1); });
+  if (J.busy > 0) { ctx.fillStyle = '#ffb4a8'; ctx.font = `800 ${Math.round(13 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('That didn\'t help...', W / 2, actRect(0, acts.length, L).y - 14 * s); } }
+// ---------- the fixes: one picture each ----------
+const fitTarget = L => [W / 2, L.sy + L.sheetH * 0.4], fitStart = L => [W / 2, L.sy + L.sheetH * 0.8], gaugeAt = L => [W / 2, L.sy + L.sheetH * 0.6, Math.min(L.sheetH * 0.3, W * 0.27)];
+const sliderRect = L => ({ x: 40 * L.s, y: L.sy + L.sheetH * 0.58, w: W - 80 * L.s, h: 22 * L.s });
+let dragFit = null;
+function drawFix(G, L, now) { const J = G.job, F = J.fix, s = L.s, y = L.sy + 4; fillR(6, y, W - 12, H - y - 6, 18, '#0e2236');
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#ffb21e'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(F.name.toUpperCase() + (F.need > 1 && F.kind !== 'pump' ? `  ${F.ok + 1}/${F.need}` : ''), 20, y + 24 * s);
+  ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; wrapText(F.how, W - 40).slice(0, 2).forEach((l, i) => ctx.fillText(l, 20, y + 48 * s + i * 16 * s));
+  const k = F.kind;
+  if (k === 'hold' || k === 'end') { const [cx, cy, R] = gaugeAt(L), a0 = Math.PI * 0.8, a1 = Math.PI * 2.2, A = v => a0 + (a1 - a0) * v;
+    ctx.lineCap = 'round'; ctx.lineWidth = 14 * s; ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(cx, cy, R, a0, a1); ctx.stroke();
+    if (k === 'hold') { ctx.strokeStyle = 'rgba(255,90,74,.55)'; ctx.beginPath(); ctx.arc(cx, cy, R, A(F.b + 0.02), a1); ctx.stroke(); }
+    ctx.strokeStyle = '#4ad86a'; ctx.beginPath(); ctx.arc(cx, cy, R, A(F.a), A(Math.min(1, F.b))); ctx.stroke();
+    ctx.strokeStyle = F.m > F.b ? '#ff5a4a' : '#ffd36a'; ctx.lineWidth = 6 * s; ctx.beginPath(); ctx.arc(cx, cy, R, a0, A(Math.max(0.001, F.m))); ctx.stroke();
+    const na = A(F.m); line([[cx, cy], [cx + Math.cos(na) * (R - 4 * s), cy + Math.sin(na) * (R - 4 * s)]], '#fff', 3 * s); circ(cx, cy, 7 * s, '#fff');
+    // what is being turned, in the middle
+    ctx.save(); ctx.translate(cx, cy + R * 0.42); ctx.rotate(F.held ? now * 6 : 0); ctx.fillStyle = '#9aa6b2'; ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; i ? ctx.lineTo(Math.cos(a) * 12 * s, Math.sin(a) * 12 * s) : ctx.moveTo(Math.cos(a) * 12 * s, Math.sin(a) * 12 * s); } ctx.closePath(); ctx.fill(); circ(0, 0, 5 * s, '#0e2236'); ctx.restore();
+    if (!F.held) { ctx.fillStyle = `rgba(255,255,255,${0.6 + 0.4 * Math.sin(now * 6)})`; ctx.font = `${Math.round(16 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('HOLD', cx, cy - R * 0.35); } }
+  if (k === 'pump') { const [cx, cy] = gaugeAt(L), r0 = 30 * s, r1 = r0 + 70 * s * (1 - F.p), near = (1 - F.p) * F.T < G.cfg.win;
+    ctx.lineWidth = 6 * s; ctx.strokeStyle = near ? '#4ad86a' : '#fff'; ctx.beginPath(); ctx.arc(cx, cy, r0, 0, TAU); ctx.stroke(); ctx.lineWidth = 3 * s; ctx.strokeStyle = `rgba(255,211,106,${0.4 + 0.6 * F.p})`; ctx.beginPath(); ctx.arc(cx, cy, r1, 0, TAU); ctx.stroke();
+    const pl = F.lastHit != null && G.t - F.lastHit < 0.2 ? 8 * s : 0; fillR(cx - 3 * s, cy - 44 * s + pl, 6 * s, 40 * s, 3 * s, '#c98d55'); ctx.fillStyle = '#d83a3a'; ctx.beginPath(); ctx.ellipse(cx, cy + 4 * s + pl, 18 * s, 10 * s, 0, Math.PI, 0); ctx.fill();
+    for (let i = 0; i < F.need; i++) circ(cx + (i - (F.need - 1) / 2) * 18 * s, cy + 58 * s, 6 * s, i < F.hits ? '#4ad86a' : 'rgba(255,255,255,.18)');
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('TAP when the ring meets the circle', cx, cy + 80 * s); }
+  if (k === 'feed') { const [cx, cy, R] = gaugeAt(L), px0 = 30 * s, px1 = W - 30 * s, py = cy - R * 0.65;
+    fillR(px0, py - 9 * s, px1 - px0, 18 * s, 9 * s, '#5a6672'); fillR(px0 + 3, py - 6 * s, (px1 - px0 - 6) * F.prog, 12 * s, 6 * s, '#ffd36a'); ctx.fillStyle = '#2a3038'; fillR(px1 - 30 * s, py - 9 * s, 26 * s, 18 * s, 6 * s, '#3a2a1a');
+    ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(11 * s)}px ${NU}`; ctx.textAlign = 'right'; ctx.fillText('BLOCKAGE', px1 - 2 * s, py - 18 * s);
+    const zone = { ok: 0.2, warn: 0.5, snag: 0.82 }[F.st], wob = F.st === 'snag' ? Math.sin(now * 50) * 0.04 : Math.sin(now * 5) * 0.03, na = Math.PI + (zone + wob) * Math.PI, gy = cy + R * 0.5;
+    ctx.lineWidth = 16 * s; ctx.lineCap = 'butt'; [['#4ad86a', 0, 0.4], ['#ffb21e', 0.4, 0.62], ['#ff5a4a', 0.62, 1]].forEach(([c, a, b]) => { ctx.strokeStyle = c; ctx.beginPath(); ctx.arc(cx, gy, R * 0.8, Math.PI + a * Math.PI, Math.PI + b * Math.PI); ctx.stroke(); });
+    line([[cx, gy], [cx + Math.cos(na) * R * 0.75, gy + Math.sin(na) * R * 0.75]], '#fff', 3 * s); circ(cx, gy, 6 * s, '#fff');
+    ctx.fillStyle = F.st === 'snag' ? '#ff8a7a' : '#fff'; ctx.font = `${Math.round(16 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(F.stall > 0 ? 'KINKED!' : F.st === 'snag' ? 'LET GO!' : F.held ? 'FEEDING...' : 'HOLD', cx, gy + 26 * s); }
+  if (k === 'set') { const r = sliderRect(L), gx = r.x + r.w * (F.tgt - F.w / 2), gw = r.w * F.w; fillR(r.x, r.y, r.w, r.h, r.h / 2, 'rgba(255,255,255,.12)'); fillR(gx, r.y, gw, r.h, 6, '#4ad86a');
+    for (let i = 0; i <= 10; i++) fillR(r.x + r.w * i / 10 - 1, r.y + r.h + 4 * s, 2, 6 * s, 1, 'rgba(255,255,255,.35)');
+    const kx = r.x + r.w * F.v; circ(kx, r.y + r.h / 2, 18 * s, F.drag ? '#fff' : '#ffd36a'); circ(kx, r.y + r.h / 2, 7 * s, '#0e2236');
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('drag the knob into the green, then let go', W / 2, r.y + r.h + 30 * s); }
+  if (k === 'fit') { const [tx, ty] = fitTarget(L), [sx, sy] = dragFit ? [dragFit.x, dragFit.y] : fitStart(L), gw = 54 * s;
+    line([[24 * s, ty], [tx - gw / 2, ty]], '#3a8ad0', 16 * s); line([[tx + gw / 2, ty], [W - 24 * s, ty]], '#3a8ad0', 16 * s); ctx.setLineDash([5, 5]); ctx.strokeStyle = `rgba(255,211,106,${0.5 + 0.4 * Math.sin(now * 6)})`; ctx.lineWidth = 2; rrect(tx - gw / 2, ty - 10 * s, gw, 20 * s, 4); ctx.stroke(); ctx.setLineDash([]);
+    fillR(sx - gw / 2 + 2, sy - 8 * s, gw - 4, 16 * s, 4, F.name === 'New hose' ? '#3a4450' : F.name === 'New cartridge' ? '#c0c8d0' : '#d9a441'); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(sx - gw / 2 + 4, sy - 6 * s, gw - 8, 3 * s);
+    if (!dragFit) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('drag me ↑', sx, sy + 22 * s); } } }
+// ---------- the picture ----------
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G;
+  ctx.fillStyle = '#123a5a'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  if (g) { const J = g.job;
+    if (J && (g.phase === 'job' || g.phase === 'fix' || g.phase === 'paid')) { paintHouse(g, L); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(HOUSE.oc, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, 0); liveHouse(g, L, now);
+      if (J.fix) drawFix(g, L, now); else if (J.look) drawLook(g, L, now); else drawJobCard(g, L, now); }
+    else { const L2 = Object.assign({}, L, { sy0: L.top + 190 * s }); street(g, L2, now, g.phase === 'drive'); if (g.phase === 'drive') driveCard(g, L, now); else drawCalls(g, L, now); } }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); circ(p.x, p.y, p.r, p.col); } ctx.globalAlpha = 1;
+  ctx.restore();
+  if (g) hud(g, L, now);
+  if (g && lastPaid && lastPaid.t < 1.8) receipt(L, now);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1.1 ? 1 : 1 - (q.t - 1.1) / 0.4, pop = 1 + 0.3 * Math.max(0, 1 - q.t * 6); ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s * pop)}px ${TF}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(8,20,34,.75)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30, hy = (G && G.job ? L.sy - 10 : H * 0.5) - hh / 2;
+    fillR(W / 2 - ww / 2, hy - hh / 2, ww, hh, 12, 'rgba(8,24,40,.95)'); ctx.strokeStyle = '#ffb21e'; ctx.lineWidth = 1.5; rrect(W / 2 - ww / 2, hy - hh / 2, ww, hh, 12); ctx.stroke(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,60,${FX.red * 0.18})`; ctx.fillRect(0, 0, W, H); }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
+function driveCard(G, L, now) { const s = L.s, P = phoneRect(L), c = G.driving; if (!c) return; fillR(P.x, P.y, P.w, 120 * s, 18, 'rgba(10,22,36,.94)'); ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillText('ON THE WAY TO', P.x + 16, P.y + 20 * s); ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(17 * s)}px ${NU}`; ctx.fillText(`${c.addr}`, P.x + 16, P.y + 44 * s);
+  ctx.fillStyle = '#9fd4f0'; ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; ctx.fillText(`${ICON[c.job.id] || ''} “${c.say}”`, P.x + 16, P.y + 70 * s); const p = 1 - G.drive / G.driveT; fillR(P.x + 16, P.y + 94 * s, P.w - 32, 8 * s, 4 * s, 'rgba(255,255,255,.12)'); fillR(P.x + 16, P.y + 94 * s, (P.w - 32) * clamp(p, 0, 1), 8 * s, 4 * s, '#ffb21e'); }
+function receipt(L, now) { const s = L.s, t = lastPaid.t, a = Math.min(1, t / 0.15, (1.8 - t) / 0.3), y = L.by + L.bh * 0.32 - Math.max(0, 1 - t * 5) * 30 * s; ctx.globalAlpha = Math.max(0, a);
+  fillR(W / 2 - 110 * s, y - 50 * s, 220 * s, 100 * s, 14, '#fffdf4'); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (lastPaid.lost) { ctx.fillStyle = '#c03a2a'; ctx.font = `${Math.round(18 * s)}px ${TF}`; ctx.fillText(lastPaid.title, W / 2, y - 14 * s); ctx.fillStyle = '#5a5a5a'; ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; ctx.fillText(lastPaid.sub, W / 2, y + 16 * s); }
+  else { ctx.fillStyle = '#2a7a3a'; ctx.font = `${Math.round(28 * s)}px ${TF}`; ctx.fillText('+$' + lastPaid.pay, W / 2, y - 16 * s); ctx.fillStyle = '#e8a010'; ctx.font = `${Math.round(18 * s)}px sans-serif`; ctx.fillText('★'.repeat(lastPaid.stars) + '☆'.repeat(3 - lastPaid.stars), W / 2, y + 12 * s);
+    ctx.fillStyle = '#5a5a5a'; ctx.font = `700 ${Math.round(12 * s)}px ${NU}`; ctx.fillText(lastPaid.tip ? `incl. $${lastPaid.tip} tip — “${lastPaid.thanks}”` : `“${lastPaid.thanks}”`, W / 2, y + 36 * s); }
+  ctx.globalAlpha = 1; }
+// ---------- what each happening looks and sounds like ----------
+const THANKS = ['Lifesaver!', 'Thank you so much!', 'Brilliant work!', 'You\'re a star!', 'Quick and tidy!', 'Best plumber in town!', 'Phew, thank you!', 'Magic!'];
+function onEvent(G, e) { const L = lay(), s = L.s;
+  switch (e.k) {
+    case 'start': say(`DAY ${G.N}`, W / 2, L.top + 90 * s, '#fff', 30); say(`Make $${G.cfg.target} by 5 pm`, W / 2, L.top + 124 * s, '#ffd36a', 15); sfx.start(); if (G.N <= 1) tip('how', 'Tap a call to drive there. Make the day\'s money before 5 pm.', 3.4); break;
+    case 'ring': sfx.ring(); ringT = 0.6; break;
+    case 'drive': sfx.van(); break;
+    case 'arrive': HOUSE.key = ''; sfx.door(); if (e.call.job.flood) { FX.red = 0.8; sfx.alarm(); } if (G.N <= 2 && !G.lesson) tip('look', 'Tap a part of the house to walk over and look at it.', 3); if (e.call.job.flood) tip('flood', 'Water everywhere! Find the stopcock by the meter, downstairs, and shut it off first.', 3.6); break;
+    case 'walk': sfx.step(); break;
+    case 'seen': if (e.bad) sfx.found(); else sfx.fine(); break;
+    case 'fix': sfx.click(); if (e.kind === 'pump') tip('pump', 'Tap each time the yellow ring closes on the white circle.', 3); if (e.kind === 'feed') tip('feed', 'Hold to feed the snake in. On RED, let go, or it kinks!', 3.2); break;
+    case 'press': break;
+    case 'plunge': { const [cx, cy] = gaugeAt(L); sfx.plunge(e.n); sparks(cx, cy, 6, '#7cc8ff', 140 * s); vibe(HAP.tick); break; }
+    case 'fixmiss': sfx.miss(); if (e.why === 'beat') say('off beat', W / 2, L.sy + 70 * s, '#ffb4a8', 14); if (e.why === 'short') say('not enough', W / 2, L.sy + 70 * s, '#ffb4a8', 14); if (e.why === 'off') say('not quite', W / 2, L.sy + 70 * s, '#ffb4a8', 14); if (e.why === 'drop') say('missed the gap', W / 2, L.sy + 70 * s, '#ffb4a8', 14); break;
+    case 'kink': sfx.kink(); FX.shake = 6; break;
+    case 'snag': sfx.snag(); break;
+    case 'over': sfx.crack(); FX.shake = 8; say({ 'Light pilot': 'TOO LONG!', 'Thaw pipe': 'TOO HOT!', 'Thaw': 'TOO HOT!', 'Top up pressure': 'TOO MUCH!', 'Bleed air': 'SPLASH!' }[e.name] || 'TOO TIGHT!', W / 2, L.sy + 70 * s, '#ff8a7a', 22); break;
+    case 'fixpart': sfx.good(); say(`${e.n} / ${e.need}`, W / 2, L.sy + 70 * s, '#a8f0b8', 18); vibe(HAP.light); break;
+    case 'fixed': { sfx.good(); vibe(HAP.light); const [px, py] = spot(G, e.part); sparks(L.X(px), L.Y(py), 14, '#ffd36a', 160 * s); say(e.name === 'Shut off' ? 'WATER OFF!' : 'FIXED!', L.X(px), L.Y(py) - 30 * s, '#a8f0b8', 18); break; }
+    case 'mistake': sfx.wrong(); FX.shake = 5; if (e.why === 'spray') { say('SHUT THE WATER OFF FIRST!', W / 2, L.by + L.bh * 0.4, '#ff8a7a', 15); FX.red = 0.8; sfx.alarm(); } else say(e.n ? `Wrong again! −patience` : 'Wrong fix!', W / 2, L.by + L.bh * 0.4, '#ff8a7a', 18); break;
+    case 'paid': lastPaid = { t: 0, pay: e.pay, tip: e.tip, stars: e.stars, thanks: THANKS[(Math.random() * THANKS.length) | 0] }; sfx.cash(e.stars); FX.flash = 0.3; vibe(e.stars === 3 ? HAP.best : HAP.light); for (let i = 0; i < 24; i++) sparks(W / 2, L.by + L.bh * 0.32, 1, ['#ffd36a', '#7be08a', '#fff'][i % 3], 260 * s);
+      if (!HEADLESS && e.stars === 3) { const notes = store.get('notes', []) || []; notes.push({ who: e.who, job: e.job, d: G.N }); store.set('notes', notes.slice(-200)); } break;
+    case 'joblost': lastPaid = { t: 0, lost: true, title: { flood: 'FLOODED OUT', angry: 'SENT AWAY', left: 'GAVE UP' }[e.why], sub: { flood: 'The room filled up. No pay.', angry: '“Get out! I\'ll call someone else.”', left: 'No pay for this one.' }[e.why] }; sfx.lose(); FX.red = 1; break;
+    case 'expired': if (G.phase === 'board') say('A call went elsewhere', W / 2, L.top + 170 * s, 'rgba(255,255,255,.7)', 12); break;
+    case 'five': say('5 PM!', W / 2, L.top + 120 * s, '#ff8a7a', 40); sfx.bell(); break;
+    case 'goal': say('DAY\'S MONEY MADE!', W / 2, L.top + 120 * s, '#ffd36a', 24); FX.flash = 0.6; sfx.goal(); vibe(HAP.best); for (let i = 0; i < 40; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: L.top + 120 * s, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320 - 160, life: 1.1, t: 0, col: ['#ffd36a', '#7be08a', '#9fd4f0'][i % 3], r: 3.5, g: 520 }); } break;
+    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.8 }; sfx.wrong(); break;
+    case 'lessonnext': if (e.first) hint = null; break;
+    case 'lessonok': sfx.cash(3); say(`${e.n} / ${e.need}`, W / 2, L.by + L.bh * 0.35, '#ffd36a', 26); break;
+    case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.by + L.bh * 0.35, '#ffd36a', 26); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': sfx.win(); break;
+    case 'lost': sfx.lose(); break;
+  } }
+
+// ===================== SOUND: the plumber's day (PLAYBOOK S1-S11) =====================
+// Short, warm and a bit comic. The phone rings two soft tones; the van chugs off; footsteps; a look ends with a little
+// "hmm" chime (two notes up when you found the trouble, one soft note when the part is fine). The wrench ratchets while you
+// hold; the plunger goes "shlup" a step higher each good push (S5); the snake rattles and a kink twangs; the till rings with
+// the pay, brighter for three stars. A wrong fix is a soft "bonk", never harsh (S8); a flood is a low warble.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  start() { [0, 4, 7].forEach((q, j) => pluck(note(392, q + 2), 0.5, 0.07, j * 0.07)); },
+  ring() { if (!gate('ring', 900)) return; for (let j = 0; j < 2; j++) { tone(1046, 0.09, 0.05, 'sine', j * 0.16); tone(1318, 0.09, 0.05, 'sine', j * 0.16 + 0.05); } },
+  van() { tone(70, 0.5, 0.09, 'sawtooth', 0, 110, 400); noise(0.45, 400, 0.05, 'lowpass', 1, 0.02); },
+  door() { tone(1318, 0.18, 0.05, 'sine'); tone(1046, 0.3, 0.05, 'sine', 0.16); },
+  step() { if (!gate('step', 120)) return; for (let j = 0; j < 3; j++) noise(0.03, 900 + Math.random() * 300, 0.05, 'bandpass', 2, j * 0.12); },
+  found() { tone(660, 0.12, 0.05, 'triangle'); tone(880, 0.18, 0.05, 'triangle', 0.09); },
+  fine() { tone(587, 0.15, 0.04, 'sine'); },
+  ratchet() { if (!gate('ratchet', 85)) return; noise(0.02, 3200 * vary(0.1), 0.05, 'bandpass', 4); },
+  plunge(n = 1) { if (!gate('plunge', 60)) return; tone(note(196, Math.min(10, n)), 0.14, 0.09, 'sine', 0, note(196, Math.min(10, n)) * 0.6); noise(0.08, 700, 0.06, 'lowpass', 1.5); },
+  snag() { if (!gate('snag', 200)) return; tone(220, 0.08, 0.04, 'square', 0, 200, 1200); },
+  kink() { tone(330, 0.25, 0.07, 'sawtooth', 0, 160, 1500); },
+  feedTick() { if (!gate('feed', 70)) return; noise(0.025, 1800 * vary(0.2), 0.035, 'bandpass', 3); },
+  miss() { if (!gate('miss', 140)) return; tone(180, 0.1, 0.05, 'sine', 0, 140); },
+  crack() { noise(0.12, 2400, 0.1, 'highpass', 1); tone(140, 0.2, 0.08, 'triangle', 0, 90); },
+  good() { tone(784, 0.12, 0.06, 'triangle'); tone(1175, 0.2, 0.05, 'triangle', 0.07); },
+  wrong() { if (!gate('wrong', 220)) return; tone(200, 0.16, 0.07, 'triangle', 0, 150, 900); },
+  alarm() { if (!gate('alarm', 800)) return; for (let j = 0; j < 3; j++) tone(500, 0.12, 0.05, 'triangle', j * 0.18, 380); },
+  cash(st = 1) { noise(0.05, 4000, 0.05, 'highpass', 1); [0, 4, 7, 12].slice(0, 1 + st).forEach((q, j) => tone(note(784, q), 0.3, 0.06, 'sine', 0.06 + j * 0.06)); },
+  bell() { [0, 0.25].forEach(d => tone(659, 0.6, 0.07, 'sine', d)); },
+  goal() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(392, q), 0.9, 0.08, j * 0.09)); },
+  no() { if (!gate('no', 250)) return; tone(200, 0.1, 0.05, 'triangle', 0, 160, 900); },
+  tick() { if (!gate('tick', 45)) return; tone(1320, 0.05, 0.03, 'triangle'); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 1)), 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(523, q), 1.0, 0.08, j * 0.12)); },
+  lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · make <b>$${cf.target}</b> by 5 pm${cf.boss ? ' · BUSY DAY' : ''}`, best[level] ? `Your best day here: <b>$${best[level]}</b>` : '', (store.get('notes', []) || []).length ? `📌 ${(store.get('notes', []) || []).length} thank-you notes on the van wall` : '', helpOn() ? '<span class="help">A longer day for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; ui.hold = false; dragFit = null; lastPaid = null; cashShow = 0; HOUSE.key = ''; hint = null; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.score > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.score; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'GOOD DAY\'S WORK!' : '5 PM: SHORT TODAY'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  const notes = (r.done || []).filter(d => d.stars === 3).length;
+  $('eSub').innerHTML = `Earned <b>$${r.cash}</b> of $${r.need}` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') + (!r.win && r.prog >= 0.8 ? ' · <b>so close!</b>' : '')
+    + `<br>${r.jobs} job${r.jobs === 1 ? '' : 's'} done` + (r.jobs ? ` · customers gave ${r.avg.toFixed(1)} ★ on average` : '') + (r.lost ? ` · ${r.lost} lost` : '') + (notes ? `<br>📌 ${notes} new thank-you note${notes > 1 ? 's' : ''} for the van wall` : '')
+    + (r.win && r.stars < 3 ? '<br>Three stars: three-star customers, and finish with time to spare.' : '') + (!r.win ? '<br>Pick the calls that pay well and are close. Look before you fix: a wrong fix costs patience.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): tap a call; tap a part of the house to look; tap a fix; then the fix itself: hold anywhere on the card
+// (and let go), tap anywhere for the plunger, drag the knob, drag the new part into the gap
+const ui = { hold: false };
+const inR = (r, x, y, pad = 0) => x >= r.x - pad && x <= r.x + r.w + pad && y >= r.y - pad && y <= r.y + r.h + pad;
+function partAt(x, y) { const L = lay(), J = G.job; let best = null, bd = 34 * L.s; for (const id of J.parts) { const [px, py] = spot(G, id), d = Math.hypot(L.X(px) - x, L.Y(py) - y); if (d < bd) { bd = d; best = id; } } return best; }
+function fitDist(x, y) { const L = lay(), [tx, ty] = fitTarget(L); return Math.hypot(x - tx, y - ty) / (54 * L.s); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || G.wait > 0) return; const x = e.clientX, y = e.clientY, L = lay();
+  if (G.phase === 'board') { G.calls.forEach((c, i) => { if (inR(callRect(i, L), x, y)) { takeCall(G, i); } }); return; }
+  const J = G.job; if (!J) return;
+  if (G.phase === 'fix' && J.fix) { const F = J.fix; if (y < L.sy) return; try { cv.setPointerCapture(e.pointerId); } catch (err) {} ui.id = e.pointerId;
+    if (F.kind === 'set') { const r = sliderRect(L); dial(G, (x - r.x) / r.w); return; }
+    if (F.kind === 'fit') { const [sx, sy] = fitStart(L); if (Math.hypot(x - sx, y - sy) < 60 * L.s) dragFit = { x, y }; return; }
+    press(G); ui.hold = true; return; }
+  if (G.phase !== 'job') return;
+  if (J.look) { if (inR(closeRect(L), x, y, 6)) { closeLook(G); sfx.click(); return; } const n = FIX[J.look.id].acts.length; for (let k = 0; k < n; k++) if (inR(actRect(k, n, L), x, y)) { act(G, k); return; } if (y >= L.sy) return; }
+  else if (y >= L.sy) { if (!G.lesson && inR(leaveRect(L), x, y, 4)) leave(G); return; }
+  const id = partAt(x, y); if (id) tapPart(G, id); else if (J.look) closeLook(G); });
+cv.addEventListener('pointermove', e => { if (!G || !G.job || !G.job.fix || e.pointerId !== ui.id) return; const F = G.job.fix, L = lay(); if (F.kind === 'set' && F.drag) { const r = sliderRect(L); dial(G, (e.clientX - r.x) / r.w); } if (F.kind === 'fit' && dragFit) { dragFit.x = e.clientX; dragFit.y = e.clientY; } });
+function up(e) { if (!G || !G.job || e.pointerId !== ui.id) return; ui.id = null; const F = G.job.fix; if (!F) { ui.hold = false; return; }
+  if (F.kind === 'set') { dialDone(G); return; } if (F.kind === 'fit') { if (dragFit) { const d = fitDist(dragFit.x, dragFit.y); dragFit = null; drop(G, d); } return; }
+  if (ui.hold) { ui.hold = false; lift(G); } }
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE VAN</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  takeCall(i) { return takeCall(G, i); }, tapPart(id) { return tapPart(G, id); }, act(k) { return act(G, k); }, press() { press(G); }, lift() { lift(G); }, dial(v) { dial(G, v); }, dialDone() { dialDone(G); }, drop(d) { drop(G, d); }, lay, renderShop, ui, spot: id => spot(G, id), FIX, callRect, actRect, sliderRect, fitTarget, fitStart, leaveRect, closeRect,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**64 games** so far. Next number: **65**.
+**65 games** so far. Next number: **66**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -72,6 +72,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 62 | **Paint Drop** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/31Xpix1yiPxyRQKvzC8rww) | `games/paint/index.html` |
 | 63 | **Pour** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QmpG7WcZG2wV2k3XTvGEuY) | `games/pour/index.html` |
 | 64 | **Block Party** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UaQb7Pkffx2PavfwZ5JVL8) | `games/blocks/index.html` |
+| 65 | **Plumber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QspkqDVm5vnfzGjJWVBmzd) | `games/plumber/index.html` |
 
 ## What each game is
 
@@ -139,3 +140,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 62. **Paint Drop**: Drop-and-merge like the watermelon game, with paint: same colours squash into the next colour; wet paint squashes, dry does not; a palette that dries without squashes; the colour chart up to the goal; don't overflow.
 63. **Pour**: Colour sort like Water Sort: tap a glass, tap another, pour; sort every colour into its own glass; solver-made puzzles with a move margin, undo, hidden layers, a mark on every colour.
 64. **Block Party**: Block puzzle like Block Blast: drag pieces from a tray of three onto an 8x8 grid; full rows and columns clear; combos multiply; gem and score goals; junk and bigger pieces as levels rise.
+65. **Plumber**: His idea: a plumber's day of house calls. Pick calls from the phone, drive there, look at parts of the cut-open house to find the real fault, pick the fix and do it by hand (hold a wrench into the green, plunge on the beat, feed a snake, set a dial, fit a part); floods until the main is shut; 21 kinds of job.
