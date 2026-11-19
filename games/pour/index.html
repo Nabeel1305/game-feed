@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Pour</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#1a2a4a;--ink:#f4f8ff;--acc:#3aa8ff;--acc-dark:#1a5a9a;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Baloo 2","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(40,80,140,.6),rgba(10,20,40,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#fff;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#fff}.lvb.cur small{color:#fff}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:72px;color:#fff">Pour</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">ONE COLOUR IN EVERY GLASS</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Baloo 2", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('po.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('po.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: Pour (game 63, set 11: a colour sort, like Water Sort) =====================
+// Glasses of coloured layers. Tap a glass to pick it up, then tap another to pour into it: the colour on top pours (all of
+// that colour that is on top, as much as fits) onto the same colour or into an empty glass. Sort every colour into a glass
+// of its own. Each level has a number of moves (more than the puzzle needs, so there is room to think, not to wander), an
+// undo or two, and later HIDDEN layers (only the top colour shows until you uncover what is below) and less spare room.
+// A pour that cannot happen wobbles back: the first is free, another soon after costs a move, then two (a slip is cheap).
+const RULES = [
+  'Tap a glass to pick it up, then tap another to <b>pour</b>. The top colour pours onto the <b>same colour</b> or into an <b>empty</b> glass.',
+  'Sort every colour into a glass of its own. A full glass of one colour is <b>done</b>.',
+  'Watch your <b>moves</b>. <b>Undo</b> takes back a pour (a few per level).',
+  'Later: <b>hidden</b> layers (?) show their colour only when uncovered.',
+  'A pour that cannot happen is free once; another soon after costs a move.',
+];
+const LIQ = ['#ff4a5a', '#ff9a2a', '#ffd83a', '#9ae83a', '#2ab85a', '#2ac8c8', '#4aa8ff', '#3a5aff', '#9a5aff', '#ff6ac8', '#9a6a4a', '#a8a8b8'];
+const SYM = ['●', '▲', '■', '◆', '★', '♥', '✚', '▼', '◐', '✿', '☗', '◯'];      // a mark on each colour, for anyone who mixes colours up
+const PLACES = [{ name: 'The Lab', bg: ['#e8f4ff', '#c8dcf0'] }, { name: 'The Café', bg: ['#fff0e0', '#f0d4b8'] }, { name: 'The Garden', bg: ['#eaffe8', '#c8e8c8'] }, { name: 'The Night Bar', bg: ['#3a2a5a', '#1a1430'] }];
+const placeOf = N => Math.floor((N - 1) / 8) % 4;
+const UPGRADES = [
+  { id: 'undo', name: 'More undos', desc: 'One more undo on every level.', max: 2, cost: l => 35 + l * 45 },
+  { id: 'spare', name: 'A spare glass', desc: 'Once a level: add a small empty glass.', max: 1, cost: l => 90 },
+  { id: 'moves', name: 'More moves', desc: 'Three more moves on every level.', max: 2, cost: l => 40 + l * 50 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Beginner'], [40, 'Mixer'], [130, 'Pourer'], [320, 'Sorter'], [700, 'Chemist'], [1500, 'Alchemist']];
+const CAP = 4;
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  const K = N === 1 ? 3 : N <= 3 ? 4 : Math.min(10, 5 + Math.floor(f / 9)), empty = 2;
+  return { N, f, help: !!help, place: placeOf(N), K, empty, hidden: N >= 6 ? x(0.2, 0.6, 40) : 0, slack: x(1.7, 1.2, 30) + 0.3 * e + (help ? 0.3 : 0),
+    undos: (N <= 5 ? 3 : 2) + upLv('undo') + (help ? 1 : 0), extra: 3 * upLv('moves'), spare: upLv('spare') }; }
+// ---------- puzzles: random glasses, kept only if the solver can sort them (and it says how many moves that took) ----------
+const key = T => T.map(t => t.join('')).sort().join('|');
+const topRun = t => { if (!t.length) return 0; const c = t[t.length - 1]; let n = 0; for (let i = t.length - 1; i >= 0 && t[i] === c; i--) n++; return n; };
+const done1 = t => !t.length || (t.length === CAP && t.every(c => c === t[0]));
+const solved = T => T.every(done1);
+function canPour(T, a, b, cap = CAP) { const A = T[a], B = T[b]; if (a === b || !A.length || B.length >= cap) return 0; const c = A[A.length - 1]; if (B.length && B[B.length - 1] !== c) return 0; if (done1(A) && A.length === CAP) return 0; return Math.min(topRun(A), cap - B.length); }
+// a small priority queue (lowest first) for the solver
+function Heap() { const a = []; return { get size() { return a.length; }, push(x, v) { a.push([v, x]); let i = a.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (a[p][0] <= a[i][0]) break; [a[p], a[i]] = [a[i], a[p]]; i = p; } },
+  pop() { const top = a[0], last = a.pop(); if (a.length) { a[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < a.length && a[l][0] < a[m][0]) m = l; if (r < a.length && a[r][0] < a[m][0]) m = r; if (m === i) break; [a[m], a[i]] = [a[i], a[m]]; i = m; } } return top[1]; } }; }
+const hOf = T => T.reduce((s, t) => { let k = 0; for (let i = 1; i < t.length; i++) if (t[i] !== t[i - 1]) k++; return s + k + (t.length && !done1(t) ? 1 : 0); }, 0);
+// best-first search on the colours it can see (unknown hidden layers are their own colours, so they never match)
+function solve(T0, limit = 20000, caps) { const cp = T => T.map(t => t.slice());
+  const open = Heap(), seen = new Set([key(T0)]); open.push({ T: cp(T0), g: 0, path: [] }, 2 * hOf(T0)); let n = 0;
+  while (open.size && n++ < limit) { const cur = open.pop(); if (solved(cur.T)) return cur.path;
+    for (let a = 0; a < cur.T.length; a++) for (let b = 0; b < cur.T.length; b++) { const m = canPour(cur.T, a, b, caps ? caps[b] : CAP); if (!m) continue; if (!cur.T[b].length && topRun(cur.T[a]) === cur.T[a].length) continue;      /* moving a whole one-colour glass into an empty one is pointless */
+      const T = cp(cur.T); for (let i = 0; i < m; i++) T[b].push(T[a].pop()); const k = key(T); if (seen.has(k)) continue; seen.add(k); open.push({ T, g: cur.g + 1, path: cur.path.concat([[a, b]]) }, cur.g + 1 + 2 * hOf(T)); } }
+  return null; }
+function makePuzzle(K, empty, R) { for (let tries = 0; tries < 60; tries++) { const cols = []; for (let c = 0; c < K; c++) for (let i = 0; i < CAP; i++) cols.push(c); for (let i = cols.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0; [cols[i], cols[j]] = [cols[j], cols[i]]; }
+    const T = []; for (let c = 0; c < K; c++) T.push(cols.slice(c * CAP, c * CAP + CAP)); for (let e = 0; e < empty; e++) T.push([]);
+    if (T.some(t => t.length && done1(t))) continue; if (T.some(t => t.length && topRun(t) >= 3)) continue;
+    const p = solve(T, 6000 + K * 3000); if (p) return { T, par: p.length }; }
+  return null; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null };
+  setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+function setup(G, P) { const c = G.cfg; if (!P) P = makePuzzle(c.K, c.empty, rng(G.N * 7919 + 3 + (G.seed % 7)));
+  G.T = P.T.map(t => t.slice()); G.caps = G.T.map(() => CAP); G.par = P.par; G.moves = P.moves != null ? P.moves : Math.ceil(P.par * c.slack + 2) + c.extra; G.movesMax = G.moves;
+  // hidden layers: everything below the top colour of a glass, at random, by the level's share
+  G.hide = G.T.map(t => t.map((_, i) => i < t.length - topRun(t) && G.rnd() < c.hidden));
+  G.sel = -1; G.hist = []; G.undos = P.undos != null ? P.undos : c.undos; G.spare = c.spare; G.fumble = 0; G.fumT = 0; G.phase = 'idle'; G.pt = 0; G.pours = 0; G.done = G.T.map(done1).map((d, i) => d && G.T[i].length > 0); }
+// ---------- what you do ----------
+function tapGlass(G, i) { if (G.over || G.wait > 0 || G.phase !== 'idle' || i < 0 || i >= G.T.length) return false;
+  if (G.sel < 0) { if (!G.T[i].length || G.done[i]) { G.ev.push({ k: 'nothing', i }); return false; } G.sel = i; G.ev.push({ k: 'pick', i }); return true; }
+  if (G.sel === i) { G.sel = -1; G.ev.push({ k: 'put', i }); return true; }
+  const a = G.sel, m = canPour(G.T, a, i, G.caps[i]); G.sel = -1;
+  if (!m) { const cost = G.lesson ? 0 : G.fumble; G.fumble++; G.fumT = 0; G.ev.push({ k: 'nope', a, b: i, cost }); if (G.lesson) { if (G.fumble > 1) lessonMiss(G); } else for (let k = 0; k < cost && G.moves > 0; k++) G.moves--; checkEnd(G); return false; }
+  G.hist.push({ T: G.T.map(t => t.slice()), hide: G.hide.map(h => h.slice()) }); const c = G.T[a][G.T[a].length - 1];
+  for (let k = 0; k < m; k++) { G.T[i].push(G.T[a].pop()); G.hide[i].push(false); G.hide[a].pop(); }
+  // uncover: the new top of the glass poured from shows its colour
+  const A = G.T[a]; let rev = false; for (let k = A.length - 1; k >= 0 && k >= A.length - topRun(A); k--) if (G.hide[a][k]) { G.hide[a][k] = false; rev = true; }
+  if (!G.lesson) G.moves--; G.pours++; G.phase = 'pour'; G.pt = 0.42 + m * 0.06; G.ev.push({ k: 'pour', a, b: i, n: m, c, rev });
+  if (done1(G.T[i]) && G.T[i].length === CAP && !G.done[i]) { G.done[i] = true; G.ev.push({ k: 'full', i, c, n: G.done.filter(Boolean).length }); lessonSee(G, 'full'); }
+  lessonSee(G, 'pour'); return true; }
+function undo(G) { if (G.over || G.wait > 0 || G.phase !== 'idle' || !G.hist.length || G.undos <= 0) return false; const h = G.hist.pop(); G.T = h.T; G.hide = h.hide; G.undos--; G.sel = -1; G.done = G.T.map((t, i) => done1(t) && t.length > 0); G.ev.push({ k: 'undo' }); return true; }
+function addSpare(G) { if (G.spare <= 0 || G.over || G.phase !== 'idle') return false; G.spare--; G.T.push([]); G.caps.push(2); G.hide.push([]); G.done.push(false); G.ev.push({ k: 'spare' }); return true; }
+function checkEnd(G) { if (G.over || G.wait > 0) return; if (G.lesson) return;
+  if (solved(G.T)) { G.ev.push({ k: 'sorted' }); G.wait = 1.4; G.next = () => finish(G, true); return; }
+  if (G.moves <= 0) { G.wait = 0.8; G.next = () => finish(G, false, 'moves'); return; }
+  // no pour left anywhere: undo if you can, otherwise it is over (never a game that just sits there)
+  let any = false; for (let a = 0; a < G.T.length && !any; a++) for (let b = 0; b < G.T.length; b++) if (canPour(G.T, a, b, G.caps[b])) { any = true; break; }
+  if (!any) { if (G.undos > 0 || G.spare > 0) G.ev.push({ k: 'stuck' }); else { G.ev.push({ k: 'stuck', end: true }); G.wait = 1.0; G.next = () => finish(G, false, 'stuck'); } } }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.fumT += dt; if (G.fumble > 0 && G.fumT > 20) { G.fumble--; G.fumT = 0; }
+  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+  if (G.phase === 'pour') { G.pt -= dt; if (G.pt <= 0) { G.phase = 'idle'; checkEnd(G); } } }
+function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const left = G.moves, mx = G.movesMax, done = G.done.filter(Boolean).length;
+  const stars = win ? 1 + (G.pours <= Math.ceil(G.par * 1.25) ? 1 : 0) + (G.pours <= G.par ? 1 : 0) : 0;
+  G.res = { win, why, stars, pours: G.pours, par: G.par, left, done, of: G.cfg.K, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + done };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- LESSONS: small rigged glasses; in a lesson a second wrong pour starts it again, and so does wandering ----------
+const LESSONS = {
+  1: [{ id: 'pour', title: 'POUR', how: 'Tap a glass, then another: the top colour pours onto the same colour, or into an empty glass. Fill two glasses with one colour each.', need: 2 }],
+  2: [{ id: 'plan', title: 'MAKE ROOM', how: 'Use the empty glass to make room, then sort all three colours. Every move counts!', need: 1 }],
+  3: [{ id: 'undo', title: 'UNDO', how: 'Stuck? Tap UNDO to take back a pour. Sort the colours: there is a trap, so think first.', need: 1 }],
+};
+const LRIG = { pour: { T: [[0, 1, 0, 1], [1, 0, 1, 0], [], []], par: 6 }, plan: { T: [[0, 1, 2, 0], [1, 2, 0, 1], [2, 0, 1, 2], [], []], par: 0 }, undo: { T: [[0, 1, 2, 3], [3, 2, 1, 0], [2, 0, 3, 1], [1, 3, 0, 2], [], []], par: 0 } };
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonDeal(G) { const st = lessonNow(G), r = LRIG[st.id], par = r.par || solve(r.T, 30000).length; const c = G.cfg, keep = c.hidden; c.hidden = 0;
+  setup(G, { T: r.T, par, moves: 99, undos: st.id === 'undo' ? 5 : 0 }); c.hidden = keep; G.lesson.n = 0; G.lesson.left = par + 3; }
+function lessonMiss(G) { G.ev.push({ k: 'lessonmiss', how: lessonNow(G).how }); G.wait = 1.2; G.next = () => lessonDeal(G); }
+function lessonSee(G, what) { const st = lessonNow(G); if (!st) return; const D = G.lesson;
+  if (what === 'pour') { D.left--; if (solved(G.T) || (st.id === 'pour' && G.done.filter(Boolean).length >= 2)) return done(); if (D.left <= 0) { lessonMiss(G); } return; }
+  if (what === 'full') G.ev.push({ k: 'lessonok', n: G.done.filter(Boolean).length, need: st.id === 'pour' ? 2 : G.cfg.K });
+  function done() { D.i++; if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { setup(G); G.ev.push({ k: 'start' }); }; } else { G.wait = 1.2; G.next = () => lessonDeal(G); } } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: taps a glass somewhere; taps undo
+const BLIND = { t: G => tapGlass(G, (Math.random() * G.T.length) | 0), u: G => undo(G) };
+// a player who looks and thinks: plans with what it can see (hidden layers are unknowns), takes the first pour of its plan;
+// a careless one now and then pours something that looked good on its own
+function seenT(G) { let u = 100; return G.T.map((t, i) => t.map((c, k) => G.hide[i][k] ? u++ : c)); }
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
+  if (G.over || G.wait > 0 || G.phase !== 'idle') { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.4 + react * 2) return; mem.t = 0;
+  if (G.sel >= 0) { tapGlass(G, mem.to); return; }
+  const S = seenT(G); let mv = null;
+  if (R() < acc) { const p = solveSeen(S, G.caps, 1500 + acc * 2500); if (p && p.length) mv = p[0]; }
+  if (!mv) { const ms = []; for (let a = 0; a < S.length; a++) for (let b = 0; b < S.length; b++) { const m = canPour(S, a, b, G.caps[b]); if (m && !(S[b].length === 0 && topRun(S[a]) === S[a].length)) ms.push([a, b, (S[b].length ? 3 : 1) + m]); }
+    if (!ms.length) { if (G.undos > 0) undo(G); return; } ms.sort((x, y) => y[2] - x[2]); mv = R() < 0.6 ? ms[0] : ms[(R() * ms.length) | 0]; }
+  mem.to = mv[1]; tapGlass(G, mv[0]); }
+// planning when some layers are unknown: aim for the state where every glass is one colour as far as it can see
+function solveSeen(S, caps, limit) { if (!S.some(t => t.some(c => c >= 100))) return solve(S, limit, caps); const cp = T => T.map(t => t.slice());
+  const open = Heap(), seen = new Set([key(S)]); open.push({ T: cp(S), g: 0, path: [] }, 2 * hOf(S)); let best = null, bh = hOf(S), n = 0;
+  while (open.size && n++ < limit) { const cur = open.pop(), hv = hOf(cur.T); if (cur.path.length && (hv < bh || (hv === bh && best && cur.path.length < best.length))) { bh = hv; best = cur.path; }
+    for (let a = 0; a < cur.T.length; a++) for (let b = 0; b < cur.T.length; b++) { const m = canPour(cur.T, a, b, caps[b]); if (!m) continue; if (!cur.T[b].length && topRun(cur.T[a]) === cur.T[a].length) continue; const T = cp(cur.T); for (let i = 0; i < m; i++) T[b].push(T[a].pop()); const k = key(T); if (seen.has(k)) continue; seen.add(k); open.push({ T, g: cur.g + 1, path: cur.path.concat([[a, b]]) }, cur.g + 1 + 2 * hOf(T)); } }
+  return best; }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; finish(G, true); }
+// ===================== DRAW + JUICE: the glasses (2D on purpose: glasses on a shelf, read side on like the originals) =====================
+// Tall glass tubes in a row or two, liquids in glossy layers, each colour with a faint mark of its own. A picked glass lifts
+// and glows; pouring, it glides over the other, tips, and a stream of colour runs in while the level rises. A glass done
+// gets a cork, a sparkle and a chime that climbs with every glass done. Hidden layers are smoky grey with a "?".
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, ANIM = null, CORK = {}, WOB = {}, chip = 0, CHIPTXT = '';
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 3 }); } }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+// where the glasses stand: one row, or two
+function lay(g = G) { const s = S1(), n = g ? g.T.length : 6, rows = n > 6 ? 2 : 1, per = Math.ceil(n / rows), tw = Math.min(58 * s, (W - 24) / (per * 1.45)), th = tw * 3.3, gapX = (W - per * tw) / (per + 1);
+  const top = 150 * s, rowH = th + 46 * s, y0 = top + Math.max(0, (H - top - 110 * s - rows * rowH) / 2);
+  const pos = i => { const r = Math.floor(i / per), k = i % per, inRow = r === rows - 1 ? n - per * (rows - 1) : per, gx = (W - inRow * tw) / (inRow + 1); return { x: gx + k * (tw + gx), y: y0 + r * rowH + 20 * s }; };
+  return { s, n, tw, th, pos, lh: (th - tw * 0.55) / CAP, undo: { x: 16 * s, y: H - 70 * s, w: 96 * s, h: 46 * s }, spareB: { x: W - 112 * s, y: H - 70 * s, w: 96 * s, h: 46 * s } }; }
+function glassAt(x, y) { const L = lay(); for (let i = 0; i < L.n; i++) { const p = L.pos(i); if (x > p.x - 12 && x < p.x + L.tw + 12 && y > p.y - 30 && y < p.y + L.th + 16) return i; } return -1; }
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2); chip = Math.max(0, chip - dt);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 500 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 20; } while (TXT.length && TXT[0].t > 1.4) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  if (ANIM) { ANIM.t += dt; if (ANIM.t >= ANIM.life) ANIM = null; } for (const k in CORK) CORK[k] = Math.min(1, CORK[k] + dt * 4); for (const k in WOB) { WOB[k] -= dt; if (WOB[k] <= 0) delete WOB[k]; } }
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255, f = v => Math.round(clamp(k > 1 ? v + (255 - v) * (k - 1) : v * k, 0, 255)); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+function tubePath(x, y, w, h) { const r = w / 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h - r); ctx.arc(x + r, y + h - r, r, Math.PI, 0, true); ctx.lineTo(x + w, y); }
+// one glass: its liquids from the bottom; `grow` makes the top n layers rise (the pour arriving)
+function drawGlass(G, i, x, y, L, o = {}) { const w = L.tw, h = L.th, t = G.T[i], cap = G.caps[i], lh = cap === CAP ? L.lh : L.lh, hh = cap === CAP ? h : L.lh * cap + w * 0.55; const yT = y + (h - hh);
+  ctx.save(); if (o.rot) { ctx.translate(x + w / 2, yT); ctx.rotate(o.rot); ctx.translate(-(x + w / 2), -yT); }
+  // the liquids, clipped to the glass
+  ctx.save(); tubePath(x + 3, yT, w - 6, hh - 3); ctx.closePath(); ctx.clip(); const base = y + h - 3;
+  const show = o.show != null ? o.show : t.length; for (let k = 0; k < show; k++) { let f = 1; if (o.grow && k >= show - o.grow.n) f = o.grow.f; const y1 = base - (k + 1) * lh + (1 - f) * lh, hid = G.hide[i][k];
+    const col = hid ? '#5a5a66' : LIQ[t[k]]; const gr = ctx.createLinearGradient(x, 0, x + w, 0); gr.addColorStop(0, shade(col, 0.82)); gr.addColorStop(0.35, shade(col, 1.15)); gr.addColorStop(1, shade(col, 0.72)); ctx.fillStyle = gr; ctx.fillRect(x, y1, w, lh * f + 1);
+    if (k === show - 1) { ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(x, y1, w, 3); }
+    ctx.fillStyle = hid ? 'rgba(255,255,255,.75)' : 'rgba(255,255,255,.45)'; ctx.font = `${Math.round(lh * 0.42)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (f > 0.6) ctx.fillText(hid ? '?' : SYM[t[k]], x + w / 2, y1 + lh / 2); }
+  ctx.restore();
+  // the glass itself
+  tubePath(x, yT, w, hh); ctx.strokeStyle = o.sel ? '#ffe08a' : 'rgba(255,255,255,.85)'; ctx.lineWidth = o.sel ? 4 : 2.5; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.28)'; ctx.fillRect(x + w * 0.18, yT + 8, w * 0.1, hh - w * 0.7); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillRect(x - 3, yT - 3, w + 6, 4);
+  // a cork when it is done
+  if (G.done[i]) { const c = CORK[i] != null ? CORK[i] : 1, cy = yT - 14 + (1 - easeOut(c)) * -40; ctx.fillStyle = '#c8945a'; rrect(x + w * 0.15, cy, w * 0.7, 16, 4); ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,.15)'; ctx.fillRect(x + w * 0.15, cy + 11, w * 0.7, 3); }
+  ctx.restore(); }
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, L = lay(g), s = L.s, P = PLACES[g ? g.place : 0];
+  const bg = ctx.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, P.bg[0]); bg.addColorStop(1, P.bg[1]); ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  if (g) { const A = ANIM;
+    for (let i = 0; i < g.T.length; i++) { const p = L.pos(i); ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(p.x + L.tw / 2, p.y + L.th + 6, L.tw * 0.7, 6, 0, 0, TAU); ctx.fill(); }
+    for (let i = 0; i < g.T.length; i++) { if (A && A.a === i) continue; const p = L.pos(i); let y = p.y; if (g.sel === i) y -= 22 * s; const wob = WOB[i] ? Math.sin(WOB[i] * 50) * WOB[i] * 14 : 0;
+      const grow = A && A.b === i ? { n: A.n, f: clamp((A.t - A.life * 0.3) / (A.life * 0.55), 0, 1) } : null; drawGlass(g, i, p.x + wob, y, L, { sel: g.sel === i, grow }); }
+    // the glass that is pouring: glides over, tips, pours
+    if (A) { const pa = L.pos(A.a), pb = L.pos(A.b), u = A.t / A.life, go = easeOut(clamp(u / 0.3, 0, 1)), back = easeOut(clamp((u - 0.85) / 0.15, 0, 1)), side = pa.x >= pb.x ? 1 : -1;
+      // the glass turns about its mouth: the mouth comes to rest just above the other glass's mouth, its bottom tips up and away
+      const mx = pb.x + L.tw / 2 + side * L.tw * 0.18, my = pb.y - 16 * s, x0 = pa.x, y0 = pa.y - 22 * s, x = lerp(lerp(x0, mx - L.tw / 2, go), x0, back), y = lerp(lerp(y0, my, go), pa.y, back), rot = -side * 1.15 * (go - back);
+      drawGlass(g, A.a, x, y, L, { rot });
+      if (u > 0.3 && u < 0.85) { const sx = x + L.tw / 2, sy = y + 2, ex = pb.x + L.tw / 2, ey = pb.y + L.th - 4 - g.T[A.b].length * L.lh * 0.5, wob = Math.sin(now * 30) * 1.5;
+        ctx.strokeStyle = LIQ[A.c]; ctx.lineWidth = 6 * s; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(ex + wob, sy + 6, ex + wob, Math.max(sy + 8, ey)); ctx.stroke(); ctx.lineCap = 'butt'; } }
+    hud(g, L, now); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; ctx.restore();
+  const dark = g && g.place === 3; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1 ? 1 : 1 - (q.t - 1) / 0.4, pop = 1 + 0.25 * Math.max(0, 1 - q.t * 6); ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s * pop)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = dark ? 'rgba(0,0,0,.6)' : 'rgba(255,255,255,.85)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30, hy = H - 120 * s;
+    ctx.fillStyle = 'rgba(30,40,60,.92)'; rrect(W / 2 - ww / 2, hy - hh / 2, ww, hh, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
+function hud(G, L, now) { const s = L.s, dark = G.place === 3, ink = dark ? '#f0eaff' : '#2a3a5a', soft = dark ? 'rgba(240,234,255,.7)' : 'rgba(42,58,90,.65)';
+  if (G.lesson) lessonPanel(G, L); else {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = G.moves <= 3 ? '#e83a4a' : ink; ctx.font = `${Math.round(40 * s)}px ${TF}`; ctx.fillText(G.moves, W / 2, 66 * s); ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillStyle = soft; ctx.fillText('MOVES', W / 2, 92 * s);
+    ctx.textAlign = 'left'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillStyle = ink; ctx.fillText(`Level ${G.N}`, 16, 56 * s); ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillStyle = soft; ctx.fillText(`${G.done.filter(Boolean).length} of ${G.cfg.K} sorted`, 16, 76 * s);
+    ctx.textAlign = 'right'; ctx.fillText(`best in ${G.par}`, W - 16, 76 * s);
+    if (G.fumble >= 1) { ctx.textAlign = 'center'; ctx.fillStyle = chip > 0 ? '#e83a4a' : soft; ctx.fillText(chip > 0 ? CHIPTXT : `Next wrong pour costs ${G.fumble} move${G.fumble > 1 ? 's' : ''}`, W / 2, 112 * s); } }
+  const btn = (b, txt, on) => { ctx.globalAlpha = on ? 1 : 0.35; ctx.fillStyle = dark ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.75)'; rrect(b.x, b.y, b.w, b.h, 14); ctx.fill(); ctx.fillStyle = ink; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, b.x + b.w / 2, b.y + b.h / 2); ctx.globalAlpha = 1; };
+  if (G.undos > 0 || G.hist.length) btn(L.undo, `↶ UNDO ${G.undos}`, G.undos > 0 && G.hist.length > 0); if (G.spare > 0) btn(L.spareB, '+ GLASS', true); }
+function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20, y = 44 * s; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 42 * s + lines.length * 17 * s;
+  ctx.fillStyle = 'rgba(30,40,60,.92)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#ffd83a'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd83a'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (D.left != null ? `  · ${Math.max(0, D.left)} pours to spare` : ''), x + 12, y + 9 * s);
+  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * s + i * 17 * s)); ctx.restore(); }
+function onEvent(G, e) { const L = lay(G), s = L.s, dark = G.place === 3, ink = dark ? '#ffe08a' : '#2a5aaa';
+  switch (e.k) {
+    case 'start': say(`Level ${G.N}`, W / 2, H * 0.12 + 40 * s, ink, 22); sfx.start(); CORK = {}; ANIM = null; if (G.N <= 1) tip('how', 'Tap a glass, then another to pour into it.', 3); break;
+    case 'pick': sfx.clink(1); break;
+    case 'put': sfx.clink(0.6); break;
+    case 'nothing': sfx.clink(0.4); break;
+    case 'pour': ANIM = { a: e.a, b: e.b, n: e.n, c: e.c, t: 0, life: G.pt }; sfx.pour(e.n); if (e.rev) setTimeout(() => sfx.reveal(), 300); break;
+    case 'full': { const p = L.pos(e.i); CORK[e.i] = 0; setTimeout(() => { sparks(p.x + L.tw / 2, p.y, 18, LIQ[e.c], 200 * s); sfx.full(e.n); vibe(HAP.light); }, 380); say(e.n >= G.cfg.K ? '' : ['', 'Nice!', 'Lovely!', 'Great!', 'Super!', 'Brilliant!', 'Wonderful!', 'Superb!', 'Amazing!', 'Fantastic!'][Math.min(9, e.n)], p.x + L.tw / 2, p.y - 30 * s, LIQ[e.c], 20); break; }
+    case 'nope': WOB[e.b] = 0.3; sfx.nope(); if (e.cost) { chip = 1.2; CHIPTXT = `−${e.cost} MOVE${e.cost > 1 ? 'S' : ''}`; say(CHIPTXT, W / 2, 130 * s, '#e83a4a', 20); } else if (!G.lesson) tip('nope', 'It only pours onto the same colour, or into an empty glass. Another wrong pour soon after costs a move.', 3.4); break;
+    case 'undo': sfx.undo(); ANIM = null; break;
+    case 'spare': sfx.full(1); say('+1 GLASS', W / 2, H * 0.5, ink, 24); break;
+    case 'stuck': if (e.end) say('NO POURS LEFT', W / 2, H * 0.45, '#e83a4a', 26); else tip('stuck', 'No pours left! Tap UNDO to take one back.', 3); break;
+    case 'sorted': FX.flash = 0.6; sfx.win(); vibe(HAP.best); for (let i = 0; i < 60; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: H * 0.45, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320 - 160, life: 1.2, t: 0, col: LIQ[i % LIQ.length], r: 3.5 }); } say('ALL SORTED!', W / 2, H * 0.4, ink, 34); break;
+    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; sfx.nope(); break;
+    case 'lessondone': say('YOU\'VE GOT IT!', W / 2, H * 0.4, ink, 30); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'lost': sfx.lose(); break;
+  } }
+// ===================== SOUND: glass and water (PLAYBOOK S1-S11) =====================
+// A bright glassy clink when a glass is picked up (softer when it is put down), a run of low "glug"s while it pours (one for
+// each layer that moves), a soft ping when a hidden colour shows itself, and a chime when a glass is done that climbs a step
+// with each glass done (S5). A pour that cannot happen is a dull little clunk. Undo is a quick reverse swish.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  start() { [0, 4, 7].forEach((q, j) => pluck(note(523, q), 0.5, 0.05, j * 0.07)); },
+  clink(v = 1) { if (!gate('clink', 60)) return; const f = 2600 + Math.random() * 300; tone(f, 0.18, 0.04 * v, 'sine'); tone(f * 1.5, 0.12, 0.02 * v, 'sine', 0.005); },
+  pour(n = 1) { for (let i = 0; i < 2 + n * 2; i++) { const t = 0.12 + i * 0.07; noise(0.07, 380 + Math.random() * 120, 0.06, 'bandpass', 3, t, 0.01); tone(160 + Math.random() * 60, 0.06, 0.03, 'sine', t, 110); } },
+  reveal() { tone(1568, 0.25, 0.03, 'sine'); },
+  full(n = 1) { const st = Math.min(14, n * 2); pluck(note(523, st), 0.9, 0.08); tone(note(1046, st), 0.4, 0.03, 'sine', 0.05); },
+  nope() { if (!gate('nope', 200)) return; tone(180, 0.12, 0.06, 'triangle', 0, 140, 800); noise(0.05, 600, 0.03, 'lowpass', 1); },
+  undo() { noise(0.18, 1800, 0.03, 'bandpass', 0.8, 0, 0.1); tone(700, 0.12, 0.03, 'sine', 0, 500); },
+  no() { if (!gate('no', 250)) return; tone(200, 0.1, 0.05, 'triangle', 0, 160, 900); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 1)), 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(523, q), 1.0, 0.07, j * 0.1)); },
+  lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · <b>${cf.K}</b> colours${cf.hidden ? ' · hidden layers' : ''}`, best[level] ? `Your best here: <b>${best[level]}</b> pours` : '', helpOn() ? '<span class="help">More moves and an extra undo for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; ANIM = null; CORK = {}; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (!best[L] || r.pours < best[L]) { r.nb = best[L] != null; best[L] = r.pours; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'ALL SORTED!' : r.why === 'stuck' ? 'NO POURS LEFT' : 'OUT OF MOVES'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = (r.win ? `Sorted in <b>${r.pours}</b> pours · the best route is ${r.par}` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') : `<b>${r.done} of ${r.of}</b> colours sorted` + (r.of - r.done <= 1 ? ' · <b>so close!</b>' : ''))
+    + (r.win && r.stars < 3 ? `<br>Sort it in ${r.par} pours for three stars.` : '') + (!r.win ? '<br>Think a few pours ahead: keep an empty glass free for as long as you can.' : '') + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): tap a glass to pick it up, tap another to pour; UNDO and + GLASS are buttons
+const ui = {};
+const inB = (b, x, y) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h;
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const L = lay(), x = e.clientX, y = e.clientY;
+  if (inB(L.undo, x, y)) { undo(G); return; } if (G.spare > 0 && inB(L.spareB, x, y)) { addSpare(G); return; }
+  const i = glassAt(x, y); if (i >= 0) tapGlass(G, i); else if (G.sel >= 0) { G.sel = -1; sfx.clink(0.5); } });
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE SUPPLY SHELF</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  tap(i) { return tapGlass(G, i); }, undo() { return undo(G); }, lay, renderShop,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

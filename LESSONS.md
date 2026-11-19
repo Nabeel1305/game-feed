@@ -615,6 +615,16 @@ Everything learned building the first games. Every new game must follow the **ru
 - Lessons in a drop game: one drop at a time, judged before the next (blind drops squashing each other passed lesson 1),
   and only for the lessons that judge a drop (the "line" lesson froze after one drop).
 
+### 63. Pour (`games/pour/`): colour sort, one thumb
+- Spam-proof from the first build, by design rather than tuning: puzzles are random glasses kept only if a solver (weighted
+  best-first with a binary heap) sorts them; the moves are the solver's route times a margin; wrong pours cost more and
+  more; lessons restart on a second quick wrong pour or on running past their pours to spare. Blind 0 on the first run.
+- The robot plans with what it can see (hidden layers count as unknown colours of their own), re-planning every pour.
+- A stalled board must end the game ("no pours left") unless an undo or a spare glass is left (rule 2).
+- Pouring animation: turn the glass about its MOUTH, set the mouth just above the target's, let the bottom tip away; the
+  stream starts at the mouth. Turned about its middle, the glass swung off the screen.
+- A mark on every colour (● ▲ ■ ...) so the game works without telling colours apart.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
