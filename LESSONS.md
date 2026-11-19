@@ -520,6 +520,11 @@ Everything learned building the first games. Every new game must follow the **ru
 - A robot that solves the ballistics exactly never misses: its error must be a person's (yaw ±0.35 x (1 - acc), pitch
   ±0.25 x (1 - acc)), and oranges reload in 0.55 s, or nothing could ever reach you and every level was won with full hearts.
 - Shields stop shots that come in flat (vy > -7); a lob or a melon's burst gets past. The big one's eye is the top of its head.
+### 55. Tri-Peaks (`games/peaks/`): a calm card game
+- A rule function named `draw` was replaced by the kit's frame `draw(now)` (the same name, later in the file): the robot
+  "drew" and nothing happened. Rule functions must not share names with the kit's (draw, step, hud, lay, measure, pick, note).
+- One deck leaves only 23 cards for the stock, whatever the level asks for: the stock is dealt from two decks.
+- Tri-peaks is luck-heavy; a long stock on the first levels (about 42) is what lets an ordinary player win them.
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
