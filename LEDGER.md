@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**56 games** so far. Next number: **57**.
+**57 games** so far. Next number: **58**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -64,6 +64,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 54 | **Fruit Fight** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/AaN4KXLpYKSDUmjRGaYycM) | `games/fruit/index.html` |
 | 55 | **Tri-Peaks** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/LMRVK8AJrKdaFVGBM48Pkz) | `games/peaks/index.html` |
 | 56 | **Oarsmen** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MjBGfJ9nsPc25wSnrLeEz6) | `games/row/index.html` |
+| 57 | **Safecracker** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CguUr26oFcrpa5b977t8Kj) | `games/safe/index.html` |
 
 ## What each game is
 
@@ -123,3 +124,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 54. **Fruit Fight**: First-person slingshot in a 3D meadow: pull back and let go with an arc to aim; oranges are quick, watermelons burst on crowds, bananas trip; blobs, scuttlers, shield-trolls, hoppers and big ones with a glowing eye.
 55. **Tri-Peaks**: Calm cards: clear three peaks by playing one higher or lower onto the pile; streaks earn jokers, locks need the key card, the stock is short.
 56. **Oarsmen**: Rowing race down a river in 3D: left thumb left oar, right thumb right oar, stroke on the green together to build rhythm, one oar to steer round bends, rocks and logs; beat the rival boats.
+57. **Safecracker**: Crack a safe by feel: drag round the dial slowly, feel the click, turn back to the chalk mark and SET; too fast is noisy, wrong numbers raise the alarm, keep still in the guard's torchlight, open it before dawn.

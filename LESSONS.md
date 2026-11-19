@@ -537,6 +537,16 @@ Everything learned building the first games. Every new game must follow the **ru
 - Balancing: blind tapping both oars steadily wins unless the course bends (bend 0.9 to 1.2) and a crab costs a lot; the
   lessons other than STEER flatten the river so they cannot stall. Bank ×0.6 speed, rock or log ×0.35.
 
+### 57. Safecracker (`games/safe/`): a calm heist by feel
+- The dial turns one to one with the thumb: the drag's change of angle round the dial's centre (ignored within a quarter of
+  the radius, where the angle jumps) times M/TAU numbers. `turnDial(G, d)` finds whether the combination number was passed
+  between the old and new position (unbounded floats, so it works for any turn); felt only under `cfg.feel` numbers a
+  second (an eased speed, `G.spd`), which leaves the chalk mark (`G.mark`). SET tries `round(pos)`.
+- Keeping still is lifting the thumb, so trying a number had to be a separate button (SET); never put "try" on lift.
+- Feel speed scales with sqrt(dial size): on a 100-number dial the plain limit was a crawl (a turn in 18 s).
+- Spam is safe by design: a guess is 1 in 40 to 100, and three or four wrong guesses fill the alarm.
+- Speed: the room behind is painted once into a spare canvas (it was a full-screen gradient every frame).
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
