@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**55 games** so far. Next number: **56**.
+**56 games** so far. Next number: **57**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -63,6 +63,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 53 | **Homemaker** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK) | `games/house/index.html` |
 | 54 | **Fruit Fight** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/AaN4KXLpYKSDUmjRGaYycM) | `games/fruit/index.html` |
 | 55 | **Tri-Peaks** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/LMRVK8AJrKdaFVGBM48Pkz) | `games/peaks/index.html` |
+| 56 | **Oarsmen** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MjBGfJ9nsPc25wSnrLeEz6) | `games/row/index.html` |
 
 ## What each game is
 
@@ -121,3 +122,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 53. **Homemaker**: Build houses on a 3D plot, a shed first and whole homes later: pick a piece, tap or drag (walls snap), windows, doors, furniture, one-tap roof; tick the checklist, move in and walk through. Every house is kept.
 54. **Fruit Fight**: First-person slingshot in a 3D meadow: pull back and let go with an arc to aim; oranges are quick, watermelons burst on crowds, bananas trip; blobs, scuttlers, shield-trolls, hoppers and big ones with a glowing eye.
 55. **Tri-Peaks**: Calm cards: clear three peaks by playing one higher or lower onto the pile; streaks earn jokers, locks need the key card, the stock is short.
+56. **Oarsmen**: Rowing race down a river in 3D: left thumb left oar, right thumb right oar, stroke on the green together to build rhythm, one oar to steer round bends, rocks and logs; beat the rival boats.

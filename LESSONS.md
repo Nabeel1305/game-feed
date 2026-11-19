@@ -525,6 +525,18 @@ Everything learned building the first games. Every new game must follow the **ru
   "drew" and nothing happened. Rule functions must not share names with the kit's (draw, step, hud, lay, measure, pick, note).
 - One deck leaves only 23 cards for the stock, whatever the level asks for: the stock is dealt from two decks.
 - Tri-peaks is luck-heavy; a long stock on the first levels (about 42) is what lets an ordinary player win them.
+### 56. Oarsmen (`games/row/`): rowing in 3D, two thumbs
+- Each half of the screen is one oar (`stroke(G, side)`, 0 left, 1 right). Quality comes from the oar's time since its last
+  stroke against CYCLE 0.85 s: crab under 0.6 of it, weak early, perfect in the window, late after. Both within 0.14 s =
+  synced, builds rhythm (+4.5% speed a step, max 8). One oar alone turns the boat; +x is the screen's LEFT, so the left oar
+  turns you right. Rowing one side for a long time breaks rhythm; a single steering stroke does not.
+- **A hand-made water ribbon must face up.** The river is a BufferGeometry strip given to `W3.water` (built in x/-z then
+  rotated): with the wrong winding it is culled and you see the grey riverbed instead of water. Order each quad
+  `(i, i+2, i+1), (i+1, i+2, i+3)`. Look at a real screenshot before trusting a 3D river.
+- Camera at 5.2 up, looking 12 ahead, so the water shows colour and not only the sky's glare.
+- Balancing: blind tapping both oars steadily wins unless the course bends (bend 0.9 to 1.2) and a crab costs a lot; the
+  lessons other than STEER flatten the river so they cannot stall. Bank ×0.6 speed, rock or log ×0.35.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
