@@ -89,3 +89,13 @@ own condition: Drone Pilot (#21) exists. Idea 1 has still not come through; it g
 | 52 | High Wire | his: a tightrope in 3D; one floating stick to lean, walk and crouch; wind, birds, banners, sandbags, last-second saves | 3 | 1 | 3D |
 | 53 | Homemaker | his: build houses on a plot, a shed first and whole homes later; a checklist, jobs before the family arrives, a walk-through | 1 | 1 | 3D |
 | 54 | Fruit Fight | his: a first-person slingshot; oranges, melons, bananas against five kinds of monster | 4 | 1 | 3D |
+
+## Set 10 (19 Nov 2026): "Ok next 5". His list was all built (idea 1 has still not come through), so all five are mine,
+picked for a balanced feed: one intense (Fire Crew, 4), two calm (Tri-Peaks, Origami), three new genres, a two-thumb game.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 55 | Tri-Peaks | mine: patience cards, one higher or lower; streaks earn jokers; locks and keys | 1 | 1 | 2D |
+| 56 | Oarsmen | mine: a rowing race down a river; left thumb left oar, right thumb right oar; rhythm, steering, rivals | 3 | 2 | 3D |
+| 57 | Safecracker | mine: turn the dial slowly, feel the click, SET on the chalk mark; noise, alarm, the guard's torch, dawn | 2 | 1 | 2D |
+| 58 | Fire Crew | mine: a burning building; hold to spray, lift to refill, tap people to send the ladder; gas, backdraft, wind | 4 | 1 | 3D |
+| 59 | Origami | mine: drag a corner and the paper folds after your thumb; six animals that come to life on your shelf | 1 | 1 | 2D |

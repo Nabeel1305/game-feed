@@ -559,6 +559,18 @@ Everything learned building the first games. Every new game must follow the **ru
 - Flames are additive sprites from a canvas glow; keep them orange and under 0.65 opacity or the tone mapping turns them
   white.
 
+### 59. Origami (`games/origami/`): fold paper, one thumb
+- The fold is real geometry: faces are convex polygons (which side is up, height in the stack); a fold clips every face by
+  the crease and reflects the flap on top in reverse order (`foldFaces`). The crease is the line halfway between where the
+  thumb went down and where it is, so the corner follows the thumb; drawn live while the thumb is down.
+- Models are written as crease + corner (`[A, B, P]`); the landing point is worked out. Design them by rendering every step
+  (a node dump of the faces and a PIL picture): corner folds can only tuck inwards, so ears and tails need creases that run
+  through the chin or across the body, as in real origami. Start the paper white side up, so folds show the colour.
+- Grading compares the player's crease with the right one at the two ends of the right crease across the paper.
+- Draw the target outline after (over) the paper, or the shape to make is hidden under it.
+- Lessons with a big room for error can be passed by blind luck: in lessons a drag counts only if it starts on the glowing
+  corner, and lesson 1 is a whole model.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

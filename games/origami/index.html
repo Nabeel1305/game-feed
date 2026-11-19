@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Origami</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@700&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#3a2618;--ink:#fff8ee;--acc:#e86a5a;--acc-dark:#8a3428;--ok:#9be3b5}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.tf{font-family:"Kaisei Decol","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:radial-gradient(circle at 50% 30%,rgba(16,20,31,.55),rgba(6,8,14,.93))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:76px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#1d1204;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#1d1204}.lvb.cur small{color:#1d1204}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+
+#eTitle{font-size:34px}.ledger{text-align:left;margin-top:10px;font-size:13px}.ledger .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:6px 9px;margin-top:5px}.ledger .g{color:#9be3b5}.ledger .b{color:#ffb4a8}
+.book{text-align:left;margin-top:10px;font-size:13.5px}.book .ln{display:flex;justify-content:space-between;background:rgba(255,255,255,.07);border-radius:9px;padding:7px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <div class="card">
+    <h1 class="tf" style="font-size:58px">Origami</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">FOLD SOMETHING LOVELY</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <button class="btn ghost" id="levelsBtn">Levels</button>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <button class="btn ghost" id="rulesBtn">How to play</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovBook">
+  <div class="card">
+    <h2 class="tf">PRICE BOOK</h2>
+    <p class="sub" id="bookSub"></p>
+    <div class="book" id="bookList"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="ledger" id="eLedger"></div>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Kaisei Decol", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('og.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('og.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+
+// ===================== RULES: Origami (game 59, mine for set 10: the calm one) =====================
+// A square of paper on a table. Each step of a model is one fold. Put your thumb on the paper and drag: the paper folds along
+// the line halfway between where your thumb went down and where it is now, so the corner you hold follows your thumb (real
+// paper: you bring a corner to a point and crease). The faint outline shows the shape the paper should make; early on the
+// corner to hold glows and a dot shows where it goes. Let go: close to the outline and the fold is made (snapped neat, and
+// graded: PERFECT, NEAT, or a bit rough); too far off and the paper springs back, crumpled a little. Three crumples and it tears.
+// The last fold made, the animal comes to life and goes on your shelf. Later: no dot, then no glow (only the outline), less
+// room for error, longer models.
+const RULES = [
+  '<b>Drag a corner</b> of the paper: it folds and follows your thumb.',
+  'Make it match the <b>faint outline</b>, then let go. Early on a <b>glow</b> shows the corner and a <b>dot</b> where it goes.',
+  'Land close for a <b>PERFECT</b> fold. Too far off and the paper <b>crumples</b>; three crumples and it tears.',
+  'Finish the model and it comes to life on your <b>shelf</b>. Stars for neat folding.',
+];
+const R2 = Math.SQRT2;
+const DIAMOND = [[0, R2], [R2, 0], [0, -R2], [-R2, 0]], SQUARE = [[-1, 1], [1, 1], [1, -1], [-1, -1]];
+// each model: a start shape and its folds, each fold "bring point P to point Q" (P a corner of the paper as it is then)
+// each fold is written as its crease (two points on it) and the corner that goes over (P); the place it lands (Q) is worked out
+const T0 = [0, R2], RT = [R2, 0], B0 = [0, -R2], LT = [-R2, 0];
+const MODELS0 = [
+  { id: 'fox', name: 'FOX', col: '#e8742a', start: DIAMOND, folds: [[[-2, 0], [2, 0], T0], [B0, [0.85, 0], RT], [B0, [-0.85, 0], LT]], eyes: [[-0.22, -0.35], [0.22, -0.35]], nose: [0, -1.25] },
+  { id: 'dog', name: 'PUPPY', col: '#b07a4a', start: DIAMOND, folds: [[[-2, 0], [2, 0], T0], [[0.5, 0.2], [0.72, -0.8], RT], [[-0.5, 0.2], [-0.72, -0.8], LT], [[-1, -0.95], [1, -0.95], B0]], eyes: [[-0.25, -0.3], [0.25, -0.3]], nose: [0, -0.8] },
+  { id: 'cat', name: 'CAT', col: '#5a6a8a', start: DIAMOND, folds: [[[-2, 0], [2, 0], T0], [B0, [1.05, 0], RT], [B0, [-1.05, 0], LT], [[-1, -0.9], [1, -0.9], B0]], eyes: [[-0.25, -0.3], [0.25, -0.3]], nose: [0, -0.72], whisk: true },
+  { id: 'whale', name: 'WHALE', col: '#3a7ab8', start: DIAMOND, folds: [[[-2, 0.6], [2, 0.6], T0], [[-2, -0.6], [2, -0.6], B0], [[-0.85, -1], [-0.85, 1], LT], [[0.2, -0.6], [1.0, 0.6], RT]], eyes: [[-0.55, 0.1]], spout: [-0.45, 0.95] },
+  { id: 'fish', name: 'FISH', col: '#e8b83a', start: DIAMOND, folds: [[[-2, 0.55], [2, 0.55], T0], [[-2, -0.55], [2, -0.55], B0], [[-0.4, -0.55], [-1.0, 0.55], LT]], eyes: [[0.7, 0.12]], bubble: [1.35, 0.6] },
+  { id: 'bird', name: 'BIRD', col: '#d84a5a', start: DIAMOND, folds: [[[-2, 0], [2, 0], T0], [B0, [-0.4, 0], LT], [[0.9, -1], [0.9, 1], RT]], eyes: [[-0.2, 0.12]] },
+];
+const reflectPt = (A, B, P) => { const t = [B[0] - A[0], B[1] - A[1]], L = Math.hypot(t[0], t[1]); t[0] /= L; t[1] /= L; const v = [P[0] - A[0], P[1] - A[1]], d = v[0] * t[0] + v[1] * t[1], f = [A[0] + t[0] * d, A[1] + t[1] * d]; return [2 * f[0] - P[0], 2 * f[1] - P[1]]; };
+const MODELS = MODELS0.map(m => Object.assign({}, m, { folds: m.folds.map(([A, B, P]) => [P, reflectPt(A, B, P)]) }));
+const PLACES = [{ name: 'The Tea House', table: '#7a5034' }, { name: 'The Garden', table: '#5a6a3a' }, { name: 'The Temple', table: '#6a2a2a' }, { name: 'The Studio', table: '#4a4a52' }];
+const placeOf = N => Math.floor((N - 1) / 6) % 4;
+const UPGRADES = [
+  { id: 'bone', name: 'Bone folder', desc: 'A little more room for error.', max: 2, cost: l => 35 + l * 45 },
+  { id: 'spare', name: 'Strong paper', desc: 'One more crumple before it tears.', max: 1, cost: l => 70 },
+  { id: 'guide', name: 'A teacher', desc: 'The dot stays on for longer.', max: 1, cost: l => 60 },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Beginner'], [40, 'Apprentice'], [130, 'Paper folder'], [320, 'Craftsman'], [700, 'Master'], [1500, 'Sensei']];
+// a level: one model or two in a row; hints fade (dot, then glow), room for error shrinks
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  const order = [0, 1, 3, 2, 4, 5], m1 = order[(N - 1) % 6], m2 = N >= 13 ? order[(N + 2) % 6] : null;
+  return { N, f, help: !!help, place: placeOf(N), models: m2 == null ? [m1] : [m1, m2], tol: x(0.42, 0.07, 22) * (1 + 0.12 * upLv('bone')) * (help ? 1.25 : 1) + 0.08 * e,
+    dot: N <= 4 + 3 * upLv('guide') || help, glow: N <= 9 || help, crumples: (N <= 3 ? 4 : 3) + upLv('spare') + (help ? 1 : 0) }; }
+// ---------- paper geometry: faces are convex polygons, each with which side is up and its height in the stack ----------
+const dot2 = (a, b) => a[0] * b[0] + a[1] * b[1];
+function lineOf(P, Q) { const n = [Q[0] - P[0], Q[1] - P[1]], L = Math.hypot(n[0], n[1]) || 1; n[0] /= L; n[1] /= L; return { p: [(P[0] + Q[0]) / 2, (P[1] + Q[1]) / 2], n }; }      /* the crease: halfway from P to Q, square to PQ; P's side moves */
+const sideOf = (ln, x) => dot2([x[0] - ln.p[0], x[1] - ln.p[1]], ln.n);
+function clipFace(pts, ln, keep) { const out = []; for (let i = 0; i < pts.length; i++) { const a = pts[i], b = pts[(i + 1) % pts.length], da = sideOf(ln, a) * keep, db = sideOf(ln, b) * keep;      /* keep = 1: the side that stays (Q's side); -1: the flap that moves (P's) */
+    if (da >= 0) out.push(a); if ((da >= 0) !== (db >= 0)) { const t = da / (da - db); out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); } } return out.length >= 3 ? out : null; }
+const reflect = (ln, x) => { const d = sideOf(ln, x); return [x[0] - 2 * d * ln.n[0], x[1] - 2 * d * ln.n[1]]; };
+function foldFaces(faces, ln, u = 1) {      /* u: 1 is fully folded; between 0 and 1 the flap is part way over (seen from above: squashed toward the crease) */
+  const out = [], top = Math.max(0, ...faces.map(f => f.z)); const c = Math.cos(Math.PI * u);
+  for (const f of faces) { const k = clipFace(f.pts, ln, 1); if (k) out.push({ pts: k, up: f.up, z: f.z });
+    const m = clipFace(f.pts, ln, -1); if (m) out.push({ pts: m.map(x => { const d = sideOf(ln, x), dd = d * c; return [x[0] - (d - dd) * ln.n[0], x[1] - (d - dd) * ln.n[1]]; }), up: u > 0.5 ? 1 - f.up : f.up, z: u > 0.5 ? top + 1 + (top - f.z) : f.z + 0.001, moving: true }); }
+  return out.sort((a, b) => a.z - b.z); }
+function corners(faces) { const all = []; for (const f of faces) for (const p of f.pts) all.push(p); return all; }
+// the target: where the next fold's corner is and where it goes, worked out from the model on the paper as it is now
+function stepNow(G) { const m = MODELS[G.mi], fd = m.folds[G.si]; return fd ? { P: fd[0], Q: fd[1], ln: lineOf(fd[0], fd[1]) } : null; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null, grades: [], made: [] };
+  G.queue = cfg.models.slice(); G.crum = 0; startModel(G, G.queue.shift());
+  if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+function startModel(G, mi) { G.mi = mi; G.si = 0; G.faces = [{ pts: MODELS[mi].start.map(p => p.slice()), up: 1, z: 0 }];      /* white side up: folds show the colour */ G.drag = null; G.ev.push({ k: 'model', name: MODELS[mi].name }); }
+// ---------- what you do: put the thumb down, drag, let go (all in paper units: the square is 2 across) ----------
+function grab(G, x, y) { if (G.over || G.wait > 0) return false; G.drag = { a: [x, y], b: [x, y] }; return true; }
+function pull(G, x, y) { if (!G.drag) return false; G.drag.b = [x, y]; return true; }
+function release(G) { const d = G.drag; G.drag = null; if (!d || G.over || G.wait > 0) return false; const st = stepNow(G); if (!st) return false;
+  if (Math.hypot(d.b[0] - d.a[0], d.b[1] - d.a[1]) < 0.12) return false;      /* a tap, not a fold */
+  if (G.lesson && Math.hypot(d.a[0] - st.P[0], d.a[1] - st.P[1]) > 0.4) { G.ev.push({ k: 'takecorner' }); return false; }      /* while learning: start on the glowing corner */
+  const ln = lineOf(d.a, d.b), tl = st.ln;
+  // how far is your crease from the right one, over the stretch of paper it crosses; and is the right side moving
+  const pts = corners(G.faces).filter(p => Math.abs(sideOf(tl, p)) < 1e9); let err = 0; const ends = creaseEnds(G, tl);
+  for (const e of ends) err = Math.max(err, Math.abs(sideOf(ln, e)));
+  const same = dot2(ln.n, tl.n) > 0.3;      /* the flap you lifted is the one that should go over */
+  if (!same || err > G.cfg.tol) { G.crum++; G.ev.push({ k: 'crumple', n: G.crum, of: G.cfg.crumples, err, wrong: !same }); fault(G); return false; }
+  const g = err < G.cfg.tol * 0.3 ? 2 : err < G.cfg.tol * 0.65 ? 1 : 0; G.grades.push(g);
+  const before = G.faces; G.faces = foldFaces(G.faces, tl, 1); G.si++; G.ev.push({ k: 'fold', g, ln: tl, from: before }); lessonSee(G, 'fold', g);
+  if (G.si >= MODELS[G.mi].folds.length) { G.made.push(G.mi); G.ev.push({ k: 'alive', mi: G.mi }); lessonSee(G, 'model'); if (G.lesson) return true;
+    G.wait = 1.8; G.next = () => { if (G.queue.length) startModel(G, G.queue.shift()); else finish(G, true); }; }
+  return true; }
+function creaseEnds(G, ln) { let lo = 1e9, hi = -1e9; const t = [-ln.n[1], ln.n[0]];
+  for (const f of G.faces) for (let i = 0; i < f.pts.length; i++) { const a = f.pts[i], b = f.pts[(i + 1) % f.pts.length], da = sideOf(ln, a), db = sideOf(ln, b);
+    if ((da >= 0) !== (db >= 0) || da === 0) { const u = da === db ? 0 : da / (da - db), x = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u], s = dot2([x[0] - ln.p[0], x[1] - ln.p[1]], t); lo = Math.min(lo, s); hi = Math.max(hi, s); } }
+  if (lo > hi) return [ln.p]; return [[ln.p[0] + t[0] * lo, ln.p[1] + t[1] * lo], [ln.p[0] + t[0] * hi, ln.p[1] + t[1] * hi]]; }
+function fault(G) { if (G.lesson) { if (G.crum >= G.cfg.crumples) G.crum = G.cfg.crumples - 1; return; }
+  if (G.crum >= G.cfg.crumples) { G.ev.push({ k: 'tear' }); G.wait = 1.2; G.next = () => finish(G, false); } }
+function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const n = G.grades.length, neat = n ? G.grades.reduce((a, b) => a + b, 0) / (2 * n) : 0;
+  const stars = win ? 1 + (neat >= 0.5 ? 1 : 0) + (neat >= 0.8 && G.crum === 0 ? 1 : 0) : 0;
+  G.res = { win, stars, neat: Math.round(neat * 100), made: G.made.slice(), crum: G.crum, perfect: G.grades.filter(g => g === 2).length, folds: n, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + G.made.length };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'fold', title: 'YOUR FIRST FOX', how: 'Put your thumb on the glowing corner and drag it onto the dot: the paper follows your thumb. Let go on the dot. Three folds make a fox.', need: 1 }],
+  2: [{ id: 'ghost', title: 'MATCH THE OUTLINE', how: 'Drag the glowing corner until the paper fits the dashed outline, then let go. Make a whole puppy.', need: 1 }],
+  3: [{ id: 'neat', title: 'NEAT AND PERFECT', how: 'Land a fold right on the outline for a PERFECT. Make two perfect folds.', need: 2 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonDeal(G) { G.lesson.n = 0; G.crum = 0; G.grades = []; startModel(G, lessonNow(G).id === 'ghost' ? 1 : 0); }
+function lessonSee(G, what, g) { const st = lessonNow(G); if (!st) return; let ok = false;
+  if (st.id === 'fold' && what === 'model') ok = true;
+  if (st.id === 'ghost' && what === 'model') ok = true;
+  if (st.id === 'neat' && what === 'fold' && g === 2) { G.lesson.n++; if (G.lesson.n >= st.need) ok = true; }
+  if (st.id === 'neat' && what === 'model' && !ok) { G.wait = 1.2; G.next = () => lessonDeal(G); G.ev.push({ k: 'lessonmiss', how: st.how }); return; }
+  if (!ok) return;
+  G.lesson.i++; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { G.grades = []; G.made = []; G.crum = 0; G.queue = G.cfg.models.slice(); startModel(G, G.queue.shift()); G.ev.push({ k: 'start' }); }; } else { G.wait = 1.2; G.next = () => lessonDeal(G); } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: a drag from somewhere on the paper to somewhere else
+const rp = () => [(Math.random() * 2 - 1) * 1.3, (Math.random() * 2 - 1) * 1.3];
+const BLIND = { d: G => { const a = rp(), b = rp(); grab(G, a[0], a[1]); pull(G, b[0], b[1]); release(G); }, s: G => { const a = rp(), b = [a[0] + (Math.random() - 0.5) * 1.2, a[1] + (Math.random() - 0.5) * 1.2]; grab(G, a[0], a[1]); pull(G, b[0], b[1]); release(G); }, t: G => { const a = rp(); grab(G, a[0], a[1]); release(G); } };
+// a player who looks: takes a moment, puts the thumb on the corner (a little off) and lets go near the right place; how near
+// depends on how steady they are, and on whether a dot shows the place (without one, they judge it from the outline)
+function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, c = G.cfg;
+  if (G.over || G.wait > 0) { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.6 + react * 2.5) return; mem.t = 0;
+  const st = stepNow(G); if (!st) return; const gs = () => { let s = 0; for (let i = 0; i < 4; i++) s += R(); return (s - 2) / 1.15; };
+  const sd = (1 - acc) * 0.22 + 0.02 + (c.dot ? 0 : 0.04) + (c.glow ? 0 : 0.02), a = [st.P[0] + gs() * 0.05, st.P[1] + gs() * 0.05], b = [st.Q[0] + gs() * sd, st.Q[1] + gs() * sd];
+  grab(G, a[0], a[1]); pull(G, b[0], b[1]); release(G); }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.made.push(G.mi); G.grades.push(2); finish(G, true); }
+// ===================== DRAW + JUICE: the paper (2D on purpose: paper folding is flat, and reads best from above) =====================
+// A wooden table under soft light. The paper: coloured on one side, cream on the other, each layer a little darker below the
+// one on top, creases drawn as fine lines, a soft shadow under it. While your thumb is down the paper is folded live along
+// the crease halfway to your thumb, so the corner follows you. The faint dashed outline is the shape to make; a glowing ring
+// marks the corner to take and a dot where it goes (early levels). A fold snaps neat with a crisp crease; a bad one shakes and
+// leaves a crumple. The finished animal gets eyes, hops, and says its name.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
+let hint = null, anim = null, alive = null, crumT = 0;
+function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 2.5 }); } }
+function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+const S1 = () => Math.min(W, H * 0.6) / 390;
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], s = S1(), x = 10, w = W - 20, y = 48 * s; ctx.save(); ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 40 * s + lines.length * 16 * s;
+  ctx.fillStyle = 'rgba(30,20,10,.88)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText(`LESSON: ${st.title}${st.need > 1 ? ` · ${D.n} OF ${st.need}` : ''}`, x + 12, y + 8 * s);
+  ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 28 * s + i * 16 * s)); ctx.restore(); }
+function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 400 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) { t.t += dt; t.y -= dt * 18; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  if (anim) { anim.t += dt; if (anim.t >= 0.32) anim = null; } if (alive) alive.t += dt; crumT = Math.max(0, crumT - dt); }
+// paper units to the screen: the square is 2 across
+function lay() { const s = S1(), U = Math.min(W * 0.3, H * 0.17), cx = W / 2, cy = H * 0.52; return { s, U, cx, cy, toS: p => [cx + p[0] * U, cy - p[1] * U], toP: (x, y) => [(x - cx) / U, (cy - y) / U] }; }
+function shade(hex, k) { const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255, f = v => Math.round(clamp(v * k, 0, 255)); return `rgb(${f(r)},${f(g)},${f(b)})`; }
+function drawFaces(faces, L, col, o = {}) { if (!faces.length) return; const top = Math.max(...faces.map(f => f.z)), bot = Math.min(...faces.map(f => f.z));
+  // the shadow
+  ctx.save(); ctx.fillStyle = 'rgba(0,0,0,.28)'; for (const f of faces) { ctx.beginPath(); f.pts.forEach((p, i) => { const q = L.toS(p); i ? ctx.lineTo(q[0] + 5, q[1] + 7) : ctx.moveTo(q[0] + 5, q[1] + 7); }); ctx.closePath(); ctx.fill(); } ctx.restore();
+  for (const f of faces) { const lv = top === bot ? 1 : 0.92 + 0.08 * (f.z - bot) / (top - bot), base = f.up === 0 ? col : '#f6f1e6';
+    ctx.beginPath(); f.pts.forEach((p, i) => { const q = L.toS(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.fillStyle = shade(base, lv * (f.moving && o.lift ? 1.06 : 1)); ctx.fill();
+    ctx.strokeStyle = 'rgba(40,30,20,.35)'; ctx.lineWidth = 1.2; ctx.stroke(); } }
+function ghost(faces, L) { ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(255,255,255,.07)';
+  for (const f of faces) { ctx.beginPath(); f.pts.forEach((p, i) => { const q = L.toS(p); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.fill(); ctx.stroke(); } ctx.restore(); }
+function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G, P = PLACES[g ? g.place : 0];
+  const rk = W + 'x' + H + ':' + DPR + ':' + (g ? g.place : 0); if (draw.rk !== rk) { draw.rk = rk; const oc = draw.oc || (draw.oc = document.createElement('canvas')); oc.width = cv.width; oc.height = cv.height; const o = oc.getContext('2d'); o.setTransform(DPR, 0, 0, DPR, 0, 0);      /* the table never changes: painted once */
+    o.fillStyle = P.table; o.fillRect(0, 0, W, H); const R0 = rng(7); for (let i = 0; i < 70; i++) { o.strokeStyle = `rgba(0,0,0,${0.04 + R0() * 0.06})`; o.lineWidth = 1 + R0() * 2; const y = R0() * H; o.beginPath(); o.moveTo(0, y); o.bezierCurveTo(W * 0.3, y + (R0() - 0.5) * 30, W * 0.7, y + (R0() - 0.5) * 30, W, y + (R0() - 0.5) * 20); o.stroke(); }
+    const vg = o.createRadialGradient(W / 2, H * 0.5, 40, W / 2, H * 0.5, H * 0.75); vg.addColorStop(0, 'rgba(255,240,210,.16)'); vg.addColorStop(1, 'rgba(0,0,0,.55)'); o.fillStyle = vg; o.fillRect(0, 0, W, H); }
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(draw.oc, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  if (g) { const m = MODELS[g.mi], st = stepNow(g);
+    let faces = g.faces; if (anim) faces = foldFaces(anim.from, anim.ln, easeOut(clamp(anim.t / 0.32, 0, 1))); else if (g.drag && Math.hypot(g.drag.b[0] - g.drag.a[0], g.drag.b[1] - g.drag.a[1]) > 0.04) faces = foldFaces(g.faces, lineOf(g.drag.a, g.drag.b), 1);
+    let hop = 0, sc = 1; if (alive) { const u = alive.t; hop = Math.abs(Math.sin(u * 7)) * Math.max(0, 1 - u / 1.6) * 22 * s; sc = 1 + 0.06 * Math.max(0, 1 - u * 2); }
+    ctx.save(); ctx.translate(L.cx, L.cy - hop); ctx.scale(sc, sc); ctx.translate(-L.cx, -L.cy); drawFaces(faces, L, m.col, { lift: !!g.drag });
+    if (crumT > 0 || g.crum) { ctx.strokeStyle = 'rgba(60,40,20,.25)'; ctx.lineWidth = 1; const R0 = rng(g.crum * 31 + g.mi); for (let i = 0; i < g.crum * 5; i++) { const a = [(R0() - 0.5) * 1.6, (R0() - 0.5) * 1.6], b = [a[0] + (R0() - 0.5) * 0.7, a[1] + (R0() - 0.5) * 0.7], p = L.toS(a), q = L.toS(b); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); } }
+    if (alive && alive.mi === g.mi) face(m, L, now);
+    ctx.restore();
+    if (st && !alive && !anim) ghost(foldFaces(g.faces, st.ln, 1), L);      /* the shape to make, drawn over the paper */
+    // hints: the corner to take, and where it goes
+    if (st && !g.drag && !anim && !alive && g.wait <= 0) { const pulse = 0.5 + 0.5 * Math.sin(now * 5);
+      if (g.cfg.glow || g.lesson) { const p = L.toS(st.P); ctx.strokeStyle = `rgba(255,220,120,${0.5 + 0.5 * pulse})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p[0], p[1], (14 + pulse * 6) * s, 0, TAU); ctx.stroke(); }
+      if (g.cfg.dot || (g.lesson && g.lesson.steps[g.lesson.i].id === 'fold')) { const q = L.toS(st.Q); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(q[0], q[1], 6 * s, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(q[0], q[1], G.cfg.tol * L.U * 0.3 + 6, 0, TAU); ctx.stroke(); } }
+    hud(g, L, now); }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1.1 ? 1 : 1 - (q.t - 1.1) / 0.4; ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s)}px ${TF}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; const lines = wrapText(hint.txt, W - 50), lh = 17 * s, hh = lines.length * lh + 14, ww = W - 30;
+    ctx.fillStyle = 'rgba(30,20,10,.92)'; rrect(W / 2 - ww / 2, H * 0.88 - hh / 2, ww, hh, 10); ctx.fill(); ctx.fillStyle = '#ffe3a0'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.88 - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
+// the finished animal comes to life: eyes that blink, a nose, whiskers, a spout or a bubble
+function face(m, L, now) { const s = L.s, blink = (now % 3.2) < 0.12; for (const e of m.eyes || []) { const p = L.toS(e); ctx.fillStyle = '#1a1410'; if (blink) ctx.fillRect(p[0] - 5 * s, p[1] - 1, 10 * s, 2.5); else { ctx.beginPath(); ctx.arc(p[0], p[1], 5 * s, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p[0] + 1.5 * s, p[1] - 1.5 * s, 1.6 * s, 0, TAU); ctx.fill(); } }
+  if (m.nose) { const p = L.toS(m.nose); ctx.fillStyle = '#1a1410'; ctx.beginPath(); ctx.arc(p[0], p[1], 4.5 * s, 0, TAU); ctx.fill(); if (m.whisk) { ctx.strokeStyle = '#1a1410'; ctx.lineWidth = 1.3; for (const sx of [-1, 1]) for (const dy of [-4, 2]) { ctx.beginPath(); ctx.moveTo(p[0] + sx * 7 * s, p[1] + dy * s * 0.5); ctx.lineTo(p[0] + sx * 34 * s, p[1] + dy * s * 1.6); ctx.stroke(); } } }
+  if (m.spout) { const p = L.toS(m.spout), u = (now * 1.5) % 1; ctx.strokeStyle = 'rgba(200,235,255,.9)'; ctx.lineWidth = 3; for (const a of [-0.5, 0, 0.5]) { ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.quadraticCurveTo(p[0] + a * 20 * s, p[1] - 30 * s * (0.6 + u * 0.4), p[0] + a * 34 * s, p[1] - 22 * s); ctx.stroke(); } }
+  if (m.bubble) { const p = L.toS(m.bubble), u = (now * 0.8) % 1; ctx.strokeStyle = 'rgba(220,240,255,.8)'; ctx.lineWidth = 2; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(p[0] + i * 6 * s, p[1] - ((u + i * 0.33) % 1) * 50 * s, (3 + i * 2) * s, 0, TAU); ctx.stroke(); } } }
+function hud(G, L, now) { const s = L.s, c = G.cfg, m = MODELS[G.mi];
+  if (G.lesson) { lessonPanel(G); return; }
+  ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `${Math.round(20 * s)}px ${TF}`; ctx.fillText(m.name, 14, 56 * s);
+  ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText(G.si < m.folds.length ? `FOLD ${G.si + 1} OF ${m.folds.length}${c.models.length > 1 ? ` · MODEL ${G.made.length + 1} OF ${c.models.length}` : ''}` : 'DONE!', 14, 78 * s);
+  ctx.textAlign = 'right'; ctx.font = `${Math.round(18 * s)}px sans-serif`; let str = ''; for (let i = 0; i < c.crumples; i++) str += i < c.crumples - G.crum ? '📄' : '🗞️'; ctx.fillText(str, W - 14, 56 * s);
+  ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('PAPER', W - 14, 78 * s); }
+function onEvent(G, e) { const L = lay(), s = L.s;
+  switch (e.k) {
+    case 'start': say(PLACES[G.place].name.toUpperCase(), W / 2, H * 0.2, '#fff', 18); sfx.paper(); alive = null; if (G.N <= 1) tip('how', 'Drag the glowing corner onto the dot.', 3); break;
+    case 'model': alive = null; anim = null; sfx.paper(); break;
+    case 'fold': { anim = { from: e.from, ln: e.ln, t: 0 }; const lab = ['ROUGH', 'NEAT', 'PERFECT!'][e.g], col = ['#ffd0a0', '#e8f4ff', '#ffe08a'][e.g]; say(lab, W / 2, H * 0.24, col, e.g === 2 ? 28 : 22); sfx.crease(e.g); vibe(HAP.light);
+      if (e.g === 2) { const p = L.toS(e.ln.p); sparks(p[0], p[1], 18, '#fff3c0'); } break; }
+    case 'crumple': crumT = 0.6; FX.shake = 8; sfx.crumple(); say(e.n >= e.of ? '' : e.wrong ? 'OTHER WAY!' : 'NOT QUITE', W / 2, H * 0.24, '#ffb4a8', 22); tip('crum', e.wrong ? 'That folds the wrong flap: take the glowing corner.' : 'Make the paper fit the dashed outline, then let go.', 3); break;
+    case 'takecorner': tip('corner', 'Start on the glowing corner.', 2.4); sfx.no(); break;
+    case 'tear': FX.shake = 14; sfx.tear(); say('IT TORE!', W / 2, H * 0.24, '#ff8a7a', 28); break;
+    case 'alive': alive = { mi: e.mi, t: 0 }; FX.flash = 0.5; sfx.alive(); say(`${MODELS[e.mi].name}!`, W / 2, H * 0.32, '#ffe08a', 32); for (let i = 0; i < 30; i++) { const a = Math.random() * TAU; PT.push({ x: L.cx, y: L.cy, vx: Math.cos(a) * 240, vy: Math.sin(a) * 240 - 150, life: 1, t: 0, col: [MODELS[e.mi].col, '#fff', '#ffe08a'][i % 3], r: 3 }); } vibe(HAP.best); break;
+    case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.88, '#ffd36a', 22); break;
+    case 'lessonmiss': say('TRY AGAIN', W / 2, H * 0.88, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessondone': say('LOVELY!', W / 2, H * 0.88, '#ffd36a', 24); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': sfx.win(); break;
+    case 'lost': sfx.lose(); break;
+  } }
+// ===================== SOUND: paper (PLAYBOOK S1-S11) =====================
+// Soft and papery. The paper slides on the table as you lift a flap; a crease is a crisp double snap (the thumbnail running
+// along the fold), brighter for a neat fold and with a little bell for a PERFECT one that climbs a note each perfect in a row
+// (S4). A crumple is a dry scrunch; a tear a long rip. The finished animal gets a little koto-like run.
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  paper() { noise(0.25, 2500, 0.03, 'bandpass', 0.7, 0, 0.05); },
+  lift() { if (!gate('lift', 300)) return; noise(0.15, 3000, 0.02, 'bandpass', 0.8, 0, 0.04); },
+  crease(g = 1) { noise(0.03, 4500, 0.06, 'highpass', 1); noise(0.03, 3800, 0.05, 'highpass', 1, 0.05); if (g >= 1) tone(g === 2 ? 1320 : 990, 0.12, 0.04, 'sine', 0.04);
+    if (g === 2) { sfx.run = (sfx.run || 0) + 1; pluck(note(523, Math.min(12, sfx.run)), 0.8, 0.07, 0.06); } else sfx.run = 0; },
+  crumple() { for (let i = 0; i < 6; i++) noise(0.05, 1500 + i * 300, 0.04, 'bandpass', 1, i * 0.04); sfx.run = 0; },
+  tear() { noise(0.6, 2200, 0.08, 'bandpass', 0.6, 0, 0.02); },
+  alive() { [0, 2, 4, 7, 9].forEach((q, j) => pluck(note(392, q + 5), 0.9, 0.08, j * 0.09)); },
+  no() { if (!gate('no', 250)) return; tone(200, 0.1, 0.05, 'triangle', 0, 160, 900); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 1)), 0.18, 0.07, 'triangle'); },
+  combo(n = 1) { [0, 2, 4].forEach((q, j) => tone(note(523, q + Math.min(6, n)), 0.15, 0.06, 'triangle', j * 0.06)); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.1, 'sine'); pluck(note(392, 2 + i * 2), 0.6, 0.1); },
+  win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(392, q), 1.0, 0.09, j * 0.12)); },
+  lose() { tone(294, 0.5, 0.08, 'triangle', 0, 262); tone(247, 0.8, 0.08, 'triangle', 0.3, 220); },
+};
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level);
+  $('hStat').innerHTML = [`<b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · fold ${cf.models.map(i => MODELS[i].name.toLowerCase()).join(' and ')}${cf.dot ? '' : cf.glow ? ' · no dot' : ' · outline only'}`, shelfLine(), best[level] ? `Your neatest here: <b>${best[level]}%</b>` : '', helpOn() ? '<span class="help">A little more room for error for now.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+function startGame() {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  PT.length = 0; TXT.length = 0; ui.drag = null; FX.shake = FX.stop = FX.flash = FX.red = 0;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return;
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.neat > (best[L] || 0)) { r.nb = best[L] != null; best[L] = r.neat; store.set('best', best); } const sh = store.get('shelf', {}); for (const mi of r.made) sh[MODELS[mi].id] = Math.max(sh[MODELS[mi].id] || 0, r.neat); store.set('shelf', sh); }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  store.set('streaks', streaks);
+
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+}
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? 'BEAUTIFUL' : 'THE PAPER TORE'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  $('eSub').innerHTML = (r.win ? `${r.made.map(i => MODELS[i].name).join(' and ')} for your shelf · neatness <b>${r.neat}%</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '') : `${r.folds} good folds before it tore`) + `<br>${r.perfect} perfect folds · ${r.crum} crumples` + (r.win && r.stars < 3 ? '<br>Neatness over 80% and no crumples for three stars.' : '') + (!r.win ? '<br>Watch the dashed outline: let go only when the paper fits it.' : '') + `<br>${shelfLine()}` + (r.rankUp ? `<br>New rank: <b>${r.rankUp}</b>` : '');
+  $('eLedger').innerHTML = ''; renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 10 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Every tenth level is a boss.' : 'Pass a level to open the next.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): put it down on the paper, drag (the paper folds after it), let go
+const ui = { drag: null };
+function shelfLine() { const sh = store.get('shelf', {}); return 'Your shelf: ' + MODELS.map(m => sh[m.id] != null ? `<b>${m.name.toLowerCase()}</b>` : '<span style="opacity:.4">?</span>').join(' · '); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const L = lay(), p = L.toP(e.clientX, e.clientY); if (!grab(G, p[0], p[1])) return; ui.drag = { id: e.pointerId }; sfx.lift(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { if (!ui.drag || ui.drag.id !== e.pointerId || !G) return; const p = lay().toP(e.clientX, e.clientY); pull(G, p[0], p[1]); });
+const endTouch = e => { if (!ui.drag || ui.drag.id !== e.pointerId) return; ui.drag = null; if (G) release(G); };
+cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', e => { if (ui.drag && ui.drag.id === e.pointerId) { ui.drag = null; if (G) G.drag = null; } });
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE PAPER SHOP</span><span>£ ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' £'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = [{ dpr: 2 }, { dpr: 1.5 }, { dpr: 1.25 }, { dpr: 1 }];
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = STEPS[stepN].dpr; resize(); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  grab(x, y) { return grab(G, x, y); }, pull(x, y) { return pull(G, x, y); }, release() { return release(G); }, lay, renderShop, stepNow() { return stepNow(G); },
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

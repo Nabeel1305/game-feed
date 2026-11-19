@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 59,
+  "next_number": 60,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2006,6 +2006,40 @@
         "P10"
       ],
       "summary": "A building on fire in 3D: hold one thumb to spray the hose just above it, lift to let the tank refill, tap people once their window is clear to send the ladder; gas bottles, backdraft and wind."
+    },
+    {
+      "number": 59,
+      "id": "origami",
+      "name": "Origami",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-19",
+      "path": "games/origami/index.html",
+      "artifact": "https://claude.ai/artifact/6siJikdse6Q1L1G33VsD7i",
+      "artifact_slug": "2f925654-92b1-4be8-b638-fe27b3d5b405",
+      "apk_repo": null,
+      "storage_prefix": "og.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Drag a corner, crease, and a paper fox comes to life.",
+        "genre": "Craft / calm",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Kaisei Decol",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P5",
+        "P3",
+        "P9",
+        "P2",
+        "P10"
+      ],
+      "summary": "Fold paper animals: drag a corner and the paper folds after your thumb; let go when it fits the dashed outline. Perfect folds, crumples, six animals that come to life on your shelf."
     }
   ],
   "planned": []
