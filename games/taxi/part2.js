@@ -1,0 +1,205 @@
+
+// ===================== THE RULES: Taxi Driver =====================
+// A city of blocks. Your taxi drives itself; HOLD anywhere to brake. SWIPE left or right to change lane; in the glowing TURN
+// ZONE before a junction, a swipe turns there instead (swipe up: straight on). Someone waving on the kerb: pull into the kerb
+// lane and stop beside them; they get in and the meter starts. Find the way (the GPS arrow, the map) and stop at their door.
+// Early with a tip, late with half the fare; too late and they walk. Red lights cost a ticket; three crashes end the shift.
+const RULES = [
+  '<b>Your taxi drives itself.</b> <b>Hold</b> anywhere to brake; let go and it drives on.',
+  '<b>Swipe left or right</b> to change lane and pass slow cars.',
+  '<b>In the glowing TURN ZONE</b> before a junction, a swipe turns there (swipe up: straight on). The <b>GPS arrow</b> shows the way.',
+  '<b>Pick up:</b> someone waving on the kerb: move to the kerb lane and stop in their ring. <b>Drop off</b> the same way at the glowing door.',
+  '<b>Beat the meter</b> for a tip. Let it run out and they walk. A <b>rusher</b> ⚡ tips big for speed; a <b>nervous</b> one 😰 hates crashes, red lights and screeching corners; a <b>tourist</b> 📷 tips if you pass the fountain.',
+  'Red lights: a ticket. <b>Three crashes</b> end the shift. Red streets on the map are jams; 🚧 are road works.',
+];
+const BL = 52, NX = 8, NY = 8, LANES = [2.0, 5.4], CARLEN = 4.6, ZONE = 24, VTURN = 9.5;
+const DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]];      // N E S W (in grid steps; north is +j)
+const PLACES = [{ name: 'Midtown', sky: 'morning' }, { name: 'Riverside', sky: 'noon' }, { name: 'Old Quarter', sky: 'golden' }, { name: 'Rainy Avenue', sky: 'rain' }, { name: 'Night Shift', sky: 'night' }, { name: 'Sunset Strip', sky: 'sunset' }];
+const placeOf = N => Math.floor((N - 1) / 5) % PLACES.length;
+const SKINS = [{ id: 'yellow', name: 'Classic Yellow', col: 0xffc61a, stars: 0 }, { id: 'green', name: 'Garden Green', col: 0x2f9a4a, stars: 5 }, { id: 'black', name: 'City Black', col: 0x1c1e22, stars: 12 },
+  { id: 'white', name: 'Pearl White', col: 0xeef2f6, stars: 20 }, { id: 'pink', name: 'Bubblegum', col: 0xff7ab0, stars: 30 }, { id: 'blue', name: 'Harbour Blue', col: 0x2a6ad8, stars: 42 },
+  { id: 'orange', name: 'Tangerine', col: 0xf0782a, stars: 56 }, { id: 'gold', name: 'Gold Cab', col: 0xd6a630, stars: 75 }];
+const UPGRADES = [
+  { id: 'engine', name: 'Engine', max: 4, cost: l => [30, 70, 140, 250][l], desc: 'A higher top speed and quicker away.' },
+  { id: 'brakes', name: 'Brakes', max: 3, cost: l => [25, 60, 120][l], desc: 'Stops in a shorter distance.' },
+  { id: 'gps', name: 'Smart GPS', max: 1, cost: l => [120][l], desc: 'The GPS knows the jams and goes round them.' },
+  { id: 'seats', name: 'Comfy seats', max: 3, cost: l => [40, 90, 170][l], desc: 'Nervous passengers forgive one more bump; everyone tips more.' },
+];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'New driver'], [60, 'Cabbie'], [200, 'Night owl'], [500, 'Street king'], [1100, 'Road legend'], [2500, 'Taxi tycoon']];
+const TYPES = { plain: { name: 'Passenger', icon: '🙂', time: 1, tip: 1 }, rush: { name: 'Rusher', icon: '⚡', time: 0.8, tip: 2 }, calm: { name: 'Nervous', icon: '😰', time: 1.3, tip: 1.5 }, sight: { name: 'Tourist', icon: '📷', time: 1.15, tip: 1 } };
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 5 === 0;
+  return { fares: Math.min(3, 2 + (f >= 15 ? 1 : 0) + (boss ? 1 : 0)), lights: N >= 2, cars: N === 1 ? 0.3 : x(0.7, 2.6, 18), works: N >= 4 ? Math.round(x(2, 8, 20)) : 0, jams: N >= 6 ? Math.round(x(2, 9, 25)) : 0,
+    far: N <= 2 ? 1 : Math.min(3.5, 2 + f / 20), near: N <= 2 ? 1 : 1.5, types: ['plain'].concat(N >= 3 ? ['rush'] : [], N >= 5 ? ['calm'] : [], N >= 8 ? ['sight'] : []),
+    vRef: x(8.0, 12.2, 22) * (1 - 0.15 * easyOf(N)) * (help ? 0.85 : 1), slack: Math.round(x(14, 4, 18)) + (help ? 8 : 0), wait: Math.round(x(40, 25, 20)) + (help ? 15 : 0), boss, help: !!help,
+    vmax: 15 * (1 + 0.04 * upLv('engine')), acc: 4.0 * (1 + 0.08 * upLv('engine')), brake: 8 * (1 + 0.08 * upLv('brakes')), smart: upLv('gps') > 0, forgive: upLv('seats'), crashes: 3 }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, wait: 0, next: null, mini: !!o.mini };
+  setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
+  return G; }
+// ---------- the city: a grid of nodes; an edge is a road from a node, one way (you drive on the right) ----------
+const inB = (i, j) => i >= 0 && j >= 0 && i < NX && j < NY;
+const ekey = (i, j, h) => i + ',' + j + ',' + h;
+const ahead = (i, j, h) => [i + DIRS[h][0], j + DIRS[h][1]];
+const twoWay = (i, j, h) => { const [a, b] = ahead(i, j, h); return ekey(Math.min(i, a), Math.min(j, b), h % 2); };      // a road, either way
+function edgeOk(G, i, j, h) { const [a, b] = ahead(i, j, h); return inB(i, j) && inB(a, b) && !G.works.has(twoWay(i, j, h)); }
+const turnTo = (h, q) => q === 'L' ? (h + 3) % 4 : q === 'R' ? (h + 1) % 4 : h;
+const turnOf = (h, h2) => h2 === h ? 'S' : h2 === (h + 1) % 4 ? 'R' : h2 === (h + 3) % 4 ? 'L' : 'U';
+function setup(G, o = {}) { const c = G.cfg, R = G.rnd; G.t = 0; G.yard = o.yard || null;
+  G.works = new Set(); G.jams = new Set(); G.cars = []; G.spawned = new Set(); G.spawnKey = null; G.carN = 0;
+  // road works and jams: never on the edge of town, never next to where you start
+  const roads = []; for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) for (const h of [0, 1]) { const [a, b] = ahead(i, j, h); if (inB(a, b)) roads.push(ekey(i, j, h)); }
+  const start = o.start || { i: 1 + ((R() * (NX - 2)) | 0), j: 1 + ((R() * 2) | 0), h: 0 };
+  const near = k2 => { const [i, j] = k2.split(',').map(Number); return Math.abs(i - start.i) + Math.abs(j - start.j) <= 1; };
+  for (let n = 0; n < (o.works != null ? o.works : c.works); n++) { const k2 = roads[(R() * roads.length) | 0]; if (!near(k2)) G.works.add(k2); }
+  for (let n = 0; n < (o.jams != null ? o.jams : c.jams); n++) { const k2 = roads[(R() * roads.length) | 0]; if (!near(k2) && !G.works.has(k2)) G.jams.add(k2); }
+  G.light = []; for (let i = 0; i < NX; i++) { G.light.push([]); for (let j = 0; j < NY; j++) G.light[i].push({ off: R() * 20, on: (o.lights != null ? o.lights : c.lights) && R() < 0.5 }); }
+  G.sight = { i: 2 + ((R() * (NX - 4)) | 0), j: 3 + ((R() * (NY - 5)) | 0) };
+  G.taxi = { i: start.i, j: start.j, h: start.h, s: o.s0 || 4, lane: 1, lx: LANES[1], v: o.v0 != null ? o.v0 : 6, brH: false, turn: null, crashes: 0, skids: 0, reds: 0, dist: 0, kick: 0 };
+  G.fare = null; G.goal = null; G.done = 0; G.coins = 0; G.tips = 0; G.late = 0; G.passed = 0; G.turnsOk = 0; G.turnsBad = 0; G.log = [];
+  if (!o.noFare) newHail(G, o.hail); }
+// a light at a node: the north-south road has green, then amber, then east-west (and back)
+function lightAt(G, i, j, axis, t) { const L = G.light[i] && G.light[i][j]; if (!L || !L.on) return 'g'; const C = 14, p = ((t + L.off) % C + C) % C, ns = p < 5.5 ? 'g' : p < 7 ? 'a' : 'r', ew = p >= 7 && p < 12.5 ? 'g' : p >= 12.5 ? 'a' : 'r'; return axis === 0 ? ns : ew; }
+// ---------- the GPS: the shortest way from the junction ahead (no U-turns) to the start of the road the goal is on ----------
+function gps(G, goal, from) { const t = from || G.taxi; if (!goal) return null; const e = goal.e;
+  if (t.i === e.i && t.j === e.j && t.h === e.h && t.s < goal.s - 2) return { turn: 'S', dist: goal.s - t.s, path: [], on: true };
+  const [ni, nj] = ahead(t.i, t.j, t.h), smart = G.cfg.smart, cost = (i, j, h) => BL * (smart && G.jams.has(twoWay(i, j, h)) ? 3.5 : 1) + (lightAt(G, i, j, 0, 0) && G.light[i][j].on ? 3 : 0);
+  const D = new Map(), P = new Map(), Q = [[BL - t.s, ni, nj, t.h]]; D.set(ekey(ni, nj, t.h), BL - t.s);
+  while (Q.length) { Q.sort((a, b) => a[0] - b[0]); const [d, i, j, hin] = Q.shift(), key = ekey(i, j, hin); if (d > D.get(key)) continue;
+    if (i === e.i && j === e.j && hin !== (e.h + 2) % 4 && edgeOk(G, i, j, e.h)) { // reached the goal's road: walk back for the first turn
+      let k2 = key, first = null; const path = [[i, j]]; while (P.has(k2)) { const pr = P.get(k2); first = { from: pr, to: k2 }; path.unshift(pr.split(',').slice(0, 2).map(Number)); k2 = pr; }
+      const h2 = first ? +first.to.split(',')[2] : e.h; return { turn: turnOf(t.h, first ? +first.to.split(',')[2] : e.h), dist: d + goal.s, path, h2 }; }
+    for (const h of [hin, (hin + 1) % 4, (hin + 3) % 4]) { if (!edgeOk(G, i, j, h)) continue; const [a, b] = ahead(i, j, h), nd = d + cost(i, j, h), k2 = ekey(a, b, h); if (!D.has(k2) || nd < D.get(k2)) { D.set(k2, nd); P.set(k2, key); Q.push([nd, a, b, h]); } } }
+  return { turn: 'S', dist: 9999, path: [] }; }
+// a place on a road for someone to wait: between near and far blocks of driving from "from" (by the GPS), on the kerb side
+function placeFrom(G, from, near, far, avoid) { const R = G.rnd; let best = null;
+  for (let n = 0; n < 160; n++) { const i = (R() * NX) | 0, j = (R() * NY) | 0, h = (R() * 4) | 0;
+    if (!edgeOk(G, i, j, h) || G.jams.has(twoWay(i, j, h))) continue; if (avoid && avoid.i === i && avoid.j === j && avoid.h === h) continue;
+    const p = { e: { i, j, h }, s: 14 + R() * (BL - 26) }, d = gps(G, p, from).dist / BL; if (d >= near && d <= far + 0.8) return p;
+    if (d < 99 && (!best || Math.abs(d - near) < best.d)) best = { p, d: Math.abs(d - near) }; }
+  return best ? best.p : { e: { i: 1, j: 1, h: 0 }, s: 26 }; }
+function newHail(G, at) { const t = G.taxi, c = G.cfg;
+  const p = at ? { e: Object.assign({}, at.e), s: at.s } : placeFrom(G, t, 0.3, 0.5 + c.near * 0.5);
+  const type = G.yard ? 'plain' : c.types[(G.rnd() * c.types.length) | 0];
+  G.goal = Object.assign(p, { kind: 'pick', type, patience: 0 }); const g = gps(G, G.goal); G.goal.patience = g.dist / Math.max(6, c.vRef) + c.wait; G.goal.left = G.goal.patience; G.ev.push({ k: 'hail', type }); }
+function pickedUp(G) { const c = G.cfg, g = G.goal, T = TYPES[g.type], t = G.taxi;
+  const d = G.yard && G.yardDrop ? G.yardDrop : placeFrom(G, { i: g.e.i, j: g.e.j, h: g.e.h, s: g.s }, c.near, c.far, g.e);
+  G.fare = { type: g.type, t0: G.t, bumps: 0, sight: false, tipOk: true };
+  G.goal = Object.assign(d, { kind: 'drop', type: g.type }); const r = gps(G, G.goal); G.fare.blocks = Math.max(1, Math.round(r.dist / BL));
+  G.fare.allow = Math.round((r.dist / c.vRef + 6 + c.slack) * T.time); G.fare.left = G.fare.allow; G.fare.pay = 4 + G.fare.blocks * 2;
+  G.ev.push({ k: 'in', type: g.type, allow: G.fare.allow }); }
+function dropped(G) { const F = G.fare, T = TYPES[F.type], c = G.cfg; let pay = F.pay, tip = 0;
+  if (F.left >= 0) { if (F.tipOk) tip = Math.round((2 + F.left / 6) * T.tip) + c.forgive; } else { pay = Math.ceil(pay / 2); G.late++; }
+  if (F.type === 'sight' && F.sight) tip += 6; G.coins += pay + tip; if (tip > 0) G.tips++; G.done++;
+  G.log.push({ type: F.type, left: Math.round(F.left), pay, tip, bumps: F.bumps }); G.ev.push({ k: 'out', pay, tip, late: F.left < 0, type: F.type });
+  G.fare = null; G.goal = null;
+  if (G.lesson) { lessonSee(G, 'drop'); return; }
+  if (G.done >= c.fares) { finish(G, true); return; }
+  G.wait = 0.9; G.next = () => newHail(G); }
+// ---------- your thumb ----------
+const inZone = G => { const t = G.taxi; return BL - t.s <= ZONE && BL - t.s > 1; };
+function swipe(G, dir) { if (G.over || G.wait > 0 || !G.taxi) return; const t = G.taxi;
+  if (dir === 'U') { if (inZone(G)) { t.turn = 'S'; G.ev.push({ k: 'queue', q: 'S' }); } return; }
+  if (inZone(G)) { const q = dir === 'L' ? 'L' : 'R', h2 = turnTo(t.h, q), [a, b] = ahead(t.i, t.j, t.h); if (!edgeOk(G, a, b, h2)) { G.ev.push({ k: 'noturn', q }); return; } t.turn = q; G.ev.push({ k: 'queue', q }); return; }
+  const nl = clamp(t.lane + (dir === 'R' ? 1 : -1), 0, 1); if (nl !== t.lane) { t.lane = nl; G.ev.push({ k: 'lane', lane: nl }); } else G.ev.push({ k: 'kerb' }); }
+function brake(G, on) { if (G.over || !G.taxi) return; G.taxi.brH = on; }
+// ---------- the clock ----------
+function bump(G, what) { const F = G.fare; if (!F) return; F.tipOk = F.tipOk && F.type !== 'calm'; if (F.type !== 'calm') return; F.bumps++; G.ev.push({ k: 'scared', what, n: F.bumps });
+  if (F.bumps > 2 + G.cfg.forgive) { G.ev.push({ k: 'letout' }); if (G.lesson) return; finish(G, false, { why: 'scared' }); } }
+function step(G, dt) { if (G.over || !(dt > 0)) return;
+  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; if (G.next) { const f = G.next; G.next = null; f(); } } return; }
+  G.t += dt; const t = G.taxi, c = G.cfg;
+  // speed: drives itself up to its top speed; brake while held
+  const a = t.brH ? -c.brake : c.acc * (1 - t.v / c.vmax) - 0.1; const v0 = t.v; t.v = Math.max(0, t.v + a * dt);
+  if (t.brH) { t.brT = (t.brT || 0) + dt; if (t.brT === dt) t.brV = v0; if (t.brT > 0.5 && t.brV > 10 && G.fare && G.fare.type === 'calm' && !t.hardT) { t.hardT = 1; bump(G, 'brake'); } } else { t.brT = 0; t.hardT = 0; }
+  t.lx += clamp(LANES[t.lane] - t.lx, -6 * dt, 6 * dt); t.s += t.v * dt; t.dist += t.v * dt;
+  // the cars: on your road (and the roads ahead, so you can see them)
+  spawnAround(G); for (const car of G.cars) moveCar(G, car, dt); G.cars = G.cars.filter(q => !q.gone);
+  // crashes: a car in your lane, just ahead
+  for (const car of G.cars) { if (car.i !== t.i || car.j !== t.j || car.h !== t.h) continue; const ds = car.s - t.s; if (ds > 0 && ds < CARLEN && Math.abs(car.lx - t.lx) < 2.3) { crash(G, car); if (G.over) return; break; }
+    if (ds < 0 && ds > -1 && Math.abs(car.lx - t.lx) >= 2.3 && !car.passed) { car.passed = true; G.passed++; G.ev.push({ k: 'pass' }); if (G.lesson) lessonSee(G, 'pass'); } }
+  // the junction
+  if (t.s >= BL) { const [ni, nj] = ahead(t.i, t.j, t.h); let q = t.turn || 'S', h2 = turnTo(t.h, q);
+    if (!edgeOk(G, ni, nj, h2)) { const g = G.goal ? gps(G, G.goal) : null; const order = [g && g.turn !== 'U' ? g.turn : 'R', 'S', 'R', 'L']; for (const q2 of order) { if (edgeOk(G, ni, nj, turnTo(t.h, q2))) { q = q2; h2 = turnTo(t.h, q2); break; } } G.ev.push({ k: 'forced', q }); }
+    const want = G.goal ? gps(G, G.goal).turn : null, col = lightAt(G, ni, nj, t.h % 2, G.t);
+    if (col === 'r') { t.reds++; G.coins -= 5; G.ev.push({ k: 'red' }); bump(G, 'red'); if (G.over) return; if (G.lesson) { lessonMiss(G, 'red'); return; } }
+    if (q !== 'S' && t.v > VTURN) { t.skids++; t.v = Math.min(t.v, 4); G.ev.push({ k: 'skid' }); bump(G, 'skid'); if (G.over) return; }
+    if (want) { if (q === want) G.turnsOk++; else G.turnsBad++; }
+    G.ev.push({ k: 'turn', q, right: want ? q === want : true, from: [t.i, t.j, t.h] }); t.kick = q === 'S' ? 0 : 1;
+    t.i = ni; t.j = nj; t.h = h2; t.s -= BL; t.turn = null;
+    if (G.fare && G.fare.type === 'sight' && ni === G.sight.i && nj === G.sight.j && !G.fare.sight) { G.fare.sight = true; G.ev.push({ k: 'sight' }); }
+    if (G.lesson) { lessonSee(G, 'turn', q === want); if (G.over || G.wait > 0) return; } }
+  // the goal: stop in the ring, in the kerb lane
+  const g = G.goal; if (g) { const on = g.e.i === t.i && g.e.j === t.j && g.e.h === t.h, d = g.s - t.s;
+    if (on && Math.abs(d) < 6 && t.lx > 4 && t.v < 1.2) { if (g.kind === 'pick') { G.ev.push({ k: 'pick' }); pickedUp(G); if (G.lesson) lessonSee(G, 'pick'); } else dropped(G); if (G.over) return; }
+    else if (on && d < -6 && !g.passT) { g.passT = 1; G.ev.push({ k: 'missed', kind: g.kind }); if (G.lesson) { lessonMiss(G, 'missed'); return; } }
+    if (!on) g.passT = 0; }
+  // the meter and the wait
+  if (G.fare) { G.fare.left -= dt; if (G.fare.left < -15) { G.ev.push({ k: 'walk' }); if (G.lesson) { lessonMiss(G, 'walk'); return; } finish(G, false, { why: 'walked' }); return; } }
+  else if (G.goal && G.goal.kind === 'pick' && !G.lesson) { G.goal.left -= dt; if (G.goal.left < 0) { G.ev.push({ k: 'gone' }); finish(G, false, { why: 'gone' }); return; } } }
+// cars: a few on every road you drive (more each level), packed and slow on a jam; they keep their lane, slow for the car in
+// front and for red lights, and turn off at the junction
+function spawnOn(G, i, j, h, from) { const k2 = ekey(i, j, h); if (G.spawned.has(k2) || !edgeOk(G, i, j, h)) return; G.spawned.add(k2); const R = G.rnd, jam = G.jams.has(twoWay(i, j, h)), c = G.cfg;
+  const n = G.yard === 'lane' ? 2 : G.yard ? 0 : jam ? 7 : Math.floor(c.cars + R()); const used = [];
+  for (let q = 0; q < n; q++) { const yl = G.yard === 'lane', lane = jam || yl ? (q + (yl ? 1 : 0)) % 2 : (R() < 0.5 ? 0 : 1), s = jam ? 10 + q * 7.5 : yl ? (from || 0) + 12 + q * 20 : (from || 0) + 14 + R() * (BL - 14 - (from || 0)); if (used.some(u => u.lane === lane && Math.abs(u.s - s) < CARLEN + 3)) continue; used.push({ lane, s });
+    G.cars.push({ id: ++G.carN, i, j, h, s, lane, lx: LANES[lane], v: 0, vt: jam ? 1.5 + R() * 1.5 : G.yard === 'lane' ? 3 + R() * 1.5 : 4.5 + R() * 4, kind: (R() * 6) | 0, jam }); } }
+function spawnAround(G) { const t = G.taxi, sk = t.i + ',' + t.j + ',' + t.h + (BL - t.s < 45 ? '+' : ''); if (G.spawnKey === sk) return; G.spawnKey = sk; spawnOn(G, t.i, t.j, t.h, t.s + 8);
+  if (BL - t.s < 45) { const [ni, nj] = ahead(t.i, t.j, t.h); for (const q of ['S', 'L', 'R']) spawnOn(G, ni, nj, turnTo(t.h, q)); }
+  const keep = new Set([ekey(t.i, t.j, t.h)]), [ni, nj] = ahead(t.i, t.j, t.h); for (let h = 0; h < 4; h++) keep.add(ekey(ni, nj, h));
+  for (const k2 of [...G.spawned]) if (!keep.has(k2)) G.spawned.delete(k2); for (const car of G.cars) if (!keep.has(ekey(car.i, car.j, car.h))) car.gone = true; }
+function moveCar(G, car, dt) { const t = G.taxi; let want = car.vt;
+  for (const o of G.cars) if (o !== car && o.i === car.i && o.j === car.j && o.h === car.h && o.lane === car.lane && o.s > car.s && o.s - car.s < 12) want = Math.min(want, Math.max(0, (o.s - car.s - CARLEN - 1.5) * 0.8), o.v);
+  const [ni, nj] = ahead(car.i, car.j, car.h), d = BL - 4 - car.s; if (d > -1 && d < 24 && lightAt(G, ni, nj, car.h % 2, G.t) !== 'g') want = Math.min(want, Math.sqrt(2 * 3 * Math.max(0, d)));
+  car.v += clamp(want - car.v, -5 * dt, 2.5 * dt); car.s += car.v * dt; if (car.s > BL + 2) car.gone = true; }
+function crash(G, car) { const t = G.taxi; t.crashes++; t.v = 0; t.s = car.s - CARLEN - 0.6; car.v = Math.max(car.v, 3); G.coins -= 5; if (G.fare) G.fare.tipOk = false; G.ev.push({ k: 'crash', n: t.crashes }); bump(G, 'crash'); if (G.over) return;
+  if (G.lesson) { lessonMiss(G, 'crash'); return; } if (t.crashes >= G.cfg.crashes) finish(G, false, { why: 'crashes' }); }
+function finish(G, win, o = {}) { if (G.over) return true; G.over = win ? 'won' : 'lost'; const t = G.taxi;
+  const onTime = G.log.filter(q => q.left >= 0).length, stars = win ? 1 + (onTime === G.log.length && G.tips >= G.log.length ? 1 : 0) + (t.crashes === 0 && t.reds === 0 && t.skids === 0 ? 1 : 0) : 0;
+  G.res = { win, stars, why: o.why || null, fares: G.cfg.fares, done: G.done, tips: G.tips, late: G.late, onTime, crashes: t.crashes, reds: t.reds, skids: t.skids, km: +(t.dist / 1000).toFixed(1), log: G.log,
+    coins: Math.max(1, G.coins + (win ? Math.ceil(G.N / 2) + stars * 3 : 0)) };
+  G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
+// ---------- the robot: a driver who reads the GPS and the road ----------
+function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.taxi) return; const t = G.taxi, c = G.cfg, acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react;
+  mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react * 0.3 * (0.5 + Math.random());
+  const g = G.goal, r = g ? gps(G, g) : null, d2n = BL - t.s, F = G.fare;
+  // the turn: in the zone, swipe the way the GPS says (now and then a slip); jams: go round if it can see a better way
+  const zkey = t.i + ',' + t.j + ',' + t.h + ':' + (G.deals | 0) + ':' + G.done;
+  if (inZone(G) && r && mem.zone !== zkey) { mem.zone = zkey; let q = r.turn; if (Math.random() < 0.02 + (1 - acc) * 0.2) q = ['L', 'R', 'S'].filter(x => x !== q)[(Math.random() * 2) | 0];      // a slip: the wrong way
+    if (F && F.type === 'sight' && !F.sight && Math.random() < acc) { const [ni, nj] = ahead(t.i, t.j, t.h), dI = Math.sign(G.sight.i - ni), dJ = Math.sign(G.sight.j - nj); const toward = [0, 1, 2, 3].find(h => DIRS[h][0] === dI && DIRS[h][1] === dJ); if (toward != null && Math.abs(G.sight.i - ni) + Math.abs(G.sight.j - nj) <= 3 && F.left > 25) { const q2 = turnOf(t.h, toward); if (q2 !== 'U') q = q2; } }
+    if (q !== 'S' || t.turn) swipe(G, q === 'S' ? 'U' : q); }
+  // the lane: the kerb lane near the goal; otherwise whichever is clear
+  const onGoal = g && g.e.i === t.i && g.e.j === t.j && g.e.h === t.h && g.s > t.s - 4, carAhead = L => G.cars.find(q => q.i === t.i && q.j === t.j && q.h === t.h && q.lane === L && q.s > t.s - CARLEN - 0.5 && q.s - t.s < 6 + t.v * 1.4);
+  if (!inZone(G)) { if (onGoal && g.s - t.s < 45) { if (t.lane !== 1 && !carAhead(1)) swipe(G, 'R'); } else if (carAhead(t.lane) && !carAhead(1 - t.lane)) swipe(G, t.lane ? 'L' : 'R'); }
+  // the speed: stop at the goal, slow for a turn, stop for a red, keep off the car in front
+  const dec = c.brake * (0.5 + 0.2 * acc); let vt = c.vmax;
+  if (onGoal) vt = Math.min(vt, Math.sqrt(2 * dec * Math.max(0, g.s - t.s - 0.5 + (1 - acc) * (Math.random() - 0.5) * 3)));
+  if (t.turn && t.turn !== 'S') vt = Math.min(vt, Math.sqrt(VTURN * VTURN * 0.75 + 2 * dec * Math.max(0, d2n - 2)));
+  const [ni, nj] = ahead(t.i, t.j, t.h), col = lightAt(G, ni, nj, t.h % 2, G.t), colSoon = lightAt(G, ni, nj, t.h % 2, G.t + d2n / Math.max(3, t.v));
+  if ((col === 'r' || (col === 'a' && d2n > t.v * 1.2) || (colSoon !== 'g' && d2n > t.v * t.v / (2 * dec) + 2)) && d2n > 0.5 && (F && F.type === 'calm' || Math.random() < 0.92 + 0.08 * acc || mem.redSeen === zkey)) { mem.redSeen = zkey; vt = Math.min(vt, Math.sqrt(2 * dec * Math.max(0, d2n - 2.5))); }
+  const blk = carAhead(t.lane); if (blk) vt = Math.min(vt, Math.max(0, (blk.s - t.s - CARLEN - 2)) * 0.9, blk.v + 0.5);
+  if (F && F.type === 'calm') vt = Math.min(vt, 8.5);
+  brake(G, t.v > vt + 0.3); }
+// blind moves (no looking): swipes either way, up, hold, let go
+const BLIND = { l: G => swipe(G, 'L'), r: G => swipe(G, 'R'), b: G => brake(G, !G.taxi.brH) };      // a thumb that swipes or holds, unseeing
+function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.log = [{ type: 'plain', left: 10, pay: 8, tip: 3, bumps: 0 }]; G.tips = 1; G.done = G.cfg.fares; finish(G, true); }
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'pick', title: 'HOLD TO BRAKE, STOP IN THE RING', how: 'Your taxi drives itself. HOLD anywhere to brake. Stop in the green ring beside the person waving; then stop in the ring at their door.', need: 2 }],
+  2: [{ id: 'turn', title: 'SWIPE IN THE TURN ZONE', how: 'Before each junction the road glows: the TURN ZONE. Swipe the way the GPS arrow points (left or right) while you are in it. Take 2 turns.', need: 2 }],
+  3: [{ id: 'lane', title: 'SWIPE TO CHANGE LANE', how: 'Outside the turn zone, swipe left or right to change lane. Pass 3 slow cars without touching them.', need: 3 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonDeal(G) { const st = lessonNow(G); G.rnd = rng(G.seed + (G.deals = (G.deals | 0) + 1)); const n = G.lesson.n;
+  if (st.id === 'pick') { G.yardDrop = { e: { i: 3, j: 2, h: 0 }, s: 40 }; setup(G, { yard: 'pick', start: { i: 3, j: 0, h: 0 }, works: 0, jams: 0, lights: false, hail: { e: { i: 3, j: 1, h: 0 }, s: 32 }, v0: 7 }); G.lesson.n = 0; }
+  if (st.id === 'turn') { const right = G.rnd() < 0.5; setup(G, { yard: 'turn', start: { i: 3, j: 0, h: 0 }, works: 0, jams: 0, lights: false, noFare: true, s0: 10, v0: 6 }); G.goal = { kind: 'drop', e: { i: right ? 4 : 2, j: 1, h: right ? 1 : 3 }, s: 30, type: 'plain', lesson: true }; G.lesson.n = n; }
+  if (st.id === 'lane') { setup(G, { yard: 'lane', start: { i: 3, j: 0, h: 0 }, works: 0, jams: 0, lights: false, noFare: true, s0: 2, v0: 7 }); G.goal = null; G.lesson.n = n; }
+  G.ev.push({ k: 'yard' }); }
+function lessonMiss(G, why) { const msg = { red: 'That light was RED! Hold to stop at the line.', crash: 'Bump! Swipe to the other lane before you reach a slow car, or hold to brake.', missed: 'You went past the ring! Hold to brake sooner, in the kerb lane (the right one).', walk: 'Too slow!' }[why] || lessonNow(G).how;
+  G.ev.push({ k: 'lessonmiss', how: msg }); G.wait = 1.6; G.next = () => lessonDeal(G); }
+function lessonSee(G, what, ok) { const L = lessonNow(G); if (!L || G.wait > 0) return;
+  if (L.id === 'pick' && (what === 'pick' || what === 'drop')) { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
+  if (L.id === 'turn' && what === 'turn') { if (ok) { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); if (G.lesson.n < L.need) { G.wait = 0.6; G.next = () => lessonDeal(G); return; } } else { G.ev.push({ k: 'lessonmiss', how: 'Not that way! Swipe the way the GPS arrow points while the road glows.' }); G.wait = 1.6; G.next = () => lessonDeal(G); return; } }
+  if (L.id === 'lane' && what === 'pass') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
+  if (G.lesson.n < L.need) { if (L.id === 'lane' && G.taxi.s > BL - 10 && G.taxi.i === 3) { /* more road: the next block has more cars */ } return; }
+  G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.4; G.next = () => { G.rnd = rng(G.seed); G.yardDrop = null; setup(G); G.ev.push({ k: 'start' }); G.ev.push({ k: 'yard' }); }; }

@@ -936,6 +936,23 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - `node` balance sims (a copy of part2 with the kit's helpers mocked) run hundreds of games in a second: tune there, then run
   test_play once.
 
+### 83. Taxi Driver (`games/taxi/`): a grid city, one thumb (built on Bus Driver's shell)
+- **The city is a grid of one-way edges** (`i,j,h`: from a node, heading N E S W; you drive on the right). The taxi is an
+  edge, a distance along it and a lane; at the node it takes the turn it was given (a closed road falls back to the GPS way,
+  then straight, then right). `wp()` turns that into the world; after a junction the taxi's drawn place and yaw ease from
+  where it was, so it swings round instead of jumping.
+- **The GPS is Dijkstra over (node, heading in)** with no U-turns; places to wait are chosen by GPS distance, not as the crow
+  flies (by distance, a "one block" fare behind you was a four-block loop, and level 1 took two minutes).
+- **One thumb**: the brake comes on the moment the thumb lands and lets go as soon as it moves 26 px (a swipe). In the last
+  24 m before a junction (the turn zone) a swipe sets the turn; elsewhere it changes lane.
+- **Cars are made only for the road you are on and the four roads out of the next junction**; the set is worked out again
+  only when that changes (`spawnKey`). Without that the robots ran at a third of the speed and the blind test took ten
+  minutes. BLIND has three moves (`l r b`): five made the blind test five times longer and proved nothing more.
+- Durations: level 1 about 45 s, rush hour about 100 s. Shorter blocks (52 m), a top speed of 15 m/s and pick-ups close by
+  kept it to that.
+- The robot's slip is a wrong turn now and then (2% + 20% of its inaccuracy); with only a stop-in-the-ring error every level
+  was the same to it.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
