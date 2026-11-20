@@ -131,3 +131,8 @@ calm (Word Wheel 1); one two-thumb game.
 | 72 | Word Wheel | like Wordscapes: slide through letters to fill a crossword; bonus words, ink, hints | 1 | 1 | 2D |
 | 73 | Sharpshooter | like Sniper 3D with sleep darts: find the thief in the crowd by the card, scope, breath, lead, wind | 4 | 2 | 3D |
 | 74 | Beat Dash | like Geometry Dash: one-tap jumps to the beat; spikes, pads, rings, gravity portals, flags | 5 | 1 | 2D |
+
+## Game 75 (20 Nov 2026, his own idea, built alone: "the equivalent of 5 games")
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 75 | Shadow Crew | like Among Us: you are the hidden traitor on a 3D station of drawn sticker crewmates; knock out unseen, vents, sabotage, meetings | 3 | 2 | 3D (drawn characters) |

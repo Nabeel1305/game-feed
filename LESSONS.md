@@ -757,6 +757,23 @@ Everything learned building the first games. Every new game must follow the **ru
 - A pad's wall and landing depend on the speed: built from the cube's speed, or at high levels the cube landed on spikes.
 - Five lives on levels 1-5 (then 4, then 3) made level 1 fair for an ordinary player; blind tapping still gets about 10%.
 
+### 75. Shadow Crew (`games/crew/`): the hidden traitor, 3D station, drawn crew
+- His big one (20 Nov 2026): "the equivalent of 5 games", stunning. Own W3 scene (not setSky): merged wall boxes with an
+  inverted-hull ink edge, toon ramp, a painted floor per room; every character is a canvas-painted sticker (4 frames in an
+  atlas) on a billboard card with a blob shadow. The fog is a 150-ray sight polygon drawn on the 2D layer.
+- The station is a grid (SW 54 x SD 30); `path()` is BFS and must return null when start or goal is not an open cell (it
+  looped for ever and ran out of memory).
+- Fairness of a social game comes from testimony with caps per kind (near the body, with the victim, guesses): uncapped,
+  stacked weak lines voted out a careful player. "With the victim" only counts from someone who saw it from over 3 m.
+- What finally stopped blind play (it won 9 in 100 with knock-at-random then vote-at-random): the finder sees you standing
+  over the body; a knock-out is heard within 4 m (they come to look, "?!"); "has anyone seen YOU do a job?" grows each
+  meeting; blaming someone nobody suspects counts against you and barely moves the vote; doubt is remembered (they keep
+  away); after 40 s + 12 s per crewmate the crew hurry their jobs (a tip says so); 5 crew from level 1. Each of these is
+  something a real player can read and answer (pretend at jobs, walk away, blame the one already doubted, strike sooner).
+- The robot must do what a person is told: walk well clear of the body (5 m, a path, not just "flee"), be seen pretending
+  at a job once, vote skip when nobody is suspected. When it did not, the rules looked too hard when they were fine.
+- Meeting lines need a real speaker (`from` is drawn as a face): never -1.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

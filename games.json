@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 75,
+  "next_number": 76,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2550,6 +2550,41 @@
         "P30"
       ],
       "summary": "A cube runs to the beat: tap to jump, hold to keep jumping; spikes, blocks, pits, pads, rings and gravity portals sit on the beat; three lives and flags; reach 100%."
+    },
+    {
+      "number": 75,
+      "id": "crew",
+      "name": "Shadow Crew",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-20",
+      "path": "games/crew/index.html",
+      "artifact": "https://claude.ai/artifact/Q6rGZr1RAon8w53BWFRS5a",
+      "artifact_slug": "bb13454f-e62d-4dfa-aa88-70a13c7c5ecd",
+      "apk_repo": null,
+      "storage_prefix": "scw.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "You are the traitor on the station. Don't get caught.",
+        "genre": "Stealth / social",
+        "intensity": 3,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Luckiest Guy",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P26",
+        "P7",
+        "P8",
+        "P13",
+        "P30"
+      ],
+      "summary": "You are the hidden traitor on a 3D space station of hand-drawn sticker crewmates: knock them out when no one can see, vanish through vents, sabotage, and talk your way out of meetings. New rules every few levels."
     }
   ],
   "planned": []
