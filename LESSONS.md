@@ -707,6 +707,19 @@ Everything learned building the first games. Every new game must follow the **ru
 - The robot needs a stuck rule (no progress in 1.5 s: drop the target, push off) or it pins between a target and a barrel.
 - Cars: a crossing is crossed strictly once, or a car turns for ever at the same crossing.
 
+### 71. Crowd Run (`games/crowd/`): gates, the crowd, the giant
+- The crowd is real runners (up to 360 drawn and hit one by one; past that each stands for several), each easing to its
+  place in a sunflower pattern; a big crowd packs tighter (radius about 1.1 + 0.05 * sqrt(n)), or it cannot dodge anything.
+- On a bridge the crowd squeezes onto the planks (from 5 m before it); only a crowd that is off-line loses runners. Without
+  the squeeze every big crowd fell in, whatever the player did.
+- The giant's number comes from the best possible run (better gate every time) times a share (65% rising to 95%); the
+  discounts for obstacles in that estimate must be small, or the share means nothing.
+- Spam: a blind thumb must meet walls early (pieces 3 and 7 are always walls) and walls right behind the better gate
+  (traps), placed 10 m after it so a person who looks has 1.3 s to slide away. Random moves then won 0 of 480.
+- Lesson 1 needs every one of twelve gates right (one blind run in 4,096): with five gates blind tapping left the lesson.
+- Gate panels face the camera only after `rotation.y = PI` (a plane faces +z; we look along +z): the numbers were mirrored.
+- The game's x is drawn flipped (`X(x) = -x`), so the thumb's right is the picture's right.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
