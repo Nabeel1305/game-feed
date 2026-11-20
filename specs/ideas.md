@@ -147,8 +147,8 @@ with nice noises make the controls good... You are a Taxi driver". Four of his n
 Designer and Taxi Driver roll to set 15 (so the two drivers and the two designers are not side by side).
 | # | Game | What it is | Intensity | Thumbs | 3D? |
 |---|---|---|---|---|---|
-| 77 | Sprint | his idea: tap left, right, left, right in time to run; races from 60 m to hurdles and relays | 5 | 2 | 3D |
+| 77 | Sprint | his idea: tap left, right, left, right in time to run; 60 m, 100 m, hurdles and 200 m (built) | 5 | 2 | 3D |
 | 78 | Bus Driver | his idea: a city route, stops to pick people up, keep to the timetable | 3 | 2 | 3D |
 | 79 | Cake Designer | his idea: bake, stack, ice and decorate cakes to order | 1 | 1 | 3D |
-| 80 | Paint It | his idea: paint things with satisfying strokes and sounds | 1 | 1 | 2D/3D |
-| 81 | (mine) | to balance the set | 3 | 1 | |
+| 80 | Paint It | his idea: paint things with satisfying strokes and sounds (built: games/roller) | 1 | 1 | 3D |
+| 81 | Kite Fighter | mine: rooftop kite fighting, hold to pull and let go to turn; cut their lines | 3 | 1 | 3D |

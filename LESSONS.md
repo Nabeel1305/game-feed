@@ -907,6 +907,20 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - Light: the board faces the camera, so the sun must come from the camera's side (azim about 25 in W3.setSky); from 150 the
   face was in its own shadow and every colour looked brown.
 
+### 81. Kite Fighter (`games/kites/`): pull and slack (built on Sprint's shell)
+- **Making spam lose took six rules, each found by tracing a blind game that won** (kitedbg traces in the session):
+  a parked kite cannot cut at all (saw needs the kite really moving, measured from where it went, not its velocity, since a
+  kite held at the end of its line or the top of the sky still has velocity); the line takes 0.25 s to tighten (a flick is a
+  tug); gravity in a pull (a dive is fast, a climb slower: blind loops dive into the roofs); the top of the sky has no wind
+  (blind kites parked there were safe and above everyone); crossings low on a rival's line, by its flyer, do not bite; and
+  the edge goes to the kite above only while it dives across the line, and a line pushed UP into another bites at 0.55.
+  Then 0 of 5,696 blind strings and 0 of 480 random games won.
+- Rivals that come back after a cut start low by their own flyer, not next to your kite (they were crossing your line the
+  moment they appeared).
+- Each of those rules cost the robots too; gentler rivals in the first six levels (rsaw x 0.7, more daylight) put them back.
+- In a lesson, a rival that flies itself into the roofs must be replaced (a new deal), or the lesson waits for ever.
+- A test of "darting across a line cuts it" must cross high on the rival's line (near its kite), or the crossing is ignored.
+
 ## The feed app (`feed/`, `tools/build_feed.py`, `android/`)
 How it is put together is in CLAUDE.md. What was learned building it:
 - **The plug goes in at build time, not into the games.** `tools/build_feed.py` writes a copy of each game with `feed/plug.js` at the top of its page. The games in `games/` stay exactly as he approved them, every game gets the same plug, and a better plug reaches all of them at once. The `<meta charset>` line must stay ahead of the plug: browsers only look for it in the first bytes of a page, and without it every "·" and "é" turns to junk.
