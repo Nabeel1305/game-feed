@@ -983,6 +983,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Practice** is the same game with `need` and `balls` at a billion: it never finishes, so nothing else had to change.
 - Arena crowds as instanced capsules behind and beside the hoop; put close to the camera they looked like pillars.
 
+### 86. Sheepdog (`games/sheepdog/`): mine, herding by pressure (built on Taxi Driver's shell)
+- **Sheep are boids with fear**: away from the dog within 9 m (stronger the faster she comes), cohesion, alignment,
+  separation, a lamb's pull to its mother; a dog running past 6.5 m/s near them raises panic, and a panicked sheep bolts
+  its own way. The ram only feels a dog within 2.6 m or a bark.
+- **Things in the way are slid round, not stopped at**: sheep and dog against a tree move along its tangent; a sheep pushed
+  at the river bank drifts along it to the bridge; one ever found standing in the water is put back on the bank. Without
+  these the flock froze against a tree or a bank and the robots lost at dusk. Trees are never placed near the river (one
+  stood on the bridge).
+- **The robot herds the textbook way (Strombom)**: if the furthest sheep is further than 2.2 sqrt(n) + 1.5 m from the
+  centre, go behind it; else drive from about 0.5 of that behind the flock, toward the bridge or the gate; walk when driving;
+  never cut through the flock (step round it along a circle); run at a fox; bark at a stuck ram.
+- **The thumb** is raycast onto the grass every 33 ms while held; a touch under 0.2 s that hardly moves is a bark and does
+  not move the dog (the move only starts after 0.18 s or 12 px).
+- The flock is slow to simulate (35 us a step), so BLIND has two moves (thumb somewhere or let go; bark): 31 strings, about
+  30 s of blind games instead of 15 minutes.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

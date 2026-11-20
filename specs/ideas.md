@@ -162,7 +162,7 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 15 | 83 | Taxi Driver | you are a taxi driver | 3 | 2 |
 | 15 | 84 | Roach Run | 12, the cockroach | 4 | 2 |
 | 15 | 85 | Hoop Shot | 13, basketball shooting | 2 | 1 |
-| 15 | 86 | (mine) | | 3 | 1 |
+| 15 | 86 | Sheepdog (mine) | herd the flock by pressure into the pen before sunset | 3 | 1 |
 | 16 | 87 | Sumo | 21 | 4 | 2 |
 | 16 | 88 | Memory Lane | 23 | 1 | 1 |
 | 16 | 89 | Spy | 18 | 3 | 2 |

@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 86,
+  "next_number": 87,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2922,18 +2922,42 @@
         "P13"
       ],
       "summary": "His idea 13: basketball purely shooting. Pull back from anywhere for power, sideways to aim, let go; the path's dots show early on; misses say too strong, too weak, left or right; swishes, streaks and the crowd. Four courts; every fifth level a challenge (bank shots, a moving spot, around the world); Practice with unlimited balls."
+    },
+    {
+      "number": 86,
+      "id": "sheepdog",
+      "name": "Sheepdog",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-20",
+      "path": "games/sheepdog/index.html",
+      "artifact": "https://claude.ai/artifact/KrB8iBmTv8RFNTsrXVe8L3",
+      "artifact_slug": "98a22f6c-a3ab-4aa8-9c7c-2293a25181d4",
+      "apk_repo": null,
+      "storage_prefix": "shd.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Be the dog. Get the flock in before dark.",
+        "genre": "Herding / puzzle-action",
+        "intensity": 3,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P3",
+        "P12",
+        "P13"
+      ],
+      "summary": "Mine: you are the sheepdog. Hold on the field and she runs there, let go and she lies down, tap to bark. Sheep are pushed, not commanded: they flow away from her, keep together and scatter if rushed. Gather strays, drive the flock round trees and over the bridge into the pen before sunset; lambs, a stubborn ram, and a fox at dusk."
     }
   ],
   "planned": [
-    {
-      "number": 86,
-      "id": "mine15",
-      "name": "(my idea for set 15)",
-      "set": 15,
-      "summary": "One of mine, to balance the set (picked when the set is built).",
-      "spec": "specs/ideas.md",
-      "from": "mine"
-    },
     {
       "number": 87,
       "id": "sumo",
