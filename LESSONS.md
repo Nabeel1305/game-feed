@@ -775,6 +775,11 @@ Everything learned building the first games. Every new game must follow the **ru
 - Meeting lines need a real speaker (`from` is drawn as a face): never -1.
 
 ### 76. Kart Kingdom (`games/kingdom/`): the big kart racer (built on Stunt Kart and Drift Kings)
+- **THE real cause of the black screens (his screenshots, 20 Nov 2026): the sky drew, the land, road and karts were black.**
+  world3d.js built the all-round light (scene.environment, through PMREM) from the sky shader; on his Samsung's chip that
+  shader gives NaN below the horizon, and NaN in that light blacks out every lit surface. Reproduced here by forcing NaN in
+  the sky shader; fixed by building the all-round light from a plain gradient sphere (sky colour, horizon, ground). All 48
+  3D games rebuilt with it. Never feed a fancy shader's output into lighting; test a change like this with the NaN forced.
 - **Black on his phone, fine here (20 Nov 2026: "everything is black... the music is going").** Same report for Tri-Peaks and
   Stunt Kart. The picture can be left at no size when an app opens the page before it knows its size and never sends a
   resize: buttons and music, a black screen. The frame loop now checks the size twice a second and fixes it (kingdom, stunt,
