@@ -136,3 +136,8 @@ calm (Word Wheel 1); one two-thumb game.
 | # | Game | What it is | Intensity | Thumbs | 3D? |
 |---|---|---|---|---|---|
 | 75 | Shadow Crew | like Among Us: you are the hidden traitor on a 3D station of drawn sticker crewmates; knock out unseen, vents, sabotage, meetings | 3 | 2 | 3D (drawn characters) |
+
+## Game 76 (20 Nov 2026, his own idea, built alone: "like 10 games")
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 76 | Kart Kingdom | like Super Mario Kart, all our own: 16 courses in 4 cups and 5 classes, turtle shells and 10 more items, drifts, tricks, gliders, trophies | 4 | 2 | 3D |

@@ -774,6 +774,25 @@ Everything learned building the first games. Every new game must follow the **ru
   at a job once, vote skip when nobody is suspected. When it did not, the rules looked too hard when they were fine.
 - Meeting lines need a real speaker (`from` is drawn as a face): never -1.
 
+### 76. Kart Kingdom (`games/kingdom/`): the big kart racer (built on Stunt Kart and Drift Kings)
+- **Courses that cannot cross themselves**: each is a polar shape (radius from a few harmonics, always above zero), so it
+  never crosses; then the whole course is scaled up until its tightest bend has a 14 m radius and any two stretches of road
+  are at least 32 m apart (walls and all). Hills come from a few sines; the ground round the glider jump is levelled first.
+- **Hills you take off from**: the ground under a kart is the road's height (plus a ramp); a kart leaves the ground when the
+  road falls away faster than gravity can follow, so crests are jumps and tricks work off any of them. The landing must be
+  judged from the real ground ahead (`landPred`): the flat-ground sum caused wipeouts on hills, for the robots and the HUD.
+- **Rivals must trick on hops too**, or a player who tricks off every crest out-boosts the field by far (it won every race).
+- **The race ends once the places you needed are taken** (no lonely lap at the back). It is kinder, and it made blind races
+  short: the kit's 13,056 blind races took 44 minutes even so. Speed-ups that mattered: `locate` searching 12 steps either
+  side (with a full search if the best is at the edge), squared distances, the place order sorted ten times a second.
+- **test_play's far levels (10, 20, 40, 80) are all boss levels**: a boss race that needs first place made the sharp robot
+  lose at 40. A boss race is faster rivals; the place asked for stays (top 4, 3, then 2).
+- Shell lesson: a slow kart that falls behind you comes round again ahead, so there is always one to aim at; the robot lines
+  up behind a kart before it fires (a shell flies straight). Seven misses in a row start the count again.
+- The same course at another time of day when the cups come round (golden, rain, mist, dusk); mirror cup flips x.
+- Measured: blind strings 0 of 13,056; random 0 of 480; ordinary 1.0 on levels 1-5, 0.6 at 20 and 40; sharp 0.3 at 80;
+  17 ms a frame on the slowed-down chip.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
