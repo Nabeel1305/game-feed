@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 80,
+  "next_number": 81,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2722,6 +2722,40 @@
         "P13"
       ],
       "summary": "His idea: a calm 3D bakery. A customer orders a cake (tiers, icing colour, drip, swirls, toppings) and you make it in five stages, each with its own control: STACK (tap to set each gliding tier down), COLOUR (tap the icing on the card), ICE (the cake spins; hold your thumb on it and the knife spreads icing there), PIPE (tap as each dot passes under the bag), TOP (tap to place berries, candles, cherries, macarons). The customer scores each part; great cakes tip. Six bakeries, show cakes, stands, upgrades and ranks."
+    },
+    {
+      "number": 80,
+      "id": "roller",
+      "name": "Paint It",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-20",
+      "path": "games/roller/index.html",
+      "artifact": "https://claude.ai/artifact/VBSibC7brkYPhnaQAbER63",
+      "artifact_slug": "e4352b3b-cf15-4b2e-9e45-d4a55ff0568c",
+      "apk_repo": null,
+      "storage_prefix": "pti.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Roll it, brush it, stay in the lines. So satisfying.",
+        "genre": "Creative / painting",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P21",
+        "P6",
+        "P19",
+        "P13",
+        "P20"
+      ],
+      "summary": "His idea: a calm 3D painting game with lovely sounds. Paint real things (a fence, a door, a beach hut, a shed wall with a heart, a birdhouse, a car, a boat, a mural) by dragging your thumb over them: paint goes on under it. A wide ROLLER and a fine BRUSH, pots to change colour, a faint pattern of which colour goes where, glass and edges to keep clean, and blue tape that is safe to paint over and peels off at the end for crisp lines."
     }
   ],
   "planned": [

@@ -891,6 +891,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - A robot that remembers "I piped swirl n" must key it by the lesson's deal as well (G.deals): after a missed lesson the
   count starts at 0 again and the old memory stopped it piping at all.
 
+### 80. Paint It (`games/roller/`): paint under the thumb (built on Cake Designer's shell)
+- **Its folder is games/roller**: games/paint is already #62 Paint Drop. Check the id is free BEFORE copying a shell into a
+  folder: new_game.py said "paint is already in games.json" and the copy had already overwritten Paint Drop's part1 and part5
+  (restored with git checkout). The registry id, not the name, is the folder.
+- The thing to paint is a 60 x 84 grid of cells: OUT (the wall behind), TAPE (safe), GLASS (a spill), or a colour. Its face
+  is one plane with a canvas (4 pixels a cell, no smoothing) and a body of instanced boxes behind it for depth; a touch is a
+  ray onto that plane, in cells. Each plank or stripe is a connected region and rings a note when it is 98.5% done.
+- The cell just past an edge takes paint without it counting as a spill (cutting in): without that, even the robot that
+  never misses spilt hundreds of cells round the fence's 2-cell gaps.
+- The camera must fit the board's width as well as its height: on a phone held upright the width is what runs out (the
+  first build cut both edges off, and a test touch aimed at the top corner landed off the screen).
+- In a lesson, DONE finishes the lesson (at 85% or more), not the game: the robots pressed DONE at 93% and "won" in the
+  middle of a lesson. A lesson is also done by itself at 94%.
+- Light: the board faces the camera, so the sun must come from the camera's side (azim about 25 in W3.setSky); from 150 the
+  face was in its own shadow and every colour looked brown.
+
 ## The feed app (`feed/`, `tools/build_feed.py`, `android/`)
 How it is put together is in CLAUDE.md. What was learned building it:
 - **The plug goes in at build time, not into the games.** `tools/build_feed.py` writes a copy of each game with `feed/plug.js` at the top of its page. The games in `games/` stay exactly as he approved them, every game gets the same plug, and a better plug reaches all of them at once. The `<meta charset>` line must stay ahead of the plug: browsers only look for it in the first bytes of a page, and without it every "·" and "é" turns to junk.
