@@ -10,7 +10,28 @@ turtle is the mascot, with his shell on his back), sixteen courses in four cups,
 100cc, 150cc, MIRROR (every course flipped), 200cc. 3D because the course in front of you is the game: real hills you take off
 from, a glider over a chasm, sixteen different worlds with their own weather and light.
 
-## How it plays (two thumbs, all simple)
+## Research (version 2, 20 Nov 2026, after his feedback: "I don't like the controls... make the music more exciting... when I
+throw a banana it's supposed to go straight... give at least two buttons... one for boost")
+- KartRider Rush+ (widely called the best kart racer on phones): two big arrow buttons for steering on one side, a drift
+  button and a nitro button on the other; drifting builds the nitro, and timing it is the skill. (pocketgamer.com,
+  nme.com, levelwinner.com, thesixthaxis.com)
+- Mario Kart Tour: a tap throws the item ahead, a swipe down throws it behind; its swipe steering is widely called imprecise.
+  Wide tracks that are hard to fall off keep races close. (gamerevolution.com, gamezebo.com, butwhytho.net)
+- Beach Buggy Racing 2: wider tracks, precise touch controls, many powerups. (androidpolice.com)
+
+## How it plays (version 2: buttons)
+- ◀ ▶ (bottom left, big): hold to steer; a thumb can slide from one to the other.
+- DRIFT (bottom right, big): hold in a bend with an arrow: a hop, a slide, sparks blue, orange, purple; let go for a boost.
+  Steering into the drift tightens it, away widens it. In the air DRIFT does a trick.
+- NITRO (above DRIFT): two bars, filled by drifts, tricks, slipstreams and rings; tap when one glows: a big boost.
+- ITEM (left of NITRO): tap: thrown far ahead (a banana flies like a slingshot about 40 m down the road and lands where you
+  see it, with a ring marking the spot); swipe down: behind. Shells the same.
+- Rocket start: hold DRIFT on the second light. Courses in the sky now have low rails; only the glider's chasm can be fallen
+  into.
+- Music: a real race track per course (drums, pumping bass, chord stabs, arpeggio, a hook with verse and chorus), faster and
+  a step higher on the final lap.
+
+## How it played (version 1)
 - The kart drives itself. **Left thumb**: put it down anywhere on the left half and slide to steer.
 - **Drift**: hold a hard turn at speed; sparks go blue, orange, purple; straighten up for a boost (bigger each colour).
 - **Right thumb, tap**: use your item. In the air (off a ramp or over a crest) a tap is a **trick**: land after it for a boost,

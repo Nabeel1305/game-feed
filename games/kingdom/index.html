@@ -5016,19 +5016,21 @@ const W3 = (() => {
 // ===================== RULES: Kart Kingdom (game 76, his idea: "like Super Mario racing... turtles, flying, boosts... numerous
 // race courses... like 10 games") =====================
 // Eight karts, three laps, sixteen courses in four cups (then the cups again, faster: 50cc, 100cc, 150cc, MIRROR, 200cc...).
-// The kart drives itself. LEFT thumb: put it down anywhere on the left half and slide to steer; hold a HARD turn at speed to
-// DRIFT (sparks blue, orange, purple; straighten up for a boost). RIGHT thumb: tap to use your item; in the air a tap is a
-// TRICK (land after it for a boost; land in the middle of one and you wipe out). Hold the right side as the second light comes
-// on for a ROCKET START (too early and you stall). Gold ramps open a GLIDER over a chasm; fly through the rings. Some courses
-// have no walls: fall off and the rescue bee puts you back. Each course has its own dangers: crabs, sheep, boulders,
-// snowballs, traffic, cannonballs, gumdrops, ghosts, twisters, lava, meteors; mud and ice.
+// The kart drives itself. Buttons (version 2, his feedback): ◀ ▶ under the left thumb; DRIFT (hold in a bend: sparks blue,
+// orange, purple; let go for a boost; in the air a tap is a TRICK), ITEM (tap: thrown far ahead; swipe down: behind) and NITRO
+// (fills from drifts, tricks and slipstreams) under the right. Hold DRIFT as the second light comes on for a ROCKET START (too
+// early and you stall). Gold ramps open a GLIDER over a chasm; fly through the rings. Courses in the sky have low rails; only
+// the chasm under the glider can be fallen into (the rescue bee brings you back).
+// Each course has its own dangers: crabs, sheep, boulders, snowballs, traffic, cannonballs, gumdrops, ghosts, twisters, lava,
+// meteors; mud and ice.
 // World: metres; x across, z the other way, y up; a heading h points along (cos h, sin h).
 const RULES = [
-  'The kart drives itself. <b>Left thumb</b>: put it down and slide to <b>steer</b>.',
-  '<b>Hold a hard turn</b> at speed to <b>drift</b>: sparks go blue, orange, purple. Straighten up for a <b>boost</b>.',
-  'Drive through <b>? boxes</b> for an item; <b>tap the right side</b> to use it: turtle shells, peppers, a star, a comet...',
-  'Off a ramp or a hill, <b>tap</b> in the air for a <b>trick</b>: land after it for a boost (mid-trick is a wipeout!).',
-  '<b>Hold the right side</b> as the 2nd light comes on for a <b>rocket start</b>. Gold ramps open your <b>glider</b>.',
+  'The kart drives itself. Hold <b>◀ ▶</b> (bottom left) to <b>steer</b>.',
+  'In a bend, steer and <b>hold DRIFT</b>: sparks go blue, orange, purple. <b>Let go</b> for a <b>boost</b>.',
+  'Drifts, tricks and slipstreams fill <b>NITRO</b>: tap it when it glows for a big boost.',
+  'Drive through <b>? boxes</b>. <b>Tap ITEM</b> to throw it far <b>ahead</b>; <b>swipe it down</b> to throw it <b>behind</b>.',
+  'Off a ramp or a hill, <b>tap DRIFT in the air</b> for a <b>trick</b>: land after it for a boost (mid-trick is a wipeout!).',
+  '<b>Hold DRIFT</b> as the 2nd light comes on for a <b>rocket start</b>. Gold ramps open your <b>glider</b>: fly through the rings.',
   'Finish in the place the race asks for. Four races make a <b>cup</b>: collect the trophies!',
 ];
 // the drivers (all ours): a head, a body colour, a little of their own in the kart
@@ -5153,14 +5155,14 @@ function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N), cl = classOf(N), boss = N % 10 === 0;
   return { N, f, help: !!help, track: placeOf(N), cup: cupOf(N), cls: cl, mirror: cl === 3, boss, laps: N <= 2 ? 2 : 3,
     place: N <= 4 ? 4 : N <= 12 ? 3 : 2,
-    skill: x(0.8, 0.99, 34) * (1 - 0.04 * e) * (help ? 0.96 : 1) * (boss ? 1.015 : 1), speedK: 1 + [0, 0.05, 0.1, 0.1, 0.16][cl],
+    skill: x(0.8, 1.07, 34) * (1 - 0.04 * e) * (help ? 0.96 : 1) * (boss ? 1.015 : 1), speedK: 1 + [0, 0.05, 0.1, 0.1, 0.16][cl],
     aiItems: x(0.35, 1, 30), aiTricks: x(0.5, 3, 30), aiDodge: x(0.5, 0.95, 30), aiDrift: x(0.3, 1, 30),
     hz: x(0, 1, 18), grav: TRACKS[placeOf(N)].grav || 1,
-    vmax: VMAX * (1 + 0.025 * upLv('engine')), grip: 1 + 0.12 * upLv('grip'), spark: 1 + 0.2 * upLv('turbo'), magnet: 1.5 + 1.0 * upLv('magnet') }; }
+    vmax: VMAX * (1 + 0.025 * upLv('engine')), grip: 1 + 0.12 * upLv('grip'), spark: 1 + 0.2 * upLv('turbo'), nitroK: 1 + 0.15 * upLv('turbo'), magnet: 1.5 + 1.0 * upLv('magnet') }; }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0, T = trackOf(cfg.track, cfg.mirror);
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.track, T,
-    driver: o.driver || myDriver(), kart: o.kart || myKart(), karts: [], boxes: [], coinsT: [], shots: [], peels: [], hz: [], booms: [], steer: 0, hold: false, count: 3.2,
+    driver: o.driver || myDriver(), kart: o.kart || myKart(), karts: [], boxes: [], coinsT: [], shots: [], peels: [], lobs: [], hz: [], booms: [], steer: 0, steerT: 0, hold: false, count: 3.2, nitros: 0,
     tricks: 0, perfects: 0, wipeouts: 0, hits: 0, zaps: 0, coins: 0, boosts: 0, bigBoosts: 0, falls: 0, items: 0, rocket: 0, drafts: 0, rings: 0, best: 99 };
   grid(G); placeBoxes(G); placeCoins(G); placeHazards(G);
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
@@ -5174,7 +5176,7 @@ function grid(G) { const T = G.T, S = T.S, n = S.length; G.karts = []; const min
   else { let q2 = 0; for (let q = 0; q < NK; q++) { const s = slot(q); if (q === mySlot) { G.me = newKart(G, s, G.driver, true, 9); G.karts.push(G.me); } else G.karts.push(newKart(G, s, pool[q2++], false, q)); } }
   for (const k of G.karts) { k.lap = 0; k.prog = -((n - k.i) % n) * T.ds; k.last = k.i; const l = locate(T, k.x, k.z, k.i); k.y = roadY(T, l); } }
 function newKart(G, s, who, me, q) { const R = G.rnd; return { me, who, x: s.x, z: s.z, y: 0, vy: 0, air: false, glide: false, ramp: null, trick: null, airTricks: 0, h: s.h, v: 0, i: s.i, last: s.i, lap: 0, prog: 0,
-  steer: 0, drift: 0, hardT: 0, charge: 0, tier: 0, slip: 0, boost: 0, spin: 0, shield: 0, star: 0, rocket: 0, coin: 0, item: null, roul: 0, orbit: 0, peppers: 0, itemT: 0, fall: 0, draftT: 0, mud: 0, ice: 0,
+  steer: 0, drift: 0, hardT: 0, charge: 0, tier: 0, slip: 0, nitro: 0, nitroT: 0, hopT: 0, wantDrift: 0, boost: 0, spin: 0, shield: 0, star: 0, rocket: 0, coin: 0, item: null, roul: 0, orbit: 0, peppers: 0, itemT: 0, fall: 0, draftT: 0, mud: 0, ice: 0,
   line: (R() - 0.5) * 5, skill: me ? 1 : 1 + (q - 3.5) * 0.008 + (R() - 0.5) * 0.02, done: false, place: 0, fin: 0, lane: R() * 6, plan: 0, dodge: 0 }; }
 function placeBoxes(G) { const S = G.T.S; G.boxes = []; for (const i of G.T.rows) { const p = S[i]; for (const c of [-4.5, -1.5, 1.5, 4.5]) G.boxes.push({ x: p.x - Math.sin(p.h) * c, z: p.z + Math.cos(p.h) * c, y: p.y + 1, t: 0 }); } }
 function placeCoins(G) { const S = G.T.S; G.coinsT = G.T.coins.map(c => { const p = S[c.i]; return { x: p.x - Math.sin(p.h) * c.lat, z: p.z + Math.cos(p.h) * c.lat, y: p.y + c.y, air: !!c.air, t: 0 }; });
@@ -5195,32 +5197,55 @@ function hazStep(G, dt) { const T = G.T, S = T.S, n = S.length, t = G.t;
     if (h.kind === 'car') { h.pos = (h.pos + h.sp * dt) % T.L; i = Math.floor(h.pos / T.ds) % n; h.i = i; }
     const p = S[i]; h.x = p.x - Math.sin(p.h) * lat; h.z = p.z + Math.cos(p.h) * lat; h.gy = p.y; h.h = p.h; h.latNow = lat; }
   for (let q = G.booms.length - 1; q >= 0; q--) { G.booms[q].t += dt; if (G.booms[q].t > 1.2) G.booms.splice(q, 1); } }
-// ---------- your thumbs ----------
-function setSteer(G, s) { G.steer = clamp(s, -1, 1); }
-// the right thumb held down: before the start, the engine revs (rocket start); during the race nothing more than a tap
+// ---------- your thumbs: buttons, like the best phone kart racers (his words, 20 Nov 2026: "I don't like the controls...
+// give at least two buttons... one for boost") ----------
+// LEFT thumb: two big arrow buttons, ◀ and ▶ (hold to turn; the turn comes on fast but smoothly). RIGHT thumb: DRIFT (hold
+// it in a bend with an arrow: the kart hops and slides, sparks build; let go for a boost; in the air it does a trick), ITEM
+// (tap: thrown far AHEAD; swipe it down: thrown BEHIND) and NITRO (fills from drifts, tricks and slipstreams; tap to fire).
+function setSteer(G, s) { G.steerT = clamp(s, -1, 1); }      // where the steering is heading (the buttons, or a robot)
+function setBtn(G, b, on) { if (b === 'L') G.bL = !!on; if (b === 'R') G.bR = !!on; G.steerT = (G.bR ? 1 : 0) - (G.bL ? 1 : 0); }
+// the right-hand buttons held down before the start: the engine revs (a rocket start on the second light)
 function setHold(G, on) { if (on && G.count > 0 && !G.hold) G.holdAt = G.count; G.hold = !!on; }
-function tapRight(G) { const k = G.me; if (G.over || k.done || G.wait > 0 || k.fall > 0) return false; if (G.count > 0) return false; if (k.air) return startTrick(G, k);
-  if (!k.item && !k.peppers && !k.orbit && G.lesson && lessonNow(G).id !== 'item') lessonMiss(G, 'ground'); return useItem(G); }
+function driftDown(G) { const k = G.me; G.driftBtn = true; if (G.count > 0) { setHold(G, true); return false; } if (G.over || k.done || G.wait > 0 || k.fall > 0) return false;
+  if (k.air) return startTrick(G, k);
+  if (k.spin > 0 || k.rocket > 0) return false; k.hopT = 0.16; G.ev.push({ k: 'hop' });
+  if (Math.abs(G.steer) > 0.25 && k.v > 11) { startDrift(G, k, Math.sign(G.steer)); } else { k.wantDrift = 0.3; if (G.lesson) lessonMiss(G, 'ground'); } return true; }
+function driftUp(G) { G.driftBtn = false; if (G.count > 0) { setHold(G, false); return; } const k = G.me; k.wantDrift = 0; if (k.drift) endDrift(G, k); }
+function startDrift(G, k, dir) { k.drift = dir; k.charge = 0; k.tier = 0; k.wantDrift = 0; if (k.me) G.ev.push({ k: 'drift' }); }
+function endDrift(G, k) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.6, 1.1, 1.7][k.tier]); addNitro(G, k, [0, 0.12, 0.25, 0.4][k.tier]); if (k.me) { G.boosts++; if (k.tier >= 2) G.bigBoosts++; G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } } k.drift = 0; k.charge = 0; k.tier = 0; }
+function addNitro(G, k, a) { const was = Math.floor(k.nitro || 0); k.nitro = Math.min(2, (k.nitro || 0) + a * (k.me ? G.cfg.nitroK : 1)); if (k.me && Math.floor(k.nitro) > was) G.ev.push({ k: 'nitroready', n: Math.floor(k.nitro) }); }
+function useNitro(G, k = G.me) { if (G.over || k.done || G.count > 0 || k.fall > 0 || (k.nitro || 0) < 1) return false; k.nitro -= 1; k.nitroT = 1.7; k.boost = Math.max(k.boost, 1.7); if (k.me) { G.nitros = (G.nitros | 0) + 1; G.ev.push({ k: 'nitro' }); lessonSee(G, 'nitro'); } return true; }
+function itemTap(G, back) { const k = G.me; if (G.count > 0) { setHold(G, true); return false; } if (G.over || k.done || G.wait > 0 || k.fall > 0) return false;
+  if (k.air && !k.item && !k.orbit && !k.peppers) return startTrick(G, k);
+  return useItem(G, k, back ? -1 : 1); }
+// the old one-button way (kept for the robots' blind thumbs and the tests): in the air a trick, on the ground the item
+function tapRight(G) { const k = G.me; if (G.over || k.done || G.wait > 0 || k.fall > 0 || G.count > 0) return false; if (k.air) return startTrick(G, k); return useItem(G); }
 function startTrick(G, k) { if (!k.air || k.spin > 0 || k.fall > 0 || k.rocket > 0) return false; if (k.trick) return false;      /* a tap during a trick does nothing (no queue) */
   k.trick = { t: 0, kind: k.me ? (G.tricks + k.airTricks) % TRICKS.length : (G.rnd() * 3) | 0 }; k.airTricks++; if (k.me) G.ev.push({ k: 'trick', n: k.airTricks, kind: k.trick.kind }); return true; }
 const race = k => k.lap * 1e5 + k.prog;
-function useItem(G, k = G.me) { if (G.over || k.done || G.count > 0 || k.air || k.fall > 0) return false;
+// dir +1: thrown ahead (the default), -1: behind
+function useItem(G, k = G.me, dir = 1) { if (G.over || k.done || G.count > 0 || k.fall > 0) return false;
   if (k.peppers > 0) { k.peppers--; k.boost = Math.max(k.boost, 1.3); G.ev.push({ k: 'use', it: 'pepper', me: k.me, x: k.x, z: k.z }); return true; }
-  if (k.orbit > 0) { k.orbit--; fire(G, k, 'shell'); G.ev.push({ k: 'use', it: 'shell', me: k.me, x: k.x, z: k.z }); if (k.me) lessonSee(G, 'use', 'shell'); return true; }
+  if (k.orbit > 0) { k.orbit--; fire(G, k, 'shell', dir); G.ev.push({ k: 'use', it: 'shell', me: k.me, x: k.x, z: k.z, back: dir < 0 }); if (k.me) lessonSee(G, 'use', 'shell'); return true; }
   if (!k.item || k.roul > 0) return false; const it = k.item; k.item = null; if (k.me) G.items++;
   if (it === 'pepper') k.boost = Math.max(k.boost, 1.4);
   if (it === 'pepper3') { k.peppers = 2; k.boost = Math.max(k.boost, 1.3); }
   if (it === 'triple') { k.orbit = 3; }
-  if (it === 'shell' || it === 'homing') fire(G, k, it);
+  if (it === 'shell' || it === 'homing') fire(G, k, it, it === 'homing' ? 1 : dir);
   if (it === 'comet') { const lead = G.karts.find(o => o.place === 1 && o !== k && !o.done); if (lead) G.shots.push({ kind: 'comet', x: k.x, z: k.z, y: k.y + 3, i: k.i, h: k.h, tgt: lead, by: k, t: 0 }); }
-  if (it === 'peel') G.peels.push({ x: k.x - Math.cos(k.h) * 2.4, z: k.z - Math.sin(k.h) * 2.4, y: k.y, by: k, t: 0 });
+  if (it === 'peel') lob(G, k, dir);
   if (it === 'star') k.star = 6;
   if (it === 'rocket') k.rocket = 3.6;
   if (it === 'bubble') k.shield = 9;
   if (it === 'freeze') { for (const o of G.karts) if (o !== k && race(o) > race(k) && !o.done) hit(G, o, 'freeze', k, 0.8); G.ev.push({ k: 'freeze', me: k.me }); }
-  G.ev.push({ k: 'use', it, me: k.me, x: k.x, z: k.z }); if (k.me) lessonSee(G, 'use', it); return true; }
-function fire(G, k, kind) { const ahead = kind === 'homing' ? G.karts.filter(o => o !== k && !o.done && race(o) > race(k)).sort((a, b) => race(a) - race(b))[0] : null;
-  G.shots.push({ kind, x: k.x + Math.cos(k.h) * 2.2, z: k.z + Math.sin(k.h) * 2.2, y: k.y, i: k.i, h: k.h, tgt: ahead || null, by: k, t: 0, me: k.me }); }
+  if (dir < 0) k.lookBack = 0.8; G.ev.push({ k: 'use', it, me: k.me, x: k.x, z: k.z, back: dir < 0 }); if (k.me) lessonSee(G, 'use', it); return true; }
+function fire(G, k, kind, dir = 1) { const ahead = kind === 'homing' ? G.karts.filter(o => o !== k && !o.done && race(o) > race(k)).sort((a, b) => race(a) - race(b))[0] : null, h = dir < 0 ? k.h + Math.PI : k.h;
+  G.shots.push({ kind, x: k.x + Math.cos(h) * 2.4, z: k.z + Math.sin(h) * 2.4, y: k.y, i: k.i, h, tgt: ahead || null, by: k, t: 0, me: k.me }); }
+// a banana peel goes like a slingshot: high and far ahead along the road (about 40 m, you see it fly and land), or a short toss
+// behind. It lands where it lands, a hazard for anyone (its thrower is safe from it for a few seconds)
+function lob(G, k, dir) { const T = G.T, S = T.S, n = S.length, far = dir > 0 ? 27 : 7, ahead = (k.i + dir * Math.round((dir > 0 ? 40 : 6) / T.ds) + n) % n, p = S[ahead], lat = clamp(k.lat || 0, -TW / 2 + 1.5, TW / 2 - 1.5);
+  const tx = p.x - Math.sin(p.h) * lat, tz = p.z + Math.cos(p.h) * lat, d = Math.hypot(tx - k.x, tz - k.z), tf = d / far + (dir > 0 ? 0 : 0.25);
+  G.lobs.push({ x: k.x, z: k.z, y: k.y + 1.2, vx: (tx - k.x) / tf, vz: (tz - k.z) / tf, vy: (p.y + 0.1 - k.y - 1.2) / tf + 0.5 * GRAV * tf, by: k, t: 0, tf, tx, tz, ty: p.y }); }
 // the item box's roulette: what you get depends on where you are (the leader gets defence, the back gets catch-up)
 const ODDS = { //        lead   middle  back
   shell: [30, 16, 4], homing: [0, 16, 14], triple: [10, 10, 6], peel: [30, 10, 2], pepper: [16, 16, 12], pepper3: [0, 10, 18],
@@ -5237,12 +5262,15 @@ function hit(G, k, why, by, len = 1.1) { if (k.star > 0 || k.rocket > 0 || k.fal
 // ---------- the race, step by step ----------
 function step(G, dt) {
   if (G.over || !(dt > 0)) return; G.t += dt; const c = G.cfg, T = G.T, S = T.S, n = S.length, R = G.rnd;
-  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0 && G.lessonEnd) { G.lessonEnd = false; Object.assign(G, { shots: [], peels: [], count: 3.2, tricks: 0, perfects: 0, wipeouts: 0, hits: 0, zaps: 0, coins: 0, boosts: 0, bigBoosts: 0, falls: 0, items: 0, rings: 0, rocket: 0, drafts: 0 }); grid(G); placeBoxes(G); placeCoins(G); placeHazards(G); G.ev.push({ k: 'start' }); } if (G.wait > 0) return; }
+  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0 && G.lessonEnd) { G.lessonEnd = false; Object.assign(G, { shots: [], peels: [], lobs: [], nitros: 0, count: 3.2, tricks: 0, perfects: 0, wipeouts: 0, hits: 0, zaps: 0, coins: 0, boosts: 0, bigBoosts: 0, falls: 0, items: 0, rings: 0, rocket: 0, drafts: 0 }); grid(G); placeBoxes(G); placeCoins(G); placeHazards(G); G.ev.push({ k: 'start' }); } if (G.wait > 0) return; }
   hazStep(G, dt);
   // the shell lesson: a slow kart that falls behind you comes round again ahead (there is always one to aim at)
   if (G.lesson && lessonNow(G).id === 'item') for (const d of G.karts) if (d.dummy && race(d) < race(G.me) - 12 && d.spin <= 0) { const S = G.T.S, n = S.length, j = (G.me.i + 55) % n, p = S[j], lat = [-3, 3, 0, -1.5, 1.5][(G.rnd() * 5) | 0]; d.x = p.x - Math.sin(p.h) * lat; d.z = p.z + Math.cos(p.h) * lat; d.h = p.h; d.i = d.last = j; d.y = p.y; d.vy = 0; d.air = false; d.line = lat; d.prog = G.me.prog + 55 * G.T.ds; d.lap = G.me.lap; d.v = 12; }
   if (G.count > 0) { const was = Math.ceil(G.count); G.count -= dt; if (Math.ceil(G.count) !== was && G.count > 0) G.ev.push({ k: 'light', n: Math.ceil(G.count) }); if (G.count <= 0) go(G); else return; }
+  { const tg = G.steerT || 0, back = Math.abs(tg) < Math.abs(G.steer) || tg * G.steer < 0, r = (back ? 9 : 6.5) * dt; G.steer = clamp(G.steer + clamp(tg - G.steer, -r, r), -1, 1); }
   for (const k of G.karts) { if (!k.me && !k.done) ai(G, k, dt); drive(G, k, dt); }
+  for (let q = G.lobs.length - 1; q >= 0; q--) { const o = G.lobs[q]; o.t += dt; o.x += o.vx * dt; o.z += o.vz * dt; o.vy -= GRAV * dt; o.y += o.vy * dt;
+    if (o.t >= o.tf || (o.vy < 0 && o.y <= o.ty)) { G.lobs.splice(q, 1); const l = locate(T, o.x, o.z, null), gy = groundAt(T, l); if (gy > VOID + 1) { G.peels.push({ x: o.x, z: o.z, y: gy, by: o.by, t: 0 }); G.ev.push({ k: 'peelland', x: o.x, z: o.z, y: gy, me: o.by.me }); } } }
   // karts bump each other; a STAR or a ROCKET knocks the other flying
   for (let a = 0; a < G.karts.length; a++) for (let b = a + 1; b < G.karts.length; b++) { const p = G.karts[a], q = G.karts[b]; if (p.fall > 0 || q.fall > 0 || Math.abs(p.y - q.y) > 1.3) continue; const dx = q.x - p.x, dz = q.z - p.z, d2 = dx * dx + dz * dz; if (d2 >= 4) continue; const d = Math.sqrt(d2);
     if (d < 2.0 && d > 1e-4) { const pa = p.star > 0 || p.rocket > 0, qa = q.star > 0 || q.rocket > 0; if (pa && !qa) hit(G, q, 'star', p); else if (qa && !pa) hit(G, p, 'star', q);
@@ -5253,7 +5281,7 @@ function step(G, dt) {
   for (const cn of G.coinsT) { if (cn.t > 0) { cn.t -= dt; continue; } for (const k of G.karts) { const rr = k.me ? c.magnet : 1.5, dx = k.x - cn.x; if (dx > rr || dx < -rr) continue; const dz = k.z - cn.z; if (dx * dx + dz * dz < rr * rr && Math.abs((k.y + 0.6) - cn.y) < (cn.air ? 1.9 : 1.5)) { cn.t = cn.air ? 999 : 9; if (k.coin < 10) k.coin++; if (k.me) { G.coins++; G.ev.push({ k: 'coin', n: k.coin, air: cn.air }); } break; } } }
   for (const rg of G.ringsT) { if (!rg.by) rg.by = []; for (const k of G.karts) if (k.air && k.glide && (k.x - rg.x) ** 2 + (k.z - rg.z) ** 2 < 6.76 && Math.abs(k.y + 0.6 - rg.y) < 2.4 && rg.by.indexOf(k) < 0) { rg.by.push(k); k.ringN = (k.ringN || 0) + 1; if (k.me) { G.rings++; G.ev.push({ k: 'ring', n: k.ringN }); } } }
   // peels: a spin for whoever drives over one (not its owner in its first moment)
-  for (let i = G.peels.length - 1; i >= 0; i--) { const s = G.peels[i]; s.t += dt; if (s.t > 40) { G.peels.splice(i, 1); continue; } for (const k of G.karts) if (!k.air && k.fall <= 0 && (k.x - s.x) ** 2 + (k.z - s.z) ** 2 < 2.25 && !(s.by === k && s.t < 1.2)) { G.peels.splice(i, 1); hit(G, k, 'peel', s.by); break; } }
+  for (let i = G.peels.length - 1; i >= 0; i--) { const s = G.peels[i]; s.t += dt; if (s.t > 40) { G.peels.splice(i, 1); continue; } for (const k of G.karts) if (!k.air && k.fall <= 0 && (k.x - s.x) ** 2 + (k.z - s.z) ** 2 < 2.25 && !(s.by === k && s.t < 3)) { G.peels.splice(i, 1); hit(G, k, 'peel', s.by); break; } }
   shotsStep(G, dt);
   // the dangers of the course
   for (const h of G.hz) { if (!h.act) continue; const rr = (h.r + 0.9) ** 2; for (const k of G.karts) { if (k.fall > 0 || k.air && h.kind !== 'gumdrop' && h.kind !== 'car') continue; if ((k.x - h.x) ** 2 + (k.z - h.z) ** 2 > rr) continue;
@@ -5278,7 +5306,7 @@ function shotsStep(G, dt) { const T = G.T, S = T.S, n = S.length;
     o.x += Math.cos(o.h) * sp; o.z += Math.sin(o.h) * sp; const l = locate(T, o.x, o.z, o.i); o.i = l.i; const gy = groundAt(T, l);
     if (gy <= VOID + 1) dead = true; else o.y = gy;
     // the walls: a shell bounces back off them (a few times)
-    const lim = TW / 2 + 3.0; if (!dead && Math.abs(l.lat) > lim && T.info.edge !== 'void') { const p = S[l.i]; o.h = 2 * p.h - o.h; const s2 = Math.sign(l.lat), back = Math.abs(l.lat) - lim + 0.2; o.x += Math.sin(p.h) * s2 * back; o.z -= Math.cos(p.h) * s2 * back; o.b = (o.b || 0) + 1; if (o.b > 4) dead = true; }
+    const lim = T.info.edge === 'void' ? TW / 2 + 0.8 : TW / 2 + 3.0; if (!dead && Math.abs(l.lat) > lim && !S[l.i].gap) { const p = S[l.i]; o.h = 2 * p.h - o.h; const s2 = Math.sign(l.lat), back = Math.abs(l.lat) - lim + 0.2; o.x += Math.sin(p.h) * s2 * back; o.z -= Math.cos(p.h) * s2 * back; o.b = (o.b || 0) + 1; if (o.b > 4) dead = true; }
     if (!dead) for (const k of G.karts) { if (k.fall > 0 || (k === o.by && o.t < 0.35)) continue; if (Math.hypot(k.x - o.x, k.z - o.z) < 1.7 && Math.abs(k.y - o.y) < 1.6) { hit(G, k, o.kind, o.by); dead = true; break; } }
     if (!dead) for (let j = G.peels.length - 1; j >= 0; j--) if (Math.hypot(G.peels[j].x - o.x, G.peels[j].z - o.z) < 1.4) { G.peels.splice(j, 1); dead = true; G.ev.push({ k: 'clash', x: o.x, z: o.z, y: o.y }); break; }
     if (!dead) for (let j = 0; j < G.shots.length; j++) { const p2 = G.shots[j]; if (p2 !== o && p2.kind !== 'comet' && Math.hypot(p2.x - o.x, p2.z - o.z) < 1.2) { G.shots.splice(Math.max(j, q), 1); G.shots.splice(Math.min(j, q), 1); q--; dead = 'both'; G.ev.push({ k: 'clash', x: o.x, z: o.z, y: o.y }); break; } }
@@ -5292,25 +5320,25 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   if (k.fall > 0) { k.fall -= dt; k.y -= 14 * dt; if (k.fall <= 0) rescue(G, k); return; }
   const loc = locate(T, k.x, k.z, k.i), off = !k.air && Math.abs(loc.lat) > TW / 2;
   const stat = me ? (G.driver.spd + G.kart.spd) * 0.006 : 0;
-  const top = (me ? c.vmax * (1 + stat) : VMAX * c.skill * k.skill * (k.rubber || 1)) * c.speedK * (1 + 0.012 * k.coin) * (k.boost > 0 ? 1.34 : 1) * (k.star > 0 ? 1.25 : 1) * (k.rocket > 0 ? 1.5 : 1)
+  const top = (me ? c.vmax * (1 + stat) : VMAX * c.skill * k.skill * (k.rubber || 1)) * c.speedK * (1 + 0.012 * k.coin) * (k.boost > 0 ? 1.34 : 1) * (k.star > 0 ? 1.25 : 1) * (k.rocket > 0 ? 1.5 : 1) * (k.nitroT > 0 ? 1.1 : 1)
     * (off && k.boost <= 0 && k.star <= 0 && k.rocket <= 0 ? (me ? 0.5 + 0.08 * upLv('grip') : 0.55) : 1) * (k.mud > 0 && k.boost <= 0 && k.star <= 0 ? 0.55 : 1) * (k.spin > 0 ? 0.25 : 1) * (go2 ? 1 : 0.6);
   const accel = me ? 0.9 + G.driver.acc * 0.08 : 0.9; if (!k.air) k.v += (top - k.v) * Math.min(1, dt * (k.v < top ? accel : 2.5));
-  // the drift: a hard turn held at speed; sparks build while it is held; straightening up releases a boost
-  if (me && k.rocket <= 0) { if (Math.abs(st) > 0.72 && k.v > 14 && !k.spin && !k.air) k.hardT += dt; else k.hardT = 0;
-    if (!k.drift && k.hardT > 0.2) { k.drift = Math.sign(st); k.charge = 0; G.ev.push({ k: 'drift' }); }
-    if (k.drift) { k.charge += dt * c.spark * (Math.sign(st) === k.drift && Math.abs(st) > 0.3 ? 1 : 0.35); const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
-      if (Math.abs(st) < 0.3 || Math.sign(st) === -k.drift && Math.abs(st) > 0.5 || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.55, 1.05, 1.6][k.tier]); G.boosts++; if (k.tier >= 2) G.bigBoosts++; G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } k.drift = 0; k.charge = 0; k.tier = 0; } } }
+  // the drift (the DRIFT button held in a bend): sparks build, faster when you steer into it; let go for a boost; it fills NITRO
+  k.hopT = Math.max(0, (k.hopT || 0) - dt); k.nitroT = Math.max(0, (k.nitroT || 0) - dt);
+  if (me && k.rocket <= 0) { if (k.wantDrift > 0) { k.wantDrift -= dt; if (G.driftBtn && Math.abs(st) > 0.25 && k.v > 11 && !k.air && !k.spin) startDrift(G, k, Math.sign(st)); }
+    if (k.drift) { const u = st * k.drift; k.charge += dt * c.spark * (u > 0.2 ? 1 : u > -0.2 ? 0.6 : 0.3); addNitro(G, k, dt * 0.05 * (k.tier + 1)); const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
+      if (!G.driftBtn || k.v < 9 || k.spin) endDrift(G, k); } }
   // steering: without a drift a hard turn at speed runs wide and scrubs speed; a drift turns hard and keeps it; ice slides
   const sp = Math.min(1, k.v / 12), hnd = me ? 1 + (G.driver.hnd + G.kart.hnd) * 0.03 : 1; let yaw;
   if (k.rocket > 0) { const p = S[(k.i + 10) % n]; let dh = Math.atan2(p.z - k.z, p.x - k.x) - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); yaw = clamp(dh * 4, -2.5, 2.5); }
-  else if (k.drift) { const u = clamp((st * k.drift - 0.3) / 0.7, 0, 1); yaw = k.drift * (0.42 + 0.95 * u) * sp * hnd; }
+  else if (k.drift) { const u = clamp(st * k.drift, -1, 1); yaw = k.drift * (0.78 + 0.6 * u) * sp * hnd; }
   else { const want = st * 1.75 * sp * hnd * (k.air ? (k.glide ? 0.8 : 0.35) : 1), lim = GRIP * grip * (k.ice > 0 ? 0.45 : 1) / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   const slip = k.drift ? -k.drift * 0.32 : k.ice > 0 ? -st * 0.25 : 0; k.slip += (slip - k.slip) * Math.min(1, dt * (k.ice > 0 ? 2 : 6)); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
   // the walls (not on a course with no walls, nor over the chasm)
-  let l2 = locate(T, k.x, k.z, k.i); const p = S[l2.i], lim2 = TW / 2 + 3.2;
-  if (T.info.edge !== 'void' && !p.gap && Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.6; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } l2 = locate(T, k.x, k.z, l2.i); }
+  let l2 = locate(T, k.x, k.z, k.i); const p = S[l2.i], lim2 = T.info.edge === 'void' ? TW / 2 + 0.9 : TW / 2 + 3.2;
+  if (!p.gap && Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.6; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } l2 = locate(T, k.x, k.z, l2.i); }
   if (me) G.wallT = Math.max(0, (G.wallT || 0) - dt);
   // up and down: the ground under the kart (hills, ramps, the chasm, the edge), gravity, and leaving the ground over a crest
   const gr = GRAV * c.grav * (k.glide ? 0.32 : 1), gy = groundAt(T, l2), rp = rampAt(T, l2); if (gy > VOID + 1) k.gyLast = gy;
@@ -5325,7 +5353,7 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   const di = l2.i - k.last; let dd = di; if (di < -n / 2) dd = di + n; if (di > n / 2) dd = di - n;
   if (!k.air && dd > 0) for (const pd of T.pads) { const rel = ((l2.i - pd.i) % n + n) % n; if (rel <= Math.max(1, dd) && Math.abs(l2.lat - pd.lat) < 2.0 && k.padI !== pd.i) { k.padI = pd.i; k.boost = Math.max(k.boost, 0.9); if (me) G.ev.push({ k: 'pad' }); } }
   if (!k.air && k.v > 16) { let drafting = false; const ch = Math.cos(k.h), sh = Math.sin(k.h); for (const o of G.karts) { if (o === k || o.air || o.fall > 0) continue; const ax = o.x - k.x, az = o.z - k.z; if (ax * ax + az * az > 200) continue; const fw = ax * ch + az * sh, sd = -ax * sh + az * ch; if (fw > 3 && fw < 14 && Math.abs(sd) < 1.6) { drafting = true; break; } }
-    k.draftT = drafting ? k.draftT + dt : Math.max(0, k.draftT - dt * 2); if (k.draftT > 1.3) { k.draftT = 0; k.boost = Math.max(k.boost, 0.8); if (me) { G.drafts++; G.ev.push({ k: 'draft' }); } } } else k.draftT = 0;
+    k.draftT = drafting ? k.draftT + dt : Math.max(0, k.draftT - dt * 2); if (k.draftT > 1.3) { k.draftT = 0; k.boost = Math.max(k.boost, 0.8); addNitro(G, k, 0.18); if (me) { G.drafts++; G.ev.push({ k: 'draft' }); } } } else k.draftT = 0;
   k.prog += dd * T.ds; k.last = l2.i; k.i = l2.i; k.lat = l2.lat; k.off = off;
   if (k.prog >= T.L) { k.prog -= T.L; k.lap++; k.padI = null; if (me) { G.ev.push({ k: 'lap', lap: k.lap }); placeCoinsAir(G); } if (k.lap >= c.laps && !G.lesson && !k.done) { k.done = true; k.fin = G.t; if (me) G.ev.push({ k: 'finish' }); else G.doneN = (G.doneN | 0) + 1; } }
   if (k.prog < -T.L / 2) { k.prog += T.L; k.lap--; } }
@@ -5345,6 +5373,7 @@ function land(G, k, gy) { k.y = gy; k.vy = 0; k.air = false; const glide = k.gli
   const n = k.airTricks; k.airTricks = 0; const rings = k.ringN | 0; k.ringN = 0; if (rings) { k.boost = Math.max(k.boost, 0.6 + rings * 0.35); }
   if (!n) { if (k.me) { G.ev.push({ k: 'land', n: 0, glide, rings }); lessonSee(G, 'land', 0); } return; }
   const perfect = G.t - (k.lastTrickEnd == null ? -9 : k.lastTrickEnd) < 0.16; k.boost = Math.max(k.boost, 0.35 + 0.32 * n + (perfect ? 0.35 : 0) + rings * 0.35); k.v = Math.max(k.v, VMAX * 0.92);
+  addNitro(G, k, 0.16 * n + (perfect ? 0.12 : 0) + rings * 0.1);
   if (k.me) { G.tricks += n; if (perfect) G.perfects++; G.ev.push({ k: 'land', n, perfect, glide, rings }); lessonSee(G, 'land', n, perfect); } }
 // ---------- the rivals: a line through the bends, a little drifting of their own, tricks off ramps, items with sense, they
 // steer round the dangers they see coming (the better ones more often), a gentle rubber band ----------
@@ -5358,12 +5387,13 @@ function ai(G, k, dt) { const T = G.T, S = T.S, n = S.length, c = G.cfg, R = G.r
   want = clamp(want, -TW / 2 + 1.2, TW / 2 - 1.2); const tx = p.x - Math.sin(p.h) * want, tz = p.z + Math.cos(p.h) * want;
   let dh = Math.atan2(tz - k.z, tx - k.x) - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.steer = clamp(dh * 2.4, -1, 1);
   // corners: a rival "drifts" a long bend and gets a little boost out of it now and then
-  if (Math.abs(cv) > 0.16 && !k.air) { k.dT = (k.dT || 0) + dt; k.drifting = true; } else { if (k.dT > 1.0 && R() < c.aiDrift) k.boost = Math.max(k.boost, 0.6); k.dT = 0; k.drifting = false; }
+  if (Math.abs(cv) > 0.16 && !k.air) { k.dT = (k.dT || 0) + dt; k.drifting = true; } else { if (k.dT > 1.0 && R() < c.aiDrift) { k.boost = Math.max(k.boost, 0.6); addNitro(G, k, 0.25); } k.dT = 0; k.drifting = false; }
   const lead = race(k) - race(G.me); k.rubber = clamp(1 - lead / 2600, 0.94, 1.035);
+  if ((k.nitro || 0) >= 1 && !k.air && Math.abs(cv) < 0.1 && R() < c.aiItems * dt * 0.8) useNitro(G, k);
   if (k.air && !k.trick && k.plan > k.airTricks && G.t - (k.lastTrickEnd || 0) > 0.02) { const tl = landPred(G, k); if (tl > TRICK + 0.08) startTrick(G, k); else k.plan = 0; }
   // items: shells and seekers with someone ahead; peels with someone behind; boosts on a straight; defence when it is hit
   const it = k.item || (k.orbit ? 'triple' : k.peppers ? 'pepper' : null); if (it) { k.itemT -= dt; if (k.itemT <= 0) { k.itemT = 0.6; if (R() < c.aiItems) { const ahead = G.karts.find(o => o !== k && race(o) > race(k) && race(o) - race(k) < 40 && Math.abs((o.lat || 0) - (k.lat || 0)) < 2.5), behind = G.karts.some(o => o !== k && race(k) - race(o) > 0 && race(k) - race(o) < 22);
-      const ok = it === 'shell' || it === 'triple' ? !!ahead : it === 'homing' ? G.karts.some(o => o !== k && race(o) > race(k)) : it === 'peel' ? behind || R() < 0.1 : it === 'pepper' || it === 'pepper3' ? Math.abs(cv) < 0.15 : true; if (ok) useItem(G, k); } } } }
+      const back = !ahead && behind && (it === 'shell' || it === 'triple' || it === 'peel'), ok = it === 'shell' || it === 'triple' ? !!ahead || behind : it === 'homing' ? G.karts.some(o => o !== k && race(o) > race(k)) : it === 'peel' ? !!ahead || behind || R() < 0.1 : it === 'pepper' || it === 'pepper3' ? Math.abs(cv) < 0.15 : true; if (ok) useItem(G, k, back ? -1 : 1); } } } }
 function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <= c.place; G.over = win ? 'won' : 'lost';
   const stars = win ? 1 + (place === 1 ? 1 : 0) + (G.bigBoosts + G.tricks >= 5 && G.falls === 0 && G.wipeouts === 0 ? 1 : 0) : 0;
   const order = G.karts.slice().sort((a, b) => a.place - b.place).map(k => k.me ? 'YOU' : k.who.name);
@@ -5372,36 +5402,42 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: the course to yourself (and a few slow karts to aim at) ----------
 const LESSONS = {
-  1: [{ id: 'boost', title: 'STEER AND DRIFT', how: 'Left thumb: slide to steer. In a bend, hold a HARD turn: the kart drifts and sparks. Straighten up for a BOOST. Twice.', need: 2 }],
-  2: [{ id: 'trick', title: 'JUMP AND TRICK', how: 'Off a ramp, TAP the right side once in the air for a trick, and land after it has finished. Twice. Tap only in the air!', need: 2 }],
-  3: [{ id: 'item', title: 'TURTLE SHELLS', how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap the right side to fire. Hit two karts.', need: 2 }],
+  1: [{ id: 'boost', title: 'STEER AND DRIFT', how: 'Hold ◀ or ▶ to steer. In a bend, steer AND hold DRIFT: you slide and the sparks go blue, orange, purple. Let go of DRIFT for a BOOST. Twice.', need: 2 },
+      { id: 'nitro', title: 'NITRO!', how: 'Drifts, tricks and slipstreams fill your NITRO. It is full now: tap NITRO (above DRIFT) for a big boost!', need: 1 }],
+  2: [{ id: 'trick', title: 'JUMP AND TRICK', how: 'Off a ramp, tap DRIFT once in the air for a trick, and land after it has finished. Twice. Only in the air!', need: 2 }],
+  3: [{ id: 'item', title: 'TURTLE SHELLS', how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap ITEM to fire ahead (swipe it down to fire behind). Hit two karts.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; G.hz = [];
   if (lessonNow(G).id === 'item') { const S = G.T.S, n = S.length; for (let q = 0; q < 3; q++) { const i = (G.me.i + 30 + q * 26) % n, p = S[i], lat = [-3, 3, 0][q]; const d = newKart(G, { x: p.x - Math.sin(p.h) * lat, z: p.z + Math.cos(p.h) * lat, h: p.h, i }, DRIVERS[1 + q], false, 0); d.dummy = true; d.line = lat; d.skill = 0.55; d.lap = 0; d.prog = G.me.prog + (30 + q * 26) * G.T.ds; d.last = i; d.y = p.y; G.karts.push(d); } } }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what, n, perfect) { const st = lessonNow(G); if (!st) return; let ok = false;
   if (st.id === 'boost' && what === 'boost') ok = true;
+  if (st.id === 'nitro' && what === 'nitro') ok = true;
   if (st.id === 'trick' && what === 'land') { if (n >= 1) ok = true; else { if (G.lesson.n && !G.me.glideLand) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'No trick on that jump. ' + st.how }); } return; } }
   if (st.id === 'item' && what === 'hitR') ok = true;
   if (st.id === 'item' && what === 'use') { G.lesson.fired = (G.lesson.fired || 0) + 1; if (G.lesson.fired > 6) { G.lesson.fired = 0; G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'Too many misses. Line up right behind a kart before you fire.' }); } return; }
   if (!ok) return; G.lesson.n++; G.lesson.fired = 0; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
-  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.lessonEnd = true; G.wait = 1.4; } }
-// a wipeout, a fall or a tap on the ground with nothing to use, during a lesson, starts the count again (so blind tapping never
-// gets through)
+  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.lessonEnd = true; G.wait = 1.4; return; }
+  G.ev.push({ k: 'lessonnext' }); if (lessonNow(G).id === 'nitro') G.me.nitro = Math.max(G.me.nitro || 0, 1); }
+// a wipeout, a fall or a hop on the ground in the trick lesson starts the count again (so blind tapping never gets through)
 function lessonMiss(G, why) { const st = lessonNow(G); if (!st) return;
   if (why === 'wipeout') { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'Wiped out! Land only when the trick has finished. ' + st.how }); }
   if (why === 'fall') { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'You fell off! ' + st.how }); }
-  if (why === 'ground' && st.id === 'trick') { G.lesson.n = 0; if (G.t - (G.lgT || -9) > 2) G.ev.push({ k: 'lessonmiss', how: 'Tap only when you are in the AIR. ' + st.how }); G.lgT = G.t; } }
+  if (why === 'ground' && st.id === 'trick') { G.lesson.n = 0; if (G.t - (G.lgT || -9) > 2) G.ev.push({ k: 'lessonmiss', how: 'Tap DRIFT only when you are in the AIR. ' + st.how }); G.lgT = G.t; } }
 // ---------- for the robots ----------
-// BLIND: thumbs that do not look: steer some way and hold it (or let go); tap the right side; hold it; let it go
-const BLIND = { s: G => { const R = Math.random; setSteer(G, R() < 0.25 ? 0 : (R() * 2 - 1) * (R() < 0.5 ? 1 : 0.6)); }, t: G => { tapRight(G); }, h: G => setHold(G, true), r: G => setHold(G, false) };
-// a driver who looks: a line through the bends, drifts the long ones, tricks as many as a jump allows, steers through the glider
-// rings and round the dangers, uses items with sense, and tries a rocket start; a person's hands: a beat late, now and then a wobble
+// BLIND: thumbs that do not look: hold ◀, ▶ or neither; press or let go of DRIFT; tap ITEM (ahead or behind) or NITRO
+const BLIND = { s: G => { const r = Math.random(); setBtn(G, 'L', r < 0.37); setBtn(G, 'R', r > 0.63); },
+  d: G => { if (G.driftBtn) driftUp(G); else driftDown(G); },
+  t: G => { const r = Math.random(); if (r < 0.4) itemTap(G, false); else if (r < 0.6) itemTap(G, true); else useNitro(G); } };
+// a driver who looks: a line through the bends, drifts the long ones with the DRIFT button (holds it to orange, more if the bend
+// lasts), tricks as many as a jump allows, steers through the glider rings and round the dangers, throws items the right way
+// (ahead at a kart in its lane, a peel back at one close behind), fires NITRO on straights, tries a rocket start; a person's
+// hands: a beat late, now and then a wobble
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, k = G.me, T = G.T, S = T.S, n = S.length;
   if (G.over || G.wait > 0) { setSteer(G, 0); return; }
   if (G.count > 0) { setSteer(G, 0); if (mem.rs == null) mem.rs = 1.95 - R() * 0.9 * (1 - acc) - react * 0.4 + (R() < (1 - acc) * 0.6 ? 0.6 : 0); if (G.count < mem.rs && !G.hold) setHold(G, true); return; }
-  if (G.hold) setHold(G, false); mem.rs = null;
+  if (G.hold) { setHold(G, false); G.driftBtn = false; } mem.rs = null;
   if (k.air) { if (!k.trick) { mem.wait = (mem.wait || 0) + 1 / 60; const tl = landPred(G, k), margin = 0.04 + react * 0.15 + (1 - acc) * 0.2;
       if (mem.wait > 0.04 + react * 0.2 && tl > TRICK + margin) { startTrick(G, k); mem.wait = 0; } else if (mem.wait > 0.04 + react * 0.2 && tl > TRICK - 0.05 && R() < (1 - acc) * 0.04) { startTrick(G, k); mem.wait = 0; } } } else mem.wait = 0;
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.05 + react * 0.15;
@@ -5410,25 +5446,29 @@ function honest(G, o, mem) {
   for (const pd of T.pads) { const rel = ((pd.i - k.i) % n + n) % n; if (rel > 0 && rel < 26) want = pd.lat; }
   for (const r of T.ramps) { const rel = ((r.i0 - k.i) % n + n) % n; if (rel > 0 && rel < 30) want = 0; }
   if (k.glide) { let bc = null, bd = 1e9; for (const rg of G.ringsT) { if (rg.by && rg.by.indexOf(k) >= 0) continue; const ax = rg.x - k.x, az = rg.z - k.z, fw = ax * Math.cos(k.h) + az * Math.sin(k.h); if (fw > 2 && fw < bd) { bd = fw; bc = rg; } } if (bc) want = locate(T, bc.x, bc.z, k.i).lat; else want = 0; }
-  // dangers: look ahead for any that will be in the way, and go round
   let avoid = false; for (const h of G.hz) { const rel = ((h.i - k.i) % n + n) % n; if (rel > 1 && rel < 24 && (h.act || h.warn > 0 || h.span)) { const hlat = h.latNow != null ? h.latNow : h.lat; if (Math.abs(hlat - want) < h.r + 2.4) { want = hlat > 0 ? hlat - h.r - 2.8 : hlat + h.r + 2.8; avoid = true; } } }
   for (const pl of G.peels) { const l = locate(T, pl.x, pl.z, k.i), rel = ((l.i - k.i) % n + n) % n; if (rel > 1 && rel < 22 && Math.abs(l.lat - want) < 2.4) { want = l.lat > 0 ? l.lat - 3 : l.lat + 3; avoid = true; } }
-  const held = k.item || (k.orbit ? 'triple' : null); let lined = false;
-  if ((held === 'shell' || held === 'triple') && !avoid && !k.glide) { let tg = null, bf = 1e9; for (const q of G.karts) { if (q === k || q.fall > 0) continue; const ax = q.x - k.x, az = q.z - k.z, fw = ax * Math.cos(k.h) + az * Math.sin(k.h); if (fw > 4 && fw < 45 && fw < bf) { bf = fw; tg = q; } }
-    if (tg) { want = tg.lat || 0; lined = Math.abs((tg.lat || 0) - (k.lat || 0)) < 1.1 && bf < 34 && Math.abs(bend) < 0.12; } }
+  const held = k.item || (k.orbit ? 'triple' : null); let lined = false, tgD = 1e9;
+  if ((held === 'shell' || held === 'triple' || held === 'peel') && !avoid && !k.glide) { let tg = null; for (const q of G.karts) { if (q === k || q.fall > 0) continue; const ax = q.x - k.x, az = q.z - k.z, fw = ax * Math.cos(k.h) + az * Math.sin(k.h); if (fw > 4 && fw < 50 && fw < tgD) { tgD = fw; tg = q; } }
+    if (tg) { want = tg.lat || 0; lined = Math.abs((tg.lat || 0) - (k.lat || 0)) < 1.1 && tgD < (held === 'peel' ? 48 : 34) && tgD > (held === 'peel' ? 22 : 4) && Math.abs(bend) < 0.12; } }
   mem.lined = lined;
   const edge = T.info.edge === 'void' ? TW / 2 - 1.5 : TW / 2 - 0.8; want = clamp(want, -edge, edge);
   const tx = p.x - Math.sin(p.h) * want, tz = p.z + Math.cos(p.h) * want;
   let dh = Math.atan2(tz - k.z, tx - k.x) - (k.h + (k.slip || 0)); dh = Math.atan2(Math.sin(dh), Math.cos(dh)); let s = clamp(dh * 2.6, -1, 1);
+  // the drift: press DRIFT as a long bend starts (steering into it), hold, and let go as it ends
   const long = Math.abs(bend) > 0.13;
-  if (!k.drift && long && k.v > 16 && Math.sign(dh) === Math.sign(bend) && !avoid && !k.air) s = Math.sign(bend);
-  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - (T.info.edge === 'void' ? 2.2 : 0.5) || avoid; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = (need - 0.42) / 0.95; s = end ? 0 : k.drift * clamp(0.3 + 0.7 * u, 0.34, 1); }
+  if (!k.drift && !G.driftBtn && long && k.v > 16 && Math.sign(dh) === Math.sign(bend) && !avoid && !k.air) { s = Math.sign(bend); setSteer(G, s); G.steer = s; driftDown(G); }
+  else if (G.driftBtn && !k.drift && !(k.wantDrift > 0)) driftUp(G);
+  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - (T.info.edge === 'void' ? 2.2 : 0.5) || avoid;
+    const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = (need - 0.78) / 0.6; s = k.drift * clamp(u, -1, 1); if (end) driftUp(G); }
   if (R() > acc) s += (R() - 0.5) * 0.8;
   setSteer(G, s);
+  if ((k.nitro || 0) >= 1 && !k.air && Math.abs(bend) < 0.12 && !k.drift && R() < 0.3 + acc * 0.5) useNitro(G);
   const it = k.item || (k.orbit ? 'triple' : k.peppers ? 'pepper' : null);
-  if (it && !k.air) { mem.it = (mem.it || 0) + 0.1; const ahead = G.karts.some(q => q !== k && race(q) > race(k) && race(q) - race(k) < 40 && Math.abs((q.lat || 0) - (k.lat || 0)) < 2.2), behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20);
-    const go3 = it === 'pepper' || it === 'pepper3' ? Math.abs(bend) < 0.2 : it === 'shell' || it === 'triple' ? mem.lined || (ahead && R() < 0.3) || (mem.it > 12 && !G.lesson) : it === 'homing' ? true : it === 'peel' ? behind || mem.it > 5 : true;
-    if (go3 && useItem(G)) mem.it = 0; }
+  if (it && !k.air && !k.drift) { mem.it = (mem.it || 0) + 0.1; const behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20 && Math.abs((q.lat || 0) - (k.lat || 0)) < 2.5);
+    let dir = 1, go3 = true; if (it === 'pepper' || it === 'pepper3') go3 = Math.abs(bend) < 0.2; else if (it === 'shell' || it === 'triple') { go3 = mem.lined || (behind && R() < 0.5) || (mem.it > 12 && !G.lesson); if (!mem.lined && behind) dir = -1; }
+    else if (it === 'peel') { go3 = mem.lined || behind || mem.it > 6; if (!mem.lined) dir = -1; }
+    if (go3 && useItem(G, k, dir)) mem.it = 0; }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.count = 0; G.me.place = 1; G.me.done = true; finish(G); }
 // ===================== THE VIEW (1 of 2): the sixteen worlds, the karts and the drivers (three.js through tools/world3d.js) =====================
@@ -5481,6 +5521,11 @@ const stripeTex = (a, b, n = 4, w = 16, h = 64) => canvasTex(w, h, (g) => { for 
 const boxTex = () => canvasTex(64, 64, (g, w, h) => { g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(0, 0, w, h); g.strokeStyle = '#fff'; g.lineWidth = 4; g.strokeRect(3, 3, w - 6, h - 6); g.fillStyle = '#fff'; g.font = 'bold 44px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('?', w / 2, h / 2 + 2); });
 const shellTex = (a, b) => canvasTex(128, 64, (g, w, h) => { g.fillStyle = a; g.fillRect(0, 0, w, h); g.strokeStyle = b; g.lineWidth = 4; for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) { const x = c * 16 + (r % 2) * 8, y = r * 16 + 4; g.beginPath(); for (let q = 0; q < 6; q++) { const a2 = q / 6 * TAU; g.lineTo(x + Math.cos(a2) * 8, y + Math.sin(a2) * 8); } g.closePath(); g.stroke(); } });
 const glowTex = (inner = 'rgba(255,255,255,1)', mid = 'rgba(255,255,255,.5)') => canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, inner); gr.addColorStop(0.35, mid); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); });
+let SHADOWT = null, START = null, SMOKET = null;
+const SHADOW = () => SHADOWT || (SHADOWT = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(0,0,0,.75)'); gr.addColorStop(0.6, 'rgba(0,0,0,.4)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
+const STARTEX = () => START || (START = canvasTex(64, 64, (g) => { g.fillStyle = '#ffe24a'; g.strokeStyle = '#a87a00'; g.lineWidth = 3; g.beginPath(); for (let q = 0; q < 10; q++) { const a = q / 10 * TAU - Math.PI / 2, r = q % 2 ? 12 : 28; g.lineTo(32 + Math.cos(a) * r, 32 + Math.sin(a) * r); } g.closePath(); g.fill(); g.stroke(); }));
+const SMOKE = () => SMOKET || (SMOKET = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(0.5, 'rgba(255,255,255,.45)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
+let TREAD = null; const treadTex = () => TREAD || (TREAD = canvasTex(64, 16, (g, w, h) => { g.fillStyle = '#1c1c1e'; g.fillRect(0, 0, w, h); g.fillStyle = '#3a3a3e'; for (let i = 0; i < 16; i++) g.fillRect(i * 4, 0, 2, h); }));
 const M = (c, r = 0.5, m = 0, e) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m, emissive: e || 0x000000 });
 // one drawing for many things (each its own place, size, turn and tint): parts = [[geometry, colour], ...]
 function mkInst(parts, list, o = {}) { const T = THREE; if (!list.length) return null;
@@ -5497,8 +5542,8 @@ const G3 = { // small geometry makers (moved into place)
   ico: (r, x = 0, y = 0, z = 0, d = 0) => new THREE.IcosahedronGeometry(r, d).translate(x, y, z),
 };
 // ---------- karts ----------
-function kartModel(drv, kt) { const T = THREE, g = new T.Group(), body = new T.Group(); g.add(body); const col = drv.col, col2 = drv.col2, b = kt.body;
-  const gold = b === 5, paint = gold ? M(0xe8b830, 0.25, 0.85) : M(col, 0.3, 0.35), trim = M(col2, 0.5, 0.1), dark = M(0x1a1a22, 0.7, 0.2), chrome = M(0xe0e4ea, 0.15, 0.9);
+function kartModel(drv, kt) { treadTex(); const T = THREE, g = new T.Group(), body = new T.Group(); g.add(body); const col = drv.col, col2 = drv.col2, b = kt.body;
+  const gold = b === 5, paint = new T.MeshPhysicalMaterial({ color: gold ? 0xe8b830 : col, roughness: gold ? 0.22 : 0.32, metalness: gold ? 0.85 : 0.25, clearcoat: 1, clearcoatRoughness: 0.08 }), trim = M(col2, 0.5, 0.1), dark = M(0x1a1a22, 0.7, 0.2), chrome = M(0xe0e4ea, 0.15, 0.9);
   const add = (geo, mat, x = 0, y = 0, z = 0) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); body.add(m); return m; };
   if (b === 1) { const sh = add(new T.SphereGeometry(1, 20, 14), paint, 0, 0.55, 0); sh.scale.set(1.15, 0.42, 0.72); add(new T.TorusGeometry(0.55, 0.06, 8, 24), chrome, 0.95, 0.5, 0).rotation.y = Math.PI / 2; }
   else if (b === 3) { add(new T.BoxGeometry(1.9, 0.5, 1.2), paint, 0, 0.85, 0); add(new T.BoxGeometry(0.5, 0.35, 1.4), dark, 1.0, 0.75, 0); add(new T.BoxGeometry(0.2, 0.2, 1.7), chrome, 1.25, 0.65, 0); }
@@ -5514,7 +5559,7 @@ function kartModel(drv, kt) { const T = THREE, g = new T.Group(), body = new T.G
   const drvG = new T.Group(); drvG.position.set(-0.22, b === 3 ? 1.25 : 0.95, 0); body.add(drvG);
   const tor = new T.Mesh(new T.CapsuleGeometry(0.26, 0.22, 4, 10), M(drv.kind === 'penguin' ? 0x2a3a6a : col2, 0.6)); tor.position.y = 0; drvG.add(tor);
   for (const s of [-1, 1]) { const arm = new T.Mesh(new T.CapsuleGeometry(0.07, 0.36, 4, 8), M(drv.kind === 'robot' ? 0x8a9aa8 : col, 0.6)); arm.position.set(0.3, 0.02, s * 0.2); arm.rotation.z = -1.2; drvG.add(arm); const hand = new T.Mesh(new T.SphereGeometry(0.09, 8, 6), M(0xffffff, 0.6)); hand.position.set(0.52, -0.05, s * 0.17); drvG.add(hand); }
-  const head = new T.Group(); head.position.set(0.04, 0.55, 0); drvG.add(head); const hm = M(col, 0.45, 0.05), wm = M(0xffffff, 0.3), bm = M(0x101018, 0.2);
+  const head = new T.Group(); head.position.set(0.04, 0.6, 0); head.scale.setScalar(1.22); drvG.add(head); const hm = M(col, 0.45, 0.05), wm = M(0xffffff, 0.3), bm = M(0x101018, 0.2);
   const hs = (r, m2, x, y, z, sx = 1, sy = 1, sz = 1) => { const s = new T.Mesh(new T.SphereGeometry(r, 16, 12), m2); s.position.set(x, y, z); s.scale.set(sx, sy, sz); head.add(s); return s; };
   const kd = drv.kind;
   if (kd === 'robot') { const bx = new T.Mesh(new T.BoxGeometry(0.58, 0.48, 0.58), M(col, 0.3, 0.7)); head.add(bx); const vi = new T.Mesh(new T.BoxGeometry(0.06, 0.16, 0.46), M(col2, 0.2, 0, col2)); vi.position.set(0.3, 0.04, 0); head.add(vi); const an = new T.Mesh(new T.CylinderGeometry(0.02, 0.02, 0.3), dark); an.position.y = 0.38; head.add(an); hs(0.06, M(0xff3a3a, 0.3, 0, 0xff2020), 0, 0.55, 0); }
@@ -5529,7 +5574,7 @@ function kartModel(drv, kt) { const T = THREE, g = new T.Group(), body = new T.G
     if (kd === 'alien') { head.children[0].scale.set(1, 1.15, 1); for (const s of [-1, 1]) { const an = new T.Mesh(new T.CylinderGeometry(0.015, 0.015, 0.3), dark); an.position.set(-0.04, 0.46, s * 0.12); an.rotation.x = s * 0.3; head.add(an); hs(0.06, M(col2, 0.3, 0, col2), -0.04, 0.62, s * 0.17); } }
     // eyes: big and shiny, looking ahead
     const er = kd === 'alien' ? 0.13 : 0.1; for (const s of [-1, 1]) { hs(er, wm, 0.27, 0.08, s * 0.14, 0.6, 1.15, 1); hs(er * 0.55, bm, 0.33, 0.07, s * 0.14, 0.5, 1, 1); hs(er * 0.18, wm, 0.36, 0.11, s * 0.12); } }
-  const wheels = []; const big = b === 3 ? 1.6 : 1; for (const [x, z, r] of [[0.78, 0.74, 0.3], [0.78, -0.74, 0.3], [-0.74, 0.78, 0.36], [-0.74, -0.78, 0.36]]) { const w = new T.Group(); const ty = new T.Mesh(new T.CylinderGeometry(r * big, r * big, 0.34 * big, 16), M(0x161616, 0.9)); ty.rotation.x = Math.PI / 2; w.add(ty); const hub = new T.Mesh(new T.CylinderGeometry(r * big * 0.5, r * big * 0.5, 0.36 * big, 10), gold ? M(0xffd84a, 0.2, 0.9) : chrome); hub.rotation.x = Math.PI / 2; w.add(hub); w.position.set(x, r * big, z * (b === 3 ? 1.15 : 1)); g.add(w); wheels.push(w); }
+  const wheels = []; const big = b === 3 ? 1.6 : 1; for (const [x, z, r] of [[0.78, 0.74, 0.3], [0.78, -0.74, 0.3], [-0.74, 0.78, 0.36], [-0.74, -0.78, 0.36]]) { const w = new T.Group(); const ty = new T.Mesh(new T.CylinderGeometry(r * big, r * big, 0.34 * big, 18), new T.MeshStandardMaterial({ color: 0x1c1c1e, roughness: 0.85, map: TREAD })); const fe = new T.Mesh(new T.CylinderGeometry(r * big + 0.07, r * big + 0.07, 0.38 * big, 14, 1, true, 0, Math.PI), paint); fe.rotation.x = Math.PI / 2; fe.rotation.z = Math.PI / 2; fe.position.y = 0.02; w.userData.fender = fe; ty.rotation.x = Math.PI / 2; w.add(ty); const hub = new T.Mesh(new T.CylinderGeometry(r * big * 0.5, r * big * 0.5, 0.36 * big, 10), gold ? M(0xffd84a, 0.2, 0.9) : chrome); hub.rotation.x = Math.PI / 2; w.add(hub); w.position.set(x, r * big, z * (b === 3 ? 1.15 : 1)); g.add(w); wheels.push(w); if (b !== 3) { const f2 = w.userData.fender; f2.position.set(x, r * big + 0.02, z); f2.rotation.set(0, 0, 0); f2.rotation.x = Math.PI / 2; f2.rotation.y = Math.PI / 2; g.add(f2); } }
   const fmat = new T.MeshBasicMaterial({ color: 0x60c0ff, transparent: true, opacity: 0.9, blending: T.AdditiveBlending, depthWrite: false }), flames = []; for (const s of b === 4 ? [-0.38, 0.38] : [0]) { const f = new T.Mesh(new T.ConeGeometry(0.2, 1.0, 10), fmat); f.rotation.z = Math.PI / 2; f.position.set(b === 4 ? -1.55 : -1.35, 0.48, s); g.add(f); flames.push(f); }
   const bub = new T.Mesh(new T.SphereGeometry(1.7, 24, 16), new T.MeshStandardMaterial({ color: 0x9adfff, transparent: true, opacity: 0.25, roughness: 0.05, metalness: 0.3, depthWrite: false, emissive: 0x2a6a9a })); bub.position.y = 0.9; g.add(bub);
   // the glider: a wide wing on a mast that opens off a gold ramp
@@ -5537,7 +5582,7 @@ function kartModel(drv, kt) { const T = THREE, g = new T.Group(), body = new T.G
   // a rocket strapped on for a Rocket Ride
   const rk = new T.Group(); const rb = new T.Mesh(new T.CylinderGeometry(0.35, 0.35, 1.8, 14), M(0xe8e8f0, 0.3, 0.4)); rb.rotation.z = Math.PI / 2; rk.add(rb); const rn = new T.Mesh(new T.ConeGeometry(0.35, 0.6, 14), M(0xff3a3a, 0.3)); rn.rotation.z = -Math.PI / 2; rn.position.x = 1.2; rk.add(rn); rk.position.set(-0.2, 1.7, 0); rk.visible = false; g.add(rk);
   g.traverse(o => { if (o.isMesh && o !== bub && !flames.includes(o)) o.castShadow = true; });
-  const outer = new T.Group(); outer.add(g); outer.userData = { body, wheels, flames, bub, wings, rk, inner: g, head, mats: [paint] }; return outer; }
+  const outer = new T.Group(); outer.add(g); outer.userData = { body, wheels, flames, bub, wings, rk, inner: g, head, drv: drvG, mats: [paint] }; return outer; }
 // ---------- the world ----------
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 64, far: 2200, near: 0.1 })) { V3 = { none: true }; return V3; }
@@ -5586,8 +5631,15 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length, i
   ribbon(-TW / 2, TW / 2, 0.03, rmat, 14);
   const kerbM = new T.MeshStandardMaterial({ map: stripeTex(th.kerb[0], th.kerb[1]), roughness: 0.6 }); for (const s of [-1, 1]) ribbon(s * TW / 2, s * (TW / 2 + 1.0), 0.04, kerbM, 6);
   if (th.void) { const skM = new T.MeshStandardMaterial({ color: th.skirt, roughness: 0.9, side: T.DoubleSide }); for (const s of [-1, 1]) ribbon(s * (TW / 2 + 1.0), 0, -3.5, skM, 8, 3.5); ribbon(-TW / 2 - 1, TW / 2 + 1, -3.5, skM, 8);
-    const gm = new T.MeshBasicMaterial({ color: th.edgeGlow, transparent: true, opacity: 0.85, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide }); for (const s of [-1, 1]) ribbon(s * (TW / 2 + 1.0), 0, 0.05, gm, 4, 0.18); }
+    const gm = new T.MeshBasicMaterial({ color: th.edgeGlow, transparent: true, opacity: 0.85, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide }); for (const s of [-1, 1]) { ribbon(s * (TW / 2 + 1.0), 0, 0, new T.MeshStandardMaterial({ map: stripeTex(th.kerb[0], th.kerb[1], 2), roughness: 0.5, side: T.DoubleSide, transparent: true, opacity: 0.9 }), 4, 0.7); ribbon(s * (TW / 2 + 1.0), 0, 0.7, gm, 4, 0.14); } }
   else { const wm = new T.MeshStandardMaterial({ map: stripeTex(th.wall[0], th.wall[1], 2), roughness: 0.6, side: T.DoubleSide }); for (const s of [-1, 1]) ribbon(s * (TW / 2 + 3.4), 0, 0, wm, 5, 0.9); }
+  // arrow boards on the outside of the sharp bends (pointing the way), tyre stacks in front of them on courses with walls
+  { const boards = [], tyres = [], chev = canvasTex(128, 64, (q, w, h) => { q.fillStyle = '#1a1a2a'; q.fillRect(0, 0, w, h); q.fillStyle = '#ffd23a'; for (let i = 0; i < 3; i++) { const x0 = 14 + i * 38; q.beginPath(); q.moveTo(x0, 8); q.lineTo(x0 + 26, h / 2); q.lineTo(x0, h - 8); q.lineTo(x0 + 12, h - 8); q.lineTo(x0 + 38, h / 2); q.lineTo(x0 + 12, 8); q.closePath(); q.fill(); } q.strokeStyle = '#fff'; q.lineWidth = 4; q.strokeRect(2, 2, w - 4, h - 4); });
+    let lastB = -99; for (let q = 0; q < n; q += 2) { const p = S[q], cv = p.curve; if (Math.abs(cv) < 0.24 || p.gap || q - lastB < 7) continue; lastB = q; const sd = Math.sign(cv), off = th.void ? TW / 2 + 1.6 : TW / 2 + 3.5, x = p.x - Math.sin(p.h) * sd * off, z = p.z + Math.cos(p.h) * sd * off;
+      const g2 = new T.PlaneGeometry(3.2, 1.6); if (sd < 0) { const uv = g2.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); } g2.rotateY(-p.h + Math.PI / 2 * (sd > 0 ? -1 : 1) + (sd > 0 ? Math.PI : 0)); g2.translate(x, p.y + 1.5, z); boards.push(g2);
+      if (!th.void) for (const a of [-1.6, 0, 1.6]) tyres.push({ x: x + Math.cos(p.h) * a - Math.sin(p.h) * sd * 0.2, y: p.y, z: z + Math.sin(p.h) * a + Math.cos(p.h) * sd * 0.2, tint: a === 0 ? 0xffffff : 0xff3a3a }); }
+    if (boards.length) { const bm = new T.Mesh(T.mergeGeometries(boards), new T.MeshStandardMaterial({ map: chev, emissive: 0xffffff, emissiveMap: chev, emissiveIntensity: 0.35, side: T.DoubleSide, roughness: 0.6 })); H.add(bm); }
+    if (tyres.length) H.add(mkInst([[G3.cyl(0.55, 0.55, 0.45, 0, 0.23, 0, 12), 0x1a1a1a], [G3.cyl(0.56, 0.56, 0.12, 0, 0.62, 0, 12), 0xffffff], [G3.cyl(0.55, 0.55, 0.45, 0, 0.92, 0, 12), 0x1a1a1a]], tyres, { shadow: true })); }
   // the gold glider ramp: a sign over the run-up; a ramp is a striped wedge across the road
   V.ramps = []; for (const r of TR.ramps) { const a = S[r.i0], b = S[(r.i0 + 4) % n], len = Math.hypot(b.x - a.x, b.z - a.z) + 0.3, geo = new T.BufferGeometry(), w = TW / 2 + 0.3;
     geo.setAttribute('position', new T.Float32BufferAttribute([0, 0, -w, len, r.h, -w, len, 0, -w, 0, 0, w, len, r.h, w, len, 0, w], 3)); geo.setIndex([0, 1, 4, 0, 4, 3, 1, 2, 5, 1, 5, 4, 0, 2, 1, 3, 4, 5]); geo.setAttribute('uv', new T.Float32BufferAttribute([0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1], 2)); geo.computeVertexNormals();
@@ -5629,8 +5681,8 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length, i
   // item boxes, coins: made once per course
   const bt = boxTex(); V.boxes = g.boxes.map(b => { const m = new T.Mesh(new T.BoxGeometry(1.3, 1.3, 1.3), new T.MeshStandardMaterial({ map: bt, transparent: true, opacity: 0.8, emissive: 0x4060ff, emissiveIntensity: 0.5, roughness: 0.15, metalness: 0.2 })); m.position.set(b.x, b.y, b.z); H.add(m); m.userData.b = b; return m; });
   const cg = new T.CylinderGeometry(0.5, 0.5, 0.12, 18), cm = new T.MeshStandardMaterial({ color: 0xffc820, emissive: 0x7a5000, roughness: 0.2, metalness: 0.8 }); V.coins = g.coinsT.map(() => { const m = new T.Mesh(cg, cm); m.rotation.x = Math.PI / 2; const w2 = new T.Group(); w2.add(m); H.add(w2); return w2; });
-  V.haz = []; V.shotsM = []; V.peelsM = []; V.boomsM = [];
-  for (const [, m] of V.karts) V.S.remove(m); V.karts.clear();
+  V.haz = []; V.shotsM = []; V.peelsM = []; V.boomsM = []; V.lobsM = V.lobsM || []; V.smokeP = []; V.smokeM = V.smokeM || []; V.trailP = []; V.trailM = V.trailM || [];
+  for (const [, m] of V.karts) dropKart(V, m); V.karts.clear();
   V.wx.visible = !!(th.snow || info.theme === 'blossom' || info.theme === 'lava' || info.theme === 'haunt' || info.theme === 'jungle' || info.theme === 'star'); V.wx.material.color.setHex(th.snow ? 0xffffff : info.theme === 'blossom' ? 0xffb0d8 : info.theme === 'lava' ? 0xff7a2a : info.theme === 'star' ? 0xc8d8ff : 0xd8ff7a); V.wx.material.size = th.snow ? 0.4 : info.theme === 'blossom' ? 0.35 : 0.22; V.wx.material.blending = th.snow || info.theme === 'blossom' ? THREE.NormalBlending : THREE.AdditiveBlending; V.wx.material.needsUpdate = true; }
 // little flags on poles: race day
 function addFlags(H, list) { const T = THREE; if (!list.length) return; const pole = mkInst([[G3.cyl(0.05, 0.05, 3.2, 0, 1.6, 0, 5), 0xdddddd]], list, {}); H.add(pole); const fg = new T.BufferGeometry(); fg.setAttribute('position', new T.Float32BufferAttribute([0, 3.1, 0, 0, 2.3, 0, 0, 2.7, 1.1], 3)); fg.computeVertexNormals();
@@ -5722,7 +5774,13 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
     // nose up or down with the slope; a lean in the drift; a wobble at speed; a hop when spun
     const sl = k.air ? clamp(k.vy * 0.03, -0.35, 0.35) : Math.atan(S[k.i].slope || 0); u.inner.rotation.set(k.drift || k.drifting ? -(k.drift || Math.sign(S[k.i].curve)) * 0.12 : 0, 0, sl); u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.4 : Math.sin(t * 30 + k.x) * 0.012 * Math.min(1, k.v / 10);
     u.body.rotation.y = k.spin ? t * 14 : 0; u.wheels.forEach((w, i) => { w.rotation.z -= k.v * dt / 0.33; if (i < 2) w.rotation.y = -(k.me ? g.steer : k.steer) * 0.4; });
-    u.head.rotation.y = -(k.me ? g.steer : k.steer) * 0.35; u.head.rotation.z = k.air ? 0.2 : 0;
+    u.head.rotation.y = -(k.me ? g.steer : k.steer) * 0.35 + (k.lookBack > 0 ? Math.PI * 0.8 : 0); u.head.rotation.z = k.air ? 0.2 : 0; u.drv.rotation.x = (k.me ? g.steer : k.steer) * 0.22; k.lookBack = Math.max(0, (k.lookBack || 0) - dt);
+    if (!u.sh) { u.sh = new T.Mesh(new T.PlaneGeometry(3.4, 2.4), new T.MeshBasicMaterial({ map: SHADOW(), transparent: true, depthWrite: false, opacity: 0.75 })); u.sh.rotation.x = -Math.PI / 2; u.sh.renderOrder = 1; V.S.add(u.sh); }
+    { const gy = k.fall > 0 ? -999 : (k.gyLast != null ? k.gyLast : k.y), hgt = Math.max(0, (k.y || 0) - gy); u.sh.visible = m.visible && k.fall <= 0; u.sh.position.set(k.x, gy + 0.06, k.z); u.sh.rotation.z = -k.h; u.sh.material.opacity = 0.75 / (1 + hgt * 0.35); u.sh.scale.setScalar(1 + hgt * 0.08); }
+    if (k.spin > 0) { if (!u.stars) { u.stars = new T.Group(); for (let q = 0; q < 5; q++) { const st = new T.Sprite(new T.SpriteMaterial({ map: STARTEX(), transparent: true, depthWrite: false })); st.scale.setScalar(0.55); u.stars.add(st); } V.S.add(u.stars); } u.stars.visible = true; u.stars.children.forEach((st, q) => { const a = t * 6 + q / 5 * TAU; st.position.set(Math.cos(a) * 0.9, 0, Math.sin(a) * 0.9); }); u.stars.position.set(k.x, (k.y || 0) + 2.4, k.z); } else if (u.stars) u.stars.visible = false;
+    if (((k.drift || k.drifting) && k.v > 12 && !k.air) || (k.off && k.v > 10 && !k.air)) for (const sd of [-0.8, 0.8]) if (Math.random() < (k.me ? 0.7 : 0.25)) V.smokeP.push({ x: k.x - Math.cos(k.h) * 0.9 - Math.sin(k.h) * sd, y: (k.y || 0) + 0.3, z: k.z - Math.sin(k.h) * 0.9 + Math.cos(k.h) * sd, vx: (Math.random() - 0.5) * 1.5, vy: 0.6 + Math.random() * 0.8, vz: (Math.random() - 0.5) * 1.5, t: 0, life: 0.6 + Math.random() * 0.5, s: 0.8 + Math.random() * 0.6, c: k.off && !k.drift ? 0xc8b090 : 0xeeeeee });
+    if (k.boost > 0 || k.nitroT > 0 || k.rocket > 0) { k.trail = k.trail || []; k.trail.push({ x: k.x - Math.cos(k.h) * 1.3, y: (k.y || 0) + 0.5, z: k.z - Math.sin(k.h) * 1.3, t: 0, c: k.nitroT > 0 ? 0x3ae0ff : k.rocket > 0 ? 0xff7a2a : 0xffb040 }); if (k.trail.length > 16) k.trail.shift(); } else if (k.trail && k.trail.length) k.trail.shift();
+    if (k.trail) for (const q of k.trail) { q.t += dt; if (Math.hypot(q.x - W3.cam.position.x, q.z - W3.cam.position.z) < 60) V.trailP.push(q); }
     if (k.trick) { const p = clamp(k.trick.t / TRICK, 0, 1), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, a = e * TAU, kd = k.trick.kind; u.inner.position.y = Math.sin(p * Math.PI) * 0.5; if (kd === 0) u.inner.rotation.z = a; else if (kd === 1) u.inner.rotation.y = a; else if (kd === 2) u.inner.rotation.x = a; else if (kd === 3) u.inner.rotation.x = Math.sin(p * Math.PI) * 1.3; else { u.inner.rotation.x = a; u.inner.rotation.y = a * 0.5; } } else u.inner.position.y = 0;
     if (k.star > 0 || u.glow) { if (!u.glow) { u.glow = new T.Sprite(new T.SpriteMaterial({ map: glowTex(), blending: T.AdditiveBlending, depthWrite: false, transparent: true })); u.glow.scale.setScalar(5); u.glow.position.y = 0.9; u.inner.add(u.glow); } u.glow.visible = k.star > 0; if (k.star > 0) u.glow.material.color.setHSL((t * 1.6) % 1, 1, 0.6); }
     u.wings.visible = !!k.glide; u.rk.visible = k.rocket > 0; u.bub.visible = k.shield > 0; if (u.bub.visible) u.bub.scale.setScalar(1 + Math.sin(t * 6) * 0.03);
@@ -5757,6 +5815,14 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
   while (V.peelsM.length < g.peels.length) { const m = peelModel(); V.S.add(m); V.peelsM.push(m); } V.peelsM.forEach((m, i) => { const p = g.peels[i]; m.visible = !!p; if (p) m.position.set(p.x, (p.y || 0) + 0.05, p.z); });
   while (V.boomsM.length < g.booms.length) { const sp = new T.Sprite(new T.SpriteMaterial({ map: glowTex('rgba(255,255,220,1)', 'rgba(255,140,40,.8)'), blending: T.AdditiveBlending, depthWrite: false })); V.S.add(sp); V.boomsM.push(sp); }
   V.boomsM.forEach((m, i) => { const b = g.booms[i]; m.visible = !!b; if (b) { const u = b.t / 1.2; m.position.set(b.x, (b.y || 0) + 1 + u * 2, b.z); m.scale.setScalar(2 + u * (b.kind === 'comet' ? 16 : 9)); m.material.opacity = 1 - u; m.material.color.setHex(b.kind === 'comet' ? 0x8ab0ff : b.kind === 'lava' ? 0xffa040 : 0xffffff); } });
+  // smoke puffs and boost trails (pools of soft sprites)
+  { const P2 = V.smokeP; while (P2.length > 90) P2.shift(); for (let i = P2.length - 1; i >= 0; i--) { const q = P2[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; if (q.t > q.life) P2.splice(i, 1); }
+    while (V.smokeM.length < 90) { const sp = new T.Sprite(new T.SpriteMaterial({ map: SMOKE(), transparent: true, depthWrite: false, opacity: 0.5 })); sp.visible = false; V.S.add(sp); V.smokeM.push(sp); }
+    V.smokeM.forEach((sp, i) => { const q = P2[i]; sp.visible = !!q; if (q) { const u = q.t / q.life; sp.position.set(q.x, q.y, q.z); sp.scale.setScalar(q.s * (1 + u * 2.2)); sp.material.opacity = 0.45 * (1 - u); sp.material.color.setHex(q.c); } });
+    const TP = V.trailP; while (V.trailM.length < 80) { const sp = new T.Sprite(new T.SpriteMaterial({ map: glowTex(), transparent: true, depthWrite: false, blending: T.AdditiveBlending })); sp.visible = false; V.S.add(sp); V.trailM.push(sp); }
+    V.trailM.forEach((sp, i) => { const q = TP[i]; sp.visible = !!q; if (q) { const u = clamp(q.t / 0.3, 0, 1); sp.position.set(q.x, q.y, q.z); sp.scale.setScalar(1.6 * (1 - u * 0.8)); sp.material.opacity = 0.85 * (1 - u); sp.material.color.setHex(q.c); } }); V.trailP.length = 0; }
+  while (V.lobsM.length < g.lobs.length) { const m = peelModel(); m.scale.setScalar(1.4); V.S.add(m); const ring = new T.Mesh(new T.RingGeometry(1.0, 1.35, 24), new T.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.85, depthWrite: false, side: T.DoubleSide })); ring.rotation.x = -Math.PI / 2; V.S.add(ring); m.userData.ring = ring; V.lobsM.push(m); }
+  V.lobsM.forEach((m, i) => { const o = g.lobs[i]; m.visible = m.userData.ring.visible = !!o; if (o) { m.position.set(o.x, o.y, o.z); m.rotation.set(t * 9, t * 7, 0); m.userData.ring.position.set(o.tx, o.ty + 0.08, o.tz); m.userData.ring.scale.setScalar(1 + 0.2 * Math.sin(t * 14)); } });
   // the start lights on the arch
   if (V.startLights) V.startLights.forEach((l, i) => { const lit = g.count > 0 ? (3 - Math.ceil(g.count)) >= i : false, gl = g.count <= 0 && g.t < 4; l.material.color.setHex(gl ? 0x3aff6a : lit ? 0xff2a2a : 0x331111); });
   // sparks
@@ -5769,21 +5835,25 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
 }
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
 function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2, front: true }; SV.set(x, y, z); return W3.screen(SV); }
+function dropKart(V, m) { V.S.remove(m); const u = m.userData; for (const x of [u.bee, u.sh, u.stars]) if (x) V.S.remove(x); if (u.orb) u.orb.forEach(s2 => V.S.remove(s2)); }
 // ---------- events: calls, sounds, shakes ----------
 const nth = q => q + (q === 1 ? 'st' : q === 2 ? 'nd' : q === 3 ? 'rd' : 'th');
 function onEvent(G, e) {
   const cx = W / 2;
   switch (e.k) {
-    case 'start': { const c = G.cfg; say(TRACKS[c.track].name.toUpperCase(), cx, H * 0.27, '#ffffff', 22); say(`${CUPS[c.cup].icon} ${CUPS[c.cup].name.toUpperCase()} · ${CLASSES[c.cls]}${c.boss ? ' · BOSS RACE' : ''}`, cx, H * 0.31, '#ffd080', 14); say(c.place === 1 ? 'WIN THE RACE!' : `FINISH TOP ${c.place}`, cx, H * 0.345, '#9be3ff', 16); sfx.go(); if (G.N <= 3) tip('rocket', 'Hold the RIGHT side of the screen as the 2nd light comes on for a ROCKET START!', 3.0); } break;
+    case 'start': { const c = G.cfg; say(TRACKS[c.track].name.toUpperCase(), cx, H * 0.27, '#ffffff', 22); say(`${CUPS[c.cup].icon} ${CUPS[c.cup].name.toUpperCase()} · ${CLASSES[c.cls]}${c.boss ? ' · BOSS RACE' : ''}`, cx, H * 0.31, '#ffd080', 14); say(c.place === 1 ? 'WIN THE RACE!' : `FINISH TOP ${c.place}`, cx, H * 0.345, '#9be3ff', 16); sfx.go(); if (G.N <= 3) tip('rocket', 'Hold DRIFT as the 2nd light comes on for a ROCKET START!', 3.0); } break;
     case 'light': sfx.light(e.n); if (e.n <= 3 && !G.lesson) say(String(e.n), cx, H * 0.46, ['#7af0a0', '#ffd040', '#ff9a3a', '#ff5a5a'][e.n], 64); break;
     case 'go': sfx.light(0); say('GO!', cx, H * 0.36, '#7af0a0', 50); FX.flash = 0.2; music.start(G); break;
     case 'rocket': sfx.boost(3); say('ROCKET START!', cx, H * 0.42, '#ffd040', 26); FX.shake = 6; vibe(HAP.sharp); break;
-    case 'stall': sfx.no(); say('STALLED! TOO EARLY', cx, H * 0.42, '#ff9a8a', 20); tip('stall', 'Too early! Hold the right side only when the SECOND light comes on.', 3); break;
+    case 'stall': sfx.no(); say('STALLED! TOO EARLY', cx, H * 0.42, '#ff9a8a', 20); tip('stall', 'Too early! Hold DRIFT only when the SECOND light comes on.', 3); break;
     case 'drift': sfx.drift(); break;
     case 'spark': sfx.spark(e.tier); G.me.lastTier = e.tier; break;
-    case 'boost': sfx.boost(e.tier); FX.shake = 2 + e.tier; G.me.lastTier = e.tier; say(['', 'BOOST', 'SUPER BOOST!', 'ULTRA BOOST!!'][e.tier], cx, H * 0.6, ['#fff', '#7ad0ff', '#ffb040', '#d080ff'][e.tier], 16 + e.tier * 4); if (e.tier >= 2) vibe(HAP.light); if (G.N <= 2) tip('drift2', 'Hold the drift longer for orange, then purple sparks: bigger boosts!', 2.6); break;
-    case 'hop': break;
-    case 'launch': sfx.launch(e.big); FX.shake = 3; if (e.big) say('GLIDE!', cx, H * 0.3, '#ffd040', 30); if (G.N <= 4) tip(e.big ? 'glide' : 'air', e.big ? 'Steer through the gold RINGS for a boost when you land. Tap for tricks!' : 'In the air: TAP the right side for a trick!', 2.4); break;
+    case 'boost': sfx.boost(e.tier); FX.shake = 2 + e.tier; G.me.lastTier = e.tier; say(['', 'BOOST', 'SUPER BOOST!', 'ULTRA BOOST!!'][e.tier], cx, H * 0.6, ['#fff', '#7ad0ff', '#ffb040', '#d080ff'][e.tier], 16 + e.tier * 4); if (e.tier >= 2) vibe(HAP.light); if (G.N <= 2) tip('drift2', 'Hold DRIFT longer for orange, then purple sparks: bigger boosts (and more NITRO)!', 2.6); break;
+    case 'hop': sfx.hop(); break;
+    case 'nitro': sfx.nitro(); FX.shake = 8; FX.flash = 0.25; say('NITRO!', cx, H * 0.4, '#7ae8ff', 34); vibe(HAP.sharp); break;
+    case 'nitroready': sfx.ready(); say(e.n > 1 ? 'NITRO ×2 READY' : 'NITRO READY!', cx, H * 0.56, '#7ae8ff', 18); if (G.N <= 4) tip('nitro', 'Your NITRO is full: tap the glowing NITRO button for a big boost!', 2.8); break;
+    case 'peelland': if (e.me) { sfx.thump(); const p = scr(e.x, (e.y || 0) + 0.6, e.z); if (p.front) say('🍌', p.x, p.y - 10 * k, '#ffd040', 20); } break;
+    case 'launch': sfx.launch(e.big); FX.shake = 3; if (e.big) say('GLIDE!', cx, H * 0.3, '#ffd040', 30); if (G.N <= 4) tip(e.big ? 'glide' : 'air', e.big ? 'Steer through the gold RINGS for a boost when you land. Tap DRIFT for tricks!' : 'In the air: tap DRIFT for a trick!', 2.4); break;
     case 'trick': sfx.trick(e.n); say(TRICKS[e.kind] + (e.n > 1 ? ` ×${e.n}` : ''), cx, H * 0.36 - Math.min(5, e.n) * 6 * k, ['#ffffff', '#ffd040', '#ff9a3a', '#ff5ac8', '#9ae6ff'][Math.min(4, e.n - 1)], 18 + Math.min(10, e.n * 2)); vibe(HAP.tick); break;
     case 'trickdone': sfx.tick(); break;
     case 'land': if (e.n) { sfx.land(e.n, e.perfect); FX.shake = 3 + e.n; say(e.perfect ? 'PERFECT!' : 'CLEAN! +BOOST', cx, H * 0.6, e.perfect ? '#ffd040' : '#7af0a0', e.perfect ? 30 : 20); if (e.perfect) { FX.flash = 0.35; burst(cx, H * 0.62, '#ffd040', 20, 200); } vibe(e.perfect ? HAP.sharp : HAP.light); } else sfx.thump(); if (e.rings) say(`${e.rings} RING${e.rings > 1 ? 'S' : ''}! +BOOST`, cx, H * 0.66, '#ffd040', 18); break;
@@ -5794,7 +5864,7 @@ function onEvent(G, e) {
     case 'draft': sfx.pad(); say('SLIPSTREAM!', cx, H * 0.56, '#bfe8ff', 18); tip('draft', 'Stay right behind a kart for a moment: its slipstream gives you a boost.', 2.6); break;
     case 'box': sfx.item(); ui.roulT = 0; break;
     case 'boxhit': sfx.boxhit(); { const p = scr(e.x, e.y, e.z); burst(p.x, p.y, '#9ad8ff', 10, 160); } break;
-    case 'item': say(ITEMS[e.it].icon + ' ' + ITEMS[e.it].name.toUpperCase(), cx, H * 0.4, '#ffffff', 18); sfx.ding(); if (G.N <= 5) tip('item', e.it === 'triple' ? 'Three shells spin round you: they block a hit. Tap to fire them, one at a time.' : 'Tap the right side of the screen to use your item.', 2.8); break;
+    case 'item': say(ITEMS[e.it].icon + ' ' + ITEMS[e.it].name.toUpperCase(), cx, H * 0.4, '#ffffff', 18); sfx.ding(); if (G.N <= 5) tip('item', e.it === 'triple' ? 'Three shells spin round you: they block a hit. Tap to fire them, one at a time.' : 'Tap ITEM to throw it far ahead. Swipe ITEM down to throw it behind you.', 2.8); break;
     case 'use': if (e.me) sfx.use(e.it); break;
     case 'freeze': if (!e.me) { say('❄ SNOW FLURRY!', cx, H * 0.34, '#bfe8ff', 22); } break;
     case 'spin': if (e.me) { sfx.spin(); FX.shake = 10; FX.red = 0.4; FX.stop = 0.06; say({ shell: 'SHELLED!', homing: 'SEEKER!', peel: 'SLIPPED!', star: 'STARRED!', comet: 'COMET!!', freeze: 'FROZEN!', sheep: 'BAAA!', crab: 'PINCHED!', boulder: 'BOULDER!', snowball: 'SNOWBALL!', ghost: 'BOO!', twister: 'TWISTER!', gumdrop: 'BOING!', cannon: 'CANNONBALL!', lava: 'TOO HOT!', meteor: 'METEOR!', car: 'BEEP BEEP!' }[e.why] || 'SPUN OUT!', cx, H * 0.4, '#ffb4a8', 26); if (e.lost) say(`−${e.lost} 🪙`, cx, H * 0.46, '#ffd040', 16); } else { const p = scr(e.x, (e.y || 0) + 1.5, e.z); if (p.front && Math.abs(p.x - cx) < W) burst(p.x, p.y, '#ffffff', 6, 90); } break;
@@ -5821,15 +5891,15 @@ function onEvent(G, e) {
   }
 }
 // ---------- every frame ----------
-function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k2 = g.me, sp = k2.v / VMAX; FX.speed = lerp(FX.speed, k2.boost > 0 || k2.rocket > 0 ? 1 : 0, Math.min(1, dt * 4));
+function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k2 = g.me, sp = k2.v / VMAX; FX.speed = lerp(FX.speed, k2.nitroT > 0 ? 1.4 : k2.boost > 0 || k2.rocket > 0 ? 1 : 0, Math.min(1, dt * 4));
   cam.fov = (asp < 0.8 ? 68 : 54) + sp * 6 + FX.speed * 8; cam.aspect = asp; cam.updateProjectionMatrix();
   if (!ui.cam || ui.snap) { ui.cam = { h: k2.h, y: k2.y || 0 }; ui.snap = false; } let dh = k2.h - ui.cam.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); ui.cam.h += dh * Math.min(1, dt * (k2.spin ? 1.5 : 5));
   ui.cam.y = lerp(ui.cam.y, k2.fall > 0 ? ui.cam.y : (k2.y || 0), Math.min(1, dt * (k2.air ? 3 : 8)));
-  const h = ui.cam.h, back = 6.6 + FX.speed * 0.8, up = 3.0, sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.02 : 0;
+  const h = ui.cam.h, back = 6.2 + FX.speed * 1.0, up = 2.75, sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.02 : 0;
   let px = k2.x - Math.cos(h) * back, py = up + ui.cam.y, pz = k2.z - Math.sin(h) * back, lx = k2.x + Math.cos(h) * 6, ly = 0.8 + ui.cam.y, lz = k2.z + Math.sin(h) * 6;
   // during the countdown: in from the front of the grid, round and down behind your kart
   if (g.count > 0 && !g.lesson) { const u = clamp((3.2 - g.count) / 2.6, 0, 1), e = u * u * (3 - 2 * u), a = h + Math.PI * (1 - e), r = lerp(15, back, e), hy = lerp(10, up, e) + Math.sin(e * Math.PI) * 2; px = k2.x - Math.cos(a) * r; pz = k2.z - Math.sin(a) * r; py = hy + ui.cam.y; }
-  cam.position.set(px + sh, py, pz + sh); cam.lookAt(lx, ly, lz); cam.updateMatrixWorld(); }
+  ui.roll = lerp(ui.roll || 0, (k2.drift || 0) * 0.05 + (g.steer || 0) * 0.02, Math.min(1, dt * 4)); cam.up.set(Math.sin(h) * ui.roll, 1, -Math.cos(h) * ui.roll).normalize(); cam.position.set(px + sh, py, pz + sh); cam.lookAt(lx, ly, lz); cam.updateMatrixWorld(); }
 // bright enough for real eyes on a real phone (his words, 20 Nov 2026: "make it for human eyes"): every course at every
 // time of day is lifted to a clear, colourful picture; night courses keep their dark sky but the road and the karts are lit
 function brighten(info, sk) { const S = W3.S, night = ['night', 'dusk'].includes(sk), wet = ['rain', 'mist', 'overcast', 'storm'].includes(sk);
@@ -5847,7 +5917,7 @@ function draw(now, dt) {
   if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now, key = g.cfg.track + (g.cfg.mirror ? 100 : 0);
   if (V.trackN !== key || V.forG !== g) { if (V.trackN !== key) { V.trackN = key; buildTrack(V, g); const info = TRACKS[g.cfg.track]; const sk = skyOf(info, g.cfg.cls); W3.setSky(sk, { azim: 140 + info.seed % 90 }); brighten(info, sk); }
-    else { for (const [, m] of V.karts) { V.S.remove(m); const u = m.userData; if (u.orb) u.orb.forEach(s => V.S.remove(s)); if (u.bee) V.S.remove(u.bee); } V.karts.clear(); V.haz.forEach(m => V.track.remove(m)); V.haz = []; V.shotsM.forEach(m => m && V.S.remove(m)); V.shotsM = []; V.peelsM.forEach(m => V.S.remove(m)); V.peelsM = []; }
+    else { for (const [, m] of V.karts) dropKart(V, m); V.karts.clear(); V.haz.forEach(m => V.track.remove(m)); V.haz = []; V.shotsM.forEach(m => m && V.S.remove(m)); V.shotsM = []; V.peelsM.forEach(m => V.S.remove(m)); V.peelsM = []; }
     V.forG = g; ui.snap = true; }
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, g.me.y || 0, g.me.z, 34); W3.render(dt);
   // speed lines on a boost
@@ -5859,6 +5929,7 @@ function draw(now, dt) {
   ctx.globalAlpha = 1;
   if (hint) { const al = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, al); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; const lines = wrapText(hint.txt, W - 70), lh = 18 * k, h = lines.length * lh + 16 * k, w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 30;
     ctx.fillStyle = 'rgba(16,24,40,.88)'; rrect(W / 2 - w / 2, H * 0.5 - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.5 - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (G && G.me.nitroT > 0) { const a = Math.min(1, G.me.nitroT) * 0.55, gr = ctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.35, W / 2, H * 0.45, Math.max(W, H) * 0.75); gr.addColorStop(0, 'rgba(60,200,255,0)'); gr.addColorStop(1, `rgba(60,200,255,${a})`); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); }
   if (FX.red > 0) { ctx.fillStyle = `rgba(255,40,60,${FX.red * 0.18})`; ctx.fillRect(0, 0, W, H); }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,235,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
 }
@@ -5877,17 +5948,9 @@ function hud(G, t) {
     ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.8)'; const tt = G.t.toFixed(1) + ' s'; ctx.strokeText(tt, x + 4, y + 92 * k); ctx.fillText(tt, x + 4, y + 92 * k);
     map(G, W - 12 - 92 * k, 46 * k, 92 * k);
   } else lessonPanel(G);
-  // the item: bottom right, under the right thumb; a roulette while it is being chosen
-  const r = 36 * k, bx = W - r - 18, by = H - r - 34 * k; ctx.fillStyle = 'rgba(16,24,40,.72)'; ctx.beginPath(); ctx.arc(bx, by, r, 0, TAU); ctx.fill();
-  const has = me.item || me.orbit || me.peppers; ctx.strokeStyle = has ? '#ffd040' : me.roul > 0 ? '#ffffff' : 'rgba(255,255,255,.25)'; ctx.lineWidth = 3 * k; ctx.stroke(); ctx.textAlign = 'center';
-  if (me.roul > 0) { const ids = Object.keys(ITEMS), q = ids[Math.floor(t * 14) % ids.length]; ctx.font = `${Math.round(28 * k)}px sans-serif`; ctx.fillText(ITEMS[q].icon.slice(0, 2), bx, by + 2); }
-  else if (has) { const ic = me.item ? ITEMS[me.item].icon : me.orbit ? '🐢×' + me.orbit : '🌶×' + me.peppers; ctx.font = `${Math.round((ic.length > 2 ? 20 : 30) * k)}px sans-serif`; ctx.fillText(ic, bx, by + 2); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#ffd040'; ctx.fillText(me.air ? 'TRICK' : 'TAP', bx, by - r - 10 * k); }
-  else { ctx.font = `700 ${Math.round(20 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillText('?', bx, by); }
-  // coins and the drift gauge
-  { const w = 150 * k, x0 = W / 2 - w / 2, y0 = H - 44 * k; panel(x0 - 8, y0 - 22 * k, w + 16, 40 * k); ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(11 * k)}px ${TF}`; ctx.fillStyle = '#ffd040'; ctx.fillText(`🪙 ${me.coin}/10`, x0, y0 - 9 * k);
-    ctx.textAlign = 'right'; const tn = ['DRIFT', 'BLUE', 'ORANGE', 'PURPLE'][me.tier || 0]; ctx.fillStyle = me.drift ? hex(TIERC[me.tier || 0]) : 'rgba(255,255,255,.5)'; ctx.fillText(me.drift ? tn : 'DRIFT', x0 + w, y0 - 9 * k);
-    const u = me.drift ? clamp(me.charge / 2.1, 0, 1) : 0; ctx.fillStyle = 'rgba(255,255,255,.14)'; rrect(x0, y0, w, 9 * k, 5); ctx.fill(); if (u > 0) { ctx.fillStyle = hex(TIERC[Math.max(1, me.tier || 0)]); rrect(x0, y0, Math.max(9 * k, w * u), 9 * k, 5); ctx.fill(); }
-    for (const m of [0.55, 1.25]) { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(x0 + w * m / 2.1 - 1, y0 - 2, 2, 9 * k + 4); } }
+  // coins, under the lap
+  if (!G.lesson) { ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(10,14,30,.8)'; const ct = `🪙 ${me.coin}/10`; ctx.strokeText(ct, 16, 46 * k + 112 * k); ctx.fillStyle = '#ffd040'; ctx.fillText(ct, 16, 46 * k + 112 * k); }
+  buttons(G, t);
   // in the air: a ring round your kart that empties as the ground comes up (a trick takes this much: the white tick)
   if (me.air && !me.spin && me.fall <= 0) { const p = scr(me.x, (me.y || 0) + 0.8, me.z), tl = landPred(G, me), full = me.glide ? 3 : 1.2, R3 = 38 * k, u = clamp(tl / full, 0, 1);
     if (tl > 0.3 || me.trick) { ctx.lineWidth = 6 * k; ctx.strokeStyle = 'rgba(16,24,40,.5)'; ctx.beginPath(); ctx.arc(p.x, p.y, R3, 0, TAU); ctx.stroke(); const ok = tl > TRICK; ctx.strokeStyle = me.trick ? '#ff9a3a' : ok ? '#7af0a0' : '#ff5a5a'; ctx.beginPath(); ctx.arc(p.x, p.y, R3, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke();
@@ -5896,11 +5959,31 @@ function hud(G, t) {
       else if (ok) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 12); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('TAP!', p.x, p.y - R3 - 12 * k); ctx.globalAlpha = 1; } } }
   // the start lights (and the rocket start: hold on the second light)
   if (G.count > 0) { const n = Math.ceil(G.count), cx = W / 2, cy = H * 0.16; ctx.fillStyle = 'rgba(16,16,24,.88)'; rrect(cx - 80 * k, cy - 26 * k, 160 * k, 52 * k, 14); ctx.fill(); for (let i = 0; i < 3; i++) { const lit = i < 4 - n; ctx.fillStyle = lit ? '#ff3a3a' : 'rgba(255,255,255,.12)'; if (lit) { ctx.shadowColor = '#ff3a3a'; ctx.shadowBlur = 16; } ctx.beginPath(); ctx.arc(cx - 46 * k + i * 46 * k, cy, 16 * k, 0, TAU); ctx.fill(); ctx.shadowBlur = 0; }
-    ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = G.hold ? (G.holdAt > 2.05 ? '#ff9a8a' : '#7af0a0') : 'rgba(255,255,255,.85)'; ctx.fillText(G.hold ? (G.holdAt > 2.05 ? 'TOO EARLY…' : 'REVVING!') : 'hold the right side on the 2nd light', cx, cy + 42 * k); }
-  // the steering thumb (the outer part of the slide is the drift zone)
-  const st = ui.stick; if (st) { const R2 = 60 * k; ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.moveTo(st.x0 - R2, st.y0); ctx.lineTo(st.x0 + R2, st.y0); ctx.stroke(); ctx.strokeStyle = 'rgba(255,170,60,.6)'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(st.x0 + s * R2 * 0.72, st.y0); ctx.lineTo(st.x0 + s * R2, st.y0); ctx.stroke(); }
-    ctx.fillStyle = me.drift ? hex(TIERC[Math.max(1, me.tier)]) : 'rgba(255,255,255,.65)'; ctx.beginPath(); ctx.arc(st.x0 + G.steer * R2, st.y0, 18 * k, 0, TAU); ctx.fill(); }
-  else if (G.N <= 2 && !G.over && G.t < 9 && G.count <= 0) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('left thumb: slide to steer · right: tap (items; tricks in the air)', W / 2, H - 130 * k); ctx.globalAlpha = 1; }
+    ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = G.hold ? (G.holdAt > 2.05 ? '#ff9a8a' : '#7af0a0') : 'rgba(255,255,255,.85)'; ctx.fillText(G.hold ? (G.holdAt > 2.05 ? 'TOO EARLY…' : 'REVVING!') : 'hold DRIFT on the 2nd light', cx, cy + 42 * k); }
+  if (G.N <= 2 && !G.over && G.t < 10 && G.count <= 0 && !G.lesson) { ctx.globalAlpha = 0.55 + 0.45 * Math.sin(t * 4); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('◀ ▶ steer · hold DRIFT in the bends · tap ITEM · NITRO when it glows', W / 2, H - 200 * k); ctx.globalAlpha = 1; }
+}
+// ---------- the buttons (KartRider-style): ◀ ▶ under the left thumb; DRIFT (big), ITEM and NITRO under the right ----------
+function btnLayout() { const r = 40 * k, by = H - 74 * k, dx = W - 18 - r * 1.35; return { L: { x: 14 + r * 1.12, y: by, r: r * 1.12 }, R: { x: 14 + r * 3.4, y: by, r: r * 1.12 }, D: { x: dx, y: by, r: r * 1.35 },
+  I: { x: dx - r * 2.5, y: by - r * 1.55, r: r }, N: { x: dx, y: by - r * 2.95, r: r * 0.95 } }; }
+function buttons(G, t) { const me = G.me, B = btnLayout(), P = ui.press || {};
+  const disc = (b, on, fill, edge) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.lineWidth = 3 * k; ctx.strokeStyle = edge; ctx.stroke(); };
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const sd of ['L', 'R']) { const b = B[sd], on = sd === 'L' ? G.bL : G.bR; disc(b, on, on ? 'rgba(255,255,255,.42)' : 'rgba(16,24,40,.45)', on ? '#ffffff' : 'rgba(255,255,255,.45)');
+    ctx.fillStyle = '#fff'; ctx.beginPath(); const d = sd === 'L' ? -1 : 1, a = b.r * 0.42; ctx.moveTo(b.x + d * a, b.y); ctx.lineTo(b.x - d * a * 0.6, b.y - a * 0.85); ctx.lineTo(b.x - d * a * 0.6, b.y + a * 0.85); ctx.closePath(); ctx.fill(); }
+  // DRIFT: the spark charge runs round it in the colour it has reached
+  { const b = B.D, on = !!G.driftBtn; disc(b, on, on ? 'rgba(255,150,40,.55)' : 'rgba(16,24,40,.5)', me.drift ? hex(TIERC[Math.max(1, me.tier)]) : 'rgba(255,190,90,.8)');
+    if (me.drift) { const u = clamp(me.charge / 2.1, 0, 1); ctx.lineWidth = 6 * k; ctx.strokeStyle = hex(TIERC[Math.max(1, me.tier)]); ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 6 * k, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(me.air ? 'TRICK' : 'DRIFT', b.x, b.y + 1); }
+  // ITEM: what you have (a roulette while it is chosen); tap = ahead, swipe down = behind
+  { const b = B.I, has = me.item || me.orbit || me.peppers, on = P.I; disc(b, on, has ? 'rgba(255,208,64,.28)' : 'rgba(16,24,40,.45)', has ? '#ffd040' : 'rgba(255,255,255,.3)');
+    if (me.roul > 0) { const ids = Object.keys(ITEMS), q = ids[Math.floor(t * 14) % ids.length]; ctx.font = `${Math.round(26 * k)}px sans-serif`; ctx.fillText(ITEMS[q].icon.slice(0, 2), b.x, b.y + 2); }
+    else if (has) { const ic = me.item ? ITEMS[me.item].icon : me.orbit ? '🐢×' + me.orbit : '🌶×' + me.peppers; ctx.font = `${Math.round((ic.length > 2 ? 17 : 28) * k)}px sans-serif`; ctx.fillText(ic, b.x, b.y + 2);
+      if (G.N <= 6 && (me.item === 'peel' || me.item === 'shell' || me.orbit)) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = '#ffd040'; ctx.fillText('tap: ahead · swipe ↓: behind', b.x, b.y - b.r - 10 * k); } }
+    else { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillText('ITEM', b.x, b.y); } }
+  // NITRO: two bars; glowing when one is full
+  { const b = B.N, nv = me.nitro || 0, ready = nv >= 1, on = P.N; if (ready) { ctx.shadowColor = '#3ae0ff'; ctx.shadowBlur = 18 + 8 * Math.sin(t * 8); } disc(b, on, ready ? 'rgba(40,190,255,.55)' : 'rgba(16,24,40,.45)', ready ? '#9ae8ff' : 'rgba(255,255,255,.3)'); ctx.shadowBlur = 0;
+    for (let q = 0; q < 2; q++) { const u = clamp(nv - q, 0, 1); ctx.lineWidth = 5 * k; ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 5 * k, -Math.PI / 2 + q * Math.PI + 0.08, -Math.PI / 2 + (q + 1) * Math.PI - 0.08); ctx.stroke(); if (u > 0) { ctx.strokeStyle = u >= 1 ? '#3ae0ff' : '#5a8aff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 5 * k, -Math.PI / 2 + q * Math.PI + 0.08, -Math.PI / 2 + q * Math.PI + 0.08 + (Math.PI - 0.16) * u); ctx.stroke(); } }
+    ctx.fillStyle = ready ? '#fff' : 'rgba(255,255,255,.5)'; ctx.font = `400 ${Math.round(12 * k)}px ${TF}`; ctx.fillText('NITRO', b.x, b.y + 1); if (me.nitroT > 0) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('GO!', b.x, b.y + 15 * k); } }
 }
 function map(G, x, y, s) { const S = G.T.S; if (!G.T.mapB) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of S) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); } G.T.mapB = { x0, x1, z0, z1 }; } const { x0, x1, z0, z1 } = G.T.mapB, sc = s / Math.max(x1 - x0, z1 - z0), ox = x + (s - (x1 - x0) * sc) / 2, oy = y + (s - (z1 - z0) * sc) / 2;
   ctx.fillStyle = 'rgba(16,24,40,.55)'; rrect(x - 6, y - 6, s + 12, s + 12, 10); ctx.fill(); ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); let pen = false; S.forEach((p, i) => { const px = ox + (p.x - x0) * sc, py = oy + (p.z - z0) * sc; if (p.gap) { pen = false; return; } pen ? ctx.lineTo(px, py) : ctx.moveTo(px, py); pen = true; }); ctx.stroke();
@@ -5926,6 +6009,9 @@ function lessonPanel(G) {
 // The music: each course its own little tune (seeded: its key, its bass line, its melody), bright or spooky to suit; faster and
 // a step higher on the final lap.
 const sfx = {
+  hop() { if (!gate('hop', 120)) return; tone(320, 0.08, 0.04, 'triangle', 0, 520); },
+  nitro() { noise(0.9, 1200, 0.09, 'bandpass', 0.6); tone(120, 0.9, 0.06, 'sawtooth', 0, 520, 2200); [0, 4, 7, 12].forEach((q, j) => tone(note(523, q + 2), 0.2, 0.035, 'square', 0.05 + j * 0.05, 0, 3000)); },
+  ready() { [7, 12].forEach((q, j) => tone(note(659, q), 0.16, 0.05, 'triangle', j * 0.07)); },
   click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
   go() { tone(660, 0.2, 0.06, 'square', 0, 660, 2400); },
   light(n) { tone(n ? 440 : 880, n ? 0.18 : 0.45, 0.07, 'square', 0, n ? 440 : 880, 2400); },
@@ -5962,20 +6048,46 @@ const sfx = {
   win() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(392, q), 1.0, 0.1, j * 0.09)); [0, 4, 7].forEach((q, j) => tone(note(392, q + 12), 0.6, 0.04, 'triangle', 0.5 + j * 0.02)); },
   lose() { tone(330, 0.5, 0.09, 'triangle', 0, 247); tone(247, 0.7, 0.09, 'triangle', 0.25, 165); },
 };
-// ---------- the music: a little tune per course, scheduled a moment ahead ----------
-const music = { on: false, next: 0, step: 0, bpm: 132, up: 0,
-  start(G) { if (HEADLESS || !actx) return; const info = TRACKS[G.cfg.track], R = rng(info.seed * 7 + 1), dark = ['haunt', 'lava', 'neon', 'star', 'moon'].includes(info.theme);
-    this.root = [196, 220, 233, 247, 262, 294][(R() * 6) | 0] * (dark ? 0.9 : 1); this.scale = dark ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9]; this.bpm = 124 + ((R() * 4) | 0) * 6; this.up = 0;
-    this.prog = [[0, 5, 3, 4], [0, 3, 4, 4], [0, 4, 5, 3], [5, 3, 0, 4]][(R() * 4) | 0]; this.mel = []; let p = 5; for (let i = 0; i < 32; i++) { if (R() < 0.62) { p = clamp(p + ((R() * 5) | 0) - 2, 2, 11); this.mel.push(p); } else this.mel.push(-1); }
-    this.on = true; this.step = 0; this.next = actx.currentTime + 0.05; },
-  final() { if (this.on) { this.bpm += 16; this.up = 1; } }, stop() { this.on = false; },
-  tick() { if (!this.on || !actx || MUTE || paused) { if (actx) this.next = Math.max(this.next, actx.currentTime + 0.05); return; } const sp = 60 / this.bpm / 2, sc = this.scale, f = s => this.root * (this.up ? 1.0595 : 1) * Math.pow(2, (sc[((s % 5) + 5) % 5] + 12 * Math.floor(s / 5)) / 12);
-    while (this.next < actx.currentTime + 0.2) { const w = this.next - actx.currentTime, i = this.step, bar = Math.floor(i / 8) % 4, ch = this.prog[bar], deg = [0, 1, 2, 3, 4, 5, 6][ch];
-      const bassS = [deg, deg, deg + 2, deg, deg + 1, deg, deg + 2, deg + 3][i % 8]; tone(f(bassS) / 2, sp * 0.9, 0.035, 'triangle', w, 0, 900);
-      if (i % 2 === 0) noise(0.04, 7000, i % 4 === 0 ? 0.012 : 0.007, 'highpass', 1, w); if (i % 8 === 4) noise(0.12, 1800, 0.02, 'bandpass', 0.8, w); if (i % 4 === 0) tone(70, 0.12, 0.05, 'sine', w, 45);
-      if (i % 4 === 2) [0, 2, 4].forEach(q => tone(f(deg + q + 5), sp * 0.6, 0.008, 'square', w, 0, 1600));
-      const m = this.mel[i % 32]; if (m >= 0) tone(f(m + 5), sp * 1.6, 0.022, 'square', w, 0, 2600);
-      this.step++; this.next += sp; } } };
+// ---------- the music (his words, 20 Nov 2026: "make it more exciting"): a real race track for every course, made on the spot.
+// Drums (four-on-the-floor kick, snare on 2 and 4, eighth hats, open hats and claps in the chorus, a crash and a snare roll at
+// every section), an octave-pumping bass that follows the chords, chord stabs, a sixteenth-note arpeggio, and a lead tune
+// built like a real hook: a two-bar motif, played, answered, varied, played again. Intro, verse, chorus, verse, chorus...
+// Each course has its own key, tempo, chords and hook (seeded). The final lap: faster, a step higher, chorus all the way.
+const MAJ = [0, 2, 4, 5, 7, 9, 11], MIN = [0, 2, 3, 5, 7, 8, 10];
+const music = { on: false, next: 0, step: 0,
+  start(G) { if (HEADLESS || !actx) return; const info = TRACKS[G.cfg.track], R = rng(info.seed * 13 + 7), dark = ['haunt', 'lava', 'neon', 'star', 'moon', 'canyon'].includes(info.theme);
+    this.sc = dark ? MIN : MAJ; this.root = [110, 116.5, 123.5, 130.8, 138.6, 146.8][(R() * 6) | 0]; this.bpm = 148 + ((R() * 4) | 0) * 4; this.up = 0;
+    this.prog = dark ? [[0, 5, 2, 6], [0, 6, 5, 4], [0, 3, 6, 5]][(R() * 3) | 0] : [[0, 4, 5, 3], [5, 3, 0, 4], [0, 3, 4, 3], [0, 5, 3, 4]][(R() * 4) | 0];
+    // the hook: two bars of sixteenths, a rhythm with drive (on-beats and syncopations), a melody that moves by small steps
+    const rh = [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0], mot = []; let d = 7 + ((R() * 3) | 0);
+    for (let i = 0; i < 32; i++) { const on = (i % 16 < 16) && (rh[i % 16] ? R() < 0.92 : R() < 0.12); if (on) { d = clamp(d + [-2, -1, -1, 1, 1, 2, 0, 3, -3][(R() * 9) | 0], 4, 13); mot.push(d); } else mot.push(-1); }
+    const ans = mot.map((v, i) => v < 0 ? v : i >= 24 ? v + (i % 2 ? 2 : -1) : v), alt = mot.map((v, i) => v < 0 ? v : v + 2);
+    this.lead = [mot, ans, alt, mot]; this.on = true; this.step = 0; this.next = actx.currentTime + 0.05; },
+  final() { if (this.on) { this.bpm += 12; this.up = 2; } }, stop() { this.on = false; },
+  f(deg, oct = 0) { const sc = this.sc, n = Math.floor(deg / 7), i = ((deg % 7) + 7) % 7; return this.root * Math.pow(2, (sc[i] + 12 * n + this.up) / 12 + oct); },
+  tick() { if (!this.on || !actx || MUTE || paused) { if (actx) this.next = Math.max(this.next, actx.currentTime + 0.05); return; } const s16 = 60 / this.bpm / 4;
+    while (this.next < actx.currentTime + 0.25) { const w = this.next - actx.currentTime, i = this.step, intro = i < 32, bar = Math.floor(i / 16), sec = Math.floor((bar - 2) / 8), chorus = this.up || (!intro && sec % 2 === 1), b16 = i % 16, bar8 = (bar - 2) % 8;
+      const ch = this.prog[((bar - (intro ? 0 : 2)) % 4 + 4) % 4], last = !intro && bar8 === 7 && b16 >= 12;
+      // drums
+      if (b16 % 4 === 0) tone(150, 0.2, 0.09, 'sine', w, 42);
+      if (chorus && (b16 === 14 || b16 === 7)) tone(140, 0.14, 0.05, 'sine', w, 50);
+      if (b16 === 4 || b16 === 12) { noise(0.16, 1900, chorus ? 0.06 : 0.05, 'bandpass', 0.7, w); tone(230, 0.07, 0.025, 'triangle', w, 170); if (chorus) noise(0.08, 2600, 0.03, 'bandpass', 2, w + 0.012); }
+      if (last) noise(0.06, 2000 + (b16 - 12) * 300, 0.035 + (b16 - 12) * 0.008, 'bandpass', 0.8, w);
+      if (b16 % 2 === 0) noise(0.03, 9000, b16 % 4 === 2 ? 0.016 : 0.009, 'highpass', 1, w); else if (chorus) noise(0.02, 10000, 0.006, 'highpass', 1, w);
+      if (chorus && b16 % 4 === 2) noise(0.12, 7500, 0.01, 'highpass', 1, w);
+      if (!intro && bar8 === 0 && b16 === 0) noise(1.2, 6000, 0.028, 'highpass', 0.5, w);
+      // bass: eighths, pumping between the octaves, a lead-in at the end of the bar
+      if (b16 % 2 === 0) { const nn = b16 === 14 ? ch + 4 : ch, oc = (b16 / 2) % 2 ? 0 : -1; tone(this.f(nn, oc - 1), s16 * 1.7, 0.05, 'sawtooth', w, 0, 700); tone(this.f(nn, oc - 1), s16 * 1.7, 0.03, 'sine', w); }
+      if (!intro) {
+        // chords: soft pads in the verse, bright stabs on the off-beats in the chorus
+        if (!chorus && b16 === 0) [0, 2, 4].forEach(q => tone(this.f(ch + q, 0), s16 * 15, 0.011, 'triangle', w, 0, 1800));
+        if (chorus && (b16 % 4 === 2)) [0, 2, 4].forEach(q => tone(this.f(ch + q, 0), s16 * 0.9, 0.013, 'square', w, 0, 2600));
+        // the arpeggio (chorus)
+        if (chorus) tone(this.f(ch + [0, 2, 4, 7][b16 % 4], 1), s16 * 0.8, 0.008, 'triangle', w, 0, 4000);
+        // the hook, with a quiet echo three sixteenths later
+        const ph = this.lead[Math.floor(bar8 / 2) % 4], nv = ph[((bar8 % 2) * 16 + b16)];
+        if (nv >= 0) { const fr = this.f(nv, chorus ? 0 : -1); tone(fr, s16 * 1.8, chorus ? 0.026 : 0.02, 'square', w, 0, chorus ? 3200 : 2200); tone(fr * 2, s16 * 1.2, 0.006, 'sine', w); tone(fr, s16 * 1.4, 0.007, 'square', w + s16 * 3, 0, 1800); } }
+      this.step++; this.next += s16; } } };
 const AM = { on: false };
 function soundStep(G, dt) {
   if (HEADLESS || !actx) return; if (!AM.on) { AM.on = true; AM.eng = bed(160, 4, 0, 0.05, 'bandpass'); AM.eng2 = bed(320, 6, 0, 0.05, 'bandpass'); AM.skid = bed(2600, 2, 0, 0.08, 'bandpass'); AM.crowd = bed(900, 0.5, 0, 0.2, 'bandpass'); }
@@ -6012,7 +6124,7 @@ function showHome() {
 function startGame() {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.stick = null; ui.lapT = 0;
+  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.stick = null; ui.lapT = 0; PTR.clear(); ui.press = {};
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -6077,13 +6189,32 @@ $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 function tapAt() {}
-// input (two thumbs): the left half steers (put it down and slide); a tap on the right half uses the item
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (e.clientX > W / 2) { ui.rid = e.pointerId; if (G.count > 0) { setHold(G, true); return; } const air = G.me.air, had = G.me.item || G.me.orbit || G.me.peppers; if (tapRight(G)) vibe(HAP.light); else if (!air && !had && !G.me.roul) sfx.no(); return; }
-  if (ui.stick) return; ui.stick = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId) return; s2.x = e.clientX; s2.y = e.clientY; stickToGame(); });
-function stickToGame() { const s2 = ui.stick; if (!G) return; if (!s2) { setSteer(G, 0); return; } const dx = s2.x - s2.x0, R = 60 * k; setSteer(G, Math.abs(dx) < 4 * k ? 0 : clamp(dx / R, -1, 1)); }
-function endStick(e) { if (e.pointerId === ui.rid) { ui.rid = null; if (G) setHold(G, false); } const s2 = ui.stick; if (s2 && s2.id === e.pointerId) { ui.stick = null; stickToGame(); } }
-cv.addEventListener('pointerup', endStick); cv.addEventListener('pointercancel', endStick);
+// input: buttons (KartRider-style). The left half of the screen is ◀ and ▶ (a thumb can slide between them); on the right,
+// DRIFT (hold), ITEM (tap: ahead; swipe down: behind) and NITRO (tap). Several thumbs at once. Before the start, any right-hand
+// button held revs the engine (rocket start on the second light).
+const PTR = new Map(); ui.press = {};
+function whichBtn(x, y) { const B = btnLayout(); if (x < W / 2) return x < (B.L.x + B.R.x) / 2 ? 'L' : 'R';
+  let best = null, bd = 1e9; for (const id of ['D', 'I', 'N']) { const b = B[id], d = Math.hypot(x - b.x, y - b.y) / b.r; if (d < bd) { bd = d; best = id; } } return bd < 1.8 ? best : (y > H * 0.55 ? 'D' : null); }
+function steerFromPtrs() { let l = false, r = false; for (const p of PTR.values()) { if (p.b === 'L') l = true; if (p.b === 'R') r = true; } setBtn(G, 'L', l); setBtn(G, 'R', r); }
+function holdFromPtrs() { if (G && G.count > 0) setHold(G, [...PTR.values()].some(p => p.b === 'D' || p.b === 'I' || p.b === 'N')); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const b = whichBtn(e.clientX, e.clientY); if (!b) return; PTR.set(e.pointerId, { b, x0: e.clientX, y0: e.clientY, done: false }); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  ui.press[b] = true; if (b === 'L' || b === 'R') steerFromPtrs();
+  else if (G.count > 0) holdFromPtrs();
+  else if (b === 'D') { if (driftDown(G)) vibe(HAP.tick); }
+  else if (b === 'N') { if (useNitro(G)) vibe(HAP.sharp); else sfx.no(); } });
+cv.addEventListener('pointermove', e => { const p = PTR.get(e.pointerId); if (!p || !G) return;
+  if (p.b === 'L' || p.b === 'R') { const nb = e.clientX < W / 2 ? whichBtn(e.clientX, e.clientY) : p.b; if (nb !== p.b) { ui.press[p.b] = false; p.b = nb; ui.press[nb] = true; steerFromPtrs(); } }
+  if (p.b === 'I' && !p.done && e.clientY - p.y0 > 34 * k && G.count <= 0) { p.done = true; const had = G.me.item || G.me.orbit || G.me.peppers; if (itemTap(G, true)) vibe(HAP.light); else if (!had) sfx.no(); } });
+function endPtr(e) { const p = PTR.get(e.pointerId); if (!p) return; PTR.delete(e.pointerId); ui.press[p.b] = [...PTR.values()].some(q => q.b === p.b); if (!G) return;
+  if (p.b === 'L' || p.b === 'R') steerFromPtrs();
+  else if (G.count > 0) holdFromPtrs();
+  else if (p.b === 'D') { if (![...PTR.values()].some(q => q.b === 'D')) driftUp(G); }
+  else if (p.b === 'I' && !p.done) { const had = G.me.item || G.me.orbit || G.me.peppers || G.me.air; if (itemTap(G, false)) vibe(HAP.light); else if (!had && !G.me.roul) sfx.no(); } }
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+// a keyboard too (arrows steer, space drifts, X item ahead, C item behind, Z nitro)
+const KEYS = {}; addEventListener('keydown', e => { if (!G || G.over || paused || KEYS[e.code]) return; KEYS[e.code] = 1; const c2 = e.code;
+  if (c2 === 'ArrowLeft') setBtn(G, 'L', true); if (c2 === 'ArrowRight') setBtn(G, 'R', true); if (c2 === 'Space' || c2 === 'ArrowUp') driftDown(G); if (c2 === 'KeyX') itemTap(G, false); if (c2 === 'KeyC' || c2 === 'ArrowDown') itemTap(G, true); if (c2 === 'KeyZ') useNitro(G); if (G.count > 0) setHold(G, true); });
+addEventListener('keyup', e => { KEYS[e.code] = 0; if (!G) return; const c2 = e.code; if (c2 === 'ArrowLeft') setBtn(G, 'L', false); if (c2 === 'ArrowRight') setBtn(G, 'R', false); if (c2 === 'Space' || c2 === 'ArrowUp') driftUp(G); if (G.count > 0) setHold(G, false); });
 // the garage: drivers and karts, opened with stars; tap one to choose it
 function starsAll() { return Object.values(stars).reduce((a, b) => a + b, 0); }
 const shipOpen = q => starsAll() >= q.stars, shipsOpen = () => DRIVERS.filter(shipOpen).length + KARTS.filter(shipOpen).length;
@@ -6184,7 +6315,7 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  steer(s) { setSteer(G, s); }, hold(on) { setHold(G, on); }, item() { return tapRight(G); }, tap() { return tapRight(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
+  steer(s) { setSteer(G, s); }, btn(b, on) { setBtn(G, b, on); }, driftDown() { return driftDown(G); }, driftUp() { driftUp(G); }, itemTap(back) { return itemTap(G, back); }, nitro() { return useNitro(G); }, btnLayout, hold(on) { setHold(G, on); }, item() { return tapRight(G); }, tap() { return tapRight(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

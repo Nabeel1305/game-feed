@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Kart Kingdom with real touches: the left thumb slid right steers right, slid left steers left, let go goes straight; held
-far over at speed it drifts, and straightening up gives a boost. On the ground a tap on the right half uses the item (and
-does not steer); three shells are fired one tap at a time. In the air a tap starts a trick; a tap during it does nothing;
-landing after it is a boost, landing in the middle a wipeout. Before the start, the right side held on the second light is a
-rocket start; held from the first light, a stall. No JavaScript errors.
+"""Kart Kingdom's buttons with real touches (version 2, KartRider-style): ◀ held steers left, ▶ right, let go goes straight, a
+thumb slid from ◀ to ▶ turns the other way. DRIFT held with an arrow at speed slides with sparks, let go gives a boost; in the
+air DRIFT is a trick (a second tap during it does nothing; landing after it is a boost, in the middle a wipeout). ITEM tapped
+throws a banana far ahead (in a high arc), swiped down throws it behind; three shells fire one tap at a time. NITRO with a full
+bar boosts. DRIFT held from the second light is a rocket start; from the first, a stall. No JavaScript errors.
 Run: python3 games/kingdom/test_touch.py"""
 import os, sys
 from playwright.sync_api import sync_playwright
@@ -18,42 +18,57 @@ with sync_playwright() as p:
     pg.add_init_script('window.__softGL = true'); pg.goto('file://' + os.path.join(here, 'index.html')); pg.wait_for_function('typeof window.gameFeedStart === "function"'); pg.wait_for_timeout(800)
     E = pg.evaluate
     cdp = ctx.new_cdp_session(pg)
-    def touch(kind, pts): cdp.send('Input.dispatchTouchEvent', {'type': kind, 'touchPoints': pts})
-    def drag(x0, y0, x1, y1, hold=300):
-        touch('touchStart', [{'x': x0, 'y': y0, 'id': 1}]); pg.wait_for_timeout(30)
-        for i in range(1, 7): touch('touchMove', [{'x': x0 + (x1 - x0) * i / 6, 'y': y0 + (y1 - y0) * i / 6, 'id': 1}]); pg.wait_for_timeout(16)
-        pg.wait_for_timeout(hold)
-    # the rocket start: hold the right side from the second light
-    E("localStorage.setItem('kk.taught', '3'); __sim.go(1); __sim.ui.snap = true;")
-    pg.wait_for_function("__sim.G.count < 1.9 && __sim.G.count > 1.2", timeout=6000); touch('touchStart', [{'x': 320, 'y': 600, 'id': 2}])
-    pg.wait_for_function("__sim.G.count <= 0", timeout=6000); pg.wait_for_timeout(50); r = E("[__sim.G.rocket, __sim.G.me.boost > 0, __sim.G.me.spin]"); touch('touchEnd', [])
-    ok(r[0] == 1 and r[1] and r[2] == 0, 'right side held from the second light: a rocket start (a boost)', str(r))
-    E("__sim.go(1); __sim.ui.snap = true;"); pg.wait_for_timeout(150); touch('touchStart', [{'x': 320, 'y': 600, 'id': 3}])
-    pg.wait_for_function("__sim.G.count <= 0", timeout=6000); pg.wait_for_timeout(50); r = E("[__sim.G.rocket, __sim.G.me.spin > 0]"); touch('touchEnd', [])
-    ok(not r[0] and r[1], 'right side held from the first light: a stall', str(r))
-    pg.wait_for_timeout(2500)
-    # steering
-    drag(90, 650, 120, 650, 150); st = E("__sim.G.steer"); ok(0.3 < st < 0.75, 'left thumb slid a little right: a gentle right turn', str(st))
-    touch('touchEnd', []); pg.wait_for_timeout(80); ok(E("__sim.G.steer") == 0, 'let go: straight')
-    drag(120, 650, 50, 650, 150); ok(E("__sim.G.steer") <= -0.95, 'slid well left: a hard left'); touch('touchEnd', []); pg.wait_for_timeout(80)
-    # a drift: held hard at speed, then straightened
-    E("(() => { const G = __sim.G, k = G.me, S = G.T.S, n = S.length; let i = k.i; for (let q = 0; q < n; q++) { const j = (k.i + q) % n; let ok = true; for (let w = -10; w < 60; w++) { const s = S[(j + w + n) % n]; if (Math.abs(s.curve) > 0.08 || Math.abs(s.slope) > 0.04 || s.gap) { ok = false; break; } } if (ok && !G.T.ramps.some(r => Math.abs(((j - r.i0 + n + n / 2) % n) - n / 2) < 40)) { i = j; break; } } const p = S[i]; k.x = p.x - Math.sin(p.h) * 4; k.z = p.z + Math.cos(p.h) * 4; k.i = k.last = i; k.h = p.h; k.y = p.y; k.vy = 0; k.v = 26; k.air = false; G.hz.length = 0; })()"); drag(120, 650, 40, 650, 0)
+    def send(kind, pts): cdp.send('Input.dispatchTouchEvent', {'type': kind, 'touchPoints': pts})
+    B = None
+    def at(name): return [B[name]['x'], B[name]['y']]
+    E("localStorage.setItem('kk.taught', '3'); __sim.go(1); __sim.ui.snap = true;"); B = E("__sim.btnLayout()")
+    # the rocket start: DRIFT held from the second light
+    pg.wait_for_function("__sim.G.count < 1.9 && __sim.G.count > 1.2", timeout=6000); x, y = at('D'); send('touchStart', [{'x': x, 'y': y, 'id': 2}])
+    pg.wait_for_function("__sim.G.count <= 0", timeout=6000); pg.wait_for_timeout(50); r = E("[__sim.G.rocket, __sim.G.me.boost > 0, __sim.G.me.spin]"); send('touchEnd', [])
+    ok(r[0] == 1 and r[1] and r[2] == 0, 'DRIFT held from the second light: a rocket start (a boost)', str(r))
+    E("__sim.go(1); __sim.ui.snap = true;"); pg.wait_for_timeout(150); send('touchStart', [{'x': x, 'y': y, 'id': 3}])
+    pg.wait_for_function("__sim.G.count <= 0", timeout=6000); pg.wait_for_timeout(50); r = E("[__sim.G.rocket, __sim.G.me.spin > 0]"); send('touchEnd', [])
+    ok(not r[0] and r[1], 'DRIFT held from the first light: a stall', str(r))
+    pg.wait_for_timeout(2200)
+    # steering with the arrows
+    lx, ly = at('L'); rx, ry = at('R')
+    send('touchStart', [{'x': lx, 'y': ly, 'id': 1}]); pg.wait_for_timeout(350); st = E("__sim.G.steer"); ok(st <= -0.9, '◀ held: a hard left', str(st))
+    for i in range(1, 7): send('touchMove', [{'x': lx + (rx - lx) * i / 6, 'y': ly, 'id': 1}]); pg.wait_for_timeout(16)
+    pg.wait_for_timeout(350); st = E("__sim.G.steer"); ok(st >= 0.9, 'the thumb slid onto ▶: a hard right', str(st))
+    send('touchEnd', []); pg.wait_for_timeout(250); st = E("__sim.G.steer"); ok(abs(st) < 0.05, 'let go: straight', str(st))
+    # a drift: ▶ and DRIFT held at speed on a straight, then DRIFT let go
+    E("(() => { const G = __sim.G, k = G.me, S = G.T.S, n = S.length; let i = k.i; for (let q = 0; q < n; q++) { const j = (k.i + q) % n; let ok = true; for (let w = -10; w < 60; w++) { const s = S[(j + w + n) % n]; if (Math.abs(s.curve) > 0.08 || Math.abs(s.slope) > 0.04 || s.gap) { ok = false; break; } } if (ok && !G.T.ramps.some(r => Math.abs(((j - r.i0 + n + n / 2) % n) - n / 2) < 40)) { i = j; break; } } const p = S[i]; k.x = p.x + Math.sin(p.h) * 4; k.z = p.z - Math.cos(p.h) * 4; k.i = k.last = i; k.h = p.h; k.y = p.y; k.vy = 0; k.v = 26; k.air = false; G.hz.length = 0; })()")
+    send('touchStart', [{'x': rx, 'y': ry, 'id': 1}]); pg.wait_for_timeout(200); send('touchStart', [{'x': rx, 'y': ry, 'id': 1}, {'x': x, 'y': y, 'id': 2}])
     try: pg.wait_for_function("__sim.G.me.tier >= 1", timeout=2500)
     except Exception: pass
-    r = E("[__sim.G.me.drift, __sim.G.me.tier]")
-    ok(r[0] == -1 and r[1] >= 1, 'a hard turn held at speed: a drift with sparks', str(r)); touch('touchEnd', []); pg.wait_for_timeout(60); r = E("[__sim.G.me.drift, __sim.G.me.boost > 0]"); ok(r[0] == 0 and r[1], 'let go of the drift: a boost', str(r))
-    # on the ground: the item
-    E("(() => { const k = __sim.G.me; k.item = 'pepper'; k.boost = 0; })()"); pg.touchscreen.tap(320, 600); pg.wait_for_timeout(120); r = E("[__sim.G.me.item, __sim.G.me.boost > 0, __sim.G.steer]")
-    ok(r[0] is None and r[1], 'on the ground a tap on the right half uses the item (a pepper: boost)', str(r)); ok(r[2] == 0, 'a tap on the right does not steer', str(r))
-    E("(() => { const k = __sim.G.me; k.item = 'triple'; })()"); pg.touchscreen.tap(320, 600); pg.wait_for_timeout(100); r1 = E("__sim.G.me.orbit"); pg.touchscreen.tap(320, 600); pg.wait_for_timeout(100); r2 = E("[__sim.G.me.orbit, __sim.G.shots.length]")
+    r = E("[__sim.G.me.drift, __sim.G.me.tier]"); ok(r[0] == 1 and r[1] >= 1, '▶ and DRIFT held at speed: a drift with sparks', str(r))
+    send('touchEnd', []); pg.wait_for_timeout(80); r = E("[__sim.G.me.drift, __sim.G.me.boost > 0, __sim.G.me.nitro > 0]"); ok(r[0] == 0 and r[1], 'DRIFT let go: a boost', str(r)); ok(r[2], 'the drift put something in NITRO', str(r))
+    pg.wait_for_timeout(200)
+    # the item: a banana thrown far ahead, or behind
+    ix, iy = at('I')
+    E("(() => { const k = __sim.G.me; k.item = 'peel'; k.roul = 0; })()"); pg.touchscreen.tap(ix, iy); pg.wait_for_timeout(60)
+    r = E("(() => { const G = __sim.G, k = G.me, o = G.lobs[0], S = G.T.S, n = S.length; if (!o) return null; let best = 0, bd = 1e18; for (let i = 0; i < n; i++) { const d = (S[i].x - o.tx) ** 2 + (S[i].z - o.tz) ** 2; if (d < bd) { bd = d; best = i; } } return [Math.round(((best - k.i + n) % n) * G.T.ds), G.me.item]; })()")
+    ok(r is not None and 30 < r[0] < 60 and r[1] is None, 'ITEM tapped: the banana flies far AHEAD along the road (lands 30-60 m on)', str(r))
+    pg.wait_for_timeout(1600); r = E("__sim.G.peels.length"); ok(r >= 1, 'it lands on the road as a peel', str(r))
+    E("(() => { const k = __sim.G.me; k.item = 'peel'; k.roul = 0; __sim.G.lobs.length = 0; })()")
+    send('touchStart', [{'x': ix, 'y': iy, 'id': 4}]); pg.wait_for_timeout(30)
+    for i in range(1, 6): send('touchMove', [{'x': ix, 'y': iy + 12 * i, 'id': 4}]); pg.wait_for_timeout(16)
+    send('touchEnd', []); pg.wait_for_timeout(40)
+    r = E("(() => { const G = __sim.G, k = G.me, o = G.lobs[0]; if (!o) return null; return Math.round((o.tx - k.x) * Math.cos(k.h) + (o.tz - k.z) * Math.sin(k.h)); })()")
+    ok(r is not None and r < 0, 'ITEM swiped down: the banana goes BEHIND', str(r))
+    pg.wait_for_timeout(1200)
+    E("(() => { const k = __sim.G.me; k.item = 'triple'; __sim.G.shots.length = 0; })()"); pg.touchscreen.tap(ix, iy); pg.wait_for_timeout(100); r1 = E("__sim.G.me.orbit"); pg.touchscreen.tap(ix, iy); pg.wait_for_timeout(100); r2 = E("[__sim.G.me.orbit, __sim.G.shots.length]")
     ok(r1 == 3 and r2[0] == 2 and r2[1] >= 1, 'three shells: the first tap sets them spinning, the next fires one', str([r1, r2]))
-    # in the air: put the kart in the air by hand, high enough for one trick
-    pg.wait_for_timeout(400); E("(() => { const k = __sim.G.me; k.air = true; k.glide = false; k.y += 2; k.vy = 6; k.airTricks = 0; k.trick = null; k.boost = 0; k.orbit = 0; k.item = null; })()")
-    pg.touchscreen.tap(320, 600); pg.wait_for_timeout(40); r = E("[!!__sim.G.me.trick, __sim.G.me.airTricks]"); ok(r[0] and r[1] == 1, 'in the air a tap on the right half starts a trick', str(r))
-    pg.touchscreen.tap(320, 600); pg.wait_for_timeout(30); ok(E("__sim.G.me.airTricks") == 1, 'a tap during a trick does nothing')
+    # NITRO
+    nx, ny = at('N'); E("(() => { const k = __sim.G.me; k.nitro = 0.4; k.nitroT = 0; })()"); pg.touchscreen.tap(nx, ny); pg.wait_for_timeout(60); ok(E("__sim.G.me.nitroT") == 0, 'NITRO not full: nothing happens')
+    E("(() => { const k = __sim.G.me; k.nitro = 1.2; })()"); pg.touchscreen.tap(nx, ny); pg.wait_for_timeout(60); r = E("[__sim.G.me.nitroT > 0, __sim.G.me.nitro]"); ok(r[0] and r[1] < 1, 'NITRO full: tapped, a big boost', str(r))
+    # in the air: DRIFT is a trick
+    pg.wait_for_timeout(300); E("(() => { const k = __sim.G.me; k.air = true; k.glide = false; k.y += 2; k.vy = 6; k.airTricks = 0; k.trick = null; k.boost = 0; k.orbit = 0; k.item = null; })()")
+    pg.touchscreen.tap(x, y); pg.wait_for_timeout(40); r = E("[!!__sim.G.me.trick, __sim.G.me.airTricks]"); ok(r[0] and r[1] == 1, 'in the air DRIFT starts a trick', str(r))
+    pg.touchscreen.tap(x, y); pg.wait_for_timeout(30); ok(E("__sim.G.me.airTricks") == 1, 'a tap during a trick does nothing')
     pg.wait_for_function("!__sim.G.me.air", timeout=5000); r = E("[__sim.G.me.spin, __sim.G.me.boost, __sim.G.tricks, __sim.G.wipeouts]")
     ok(r[0] == 0 and r[1] > 0.3 and r[2] == 1, 'landing after the trick: clean, a boost', str(r))
-    pg.wait_for_timeout(300); E("(() => { const k = __sim.G.me; k.air = true; k.y += 0.6; k.vy = 0; k.airTricks = 0; k.trick = null; })()"); pg.touchscreen.tap(320, 600)
+    pg.wait_for_timeout(300); E("(() => { const k = __sim.G.me; k.air = true; k.y += 0.6; k.vy = 0; k.airTricks = 0; k.trick = null; })()"); pg.touchscreen.tap(x, y)
     pg.wait_for_function("!__sim.G.me.air", timeout=5000); ok(E("__sim.G.wipeouts") == 1 and E("__sim.G.me.spin") > 0, 'landing mid-trick: a wipeout')
     pg.wait_for_timeout(200); ok(not errs, 'no JavaScript errors', str(errs[:3]))
     b.close()

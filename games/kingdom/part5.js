@@ -24,7 +24,7 @@ function showHome() {
 function startGame() {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.stick = null; ui.lapT = 0;
+  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.stick = null; ui.lapT = 0; PTR.clear(); ui.press = {};
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -89,13 +89,32 @@ $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 function tapAt() {}
-// input (two thumbs): the left half steers (put it down and slide); a tap on the right half uses the item
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (e.clientX > W / 2) { ui.rid = e.pointerId; if (G.count > 0) { setHold(G, true); return; } const air = G.me.air, had = G.me.item || G.me.orbit || G.me.peppers; if (tapRight(G)) vibe(HAP.light); else if (!air && !had && !G.me.roul) sfx.no(); return; }
-  if (ui.stick) return; ui.stick = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId) return; s2.x = e.clientX; s2.y = e.clientY; stickToGame(); });
-function stickToGame() { const s2 = ui.stick; if (!G) return; if (!s2) { setSteer(G, 0); return; } const dx = s2.x - s2.x0, R = 60 * k; setSteer(G, Math.abs(dx) < 4 * k ? 0 : clamp(dx / R, -1, 1)); }
-function endStick(e) { if (e.pointerId === ui.rid) { ui.rid = null; if (G) setHold(G, false); } const s2 = ui.stick; if (s2 && s2.id === e.pointerId) { ui.stick = null; stickToGame(); } }
-cv.addEventListener('pointerup', endStick); cv.addEventListener('pointercancel', endStick);
+// input: buttons (KartRider-style). The left half of the screen is ◀ and ▶ (a thumb can slide between them); on the right,
+// DRIFT (hold), ITEM (tap: ahead; swipe down: behind) and NITRO (tap). Several thumbs at once. Before the start, any right-hand
+// button held revs the engine (rocket start on the second light).
+const PTR = new Map(); ui.press = {};
+function whichBtn(x, y) { const B = btnLayout(); if (x < W / 2) return x < (B.L.x + B.R.x) / 2 ? 'L' : 'R';
+  let best = null, bd = 1e9; for (const id of ['D', 'I', 'N']) { const b = B[id], d = Math.hypot(x - b.x, y - b.y) / b.r; if (d < bd) { bd = d; best = id; } } return bd < 1.8 ? best : (y > H * 0.55 ? 'D' : null); }
+function steerFromPtrs() { let l = false, r = false; for (const p of PTR.values()) { if (p.b === 'L') l = true; if (p.b === 'R') r = true; } setBtn(G, 'L', l); setBtn(G, 'R', r); }
+function holdFromPtrs() { if (G && G.count > 0) setHold(G, [...PTR.values()].some(p => p.b === 'D' || p.b === 'I' || p.b === 'N')); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const b = whichBtn(e.clientX, e.clientY); if (!b) return; PTR.set(e.pointerId, { b, x0: e.clientX, y0: e.clientY, done: false }); try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  ui.press[b] = true; if (b === 'L' || b === 'R') steerFromPtrs();
+  else if (G.count > 0) holdFromPtrs();
+  else if (b === 'D') { if (driftDown(G)) vibe(HAP.tick); }
+  else if (b === 'N') { if (useNitro(G)) vibe(HAP.sharp); else sfx.no(); } });
+cv.addEventListener('pointermove', e => { const p = PTR.get(e.pointerId); if (!p || !G) return;
+  if (p.b === 'L' || p.b === 'R') { const nb = e.clientX < W / 2 ? whichBtn(e.clientX, e.clientY) : p.b; if (nb !== p.b) { ui.press[p.b] = false; p.b = nb; ui.press[nb] = true; steerFromPtrs(); } }
+  if (p.b === 'I' && !p.done && e.clientY - p.y0 > 34 * k && G.count <= 0) { p.done = true; const had = G.me.item || G.me.orbit || G.me.peppers; if (itemTap(G, true)) vibe(HAP.light); else if (!had) sfx.no(); } });
+function endPtr(e) { const p = PTR.get(e.pointerId); if (!p) return; PTR.delete(e.pointerId); ui.press[p.b] = [...PTR.values()].some(q => q.b === p.b); if (!G) return;
+  if (p.b === 'L' || p.b === 'R') steerFromPtrs();
+  else if (G.count > 0) holdFromPtrs();
+  else if (p.b === 'D') { if (![...PTR.values()].some(q => q.b === 'D')) driftUp(G); }
+  else if (p.b === 'I' && !p.done) { const had = G.me.item || G.me.orbit || G.me.peppers || G.me.air; if (itemTap(G, false)) vibe(HAP.light); else if (!had && !G.me.roul) sfx.no(); } }
+cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
+// a keyboard too (arrows steer, space drifts, X item ahead, C item behind, Z nitro)
+const KEYS = {}; addEventListener('keydown', e => { if (!G || G.over || paused || KEYS[e.code]) return; KEYS[e.code] = 1; const c2 = e.code;
+  if (c2 === 'ArrowLeft') setBtn(G, 'L', true); if (c2 === 'ArrowRight') setBtn(G, 'R', true); if (c2 === 'Space' || c2 === 'ArrowUp') driftDown(G); if (c2 === 'KeyX') itemTap(G, false); if (c2 === 'KeyC' || c2 === 'ArrowDown') itemTap(G, true); if (c2 === 'KeyZ') useNitro(G); if (G.count > 0) setHold(G, true); });
+addEventListener('keyup', e => { KEYS[e.code] = 0; if (!G) return; const c2 = e.code; if (c2 === 'ArrowLeft') setBtn(G, 'L', false); if (c2 === 'ArrowRight') setBtn(G, 'R', false); if (c2 === 'Space' || c2 === 'ArrowUp') driftUp(G); if (G.count > 0) setHold(G, false); });
 // the garage: drivers and karts, opened with stars; tap one to choose it
 function starsAll() { return Object.values(stars).reduce((a, b) => a + b, 0); }
 const shipOpen = q => starsAll() >= q.stars, shipsOpen = () => DRIVERS.filter(shipOpen).length + KARTS.filter(shipOpen).length;
@@ -183,7 +202,7 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  steer(s) { setSteer(G, s); }, hold(on) { setHold(G, on); }, item() { return tapRight(G); }, tap() { return tapRight(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
+  steer(s) { setSteer(G, s); }, btn(b, on) { setBtn(G, b, on); }, driftDown() { return driftDown(G); }, driftUp() { driftUp(G); }, itemTap(back) { return itemTap(G, back); }, nitro() { return useNitro(G); }, btnLayout, hold(on) { setHold(G, on); }, item() { return tapRight(G); }, tap() { return tapRight(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

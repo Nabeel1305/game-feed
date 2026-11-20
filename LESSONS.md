@@ -775,6 +775,17 @@ Everything learned building the first games. Every new game must follow the **ru
 - Meeting lines need a real speaker (`from` is drawn as a face): never -1.
 
 ### 76. Kart Kingdom (`games/kingdom/`): the big kart racer (built on Stunt Kart and Drift Kings)
+- **Version 2 after his verdict ("mid"; 20 Nov 2026).** Researched first (KartRider Rush+, Mario Kart Tour, Beach Buggy
+  Racing 2): buttons instead of a slide. ◀ ▶ (a thumb can slide between them; the steering eases in over about 0.15 s), DRIFT
+  (hold with an arrow: hop and slide; into the turn tightens, away widens; in the air a trick), ITEM (tap ahead, swipe down
+  behind; a banana is lobbed about 40 m down the road and a ring shows where it lands; its thrower is safe from it for 3 s),
+  NITRO (two bars from drifts, tricks, slipstreams, rings). A kart with nitro and drift boosts won every race: rival skill
+  now rises to 1.07 (from 0.99), and rivals fill and fire nitro too. Blind thumbs are 3 moves (s random arrows, d DRIFT
+  down/up, t ITEM ahead/behind or NITRO) so the kit's blind test stays near 90 strings: 0 of 5,696 won; random 0 of 480.
+- In the trick lesson a plain hop on the ground (DRIFT without an arrow) resets the count; a drift does not (the robot, like
+  a person, drifts through the bends).
+- Music v2: drums on a sixteenth grid (kick, snare, hats, claps, crash and rolls at sections), octave-pumping bass, stabs,
+  arpeggio, and a hook built as motif / answer / variation / motif over 8 bars; verse and chorus alternate.
 - **THE real cause of the black screens (his screenshots, 20 Nov 2026): the sky drew, the land, road and karts were black.**
   world3d.js built the all-round light (scene.environment, through PMREM) from the sky shader; on his Samsung's chip that
   shader gives NaN below the horizon, and NaN in that light blacks out every lit surface. Reproduced here by forcing NaN in

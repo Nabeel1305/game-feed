@@ -2591,7 +2591,7 @@
       "id": "kingdom",
       "name": "Kart Kingdom",
       "status": "testing",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "added": "2026-11-20",
       "path": "games/kingdom/index.html",
       "artifact": "https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU",
@@ -2601,7 +2601,7 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "16 tracks, turtle shells, gliders, drifts. Win the cup.",
+        "hook": "Steer, drift, NITRO! 16 tracks, shells, gliders. Win the cup.",
         "genre": "Racing / kart",
         "intensity": 4,
         "thumbs": 2,
@@ -2619,7 +2619,7 @@
         "P26",
         "P30"
       ],
-      "summary": "His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, drifts with coloured sparks, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies."
+      "summary": "His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, KartRider-style buttons (steer arrows, DRIFT, ITEM, NITRO), drifts with coloured sparks that fill the nitro, bananas thrown far ahead or behind, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies."
     }
   ],
   "planned": []

@@ -33,7 +33,13 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
     // nose up or down with the slope; a lean in the drift; a wobble at speed; a hop when spun
     const sl = k.air ? clamp(k.vy * 0.03, -0.35, 0.35) : Math.atan(S[k.i].slope || 0); u.inner.rotation.set(k.drift || k.drifting ? -(k.drift || Math.sign(S[k.i].curve)) * 0.12 : 0, 0, sl); u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.4 : Math.sin(t * 30 + k.x) * 0.012 * Math.min(1, k.v / 10);
     u.body.rotation.y = k.spin ? t * 14 : 0; u.wheels.forEach((w, i) => { w.rotation.z -= k.v * dt / 0.33; if (i < 2) w.rotation.y = -(k.me ? g.steer : k.steer) * 0.4; });
-    u.head.rotation.y = -(k.me ? g.steer : k.steer) * 0.35; u.head.rotation.z = k.air ? 0.2 : 0;
+    u.head.rotation.y = -(k.me ? g.steer : k.steer) * 0.35 + (k.lookBack > 0 ? Math.PI * 0.8 : 0); u.head.rotation.z = k.air ? 0.2 : 0; u.drv.rotation.x = (k.me ? g.steer : k.steer) * 0.22; k.lookBack = Math.max(0, (k.lookBack || 0) - dt);
+    if (!u.sh) { u.sh = new T.Mesh(new T.PlaneGeometry(3.4, 2.4), new T.MeshBasicMaterial({ map: SHADOW(), transparent: true, depthWrite: false, opacity: 0.75 })); u.sh.rotation.x = -Math.PI / 2; u.sh.renderOrder = 1; V.S.add(u.sh); }
+    { const gy = k.fall > 0 ? -999 : (k.gyLast != null ? k.gyLast : k.y), hgt = Math.max(0, (k.y || 0) - gy); u.sh.visible = m.visible && k.fall <= 0; u.sh.position.set(k.x, gy + 0.06, k.z); u.sh.rotation.z = -k.h; u.sh.material.opacity = 0.75 / (1 + hgt * 0.35); u.sh.scale.setScalar(1 + hgt * 0.08); }
+    if (k.spin > 0) { if (!u.stars) { u.stars = new T.Group(); for (let q = 0; q < 5; q++) { const st = new T.Sprite(new T.SpriteMaterial({ map: STARTEX(), transparent: true, depthWrite: false })); st.scale.setScalar(0.55); u.stars.add(st); } V.S.add(u.stars); } u.stars.visible = true; u.stars.children.forEach((st, q) => { const a = t * 6 + q / 5 * TAU; st.position.set(Math.cos(a) * 0.9, 0, Math.sin(a) * 0.9); }); u.stars.position.set(k.x, (k.y || 0) + 2.4, k.z); } else if (u.stars) u.stars.visible = false;
+    if (((k.drift || k.drifting) && k.v > 12 && !k.air) || (k.off && k.v > 10 && !k.air)) for (const sd of [-0.8, 0.8]) if (Math.random() < (k.me ? 0.7 : 0.25)) V.smokeP.push({ x: k.x - Math.cos(k.h) * 0.9 - Math.sin(k.h) * sd, y: (k.y || 0) + 0.3, z: k.z - Math.sin(k.h) * 0.9 + Math.cos(k.h) * sd, vx: (Math.random() - 0.5) * 1.5, vy: 0.6 + Math.random() * 0.8, vz: (Math.random() - 0.5) * 1.5, t: 0, life: 0.6 + Math.random() * 0.5, s: 0.8 + Math.random() * 0.6, c: k.off && !k.drift ? 0xc8b090 : 0xeeeeee });
+    if (k.boost > 0 || k.nitroT > 0 || k.rocket > 0) { k.trail = k.trail || []; k.trail.push({ x: k.x - Math.cos(k.h) * 1.3, y: (k.y || 0) + 0.5, z: k.z - Math.sin(k.h) * 1.3, t: 0, c: k.nitroT > 0 ? 0x3ae0ff : k.rocket > 0 ? 0xff7a2a : 0xffb040 }); if (k.trail.length > 16) k.trail.shift(); } else if (k.trail && k.trail.length) k.trail.shift();
+    if (k.trail) for (const q of k.trail) { q.t += dt; if (Math.hypot(q.x - W3.cam.position.x, q.z - W3.cam.position.z) < 60) V.trailP.push(q); }
     if (k.trick) { const p = clamp(k.trick.t / TRICK, 0, 1), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, a = e * TAU, kd = k.trick.kind; u.inner.position.y = Math.sin(p * Math.PI) * 0.5; if (kd === 0) u.inner.rotation.z = a; else if (kd === 1) u.inner.rotation.y = a; else if (kd === 2) u.inner.rotation.x = a; else if (kd === 3) u.inner.rotation.x = Math.sin(p * Math.PI) * 1.3; else { u.inner.rotation.x = a; u.inner.rotation.y = a * 0.5; } } else u.inner.position.y = 0;
     if (k.star > 0 || u.glow) { if (!u.glow) { u.glow = new T.Sprite(new T.SpriteMaterial({ map: glowTex(), blending: T.AdditiveBlending, depthWrite: false, transparent: true })); u.glow.scale.setScalar(5); u.glow.position.y = 0.9; u.inner.add(u.glow); } u.glow.visible = k.star > 0; if (k.star > 0) u.glow.material.color.setHSL((t * 1.6) % 1, 1, 0.6); }
     u.wings.visible = !!k.glide; u.rk.visible = k.rocket > 0; u.bub.visible = k.shield > 0; if (u.bub.visible) u.bub.scale.setScalar(1 + Math.sin(t * 6) * 0.03);
@@ -68,6 +74,14 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
   while (V.peelsM.length < g.peels.length) { const m = peelModel(); V.S.add(m); V.peelsM.push(m); } V.peelsM.forEach((m, i) => { const p = g.peels[i]; m.visible = !!p; if (p) m.position.set(p.x, (p.y || 0) + 0.05, p.z); });
   while (V.boomsM.length < g.booms.length) { const sp = new T.Sprite(new T.SpriteMaterial({ map: glowTex('rgba(255,255,220,1)', 'rgba(255,140,40,.8)'), blending: T.AdditiveBlending, depthWrite: false })); V.S.add(sp); V.boomsM.push(sp); }
   V.boomsM.forEach((m, i) => { const b = g.booms[i]; m.visible = !!b; if (b) { const u = b.t / 1.2; m.position.set(b.x, (b.y || 0) + 1 + u * 2, b.z); m.scale.setScalar(2 + u * (b.kind === 'comet' ? 16 : 9)); m.material.opacity = 1 - u; m.material.color.setHex(b.kind === 'comet' ? 0x8ab0ff : b.kind === 'lava' ? 0xffa040 : 0xffffff); } });
+  // smoke puffs and boost trails (pools of soft sprites)
+  { const P2 = V.smokeP; while (P2.length > 90) P2.shift(); for (let i = P2.length - 1; i >= 0; i--) { const q = P2[i]; q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; if (q.t > q.life) P2.splice(i, 1); }
+    while (V.smokeM.length < 90) { const sp = new T.Sprite(new T.SpriteMaterial({ map: SMOKE(), transparent: true, depthWrite: false, opacity: 0.5 })); sp.visible = false; V.S.add(sp); V.smokeM.push(sp); }
+    V.smokeM.forEach((sp, i) => { const q = P2[i]; sp.visible = !!q; if (q) { const u = q.t / q.life; sp.position.set(q.x, q.y, q.z); sp.scale.setScalar(q.s * (1 + u * 2.2)); sp.material.opacity = 0.45 * (1 - u); sp.material.color.setHex(q.c); } });
+    const TP = V.trailP; while (V.trailM.length < 80) { const sp = new T.Sprite(new T.SpriteMaterial({ map: glowTex(), transparent: true, depthWrite: false, blending: T.AdditiveBlending })); sp.visible = false; V.S.add(sp); V.trailM.push(sp); }
+    V.trailM.forEach((sp, i) => { const q = TP[i]; sp.visible = !!q; if (q) { const u = clamp(q.t / 0.3, 0, 1); sp.position.set(q.x, q.y, q.z); sp.scale.setScalar(1.6 * (1 - u * 0.8)); sp.material.opacity = 0.85 * (1 - u); sp.material.color.setHex(q.c); } }); V.trailP.length = 0; }
+  while (V.lobsM.length < g.lobs.length) { const m = peelModel(); m.scale.setScalar(1.4); V.S.add(m); const ring = new T.Mesh(new T.RingGeometry(1.0, 1.35, 24), new T.MeshBasicMaterial({ color: 0xffd23a, transparent: true, opacity: 0.85, depthWrite: false, side: T.DoubleSide })); ring.rotation.x = -Math.PI / 2; V.S.add(ring); m.userData.ring = ring; V.lobsM.push(m); }
+  V.lobsM.forEach((m, i) => { const o = g.lobs[i]; m.visible = m.userData.ring.visible = !!o; if (o) { m.position.set(o.x, o.y, o.z); m.rotation.set(t * 9, t * 7, 0); m.userData.ring.position.set(o.tx, o.ty + 0.08, o.tz); m.userData.ring.scale.setScalar(1 + 0.2 * Math.sin(t * 14)); } });
   // the start lights on the arch
   if (V.startLights) V.startLights.forEach((l, i) => { const lit = g.count > 0 ? (3 - Math.ceil(g.count)) >= i : false, gl = g.count <= 0 && g.t < 4; l.material.color.setHex(gl ? 0x3aff6a : lit ? 0xff2a2a : 0x331111); });
   // sparks
@@ -80,21 +94,25 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
 }
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
 function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2, front: true }; SV.set(x, y, z); return W3.screen(SV); }
+function dropKart(V, m) { V.S.remove(m); const u = m.userData; for (const x of [u.bee, u.sh, u.stars]) if (x) V.S.remove(x); if (u.orb) u.orb.forEach(s2 => V.S.remove(s2)); }
 // ---------- events: calls, sounds, shakes ----------
 const nth = q => q + (q === 1 ? 'st' : q === 2 ? 'nd' : q === 3 ? 'rd' : 'th');
 function onEvent(G, e) {
   const cx = W / 2;
   switch (e.k) {
-    case 'start': { const c = G.cfg; say(TRACKS[c.track].name.toUpperCase(), cx, H * 0.27, '#ffffff', 22); say(`${CUPS[c.cup].icon} ${CUPS[c.cup].name.toUpperCase()} · ${CLASSES[c.cls]}${c.boss ? ' · BOSS RACE' : ''}`, cx, H * 0.31, '#ffd080', 14); say(c.place === 1 ? 'WIN THE RACE!' : `FINISH TOP ${c.place}`, cx, H * 0.345, '#9be3ff', 16); sfx.go(); if (G.N <= 3) tip('rocket', 'Hold the RIGHT side of the screen as the 2nd light comes on for a ROCKET START!', 3.0); } break;
+    case 'start': { const c = G.cfg; say(TRACKS[c.track].name.toUpperCase(), cx, H * 0.27, '#ffffff', 22); say(`${CUPS[c.cup].icon} ${CUPS[c.cup].name.toUpperCase()} · ${CLASSES[c.cls]}${c.boss ? ' · BOSS RACE' : ''}`, cx, H * 0.31, '#ffd080', 14); say(c.place === 1 ? 'WIN THE RACE!' : `FINISH TOP ${c.place}`, cx, H * 0.345, '#9be3ff', 16); sfx.go(); if (G.N <= 3) tip('rocket', 'Hold DRIFT as the 2nd light comes on for a ROCKET START!', 3.0); } break;
     case 'light': sfx.light(e.n); if (e.n <= 3 && !G.lesson) say(String(e.n), cx, H * 0.46, ['#7af0a0', '#ffd040', '#ff9a3a', '#ff5a5a'][e.n], 64); break;
     case 'go': sfx.light(0); say('GO!', cx, H * 0.36, '#7af0a0', 50); FX.flash = 0.2; music.start(G); break;
     case 'rocket': sfx.boost(3); say('ROCKET START!', cx, H * 0.42, '#ffd040', 26); FX.shake = 6; vibe(HAP.sharp); break;
-    case 'stall': sfx.no(); say('STALLED! TOO EARLY', cx, H * 0.42, '#ff9a8a', 20); tip('stall', 'Too early! Hold the right side only when the SECOND light comes on.', 3); break;
+    case 'stall': sfx.no(); say('STALLED! TOO EARLY', cx, H * 0.42, '#ff9a8a', 20); tip('stall', 'Too early! Hold DRIFT only when the SECOND light comes on.', 3); break;
     case 'drift': sfx.drift(); break;
     case 'spark': sfx.spark(e.tier); G.me.lastTier = e.tier; break;
-    case 'boost': sfx.boost(e.tier); FX.shake = 2 + e.tier; G.me.lastTier = e.tier; say(['', 'BOOST', 'SUPER BOOST!', 'ULTRA BOOST!!'][e.tier], cx, H * 0.6, ['#fff', '#7ad0ff', '#ffb040', '#d080ff'][e.tier], 16 + e.tier * 4); if (e.tier >= 2) vibe(HAP.light); if (G.N <= 2) tip('drift2', 'Hold the drift longer for orange, then purple sparks: bigger boosts!', 2.6); break;
-    case 'hop': break;
-    case 'launch': sfx.launch(e.big); FX.shake = 3; if (e.big) say('GLIDE!', cx, H * 0.3, '#ffd040', 30); if (G.N <= 4) tip(e.big ? 'glide' : 'air', e.big ? 'Steer through the gold RINGS for a boost when you land. Tap for tricks!' : 'In the air: TAP the right side for a trick!', 2.4); break;
+    case 'boost': sfx.boost(e.tier); FX.shake = 2 + e.tier; G.me.lastTier = e.tier; say(['', 'BOOST', 'SUPER BOOST!', 'ULTRA BOOST!!'][e.tier], cx, H * 0.6, ['#fff', '#7ad0ff', '#ffb040', '#d080ff'][e.tier], 16 + e.tier * 4); if (e.tier >= 2) vibe(HAP.light); if (G.N <= 2) tip('drift2', 'Hold DRIFT longer for orange, then purple sparks: bigger boosts (and more NITRO)!', 2.6); break;
+    case 'hop': sfx.hop(); break;
+    case 'nitro': sfx.nitro(); FX.shake = 8; FX.flash = 0.25; say('NITRO!', cx, H * 0.4, '#7ae8ff', 34); vibe(HAP.sharp); break;
+    case 'nitroready': sfx.ready(); say(e.n > 1 ? 'NITRO ×2 READY' : 'NITRO READY!', cx, H * 0.56, '#7ae8ff', 18); if (G.N <= 4) tip('nitro', 'Your NITRO is full: tap the glowing NITRO button for a big boost!', 2.8); break;
+    case 'peelland': if (e.me) { sfx.thump(); const p = scr(e.x, (e.y || 0) + 0.6, e.z); if (p.front) say('🍌', p.x, p.y - 10 * k, '#ffd040', 20); } break;
+    case 'launch': sfx.launch(e.big); FX.shake = 3; if (e.big) say('GLIDE!', cx, H * 0.3, '#ffd040', 30); if (G.N <= 4) tip(e.big ? 'glide' : 'air', e.big ? 'Steer through the gold RINGS for a boost when you land. Tap DRIFT for tricks!' : 'In the air: tap DRIFT for a trick!', 2.4); break;
     case 'trick': sfx.trick(e.n); say(TRICKS[e.kind] + (e.n > 1 ? ` ×${e.n}` : ''), cx, H * 0.36 - Math.min(5, e.n) * 6 * k, ['#ffffff', '#ffd040', '#ff9a3a', '#ff5ac8', '#9ae6ff'][Math.min(4, e.n - 1)], 18 + Math.min(10, e.n * 2)); vibe(HAP.tick); break;
     case 'trickdone': sfx.tick(); break;
     case 'land': if (e.n) { sfx.land(e.n, e.perfect); FX.shake = 3 + e.n; say(e.perfect ? 'PERFECT!' : 'CLEAN! +BOOST', cx, H * 0.6, e.perfect ? '#ffd040' : '#7af0a0', e.perfect ? 30 : 20); if (e.perfect) { FX.flash = 0.35; burst(cx, H * 0.62, '#ffd040', 20, 200); } vibe(e.perfect ? HAP.sharp : HAP.light); } else sfx.thump(); if (e.rings) say(`${e.rings} RING${e.rings > 1 ? 'S' : ''}! +BOOST`, cx, H * 0.66, '#ffd040', 18); break;
@@ -105,7 +123,7 @@ function onEvent(G, e) {
     case 'draft': sfx.pad(); say('SLIPSTREAM!', cx, H * 0.56, '#bfe8ff', 18); tip('draft', 'Stay right behind a kart for a moment: its slipstream gives you a boost.', 2.6); break;
     case 'box': sfx.item(); ui.roulT = 0; break;
     case 'boxhit': sfx.boxhit(); { const p = scr(e.x, e.y, e.z); burst(p.x, p.y, '#9ad8ff', 10, 160); } break;
-    case 'item': say(ITEMS[e.it].icon + ' ' + ITEMS[e.it].name.toUpperCase(), cx, H * 0.4, '#ffffff', 18); sfx.ding(); if (G.N <= 5) tip('item', e.it === 'triple' ? 'Three shells spin round you: they block a hit. Tap to fire them, one at a time.' : 'Tap the right side of the screen to use your item.', 2.8); break;
+    case 'item': say(ITEMS[e.it].icon + ' ' + ITEMS[e.it].name.toUpperCase(), cx, H * 0.4, '#ffffff', 18); sfx.ding(); if (G.N <= 5) tip('item', e.it === 'triple' ? 'Three shells spin round you: they block a hit. Tap to fire them, one at a time.' : 'Tap ITEM to throw it far ahead. Swipe ITEM down to throw it behind you.', 2.8); break;
     case 'use': if (e.me) sfx.use(e.it); break;
     case 'freeze': if (!e.me) { say('❄ SNOW FLURRY!', cx, H * 0.34, '#bfe8ff', 22); } break;
     case 'spin': if (e.me) { sfx.spin(); FX.shake = 10; FX.red = 0.4; FX.stop = 0.06; say({ shell: 'SHELLED!', homing: 'SEEKER!', peel: 'SLIPPED!', star: 'STARRED!', comet: 'COMET!!', freeze: 'FROZEN!', sheep: 'BAAA!', crab: 'PINCHED!', boulder: 'BOULDER!', snowball: 'SNOWBALL!', ghost: 'BOO!', twister: 'TWISTER!', gumdrop: 'BOING!', cannon: 'CANNONBALL!', lava: 'TOO HOT!', meteor: 'METEOR!', car: 'BEEP BEEP!' }[e.why] || 'SPUN OUT!', cx, H * 0.4, '#ffb4a8', 26); if (e.lost) say(`−${e.lost} 🪙`, cx, H * 0.46, '#ffd040', 16); } else { const p = scr(e.x, (e.y || 0) + 1.5, e.z); if (p.front && Math.abs(p.x - cx) < W) burst(p.x, p.y, '#ffffff', 6, 90); } break;
@@ -132,15 +150,15 @@ function onEvent(G, e) {
   }
 }
 // ---------- every frame ----------
-function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k2 = g.me, sp = k2.v / VMAX; FX.speed = lerp(FX.speed, k2.boost > 0 || k2.rocket > 0 ? 1 : 0, Math.min(1, dt * 4));
+function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k2 = g.me, sp = k2.v / VMAX; FX.speed = lerp(FX.speed, k2.nitroT > 0 ? 1.4 : k2.boost > 0 || k2.rocket > 0 ? 1 : 0, Math.min(1, dt * 4));
   cam.fov = (asp < 0.8 ? 68 : 54) + sp * 6 + FX.speed * 8; cam.aspect = asp; cam.updateProjectionMatrix();
   if (!ui.cam || ui.snap) { ui.cam = { h: k2.h, y: k2.y || 0 }; ui.snap = false; } let dh = k2.h - ui.cam.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); ui.cam.h += dh * Math.min(1, dt * (k2.spin ? 1.5 : 5));
   ui.cam.y = lerp(ui.cam.y, k2.fall > 0 ? ui.cam.y : (k2.y || 0), Math.min(1, dt * (k2.air ? 3 : 8)));
-  const h = ui.cam.h, back = 6.6 + FX.speed * 0.8, up = 3.0, sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.02 : 0;
+  const h = ui.cam.h, back = 6.2 + FX.speed * 1.0, up = 2.75, sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.02 : 0;
   let px = k2.x - Math.cos(h) * back, py = up + ui.cam.y, pz = k2.z - Math.sin(h) * back, lx = k2.x + Math.cos(h) * 6, ly = 0.8 + ui.cam.y, lz = k2.z + Math.sin(h) * 6;
   // during the countdown: in from the front of the grid, round and down behind your kart
   if (g.count > 0 && !g.lesson) { const u = clamp((3.2 - g.count) / 2.6, 0, 1), e = u * u * (3 - 2 * u), a = h + Math.PI * (1 - e), r = lerp(15, back, e), hy = lerp(10, up, e) + Math.sin(e * Math.PI) * 2; px = k2.x - Math.cos(a) * r; pz = k2.z - Math.sin(a) * r; py = hy + ui.cam.y; }
-  cam.position.set(px + sh, py, pz + sh); cam.lookAt(lx, ly, lz); cam.updateMatrixWorld(); }
+  ui.roll = lerp(ui.roll || 0, (k2.drift || 0) * 0.05 + (g.steer || 0) * 0.02, Math.min(1, dt * 4)); cam.up.set(Math.sin(h) * ui.roll, 1, -Math.cos(h) * ui.roll).normalize(); cam.position.set(px + sh, py, pz + sh); cam.lookAt(lx, ly, lz); cam.updateMatrixWorld(); }
 // bright enough for real eyes on a real phone (his words, 20 Nov 2026: "make it for human eyes"): every course at every
 // time of day is lifted to a clear, colourful picture; night courses keep their dark sky but the road and the karts are lit
 function brighten(info, sk) { const S = W3.S, night = ['night', 'dusk'].includes(sk), wet = ['rain', 'mist', 'overcast', 'storm'].includes(sk);
@@ -158,7 +176,7 @@ function draw(now, dt) {
   if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now, key = g.cfg.track + (g.cfg.mirror ? 100 : 0);
   if (V.trackN !== key || V.forG !== g) { if (V.trackN !== key) { V.trackN = key; buildTrack(V, g); const info = TRACKS[g.cfg.track]; const sk = skyOf(info, g.cfg.cls); W3.setSky(sk, { azim: 140 + info.seed % 90 }); brighten(info, sk); }
-    else { for (const [, m] of V.karts) { V.S.remove(m); const u = m.userData; if (u.orb) u.orb.forEach(s => V.S.remove(s)); if (u.bee) V.S.remove(u.bee); } V.karts.clear(); V.haz.forEach(m => V.track.remove(m)); V.haz = []; V.shotsM.forEach(m => m && V.S.remove(m)); V.shotsM = []; V.peelsM.forEach(m => V.S.remove(m)); V.peelsM = []; }
+    else { for (const [, m] of V.karts) dropKart(V, m); V.karts.clear(); V.haz.forEach(m => V.track.remove(m)); V.haz = []; V.shotsM.forEach(m => m && V.S.remove(m)); V.shotsM = []; V.peelsM.forEach(m => V.S.remove(m)); V.peelsM = []; }
     V.forG = g; ui.snap = true; }
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, g.me.y || 0, g.me.z, 34); W3.render(dt);
   // speed lines on a boost
@@ -170,6 +188,7 @@ function draw(now, dt) {
   ctx.globalAlpha = 1;
   if (hint) { const al = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, al); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; const lines = wrapText(hint.txt, W - 70), lh = 18 * k, h = lines.length * lh + 16 * k, w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 30;
     ctx.fillStyle = 'rgba(16,24,40,.88)'; rrect(W / 2 - w / 2, H * 0.5 - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.5 - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
+  if (G && G.me.nitroT > 0) { const a = Math.min(1, G.me.nitroT) * 0.55, gr = ctx.createRadialGradient(W / 2, H * 0.45, Math.min(W, H) * 0.35, W / 2, H * 0.45, Math.max(W, H) * 0.75); gr.addColorStop(0, 'rgba(60,200,255,0)'); gr.addColorStop(1, `rgba(60,200,255,${a})`); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); }
   if (FX.red > 0) { ctx.fillStyle = `rgba(255,40,60,${FX.red * 0.18})`; ctx.fillRect(0, 0, W, H); }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,235,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
 }
@@ -188,17 +207,9 @@ function hud(G, t) {
     ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.8)'; const tt = G.t.toFixed(1) + ' s'; ctx.strokeText(tt, x + 4, y + 92 * k); ctx.fillText(tt, x + 4, y + 92 * k);
     map(G, W - 12 - 92 * k, 46 * k, 92 * k);
   } else lessonPanel(G);
-  // the item: bottom right, under the right thumb; a roulette while it is being chosen
-  const r = 36 * k, bx = W - r - 18, by = H - r - 34 * k; ctx.fillStyle = 'rgba(16,24,40,.72)'; ctx.beginPath(); ctx.arc(bx, by, r, 0, TAU); ctx.fill();
-  const has = me.item || me.orbit || me.peppers; ctx.strokeStyle = has ? '#ffd040' : me.roul > 0 ? '#ffffff' : 'rgba(255,255,255,.25)'; ctx.lineWidth = 3 * k; ctx.stroke(); ctx.textAlign = 'center';
-  if (me.roul > 0) { const ids = Object.keys(ITEMS), q = ids[Math.floor(t * 14) % ids.length]; ctx.font = `${Math.round(28 * k)}px sans-serif`; ctx.fillText(ITEMS[q].icon.slice(0, 2), bx, by + 2); }
-  else if (has) { const ic = me.item ? ITEMS[me.item].icon : me.orbit ? '🐢×' + me.orbit : '🌶×' + me.peppers; ctx.font = `${Math.round((ic.length > 2 ? 20 : 30) * k)}px sans-serif`; ctx.fillText(ic, bx, by + 2); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#ffd040'; ctx.fillText(me.air ? 'TRICK' : 'TAP', bx, by - r - 10 * k); }
-  else { ctx.font = `700 ${Math.round(20 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillText('?', bx, by); }
-  // coins and the drift gauge
-  { const w = 150 * k, x0 = W / 2 - w / 2, y0 = H - 44 * k; panel(x0 - 8, y0 - 22 * k, w + 16, 40 * k); ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(11 * k)}px ${TF}`; ctx.fillStyle = '#ffd040'; ctx.fillText(`🪙 ${me.coin}/10`, x0, y0 - 9 * k);
-    ctx.textAlign = 'right'; const tn = ['DRIFT', 'BLUE', 'ORANGE', 'PURPLE'][me.tier || 0]; ctx.fillStyle = me.drift ? hex(TIERC[me.tier || 0]) : 'rgba(255,255,255,.5)'; ctx.fillText(me.drift ? tn : 'DRIFT', x0 + w, y0 - 9 * k);
-    const u = me.drift ? clamp(me.charge / 2.1, 0, 1) : 0; ctx.fillStyle = 'rgba(255,255,255,.14)'; rrect(x0, y0, w, 9 * k, 5); ctx.fill(); if (u > 0) { ctx.fillStyle = hex(TIERC[Math.max(1, me.tier || 0)]); rrect(x0, y0, Math.max(9 * k, w * u), 9 * k, 5); ctx.fill(); }
-    for (const m of [0.55, 1.25]) { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(x0 + w * m / 2.1 - 1, y0 - 2, 2, 9 * k + 4); } }
+  // coins, under the lap
+  if (!G.lesson) { ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(10,14,30,.8)'; const ct = `🪙 ${me.coin}/10`; ctx.strokeText(ct, 16, 46 * k + 112 * k); ctx.fillStyle = '#ffd040'; ctx.fillText(ct, 16, 46 * k + 112 * k); }
+  buttons(G, t);
   // in the air: a ring round your kart that empties as the ground comes up (a trick takes this much: the white tick)
   if (me.air && !me.spin && me.fall <= 0) { const p = scr(me.x, (me.y || 0) + 0.8, me.z), tl = landPred(G, me), full = me.glide ? 3 : 1.2, R3 = 38 * k, u = clamp(tl / full, 0, 1);
     if (tl > 0.3 || me.trick) { ctx.lineWidth = 6 * k; ctx.strokeStyle = 'rgba(16,24,40,.5)'; ctx.beginPath(); ctx.arc(p.x, p.y, R3, 0, TAU); ctx.stroke(); const ok = tl > TRICK; ctx.strokeStyle = me.trick ? '#ff9a3a' : ok ? '#7af0a0' : '#ff5a5a'; ctx.beginPath(); ctx.arc(p.x, p.y, R3, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke();
@@ -207,11 +218,31 @@ function hud(G, t) {
       else if (ok) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 12); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('TAP!', p.x, p.y - R3 - 12 * k); ctx.globalAlpha = 1; } } }
   // the start lights (and the rocket start: hold on the second light)
   if (G.count > 0) { const n = Math.ceil(G.count), cx = W / 2, cy = H * 0.16; ctx.fillStyle = 'rgba(16,16,24,.88)'; rrect(cx - 80 * k, cy - 26 * k, 160 * k, 52 * k, 14); ctx.fill(); for (let i = 0; i < 3; i++) { const lit = i < 4 - n; ctx.fillStyle = lit ? '#ff3a3a' : 'rgba(255,255,255,.12)'; if (lit) { ctx.shadowColor = '#ff3a3a'; ctx.shadowBlur = 16; } ctx.beginPath(); ctx.arc(cx - 46 * k + i * 46 * k, cy, 16 * k, 0, TAU); ctx.fill(); ctx.shadowBlur = 0; }
-    ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = G.hold ? (G.holdAt > 2.05 ? '#ff9a8a' : '#7af0a0') : 'rgba(255,255,255,.85)'; ctx.fillText(G.hold ? (G.holdAt > 2.05 ? 'TOO EARLY…' : 'REVVING!') : 'hold the right side on the 2nd light', cx, cy + 42 * k); }
-  // the steering thumb (the outer part of the slide is the drift zone)
-  const st = ui.stick; if (st) { const R2 = 60 * k; ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.moveTo(st.x0 - R2, st.y0); ctx.lineTo(st.x0 + R2, st.y0); ctx.stroke(); ctx.strokeStyle = 'rgba(255,170,60,.6)'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(st.x0 + s * R2 * 0.72, st.y0); ctx.lineTo(st.x0 + s * R2, st.y0); ctx.stroke(); }
-    ctx.fillStyle = me.drift ? hex(TIERC[Math.max(1, me.tier)]) : 'rgba(255,255,255,.65)'; ctx.beginPath(); ctx.arc(st.x0 + G.steer * R2, st.y0, 18 * k, 0, TAU); ctx.fill(); }
-  else if (G.N <= 2 && !G.over && G.t < 9 && G.count <= 0) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('left thumb: slide to steer · right: tap (items; tricks in the air)', W / 2, H - 130 * k); ctx.globalAlpha = 1; }
+    ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = G.hold ? (G.holdAt > 2.05 ? '#ff9a8a' : '#7af0a0') : 'rgba(255,255,255,.85)'; ctx.fillText(G.hold ? (G.holdAt > 2.05 ? 'TOO EARLY…' : 'REVVING!') : 'hold DRIFT on the 2nd light', cx, cy + 42 * k); }
+  if (G.N <= 2 && !G.over && G.t < 10 && G.count <= 0 && !G.lesson) { ctx.globalAlpha = 0.55 + 0.45 * Math.sin(t * 4); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('◀ ▶ steer · hold DRIFT in the bends · tap ITEM · NITRO when it glows', W / 2, H - 200 * k); ctx.globalAlpha = 1; }
+}
+// ---------- the buttons (KartRider-style): ◀ ▶ under the left thumb; DRIFT (big), ITEM and NITRO under the right ----------
+function btnLayout() { const r = 40 * k, by = H - 74 * k, dx = W - 18 - r * 1.35; return { L: { x: 14 + r * 1.12, y: by, r: r * 1.12 }, R: { x: 14 + r * 3.4, y: by, r: r * 1.12 }, D: { x: dx, y: by, r: r * 1.35 },
+  I: { x: dx - r * 2.5, y: by - r * 1.55, r: r }, N: { x: dx, y: by - r * 2.95, r: r * 0.95 } }; }
+function buttons(G, t) { const me = G.me, B = btnLayout(), P = ui.press || {};
+  const disc = (b, on, fill, edge) => { ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(b.x, b.y, b.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.lineWidth = 3 * k; ctx.strokeStyle = edge; ctx.stroke(); };
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const sd of ['L', 'R']) { const b = B[sd], on = sd === 'L' ? G.bL : G.bR; disc(b, on, on ? 'rgba(255,255,255,.42)' : 'rgba(16,24,40,.45)', on ? '#ffffff' : 'rgba(255,255,255,.45)');
+    ctx.fillStyle = '#fff'; ctx.beginPath(); const d = sd === 'L' ? -1 : 1, a = b.r * 0.42; ctx.moveTo(b.x + d * a, b.y); ctx.lineTo(b.x - d * a * 0.6, b.y - a * 0.85); ctx.lineTo(b.x - d * a * 0.6, b.y + a * 0.85); ctx.closePath(); ctx.fill(); }
+  // DRIFT: the spark charge runs round it in the colour it has reached
+  { const b = B.D, on = !!G.driftBtn; disc(b, on, on ? 'rgba(255,150,40,.55)' : 'rgba(16,24,40,.5)', me.drift ? hex(TIERC[Math.max(1, me.tier)]) : 'rgba(255,190,90,.8)');
+    if (me.drift) { const u = clamp(me.charge / 2.1, 0, 1); ctx.lineWidth = 6 * k; ctx.strokeStyle = hex(TIERC[Math.max(1, me.tier)]); ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 6 * k, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke(); }
+    ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(me.air ? 'TRICK' : 'DRIFT', b.x, b.y + 1); }
+  // ITEM: what you have (a roulette while it is chosen); tap = ahead, swipe down = behind
+  { const b = B.I, has = me.item || me.orbit || me.peppers, on = P.I; disc(b, on, has ? 'rgba(255,208,64,.28)' : 'rgba(16,24,40,.45)', has ? '#ffd040' : 'rgba(255,255,255,.3)');
+    if (me.roul > 0) { const ids = Object.keys(ITEMS), q = ids[Math.floor(t * 14) % ids.length]; ctx.font = `${Math.round(26 * k)}px sans-serif`; ctx.fillText(ITEMS[q].icon.slice(0, 2), b.x, b.y + 2); }
+    else if (has) { const ic = me.item ? ITEMS[me.item].icon : me.orbit ? '🐢×' + me.orbit : '🌶×' + me.peppers; ctx.font = `${Math.round((ic.length > 2 ? 17 : 28) * k)}px sans-serif`; ctx.fillText(ic, b.x, b.y + 2);
+      if (G.N <= 6 && (me.item === 'peel' || me.item === 'shell' || me.orbit)) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = '#ffd040'; ctx.fillText('tap: ahead · swipe ↓: behind', b.x, b.y - b.r - 10 * k); } }
+    else { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.fillText('ITEM', b.x, b.y); } }
+  // NITRO: two bars; glowing when one is full
+  { const b = B.N, nv = me.nitro || 0, ready = nv >= 1, on = P.N; if (ready) { ctx.shadowColor = '#3ae0ff'; ctx.shadowBlur = 18 + 8 * Math.sin(t * 8); } disc(b, on, ready ? 'rgba(40,190,255,.55)' : 'rgba(16,24,40,.45)', ready ? '#9ae8ff' : 'rgba(255,255,255,.3)'); ctx.shadowBlur = 0;
+    for (let q = 0; q < 2; q++) { const u = clamp(nv - q, 0, 1); ctx.lineWidth = 5 * k; ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 5 * k, -Math.PI / 2 + q * Math.PI + 0.08, -Math.PI / 2 + (q + 1) * Math.PI - 0.08); ctx.stroke(); if (u > 0) { ctx.strokeStyle = u >= 1 ? '#3ae0ff' : '#5a8aff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 5 * k, -Math.PI / 2 + q * Math.PI + 0.08, -Math.PI / 2 + q * Math.PI + 0.08 + (Math.PI - 0.16) * u); ctx.stroke(); } }
+    ctx.fillStyle = ready ? '#fff' : 'rgba(255,255,255,.5)'; ctx.font = `400 ${Math.round(12 * k)}px ${TF}`; ctx.fillText('NITRO', b.x, b.y + 1); if (me.nitroT > 0) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('GO!', b.x, b.y + 15 * k); } }
 }
 function map(G, x, y, s) { const S = G.T.S; if (!G.T.mapB) { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of S) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); } G.T.mapB = { x0, x1, z0, z1 }; } const { x0, x1, z0, z1 } = G.T.mapB, sc = s / Math.max(x1 - x0, z1 - z0), ox = x + (s - (x1 - x0) * sc) / 2, oy = y + (s - (z1 - z0) * sc) / 2;
   ctx.fillStyle = 'rgba(16,24,40,.55)'; rrect(x - 6, y - 6, s + 12, s + 12, 10); ctx.fill(); ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.beginPath(); let pen = false; S.forEach((p, i) => { const px = ox + (p.x - x0) * sc, py = oy + (p.z - z0) * sc; if (p.gap) { pen = false; return; } pen ? ctx.lineTo(px, py) : ctx.moveTo(px, py); pen = true; }); ctx.stroke();

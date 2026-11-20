@@ -2,19 +2,21 @@
 // ===================== RULES: Kart Kingdom (game 76, his idea: "like Super Mario racing... turtles, flying, boosts... numerous
 // race courses... like 10 games") =====================
 // Eight karts, three laps, sixteen courses in four cups (then the cups again, faster: 50cc, 100cc, 150cc, MIRROR, 200cc...).
-// The kart drives itself. LEFT thumb: put it down anywhere on the left half and slide to steer; hold a HARD turn at speed to
-// DRIFT (sparks blue, orange, purple; straighten up for a boost). RIGHT thumb: tap to use your item; in the air a tap is a
-// TRICK (land after it for a boost; land in the middle of one and you wipe out). Hold the right side as the second light comes
-// on for a ROCKET START (too early and you stall). Gold ramps open a GLIDER over a chasm; fly through the rings. Some courses
-// have no walls: fall off and the rescue bee puts you back. Each course has its own dangers: crabs, sheep, boulders,
-// snowballs, traffic, cannonballs, gumdrops, ghosts, twisters, lava, meteors; mud and ice.
+// The kart drives itself. Buttons (version 2, his feedback): ◀ ▶ under the left thumb; DRIFT (hold in a bend: sparks blue,
+// orange, purple; let go for a boost; in the air a tap is a TRICK), ITEM (tap: thrown far ahead; swipe down: behind) and NITRO
+// (fills from drifts, tricks and slipstreams) under the right. Hold DRIFT as the second light comes on for a ROCKET START (too
+// early and you stall). Gold ramps open a GLIDER over a chasm; fly through the rings. Courses in the sky have low rails; only
+// the chasm under the glider can be fallen into (the rescue bee brings you back).
+// Each course has its own dangers: crabs, sheep, boulders, snowballs, traffic, cannonballs, gumdrops, ghosts, twisters, lava,
+// meteors; mud and ice.
 // World: metres; x across, z the other way, y up; a heading h points along (cos h, sin h).
 const RULES = [
-  'The kart drives itself. <b>Left thumb</b>: put it down and slide to <b>steer</b>.',
-  '<b>Hold a hard turn</b> at speed to <b>drift</b>: sparks go blue, orange, purple. Straighten up for a <b>boost</b>.',
-  'Drive through <b>? boxes</b> for an item; <b>tap the right side</b> to use it: turtle shells, peppers, a star, a comet...',
-  'Off a ramp or a hill, <b>tap</b> in the air for a <b>trick</b>: land after it for a boost (mid-trick is a wipeout!).',
-  '<b>Hold the right side</b> as the 2nd light comes on for a <b>rocket start</b>. Gold ramps open your <b>glider</b>.',
+  'The kart drives itself. Hold <b>◀ ▶</b> (bottom left) to <b>steer</b>.',
+  'In a bend, steer and <b>hold DRIFT</b>: sparks go blue, orange, purple. <b>Let go</b> for a <b>boost</b>.',
+  'Drifts, tricks and slipstreams fill <b>NITRO</b>: tap it when it glows for a big boost.',
+  'Drive through <b>? boxes</b>. <b>Tap ITEM</b> to throw it far <b>ahead</b>; <b>swipe it down</b> to throw it <b>behind</b>.',
+  'Off a ramp or a hill, <b>tap DRIFT in the air</b> for a <b>trick</b>: land after it for a boost (mid-trick is a wipeout!).',
+  '<b>Hold DRIFT</b> as the 2nd light comes on for a <b>rocket start</b>. Gold ramps open your <b>glider</b>: fly through the rings.',
   'Finish in the place the race asks for. Four races make a <b>cup</b>: collect the trophies!',
 ];
 // the drivers (all ours): a head, a body colour, a little of their own in the kart
@@ -139,14 +141,14 @@ function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N), cl = classOf(N), boss = N % 10 === 0;
   return { N, f, help: !!help, track: placeOf(N), cup: cupOf(N), cls: cl, mirror: cl === 3, boss, laps: N <= 2 ? 2 : 3,
     place: N <= 4 ? 4 : N <= 12 ? 3 : 2,
-    skill: x(0.8, 0.99, 34) * (1 - 0.04 * e) * (help ? 0.96 : 1) * (boss ? 1.015 : 1), speedK: 1 + [0, 0.05, 0.1, 0.1, 0.16][cl],
+    skill: x(0.8, 1.07, 34) * (1 - 0.04 * e) * (help ? 0.96 : 1) * (boss ? 1.015 : 1), speedK: 1 + [0, 0.05, 0.1, 0.1, 0.16][cl],
     aiItems: x(0.35, 1, 30), aiTricks: x(0.5, 3, 30), aiDodge: x(0.5, 0.95, 30), aiDrift: x(0.3, 1, 30),
     hz: x(0, 1, 18), grav: TRACKS[placeOf(N)].grav || 1,
-    vmax: VMAX * (1 + 0.025 * upLv('engine')), grip: 1 + 0.12 * upLv('grip'), spark: 1 + 0.2 * upLv('turbo'), magnet: 1.5 + 1.0 * upLv('magnet') }; }
+    vmax: VMAX * (1 + 0.025 * upLv('engine')), grip: 1 + 0.12 * upLv('grip'), spark: 1 + 0.2 * upLv('turbo'), nitroK: 1 + 0.15 * upLv('turbo'), magnet: 1.5 + 1.0 * upLv('magnet') }; }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0, T = trackOf(cfg.track, cfg.mirror);
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.track, T,
-    driver: o.driver || myDriver(), kart: o.kart || myKart(), karts: [], boxes: [], coinsT: [], shots: [], peels: [], hz: [], booms: [], steer: 0, hold: false, count: 3.2,
+    driver: o.driver || myDriver(), kart: o.kart || myKart(), karts: [], boxes: [], coinsT: [], shots: [], peels: [], lobs: [], hz: [], booms: [], steer: 0, steerT: 0, hold: false, count: 3.2, nitros: 0,
     tricks: 0, perfects: 0, wipeouts: 0, hits: 0, zaps: 0, coins: 0, boosts: 0, bigBoosts: 0, falls: 0, items: 0, rocket: 0, drafts: 0, rings: 0, best: 99 };
   grid(G); placeBoxes(G); placeCoins(G); placeHazards(G);
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
@@ -160,7 +162,7 @@ function grid(G) { const T = G.T, S = T.S, n = S.length; G.karts = []; const min
   else { let q2 = 0; for (let q = 0; q < NK; q++) { const s = slot(q); if (q === mySlot) { G.me = newKart(G, s, G.driver, true, 9); G.karts.push(G.me); } else G.karts.push(newKart(G, s, pool[q2++], false, q)); } }
   for (const k of G.karts) { k.lap = 0; k.prog = -((n - k.i) % n) * T.ds; k.last = k.i; const l = locate(T, k.x, k.z, k.i); k.y = roadY(T, l); } }
 function newKart(G, s, who, me, q) { const R = G.rnd; return { me, who, x: s.x, z: s.z, y: 0, vy: 0, air: false, glide: false, ramp: null, trick: null, airTricks: 0, h: s.h, v: 0, i: s.i, last: s.i, lap: 0, prog: 0,
-  steer: 0, drift: 0, hardT: 0, charge: 0, tier: 0, slip: 0, boost: 0, spin: 0, shield: 0, star: 0, rocket: 0, coin: 0, item: null, roul: 0, orbit: 0, peppers: 0, itemT: 0, fall: 0, draftT: 0, mud: 0, ice: 0,
+  steer: 0, drift: 0, hardT: 0, charge: 0, tier: 0, slip: 0, nitro: 0, nitroT: 0, hopT: 0, wantDrift: 0, boost: 0, spin: 0, shield: 0, star: 0, rocket: 0, coin: 0, item: null, roul: 0, orbit: 0, peppers: 0, itemT: 0, fall: 0, draftT: 0, mud: 0, ice: 0,
   line: (R() - 0.5) * 5, skill: me ? 1 : 1 + (q - 3.5) * 0.008 + (R() - 0.5) * 0.02, done: false, place: 0, fin: 0, lane: R() * 6, plan: 0, dodge: 0 }; }
 function placeBoxes(G) { const S = G.T.S; G.boxes = []; for (const i of G.T.rows) { const p = S[i]; for (const c of [-4.5, -1.5, 1.5, 4.5]) G.boxes.push({ x: p.x - Math.sin(p.h) * c, z: p.z + Math.cos(p.h) * c, y: p.y + 1, t: 0 }); } }
 function placeCoins(G) { const S = G.T.S; G.coinsT = G.T.coins.map(c => { const p = S[c.i]; return { x: p.x - Math.sin(p.h) * c.lat, z: p.z + Math.cos(p.h) * c.lat, y: p.y + c.y, air: !!c.air, t: 0 }; });
@@ -181,32 +183,55 @@ function hazStep(G, dt) { const T = G.T, S = T.S, n = S.length, t = G.t;
     if (h.kind === 'car') { h.pos = (h.pos + h.sp * dt) % T.L; i = Math.floor(h.pos / T.ds) % n; h.i = i; }
     const p = S[i]; h.x = p.x - Math.sin(p.h) * lat; h.z = p.z + Math.cos(p.h) * lat; h.gy = p.y; h.h = p.h; h.latNow = lat; }
   for (let q = G.booms.length - 1; q >= 0; q--) { G.booms[q].t += dt; if (G.booms[q].t > 1.2) G.booms.splice(q, 1); } }
-// ---------- your thumbs ----------
-function setSteer(G, s) { G.steer = clamp(s, -1, 1); }
-// the right thumb held down: before the start, the engine revs (rocket start); during the race nothing more than a tap
+// ---------- your thumbs: buttons, like the best phone kart racers (his words, 20 Nov 2026: "I don't like the controls...
+// give at least two buttons... one for boost") ----------
+// LEFT thumb: two big arrow buttons, ◀ and ▶ (hold to turn; the turn comes on fast but smoothly). RIGHT thumb: DRIFT (hold
+// it in a bend with an arrow: the kart hops and slides, sparks build; let go for a boost; in the air it does a trick), ITEM
+// (tap: thrown far AHEAD; swipe it down: thrown BEHIND) and NITRO (fills from drifts, tricks and slipstreams; tap to fire).
+function setSteer(G, s) { G.steerT = clamp(s, -1, 1); }      // where the steering is heading (the buttons, or a robot)
+function setBtn(G, b, on) { if (b === 'L') G.bL = !!on; if (b === 'R') G.bR = !!on; G.steerT = (G.bR ? 1 : 0) - (G.bL ? 1 : 0); }
+// the right-hand buttons held down before the start: the engine revs (a rocket start on the second light)
 function setHold(G, on) { if (on && G.count > 0 && !G.hold) G.holdAt = G.count; G.hold = !!on; }
-function tapRight(G) { const k = G.me; if (G.over || k.done || G.wait > 0 || k.fall > 0) return false; if (G.count > 0) return false; if (k.air) return startTrick(G, k);
-  if (!k.item && !k.peppers && !k.orbit && G.lesson && lessonNow(G).id !== 'item') lessonMiss(G, 'ground'); return useItem(G); }
+function driftDown(G) { const k = G.me; G.driftBtn = true; if (G.count > 0) { setHold(G, true); return false; } if (G.over || k.done || G.wait > 0 || k.fall > 0) return false;
+  if (k.air) return startTrick(G, k);
+  if (k.spin > 0 || k.rocket > 0) return false; k.hopT = 0.16; G.ev.push({ k: 'hop' });
+  if (Math.abs(G.steer) > 0.25 && k.v > 11) { startDrift(G, k, Math.sign(G.steer)); } else { k.wantDrift = 0.3; if (G.lesson) lessonMiss(G, 'ground'); } return true; }
+function driftUp(G) { G.driftBtn = false; if (G.count > 0) { setHold(G, false); return; } const k = G.me; k.wantDrift = 0; if (k.drift) endDrift(G, k); }
+function startDrift(G, k, dir) { k.drift = dir; k.charge = 0; k.tier = 0; k.wantDrift = 0; if (k.me) G.ev.push({ k: 'drift' }); }
+function endDrift(G, k) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.6, 1.1, 1.7][k.tier]); addNitro(G, k, [0, 0.12, 0.25, 0.4][k.tier]); if (k.me) { G.boosts++; if (k.tier >= 2) G.bigBoosts++; G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } } k.drift = 0; k.charge = 0; k.tier = 0; }
+function addNitro(G, k, a) { const was = Math.floor(k.nitro || 0); k.nitro = Math.min(2, (k.nitro || 0) + a * (k.me ? G.cfg.nitroK : 1)); if (k.me && Math.floor(k.nitro) > was) G.ev.push({ k: 'nitroready', n: Math.floor(k.nitro) }); }
+function useNitro(G, k = G.me) { if (G.over || k.done || G.count > 0 || k.fall > 0 || (k.nitro || 0) < 1) return false; k.nitro -= 1; k.nitroT = 1.7; k.boost = Math.max(k.boost, 1.7); if (k.me) { G.nitros = (G.nitros | 0) + 1; G.ev.push({ k: 'nitro' }); lessonSee(G, 'nitro'); } return true; }
+function itemTap(G, back) { const k = G.me; if (G.count > 0) { setHold(G, true); return false; } if (G.over || k.done || G.wait > 0 || k.fall > 0) return false;
+  if (k.air && !k.item && !k.orbit && !k.peppers) return startTrick(G, k);
+  return useItem(G, k, back ? -1 : 1); }
+// the old one-button way (kept for the robots' blind thumbs and the tests): in the air a trick, on the ground the item
+function tapRight(G) { const k = G.me; if (G.over || k.done || G.wait > 0 || k.fall > 0 || G.count > 0) return false; if (k.air) return startTrick(G, k); return useItem(G); }
 function startTrick(G, k) { if (!k.air || k.spin > 0 || k.fall > 0 || k.rocket > 0) return false; if (k.trick) return false;      /* a tap during a trick does nothing (no queue) */
   k.trick = { t: 0, kind: k.me ? (G.tricks + k.airTricks) % TRICKS.length : (G.rnd() * 3) | 0 }; k.airTricks++; if (k.me) G.ev.push({ k: 'trick', n: k.airTricks, kind: k.trick.kind }); return true; }
 const race = k => k.lap * 1e5 + k.prog;
-function useItem(G, k = G.me) { if (G.over || k.done || G.count > 0 || k.air || k.fall > 0) return false;
+// dir +1: thrown ahead (the default), -1: behind
+function useItem(G, k = G.me, dir = 1) { if (G.over || k.done || G.count > 0 || k.fall > 0) return false;
   if (k.peppers > 0) { k.peppers--; k.boost = Math.max(k.boost, 1.3); G.ev.push({ k: 'use', it: 'pepper', me: k.me, x: k.x, z: k.z }); return true; }
-  if (k.orbit > 0) { k.orbit--; fire(G, k, 'shell'); G.ev.push({ k: 'use', it: 'shell', me: k.me, x: k.x, z: k.z }); if (k.me) lessonSee(G, 'use', 'shell'); return true; }
+  if (k.orbit > 0) { k.orbit--; fire(G, k, 'shell', dir); G.ev.push({ k: 'use', it: 'shell', me: k.me, x: k.x, z: k.z, back: dir < 0 }); if (k.me) lessonSee(G, 'use', 'shell'); return true; }
   if (!k.item || k.roul > 0) return false; const it = k.item; k.item = null; if (k.me) G.items++;
   if (it === 'pepper') k.boost = Math.max(k.boost, 1.4);
   if (it === 'pepper3') { k.peppers = 2; k.boost = Math.max(k.boost, 1.3); }
   if (it === 'triple') { k.orbit = 3; }
-  if (it === 'shell' || it === 'homing') fire(G, k, it);
+  if (it === 'shell' || it === 'homing') fire(G, k, it, it === 'homing' ? 1 : dir);
   if (it === 'comet') { const lead = G.karts.find(o => o.place === 1 && o !== k && !o.done); if (lead) G.shots.push({ kind: 'comet', x: k.x, z: k.z, y: k.y + 3, i: k.i, h: k.h, tgt: lead, by: k, t: 0 }); }
-  if (it === 'peel') G.peels.push({ x: k.x - Math.cos(k.h) * 2.4, z: k.z - Math.sin(k.h) * 2.4, y: k.y, by: k, t: 0 });
+  if (it === 'peel') lob(G, k, dir);
   if (it === 'star') k.star = 6;
   if (it === 'rocket') k.rocket = 3.6;
   if (it === 'bubble') k.shield = 9;
   if (it === 'freeze') { for (const o of G.karts) if (o !== k && race(o) > race(k) && !o.done) hit(G, o, 'freeze', k, 0.8); G.ev.push({ k: 'freeze', me: k.me }); }
-  G.ev.push({ k: 'use', it, me: k.me, x: k.x, z: k.z }); if (k.me) lessonSee(G, 'use', it); return true; }
-function fire(G, k, kind) { const ahead = kind === 'homing' ? G.karts.filter(o => o !== k && !o.done && race(o) > race(k)).sort((a, b) => race(a) - race(b))[0] : null;
-  G.shots.push({ kind, x: k.x + Math.cos(k.h) * 2.2, z: k.z + Math.sin(k.h) * 2.2, y: k.y, i: k.i, h: k.h, tgt: ahead || null, by: k, t: 0, me: k.me }); }
+  if (dir < 0) k.lookBack = 0.8; G.ev.push({ k: 'use', it, me: k.me, x: k.x, z: k.z, back: dir < 0 }); if (k.me) lessonSee(G, 'use', it); return true; }
+function fire(G, k, kind, dir = 1) { const ahead = kind === 'homing' ? G.karts.filter(o => o !== k && !o.done && race(o) > race(k)).sort((a, b) => race(a) - race(b))[0] : null, h = dir < 0 ? k.h + Math.PI : k.h;
+  G.shots.push({ kind, x: k.x + Math.cos(h) * 2.4, z: k.z + Math.sin(h) * 2.4, y: k.y, i: k.i, h, tgt: ahead || null, by: k, t: 0, me: k.me }); }
+// a banana peel goes like a slingshot: high and far ahead along the road (about 40 m, you see it fly and land), or a short toss
+// behind. It lands where it lands, a hazard for anyone (its thrower is safe from it for a few seconds)
+function lob(G, k, dir) { const T = G.T, S = T.S, n = S.length, far = dir > 0 ? 27 : 7, ahead = (k.i + dir * Math.round((dir > 0 ? 40 : 6) / T.ds) + n) % n, p = S[ahead], lat = clamp(k.lat || 0, -TW / 2 + 1.5, TW / 2 - 1.5);
+  const tx = p.x - Math.sin(p.h) * lat, tz = p.z + Math.cos(p.h) * lat, d = Math.hypot(tx - k.x, tz - k.z), tf = d / far + (dir > 0 ? 0 : 0.25);
+  G.lobs.push({ x: k.x, z: k.z, y: k.y + 1.2, vx: (tx - k.x) / tf, vz: (tz - k.z) / tf, vy: (p.y + 0.1 - k.y - 1.2) / tf + 0.5 * GRAV * tf, by: k, t: 0, tf, tx, tz, ty: p.y }); }
 // the item box's roulette: what you get depends on where you are (the leader gets defence, the back gets catch-up)
 const ODDS = { //        lead   middle  back
   shell: [30, 16, 4], homing: [0, 16, 14], triple: [10, 10, 6], peel: [30, 10, 2], pepper: [16, 16, 12], pepper3: [0, 10, 18],
@@ -223,12 +248,15 @@ function hit(G, k, why, by, len = 1.1) { if (k.star > 0 || k.rocket > 0 || k.fal
 // ---------- the race, step by step ----------
 function step(G, dt) {
   if (G.over || !(dt > 0)) return; G.t += dt; const c = G.cfg, T = G.T, S = T.S, n = S.length, R = G.rnd;
-  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0 && G.lessonEnd) { G.lessonEnd = false; Object.assign(G, { shots: [], peels: [], count: 3.2, tricks: 0, perfects: 0, wipeouts: 0, hits: 0, zaps: 0, coins: 0, boosts: 0, bigBoosts: 0, falls: 0, items: 0, rings: 0, rocket: 0, drafts: 0 }); grid(G); placeBoxes(G); placeCoins(G); placeHazards(G); G.ev.push({ k: 'start' }); } if (G.wait > 0) return; }
+  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0 && G.lessonEnd) { G.lessonEnd = false; Object.assign(G, { shots: [], peels: [], lobs: [], nitros: 0, count: 3.2, tricks: 0, perfects: 0, wipeouts: 0, hits: 0, zaps: 0, coins: 0, boosts: 0, bigBoosts: 0, falls: 0, items: 0, rings: 0, rocket: 0, drafts: 0 }); grid(G); placeBoxes(G); placeCoins(G); placeHazards(G); G.ev.push({ k: 'start' }); } if (G.wait > 0) return; }
   hazStep(G, dt);
   // the shell lesson: a slow kart that falls behind you comes round again ahead (there is always one to aim at)
   if (G.lesson && lessonNow(G).id === 'item') for (const d of G.karts) if (d.dummy && race(d) < race(G.me) - 12 && d.spin <= 0) { const S = G.T.S, n = S.length, j = (G.me.i + 55) % n, p = S[j], lat = [-3, 3, 0, -1.5, 1.5][(G.rnd() * 5) | 0]; d.x = p.x - Math.sin(p.h) * lat; d.z = p.z + Math.cos(p.h) * lat; d.h = p.h; d.i = d.last = j; d.y = p.y; d.vy = 0; d.air = false; d.line = lat; d.prog = G.me.prog + 55 * G.T.ds; d.lap = G.me.lap; d.v = 12; }
   if (G.count > 0) { const was = Math.ceil(G.count); G.count -= dt; if (Math.ceil(G.count) !== was && G.count > 0) G.ev.push({ k: 'light', n: Math.ceil(G.count) }); if (G.count <= 0) go(G); else return; }
+  { const tg = G.steerT || 0, back = Math.abs(tg) < Math.abs(G.steer) || tg * G.steer < 0, r = (back ? 9 : 6.5) * dt; G.steer = clamp(G.steer + clamp(tg - G.steer, -r, r), -1, 1); }
   for (const k of G.karts) { if (!k.me && !k.done) ai(G, k, dt); drive(G, k, dt); }
+  for (let q = G.lobs.length - 1; q >= 0; q--) { const o = G.lobs[q]; o.t += dt; o.x += o.vx * dt; o.z += o.vz * dt; o.vy -= GRAV * dt; o.y += o.vy * dt;
+    if (o.t >= o.tf || (o.vy < 0 && o.y <= o.ty)) { G.lobs.splice(q, 1); const l = locate(T, o.x, o.z, null), gy = groundAt(T, l); if (gy > VOID + 1) { G.peels.push({ x: o.x, z: o.z, y: gy, by: o.by, t: 0 }); G.ev.push({ k: 'peelland', x: o.x, z: o.z, y: gy, me: o.by.me }); } } }
   // karts bump each other; a STAR or a ROCKET knocks the other flying
   for (let a = 0; a < G.karts.length; a++) for (let b = a + 1; b < G.karts.length; b++) { const p = G.karts[a], q = G.karts[b]; if (p.fall > 0 || q.fall > 0 || Math.abs(p.y - q.y) > 1.3) continue; const dx = q.x - p.x, dz = q.z - p.z, d2 = dx * dx + dz * dz; if (d2 >= 4) continue; const d = Math.sqrt(d2);
     if (d < 2.0 && d > 1e-4) { const pa = p.star > 0 || p.rocket > 0, qa = q.star > 0 || q.rocket > 0; if (pa && !qa) hit(G, q, 'star', p); else if (qa && !pa) hit(G, p, 'star', q);
@@ -239,7 +267,7 @@ function step(G, dt) {
   for (const cn of G.coinsT) { if (cn.t > 0) { cn.t -= dt; continue; } for (const k of G.karts) { const rr = k.me ? c.magnet : 1.5, dx = k.x - cn.x; if (dx > rr || dx < -rr) continue; const dz = k.z - cn.z; if (dx * dx + dz * dz < rr * rr && Math.abs((k.y + 0.6) - cn.y) < (cn.air ? 1.9 : 1.5)) { cn.t = cn.air ? 999 : 9; if (k.coin < 10) k.coin++; if (k.me) { G.coins++; G.ev.push({ k: 'coin', n: k.coin, air: cn.air }); } break; } } }
   for (const rg of G.ringsT) { if (!rg.by) rg.by = []; for (const k of G.karts) if (k.air && k.glide && (k.x - rg.x) ** 2 + (k.z - rg.z) ** 2 < 6.76 && Math.abs(k.y + 0.6 - rg.y) < 2.4 && rg.by.indexOf(k) < 0) { rg.by.push(k); k.ringN = (k.ringN || 0) + 1; if (k.me) { G.rings++; G.ev.push({ k: 'ring', n: k.ringN }); } } }
   // peels: a spin for whoever drives over one (not its owner in its first moment)
-  for (let i = G.peels.length - 1; i >= 0; i--) { const s = G.peels[i]; s.t += dt; if (s.t > 40) { G.peels.splice(i, 1); continue; } for (const k of G.karts) if (!k.air && k.fall <= 0 && (k.x - s.x) ** 2 + (k.z - s.z) ** 2 < 2.25 && !(s.by === k && s.t < 1.2)) { G.peels.splice(i, 1); hit(G, k, 'peel', s.by); break; } }
+  for (let i = G.peels.length - 1; i >= 0; i--) { const s = G.peels[i]; s.t += dt; if (s.t > 40) { G.peels.splice(i, 1); continue; } for (const k of G.karts) if (!k.air && k.fall <= 0 && (k.x - s.x) ** 2 + (k.z - s.z) ** 2 < 2.25 && !(s.by === k && s.t < 3)) { G.peels.splice(i, 1); hit(G, k, 'peel', s.by); break; } }
   shotsStep(G, dt);
   // the dangers of the course
   for (const h of G.hz) { if (!h.act) continue; const rr = (h.r + 0.9) ** 2; for (const k of G.karts) { if (k.fall > 0 || k.air && h.kind !== 'gumdrop' && h.kind !== 'car') continue; if ((k.x - h.x) ** 2 + (k.z - h.z) ** 2 > rr) continue;
@@ -264,7 +292,7 @@ function shotsStep(G, dt) { const T = G.T, S = T.S, n = S.length;
     o.x += Math.cos(o.h) * sp; o.z += Math.sin(o.h) * sp; const l = locate(T, o.x, o.z, o.i); o.i = l.i; const gy = groundAt(T, l);
     if (gy <= VOID + 1) dead = true; else o.y = gy;
     // the walls: a shell bounces back off them (a few times)
-    const lim = TW / 2 + 3.0; if (!dead && Math.abs(l.lat) > lim && T.info.edge !== 'void') { const p = S[l.i]; o.h = 2 * p.h - o.h; const s2 = Math.sign(l.lat), back = Math.abs(l.lat) - lim + 0.2; o.x += Math.sin(p.h) * s2 * back; o.z -= Math.cos(p.h) * s2 * back; o.b = (o.b || 0) + 1; if (o.b > 4) dead = true; }
+    const lim = T.info.edge === 'void' ? TW / 2 + 0.8 : TW / 2 + 3.0; if (!dead && Math.abs(l.lat) > lim && !S[l.i].gap) { const p = S[l.i]; o.h = 2 * p.h - o.h; const s2 = Math.sign(l.lat), back = Math.abs(l.lat) - lim + 0.2; o.x += Math.sin(p.h) * s2 * back; o.z -= Math.cos(p.h) * s2 * back; o.b = (o.b || 0) + 1; if (o.b > 4) dead = true; }
     if (!dead) for (const k of G.karts) { if (k.fall > 0 || (k === o.by && o.t < 0.35)) continue; if (Math.hypot(k.x - o.x, k.z - o.z) < 1.7 && Math.abs(k.y - o.y) < 1.6) { hit(G, k, o.kind, o.by); dead = true; break; } }
     if (!dead) for (let j = G.peels.length - 1; j >= 0; j--) if (Math.hypot(G.peels[j].x - o.x, G.peels[j].z - o.z) < 1.4) { G.peels.splice(j, 1); dead = true; G.ev.push({ k: 'clash', x: o.x, z: o.z, y: o.y }); break; }
     if (!dead) for (let j = 0; j < G.shots.length; j++) { const p2 = G.shots[j]; if (p2 !== o && p2.kind !== 'comet' && Math.hypot(p2.x - o.x, p2.z - o.z) < 1.2) { G.shots.splice(Math.max(j, q), 1); G.shots.splice(Math.min(j, q), 1); q--; dead = 'both'; G.ev.push({ k: 'clash', x: o.x, z: o.z, y: o.y }); break; } }
@@ -278,25 +306,25 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   if (k.fall > 0) { k.fall -= dt; k.y -= 14 * dt; if (k.fall <= 0) rescue(G, k); return; }
   const loc = locate(T, k.x, k.z, k.i), off = !k.air && Math.abs(loc.lat) > TW / 2;
   const stat = me ? (G.driver.spd + G.kart.spd) * 0.006 : 0;
-  const top = (me ? c.vmax * (1 + stat) : VMAX * c.skill * k.skill * (k.rubber || 1)) * c.speedK * (1 + 0.012 * k.coin) * (k.boost > 0 ? 1.34 : 1) * (k.star > 0 ? 1.25 : 1) * (k.rocket > 0 ? 1.5 : 1)
+  const top = (me ? c.vmax * (1 + stat) : VMAX * c.skill * k.skill * (k.rubber || 1)) * c.speedK * (1 + 0.012 * k.coin) * (k.boost > 0 ? 1.34 : 1) * (k.star > 0 ? 1.25 : 1) * (k.rocket > 0 ? 1.5 : 1) * (k.nitroT > 0 ? 1.1 : 1)
     * (off && k.boost <= 0 && k.star <= 0 && k.rocket <= 0 ? (me ? 0.5 + 0.08 * upLv('grip') : 0.55) : 1) * (k.mud > 0 && k.boost <= 0 && k.star <= 0 ? 0.55 : 1) * (k.spin > 0 ? 0.25 : 1) * (go2 ? 1 : 0.6);
   const accel = me ? 0.9 + G.driver.acc * 0.08 : 0.9; if (!k.air) k.v += (top - k.v) * Math.min(1, dt * (k.v < top ? accel : 2.5));
-  // the drift: a hard turn held at speed; sparks build while it is held; straightening up releases a boost
-  if (me && k.rocket <= 0) { if (Math.abs(st) > 0.72 && k.v > 14 && !k.spin && !k.air) k.hardT += dt; else k.hardT = 0;
-    if (!k.drift && k.hardT > 0.2) { k.drift = Math.sign(st); k.charge = 0; G.ev.push({ k: 'drift' }); }
-    if (k.drift) { k.charge += dt * c.spark * (Math.sign(st) === k.drift && Math.abs(st) > 0.3 ? 1 : 0.35); const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
-      if (Math.abs(st) < 0.3 || Math.sign(st) === -k.drift && Math.abs(st) > 0.5 || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.55, 1.05, 1.6][k.tier]); G.boosts++; if (k.tier >= 2) G.bigBoosts++; G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } k.drift = 0; k.charge = 0; k.tier = 0; } } }
+  // the drift (the DRIFT button held in a bend): sparks build, faster when you steer into it; let go for a boost; it fills NITRO
+  k.hopT = Math.max(0, (k.hopT || 0) - dt); k.nitroT = Math.max(0, (k.nitroT || 0) - dt);
+  if (me && k.rocket <= 0) { if (k.wantDrift > 0) { k.wantDrift -= dt; if (G.driftBtn && Math.abs(st) > 0.25 && k.v > 11 && !k.air && !k.spin) startDrift(G, k, Math.sign(st)); }
+    if (k.drift) { const u = st * k.drift; k.charge += dt * c.spark * (u > 0.2 ? 1 : u > -0.2 ? 0.6 : 0.3); addNitro(G, k, dt * 0.05 * (k.tier + 1)); const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
+      if (!G.driftBtn || k.v < 9 || k.spin) endDrift(G, k); } }
   // steering: without a drift a hard turn at speed runs wide and scrubs speed; a drift turns hard and keeps it; ice slides
   const sp = Math.min(1, k.v / 12), hnd = me ? 1 + (G.driver.hnd + G.kart.hnd) * 0.03 : 1; let yaw;
   if (k.rocket > 0) { const p = S[(k.i + 10) % n]; let dh = Math.atan2(p.z - k.z, p.x - k.x) - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); yaw = clamp(dh * 4, -2.5, 2.5); }
-  else if (k.drift) { const u = clamp((st * k.drift - 0.3) / 0.7, 0, 1); yaw = k.drift * (0.42 + 0.95 * u) * sp * hnd; }
+  else if (k.drift) { const u = clamp(st * k.drift, -1, 1); yaw = k.drift * (0.78 + 0.6 * u) * sp * hnd; }
   else { const want = st * 1.75 * sp * hnd * (k.air ? (k.glide ? 0.8 : 0.35) : 1), lim = GRIP * grip * (k.ice > 0 ? 0.45 : 1) / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   const slip = k.drift ? -k.drift * 0.32 : k.ice > 0 ? -st * 0.25 : 0; k.slip += (slip - k.slip) * Math.min(1, dt * (k.ice > 0 ? 2 : 6)); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
   // the walls (not on a course with no walls, nor over the chasm)
-  let l2 = locate(T, k.x, k.z, k.i); const p = S[l2.i], lim2 = TW / 2 + 3.2;
-  if (T.info.edge !== 'void' && !p.gap && Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.6; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } l2 = locate(T, k.x, k.z, l2.i); }
+  let l2 = locate(T, k.x, k.z, k.i); const p = S[l2.i], lim2 = T.info.edge === 'void' ? TW / 2 + 0.9 : TW / 2 + 3.2;
+  if (!p.gap && Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.6; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } l2 = locate(T, k.x, k.z, l2.i); }
   if (me) G.wallT = Math.max(0, (G.wallT || 0) - dt);
   // up and down: the ground under the kart (hills, ramps, the chasm, the edge), gravity, and leaving the ground over a crest
   const gr = GRAV * c.grav * (k.glide ? 0.32 : 1), gy = groundAt(T, l2), rp = rampAt(T, l2); if (gy > VOID + 1) k.gyLast = gy;
@@ -311,7 +339,7 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   const di = l2.i - k.last; let dd = di; if (di < -n / 2) dd = di + n; if (di > n / 2) dd = di - n;
   if (!k.air && dd > 0) for (const pd of T.pads) { const rel = ((l2.i - pd.i) % n + n) % n; if (rel <= Math.max(1, dd) && Math.abs(l2.lat - pd.lat) < 2.0 && k.padI !== pd.i) { k.padI = pd.i; k.boost = Math.max(k.boost, 0.9); if (me) G.ev.push({ k: 'pad' }); } }
   if (!k.air && k.v > 16) { let drafting = false; const ch = Math.cos(k.h), sh = Math.sin(k.h); for (const o of G.karts) { if (o === k || o.air || o.fall > 0) continue; const ax = o.x - k.x, az = o.z - k.z; if (ax * ax + az * az > 200) continue; const fw = ax * ch + az * sh, sd = -ax * sh + az * ch; if (fw > 3 && fw < 14 && Math.abs(sd) < 1.6) { drafting = true; break; } }
-    k.draftT = drafting ? k.draftT + dt : Math.max(0, k.draftT - dt * 2); if (k.draftT > 1.3) { k.draftT = 0; k.boost = Math.max(k.boost, 0.8); if (me) { G.drafts++; G.ev.push({ k: 'draft' }); } } } else k.draftT = 0;
+    k.draftT = drafting ? k.draftT + dt : Math.max(0, k.draftT - dt * 2); if (k.draftT > 1.3) { k.draftT = 0; k.boost = Math.max(k.boost, 0.8); addNitro(G, k, 0.18); if (me) { G.drafts++; G.ev.push({ k: 'draft' }); } } } else k.draftT = 0;
   k.prog += dd * T.ds; k.last = l2.i; k.i = l2.i; k.lat = l2.lat; k.off = off;
   if (k.prog >= T.L) { k.prog -= T.L; k.lap++; k.padI = null; if (me) { G.ev.push({ k: 'lap', lap: k.lap }); placeCoinsAir(G); } if (k.lap >= c.laps && !G.lesson && !k.done) { k.done = true; k.fin = G.t; if (me) G.ev.push({ k: 'finish' }); else G.doneN = (G.doneN | 0) + 1; } }
   if (k.prog < -T.L / 2) { k.prog += T.L; k.lap--; } }
@@ -331,6 +359,7 @@ function land(G, k, gy) { k.y = gy; k.vy = 0; k.air = false; const glide = k.gli
   const n = k.airTricks; k.airTricks = 0; const rings = k.ringN | 0; k.ringN = 0; if (rings) { k.boost = Math.max(k.boost, 0.6 + rings * 0.35); }
   if (!n) { if (k.me) { G.ev.push({ k: 'land', n: 0, glide, rings }); lessonSee(G, 'land', 0); } return; }
   const perfect = G.t - (k.lastTrickEnd == null ? -9 : k.lastTrickEnd) < 0.16; k.boost = Math.max(k.boost, 0.35 + 0.32 * n + (perfect ? 0.35 : 0) + rings * 0.35); k.v = Math.max(k.v, VMAX * 0.92);
+  addNitro(G, k, 0.16 * n + (perfect ? 0.12 : 0) + rings * 0.1);
   if (k.me) { G.tricks += n; if (perfect) G.perfects++; G.ev.push({ k: 'land', n, perfect, glide, rings }); lessonSee(G, 'land', n, perfect); } }
 // ---------- the rivals: a line through the bends, a little drifting of their own, tricks off ramps, items with sense, they
 // steer round the dangers they see coming (the better ones more often), a gentle rubber band ----------
@@ -344,12 +373,13 @@ function ai(G, k, dt) { const T = G.T, S = T.S, n = S.length, c = G.cfg, R = G.r
   want = clamp(want, -TW / 2 + 1.2, TW / 2 - 1.2); const tx = p.x - Math.sin(p.h) * want, tz = p.z + Math.cos(p.h) * want;
   let dh = Math.atan2(tz - k.z, tx - k.x) - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.steer = clamp(dh * 2.4, -1, 1);
   // corners: a rival "drifts" a long bend and gets a little boost out of it now and then
-  if (Math.abs(cv) > 0.16 && !k.air) { k.dT = (k.dT || 0) + dt; k.drifting = true; } else { if (k.dT > 1.0 && R() < c.aiDrift) k.boost = Math.max(k.boost, 0.6); k.dT = 0; k.drifting = false; }
+  if (Math.abs(cv) > 0.16 && !k.air) { k.dT = (k.dT || 0) + dt; k.drifting = true; } else { if (k.dT > 1.0 && R() < c.aiDrift) { k.boost = Math.max(k.boost, 0.6); addNitro(G, k, 0.25); } k.dT = 0; k.drifting = false; }
   const lead = race(k) - race(G.me); k.rubber = clamp(1 - lead / 2600, 0.94, 1.035);
+  if ((k.nitro || 0) >= 1 && !k.air && Math.abs(cv) < 0.1 && R() < c.aiItems * dt * 0.8) useNitro(G, k);
   if (k.air && !k.trick && k.plan > k.airTricks && G.t - (k.lastTrickEnd || 0) > 0.02) { const tl = landPred(G, k); if (tl > TRICK + 0.08) startTrick(G, k); else k.plan = 0; }
   // items: shells and seekers with someone ahead; peels with someone behind; boosts on a straight; defence when it is hit
   const it = k.item || (k.orbit ? 'triple' : k.peppers ? 'pepper' : null); if (it) { k.itemT -= dt; if (k.itemT <= 0) { k.itemT = 0.6; if (R() < c.aiItems) { const ahead = G.karts.find(o => o !== k && race(o) > race(k) && race(o) - race(k) < 40 && Math.abs((o.lat || 0) - (k.lat || 0)) < 2.5), behind = G.karts.some(o => o !== k && race(k) - race(o) > 0 && race(k) - race(o) < 22);
-      const ok = it === 'shell' || it === 'triple' ? !!ahead : it === 'homing' ? G.karts.some(o => o !== k && race(o) > race(k)) : it === 'peel' ? behind || R() < 0.1 : it === 'pepper' || it === 'pepper3' ? Math.abs(cv) < 0.15 : true; if (ok) useItem(G, k); } } } }
+      const back = !ahead && behind && (it === 'shell' || it === 'triple' || it === 'peel'), ok = it === 'shell' || it === 'triple' ? !!ahead || behind : it === 'homing' ? G.karts.some(o => o !== k && race(o) > race(k)) : it === 'peel' ? !!ahead || behind || R() < 0.1 : it === 'pepper' || it === 'pepper3' ? Math.abs(cv) < 0.15 : true; if (ok) useItem(G, k, back ? -1 : 1); } } } }
 function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <= c.place; G.over = win ? 'won' : 'lost';
   const stars = win ? 1 + (place === 1 ? 1 : 0) + (G.bigBoosts + G.tricks >= 5 && G.falls === 0 && G.wipeouts === 0 ? 1 : 0) : 0;
   const order = G.karts.slice().sort((a, b) => a.place - b.place).map(k => k.me ? 'YOU' : k.who.name);
@@ -358,36 +388,42 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: the course to yourself (and a few slow karts to aim at) ----------
 const LESSONS = {
-  1: [{ id: 'boost', title: 'STEER AND DRIFT', how: 'Left thumb: slide to steer. In a bend, hold a HARD turn: the kart drifts and sparks. Straighten up for a BOOST. Twice.', need: 2 }],
-  2: [{ id: 'trick', title: 'JUMP AND TRICK', how: 'Off a ramp, TAP the right side once in the air for a trick, and land after it has finished. Twice. Tap only in the air!', need: 2 }],
-  3: [{ id: 'item', title: 'TURTLE SHELLS', how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap the right side to fire. Hit two karts.', need: 2 }],
+  1: [{ id: 'boost', title: 'STEER AND DRIFT', how: 'Hold ◀ or ▶ to steer. In a bend, steer AND hold DRIFT: you slide and the sparks go blue, orange, purple. Let go of DRIFT for a BOOST. Twice.', need: 2 },
+      { id: 'nitro', title: 'NITRO!', how: 'Drifts, tricks and slipstreams fill your NITRO. It is full now: tap NITRO (above DRIFT) for a big boost!', need: 1 }],
+  2: [{ id: 'trick', title: 'JUMP AND TRICK', how: 'Off a ramp, tap DRIFT once in the air for a trick, and land after it has finished. Twice. Only in the air!', need: 2 }],
+  3: [{ id: 'item', title: 'TURTLE SHELLS', how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap ITEM to fire ahead (swipe it down to fire behind). Hit two karts.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; G.hz = [];
   if (lessonNow(G).id === 'item') { const S = G.T.S, n = S.length; for (let q = 0; q < 3; q++) { const i = (G.me.i + 30 + q * 26) % n, p = S[i], lat = [-3, 3, 0][q]; const d = newKart(G, { x: p.x - Math.sin(p.h) * lat, z: p.z + Math.cos(p.h) * lat, h: p.h, i }, DRIVERS[1 + q], false, 0); d.dummy = true; d.line = lat; d.skill = 0.55; d.lap = 0; d.prog = G.me.prog + (30 + q * 26) * G.T.ds; d.last = i; d.y = p.y; G.karts.push(d); } } }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what, n, perfect) { const st = lessonNow(G); if (!st) return; let ok = false;
   if (st.id === 'boost' && what === 'boost') ok = true;
+  if (st.id === 'nitro' && what === 'nitro') ok = true;
   if (st.id === 'trick' && what === 'land') { if (n >= 1) ok = true; else { if (G.lesson.n && !G.me.glideLand) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'No trick on that jump. ' + st.how }); } return; } }
   if (st.id === 'item' && what === 'hitR') ok = true;
   if (st.id === 'item' && what === 'use') { G.lesson.fired = (G.lesson.fired || 0) + 1; if (G.lesson.fired > 6) { G.lesson.fired = 0; G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'Too many misses. Line up right behind a kart before you fire.' }); } return; }
   if (!ok) return; G.lesson.n++; G.lesson.fired = 0; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
-  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.lessonEnd = true; G.wait = 1.4; } }
-// a wipeout, a fall or a tap on the ground with nothing to use, during a lesson, starts the count again (so blind tapping never
-// gets through)
+  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.lessonEnd = true; G.wait = 1.4; return; }
+  G.ev.push({ k: 'lessonnext' }); if (lessonNow(G).id === 'nitro') G.me.nitro = Math.max(G.me.nitro || 0, 1); }
+// a wipeout, a fall or a hop on the ground in the trick lesson starts the count again (so blind tapping never gets through)
 function lessonMiss(G, why) { const st = lessonNow(G); if (!st) return;
   if (why === 'wipeout') { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'Wiped out! Land only when the trick has finished. ' + st.how }); }
   if (why === 'fall') { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'You fell off! ' + st.how }); }
-  if (why === 'ground' && st.id === 'trick') { G.lesson.n = 0; if (G.t - (G.lgT || -9) > 2) G.ev.push({ k: 'lessonmiss', how: 'Tap only when you are in the AIR. ' + st.how }); G.lgT = G.t; } }
+  if (why === 'ground' && st.id === 'trick') { G.lesson.n = 0; if (G.t - (G.lgT || -9) > 2) G.ev.push({ k: 'lessonmiss', how: 'Tap DRIFT only when you are in the AIR. ' + st.how }); G.lgT = G.t; } }
 // ---------- for the robots ----------
-// BLIND: thumbs that do not look: steer some way and hold it (or let go); tap the right side; hold it; let it go
-const BLIND = { s: G => { const R = Math.random; setSteer(G, R() < 0.25 ? 0 : (R() * 2 - 1) * (R() < 0.5 ? 1 : 0.6)); }, t: G => { tapRight(G); }, h: G => setHold(G, true), r: G => setHold(G, false) };
-// a driver who looks: a line through the bends, drifts the long ones, tricks as many as a jump allows, steers through the glider
-// rings and round the dangers, uses items with sense, and tries a rocket start; a person's hands: a beat late, now and then a wobble
+// BLIND: thumbs that do not look: hold ◀, ▶ or neither; press or let go of DRIFT; tap ITEM (ahead or behind) or NITRO
+const BLIND = { s: G => { const r = Math.random(); setBtn(G, 'L', r < 0.37); setBtn(G, 'R', r > 0.63); },
+  d: G => { if (G.driftBtn) driftUp(G); else driftDown(G); },
+  t: G => { const r = Math.random(); if (r < 0.4) itemTap(G, false); else if (r < 0.6) itemTap(G, true); else useNitro(G); } };
+// a driver who looks: a line through the bends, drifts the long ones with the DRIFT button (holds it to orange, more if the bend
+// lasts), tricks as many as a jump allows, steers through the glider rings and round the dangers, throws items the right way
+// (ahead at a kart in its lane, a peel back at one close behind), fires NITRO on straights, tries a rocket start; a person's
+// hands: a beat late, now and then a wobble
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, k = G.me, T = G.T, S = T.S, n = S.length;
   if (G.over || G.wait > 0) { setSteer(G, 0); return; }
   if (G.count > 0) { setSteer(G, 0); if (mem.rs == null) mem.rs = 1.95 - R() * 0.9 * (1 - acc) - react * 0.4 + (R() < (1 - acc) * 0.6 ? 0.6 : 0); if (G.count < mem.rs && !G.hold) setHold(G, true); return; }
-  if (G.hold) setHold(G, false); mem.rs = null;
+  if (G.hold) { setHold(G, false); G.driftBtn = false; } mem.rs = null;
   if (k.air) { if (!k.trick) { mem.wait = (mem.wait || 0) + 1 / 60; const tl = landPred(G, k), margin = 0.04 + react * 0.15 + (1 - acc) * 0.2;
       if (mem.wait > 0.04 + react * 0.2 && tl > TRICK + margin) { startTrick(G, k); mem.wait = 0; } else if (mem.wait > 0.04 + react * 0.2 && tl > TRICK - 0.05 && R() < (1 - acc) * 0.04) { startTrick(G, k); mem.wait = 0; } } } else mem.wait = 0;
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.05 + react * 0.15;
@@ -396,24 +432,28 @@ function honest(G, o, mem) {
   for (const pd of T.pads) { const rel = ((pd.i - k.i) % n + n) % n; if (rel > 0 && rel < 26) want = pd.lat; }
   for (const r of T.ramps) { const rel = ((r.i0 - k.i) % n + n) % n; if (rel > 0 && rel < 30) want = 0; }
   if (k.glide) { let bc = null, bd = 1e9; for (const rg of G.ringsT) { if (rg.by && rg.by.indexOf(k) >= 0) continue; const ax = rg.x - k.x, az = rg.z - k.z, fw = ax * Math.cos(k.h) + az * Math.sin(k.h); if (fw > 2 && fw < bd) { bd = fw; bc = rg; } } if (bc) want = locate(T, bc.x, bc.z, k.i).lat; else want = 0; }
-  // dangers: look ahead for any that will be in the way, and go round
   let avoid = false; for (const h of G.hz) { const rel = ((h.i - k.i) % n + n) % n; if (rel > 1 && rel < 24 && (h.act || h.warn > 0 || h.span)) { const hlat = h.latNow != null ? h.latNow : h.lat; if (Math.abs(hlat - want) < h.r + 2.4) { want = hlat > 0 ? hlat - h.r - 2.8 : hlat + h.r + 2.8; avoid = true; } } }
   for (const pl of G.peels) { const l = locate(T, pl.x, pl.z, k.i), rel = ((l.i - k.i) % n + n) % n; if (rel > 1 && rel < 22 && Math.abs(l.lat - want) < 2.4) { want = l.lat > 0 ? l.lat - 3 : l.lat + 3; avoid = true; } }
-  const held = k.item || (k.orbit ? 'triple' : null); let lined = false;
-  if ((held === 'shell' || held === 'triple') && !avoid && !k.glide) { let tg = null, bf = 1e9; for (const q of G.karts) { if (q === k || q.fall > 0) continue; const ax = q.x - k.x, az = q.z - k.z, fw = ax * Math.cos(k.h) + az * Math.sin(k.h); if (fw > 4 && fw < 45 && fw < bf) { bf = fw; tg = q; } }
-    if (tg) { want = tg.lat || 0; lined = Math.abs((tg.lat || 0) - (k.lat || 0)) < 1.1 && bf < 34 && Math.abs(bend) < 0.12; } }
+  const held = k.item || (k.orbit ? 'triple' : null); let lined = false, tgD = 1e9;
+  if ((held === 'shell' || held === 'triple' || held === 'peel') && !avoid && !k.glide) { let tg = null; for (const q of G.karts) { if (q === k || q.fall > 0) continue; const ax = q.x - k.x, az = q.z - k.z, fw = ax * Math.cos(k.h) + az * Math.sin(k.h); if (fw > 4 && fw < 50 && fw < tgD) { tgD = fw; tg = q; } }
+    if (tg) { want = tg.lat || 0; lined = Math.abs((tg.lat || 0) - (k.lat || 0)) < 1.1 && tgD < (held === 'peel' ? 48 : 34) && tgD > (held === 'peel' ? 22 : 4) && Math.abs(bend) < 0.12; } }
   mem.lined = lined;
   const edge = T.info.edge === 'void' ? TW / 2 - 1.5 : TW / 2 - 0.8; want = clamp(want, -edge, edge);
   const tx = p.x - Math.sin(p.h) * want, tz = p.z + Math.cos(p.h) * want;
   let dh = Math.atan2(tz - k.z, tx - k.x) - (k.h + (k.slip || 0)); dh = Math.atan2(Math.sin(dh), Math.cos(dh)); let s = clamp(dh * 2.6, -1, 1);
+  // the drift: press DRIFT as a long bend starts (steering into it), hold, and let go as it ends
   const long = Math.abs(bend) > 0.13;
-  if (!k.drift && long && k.v > 16 && Math.sign(dh) === Math.sign(bend) && !avoid && !k.air) s = Math.sign(bend);
-  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - (T.info.edge === 'void' ? 2.2 : 0.5) || avoid; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = (need - 0.42) / 0.95; s = end ? 0 : k.drift * clamp(0.3 + 0.7 * u, 0.34, 1); }
+  if (!k.drift && !G.driftBtn && long && k.v > 16 && Math.sign(dh) === Math.sign(bend) && !avoid && !k.air) { s = Math.sign(bend); setSteer(G, s); G.steer = s; driftDown(G); }
+  else if (G.driftBtn && !k.drift && !(k.wantDrift > 0)) driftUp(G);
+  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - (T.info.edge === 'void' ? 2.2 : 0.5) || avoid;
+    const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = (need - 0.78) / 0.6; s = k.drift * clamp(u, -1, 1); if (end) driftUp(G); }
   if (R() > acc) s += (R() - 0.5) * 0.8;
   setSteer(G, s);
+  if ((k.nitro || 0) >= 1 && !k.air && Math.abs(bend) < 0.12 && !k.drift && R() < 0.3 + acc * 0.5) useNitro(G);
   const it = k.item || (k.orbit ? 'triple' : k.peppers ? 'pepper' : null);
-  if (it && !k.air) { mem.it = (mem.it || 0) + 0.1; const ahead = G.karts.some(q => q !== k && race(q) > race(k) && race(q) - race(k) < 40 && Math.abs((q.lat || 0) - (k.lat || 0)) < 2.2), behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20);
-    const go3 = it === 'pepper' || it === 'pepper3' ? Math.abs(bend) < 0.2 : it === 'shell' || it === 'triple' ? mem.lined || (ahead && R() < 0.3) || (mem.it > 12 && !G.lesson) : it === 'homing' ? true : it === 'peel' ? behind || mem.it > 5 : true;
-    if (go3 && useItem(G)) mem.it = 0; }
+  if (it && !k.air && !k.drift) { mem.it = (mem.it || 0) + 0.1; const behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20 && Math.abs((q.lat || 0) - (k.lat || 0)) < 2.5);
+    let dir = 1, go3 = true; if (it === 'pepper' || it === 'pepper3') go3 = Math.abs(bend) < 0.2; else if (it === 'shell' || it === 'triple') { go3 = mem.lined || (behind && R() < 0.5) || (mem.it > 12 && !G.lesson); if (!mem.lined && behind) dir = -1; }
+    else if (it === 'peel') { go3 = mem.lined || behind || mem.it > 6; if (!mem.lined) dir = -1; }
+    if (go3 && useItem(G, k, dir)) mem.it = 0; }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.count = 0; G.me.place = 1; G.me.done = true; finish(G); }

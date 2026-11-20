@@ -7,6 +7,9 @@
 // The music: each course its own little tune (seeded: its key, its bass line, its melody), bright or spooky to suit; faster and
 // a step higher on the final lap.
 const sfx = {
+  hop() { if (!gate('hop', 120)) return; tone(320, 0.08, 0.04, 'triangle', 0, 520); },
+  nitro() { noise(0.9, 1200, 0.09, 'bandpass', 0.6); tone(120, 0.9, 0.06, 'sawtooth', 0, 520, 2200); [0, 4, 7, 12].forEach((q, j) => tone(note(523, q + 2), 0.2, 0.035, 'square', 0.05 + j * 0.05, 0, 3000)); },
+  ready() { [7, 12].forEach((q, j) => tone(note(659, q), 0.16, 0.05, 'triangle', j * 0.07)); },
   click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
   go() { tone(660, 0.2, 0.06, 'square', 0, 660, 2400); },
   light(n) { tone(n ? 440 : 880, n ? 0.18 : 0.45, 0.07, 'square', 0, n ? 440 : 880, 2400); },
@@ -43,20 +46,46 @@ const sfx = {
   win() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(392, q), 1.0, 0.1, j * 0.09)); [0, 4, 7].forEach((q, j) => tone(note(392, q + 12), 0.6, 0.04, 'triangle', 0.5 + j * 0.02)); },
   lose() { tone(330, 0.5, 0.09, 'triangle', 0, 247); tone(247, 0.7, 0.09, 'triangle', 0.25, 165); },
 };
-// ---------- the music: a little tune per course, scheduled a moment ahead ----------
-const music = { on: false, next: 0, step: 0, bpm: 132, up: 0,
-  start(G) { if (HEADLESS || !actx) return; const info = TRACKS[G.cfg.track], R = rng(info.seed * 7 + 1), dark = ['haunt', 'lava', 'neon', 'star', 'moon'].includes(info.theme);
-    this.root = [196, 220, 233, 247, 262, 294][(R() * 6) | 0] * (dark ? 0.9 : 1); this.scale = dark ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9]; this.bpm = 124 + ((R() * 4) | 0) * 6; this.up = 0;
-    this.prog = [[0, 5, 3, 4], [0, 3, 4, 4], [0, 4, 5, 3], [5, 3, 0, 4]][(R() * 4) | 0]; this.mel = []; let p = 5; for (let i = 0; i < 32; i++) { if (R() < 0.62) { p = clamp(p + ((R() * 5) | 0) - 2, 2, 11); this.mel.push(p); } else this.mel.push(-1); }
-    this.on = true; this.step = 0; this.next = actx.currentTime + 0.05; },
-  final() { if (this.on) { this.bpm += 16; this.up = 1; } }, stop() { this.on = false; },
-  tick() { if (!this.on || !actx || MUTE || paused) { if (actx) this.next = Math.max(this.next, actx.currentTime + 0.05); return; } const sp = 60 / this.bpm / 2, sc = this.scale, f = s => this.root * (this.up ? 1.0595 : 1) * Math.pow(2, (sc[((s % 5) + 5) % 5] + 12 * Math.floor(s / 5)) / 12);
-    while (this.next < actx.currentTime + 0.2) { const w = this.next - actx.currentTime, i = this.step, bar = Math.floor(i / 8) % 4, ch = this.prog[bar], deg = [0, 1, 2, 3, 4, 5, 6][ch];
-      const bassS = [deg, deg, deg + 2, deg, deg + 1, deg, deg + 2, deg + 3][i % 8]; tone(f(bassS) / 2, sp * 0.9, 0.035, 'triangle', w, 0, 900);
-      if (i % 2 === 0) noise(0.04, 7000, i % 4 === 0 ? 0.012 : 0.007, 'highpass', 1, w); if (i % 8 === 4) noise(0.12, 1800, 0.02, 'bandpass', 0.8, w); if (i % 4 === 0) tone(70, 0.12, 0.05, 'sine', w, 45);
-      if (i % 4 === 2) [0, 2, 4].forEach(q => tone(f(deg + q + 5), sp * 0.6, 0.008, 'square', w, 0, 1600));
-      const m = this.mel[i % 32]; if (m >= 0) tone(f(m + 5), sp * 1.6, 0.022, 'square', w, 0, 2600);
-      this.step++; this.next += sp; } } };
+// ---------- the music (his words, 20 Nov 2026: "make it more exciting"): a real race track for every course, made on the spot.
+// Drums (four-on-the-floor kick, snare on 2 and 4, eighth hats, open hats and claps in the chorus, a crash and a snare roll at
+// every section), an octave-pumping bass that follows the chords, chord stabs, a sixteenth-note arpeggio, and a lead tune
+// built like a real hook: a two-bar motif, played, answered, varied, played again. Intro, verse, chorus, verse, chorus...
+// Each course has its own key, tempo, chords and hook (seeded). The final lap: faster, a step higher, chorus all the way.
+const MAJ = [0, 2, 4, 5, 7, 9, 11], MIN = [0, 2, 3, 5, 7, 8, 10];
+const music = { on: false, next: 0, step: 0,
+  start(G) { if (HEADLESS || !actx) return; const info = TRACKS[G.cfg.track], R = rng(info.seed * 13 + 7), dark = ['haunt', 'lava', 'neon', 'star', 'moon', 'canyon'].includes(info.theme);
+    this.sc = dark ? MIN : MAJ; this.root = [110, 116.5, 123.5, 130.8, 138.6, 146.8][(R() * 6) | 0]; this.bpm = 148 + ((R() * 4) | 0) * 4; this.up = 0;
+    this.prog = dark ? [[0, 5, 2, 6], [0, 6, 5, 4], [0, 3, 6, 5]][(R() * 3) | 0] : [[0, 4, 5, 3], [5, 3, 0, 4], [0, 3, 4, 3], [0, 5, 3, 4]][(R() * 4) | 0];
+    // the hook: two bars of sixteenths, a rhythm with drive (on-beats and syncopations), a melody that moves by small steps
+    const rh = [1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0], mot = []; let d = 7 + ((R() * 3) | 0);
+    for (let i = 0; i < 32; i++) { const on = (i % 16 < 16) && (rh[i % 16] ? R() < 0.92 : R() < 0.12); if (on) { d = clamp(d + [-2, -1, -1, 1, 1, 2, 0, 3, -3][(R() * 9) | 0], 4, 13); mot.push(d); } else mot.push(-1); }
+    const ans = mot.map((v, i) => v < 0 ? v : i >= 24 ? v + (i % 2 ? 2 : -1) : v), alt = mot.map((v, i) => v < 0 ? v : v + 2);
+    this.lead = [mot, ans, alt, mot]; this.on = true; this.step = 0; this.next = actx.currentTime + 0.05; },
+  final() { if (this.on) { this.bpm += 12; this.up = 2; } }, stop() { this.on = false; },
+  f(deg, oct = 0) { const sc = this.sc, n = Math.floor(deg / 7), i = ((deg % 7) + 7) % 7; return this.root * Math.pow(2, (sc[i] + 12 * n + this.up) / 12 + oct); },
+  tick() { if (!this.on || !actx || MUTE || paused) { if (actx) this.next = Math.max(this.next, actx.currentTime + 0.05); return; } const s16 = 60 / this.bpm / 4;
+    while (this.next < actx.currentTime + 0.25) { const w = this.next - actx.currentTime, i = this.step, intro = i < 32, bar = Math.floor(i / 16), sec = Math.floor((bar - 2) / 8), chorus = this.up || (!intro && sec % 2 === 1), b16 = i % 16, bar8 = (bar - 2) % 8;
+      const ch = this.prog[((bar - (intro ? 0 : 2)) % 4 + 4) % 4], last = !intro && bar8 === 7 && b16 >= 12;
+      // drums
+      if (b16 % 4 === 0) tone(150, 0.2, 0.09, 'sine', w, 42);
+      if (chorus && (b16 === 14 || b16 === 7)) tone(140, 0.14, 0.05, 'sine', w, 50);
+      if (b16 === 4 || b16 === 12) { noise(0.16, 1900, chorus ? 0.06 : 0.05, 'bandpass', 0.7, w); tone(230, 0.07, 0.025, 'triangle', w, 170); if (chorus) noise(0.08, 2600, 0.03, 'bandpass', 2, w + 0.012); }
+      if (last) noise(0.06, 2000 + (b16 - 12) * 300, 0.035 + (b16 - 12) * 0.008, 'bandpass', 0.8, w);
+      if (b16 % 2 === 0) noise(0.03, 9000, b16 % 4 === 2 ? 0.016 : 0.009, 'highpass', 1, w); else if (chorus) noise(0.02, 10000, 0.006, 'highpass', 1, w);
+      if (chorus && b16 % 4 === 2) noise(0.12, 7500, 0.01, 'highpass', 1, w);
+      if (!intro && bar8 === 0 && b16 === 0) noise(1.2, 6000, 0.028, 'highpass', 0.5, w);
+      // bass: eighths, pumping between the octaves, a lead-in at the end of the bar
+      if (b16 % 2 === 0) { const nn = b16 === 14 ? ch + 4 : ch, oc = (b16 / 2) % 2 ? 0 : -1; tone(this.f(nn, oc - 1), s16 * 1.7, 0.05, 'sawtooth', w, 0, 700); tone(this.f(nn, oc - 1), s16 * 1.7, 0.03, 'sine', w); }
+      if (!intro) {
+        // chords: soft pads in the verse, bright stabs on the off-beats in the chorus
+        if (!chorus && b16 === 0) [0, 2, 4].forEach(q => tone(this.f(ch + q, 0), s16 * 15, 0.011, 'triangle', w, 0, 1800));
+        if (chorus && (b16 % 4 === 2)) [0, 2, 4].forEach(q => tone(this.f(ch + q, 0), s16 * 0.9, 0.013, 'square', w, 0, 2600));
+        // the arpeggio (chorus)
+        if (chorus) tone(this.f(ch + [0, 2, 4, 7][b16 % 4], 1), s16 * 0.8, 0.008, 'triangle', w, 0, 4000);
+        // the hook, with a quiet echo three sixteenths later
+        const ph = this.lead[Math.floor(bar8 / 2) % 4], nv = ph[((bar8 % 2) * 16 + b16)];
+        if (nv >= 0) { const fr = this.f(nv, chorus ? 0 : -1); tone(fr, s16 * 1.8, chorus ? 0.026 : 0.02, 'square', w, 0, chorus ? 3200 : 2200); tone(fr * 2, s16 * 1.2, 0.006, 'sine', w); tone(fr, s16 * 1.4, 0.007, 'square', w + s16 * 3, 0, 1800); } }
+      this.step++; this.next += s16; } } };
 const AM = { on: false };
 function soundStep(G, dt) {
   if (HEADLESS || !actx) return; if (!AM.on) { AM.on = true; AM.eng = bed(160, 4, 0, 0.05, 'bandpass'); AM.eng2 = bed(320, 6, 0, 0.05, 'bandpass'); AM.skid = bed(2600, 2, 0, 0.08, 'bandpass'); AM.crowd = bed(900, 0.5, 0, 0.2, 'bandpass'); }

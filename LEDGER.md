@@ -83,7 +83,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 73 | **Sharpshooter** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/W5XXdXd3AgPV7CRfJMevJs) | `games/sniper/index.html` |
 | 74 | **Beat Dash** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/ESJ8vDMkWnqvMDPuumRsEu) | `games/dash/index.html` |
 | 75 | **Shadow Crew** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/Q6rGZr1RAon8w53BWFRS5a) | `games/crew/index.html` |
-| 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
+| 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
 
 ## What each game is
 
@@ -162,4 +162,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 73. **Sharpshooter**: From a rooftop, find the thief in a busy square by the clues on the card, then put him to sleep with a dart: hold FIRE for the scope and your breath, lead him, mind the wind, never hit a passer-by.
 74. **Beat Dash**: A cube runs to the beat: tap to jump, hold to keep jumping; spikes, blocks, pits, pads, rings and gravity portals sit on the beat; three lives and flags; reach 100%.
 75. **Shadow Crew**: You are the hidden traitor on a 3D space station of hand-drawn sticker crewmates: knock them out when no one can see, vanish through vents, sabotage, and talk your way out of meetings. New rules every few levels.
-76. **Kart Kingdom**: His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, drifts with coloured sparks, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies.
+76. **Kart Kingdom**: His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, KartRider-style buttons (steer arrows, DRIFT, ITEM, NITRO), drifts with coloured sparks that fill the nitro, bananas thrown far ahead or behind, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies.
