@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**78 games** so far. Next number: **79**.
+**79 games** so far. Next number: **80**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -86,6 +86,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
 | 77 | **Sprint** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MmQxLMvqSpTbUQbya1HT97) | `games/sprint/index.html` |
 | 78 | **Bus Driver** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/SvgMcmUkQVPx1rcU36EjW9) | `games/bus/index.html` |
+| 79 | **Cake Designer** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/73cvdYLtDKLqvV4ji1aeii) | `games/cake/index.html` |
 
 ## What each game is
 
@@ -167,6 +168,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 76. **Kart Kingdom**: His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, KartRider-style buttons (steer arrows, DRIFT, ITEM, NITRO), drifts with coloured sparks that fill the nitro, bananas thrown far ahead or behind, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies.
 77. **Sprint**: His idea: a sprint where your two thumbs are your two feet. Tap the side whose ring is closing, as it closes: on the beat drives you on and builds FLOW, mashing trips you. A real start (reaction time, false starts, out on the second), hurdles and the dip with both thumbs, five events (60 m, 100 m, 60 m and 110 m hurdles, 200 m round the bend) in heats, semis and finals at six 3D stadiums, the ghost of your best run, kit colours, upgrades and ranks.
 78. **Bus Driver**: His idea: drive a city bus along its route through a 3D town with two pedals (hold GO, hold BRAKE; both ease in). Stop with the front door on the stop's mark and the doors open by themselves; people step off and climb aboard; leave on the stop's time, never before it. Red lights, zebra crossings with people, the car in front, speed cameras, corners to slow for, and a cup of tea that spills if you drive roughly. Six districts, rush hours, liveries, upgrades and ranks.
+79. **Cake Designer**: His idea: a calm 3D bakery. A customer orders a cake (tiers, icing colour, drip, swirls, toppings) and you make it in five stages, each with its own control: STACK (tap to set each gliding tier down), COLOUR (tap the icing on the card), ICE (the cake spins; hold your thumb on it and the knife spreads icing there), PIPE (tap as each dot passes under the bag), TOP (tap to place berries, candles, cherries, macarons). The customer scores each part; great cakes tip. Six bakeries, show cakes, stands, upgrades and ranks.
 
 ## Up next (designed, not built yet)
 

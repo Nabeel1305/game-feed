@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 79,
+  "next_number": 80,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2688,6 +2688,40 @@
         "P26"
       ],
       "summary": "His idea: drive a city bus along its route through a 3D town with two pedals (hold GO, hold BRAKE; both ease in). Stop with the front door on the stop's mark and the doors open by themselves; people step off and climb aboard; leave on the stop's time, never before it. Red lights, zebra crossings with people, the car in front, speed cameras, corners to slow for, and a cup of tea that spills if you drive roughly. Six districts, rush hours, liveries, upgrades and ranks."
+    },
+    {
+      "number": 79,
+      "id": "cake",
+      "name": "Cake Designer",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-20",
+      "path": "games/cake/index.html",
+      "artifact": "https://claude.ai/artifact/73cvdYLtDKLqvV4ji1aeii",
+      "artifact_slug": "30f47577-8bdf-45fa-945a-d437e295816f",
+      "apk_repo": null,
+      "storage_prefix": "cks.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Stack it, ice it, pipe it, top it. Make their dream cake.",
+        "genre": "Creative / baking",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Pacifico",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P21",
+        "P19",
+        "P6",
+        "P12",
+        "P13"
+      ],
+      "summary": "His idea: a calm 3D bakery. A customer orders a cake (tiers, icing colour, drip, swirls, toppings) and you make it in five stages, each with its own control: STACK (tap to set each gliding tier down), COLOUR (tap the icing on the card), ICE (the cake spins; hold your thumb on it and the knife spreads icing there), PIPE (tap as each dot passes under the bag), TOP (tap to place berries, candles, cherries, macarons). The customer scores each part; great cakes tip. Six bakeries, show cakes, stands, upgrades and ranks."
     }
   ],
   "planned": [

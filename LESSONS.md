@@ -874,6 +874,23 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - Cameras: 10 m behind the back of the bus and 6 m up (closer and its roof fills the screen); at a stop it swings to the
   door side, high (from low, the shelter hides the door).
 
+### 79. Cake Designer (`games/cake/`): five stages, five controls (built on Bus Driver's shell)
+- **The icing is a real map**: 24 bands x 48 slices per tier, painted into a canvas wrapped round an open cylinder just
+  outside the sponge (alphaTest 0.5, so uniced parts show the sponge, with no transparency sorting). The slice under the
+  knife is the turntable's angle, because the cake turns by -angle and a cylinder's u = 0 faces +z (the camera). The covered
+  total is kept as a running sum: recounting 1,152 cells a tier every frame made the robots twenty times slower.
+- **Touches mean what they are over** (part3 sem): the height on the cake from where its foot and top are on screen, the
+  point on the top from a ray onto the top's plane turned back into the cake's own frame. The rules only see { u, h, top }.
+- **Blind thumbs iced cakes**: a thumb put down anywhere over and over covers a spinning cake in the end, so icing alone
+  cannot be what a cake is judged on. The wrong icing colour fails the cake (a blind thumb picks it three times in four),
+  stacking weighs more, a swirl more than 0.4 of a gap off is worth nothing, and a blind "thumb" is anywhere on the screen
+  (the cake is about a third of it), not always on the cake. Then 2 of 5,696 blind strings won.
+- **G.wait can end below zero**: after "G.wait -= dt" it is often -0.01, and "!G.wait" is then false for ever: the stage
+  timeouts (the customer's "Is it ready yet?") never fired and blind games ran to the robots' 300 s limit. Set it to 0 when
+  it runs out, and test "G.wait <= 0".
+- A robot that remembers "I piped swirl n" must key it by the lesson's deal as well (G.deals): after a missed lesson the
+  count starts at 0 again and the old memory stopped it piping at all.
+
 ## The feed app (`feed/`, `tools/build_feed.py`, `android/`)
 How it is put together is in CLAUDE.md. What was learned building it:
 - **The plug goes in at build time, not into the games.** `tools/build_feed.py` writes a copy of each game with `feed/plug.js` at the top of its page. The games in `games/` stay exactly as he approved them, every game gets the same plug, and a better plug reaches all of them at once. The `<meta charset>` line must stay ahead of the plug: browsers only look for it in the first bytes of a page, and without it every "·" and "é" turns to junk.
