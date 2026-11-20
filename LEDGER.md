@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**72 games** so far. Next number: **73**.
+**73 games** so far. Next number: **74**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -80,6 +80,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 70 | **Sinkhole** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/2PghAkBBXJAifUWkns1UwQ) | `games/sinkhole/index.html` |
 | 71 | **Crowd Run** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/7mKQb3syPtjMEvLQr3Fuzt) | `games/crowd/index.html` |
 | 72 | **Word Wheel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Ww9HsnkonwwAQRpqAp4qYM) | `games/words/index.html` |
+| 73 | **Sharpshooter** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/W5XXdXd3AgPV7CRfJMevJs) | `games/sniper/index.html` |
 
 ## What each game is
 
@@ -155,3 +156,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 70. **Sinkhole**: You are a hole in the road: slide to swallow everything smaller than you, grow until houses and towers fall in, fill the town meter before the clock; red barrels blow up, other holes race you.
 71. **Crowd Run**: Steer a crowd of runners through gates that add, multiply, subtract and divide, past saws, hammers and walls, over narrow bridges and through red crowds, then beat the giant and climb the bonus stairs.
 72. **Word Wheel**: A calm word game: slide your thumb through a wheel of letters to spell the words that fill a little crossword; any other real word is a bonus; made-up words spill ink.
+73. **Sharpshooter**: From a rooftop, find the thief in a busy square by the clues on the card, then put him to sleep with a dart: hold FIRE for the scope and your breath, lead him, mind the wind, never hit a passer-by.

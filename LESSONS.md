@@ -733,6 +733,17 @@ Everything learned building the first games. Every new game must follow the **ru
 - `hint` is a rules function here: the view's tip box is `hint0` (part5's reset line set `hint = null` and broke it).
 - A first gift of 100 coins, or a new player cannot use a hint.
 
+### 73. Sharpshooter (`games/sniper/`): the crowd, the card, the scope
+- Sleep darts, not bullets: the thief lies down and snores. Same thrill, no blood.
+- Two thumbs for real: the FIRE pad is held (scope up, breath held, the sight steadies for 3 s then shakes) and released to
+  fire, while the other thumb keeps aiming. test_touch drives two pointers at once with the page's own PointerEvents.
+- The scope is the same 3D camera turned to the sight with a narrow field of view; the 2D layer paints the black ring.
+- A dart flies (55 m/s, a little drop, wind drift) and is checked against each person's column every frame of its flight,
+  so leading a walker and crossing people both work as they look.
+- Spam: the sight starts on the rooftops (not on the crowd) and any miss scatters the crowd with 6 s left; blind darts land
+  on the ground. A robot that looks must also wait for a clear shot, or it darts passers-by walking in front.
+- The camera close enough that people are big (it stood 16 m back at first: half the screen was empty ground).
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
