@@ -153,7 +153,7 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now;
-  if (V.trackN !== g.cfg.track || V.forG !== g) { if (V.trackN !== g.cfg.track) { V.trackN = g.cfg.track; buildTrack(V, g); W3.setSky(TRACKS[g.cfg.track].sky, { azim: 140 }); if (g.cfg.track === 2) { W3.S.exposure = 0.9; W3.S.hemiI = 0.7; } } else { for (const [, m] of V.karts) V.S.remove(m); V.karts.clear(); V.boxes.forEach((m, i) => m.userData.b = g.boxes[i]); } V.forG = g; ui.snap = true; }
+  if (V.trackN !== g.cfg.track || V.forG !== g) { if (V.trackN !== g.cfg.track) { V.trackN = g.cfg.track; buildTrack(V, g); W3.setSky(TRACKS[g.cfg.track].sky, { azim: 140 }); if (g.cfg.track === 2) { W3.S.exposure = 1.8; W3.S.hemiI = 1.4; } } else { for (const [, m] of V.karts) V.S.remove(m); V.karts.clear(); V.boxes.forEach((m, i) => m.userData.b = g.boxes[i]); } V.forG = g; ui.snap = true; }
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, 0, g.me.z, 30); W3.render(dt);
   if (G) hud(G, t);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;

@@ -112,6 +112,9 @@ let last = performance.now(), endT = 0;
 function frame(now) {
   const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
   if (HEADLESS) { requestAnimationFrame(frame); return; }
+  // the screen's size, checked twice a second: an app that opens the page before it has its size never sends a resize, and
+  // the picture stayed at no size at all (a black screen with only the buttons and the music) on his phone
+  if (now - (frame.sz || 0) > 500) { frame.sz = now; const gl3 = typeof W3 !== 'undefined' && W3 && W3.ok; if (innerWidth > 0 && innerHeight > 0 && (W !== innerWidth || H !== innerHeight || !cv.width || (gl3 && !W3.R.domElement.width))) { resize(); if (gl3) W3.resize(); } }
   if (G && !paused && !G.over) measure(ms);
   if (G && !paused) {
     let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)

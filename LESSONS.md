@@ -775,6 +775,12 @@ Everything learned building the first games. Every new game must follow the **ru
 - Meeting lines need a real speaker (`from` is drawn as a face): never -1.
 
 ### 76. Kart Kingdom (`games/kingdom/`): the big kart racer (built on Stunt Kart and Drift Kings)
+- **Black on his phone, fine here (20 Nov 2026: "everything is black... the music is going").** Same report for Tri-Peaks and
+  Stunt Kart. The picture can be left at no size when an app opens the page before it knows its size and never sends a
+  resize: buttons and music, a black screen. The frame loop now checks the size twice a second and fixes it (kingdom, stunt,
+  peaks); world3d.js also keeps the right to get the 3D picture back if the phone takes it away. And brighter for real eyes:
+  no black night skies on race courses (dusk, sunset, golden instead), exposure and sky light lifted, a soft ambient light;
+  every course measured at a mean brightness of at least about 50 of 255, most 75-160.
 - **Courses that cannot cross themselves**: each is a polar shape (radius from a few harmonics, always above zero), so it
   never crosses; then the whole course is scaled up until its tightest bend has a 14 m radius and any two stretches of road
   are at least 32 m apart (walls and all). Hills come from a few sines; the ground round the glider jump is levelled first.

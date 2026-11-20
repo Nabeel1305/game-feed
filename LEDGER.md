@@ -62,7 +62,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 52 | **High Wire** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7) | `games/rope/index.html` |
 | 53 | **Homemaker** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK) | `games/house/index.html` |
 | 54 | **Fruit Fight** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/AaN4KXLpYKSDUmjRGaYycM) | `games/fruit/index.html` |
-| 55 | **Tri-Peaks** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/LMRVK8AJrKdaFVGBM48Pkz) | `games/peaks/index.html` |
+| 55 | **Tri-Peaks** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/LMRVK8AJrKdaFVGBM48Pkz) | `games/peaks/index.html` |
 | 56 | **Oarsmen** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MjBGfJ9nsPc25wSnrLeEz6) | `games/row/index.html` |
 | 57 | **Safecracker** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CguUr26oFcrpa5b977t8Kj) | `games/safe/index.html` |
 | 58 | **Fire Crew** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/LP3oJGfLwpe9djpWjsyR9T) | `games/fire/index.html` |
@@ -73,7 +73,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 63 | **Pour** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QmpG7WcZG2wV2k3XTvGEuY) | `games/pour/index.html` |
 | 64 | **Block Party** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UaQb7Pkffx2PavfwZ5JVL8) | `games/blocks/index.html` |
 | 65 | **Plumber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QspkqDVm5vnfzGjJWVBmzd) | `games/plumber/index.html` |
-| 66 | **Stunt Kart** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/1aSgdzNK6JWszpPCLwUKCJ) | `games/stunt/index.html` |
+| 66 | **Stunt Kart** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/1aSgdzNK6JWszpPCLwUKCJ) | `games/stunt/index.html` |
 | 67 | **Knife Spin** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/W9MYa4oFq3bMgN2bi48M6m) | `games/knife/index.html` |
 | 68 | **Mow It** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/TxRAf2ZspQ9BS5m6Gs5156) | `games/mow/index.html` |
 | 69 | **Helix Drop** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/AjmPj39viu1U3HLgSvzRS9) | `games/helix/index.html` |
@@ -83,7 +83,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 73 | **Sharpshooter** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/W5XXdXd3AgPV7CRfJMevJs) | `games/sniper/index.html` |
 | 74 | **Beat Dash** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/ESJ8vDMkWnqvMDPuumRsEu) | `games/dash/index.html` |
 | 75 | **Shadow Crew** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Q6rGZr1RAon8w53BWFRS5a) | `games/crew/index.html` |
-| 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
+| 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
 
 ## What each game is
 

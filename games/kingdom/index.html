@@ -4860,6 +4860,8 @@ const W3 = (() => {
       stars = new T.Points(g, new T.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })); stars.renderOrder = -1; scene.add(stars); }
     rain = makeRain(); scene.add(rain);
     scene.fog = new T.Fog(0xb9cde0, 60, 900);
+    // a phone can take the 3D picture away (too much else running): keep the right to have it back, and get it back
+    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; }, false); canvas.addEventListener('webglcontextrestored', () => { S.lost = false; S.restored = (S.restored || 0) + 1; resize(); }, false);
     ok = true; resize(); return true;
   }
   function rngW(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -5050,12 +5052,12 @@ const TRACKS = [
   { name: 'Blossom Way', sky: 'morning', theme: 'blossom', seed: 53, R: 98, hills: 4, haz: [['gumdrop', 0, 0], ['mud', 1, 2]], water: true },
   { name: 'Frost Peak', sky: 'overcast', theme: 'frost', seed: 67, R: 112, hills: 8, haz: [['snowball', 1, 4], ['ice', 1, 3]], snow: true },
   { name: 'Jungle Ruins', sky: 'mist', theme: 'jungle', seed: 71, R: 104, hills: 5, gap: 'river', haz: [['mud', 2, 4], ['boulder', 0, 2]] },
-  { name: 'Neon City', sky: 'night', theme: 'neon', seed: 83, R: 116, hills: 2, haz: [['car', 2, 5]] },
-  { name: 'Pirate Cove', sky: 'sunset', theme: 'pirate', seed: 97, R: 108, hills: 3, gap: 'sea', haz: [['cannon', 2, 5], ['crab', 1, 2]], water: true },
+  { name: 'Neon City', sky: 'golden', theme: 'neon', seed: 83, R: 116, hills: 2, haz: [['car', 2, 5]] },
+  { name: 'Pirate Cove', sky: 'golden', theme: 'pirate', seed: 97, R: 108, hills: 3, gap: 'sea', haz: [['cannon', 2, 5], ['crab', 1, 2]], water: true },
   { name: 'Candy Canyon', sky: 'noon', theme: 'candy', seed: 101, R: 100, hills: 6, haz: [['gumdrop', 2, 5]] },
-  { name: 'Haunted Manor', sky: 'night', theme: 'haunt', seed: 113, R: 102, hills: 3, haz: [['ghost', 2, 5]], fog: true },
+  { name: 'Haunted Manor', sky: 'sunset', theme: 'haunt', seed: 113, R: 102, hills: 3, haz: [['ghost', 2, 5]], fog: true },
   { name: 'Desert Dunes', sky: 'noon', theme: 'desert', seed: 127, R: 118, hills: 6, haz: [['twister', 1, 3], ['boulder', 1, 2]] },
-  { name: 'Lava Castle', sky: 'storm', theme: 'lava', seed: 131, R: 106, hills: 4, gap: 'lava', edge: 'void', haz: [['lava', 2, 5]] },
+  { name: 'Lava Castle', sky: 'golden', theme: 'lava', seed: 131, R: 106, hills: 4, gap: 'lava', edge: 'void', haz: [['lava', 2, 5]] },
   { name: 'Sky Garden', sky: 'morning', theme: 'sky', seed: 149, R: 104, hills: 9, gap: 'cloud', edge: 'void', haz: [['gumdrop', 0, 2]] },
   { name: 'Moon Base', sky: 'night', theme: 'moon', seed: 157, R: 112, hills: 6, grav: 0.55, haz: [['meteor', 2, 5]] },
   { name: 'Star Ribbon', sky: 'night', theme: 'star', seed: 163, R: 120, hills: 10, gap: 'space', edge: 'void', haz: [['meteor', 0, 3]] },
@@ -5450,10 +5452,10 @@ const THEMES = {
   blossom: { lo: 0x7ab85a, hi: 0x9ac87a, road: '#45404c', kerb: ['#ff8ac8', '#ffffff'], wall: ['#c83a3a', '#2a2a2a'], trees: 'round', leaf: [0xffa8d0, 0xffc8e0], props: ['pagoda', 'lanterns', 'torii'], sea: 0x2a6a7a, hills: 16 },
   frost: { lo: 0xe8eef8, hi: 0xffffff, road: '#4a5468', kerb: ['#3ab0ff', '#ffffff'], wall: ['#ffffff', '#c8d8f0'], trees: 'snowpine', props: ['snowmen', 'iceblocks'], hills: 30, snow: true },
   jungle: { lo: 0x2a6a2a, hi: 0x3a8a3a, road: '#5a4c3a', kerb: ['#d8c080', '#5a4a30'], wall: ['#5a7a4a', '#7a8a5a'], trees: 'jungle', props: ['ruins', 'ferns'], hills: 20, chasm: 'river' },
-  neon: { lo: 0x1a1a24, hi: 0x24242e, road: '#2a2a34', kerb: ['#ff3ab0', '#3ae0ff'], wall: ['#ff3ab0', '#1a1a2a'], trees: 'none', props: ['towers', 'signs'], hills: 2, night: true },
+  neon: { lo: 0x4a4a5a, hi: 0x5a5a6a, road: '#3e3e4c', kerb: ['#ff3ab0', '#3ae0ff'], wall: ['#ff3ab0', '#1a1a2a'], trees: 'none', props: ['towers', 'signs'], hills: 2, night: true },
   pirate: { lo: 0xe0c890, hi: 0x6a9a4a, road: '#5a4c40', kerb: ['#c83a2a', '#ffe8c0'], wall: ['#6a4a2a', '#8a6a3a'], trees: 'palm', props: ['ships', 'barrels'], sea: 0x1a5a7a, hills: 10, chasm: 'sea' },
   candy: { lo: 0xffb8d8, hi: 0xb8e8ff, road: '#8a4a72', kerb: ['#ffffff', '#ff3a6a'], wall: ['#ffffff', '#ff5a9a'], trees: 'lolly', props: ['canes', 'cupcakes', 'gumballs'], hills: 16 },
-  haunt: { lo: 0x2a2a3a, hi: 0x3a3048, road: '#3a3440', kerb: ['#8a3aff', '#2a2a2a'], wall: ['#4a4a5a', '#2a2a3a'], trees: 'dead', props: ['manor', 'graves', 'pumpkins'], hills: 12, night: true },
+  haunt: { lo: 0x5a5a78, hi: 0x6a6088, road: '#5a5468', kerb: ['#8a3aff', '#2a2a2a'], wall: ['#4a4a5a', '#2a2a3a'], trees: 'dead', props: ['manor', 'graves', 'pumpkins'], hills: 12, night: true },
   desert: { lo: 0xe8c078, hi: 0xd8a860, road: '#6a5c4c', kerb: ['#ffffff', '#d87a2a'], wall: ['#c8964a', '#a87a3a'], trees: 'cactus', props: ['pyramids', 'rocks'], hills: 22 },
   lava: { road: '#3a3238', kerb: ['#ff6a1a', '#2a2228'], edgeGlow: 0xff5a1a, props: ['castle', 'lavasea', 'rocks'], void: true, skirt: 0x2a2228 },
   sky: { road: '#8a8aa8', kerb: ['#ffffff', '#ffd23a'], edgeGlow: 0xffffff, props: ['islands', 'clouds', 'rainbow'], void: true, skirt: 0xe8e8f8 },
@@ -5536,7 +5538,7 @@ function buildWorld() {
   // the weather: snow, petals, embers, fireflies, star dust (a box of drifting points that follows the camera)
   const WN = 700, wp = new Float32Array(WN * 3); for (let i = 0; i < WN * 3; i++) wp[i] = (Math.random() - 0.5) * 80; const wg = new T.BufferGeometry(); wg.setAttribute('position', new T.BufferAttribute(wp, 3));
   V.wx = new T.Points(wg, new T.PointsMaterial({ size: 0.35, map: glowTex(), transparent: true, opacity: 0.9, depthWrite: false, color: 0xffffff })); V.wx.frustumCulled = false; V.wx.visible = false; V.S.add(V.wx);
-  W3.setQuality(stepN); return V; }
+  V.amb = new T.AmbientLight(0xffffff, 0.45); V.S.add(V.amb); W3.setQuality(stepN); return V; }
 // a grid round the course: the nearest piece of road to any point (for the land's height and keeping scenery off the road)
 function nearGrid(TR) { if (TR.ng) return TR.ng; const S = TR.S, n = S.length; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of S) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
   const C = 5, pad = 120; x0 -= pad; z0 -= pad; x1 += pad; z1 += pad; const nx = Math.ceil((x1 - x0) / C), nz = Math.ceil((z1 - z0) / C), idx = new Int16Array(nx * nz), dist = new Float32Array(nx * nz);
@@ -5544,7 +5546,7 @@ function nearGrid(TR) { if (TR.ng) return TR.ng; const S = TR.S, n = S.length; l
   TR.ng = { x0, z0, C, nx, nz, idx, dist, at(x, z) { const a = clamp(Math.round((x - x0) / C), 0, nx - 1), b = clamp(Math.round((z - z0) / C), 0, nz - 1); return { i: idx[a + b * nx], d: dist[a + b * nx] }; }, cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, w: x1 - x0, h: z1 - z0 }; return TR.ng; }
 // one course's world: built when the course changes
 function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length, info = TR.info, th = THEMES[info.theme], R0 = W3.rng(info.seed + 3), ng = nearGrid(TR);
-  if (V.track) { V.S.remove(V.track); V.track.traverse(o => { if (o.geometry) o.geometry.dispose(); }); } const H = new T.Group(); V.track = H; V.S.add(H); V.anim = []; V.lights = [];
+  if (V.track) { V.S.remove(V.track); V.track.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? [].concat(o.material) : []; for (const m of ms) { for (const k2 of ['map', 'emissiveMap']) if (m[k2]) m[k2].dispose(); m.dispose(); } }); } const H = new T.Group(); V.track = H; V.S.add(H); V.anim = []; V.lights = [];
   let minY = 1e9; for (const p of S) minY = Math.min(minY, p.y);
   const noise = (x, z) => Math.sin(x * 0.013 + 1.3) * Math.cos(z * 0.011 - 0.7) + 0.5 * Math.sin(x * 0.031 + z * 0.027) + 0.25 * Math.cos(x * 0.07 - z * 0.05);
   // the land: it meets the road, rolls into hills away from it, drops into the chasm under the glider, dips under the sea
@@ -5596,7 +5598,8 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length, i
   arch.position.set(s0.x, s0.y, s0.z); arch.rotation.y = -s0.h; H.add(arch);
   { const fl = []; for (let q = -40; q < 40; q += 3) { const p = S[(q + n) % n]; if (p.gap) continue; for (const sd of [-1, 1]) fl.push({ x: p.x - Math.sin(p.h) * sd * (TW / 2 + (th.void ? 1.4 : 3.8)), y: p.y, z: p.z + Math.cos(p.h) * sd * (TW / 2 + (th.void ? 1.4 : 3.8)), rot: -p.h + Math.PI / 2, tint: [0xff3a5a, 0xffd23a, 0x3ab0ff, 0x7ae04a, 0xff8ac8][((q + 40) / 3 + (sd > 0 ? 2 : 0)) % 5 | 0] }); }
     addFlags(H, fl);
-    if (!th.void) { const p = S[(n - 20) % n], sd = (TRACKS.indexOf(info) % 2 ? 1 : -1), off = TW / 2 + 12, gs = new T.Group(); const crowd = canvasTex(256, 64, (q, w, h) => { q.fillStyle = '#2a2a3a'; q.fillRect(0, 0, w, h); for (let r = 0; r < 4; r++) for (let c = 0; c < 40; c++) { q.fillStyle = ['#ff5a5a', '#ffd23a', '#5ab0ff', '#ffffff', '#7ae04a', '#ff8ac8', '#c08aff'][(r * 7 + c * 3) % 7]; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 10 + r * 15, 3.2, 0, TAU); q.fill(); q.fillStyle = '#f0c8a0'; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 5 + r * 15, 2.2, 0, TAU); q.fill(); } });
+    let gsAt = null; if (!th.void) for (const q0 of [n - 20, n - 40, 20, 40, n - 60]) for (const sd0 of [1, -1]) { if (gsAt) break; const p = S[(q0 + n) % n], off = TW / 2 + 13, cx2 = p.x - Math.sin(p.h) * sd0 * off, cz2 = p.z + Math.cos(p.h) * sd0 * off; let clear = true; for (let a = -22; a <= 22 && clear; a += 5.5) for (let b2 = -6; b2 <= 6; b2 += 6) { const x = cx2 + Math.cos(p.h) * a - Math.sin(p.h) * b2, z = cz2 + Math.sin(p.h) * a + Math.cos(p.h) * b2; if (ng.at(x, z).d < TW / 2 + 5) { clear = false; break; } } if (clear) gsAt = { p, sd: sd0 }; }
+    if (gsAt) { const p = gsAt.p, sd = gsAt.sd, off = TW / 2 + 13, gs = new T.Group(); const crowd = canvasTex(256, 64, (q, w, h) => { q.fillStyle = '#2a2a3a'; q.fillRect(0, 0, w, h); for (let r = 0; r < 4; r++) for (let c = 0; c < 40; c++) { q.fillStyle = ['#ff5a5a', '#ffd23a', '#5ab0ff', '#ffffff', '#7ae04a', '#ff8ac8', '#c08aff'][(r * 7 + c * 3) % 7]; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 10 + r * 15, 3.2, 0, TAU); q.fill(); q.fillStyle = '#f0c8a0'; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 5 + r * 15, 2.2, 0, TAU); q.fill(); } });
       const st2 = new T.Mesh(new T.BoxGeometry(40, 7, 8), [M(0x3a3a4a), M(0x3a3a4a), M(0x4a4a5a), M(0x3a3a4a), new T.MeshStandardMaterial({ map: crowd, roughness: 0.9 }), M(0x3a3a4a)]); st2.position.y = 3.5; st2.rotation.x = 0; gs.add(st2); const rf = new T.Mesh(new T.BoxGeometry(42, 0.5, 10), M(0xff3a5a, 0.5)); rf.position.y = 9; gs.add(rf);
       for (const x of [-20, 20]) { const pl = new T.Mesh(new T.BoxGeometry(0.4, 9, 0.4), M(0xdddddd)); pl.position.set(x, 4.5, 4); gs.add(pl); } gs.position.set(p.x - Math.sin(p.h) * sd * off, p.y, p.z + Math.cos(p.h) * sd * off); gs.rotation.y = -p.h + (sd > 0 ? Math.PI : 0); H.add(gs); } }
   // scenery: away from the road, standing on the land
@@ -5818,16 +5821,23 @@ function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k
   // during the countdown: in from the front of the grid, round and down behind your kart
   if (g.count > 0 && !g.lesson) { const u = clamp((3.2 - g.count) / 2.6, 0, 1), e = u * u * (3 - 2 * u), a = h + Math.PI * (1 - e), r = lerp(15, back, e), hy = lerp(10, up, e) + Math.sin(e * Math.PI) * 2; px = k2.x - Math.cos(a) * r; pz = k2.z - Math.sin(a) * r; py = hy + ui.cam.y; }
   cam.position.set(px + sh, py, pz + sh); cam.lookAt(lx, ly, lz); cam.updateMatrixWorld(); }
+// bright enough for real eyes on a real phone (his words, 20 Nov 2026: "make it for human eyes"): every course at every
+// time of day is lifted to a clear, colourful picture; night courses keep their dark sky but the road and the karts are lit
+function brighten(info, sk) { const S = W3.S, night = ['night', 'dusk'].includes(sk), wet = ['rain', 'mist', 'overcast', 'storm'].includes(sk);
+  S.exposure *= night ? 1.0 : wet ? 1.4 : info.theme === 'candy' || info.theme === 'desert' || info.theme === 'sky' ? 0.95 : 1.1; if (night) S.exposure = Math.max(S.exposure, sk === 'dusk' ? 1.6 : 2.0); if (sk === 'sunset') S.exposure *= 1.7; S.hemiI = Math.max(S.hemiI, night ? 1.5 : 1.25); W3.hemi.intensity = S.hemiI; if (night) { W3.hemi.color.set(0xb8c8ff); W3.hemi.groundColor.set(0x6a6a8a); }
+  W3.scene.environmentIntensity = Math.max(W3.scene.environmentIntensity, night ? 0.6 : 1.0); if (V3 && V3.amb) V3.amb.intensity = night ? 0.9 : wet ? 0.6 : 0.4;
+  W3.scene.fog.far = Math.max(W3.scene.fog.far, 420); W3.scene.fog.near = Math.max(W3.scene.fog.near, 60); }
 // the same course at another time of day when the cups come round again (light and weather that change)
-function skyOf(info, cls) { const b = info.sky, night = ['night', 'storm'].includes(b) || info.theme === 'sky'; if (night || cls === 0 || cls === 3) return b;
+function skyOf(info, cls) { const b = info.sky, night = ['night', 'storm', 'sunset', 'dusk'].includes(b) || ['sky', 'lava', 'pirate'].includes(info.theme); if (night || cls === 0 || cls === 3) return b;
   if (cls === 1) return ['golden', 'sunset', 'morning'][info.seed % 3] === b ? 'noon' : ['golden', 'sunset', 'morning'][info.seed % 3];
-  if (cls === 2) return ['rain', 'mist', 'overcast'][info.seed % 3]; return 'dusk'; }
-let IG = null; function idleG() { if (!IG || IG.over || IG.t > 70) { IG = newGame(Math.max(1, (store.get('level', 1) | 0)) + (IG ? (IG.N % 16) : 0), { seed: (Math.random() * 1e6) | 0 }); IG.lesson = null; IG.mem = {}; ui.snap = true; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
+  if (cls === 2) return ['rain', 'mist', 'overcast'][info.seed % 3]; return 'golden'; }
+let IG = null; function idleG() { if (!IG || IG.over || IG.t > 70) { IG = newGame(Math.max(1, (store.get('level', 1) | 0)), { seed: (Math.random() * 1e6) | 0 }); IG.lesson = null; IG.mem = {}; ui.snap = true; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  const V = buildWorld(); if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
+  const V = buildWorld(); if (!V.none && V.restored !== W3.S.restored) { V.restored = W3.S.restored; V.trackN = -1; }
+  if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now, key = g.cfg.track + (g.cfg.mirror ? 100 : 0);
-  if (V.trackN !== key || V.forG !== g) { if (V.trackN !== key) { V.trackN = key; buildTrack(V, g); const info = TRACKS[g.cfg.track]; W3.setSky(skyOf(info, g.cfg.cls), { azim: 140 + info.seed % 90 }); if (THEMES[info.theme].night) { W3.S.exposure = info.theme === 'neon' ? 1.1 : 1.3; W3.S.hemiI = 0.8; } if (info.theme === 'star') W3.S.exposure = 1.6; }
+  if (V.trackN !== key || V.forG !== g) { if (V.trackN !== key) { V.trackN = key; buildTrack(V, g); const info = TRACKS[g.cfg.track]; const sk = skyOf(info, g.cfg.cls); W3.setSky(sk, { azim: 140 + info.seed % 90 }); brighten(info, sk); }
     else { for (const [, m] of V.karts) { V.S.remove(m); const u = m.userData; if (u.orb) u.orb.forEach(s => V.S.remove(s)); if (u.bee) V.S.remove(u.bee); } V.karts.clear(); V.haz.forEach(m => V.track.remove(m)); V.haz = []; V.shotsM.forEach(m => m && V.S.remove(m)); V.shotsM = []; V.peelsM.forEach(m => V.S.remove(m)); V.peelsM = []; }
     V.forG = g; ui.snap = true; }
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, g.me.y || 0, g.me.z, 34); W3.render(dt);
@@ -6129,6 +6139,9 @@ let last = performance.now(), endT = 0;
 function frame(now) {
   const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
   if (HEADLESS) { requestAnimationFrame(frame); return; }
+  // the screen's size, checked twice a second: an app that opens the page before it has its size never sends a resize, and
+  // the picture stayed at no size at all (a black screen with only the buttons and the music) on his phone
+  if (now - (frame.sz || 0) > 500) { frame.sz = now; const gl3 = typeof W3 !== 'undefined' && W3 && W3.ok; if (innerWidth > 0 && innerHeight > 0 && (W !== innerWidth || H !== innerHeight || !cv.width || (gl3 && !W3.R.domElement.width))) { resize(); if (gl3) W3.resize(); } }
   if (G && !paused && !G.over) measure(ms);
   if (G && !paused) {
     let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)

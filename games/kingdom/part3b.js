@@ -141,16 +141,23 @@ function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k
   // during the countdown: in from the front of the grid, round and down behind your kart
   if (g.count > 0 && !g.lesson) { const u = clamp((3.2 - g.count) / 2.6, 0, 1), e = u * u * (3 - 2 * u), a = h + Math.PI * (1 - e), r = lerp(15, back, e), hy = lerp(10, up, e) + Math.sin(e * Math.PI) * 2; px = k2.x - Math.cos(a) * r; pz = k2.z - Math.sin(a) * r; py = hy + ui.cam.y; }
   cam.position.set(px + sh, py, pz + sh); cam.lookAt(lx, ly, lz); cam.updateMatrixWorld(); }
+// bright enough for real eyes on a real phone (his words, 20 Nov 2026: "make it for human eyes"): every course at every
+// time of day is lifted to a clear, colourful picture; night courses keep their dark sky but the road and the karts are lit
+function brighten(info, sk) { const S = W3.S, night = ['night', 'dusk'].includes(sk), wet = ['rain', 'mist', 'overcast', 'storm'].includes(sk);
+  S.exposure *= night ? 1.0 : wet ? 1.4 : info.theme === 'candy' || info.theme === 'desert' || info.theme === 'sky' ? 0.95 : 1.1; if (night) S.exposure = Math.max(S.exposure, sk === 'dusk' ? 1.6 : 2.0); if (sk === 'sunset') S.exposure *= 1.7; S.hemiI = Math.max(S.hemiI, night ? 1.5 : 1.25); W3.hemi.intensity = S.hemiI; if (night) { W3.hemi.color.set(0xb8c8ff); W3.hemi.groundColor.set(0x6a6a8a); }
+  W3.scene.environmentIntensity = Math.max(W3.scene.environmentIntensity, night ? 0.6 : 1.0); if (V3 && V3.amb) V3.amb.intensity = night ? 0.9 : wet ? 0.6 : 0.4;
+  W3.scene.fog.far = Math.max(W3.scene.fog.far, 420); W3.scene.fog.near = Math.max(W3.scene.fog.near, 60); }
 // the same course at another time of day when the cups come round again (light and weather that change)
-function skyOf(info, cls) { const b = info.sky, night = ['night', 'storm'].includes(b) || info.theme === 'sky'; if (night || cls === 0 || cls === 3) return b;
+function skyOf(info, cls) { const b = info.sky, night = ['night', 'storm', 'sunset', 'dusk'].includes(b) || ['sky', 'lava', 'pirate'].includes(info.theme); if (night || cls === 0 || cls === 3) return b;
   if (cls === 1) return ['golden', 'sunset', 'morning'][info.seed % 3] === b ? 'noon' : ['golden', 'sunset', 'morning'][info.seed % 3];
-  if (cls === 2) return ['rain', 'mist', 'overcast'][info.seed % 3]; return 'dusk'; }
-let IG = null; function idleG() { if (!IG || IG.over || IG.t > 70) { IG = newGame(Math.max(1, (store.get('level', 1) | 0)) + (IG ? (IG.N % 16) : 0), { seed: (Math.random() * 1e6) | 0 }); IG.lesson = null; IG.mem = {}; ui.snap = true; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
+  if (cls === 2) return ['rain', 'mist', 'overcast'][info.seed % 3]; return 'golden'; }
+let IG = null; function idleG() { if (!IG || IG.over || IG.t > 70) { IG = newGame(Math.max(1, (store.get('level', 1) | 0)), { seed: (Math.random() * 1e6) | 0 }); IG.lesson = null; IG.mem = {}; ui.snap = true; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  const V = buildWorld(); if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
+  const V = buildWorld(); if (!V.none && V.restored !== W3.S.restored) { V.restored = W3.S.restored; V.trackN = -1; }
+  if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now, key = g.cfg.track + (g.cfg.mirror ? 100 : 0);
-  if (V.trackN !== key || V.forG !== g) { if (V.trackN !== key) { V.trackN = key; buildTrack(V, g); const info = TRACKS[g.cfg.track]; W3.setSky(skyOf(info, g.cfg.cls), { azim: 140 + info.seed % 90 }); if (THEMES[info.theme].night) { W3.S.exposure = info.theme === 'neon' ? 1.1 : 1.3; W3.S.hemiI = 0.8; } if (info.theme === 'star') W3.S.exposure = 1.6; }
+  if (V.trackN !== key || V.forG !== g) { if (V.trackN !== key) { V.trackN = key; buildTrack(V, g); const info = TRACKS[g.cfg.track]; const sk = skyOf(info, g.cfg.cls); W3.setSky(sk, { azim: 140 + info.seed % 90 }); brighten(info, sk); }
     else { for (const [, m] of V.karts) { V.S.remove(m); const u = m.userData; if (u.orb) u.orb.forEach(s => V.S.remove(s)); if (u.bee) V.S.remove(u.bee); } V.karts.clear(); V.haz.forEach(m => V.track.remove(m)); V.haz = []; V.shotsM.forEach(m => m && V.S.remove(m)); V.shotsM = []; V.peelsM.forEach(m => V.S.remove(m)); V.peelsM = []; }
     V.forG = g; ui.snap = true; }
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, g.me.y || 0, g.me.z, 34); W3.render(dt);

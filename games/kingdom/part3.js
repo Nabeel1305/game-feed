@@ -28,10 +28,10 @@ const THEMES = {
   blossom: { lo: 0x7ab85a, hi: 0x9ac87a, road: '#45404c', kerb: ['#ff8ac8', '#ffffff'], wall: ['#c83a3a', '#2a2a2a'], trees: 'round', leaf: [0xffa8d0, 0xffc8e0], props: ['pagoda', 'lanterns', 'torii'], sea: 0x2a6a7a, hills: 16 },
   frost: { lo: 0xe8eef8, hi: 0xffffff, road: '#4a5468', kerb: ['#3ab0ff', '#ffffff'], wall: ['#ffffff', '#c8d8f0'], trees: 'snowpine', props: ['snowmen', 'iceblocks'], hills: 30, snow: true },
   jungle: { lo: 0x2a6a2a, hi: 0x3a8a3a, road: '#5a4c3a', kerb: ['#d8c080', '#5a4a30'], wall: ['#5a7a4a', '#7a8a5a'], trees: 'jungle', props: ['ruins', 'ferns'], hills: 20, chasm: 'river' },
-  neon: { lo: 0x1a1a24, hi: 0x24242e, road: '#2a2a34', kerb: ['#ff3ab0', '#3ae0ff'], wall: ['#ff3ab0', '#1a1a2a'], trees: 'none', props: ['towers', 'signs'], hills: 2, night: true },
+  neon: { lo: 0x4a4a5a, hi: 0x5a5a6a, road: '#3e3e4c', kerb: ['#ff3ab0', '#3ae0ff'], wall: ['#ff3ab0', '#1a1a2a'], trees: 'none', props: ['towers', 'signs'], hills: 2, night: true },
   pirate: { lo: 0xe0c890, hi: 0x6a9a4a, road: '#5a4c40', kerb: ['#c83a2a', '#ffe8c0'], wall: ['#6a4a2a', '#8a6a3a'], trees: 'palm', props: ['ships', 'barrels'], sea: 0x1a5a7a, hills: 10, chasm: 'sea' },
   candy: { lo: 0xffb8d8, hi: 0xb8e8ff, road: '#8a4a72', kerb: ['#ffffff', '#ff3a6a'], wall: ['#ffffff', '#ff5a9a'], trees: 'lolly', props: ['canes', 'cupcakes', 'gumballs'], hills: 16 },
-  haunt: { lo: 0x2a2a3a, hi: 0x3a3048, road: '#3a3440', kerb: ['#8a3aff', '#2a2a2a'], wall: ['#4a4a5a', '#2a2a3a'], trees: 'dead', props: ['manor', 'graves', 'pumpkins'], hills: 12, night: true },
+  haunt: { lo: 0x5a5a78, hi: 0x6a6088, road: '#5a5468', kerb: ['#8a3aff', '#2a2a2a'], wall: ['#4a4a5a', '#2a2a3a'], trees: 'dead', props: ['manor', 'graves', 'pumpkins'], hills: 12, night: true },
   desert: { lo: 0xe8c078, hi: 0xd8a860, road: '#6a5c4c', kerb: ['#ffffff', '#d87a2a'], wall: ['#c8964a', '#a87a3a'], trees: 'cactus', props: ['pyramids', 'rocks'], hills: 22 },
   lava: { road: '#3a3238', kerb: ['#ff6a1a', '#2a2228'], edgeGlow: 0xff5a1a, props: ['castle', 'lavasea', 'rocks'], void: true, skirt: 0x2a2228 },
   sky: { road: '#8a8aa8', kerb: ['#ffffff', '#ffd23a'], edgeGlow: 0xffffff, props: ['islands', 'clouds', 'rainbow'], void: true, skirt: 0xe8e8f8 },
@@ -114,7 +114,7 @@ function buildWorld() {
   // the weather: snow, petals, embers, fireflies, star dust (a box of drifting points that follows the camera)
   const WN = 700, wp = new Float32Array(WN * 3); for (let i = 0; i < WN * 3; i++) wp[i] = (Math.random() - 0.5) * 80; const wg = new T.BufferGeometry(); wg.setAttribute('position', new T.BufferAttribute(wp, 3));
   V.wx = new T.Points(wg, new T.PointsMaterial({ size: 0.35, map: glowTex(), transparent: true, opacity: 0.9, depthWrite: false, color: 0xffffff })); V.wx.frustumCulled = false; V.wx.visible = false; V.S.add(V.wx);
-  W3.setQuality(stepN); return V; }
+  V.amb = new T.AmbientLight(0xffffff, 0.45); V.S.add(V.amb); W3.setQuality(stepN); return V; }
 // a grid round the course: the nearest piece of road to any point (for the land's height and keeping scenery off the road)
 function nearGrid(TR) { if (TR.ng) return TR.ng; const S = TR.S, n = S.length; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const p of S) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
   const C = 5, pad = 120; x0 -= pad; z0 -= pad; x1 += pad; z1 += pad; const nx = Math.ceil((x1 - x0) / C), nz = Math.ceil((z1 - z0) / C), idx = new Int16Array(nx * nz), dist = new Float32Array(nx * nz);
@@ -122,7 +122,7 @@ function nearGrid(TR) { if (TR.ng) return TR.ng; const S = TR.S, n = S.length; l
   TR.ng = { x0, z0, C, nx, nz, idx, dist, at(x, z) { const a = clamp(Math.round((x - x0) / C), 0, nx - 1), b = clamp(Math.round((z - z0) / C), 0, nz - 1); return { i: idx[a + b * nx], d: dist[a + b * nx] }; }, cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, w: x1 - x0, h: z1 - z0 }; return TR.ng; }
 // one course's world: built when the course changes
 function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length, info = TR.info, th = THEMES[info.theme], R0 = W3.rng(info.seed + 3), ng = nearGrid(TR);
-  if (V.track) { V.S.remove(V.track); V.track.traverse(o => { if (o.geometry) o.geometry.dispose(); }); } const H = new T.Group(); V.track = H; V.S.add(H); V.anim = []; V.lights = [];
+  if (V.track) { V.S.remove(V.track); V.track.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? [].concat(o.material) : []; for (const m of ms) { for (const k2 of ['map', 'emissiveMap']) if (m[k2]) m[k2].dispose(); m.dispose(); } }); } const H = new T.Group(); V.track = H; V.S.add(H); V.anim = []; V.lights = [];
   let minY = 1e9; for (const p of S) minY = Math.min(minY, p.y);
   const noise = (x, z) => Math.sin(x * 0.013 + 1.3) * Math.cos(z * 0.011 - 0.7) + 0.5 * Math.sin(x * 0.031 + z * 0.027) + 0.25 * Math.cos(x * 0.07 - z * 0.05);
   // the land: it meets the road, rolls into hills away from it, drops into the chasm under the glider, dips under the sea
@@ -174,7 +174,8 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length, i
   arch.position.set(s0.x, s0.y, s0.z); arch.rotation.y = -s0.h; H.add(arch);
   { const fl = []; for (let q = -40; q < 40; q += 3) { const p = S[(q + n) % n]; if (p.gap) continue; for (const sd of [-1, 1]) fl.push({ x: p.x - Math.sin(p.h) * sd * (TW / 2 + (th.void ? 1.4 : 3.8)), y: p.y, z: p.z + Math.cos(p.h) * sd * (TW / 2 + (th.void ? 1.4 : 3.8)), rot: -p.h + Math.PI / 2, tint: [0xff3a5a, 0xffd23a, 0x3ab0ff, 0x7ae04a, 0xff8ac8][((q + 40) / 3 + (sd > 0 ? 2 : 0)) % 5 | 0] }); }
     addFlags(H, fl);
-    if (!th.void) { const p = S[(n - 20) % n], sd = (TRACKS.indexOf(info) % 2 ? 1 : -1), off = TW / 2 + 12, gs = new T.Group(); const crowd = canvasTex(256, 64, (q, w, h) => { q.fillStyle = '#2a2a3a'; q.fillRect(0, 0, w, h); for (let r = 0; r < 4; r++) for (let c = 0; c < 40; c++) { q.fillStyle = ['#ff5a5a', '#ffd23a', '#5ab0ff', '#ffffff', '#7ae04a', '#ff8ac8', '#c08aff'][(r * 7 + c * 3) % 7]; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 10 + r * 15, 3.2, 0, TAU); q.fill(); q.fillStyle = '#f0c8a0'; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 5 + r * 15, 2.2, 0, TAU); q.fill(); } });
+    let gsAt = null; if (!th.void) for (const q0 of [n - 20, n - 40, 20, 40, n - 60]) for (const sd0 of [1, -1]) { if (gsAt) break; const p = S[(q0 + n) % n], off = TW / 2 + 13, cx2 = p.x - Math.sin(p.h) * sd0 * off, cz2 = p.z + Math.cos(p.h) * sd0 * off; let clear = true; for (let a = -22; a <= 22 && clear; a += 5.5) for (let b2 = -6; b2 <= 6; b2 += 6) { const x = cx2 + Math.cos(p.h) * a - Math.sin(p.h) * b2, z = cz2 + Math.sin(p.h) * a + Math.cos(p.h) * b2; if (ng.at(x, z).d < TW / 2 + 5) { clear = false; break; } } if (clear) gsAt = { p, sd: sd0 }; }
+    if (gsAt) { const p = gsAt.p, sd = gsAt.sd, off = TW / 2 + 13, gs = new T.Group(); const crowd = canvasTex(256, 64, (q, w, h) => { q.fillStyle = '#2a2a3a'; q.fillRect(0, 0, w, h); for (let r = 0; r < 4; r++) for (let c = 0; c < 40; c++) { q.fillStyle = ['#ff5a5a', '#ffd23a', '#5ab0ff', '#ffffff', '#7ae04a', '#ff8ac8', '#c08aff'][(r * 7 + c * 3) % 7]; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 10 + r * 15, 3.2, 0, TAU); q.fill(); q.fillStyle = '#f0c8a0'; q.beginPath(); q.arc(4 + c * 6.3 + (r % 2) * 3, 5 + r * 15, 2.2, 0, TAU); q.fill(); } });
       const st2 = new T.Mesh(new T.BoxGeometry(40, 7, 8), [M(0x3a3a4a), M(0x3a3a4a), M(0x4a4a5a), M(0x3a3a4a), new T.MeshStandardMaterial({ map: crowd, roughness: 0.9 }), M(0x3a3a4a)]); st2.position.y = 3.5; st2.rotation.x = 0; gs.add(st2); const rf = new T.Mesh(new T.BoxGeometry(42, 0.5, 10), M(0xff3a5a, 0.5)); rf.position.y = 9; gs.add(rf);
       for (const x of [-20, 20]) { const pl = new T.Mesh(new T.BoxGeometry(0.4, 9, 0.4), M(0xdddddd)); pl.position.set(x, 4.5, 4); gs.add(pl); } gs.position.set(p.x - Math.sin(p.h) * sd * off, p.y, p.z + Math.cos(p.h) * sd * off); gs.rotation.y = -p.h + (sd > 0 ? Math.PI : 0); H.add(gs); } }
   // scenery: away from the road, standing on the land

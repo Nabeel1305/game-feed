@@ -51,6 +51,8 @@ const W3 = (() => {
       stars = new T.Points(g, new T.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })); stars.renderOrder = -1; scene.add(stars); }
     rain = makeRain(); scene.add(rain);
     scene.fog = new T.Fog(0xb9cde0, 60, 900);
+    // a phone can take the 3D picture away (too much else running): keep the right to have it back, and get it back
+    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; }, false); canvas.addEventListener('webglcontextrestored', () => { S.lost = false; S.restored = (S.restored || 0) + 1; resize(); }, false);
     ok = true; resize(); return true;
   }
   function rngW(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }

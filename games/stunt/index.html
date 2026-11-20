@@ -4842,6 +4842,8 @@ const W3 = (() => {
       stars = new T.Points(g, new T.PointsMaterial({ color: 0xffffff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false })); stars.renderOrder = -1; scene.add(stars); }
     rain = makeRain(); scene.add(rain);
     scene.fog = new T.Fog(0xb9cde0, 60, 900);
+    // a phone can take the 3D picture away (too much else running): keep the right to have it back, and get it back
+    canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); S.lost = true; }, false); canvas.addEventListener('webglcontextrestored', () => { S.lost = false; S.restored = (S.restored || 0) + 1; resize(); }, false);
     ok = true; resize(); return true;
   }
   function rngW(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -5353,7 +5355,7 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#101828'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D track.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now;
-  if (V.trackN !== g.cfg.track || V.forG !== g) { if (V.trackN !== g.cfg.track) { V.trackN = g.cfg.track; buildTrack(V, g); W3.setSky(TRACKS[g.cfg.track].sky, { azim: 140 }); if (g.cfg.track === 2) { W3.S.exposure = 0.9; W3.S.hemiI = 0.7; } } else { for (const [, m] of V.karts) V.S.remove(m); V.karts.clear(); V.boxes.forEach((m, i) => m.userData.b = g.boxes[i]); } V.forG = g; ui.snap = true; }
+  if (V.trackN !== g.cfg.track || V.forG !== g) { if (V.trackN !== g.cfg.track) { V.trackN = g.cfg.track; buildTrack(V, g); W3.setSky(TRACKS[g.cfg.track].sky, { azim: 140 }); if (g.cfg.track === 2) { W3.S.exposure = 1.8; W3.S.hemiI = 1.4; } } else { for (const [, m] of V.karts) V.S.remove(m); V.karts.clear(); V.boxes.forEach((m, i) => m.userData.b = g.boxes[i]); } V.forG = g; ui.snap = true; }
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, 0, g.me.z, 30); W3.render(dt);
   if (G) hud(G, t);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
@@ -5582,6 +5584,9 @@ let last = performance.now(), endT = 0;
 function frame(now) {
   const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
   if (HEADLESS) { requestAnimationFrame(frame); return; }
+  // the screen's size, checked twice a second: an app that opens the page before it has its size never sends a resize, and
+  // the picture stayed at no size at all (a black screen with only the buttons and the music) on his phone
+  if (now - (frame.sz || 0) > 500) { frame.sz = now; const gl3 = typeof W3 !== 'undefined' && W3 && W3.ok; if (innerWidth > 0 && innerHeight > 0 && (W !== innerWidth || H !== innerHeight || !cv.width || (gl3 && !W3.R.domElement.width))) { resize(); if (gl3) W3.resize(); } }
   if (G && !paused && !G.over) measure(ms);
   if (G && !paused) {
     let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; }      // a heartbeat of stillness on a hit (P7)
