@@ -141,3 +141,14 @@ calm (Word Wheel 1); one two-thumb game.
 | # | Game | What it is | Intensity | Thumbs | 3D? |
 |---|---|---|---|---|---|
 | 76 | Kart Kingdom | like Super Mario Kart, all our own: 16 courses in 4 cups and 5 classes, turtle shells and 10 more items, drifts, tricks, gliders, trophies | 4 | 2 | 3D |
+
+## Set 14 (20 Nov 2026): his list "Running game like sprinting... Bus driver... Cake designer... Dress designer... Painting things
+with nice noises make the controls good... You are a Taxi driver". Four of his now plus one of mine for the mix; Dress
+Designer and Taxi Driver roll to set 15 (so the two drivers and the two designers are not side by side).
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 77 | Sprint | his idea: tap left, right, left, right in time to run; races from 60 m to hurdles and relays | 5 | 2 | 3D |
+| 78 | Bus Driver | his idea: a city route, stops to pick people up, keep to the timetable | 3 | 2 | 3D |
+| 79 | Cake Designer | his idea: bake, stack, ice and decorate cakes to order | 1 | 1 | 3D |
+| 80 | Paint It | his idea: paint things with satisfying strokes and sounds | 1 | 1 | 2D/3D |
+| 81 | (mine) | to balance the set | 3 | 1 | |

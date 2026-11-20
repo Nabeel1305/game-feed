@@ -833,6 +833,28 @@ Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in 
 ### Shared building blocks
 Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/catch; synthesized sounds (filtered noise for hits/shots, tones for bells/calls, plucked strings for music); a vibration helper that prefers `window.GameNative.vibrate` (phone app) over `navigator.vibrate`; level grid; full-screen overlay CSS for home / rules / levels / round break / end; pause when the tab is hidden.
 
+### 77. Sprint (`games/sprint/`): two thumbs are two feet (built on Sinkhole's shell)
+- **The stride model.** Each tap is a stride; the next foot is due one stride-time after it, T(v) = 1/(2 + 0.24 v) (0.5 s
+  standing, 0.22 s flat out), so the beat quickens as you speed up. PERFECT (within 0.05 s) pushes 22% of the way to top speed
+  and adds FLOW (+1.2% top speed each, to 10); GOOD/EARLY push less; LATE floats (you slow while you wait); 0.13 s early or the
+  same side twice trips you (speed x0.58, 0.42 s). Drag 12%/s. A metronome cannot follow a beat that quickens, and the gun
+  (a tap on SET is a false start; under 0.1 s after the bang too; the second one disqualifies) ends every blind string:
+  0 of 5,696 won; random 0 of 480.
+- **Both thumbs = within 0.085 s.** The first tap is played as a stride at once (so the step sounds with no delay) and its
+  effect is undone if the other thumb follows in time; a trip's words and sound wait 0.09 s for that, so a jump never shows
+  "WRONG FOOT". At flat-out the stride is only 0.22 s, so a tap 0.08 s after the last one counts as "both": tests of "far too
+  soon" must tap about 0.14 s early, not 0.16.
+- Rivals are a simple first-order run-up (react, tau, top speed; 7% slower in hurdles; a chance to clip each hurdle); the race
+  ends 1.3 s after you cross (the field still finishes on screen) or as soon as enough rivals are home that you cannot go
+  through. Unfinished rivals on the board get a projected time.
+- The 200 m runs round the far bend: every lane runs exactly 200 m (the stagger falls out of trackAt(lane, metres-to-go)).
+  The 100 m and hurdles start in a chute past the bend; the bend's lane lines are left out where the chute covers them.
+- Cameras: low in front in the blocks (beside you, other lanes hide you); behind and only 0.55 m to the side while running
+  (more and the next lane's runner fills the middle of the screen); the photo-finish camera sits on the infield looking out,
+  so the stands are its backdrop (from the stands side the crowd blocked it).
+- The ghost: the distance run every 0.1 s is saved with each personal best per event and drawn as a see-through runner in
+  your lane, with "1.2 m ahead / behind your best" under the clock.
+
 ## The feed app (`feed/`, `tools/build_feed.py`, `android/`)
 How it is put together is in CLAUDE.md. What was learned building it:
 - **The plug goes in at build time, not into the games.** `tools/build_feed.py` writes a copy of each game with `feed/plug.js` at the top of its page. The games in `games/` stay exactly as he approved them, every game gets the same plug, and a better plug reaches all of them at once. The `<meta charset>` line must stay ahead of the plug: browsers only look for it in the first bytes of a page, and without it every "·" and "é" turns to junk.

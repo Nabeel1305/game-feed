@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**76 games** so far. Next number: **77**.
+**77 games** so far. Next number: **78**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -84,6 +84,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 74 | **Beat Dash** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/ESJ8vDMkWnqvMDPuumRsEu) | `games/dash/index.html` |
 | 75 | **Shadow Crew** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/Q6rGZr1RAon8w53BWFRS5a) | `games/crew/index.html` |
 | 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
+| 77 | **Sprint** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MmQxLMvqSpTbUQbya1HT97) | `games/sprint/index.html` |
 
 ## What each game is
 
@@ -163,3 +164,9 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 74. **Beat Dash**: A cube runs to the beat: tap to jump, hold to keep jumping; spikes, blocks, pits, pads, rings and gravity portals sit on the beat; three lives and flags; reach 100%.
 75. **Shadow Crew**: You are the hidden traitor on a 3D space station of hand-drawn sticker crewmates: knock them out when no one can see, vanish through vents, sabotage, and talk your way out of meetings. New rules every few levels.
 76. **Kart Kingdom**: His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, KartRider-style buttons (steer arrows, DRIFT, ITEM, NITRO), drifts with coloured sparks that fill the nitro, bananas thrown far ahead or behind, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies.
+77. **Sprint**: His idea: a sprint where your two thumbs are your two feet. Tap the side whose ring is closing, as it closes: on the beat drives you on and builds FLOW, mashing trips you. A real start (reaction time, false starts, out on the second), hurdles and the dip with both thumbs, five events (60 m, 100 m, 60 m and 110 m hurdles, 200 m round the bend) in heats, semis and finals at six 3D stadiums, the ghost of your best run, kit colours, upgrades and ranks.
+
+## Up next (designed, not built yet)
+
+82. **Dress Designer**: His idea: design dresses (set 15; spec to come, after research). Spec: `specs/ideas.md`.
+83. **Taxi Driver**: His idea: you are a taxi driver (set 15; spec to come, after research). Spec: `specs/ideas.md`.
