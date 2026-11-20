@@ -720,6 +720,19 @@ Everything learned building the first games. Every new game must follow the **ru
 - Gate panels face the camera only after `rotation.y = PI` (a plane faces +z; we look along +z): the numbers were mirrored.
 - The game's x is drawn flipped (`X(x) = -x`), so the thumb's right is the picture's right.
 
+### 72. Word Wheel (`games/words/`): a calm word game
+- Words: the SCOWL lists (npm `wordlist-english`, free with its notice, kept in `part1w.js`): sizes 10+20 are the everyday
+  words a crossword asks for; size 35 is also accepted as a bonus word (and asked for from level 25). Rude words removed.
+  Stored as one string per word length with no separators (100 KB for 17,500 words).
+- The crossword: greedy placement (each word across one already there, never touching side by side), 40 tries in different
+  orders, keep the one with most words then the smallest box. One try alone placed half the words.
+- Spam: random letters are mostly not words, and a made-up word spills ink; out of ink the page is lost. Free hints in a
+  lesson must be limited (two), or blind taps on the bulb fill the lesson page.
+- A calm game still has to get harder for the robots: rarer words later and less ink (5, 4, 3) did it; the robot, when
+  stuck with no coins, guesses (and spills) like a person does.
+- `hint` is a rules function here: the view's tip box is `hint0` (part5's reset line set `hint = null` and broke it).
+- A first gift of 100 coins, or a new player cannot use a hint.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.
