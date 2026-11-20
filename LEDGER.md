@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**84 games** so far. Next number: **85**.
+**85 games** so far. Next number: **86**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -92,6 +92,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 82 | **Dress Designer** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Xoe9SwDnqFtDKSjfTPp5zN) | `games/dress/index.html` |
 | 83 | **Taxi Driver** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UM1but5VAXNifXVKai5S7y) | `games/taxi/index.html` |
 | 84 | **Roach Run** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/WrCQwuCfZPhKXqQWiBhMQK) | `games/roach/index.html` |
+| 85 | **Hoop Shot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/GXVs6uZB3qLZNobg7WK88P) | `games/hoopshot/index.html` |
 
 ## What each game is
 
@@ -179,10 +180,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 82. **Dress Designer**: A client brings a brief; design the dress part by part on a turning model (cut, length, sleeves, fabric, colour, pattern, finishing touches placed on the dress), then she walks the runway and three judges give stars, saying exactly what missed.
 83. **Taxi Driver**: The cab drives itself: hold to brake, swipe to change lane, swipe in the glowing turn zone to turn. Pick up whoever waves, find the way (GPS or round the jams), stop at their door before the meter runs out; rushers, nervous passengers and tourists each want a different drive.
 84. **Roach Run**: His idea 12: a cockroach leaves its crack in the wall at night, runs through a huge 3D house for crumbs and big pieces and carries them home before dawn, dodging slippers (a growing shadow aimed where it is heading) and bug spray (the can comes down first, the cloud lingers). Floating stick, SPRINT with stamina, HIDE near hiding places, DROP to escape.
+85. **Hoop Shot**: His idea 13: basketball purely shooting. Pull back from anywhere for power, sideways to aim, let go; the path's dots show early on; misses say too strong, too weak, left or right; swishes, streaks and the crowd. Four courts; every fifth level a challenge (bank shots, a moving spot, around the world); Practice with unlimited balls.
 
 ## Up next (designed, not built yet)
 
-85. **Hoop Shot**: his idea 13: basketball shooting only; drag back to set power and direction, release to shoot. Spec: `specs/his-list-2026-11-20.md`.
 86. **(my idea for set 15)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 87. **Sumo**: his idea 21: heavy sumo bouts; push, grip, dodge, balance and stamina; vibration in every collision. Spec: `specs/his-list-2026-11-20.md`.
 88. **Memory Lane**: his idea 23: see a scene, it hides, recall or rebuild it; positions, sequences, what is missing, what changed. Spec: `specs/his-list-2026-11-20.md`.

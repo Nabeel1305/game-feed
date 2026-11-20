@@ -970,6 +970,19 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - Carry capacity is 3 (a big piece fills it), so later nights need several trips: that is what made rounds 40-80 s instead
   of 10.
 
+### 85. Hoop Shot (`games/hoopshot/`): his idea 13, a slingshot pull (built on Taxi Driver's shell)
+- **Real flight**: gravity, a ring for the rim (the nearest point of the circle, restitution 0.55), the board, the floor;
+  a basket when the ball drops through the ring. A fixed 52-degree launch so the thumb sets only power and aim. The power
+  window is a few hundredths wide; a launch speed range of 5.2-9.6 m/s (not 4.6-10.8) widened it by about 40%.
+- **The robot finds its shot by simulating**: for each spot, a sweep of powers (and aims, for bank shots or a moving spot,
+  around the aim that cancels the slide) and the middle of the widest run that scores; then its hand is off by an amount
+  that grows as the path shown gets shorter. Without the slide's aim correction it never scored on a moving spot.
+- **Why it missed**: where it came down past the rim's height, along and across the line of the shot; one that never got
+  that high is too weak; one that hit the board first and came back out is too strong (the bounce back first read as
+  "too weak").
+- **Practice** is the same game with `need` and `balls` at a billion: it never finishes, so nothing else had to change.
+- Arena crowds as instanced capsules behind and beside the hoop; put close to the camera they looked like pillars.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
