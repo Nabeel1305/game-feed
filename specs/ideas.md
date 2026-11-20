@@ -152,3 +152,28 @@ Designer and Taxi Driver roll to set 15 (so the two drivers and the two designer
 | 79 | Cake Designer | his idea: bake, stack, ice and decorate cakes to order | 1 | 1 | 3D |
 | 80 | Paint It | his idea: paint things with satisfying strokes and sounds (built: games/roller) | 1 | 1 | 3D |
 | 81 | Kite Fighter | mine: rooftop kite fighting, hold to pull and let go to turn; cut their lines | 3 | 1 | 3D |
+
+## Sets 15 to 18 (20 Nov 2026, evening): his ideas 12 to 24 (word for word in `specs/his-list-2026-11-20.md`) and the two from set 14
+Fifteen of his ideas, four to a set with one of mine each (his rule: one or two of mine a set). Six are intense (4-5), so
+two at most go in a set; every set has a calm one; the five sports are spread out.
+| Set | # | Game | His idea | Intensity | Thumbs |
+|---|---|---|---|---|---|
+| 15 | 82 | Dress Designer | design dresses | 1 | 1 |
+| 15 | 83 | Taxi Driver | you are a taxi driver | 3 | 2 |
+| 15 | 84 | Roach Run | 12, the cockroach | 4 | 2 |
+| 15 | 85 | Hoop Shot | 13, basketball shooting | 2 | 1 |
+| 15 | 86 | (mine) | | 3 | 1 |
+| 16 | 87 | Sumo | 21 | 4 | 2 |
+| 16 | 88 | Memory Lane | 23 | 1 | 1 |
+| 16 | 89 | Spy | 18 | 3 | 2 |
+| 16 | 90 | Mocktail Bar | 24 | 1 | 1 |
+| 16 | 91 | (mine) | | | |
+| 17 | 92 | Ice Hockey | 16 | 5 | 2 |
+| 17 | 93 | Tennis | 17 | 4 | 2 |
+| 17 | 94 | Metro Map | 19 | 2 | 1 |
+| 17 | 95 | Bin Round | 20 (cannot lose: the spam test becomes "blind thumbs do not finish a round") | 1 | 1 |
+| 17 | 96 | (mine) | | | |
+| 18 | 97 | Hoops 3v3 | 14 | 4 | 2 |
+| 18 | 98 | Gridiron | 15, American football | 4 | 2 |
+| 18 | 99 | Rock Climb | 22 | 2 | 1 |
+| 18 | 100 | (mine) | | | |

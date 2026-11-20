@@ -921,6 +921,15 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - In a lesson, a rival that flies itself into the roofs must be replaced (a new deal), or the lesson waits for ever.
 - A test of "darting across a line cuts it" must cross high on the rival's line (near its kite), or the crossing is ignored.
 
+### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
+- tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
+  (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
+  nothing when vibration is off and scales its pulses by the strength (LOW 0.5, NORMAL 1, STRONG 1.6). Old games are
+  unchanged when rebuilt (all on; their music simply counts as sound effects).
+- `python3 tools/add_settings.py <id>` adds the ⚙ button (home and pause), the card and its saving to a game made from the
+  kit (the kit itself has it). Test it: the card opens from both places, each switch saves (store 'settings') and Done goes
+  back where it came from. Put every piece of music in music(): the soundCheck only renders sound effects.
+
 ## The feed app (`feed/`, `tools/build_feed.py`, `android/`)
 How it is put together is in CLAUDE.md. What was learned building it:
 - **The plug goes in at build time, not into the games.** `tools/build_feed.py` writes a copy of each game with `feed/plug.js` at the top of its page. The games in `games/` stay exactly as he approved them, every game gets the same plug, and a better plug reaches all of them at once. The `<meta charset>` line must stay ahead of the plug: browsers only look for it in the first bytes of a page, and without it every "·" and "é" turns to junk.

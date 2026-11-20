@@ -176,5 +176,22 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
 ## Up next (designed, not built yet)
 
-82. **Dress Designer**: His idea: design dresses (set 15; spec to come, after research). Spec: `specs/ideas.md`.
-83. **Taxi Driver**: His idea: you are a taxi driver (set 15; spec to come, after research). Spec: `specs/ideas.md`.
+82. **Dress Designer**: his idea (20 Nov): design dresses. Spec: `specs/ideas.md`.
+83. **Taxi Driver**: his idea (20 Nov): you are a taxi driver. Spec: `specs/ideas.md`.
+84. **Roach Run**: his idea 12: a cockroach finds food in a huge 3D house and gets it home past slippers and bug spray. Spec: `specs/his-list-2026-11-20.md`.
+85. **Hoop Shot**: his idea 13: basketball shooting only; drag back to set power and direction, release to shoot. Spec: `specs/his-list-2026-11-20.md`.
+86. **(my idea for set 15)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
+87. **Sumo**: his idea 21: heavy sumo bouts; push, grip, dodge, balance and stamina; vibration in every collision. Spec: `specs/his-list-2026-11-20.md`.
+88. **Memory Lane**: his idea 23: see a scene, it hides, recall or rebuild it; positions, sequences, what is missing, what changed. Spec: `specs/his-list-2026-11-20.md`.
+89. **Spy**: his idea 18: sneak in, photograph the secret document, escape; vision cones, noise, gadgets. Spec: `specs/his-list-2026-11-20.md`.
+90. **Mocktail Bar**: his idea 24: mix alcohol-free drinks to order; pour, shake, stir, garnish; customers say what was wrong. Spec: `specs/his-list-2026-11-20.md`.
+91. **(my idea for set 16)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
+92. **Ice Hockey**: his idea 16: three skaters and a goalie a side; pass, shoot, burst; rebounds and boards. Spec: `specs/his-list-2026-11-20.md`.
+93. **Tennis**: his idea 17: rallies to matches; joystick to move, swipe to swing; serves, lobs, slices, volleys. Spec: `specs/his-list-2026-11-20.md`.
+94. **Metro Map**: his idea 19: draw metro lines on a 2D city map so passengers get where they are going. Spec: `specs/his-list-2026-11-20.md`.
+95. **Bin Round**: his idea 20: work at the back of a bin lorry; calm, cannot lose. Spec: `specs/his-list-2026-11-20.md`.
+96. **(my idea for set 17)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
+97. **Hoops 3v3**: his idea 14: three-a-side basketball matches; move, pass, shoot with a timing meter, defend. Spec: `specs/his-list-2026-11-20.md`.
+98. **Gridiron**: his idea 15: arcade American football; pick a play, throw to a receiver, run, tackle. Spec: `specs/his-list-2026-11-20.md`.
+99. **Rock Climb**: his idea 22: climb rock faces hold by hold; grip, stamina, routes, a safety rope. Spec: `specs/his-list-2026-11-20.md`.
+100. **(my idea for set 18)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.

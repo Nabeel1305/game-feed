@@ -1,19 +1,25 @@
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
-let actx = null, MUTE = false, BUS = null, AMB = null; const lastPlay = {};
+let actx = null, MUTE = false, BUS = null, AMB = null, MUSB = null, OUTM = false; const lastPlay = {};
+// his rule (20 Nov 2026): separate Music, Sound effects and Vibration settings. Music is anything played inside music(() => ...);
+// everything else is a sound effect. SET is saved by the game's Settings card (kit part5).
+const SET = { mus: true, sfx: true, vib: true, vk: 1 };
+function applySet() { if (!actx || !BUS) return; const t = actx.currentTime; BUS.gain.setTargetAtTime(MUTE || !SET.sfx ? 0 : 0.9, t, 0.02); if (MUSB) MUSB.gain.setTargetAtTime(MUTE || !SET.mus ? 0 : 0.9, t, 0.02); }
+function music(fn) { const k = OUTM; OUTM = true; try { fn(); } finally { OUTM = k; } }
 function audio() {
   if (!actx) {
     try {
       actx = new (window.AudioContext || window.webkitAudioContext)();
       const comp = actx.createDynamicsCompressor();
       comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
-      BUS = actx.createGain(); BUS.gain.value = MUTE ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      BUS = actx.createGain(); BUS.gain.value = MUTE || !SET.sfx ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      MUSB = actx.createGain(); MUSB.gain.value = MUTE || !SET.mus ? 0 : 0.9; MUSB.connect(comp);
       AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
     } catch (e) { actx = null; }
   }
   if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
 }
-function setMute(m) { MUTE = m; if (BUS) BUS.gain.setTargetAtTime(m ? 0 : 0.9, actx.currentTime, 0.02); }
+function setMute(m) { MUTE = m; applySet(); }
 const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
 function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
 function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
@@ -23,7 +29,7 @@ function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
     const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
     o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
     let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
-    env(g, t, vol, dur); n.connect(g); g.connect(dest || BUS); o.start(t); o.stop(t + dur + 0.03);
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || (OUTM && MUSB) || BUS); o.start(t); o.stop(t + dur + 0.03);
   } catch (e) {}
 }
 const NB = {};   // cached noise buffers
@@ -33,7 +39,7 @@ function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, d
   try {
     const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
     const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
-    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || BUS); s.start(t);
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || (OUTM && MUSB) || BUS); s.start(t);
   } catch (e) {}
 }
 function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
@@ -43,7 +49,7 @@ function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong stri
     for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
     for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
     const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
-    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(BUS); s.start(actx.currentTime + when);
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect((OUTM && MUSB) || BUS); s.start(actx.currentTime + when);
   } catch (e) {}
 }
 function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
@@ -72,4 +78,4 @@ function duck(amount = 0.5, ms = 400) {                   // drop ambience under
 }
 // Haptic vocabulary (silent sound channel). Never on failure.
 const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
-function vibe(p) { try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+function vibe(p) { if (!SET.vib) return; if (SET.vk !== 1) p = (Array.isArray(p) ? p : [p]).map((v, i) => i % 2 ? v : Math.max(5, Math.round(v * SET.vk))); try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }

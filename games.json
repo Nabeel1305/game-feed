@@ -2794,22 +2794,205 @@
   ],
   "planned": [
     {
+      "number": 82,
       "id": "dress",
       "name": "Dress Designer",
       "set": 15,
-      "from": "his idea, 20 Nov 2026: \"Dress designer\"",
+      "intensity": 1,
+      "thumbs": 1,
+      "summary": "his idea (20 Nov): design dresses.",
       "spec": "specs/ideas.md",
-      "number": 82,
-      "summary": "His idea: design dresses (set 15; spec to come, after research)."
+      "from": "his idea"
     },
     {
+      "number": 83,
       "id": "taxi",
       "name": "Taxi Driver",
       "set": 15,
-      "from": "his idea, 20 Nov 2026: \"You are a Taxi driver\"",
+      "intensity": 3,
+      "thumbs": 2,
+      "summary": "his idea (20 Nov): you are a taxi driver.",
       "spec": "specs/ideas.md",
-      "number": 83,
-      "summary": "His idea: you are a taxi driver (set 15; spec to come, after research)."
+      "from": "his idea"
+    },
+    {
+      "number": 84,
+      "id": "roach",
+      "name": "Roach Run",
+      "set": 15,
+      "intensity": 4,
+      "thumbs": 2,
+      "summary": "his idea 12: a cockroach finds food in a huge 3D house and gets it home past slippers and bug spray.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 85,
+      "id": "hoopshot",
+      "name": "Hoop Shot",
+      "set": 15,
+      "intensity": 2,
+      "thumbs": 1,
+      "summary": "his idea 13: basketball shooting only; drag back to set power and direction, release to shoot.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 86,
+      "id": "mine15",
+      "name": "(my idea for set 15)",
+      "set": 15,
+      "summary": "One of mine, to balance the set (picked when the set is built).",
+      "spec": "specs/ideas.md",
+      "from": "mine"
+    },
+    {
+      "number": 87,
+      "id": "sumo",
+      "name": "Sumo",
+      "set": 16,
+      "intensity": 4,
+      "thumbs": 2,
+      "summary": "his idea 21: heavy sumo bouts; push, grip, dodge, balance and stamina; vibration in every collision.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 88,
+      "id": "memory",
+      "name": "Memory Lane",
+      "set": 16,
+      "intensity": 1,
+      "thumbs": 1,
+      "summary": "his idea 23: see a scene, it hides, recall or rebuild it; positions, sequences, what is missing, what changed.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 89,
+      "id": "spy",
+      "name": "Spy",
+      "set": 16,
+      "intensity": 3,
+      "thumbs": 2,
+      "summary": "his idea 18: sneak in, photograph the secret document, escape; vision cones, noise, gadgets.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 90,
+      "id": "mocktail",
+      "name": "Mocktail Bar",
+      "set": 16,
+      "intensity": 1,
+      "thumbs": 1,
+      "summary": "his idea 24: mix alcohol-free drinks to order; pour, shake, stir, garnish; customers say what was wrong.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 91,
+      "id": "mine16",
+      "name": "(my idea for set 16)",
+      "set": 16,
+      "summary": "One of mine, to balance the set (picked when the set is built).",
+      "spec": "specs/ideas.md",
+      "from": "mine"
+    },
+    {
+      "number": 92,
+      "id": "hockey",
+      "name": "Ice Hockey",
+      "set": 17,
+      "intensity": 5,
+      "thumbs": 2,
+      "summary": "his idea 16: three skaters and a goalie a side; pass, shoot, burst; rebounds and boards.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 93,
+      "id": "tennis",
+      "name": "Tennis",
+      "set": 17,
+      "intensity": 4,
+      "thumbs": 2,
+      "summary": "his idea 17: rallies to matches; joystick to move, swipe to swing; serves, lobs, slices, volleys.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 94,
+      "id": "metro",
+      "name": "Metro Map",
+      "set": 17,
+      "intensity": 2,
+      "thumbs": 1,
+      "summary": "his idea 19: draw metro lines on a 2D city map so passengers get where they are going.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 95,
+      "id": "binround",
+      "name": "Bin Round",
+      "set": 17,
+      "intensity": 1,
+      "thumbs": 1,
+      "summary": "his idea 20: work at the back of a bin lorry; calm, cannot lose.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 96,
+      "id": "mine17",
+      "name": "(my idea for set 17)",
+      "set": 17,
+      "summary": "One of mine, to balance the set (picked when the set is built).",
+      "spec": "specs/ideas.md",
+      "from": "mine"
+    },
+    {
+      "number": 97,
+      "id": "hoops3",
+      "name": "Hoops 3v3",
+      "set": 18,
+      "intensity": 4,
+      "thumbs": 2,
+      "summary": "his idea 14: three-a-side basketball matches; move, pass, shoot with a timing meter, defend.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 98,
+      "id": "gridiron",
+      "name": "Gridiron",
+      "set": 18,
+      "intensity": 4,
+      "thumbs": 2,
+      "summary": "his idea 15: arcade American football; pick a play, throw to a receiver, run, tackle.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 99,
+      "id": "climb",
+      "name": "Rock Climb",
+      "set": 18,
+      "intensity": 2,
+      "thumbs": 1,
+      "summary": "his idea 22: climb rock faces hold by hold; grip, stamina, routes, a safety rope.",
+      "spec": "specs/his-list-2026-11-20.md",
+      "from": "his idea"
+    },
+    {
+      "number": 100,
+      "id": "mine18",
+      "name": "(my idea for set 18)",
+      "set": 18,
+      "summary": "One of mine, to balance the set (picked when the set is built).",
+      "spec": "specs/ideas.md",
+      "from": "mine"
     }
   ]
 }
