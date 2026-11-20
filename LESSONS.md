@@ -744,6 +744,19 @@ Everything learned building the first games. Every new game must follow the **ru
   on the ground. A robot that looks must also wait for a clear shot, or it darts passers-by walking in front.
 - The camera close enough that people are big (it stood 16 m back at first: half the screen was empty ground).
 
+### 74. Beat Dash (`games/dash/`): one tap, to the beat
+- The course is built from pieces spaced in beats, and the music is played from the cube's place (beats = x / beat
+  length), so the music always matches the course, also after a crash puts the cube back at a flag.
+- Physics in 1/120 s substeps (the robot's look-ahead uses the same ticks). Hitboxes forgive: the cube is 0.6 wide against
+  spikes 0.26 wide, or a triple spike leaves an 18 ms window (now about 50 ms).
+- The robot is a planner: if doing nothing crashes within 44 frames, it tries a tap at each of the next frames (one by one,
+  not every other: a triple spike's window is three frames), each checked far enough ahead to pass what caused the crash,
+  preferring a tap that needs no second one soon; then it taps a little early or late. A fall counts at once (y < -0.4),
+  or a too-short look-ahead thinks jumping into a pit is fine.
+- With nothing that works yet, the robot waits if the crash is more than 22 frames away (it used to jump and hope).
+- A pad's wall and landing depend on the speed: built from the cube's speed, or at high levels the cube landed on spikes.
+- Five lives on levels 1-5 (then 4, then 3) made level 1 fair for an ordinary player; blind tapping still gets about 10%.
+
 ### Engagement pass (Nov 2026, games 2-4)
 Applied PLAYBOOK factors chosen per game (listed in each game's `principles` in games.json). How it was done, so new games can copy it:
 - **Juice kit:** `tools/juice-kit.js` is pasted into each game (sound bus + compressor, `vary`, `gate`, `env`, `tone`, `noise` with cached buffers, `pluck`, `note` pentatonic, `bed()` looping ambience, `duck()`, `HAP` haptic vocabulary, `setMute`). Each game then defines its own `sfx` recipes on top. Mute is saved per game (`<prefix>mute`) with a 🔊 button at the bottom right of the home screen.

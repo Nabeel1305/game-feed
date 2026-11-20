@@ -120,3 +120,14 @@ Mario Kart, a racing game, but one that you can do cool things... make up the re
 | 67 | Knife Spin | mine: throw knives into a spinning target that reverses; apples, obstacles, boss targets | 3 | 1 | 2D |
 | 68 | Mow It | mine, the calm one: mow lawns into stripes round flower beds, empty the bag, mind the fuel | 1 | 1 | 2D |
 | 69 | Helix Drop | mine: turn the tower so the ball drops through the gaps; red ends it; three in a row and it smashes through | 3 | 1 | 3D |
+
+## Set 13 (19-20 Nov 2026): "Next 5 make these unique HITS!!!!". All five mine (every idea of his is built): each modelled
+on one of the most played phone games, made deeper and spam-proof. Balance: two intense (Sharpshooter 4, Beat Dash 5), one
+calm (Word Wheel 1); one two-thumb game.
+| # | Game | What it is | Intensity | Thumbs | 3D? |
+|---|---|---|---|---|---|
+| 70 | Sinkhole | like Hole.io: a hole in a town swallows everything smaller and grows; red barrels, rival holes, power-ups | 3 | 1 | 3D |
+| 71 | Crowd Run | like Count Masters: steer a crowd through + x - ÷ gates, past saws and over bridges, beat the giant, climb the stairs | 3 | 1 | 3D |
+| 72 | Word Wheel | like Wordscapes: slide through letters to fill a crossword; bonus words, ink, hints | 1 | 1 | 2D |
+| 73 | Sharpshooter | like Sniper 3D with sleep darts: find the thief in the crowd by the card, scope, breath, lead, wind | 4 | 2 | 3D |
+| 74 | Beat Dash | like Geometry Dash: one-tap jumps to the beat; spikes, pads, rings, gravity portals, flags | 5 | 1 | 2D |
