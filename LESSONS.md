@@ -953,6 +953,23 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - The robot's slip is a wrong turn now and then (2% + 20% of its inaccuracy); with only a stop-in-the-ring error every level
   was the same to it.
 
+### 84. Roach Run (`games/roach/`): his idea 12, a bug-height house (built on Taxi Driver's shell)
+- **The world is in centimetres** (a table 75 high, a roach 3 long). The camera sits 30 cm up and 34 behind: high enough
+  to see shadows coming, low enough that table tops are ceilings. At 58 cm up the house looked ordinary. The start camera
+  is inside the crack (4 cm up) and eases out once the roach is out.
+- **Indoors at night with world3d**: setSky('night'), then turn its sun and sky light down, the fog far off, and light the
+  room with a PointLight and SpotLights with decay 0 (with the default decay in centimetres they were either black or white).
+- **Stealth as a meter**: each person's notice rises only while you are in the open (x2.2 in a pool of light, more when
+  near or sprinting, a third when still) and falls under cover; at 1 they attack. Covered floor (under tables, chairs, the
+  cupboard gap) makes slippers harmless; HIDE also stops the spray.
+- **The slipper aims at where you will be** (position + velocity x warning x lead). The robot only "sees" a shadow after its
+  own reaction time (react x 1.2, varied); without that every robot dodged everything and far levels were as easy as
+  level 1.
+- The robot walks an A* grid (5 cm cells, costs for the open and the light, clouds and shadows avoided). With a plain list
+  as the open set a balance run took minutes; a binary heap made it a fraction of a second a game.
+- Carry capacity is 3 (a big piece fills it), so later nights need several trips: that is what made rounds 40-80 s instead
+  of 10.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

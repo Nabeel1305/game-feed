@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 84,
+  "next_number": 85,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2856,20 +2856,42 @@
         "P13"
       ],
       "summary": "The cab drives itself: hold to brake, swipe to change lane, swipe in the glowing turn zone to turn. Pick up whoever waves, find the way (GPS or round the jams), stop at their door before the meter runs out; rushers, nervous passengers and tourists each want a different drive."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 84,
       "id": "roach",
       "name": "Roach Run",
-      "set": 15,
-      "intensity": 4,
-      "thumbs": 2,
-      "summary": "his idea 12: a cockroach finds food in a huge 3D house and gets it home past slippers and bug spray.",
-      "spec": "specs/his-list-2026-11-20.md",
-      "from": "his idea"
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-20",
+      "path": "games/roach/index.html",
+      "artifact": "https://claude.ai/artifact/WrCQwuCfZPhKXqQWiBhMQK",
+      "artifact_slug": "f1b77fd2-3c68-4c4a-9e36-0378dc98c658",
+      "apk_repo": null,
+      "storage_prefix": "rch.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Sneak out, grab the crumbs, dodge the slipper.",
+        "genre": "Stealth / action",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P3",
+        "P12",
+        "P13"
+      ],
+      "summary": "His idea 12: a cockroach leaves its crack in the wall at night, runs through a huge 3D house for crumbs and big pieces and carries them home before dawn, dodging slippers (a growing shadow aimed where it is heading) and bug spray (the can comes down first, the cloud lingers). Floating stick, SPRINT with stamina, HIDE near hiding places, DROP to escape."
+    }
+  ],
+  "planned": [
     {
       "number": 85,
       "id": "hoopshot",
