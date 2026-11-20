@@ -855,6 +855,25 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - The ghost: the distance run every 0.1 s is saved with each personal best per event and drawn as a see-through runner in
   your lane, with "1.2 m ahead / behind your best" under the clock.
 
+### 78. Bus Driver (`games/bus/`): two pedals, a set route (built on Sprint's shell)
+- **The route is a 1D line**: straights and quarter turns (radius 11 m) on a grid; everything (stops, lights, zebras, speed
+  zones, cars in front) is a position along it. part3 turns a position into a place (pathAt), so the road, the pavements and
+  the centre line are ribbons along the path, buildings are kept off it by distance to its points, and the bus bends round
+  corners because it is drawn from its front point to its back point.
+- **Pedals ease in and out** (GO 1.8 a second, BRAKE 2.2, both off at 5 a second): a tap is gentle, a hold is hard. Without
+  the ease-out, the robot's short presses were all-or-nothing and the tea always spilt. The tea (comfort) loses
+  (|a| - 2.9 m/s2) x 5 a second, where |a| includes the sideways pull in corners (v^2 / 11), so corners need slowing for.
+- **The timetable allows for what is in the way**: each stop's time = distance / pace + 4 s + 7 s a stop + 4.5 s a light +
+  2.5 s a zebra + 3 s a car before it. Without that, far levels (many lights) were late for even the sharp robot. A route is
+  at most six stops (about 3 minutes): longer than that is too long for the feed, and the robots ran out of time.
+- People on zebras step out only when the bus is 30 to 52 m away (so it can always stop). A test that starts the bus 45 m
+  from a zebra at rest never meets the walker: give it speed first.
+- Test traps: a test loop "drive until 10 m/s" never ends if the shift is lost first (a stop passed): move the stops away
+  (G.stops[i].s += 3000) in tests that are about the pedals. The kit's mySkin() answers the first colour while HEADLESS;
+  call __sim.live() before testing Your buses after __sim.start().
+- Cameras: 10 m behind the back of the bus and 6 m up (closer and its roof fills the screen); at a stop it swings to the
+  door side, high (from low, the shelter hides the door).
+
 ## The feed app (`feed/`, `tools/build_feed.py`, `android/`)
 How it is put together is in CLAUDE.md. What was learned building it:
 - **The plug goes in at build time, not into the games.** `tools/build_feed.py` writes a copy of each game with `feed/plug.js` at the top of its page. The games in `games/` stay exactly as he approved them, every game gets the same plug, and a better plug reaches all of them at once. The `<meta charset>` line must stay ahead of the plug: browsers only look for it in the first bytes of a page, and without it every "·" and "é" turns to junk.
