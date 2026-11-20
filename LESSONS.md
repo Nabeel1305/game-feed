@@ -921,6 +921,21 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - In a lesson, a rival that flies itself into the roofs must be replaced (a new deal), or the lesson waits for ever.
 - A test of "darting across a line cuts it" must cross high on the rival's line (near its kite), or the crossing is ignored.
 
+### 82. Dress Designer (`games/dress/`): taps that dress the model (built on Cake Designer's shell)
+- The dress is rebuilt from the choices only when they change (a signature of `G.d` and `G.trims`): the skirt is a
+  LatheGeometry whose outline follows the cut and the length, the bodice a squashed lathe, sleeves open cylinders; fabric is a
+  MeshPhysicalMaterial (satin clearcoat and sheen, velvet sheen, chiffon see-through over an underskirt, sequins metal with a
+  sparkle emissive map) and the pattern a canvas texture.
+- The runway needs its own dark hall (a big BackSide box), or the day sky shows above the crowd.
+- Trim spots are tappable rings placed on the dress; `spotScreen(where)` projects them for the thumb and the touch test.
+- Balance: the robot's slips grow with what it has to keep in mind (wishes, the NO, the hidden wish, a short clock, the higher
+  pass mark): `right = 0.9 + 0.1 acc - 0.014 (load - 3)`; and it forgets a clash rule now and then. Without that, level 40
+  was as easy as level 3 for it (the test "it gets harder" failed). Real difficulty rises too: the pass mark goes from 3 to
+  3.5 stars at 15, the forgiven miss ends at 20, the client's patience falls from 30 s to 12 s.
+- The dress starts on options that do NOT meet her wishes, so NEXT, NEXT, NEXT loses.
+- `node` balance sims (a copy of part2 with the kit's helpers mocked) run hundreds of games in a second: tune there, then run
+  test_play once.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

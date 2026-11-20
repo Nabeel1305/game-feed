@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 82,
+  "next_number": 83,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2790,20 +2790,42 @@
         "P26"
       ],
       "summary": "My idea for set 14: rooftop kite fighting (Basant, Uttarayan, pipa combate) in 3D. One thumb: hold to pull (the kite darts the way its nose points), let go to give slack (it turns on the spot). Cross a rival's line and the lines saw: the one pulling while its kite moves cuts the other, and the kite above, diving across, has the edge (BO KATA!). Cut the kites the round asks for before the daylight goes; catch falling kites; doubles and triples; six skies including a night festival with lanterns; kites, upgrades (sharp manja, strong line, light kite, big spool) and ranks."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 82,
       "id": "dress",
       "name": "Dress Designer",
-      "set": 15,
-      "intensity": 1,
-      "thumbs": 1,
-      "summary": "his idea (20 Nov): design dresses.",
-      "spec": "specs/ideas.md",
-      "from": "his idea"
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-20",
+      "path": "games/dress/index.html",
+      "artifact": "https://claude.ai/artifact/Xoe9SwDnqFtDKSjfTPp5zN",
+      "artifact_slug": "f97543d9-450d-4202-ac5a-536ace1f3c07",
+      "apk_repo": null,
+      "storage_prefix": "dsg.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Design the dress, walk the runway, win the judges.",
+        "genre": "Creative / fashion",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P12",
+        "P3",
+        "P13"
+      ],
+      "summary": "A client brings a brief; design the dress part by part on a turning model (cut, length, sleeves, fabric, colour, pattern, finishing touches placed on the dress), then she walks the runway and three judges give stars, saying exactly what missed."
+    }
+  ],
+  "planned": [
     {
       "number": 83,
       "id": "taxi",

@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**81 games** so far. Next number: **82**.
+**82 games** so far. Next number: **83**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -89,6 +89,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 79 | **Cake Designer** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/73cvdYLtDKLqvV4ji1aeii) | `games/cake/index.html` |
 | 80 | **Paint It** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/VBSibC7brkYPhnaQAbER63) | `games/roller/index.html` |
 | 81 | **Kite Fighter** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/3pist2UpU6rL6G9WrSMQYL) | `games/kites/index.html` |
+| 82 | **Dress Designer** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Xoe9SwDnqFtDKSjfTPp5zN) | `games/dress/index.html` |
 
 ## What each game is
 
@@ -173,10 +174,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 79. **Cake Designer**: His idea: a calm 3D bakery. A customer orders a cake (tiers, icing colour, drip, swirls, toppings) and you make it in five stages, each with its own control: STACK (tap to set each gliding tier down), COLOUR (tap the icing on the card), ICE (the cake spins; hold your thumb on it and the knife spreads icing there), PIPE (tap as each dot passes under the bag), TOP (tap to place berries, candles, cherries, macarons). The customer scores each part; great cakes tip. Six bakeries, show cakes, stands, upgrades and ranks.
 80. **Paint It**: His idea: a calm 3D painting game with lovely sounds. Paint real things (a fence, a door, a beach hut, a shed wall with a heart, a birdhouse, a car, a boat, a mural) by dragging your thumb over them: paint goes on under it. A wide ROLLER and a fine BRUSH, pots to change colour, a faint pattern of which colour goes where, glass and edges to keep clean, and blue tape that is safe to paint over and peels off at the end for crisp lines.
 81. **Kite Fighter**: My idea for set 14: rooftop kite fighting (Basant, Uttarayan, pipa combate) in 3D. One thumb: hold to pull (the kite darts the way its nose points), let go to give slack (it turns on the spot). Cross a rival's line and the lines saw: the one pulling while its kite moves cuts the other, and the kite above, diving across, has the edge (BO KATA!). Cut the kites the round asks for before the daylight goes; catch falling kites; doubles and triples; six skies including a night festival with lanterns; kites, upgrades (sharp manja, strong line, light kite, big spool) and ranks.
+82. **Dress Designer**: A client brings a brief; design the dress part by part on a turning model (cut, length, sleeves, fabric, colour, pattern, finishing touches placed on the dress), then she walks the runway and three judges give stars, saying exactly what missed.
 
 ## Up next (designed, not built yet)
 
-82. **Dress Designer**: his idea (20 Nov): design dresses. Spec: `specs/ideas.md`.
 83. **Taxi Driver**: his idea (20 Nov): you are a taxi driver. Spec: `specs/ideas.md`.
 84. **Roach Run**: his idea 12: a cockroach finds food in a huge 3D house and gets it home past slippers and bug spray. Spec: `specs/his-list-2026-11-20.md`.
 85. **Hoop Shot**: his idea 13: basketball shooting only; drag back to set power and direction, release to shoot. Spec: `specs/his-list-2026-11-20.md`.
