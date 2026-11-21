@@ -1110,6 +1110,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - Speeds that feel right on a phone: drives travel at about dist/(12.5 + 10 x pace) seconds, slowed by a quarter at level 1.
   Honest robots aiming at the open court (+/-2.7 m) give 8 to 15 shot rallies and minute-long matches.
 
+### 94. Metro Map (`games/metro/`): his idea 19, a city's metro on a 2D paper map (Timber's shell, 2D, portrait)
+- **2D on the 3D shell**: three.js is taken out and `/*WORLD3D*/` becomes `const W3 = null, THREE = undefined;`. STEPS for
+  smoothness are then three sharpness notches (`pr` 2, 1.5, 1). The city behind the map (blocks, parks, river) is drawn once
+  per level into its own canvas and copied each frame.
+- **In a planning game a random network works**: a thumb dragging at random links every station sooner or later, and at low
+  load any network carries people. Three things stop it: nothing is built unless the drag is *let go on a station*; every
+  change halts that line's trains for 4 s (track works); and each level has a last week (4 weeks at levels 1-3, then 6).
+  Blind wins went from 1.4% to 0 of 5,696.
+- **Delivery is limited by how many people appear**, so a good network and a merely working one reach the target at the same
+  time; that is why the last week, not speed, separates them. Faster trains (2.0 units/s) and a week of 45 s made late
+  levels winnable; the target is capped at 190.
+- **A tap on a station must come before a tap on a line**: the line passes through the station's centre, so the line won
+  every tap and added trains instead of showing the station's card.
+- **Queues beside stations near the right edge go to the left**, or they run off the screen.
+- The overlay behind cards is darker than other games' (the paper map is light and showed through the end card).
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

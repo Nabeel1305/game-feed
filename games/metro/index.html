@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Metro Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Barlow+Condensed:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* STARTER KIT (kit/README.md). Colours: change the five below and the game's whole look follows. */
+:root{--bg:#1e2230;--ink:#f6f4ee;--acc:#ff6a50;--acc-dark:#b03a28;--ok:#8fe0ab}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#gl{z-index:0}#cv{z-index:1}
+.tf{font-family:"Righteous","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
+#pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
+#pauseBtn.hidden{display:none}
+.ov{position:fixed;inset:0;z-index:5;display:flex;align-items:safe center;justify-content:center;overflow-y:auto;background:linear-gradient(180deg,rgba(22,26,38,.62),rgba(22,26,38,.86) 40%,rgba(16,19,28,.95))}
+.ov.hidden,.btn.hidden{display:none}
+.card{width:calc(100% - 44px);max-width:360px;text-align:center;max-height:100%;overflow:auto;padding:20px 0}
+.card h1{margin:0;font-size:56px;line-height:.95;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.35),0 12px 28px rgba(0,0,0,.55)}
+.card h2{margin:0;font-size:42px;line-height:1;color:#fff}
+.bar{height:3px;width:150px;margin:10px auto 9px;background:linear-gradient(90deg,transparent,var(--acc),transparent)}
+.tag{font-size:12px;font-weight:800;letter-spacing:2.5px;opacity:.85}
+.vs{margin:18px 0 4px;font-size:12px;letter-spacing:2px;opacity:.7;font-weight:800}
+.sub{opacity:.9;font-size:14px;margin:10px 0 0;line-height:1.5}
+.stat{font-size:13px;margin-top:12px;opacity:.92;line-height:1.5}
+.btn{display:block;width:100%;margin-top:16px;border:0;border-radius:14px;padding:16px;font:inherit;font-size:20px;font-weight:800;background:var(--acc);color:#1d1204;box-shadow:0 5px 0 var(--acc-dark);cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--acc-dark)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:none;border:1.5px solid rgba(238,242,248,.3);font-size:16px;padding:13px;margin-top:10px}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+.shop{margin-top:14px;text-align:left}.shop h3{margin:0 0 6px;font-size:13px;letter-spacing:2px;opacity:.8;display:flex;justify-content:space-between}
+.shop .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.up{border:1.5px solid rgba(255,255,255,.18);border-radius:12px;padding:8px 9px;background:rgba(0,0,0,.25);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up b{display:block;font-size:14px}.up small{display:block;font-size:11px;opacity:.75;line-height:1.3;margin-top:2px}.up .lv{font-size:11px;letter-spacing:2px;color:var(--acc)}.up .cost{float:right;font-weight:800;font-size:13px}
+.up.can{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}.up.max{opacity:.5}.up.no{opacity:.55}.up.bought{animation:pop .35s}@keyframes pop{50%{transform:scale(1.06)}}
+#ovPause,#ovLevels{background:radial-gradient(circle at 50% 30%,rgba(14,18,28,.94),rgba(6,8,14,.97))}
+.btn.quiet{border-color:transparent;opacity:.6;font-size:14px;padding:10px;margin-top:6px}
+.rules{list-style:none;padding:0;margin:14px 0 0;text-align:left}
+.rules li{padding:0 0 11px 0;font-size:14px;line-height:1.45;opacity:.95}
+.rules b{color:var(--acc)}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px;max-height:56vh;overflow:auto;padding:4px 2px}
+.lvb{border:0;border-radius:12px;padding:10px 0 6px;font:inherit;font-weight:800;font-size:17px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}
+.lvb small{display:block;font-size:10px;color:var(--acc);min-height:12px;letter-spacing:1px}
+.lvb.boss{box-shadow:inset 0 0 0 2px var(--acc)}
+.lvb.cur{background:var(--acc);color:#1d1204}.lvb.cur small{color:#1d1204}
+.lvb.lock{opacity:.3}
+.stars{font-size:34px;letter-spacing:6px;margin-top:8px;color:var(--acc)}
+.stars .off{color:rgba(255,255,255,.2)}
+.snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
+.aqgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.aq{border-radius:12px;padding:8px 2px 6px;background:rgba(255,255,255,.08);font-size:11px;line-height:1.25}.aq canvas{position:static;width:64px;height:75px;display:block;margin:0 auto 3px}.aq.off{opacity:.35}.aq.sel{box-shadow:inset 0 0 0 2px var(--acc)}.aq{cursor:pointer}.aq b{display:block;font-size:12px}
+.nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
+#skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;font-size:16px;font-weight:800;text-align:left}.tog{min-width:96px;border:0;border-radius:12px;padding:11px 10px;font:inherit;font-weight:800;font-size:15px;background:var(--acc);color:#1d1204;cursor:pointer}.tog.off{background:rgba(255,255,255,.14);color:var(--ink)}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="cv"></canvas>
+<button id="skipTut" class="hidden">Skip tutorial ›</button>
+<button id="pauseBtn" class="hidden" aria-label="Pause">II</button>
+
+<div class="ov" id="ovHome">
+  <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <button class="snd" id="setBtn" aria-label="Settings" style="right:62px">⚙</button>
+  <div class="card">
+    <h1 class="tf">Metro Map</h1>
+    <div class="bar"></div>
+    <div class="tag" id="hTag">DRAW LINES · MOVE THE CITY</div>
+    <div class="vs">LEVEL <span id="hLvl">1</span></div>
+    <div class="stat" id="hStat"></div>
+    <button class="btn" id="playBtn">PLAY</button>
+    <div class="row2"><button class="btn ghost" id="levelsBtn">Levels</button><button class="btn ghost" id="practiceBtn">🚇 Endless</button></div>
+    <button class="btn ghost" id="tutBtn">🎓 Tutorial</button>
+    <div class="row2"><button class="btn ghost" id="aquaBtn">🎨 Your map</button><button class="btn ghost" id="rulesBtn">How to play</button></div>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovAqua">
+  <div class="card">
+    <h2 class="tf">YOUR MAP</h2>
+    <div class="sub" id="aqSub"></div>
+    <div class="aqgrid" id="aqGrid"></div>
+    <button class="btn" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovRules">
+  <div class="card">
+    <h2 class="tf">HOW TO PLAY</h2>
+    <ul class="rules" id="rulesList"></ul>
+    <button class="btn" data-back>Got it</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovLevels">
+  <div class="card">
+    <h2 class="tf">LEVELS</h2>
+    <p class="sub" id="lvSub"></p>
+    <div class="lvgrid" id="lvGrid"></div>
+    <button class="btn ghost" data-back>Back</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovEnd">
+  <div class="card">
+    <h2 class="tf" id="eTitle">YOU WIN</h2>
+    <div class="stars" id="eStars"></div>
+    <p class="sub" id="eSub"></p>
+    <div class="shop" id="eShop"></div>
+    <button class="btn" id="eMain">NEXT LEVEL</button>
+    <button class="btn ghost" id="eAlt">Play it again</button>
+    <button class="btn ghost" id="eLevels">Levels</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovSet">
+  <div class="card">
+    <h2 class="tf">SETTINGS</h2>
+    <div class="setrow"><span>🎵 Music</span><button class="tog" id="tMus"></button></div>
+    <div class="setrow"><span>🔊 Sound effects</span><button class="tog" id="tSfx"></button></div>
+    <div class="setrow"><span>📳 Vibration</span><button class="tog" id="tVib"></button></div>
+    <div class="setrow"><span>Vibration strength</span><button class="tog" id="tVk"></button></div>
+    <button class="btn" id="setBack">Done</button>
+  </div>
+</div>
+
+<div class="ov hidden" id="ovPause">
+  <div class="card">
+    <h2 class="tf">PAUSED</h2>
+    <p class="sub" id="pLvl"></p>
+    <button class="btn" id="pResume">RESUME</button>
+    <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
+    <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pSet">⚙ Settings</button>
+    <button class="btn ghost quiet" id="pQuit">Home</button>
+    <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
+  </div>
+</div>
+
+
+<script>
+(() => {
+'use strict';
+// ===================== SHARED: utilities (rarely touched) =====================
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const TF = '"Righteous", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
+let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+addEventListener('resize', resize);
+const store = {
+  get(key, d) { try { const v = localStorage.getItem('met.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(key, v) { try { localStorage.setItem('met.' + key, JSON.stringify(v)); } catch (e) {} }
+};
+let HEADLESS = false;
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const TAU = Math.PI * 2;
+const pick = (R, a) => a[(R() * a.length) | 0];
+function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
+const easyOf = L => clamp((7 - L) / 6, 0, 1);
+
+// ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
+// Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
+let actx = null, MUTE = false, BUS = null, AMB = null, MUSB = null, OUTM = false; const lastPlay = {};
+// his rule (20 Nov 2026): separate Music, Sound effects and Vibration settings. Music is anything played inside music(() => ...);
+// everything else is a sound effect. SET is saved by the game's Settings card (kit part5).
+const SET = { mus: true, sfx: true, vib: true, vk: 1 };
+function applySet() { if (!actx || !BUS) return; const t = actx.currentTime; BUS.gain.setTargetAtTime(MUTE || !SET.sfx ? 0 : 0.9, t, 0.02); if (MUSB) MUSB.gain.setTargetAtTime(MUTE || !SET.mus ? 0 : 0.9, t, 0.02); }
+function music(fn) { const k = OUTM; OUTM = true; try { fn(); } finally { OUTM = k; } }
+function audio() {
+  if (!actx) {
+    try {
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      const comp = actx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = actx.createGain(); BUS.gain.value = MUTE || !SET.sfx ? 0 : 0.9; BUS.connect(comp); comp.connect(actx.destination);
+      MUSB = actx.createGain(); MUSB.gain.value = MUTE || !SET.mus ? 0 : 0.9; MUSB.connect(comp);
+      AMB = actx.createGain(); AMB.gain.value = 1; AMB.connect(BUS);
+    } catch (e) { actx = null; }
+  }
+  if (actx && actx.state === 'suspended') actx.resume().catch(() => {});
+}
+function setMute(m) { MUTE = m; applySet(); }
+const vary = (a = 0.06) => 1 + (Math.random() * 2 - 1) * a;
+function gate(name, ms = 35) { const t = performance.now(); if (lastPlay[name] && t - lastPlay[name] < ms) return false; lastPlay[name] = t; return true; }
+function env(g, t, vol, dur, att = 0.005) { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t + att); g.gain.exponentialRampToValueAtTime(0.0005, t + dur); }
+function tone(fr, dur, vol, type = 'sine', when = 0, to, lp, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(fr, t); if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    let n = o; if (lp) { const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lp; o.connect(f); n = f; }
+    env(g, t, vol, dur); n.connect(g); g.connect(dest || (OUTM && MUSB) || BUS); o.start(t); o.stop(t + dur + 0.03);
+  } catch (e) {}
+}
+const NB = {};   // cached noise buffers
+function nbuf(dur) { const k = Math.round(dur * 100); if (!NB[k]) { const n = Math.max(1, Math.floor(actx.sampleRate * dur)), b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.5); NB[k] = b; } return NB[k]; }
+function noise(dur, freq, vol, type = 'lowpass', q = 1, when = 0, att = 0.002, dest) {
+  if (!actx || MUTE) return;
+  try {
+    const t = actx.currentTime + when, s = actx.createBufferSource(); s.buffer = nbuf(dur); s.playbackRate.value = vary(0.08);
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); env(g, t, vol, dur, att); s.connect(f); f.connect(g); g.connect(dest || (OUTM && MUSB) || BUS); s.start(t);
+  } catch (e) {}
+}
+function pluck(fr, dur = 0.8, vol = 0.3, when = 0) {      // Karplus-Strong string
+  if (!actx || MUTE) return;
+  try {
+    const sr = actx.sampleRate, n = Math.floor(sr * dur), b = actx.createBuffer(1, n, sr), d = b.getChannelData(0), p = Math.max(2, Math.round(sr / fr));
+    for (let i = 0; i < p; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = p; i < n; i++) d[i] = 0.996 * 0.5 * (d[i - p] + d[i - p + 1]);
+    const s = actx.createBufferSource(); s.buffer = b; const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 5000;
+    const g = actx.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect((OUTM && MUSB) || BUS); s.start(actx.currentTime + when);
+  } catch (e) {}
+}
+function echo(fn, delay = 0.075, level = 0.12) {          // one short slap-back (a sense of place)
+  fn(1); setTimeout(() => fn(level), delay * 1000);
+}
+const PENTA = [0, 2, 4, 7, 9];
+const note = (base, step) => base * Math.pow(2, (PENTA[step % 5] + 12 * Math.floor(step / 5)) / 12);
+// Looping ambience bed (crowd, wind). Returns {set(level), stop()}.
+function bed(freq, q, level, lfo = 0.15, type = 'bandpass') {
+  if (!actx) return null;
+  try {
+    const n = actx.sampleRate * 3, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0);
+    let last = 0; for (let i = 0; i < n; i++) { last = last * 0.6 + (Math.random() * 2 - 1) * 0.4; d[i] = last; }
+    const s = actx.createBufferSource(); s.buffer = b; s.loop = true;
+    const f = actx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = actx.createGain(); g.gain.value = 0;
+    const o = actx.createOscillator(), og = actx.createGain(); o.frequency.value = lfo; og.gain.value = level * 0.35; o.connect(og); og.connect(g.gain);
+    s.connect(f); f.connect(g); g.connect(AMB); s.start(); o.start();
+    const B = { g, f, base: level, set(v, tc = 0.4) { try { g.gain.setTargetAtTime(v, actx.currentTime, tc); } catch (e) {} }, stop() { try { s.stop(); o.stop(); } catch (e) {} } };
+    B.set(level, 1.2); return B;
+  } catch (e) { return null; }
+}
+function duck(amount = 0.5, ms = 400) {                   // drop ambience under a big moment
+  if (!actx || !AMB) return;
+  const t = actx.currentTime; AMB.gain.cancelScheduledValues(t); AMB.gain.setTargetAtTime(1 - amount, t, 0.02); AMB.gain.setTargetAtTime(1, t + ms / 1000, 0.15);
+}
+// Haptic vocabulary (silent sound channel). Never on failure.
+const HAP = { tick: [10], light: [18], sharp: [22, 40, 30], thud: [70], heavy: [120, 50, 200], best: [20, 50, 30, 50, 60] };
+function vibe(p) { if (!SET.vib) return; if (SET.vk !== 1) p = (Array.isArray(p) ? p : [p]).map((v, i) => i % 2 ? v : Math.max(5, Math.round(v * SET.vk))); try { if (window.GameNative && GameNative.vibrate) { GameNative.vibrate(JSON.stringify(p)); return; } navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+
+const W3 = null, THREE = undefined;      // a 2D game: no 3D world
+// ===================== THE RULES: Metro Map (his idea 19, 20 Nov 2026) =====================
+// A growing city on a clean 2D map. Stations have shapes (● homes, ■ offices, ▲ schools, ★ the stadium, ✚ the hospital, ◆ the
+// market); passengers appear at stations as little shapes: the kind of place they want to reach. Drag from station to station
+// to draw a line (a train starts on it); drag from the end of a line to extend it; drag the middle of a stretch onto a station
+// to reroute through it; tap a line to put another train on it; tap a line's end tab to shorten it. Lines, trains and river
+// bridges are limited: every week brings a new train and a choice of one more thing. Passengers change lines by themselves.
+// A crowded station fills a ring; let it fill and the metro closes. Carry enough passengers to finish the level.
+const RULES = [
+  '<b>Drag from station to station</b> to draw a line. A train starts on it.',
+  '<b>Drag from a line\'s end</b> to extend it. <b>Drag the middle</b> of a stretch onto a station to route it through.',
+  '<b>Tap a line</b> to add a train. <b>Tap its end tab</b> to shorten it.',
+  'Passengers are shapes: the kind of place they want. They change lines on their own.',
+  'Crossing the river takes a <b>bridge</b>. Each week: a new train and a choice.',
+  'A <b>crowded station</b> fills its ring. Let it fill up and the metro closes. Carry enough people before the last week ends to win.',
+];
+const MW = 10, MH = 14, SR = 0.34, TRAIN_V = 2.0, CAP0 = 6, QCAP = 6, WEEK = 45;
+const TYPES = ['circle', 'square', 'tri', 'star', 'cross', 'diamond'], TNAME = { circle: 'homes', square: 'offices', tri: 'a school', star: 'the stadium', cross: 'the hospital', diamond: 'the market' };
+const LCOL = ['#e8443a', '#2a7ad8', '#f0b020', '#2aa860', '#9a4ad0', '#f07a20', '#1ab0b0'];
+const CITIES = ['Riverside', 'Harbourtown', 'Old Mill', 'Northbank', 'Greenhill', 'Lakeshore', 'Ironbridge', 'Westvale'];
+const SKINS = [{ id: 'classic', name: 'Paper', col: '#f4f1e8', stars: 0 }, { id: 'night', name: 'Night map', col: '#1e2430', stars: 6 }, { id: 'blueprint', name: 'Blueprint', col: '#1a3a6a', stars: 14 }, { id: 'sepia', name: 'Old map', col: '#e8d8b0', stars: 24 }, { id: 'mint', name: 'Mint', col: '#dff2e8', stars: 36 }, { id: 'neon', name: 'Neon', col: '#140a24', stars: 50 }];
+const UPGRADES = [{ id: 'depot', name: 'Spare train', max: 2, cost: l => [60, 150][l], desc: 'Start each level with one more train.' }, { id: 'wide', name: 'Wide platforms', max: 2, cost: l => [70, 160][l], desc: 'Stations hold 2 more before they crowd.' }, { id: 'fast', name: 'Faster trains', max: 1, cost: () => 120, desc: 'Trains run 10% quicker.' }];
+const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
+const RANKS = [[0, 'Ticket clerk'], [60, 'Driver'], [200, 'Signaller'], [500, 'Line manager'], [1100, 'Network planner'], [2500, 'Legend of the lines']];
+const cityOf = N => CITIES[(N - 1) % CITIES.length];
+function makeCfg(N, help, o = {}) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+  return { N, f, help: !!help, endless: !!o.practice, target: o.practice ? 1e9 : Math.round(Math.min(190, 30 + 12 * Math.min(N, 10) + Math.max(0, N - 10))), weeks: N <= 3 ? 4 : 6, lines0: N <= 2 ? 1 : 2, trains0: (N <= 2 ? 1 : 2) + upLv('depot'), bridges0: N <= 1 ? 0 : N <= 4 ? 1 : 2, river: N >= 2,
+    spawnSt: x(16, 11, 30) * (help ? 1.2 : 1), rate: x(0.045, 0.08, 30) * (help ? 0.8 : 1), grow: x(0.0006, 0.0014, 30), maxTypes: N <= 3 ? 3 : N <= 6 ? 4 : N <= 10 ? 5 : 6, rush: N >= 3, close: N >= 6, qcap: QCAP + 2 * upLv('wide'), fill: help ? 38 : 30 }; }
+function newGame(N, o = {}) { const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0, R = rng(seed);
+  const G = { N, cfg, seed, rnd: R, t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, mini: !!o.mini, city: cityOf(N),
+    S: [], L: [], trains: [], free: { lines: cfg.lines0, trains: cfg.trains0, bridges: cfg.bridges0 }, delivered: 0, week: 0, weekT: 0, choice: null, nextSt: 6, waitSum: 0, waitN: 0, weekLog: [], seg: {}, rush: null, closure: null, speed: 1, drag: null, sid: 0 };
+  G.river = cfg.river ? makeRiver(R) : null;
+  if (G.teach && LESSONS[N] && G.taught < N && !cfg.endless) lessonStart(G); else { firstStations(G); G.ev.push({ k: 'start' }); }
+  return G; }
+// the river: a band from one side to the other, with bends
+function makeRiver(R) { const pts = [], y0 = 5.5 + R() * 3, horiz = true; for (let i = 0; i <= 10; i++) { const x = -0.5 + i * 1.1, y = y0 + Math.sin(i * 0.9 + R() * 2) * 1.1 + (R() - 0.5) * 0.5; pts.push([x, y]); } return { pts, w: 0.5 }; }
+function riverY(G, x) { const P = G.river.pts; for (let i = 0; i < P.length - 1; i++) if (x >= P[i][0] && x <= P[i + 1][0]) { const u = (x - P[i][0]) / (P[i + 1][0] - P[i][0]); return P[i][1] + (P[i + 1][1] - P[i][1]) * u; } return P[0][1]; }
+const segX = (a, b, c, d) => { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b); };
+function crossings(G, a, b) { if (!G.river) return 0; const P = G.river.pts; let n = 0; for (let i = 0; i < P.length - 1; i++) if (segX([a.x, a.y], [b.x, b.y], P[i], P[i + 1])) n++; return n % 2; }
+const usedBridges = G => G.L.reduce((n, l) => { for (let i = 0; i < l.st.length - 1; i++) n += crossings(G, st(G, l.st[i]), st(G, l.st[i + 1])); return n; }, 0);
+const bridgesLeft = G => G.free.bridges - usedBridges(G);
+// ---------- stations ----------
+const st = (G, id) => G.S.find(s => s.id === id);
+function placeStation(G, type, near) { const R = G.rnd; for (let tries = 0; tries < 80; tries++) { const x = near ? clamp(near[0] + (R() - 0.5) * 5, 0.8, MW - 0.8) : 0.8 + R() * (MW - 1.6), y = near ? clamp(near[1] + (R() - 0.5) * 5, 1.0, MH - 0.8) : 1.0 + R() * (MH - 1.8);
+    if (G.S.some(s => Math.hypot(s.x - x, s.y - y) < 1.7)) continue; if (G.river && Math.abs(y - riverY(G, x)) < 0.8) continue; if (G.lessonArea && (y < G.lessonArea[0] || y > G.lessonArea[1])) continue;
+    const s = { id: ++G.sid, x, y, type, q: [], over: 0, born: G.t, closed: 0, cap: G.cfg.qcap, rate: 0.6 + R() * 0.8, served: 0 }; G.S.push(s); G.ev.push({ k: 'station', id: s.id, type }); return s; } return null; }
+function firstStations(G) { const c = [MW / 2, G.river ? Math.min(MH - 2, riverY(G, MW / 2) + 3) : MH / 2]; ['circle', 'square', 'tri'].forEach(t => placeStation(G, t, c)); }
+function newStationType(G) { const R = G.rnd, have = TYPES.slice(0, G.cfg.maxTypes); const counts = have.map(t => G.S.filter(s => s.type === t).length); if (counts.some((n, i) => i >= 3 && n === 0) && R() < 0.35) return have[counts.findIndex((n, i) => i >= 3 && n === 0)]; const r = R(); return r < 0.5 ? 'circle' : r < 0.75 ? 'square' : r < 0.9 ? 'tri' : have[3 + ((R() * Math.max(1, have.length - 3)) | 0)] || 'tri'; }
+// ---------- the network: lines, their order of stations, distances to each kind of place ----------
+function works(G, lid) { for (const tr of G.trains) if (tr.line === lid) tr.dwell = Math.max(tr.dwell, 4); }      // track works: a changed line's trains stand a moment
+function netChanged(G) { const adj = {}; for (const s of G.S) adj[s.id] = new Set(); for (const l of G.L) for (let i = 0; i < l.st.length - 1; i++) { adj[l.st[i]].add(l.st[i + 1]); adj[l.st[i + 1]].add(l.st[i]); }
+  G.dist = {}; for (const t of TYPES) { const d = {}, q = []; for (const s of G.S) if (s.type === t && s.closed <= 0) { d[s.id] = 0; q.push(s.id); } while (q.length) { const u = q.shift(); for (const v of adj[u]) if (d[v] == null) { d[v] = d[u] + 1; q.push(v); } } G.dist[t] = d; }
+  G.adj = adj; }
+const distTo = (G, t, sid) => { const d = G.dist && G.dist[t] && G.dist[t][sid]; return d == null ? 99 : d; };
+function lineOf(G, sid) { return G.L.filter(l => l.st.includes(sid)); }
+// ---------- the player's moves ----------
+const busy = G => G.over || G.choice || G.lesson && G.lesson.wait > 0;
+function newLine(G, a, b) { if (busy(G) || G.free.lines <= 0 || a === b) return null; const A = st(G, a), B = st(G, b); if (!A || !B) return null; const cr = crossings(G, A, B); if (cr > bridgesLeft(G)) { G.ev.push({ k: 'needbridge' }); return null; }
+  const used = new Set(G.L.map(l => l.col)), col = LCOL.find(c => !used.has(c)) || LCOL[G.L.length % LCOL.length], l = { id: G.L.length ? Math.max(...G.L.map(q => q.id)) + 1 : 1, col, st: [a, b] }; G.L.push(l); G.free.lines--;
+  if (G.free.trains > 0) addTrain(G, l.id, true); netChanged(G); G.ev.push({ k: 'line', id: l.id }); lessonSee(G, 'line'); return l; }
+function extendLine(G, lid, atEnd, sid) { if (busy(G)) return false; const l = G.L.find(q => q.id === lid); if (!l || l.st.includes(sid)) return false; const endId = atEnd ? l.st[l.st.length - 1] : l.st[0], cr = crossings(G, st(G, endId), st(G, sid)); if (cr > bridgesLeft(G)) { G.ev.push({ k: 'needbridge' }); return false; }
+  if (atEnd) l.st.push(sid); else { l.st.unshift(sid); for (const tr of G.trains) if (tr.line === lid) tr.i++; } works(G, lid); netChanged(G); G.ev.push({ k: 'extend', id: lid }); lessonSee(G, 'extend'); return true; }
+function insertStation(G, lid, seg, sid) { if (busy(G)) return false; const l = G.L.find(q => q.id === lid); if (!l || l.st.includes(sid) || seg < 0 || seg >= l.st.length - 1) return false; const a = st(G, l.st[seg]), b = st(G, l.st[seg + 1]), s = st(G, sid), cr = crossings(G, a, s) + crossings(G, s, b) - crossings(G, a, b);
+  if (cr > bridgesLeft(G)) { G.ev.push({ k: 'needbridge' }); return false; } l.st.splice(seg + 1, 0, sid); for (const tr of G.trains) if (tr.line === lid && tr.i > seg) tr.i++; works(G, lid); netChanged(G); G.ev.push({ k: 'extend', id: lid }); lessonSee(G, 'extend'); return true; }
+function trimLine(G, lid, atEnd) { if (busy(G)) return false; const l = G.L.find(q => q.id === lid); if (!l) return false;
+  if (l.st.length <= 2) { for (const tr of G.trains.filter(q => q.line === lid)) { dropAll(G, tr); G.free.trains++; } G.trains = G.trains.filter(q => q.line !== lid); G.L = G.L.filter(q => q !== l); G.free.lines++; netChanged(G); G.ev.push({ k: 'removed' }); return true; }
+  if (atEnd) { l.st.pop(); for (const tr of G.trains) if (tr.line === lid && tr.i >= l.st.length - 1) { tr.i = l.st.length - 2; tr.u = 1; tr.dir = -1; } } else { l.st.shift(); for (const tr of G.trains) if (tr.line === lid) { tr.i = Math.max(0, tr.i - 1); if (tr.i === 0 && tr.dir < 0) { tr.u = 0; tr.dir = 1; } } }
+  works(G, lid); netChanged(G); G.ev.push({ k: 'trim' }); return true; }
+function addTrain(G, lid, quiet) { if (G.over || G.choice || G.free.trains <= 0) { if (!quiet) G.ev.push({ k: 'notrain' }); return false; } const l = G.L.find(q => q.id === lid); if (!l) return false;
+  const n = G.trains.filter(q => q.line === lid).length; G.trains.push({ line: lid, i: n % Math.max(1, l.st.length - 1), u: 0, dir: n % 2 ? -1 : 1, load: [], cap: CAP0, dwell: 0.5, at: null }); G.free.trains--; if (!quiet) G.ev.push({ k: 'train', id: lid }); lessonSee(G, 'train'); return true; }
+function choose(G, i) { const c = G.choice; if (!c) return false; const pick = c.opts[i]; if (!pick) return false; if (pick === 'line') G.free.lines++; else if (pick === 'train') G.free.trains++; else if (pick === 'bridge') G.free.bridges += 2; else if (pick === 'carriage') { const tr = G.trains.slice().sort((a, b) => (b.load.length / b.cap) - (a.load.length / a.cap))[0]; if (tr) tr.cap += 4; else G.free.trains++; }
+  else if (pick === 'platform') for (const s of G.S) s.cap += 2; G.choice = null; G.ev.push({ k: 'chosen', what: pick }); return true; }
+// ---------- passengers ----------
+function spawn(G, s) { const have = [...new Set(G.S.map(q => q.type))].filter(t => t !== s.type); if (!have.length) return; const dest = have[(G.rnd() * have.length) | 0]; s.q.push({ dest, t0: G.t }); }
+function dropAll(G, tr) { const l = G.L.find(q => q.id === tr.line), sid = l && l.st[tr.dir > 0 ? tr.i : tr.i + 1], s = sid && st(G, sid); for (const p of tr.load) if (s) s.q.push(p); tr.load = []; }
+// a train at a station: let off who arrived (or who should change here), take on who this train brings closer
+function serveStation(G, tr, s, l) { const pos = l.st.indexOf(s.id), nextId = l.st[pos + tr.dir] != null ? l.st[pos + tr.dir] : l.st[pos - tr.dir]; let moved = 0;
+  if (s.closed > 0) return 0;
+  for (let k = tr.load.length - 1; k >= 0; k--) { const p = tr.load[k];
+    if (p.dest === s.type) { tr.load.splice(k, 1); G.delivered++; s.served++; G.waitSum += G.t - p.t0; G.waitN++; moved++; G.ev.push({ k: 'deliver', x: s.x, y: s.y, type: p.dest }); continue; }
+    if (distTo(G, p.dest, nextId) >= distTo(G, p.dest, s.id) && distTo(G, p.dest, s.id) < 99) { tr.load.splice(k, 1); p.xfer = (p.xfer || 0) + 1; s.q.push(p); moved++; } }      // change here: another line is closer
+  for (let k = 0; k < s.q.length && tr.load.length < tr.cap; k++) { const p = s.q[k]; if (distTo(G, p.dest, nextId) < distTo(G, p.dest, s.id)) { s.q.splice(k, 1); k--; tr.load.push(p); moved++; const key = Math.min(s.id, nextId) + '-' + Math.max(s.id, nextId); G.seg[key] = (G.seg[key] || 0) + 1; } }
+  return moved; }
+// ---------- the clock ----------
+function step(G, dt) { if (G.over || !(dt > 0) || G.choice) return; dt *= G.speed; G.t += dt; const c = G.cfg, R = G.rnd;
+  if (G.lesson) { lessonTick(G, dt); if (G.lesson && G.lesson.wait > 0) return; }
+  // the week: a new train, and a choice
+  if (!G.lesson) { G.weekT += dt; if (G.weekT >= WEEK) { G.weekT = 0; G.week++; G.weekLog.push(G.delivered); if (!c.endless && G.week >= c.weeks) return finish(G, false, { time: true }); G.free.trains++; const all = ['line', 'carriage', 'bridge', 'platform', 'train'].filter(k2 => k2 !== 'bridge' || G.river), a = all[(R() * all.length) | 0]; let b = all[(R() * all.length) | 0]; while (b === a) b = all[(R() * all.length) | 0]; G.choice = { opts: [a, b] }; G.ev.push({ k: 'week', n: G.week }); return; }
+    // new stations; rush hours and closures, warned first
+    G.nextSt -= dt; if (G.nextSt <= 0) { G.nextSt = c.spawnSt * (0.8 + R() * 0.4); const near = G.S.length && R() < 0.7 ? (() => { const s = G.S[(R() * G.S.length) | 0]; return [s.x, s.y]; })() : null; placeStation(G, newStationType(G), near); netChanged(G); }
+    if (c.rush) { if (!G.rush && R() < dt / 70) G.rush = { warn: 6, t: 15 }; if (G.rush) { if (G.rush.warn > 0) { G.rush.warn -= dt; if (G.rush.warn <= 0) G.ev.push({ k: 'rush' }); } else { G.rush.t -= dt; if (G.rush.t <= 0) G.rush = null; } } }
+    if (c.close && !G.closure && G.S.length > 6 && R() < dt / 90) { const s = G.S[(R() * G.S.length) | 0]; G.closure = { id: s.id, warn: 6 }; G.ev.push({ k: 'closewarn', id: s.id }); }
+    if (G.closure) { const s = st(G, G.closure.id); if (G.closure.warn > 0) { G.closure.warn -= dt; if (G.closure.warn <= 0 && s) { s.closed = 15; netChanged(G); G.ev.push({ k: 'closed', id: s.id }); } } else if (!s || s.closed <= 0) { G.closure = null; netChanged(G); } } }
+  // passengers appear; crowds build
+  const surge = G.rush && G.rush.warn <= 0 ? 2.5 : 1, rate = c.rate * (1 + c.grow * G.t * 60 / 60) * surge;
+  for (const s of G.S) { if (s.closed > 0) { s.closed -= dt; if (s.closed <= 0) netChanged(G); continue; } if (G.t - s.born > 2 && R() < rate * s.rate * dt * (G.lesson ? G.lesson.rate : 1)) spawn(G, s);
+    if (s.q.length > s.cap) { s.over += dt / c.fill * (G.t - s.born < 25 ? 0.5 : 1);      // a new station gets time: never lost because one appeared in an awkward place
+      if (s.over > 0.5 && !s.warned) { s.warned = true; G.ev.push({ k: 'crowd', id: s.id }); } if (s.over >= 1 && !G.lesson) return finish(G, false, { why: s }); } else { s.over = Math.max(0, s.over - dt / 20); if (s.over < 0.3) s.warned = false; } }
+  // trains move along their lines, stop at each station
+  for (const tr of G.trains) { const l = G.L.find(q => q.id === tr.line); if (!l || l.st.length < 2) continue; if (tr.i > l.st.length - 2) { tr.i = l.st.length - 2; tr.u = 1; }
+    if (tr.dwell > 0) { tr.dwell -= dt; continue; }
+    const a = st(G, l.st[tr.i]), b = st(G, l.st[tr.i + 1]), len = Math.hypot(b.x - a.x, b.y - a.y) || 1, v = TRAIN_V * (1 + 0.1 * upLv('fast')) / len;
+    tr.u += tr.dir * v * dt; if (tr.u >= 1 || tr.u <= 0) { const arrived = tr.u >= 1 ? b : a; tr.u = clamp(tr.u, 0, 1);
+      if (tr.u >= 1) { if (tr.i + 1 >= l.st.length - 1) tr.dir = -1; else { tr.i++; tr.u = 0; } } else { if (tr.i <= 0) tr.dir = 1; else { tr.i--; tr.u = 1; } }
+      const moved = serveStation(G, tr, arrived, l); tr.dwell = 0.25 + moved * 0.12; } }
+  if (!c.endless && G.delivered >= c.target && !G.lesson) finish(G, true); }
+function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lost'; const avg = G.waitN ? G.waitSum / G.waitN : 0, stars = win ? (avg < 18 ? 3 : avg < 26 ? 2 : 1) : 0; G.weekLog.push(G.delivered);
+  let busiest = null, bn = 0; for (const k2 in G.seg) if (G.seg[k2] > bn) { bn = G.seg[k2]; busiest = k2; }
+  G.res = { win, stars, delivered: G.delivered, target: G.cfg.target, avg: Math.round(avg), weeks: G.week, log: G.weekLog.slice(), why: o.why ? { type: o.why.type, waiting: o.why.q.length } : null, time: !!o.time, busiest, bn, stations: G.S.length, lines: G.L.length, coins: Math.round(G.delivered / 5) + (win ? 8 + Math.ceil(G.N / 2) + stars * 3 : 0) };
+  G.ev.push({ k: win ? 'won' : 'lost' }); }
+// why a station struggles (tap a station to see it)
+function inspect(G, sid) { const s = st(G, sid); if (!s) return null; const want = {}; for (const p of s.q) want[p.dest] = (want[p.dest] || 0) + 1; const lines = lineOf(G, sid), reasons = [];
+  if (!lines.length) reasons.push('No line stops here yet.'); else for (const t in want) if (distTo(G, t, sid) >= 99) reasons.push(`No route to ${TNAME[t]}.`);
+  if (lines.length && !G.trains.some(tr => lines.some(l => l.id === tr.line))) reasons.push('Its line has no train.');
+  if (!reasons.length && s.q.length > s.cap - 2) reasons.push(`Busy: ${s.q.length} waiting. Add a train to ${lines.length > 1 ? 'its lines' : 'its line'}.`);
+  if (s.closed > 0) reasons.unshift('Closed for repairs.'); return { s, want, lines: lines.length, reasons }; }
+// ---------- LESSONS ----------
+const LESSONS = {
+  1: [{ id: 'line', title: 'DRAW A LINE', how: 'Drag from one station to another, then on to the third, without lifting your finger. A train starts on it.', need: 1 }],
+  2: [{ id: 'extend', title: 'REACH THE NEW STATIONS', how: 'New stations keep appearing. Drag from the END of your line to each one. Three of them.', need: 3 }],
+  3: [{ id: 'train', title: 'MORE TRAINS', how: 'A crowd is growing. TAP your line to put a second train on it.', need: 1 }],
+};
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, rate: 0.5 }; G.ev.push({ k: 'lessonnext', first: true }); firstStations(G); const st0 = lessonNow(G); G.lesson.setup = true;
+  if (st0.id !== 'line') { const [a, b, c] = G.S; G.free.lines = Math.max(G.free.lines, 1); newLine(G, a.id, b.id); extendLine(G, G.L[0].id, true, c.id); }
+  if (st0.id === 'extend') { G.lessonArea = null; const s = placeStation(G, 'square', [G.S[2].x, G.S[2].y]); netChanged(G); }
+  if (st0.id === 'train') { G.free.trains = Math.max(1, G.free.trains); for (let i = 0; i < 5; i++) spawn(G, G.S[0]); G.lesson.rate = 1.5; }
+  for (const tr of G.trains) tr.dwell = 0.5; netChanged(G); G.lesson.setup = false; }
+const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
+function lessonSee(G, what) { const st0 = lessonNow(G); if (!st0 || G.lesson.done || G.lesson.setup) return; const ok = (st0.id === 'line' && what === 'line' && G.L[0] && G.L[0].st.length >= 2) || (st0.id === 'extend' && what === 'extend') || (st0.id === 'train' && what === 'train');
+  if (ok && st0.id === 'extend' && ++G.lesson.n < st0.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st0.need }); const l = G.L[0], e = st(G, l.st[l.st.length - 1]); G.lesson.setup = true; placeStation(G, ['circle', 'tri', 'square'][G.lesson.n % 3], [e.x, e.y]); netChanged(G); G.lesson.setup = false; return; }
+  if (ok) { G.lesson.done = true; G.lesson.wait = 1.6; G.ev.push({ k: 'lessonok', n: 1, need: 1 }); G.ev.push({ k: 'lessondone', N: G.N }); } }
+function lessonTick(G, dt) { const D = G.lesson; if (D.wait > 0) { D.wait -= dt; if (D.wait <= 0 && D.done) { G.lesson = null; G.ev.push({ k: 'start' }); } } }
+// ---------- for the robots ----------
+// BLIND: a thumb that does not look: drags between random spots, taps random spots, picks either choice
+function rndPt() { return { x: Math.random() * MW, y: Math.random() * MH }; }
+function hitStation(G, p, r = 0.6) { let best = null, bd = r; for (const s of G.S) { const d = Math.hypot(s.x - p.x, s.y - p.y); if (d < bd) { bd = d; best = s; } } return best; }
+function hitSegment(G, p, r = 0.35) { let best = null, bd = r; for (const l of G.L) for (let i = 0; i < l.st.length - 1; i++) { const a = st(G, l.st[i]), b = st(G, l.st[i + 1]), vx = b.x - a.x, vy = b.y - a.y, L2 = vx * vx + vy * vy || 1, u = clamp(((p.x - a.x) * vx + (p.y - a.y) * vy) / L2, 0, 1), d = Math.hypot(a.x + vx * u - p.x, a.y + vy * u - p.y); if (d < bd) { bd = d; best = { l, i, u }; } } return best; }
+// a whole drag gesture from world point p0 through pts, as the screen does it (used by the robots and by the screen's input)
+function gesture(G, pts, tap) { if (busy(G)) return false; const p0 = pts[0], s0 = hitStation(G, p0);
+  if (tap) { const sn = hitStation(G, p0, 0.45); if (sn) { G.inspect = { id: sn.id, t: 3.5 }; G.ev.push({ k: 'inspect', id: sn.id }); return true; } const tab = hitTab(G, p0); if (tab) return trimLine(G, tab.l.id, tab.end); const sg = hitSegment(G, p0, 0.45); if (sg) return addTrain(G, sg.l.id); return false; }
+  if (!hitStation(G, pts[pts.length - 1], 0.5)) { G.ev.push({ k: 'letgo' }); return false; }      // a line is only built when you let go on a station
+  if (s0) { const ends = G.L.filter(l => l.st[0] === s0.id || l.st[l.st.length - 1] === s0.id); let cur = ends.length ? { l: ends[ends.length - 1], end: ends[ends.length - 1].st[ends[ends.length - 1].st.length - 1] === s0.id } : null, made = false, prev = s0.id;
+    for (const p of pts.slice(1)) { const s = hitStation(G, p, 0.5); if (!s || s.id === prev) continue; if (cur) { if (extendLine(G, cur.l.id, cur.end, s.id)) { made = true; prev = s.id; } } else { const l = newLine(G, prev, s.id); if (l) { cur = { l, end: true }; made = true; prev = s.id; } } }
+    return made; }
+  const sg = hitSegment(G, p0); if (sg) { const last = pts[pts.length - 1], s = hitStation(G, last, 0.5); if (s) return insertStation(G, sg.l.id, sg.i, s.id); } return false; }
+function hitTab(G, p) { for (const l of G.L) for (const end of [false, true]) { const a = st(G, end ? l.st[l.st.length - 1] : l.st[0]), b = st(G, end ? l.st[l.st.length - 2] : l.st[1]), d = Math.hypot(a.x - b.x, a.y - b.y) || 1, tx = a.x + (a.x - b.x) / d * 0.75, ty = a.y + (a.y - b.y) / d * 0.75; if (Math.hypot(p.x - tx, p.y - ty) < 0.32) return { l, end }; } return null; }
+const BLIND = {
+  d: G => { const a = rndPt(), b = rndPt(), pts = [a]; for (let i = 1; i <= 6; i++) pts.push({ x: a.x + (b.x - a.x) * i / 6, y: a.y + (b.y - a.y) * i / 6 }); gesture(G, pts, false); },
+  t: G => gesture(G, [rndPt()], true),
+  c: G => choose(G, Math.random() < 0.5 ? 0 : 1),
+};
+// HONEST: a planner who looks: links every station into the network (nearest line end, or the cheapest stretch to pass through),
+// opens a new line where the city has grown, and puts spare trains where the crowds are. react: seconds between moves; acc:
+// how often it picks the best option rather than a nearby one.
+function honest(G, o, mem) { if (G.over) return; const acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react, R = Math.random;
+  if (G.choice) { mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react; const longest = Math.max(0, ...G.L.map(l => l.st.length)), pref = (!G.free.lines && longest > 6) ? ['line', 'train', 'carriage', 'platform', 'bridge'] : bridgesLeft(G) <= 0 && G.river ? ['bridge', 'train', 'line', 'carriage', 'platform'] : ['train', 'carriage', 'line', 'platform', 'bridge']; let best = 0, br = 99; G.choice.opts.forEach((p, i) => { const r = pref.indexOf(p); if (r < br) { br = r; best = i; } }); choose(G, R() < acc ? best : 1 - best); return; }
+  if (busy(G)) return; mem.cd = (mem.cd || 0) - 1 / 60 * G.speed; if (mem.cd > 0) return; mem.cd = react * (1.5 + R()) * 2;
+  const L = G.lesson && lessonNow(G);
+  if (L && L.id === 'train') { if (G.L[0]) addTrain(G, G.L[0].id); return; }
+  // the first line: the three stations
+  if (!G.L.length) { const [a, b, c] = G.S; const l = newLine(G, a.id, b.id); if (l && c) extendLine(G, l.id, true, c.id); return; }
+  // a station left out: join it
+  const lone = G.S.filter(s => !lineOf(G, s.id).length).sort((a, b) => a.born - b.born)[0];
+  if (lone) { let best = null; for (const l of G.L) { for (const end of [false, true]) { const e = st(G, end ? l.st[l.st.length - 1] : l.st[0]), cost = Math.hypot(e.x - lone.x, e.y - lone.y) + crossings(G, e, lone) * 3; if (crossings(G, e, lone) <= bridgesLeft(G) && (!best || cost < best.cost)) best = { kind: 'ext', l, end, cost }; }
+        for (let i = 0; i < l.st.length - 1; i++) { const a = st(G, l.st[i]), b = st(G, l.st[i + 1]), extra = Math.hypot(a.x - lone.x, a.y - lone.y) + Math.hypot(b.x - lone.x, b.y - lone.y) - Math.hypot(a.x - b.x, a.y - b.y), cr = crossings(G, a, lone) + crossings(G, lone, b) - crossings(G, a, b); if (cr <= bridgesLeft(G) && (!best || extra * 1.3 < best.cost)) best = { kind: 'ins', l, i, cost: extra * 1.3 }; } }
+    // a long line, or a station far from everything: a new line if one is free
+    if (G.free.lines > 0 && (!best || best.cost > 3.5 || (best.l && best.l.st.length > 5 && R() < acc))) { let near = null, nd = 1e9; for (const s of G.S) if (s !== lone && s.type !== lone.type) { const d = Math.hypot(s.x - lone.x, s.y - lone.y) + crossings(G, s, lone) * 3; if (d < nd && crossings(G, s, lone) <= bridgesLeft(G)) { nd = d; near = s; } } if (near && newLine(G, lone.id, near.id)) return; }
+    if (best) { if (R() > acc && best.kind === 'ins') return; if (best.kind === 'ext') extendLine(G, best.l.id, best.end, lone.id); else insertStation(G, best.l.id, best.i, lone.id); return; } }
+  // spare trains: to the line with the biggest crowd
+  if (G.free.trains > 0) { let bl = null, bw = -1; for (const l of G.L) { const w = l.st.reduce((n, id) => n + st(G, id).q.length, 0) / (1 + G.trains.filter(t => t.line === l.id).length); if (w > bw) { bw = w; bl = l; } } if (bl) { addTrain(G, bl.id); return; } }
+  // a free line: link the two busiest stations that are not yet linked directly
+  if (G.free.lines > 0 && R() < acc * 0.5) { const busy2 = G.S.slice().sort((a, b) => b.q.length - a.q.length).slice(0, 4); for (const a of busy2) { const want = a.q.map(p => p.dest).find(t => distTo(G, t, a.id) > 2); if (!want) continue; let near = null, nd = 1e9; for (const s of G.S) if (s.type === want) { const d = Math.hypot(s.x - a.x, s.y - a.y); if (d < nd && crossings(G, s, a) <= bridgesLeft(G)) { nd = d; near = s; } } if (near && newLine(G, a.id, near.id)) return; } } }
+function winNow(G) { if (!G || G.over) return; G.lesson = null; G.delivered = G.cfg.target; finish(G, true); }
+// ===================== DRAW + JUICE: Metro Map =====================
+// A clean paper map: neighbourhood blocks, a river, parks; stations as plain shapes; lines in bright colours, side by side where
+// they share track; trains carrying little shapes; a ring that fills round a crowded station. Bottom bar: what you have left.
+const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [], PARTS = PT;
+let hint = null, V3 = null;
+const ui = { drag: null, hold: null, snap: true, banner: null };
+function sparks(x, y, n, col, sp = 120) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.45 + Math.random() * 0.3, t: 0, col, r: 1.6 + Math.random() * 2 }); } if (PT.length > 240) PT.splice(0, PT.length - 240); }
+function say(txt, x, y, col = '#fff', size = 22) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
+function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function fxStep(dt) {
+  FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
+  for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= 0.94; p.vy *= 0.94; }
+  for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
+  for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.3) TXT.shift();
+  if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
+  if (G && G.inspect) { G.inspect.t -= dt; if (G.inspect.t <= 0) G.inspect = null; }
+}
+const mySkin = () => SKINS.find(q => q.id === store.get('skin', 'classic')) || SKINS[0];
+const darkMap = () => ['night', 'blueprint', 'neon'].includes(mySkin().id);
+// ---------- where things are on screen ----------
+function layout(G) { const top = 64 * k, bar = 76 * k, aw = W - 16, ah = H - top - bar - 8, s = Math.min(aw / MW, ah / MH), ox = (W - MW * s) / 2, oy = top + (ah - MH * s) / 2;
+  const by = H - bar + 8 * k, bh = bar - 16 * k;
+  const L = { s, ox, oy, top, bar: { x: 8, y: by, w: W - 16, h: bh }, speed: { x: W - 8 - 64 * k, y: by + 6 * k, w: 58 * k, h: bh - 12 * k } };
+  if (G && G.choice) { const cw = Math.min(W - 40, 340 * k), ch = 96 * k, cx = (W - cw) / 2, cy = H * 0.36; L.ch = [{ x: cx, y: cy, w: cw, h: ch }, { x: cx, y: cy + ch + 14 * k, w: cw, h: ch }]; }
+  return L; }
+const toPx = (L, x, y) => [L.ox + x * L.s, L.oy + y * L.s];
+const toW = (L, px, py) => ({ x: (px - L.ox) / L.s, y: (py - L.oy) / L.s });
+// ---------- shapes ----------
+function shape(type, x, y, r, fill, stroke, lw) { ctx.beginPath();
+  if (type === 'circle') ctx.arc(x, y, r, 0, TAU);
+  else if (type === 'square') ctx.rect(x - r * 0.88, y - r * 0.88, r * 1.76, r * 1.76);
+  else if (type === 'tri') { ctx.moveTo(x, y - r * 1.1); ctx.lineTo(x + r * 1.05, y + r * 0.75); ctx.lineTo(x - r * 1.05, y + r * 0.75); ctx.closePath(); }
+  else if (type === 'diamond') { ctx.moveTo(x, y - r * 1.15); ctx.lineTo(x + r * 1.0, y); ctx.lineTo(x, y + r * 1.15); ctx.lineTo(x - r * 1.0, y); ctx.closePath(); }
+  else if (type === 'star') { for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.5 : r * 1.15; ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath(); }
+  else if (type === 'cross') { const a = r * 0.38, b = r * 1.0; ctx.moveTo(x - a, y - b); ctx.lineTo(x + a, y - b); ctx.lineTo(x + a, y - a); ctx.lineTo(x + b, y - a); ctx.lineTo(x + b, y + a); ctx.lineTo(x + a, y + a); ctx.lineTo(x + a, y + b); ctx.lineTo(x - a, y + b); ctx.lineTo(x - a, y + a); ctx.lineTo(x - b, y + a); ctx.lineTo(x - b, y - a); ctx.lineTo(x - a, y - a); ctx.closePath(); }
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 2; ctx.stroke(); } }
+// ---------- the city behind the map: blocks and parks from the level's seed (drawn once per level, kept) ----------
+let bgFor = null, bgCv = null;
+function background(G, L) { const key = G.seed + ':' + W + 'x' + H + ':' + mySkin().id; if (bgFor === key && bgCv) return bgCv; bgFor = key; bgCv = document.createElement('canvas'); bgCv.width = Math.round(W * DPR); bgCv.height = Math.round(H * DPR);
+  const c = bgCv.getContext('2d'), R = rng(G.seed ^ 0x5a5a), sk = mySkin(), dark = darkMap(); c.setTransform(DPR, 0, 0, DPR, 0, 0); c.fillStyle = sk.col; c.fillRect(0, 0, W, H);
+  const P = (x, y) => [L.ox + x * L.s, L.oy + y * L.s];
+  // neighbourhood blocks: soft rounded rectangles on a loose grid
+  for (let gx = 0; gx < MW; gx += 1.25) for (let gy = 0; gy < MH; gy += 1.25) { if (R() < 0.35) continue; const [x, y] = P(gx + 0.12 + R() * 0.1, gy + 0.12 + R() * 0.1), w = L.s * (0.8 + R() * 0.25), h = L.s * (0.8 + R() * 0.25);
+    c.fillStyle = dark ? `rgba(255,255,255,${0.03 + R() * 0.03})` : `rgba(0,0,0,${0.035 + R() * 0.03})`; c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, 4) : c.rect(x, y, w, h); c.fill(); }
+  // parks
+  for (let i = 0; i < 4; i++) { const [x, y] = P(0.5 + R() * (MW - 1), 0.5 + R() * (MH - 1)); c.fillStyle = dark ? 'rgba(80,200,140,.10)' : 'rgba(90,170,100,.16)'; c.beginPath(); c.ellipse(x, y, L.s * (0.8 + R() * 0.7), L.s * (0.6 + R() * 0.5), R() * 3, 0, TAU); c.fill(); }
+  // the river: a wide blue band with soft banks
+  if (G.river) { const pts = G.river.pts.map(p => P(p[0], p[1])); for (const [w, col] of [[G.river.w * L.s * 1.5, dark ? 'rgba(80,140,220,.18)' : 'rgba(120,170,220,.25)'], [G.river.w * L.s, dark ? '#24507e' : '#a9cdea']]) { c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke(); } }
+  return bgCv; }
+// ---------- what the game does with each event ----------
+function onEvent(G, e) { const L = layout(G), at = id => { const s = st(G, id); return s ? toPx(L, s.x, s.y) : [W / 2, H / 2]; };
+  switch (e.k) {
+    case 'start': if (!G.lesson) tip('start', G.L.length ? 'Passengers ride to the shape they want' : 'Drag from station to station to draw a line', 3.2); break;
+    case 'station': if (G.t > 1) { const [x, y] = at(e.id); sparks(x, y, 10, '#ffd36a', 90); sfx.pop(); } break;
+    case 'line': sfx.build(G.L.length); vibe(HAP.light); { const l = G.L.find(q => q.id === e.id); if (l) { const [x, y] = at(l.st[l.st.length - 1]); say('NEW LINE', x, y - 24 * k, l.col, 18); } } break;
+    case 'extend': sfx.build(1); vibe(HAP.tick); break;
+    case 'trim': sfx.trim(); vibe(HAP.tick); break;
+    case 'removed': sfx.trim(); say('LINE TAKEN UP', W / 2, H * 0.45, '#ffd0c4', 18); break;
+    case 'train': sfx.train(); vibe(HAP.light); say('+1 TRAIN', W / 2, H * 0.45, '#9be3b5', 18); break;
+    case 'notrain': sfx.no(); say('NO SPARE TRAIN', W / 2, H * 0.45, '#ffd0c4', 18); tip('notrain', 'A new train comes every week', 2.6); break;
+    case 'needbridge': sfx.no(); say('NO BRIDGE LEFT', W / 2, H * 0.45, '#ffd0c4', 18); tip('bridge', 'Crossing the river takes a bridge (🌉 below)', 3); break;
+    case 'letgo': if (ui.lastDragLong) tip('letgo', 'Let go ON a station to build', 2.6); break;
+    case 'deliver': { const [x, y] = toPx(L, e.x, e.y); if (PT.length < 160) sparks(x, y, 3, '#ffffff', 60); if (gate('deliver', 110)) sfx.deliver(TYPES.indexOf(e.type)); if (G.delivered % 25 === 0 && !G.lesson) { say(`${G.delivered} CARRIED`, x, y - 26 * k, '#ffd36a', 18); sfx.combo(Math.min(8, G.delivered / 25)); } } break;
+    case 'crowd': { const [x, y] = at(e.id); say('CROWDED', x, y - 30 * k, '#ff9a6a', 17); sfx.warn(); tip('crowd', 'Tap a station to see why it is struggling', 3.4); } break;
+    case 'inspect': sfx.click(); break;
+    case 'week': sfx.week(); vibe(HAP.light); break;
+    case 'chosen': sfx.combo(3); vibe(HAP.light); break;
+    case 'rush': say('RUSH HOUR!', W / 2, H * 0.42, '#ffd36a', 26); sfx.warn(); break;
+    case 'closewarn': { const [x, y] = at(e.id); say('CLOSING SOON', x, y - 30 * k, '#ffd36a', 16); sfx.warn(); tip('close', 'A station shuts for repairs soon: route around it', 3); } break;
+    case 'closed': sfx.trim(); break;
+    case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.5, '#ffd36a', 24); sfx.ding(); break;
+    case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.5, '#9be3b5', 24); sfx.coin(e.n); break;
+    case 'lessondone': say('YOU KNOW IT. NOW PLAY!', W / 2, H * 0.5, '#ffd36a', 24); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
+    case 'won': FX.flash = 1; sfx.win(); vibe(HAP.best); break;
+    case 'lost': sfx.lose(); break;      // (P11: never vibrate on failure)
+  } }
+// ---------- the picture ----------
+function segOffsets(G) { const by = {}; for (const l of G.L) for (let i = 0; i < l.st.length - 1; i++) { const a = l.st[i], b = l.st[i + 1], key = Math.min(a, b) + '-' + Math.max(a, b); (by[key] = by[key] || []).push(l.id); } return by; }
+function linePts(G, L, l, offs) { const out = []; for (let i = 0; i < l.st.length; i++) { const s = st(G, l.st[i]); let [x, y] = toPx(L, s.x, s.y);
+    // nudge sideways where lines share a stretch, so each stays visible
+    const nb = l.st[i + 1] != null ? st(G, l.st[i + 1]) : st(G, l.st[i - 1]), key = Math.min(s.id, nb.id) + '-' + Math.max(s.id, nb.id), sh = offs[key] || [l.id], j = sh.indexOf(l.id), n = sh.length;
+    if (n > 1) { const dx = nb.x - s.x, dy = nb.y - s.y, d = Math.hypot(dx, dy) || 1, o = (j - (n - 1) / 2) * 6 * k * (l.st[i + 1] != null ? 1 : -1); x += -dy / d * o; y += dx / d * o; }
+    out.push([x, y]); } return out; }
+function draw(now) {
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!G) { ctx.fillStyle = '#1e2230'; ctx.fillRect(0, 0, W, H); homeMap(now); return; }
+  const L = layout(G), dark = darkMap(), ink = dark ? '#e8ecf4' : '#22252e', paper = mySkin().col, R0 = SR * L.s;
+  ctx.drawImage(background(G, L), 0, 0, W, H);
+  ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
+  // the busiest stretch glows softly (his "busiest connections")
+  let busy = null, bn = 0; for (const key in G.seg) if (G.seg[key] > bn) { bn = G.seg[key]; busy = key; }
+  if (busy && bn > 6) { const [a, b] = busy.split('-').map(Number), A = st(G, a), B = st(G, b); if (A && B && G.adj && G.adj[a] && G.adj[a].has(b)) { const [x1, y1] = toPx(L, A.x, A.y), [x2, y2] = toPx(L, B.x, B.y); ctx.strokeStyle = 'rgba(255,200,80,.35)'; ctx.lineWidth = 20 * k; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); } }
+  // lines
+  const offs = segOffsets(G);
+  for (const l of G.L) { const P = linePts(G, L, l, offs);
+    for (let i = 0; i < P.length - 1; i++) if (crossings(G, st(G, l.st[i]), st(G, l.st[i + 1]))) { ctx.strokeStyle = dark ? '#8a94a8' : '#5a6070'; ctx.lineWidth = 13 * k; ctx.lineCap = 'butt'; ctx.beginPath(); ctx.moveTo(P[i][0], P[i][1]); ctx.lineTo(P[i + 1][0], P[i + 1][1]); ctx.stroke(); }      // a bridge
+    ctx.strokeStyle = l.col; ctx.lineWidth = 7 * k; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
+    // the end tabs: tap one to shorten the line
+    for (const end of [false, true]) { const a = end ? P[P.length - 1] : P[0], b = end ? P[P.length - 2] : P[1], d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, ux = (a[0] - b[0]) / d, uy = (a[1] - b[1]) / d, tx = a[0] + ux * 0.75 * L.s, ty = a[1] + uy * 0.75 * L.s;
+      ctx.lineWidth = 7 * k; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(tx, ty); ctx.stroke(); ctx.lineWidth = 6 * k; ctx.beginPath(); ctx.moveTo(tx - uy * 9 * k, ty + ux * 9 * k); ctx.lineTo(tx + uy * 9 * k, ty - ux * 9 * k); ctx.stroke(); } }
+  // the drag being drawn
+  const d = ui.drag; if (d && d.moved) { const p = d.px, hits = d.hits || []; const col = d.col || '#888';
+    ctx.strokeStyle = col; ctx.globalAlpha = 0.75; ctx.lineWidth = 7 * k; ctx.lineCap = 'round'; ctx.setLineDash([10 * k, 8 * k]); ctx.beginPath();
+    if (d.seg) { const A = st(G, d.seg.a), B = st(G, d.seg.b); if (A && B) { const a = toPx(L, A.x, A.y), b = toPx(L, B.x, B.y); ctx.moveTo(a[0], a[1]); ctx.lineTo(p[0], p[1]); ctx.lineTo(b[0], b[1]); } }
+    else { hits.forEach((id, i) => { const s = st(G, id); if (!s) return; const q = toPx(L, s.x, s.y); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.lineTo(p[0], p[1]); }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+  // trains, with their passengers
+  for (const tr of G.trains) { const l = G.L.find(q => q.id === tr.line); if (!l || l.st.length < 2) continue; const P = linePts(G, L, l, offs), i = Math.min(tr.i, P.length - 2), a = P[i], b = P[i + 1], x = a[0] + (b[0] - a[0]) * tr.u, y = a[1] + (b[1] - a[1]) * tr.u, ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    const tw = 34 * k * (tr.cap > CAP0 ? 1.35 : 1), th = 16 * k; ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.fillStyle = l.col; ctx.strokeStyle = dark ? '#0a0c12' : '#fff'; ctx.lineWidth = 2; rrect(-tw / 2, -th / 2, tw, th, 4 * k); ctx.fill(); ctx.stroke();
+    const n = Math.min(tr.load.length, 12), cols = Math.ceil(tr.cap / 2), cw = tw / (cols + 0.5); for (let j = 0; j < n; j++) { const cx = -tw / 2 + cw * (0.75 + (j % cols)), cy = j < cols ? -th * 0.22 : th * 0.22; shape(tr.load[j].dest, cx, cy, 2.6 * k, '#fff'); }
+    ctx.restore(); }
+  // stations: shape, crowd ring, waiting passengers
+  for (const s of G.S) { const [x, y] = toPx(L, s.x, s.y), age = G.t - s.born, pop = age < 0.4 ? 0.5 + age * 1.25 : 1, r = R0 * pop;
+    if (s.over > 0) { const warn = s.over > 0.5, pul = warn ? 0.6 + 0.4 * Math.sin(now * 8) : 1; ctx.strokeStyle = `rgba(240,90,40,${0.35 + 0.5 * pul})`; ctx.lineWidth = 5 * k; ctx.beginPath(); ctx.arc(x, y, r + 9 * k, -Math.PI / 2, -Math.PI / 2 + TAU * s.over); ctx.stroke();
+      ctx.fillStyle = `rgba(240,90,40,${0.08 + 0.12 * s.over})`; ctx.beginPath(); ctx.arc(x, y, r + 14 * k, 0, TAU); ctx.fill(); }
+    const closing = G.closure && G.closure.id === s.id && G.closure.warn > 0, closed = s.closed > 0;
+    shape(s.type, x, y, r, closed ? (dark ? '#3a3f4a' : '#c8c8c8') : (dark ? '#141821' : '#ffffff'), closing && Math.sin(now * 10) > 0 ? '#e0a020' : ink, 3.2 * k);
+    if (closed) { ctx.strokeStyle = '#d04030'; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.moveTo(x - r * 0.7, y - r * 0.7); ctx.lineTo(x + r * 0.7, y + r * 0.7); ctx.moveTo(x + r * 0.7, y - r * 0.7); ctx.lineTo(x - r * 0.7, y + r * 0.7); ctx.stroke(); }
+    if (G.inspect && G.inspect.id === s.id) { ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.arc(x, y, r + 6 * k, 0, TAU); ctx.stroke(); }
+    const n = Math.min(s.q.length, 14), ps = 4.2 * k, lft = x + r + 7 * k + 7 * ps * 2.2 > W - 4, sx0 = lft ? x - r - 7 * k : x + r + 7 * k, sd = lft ? -1 : 1; for (let j = 0; j < n; j++) { const cx = sx0 + sd * (j % 7) * ps * 2.2, cy = y - ps * 1.2 + Math.floor(j / 7) * ps * 2.4; shape(s.q[j].dest, cx, cy, ps, j >= s.cap ? '#e0603a' : ink); }
+    if (s.q.length > 14) { ctx.fillStyle = '#e0603a'; ctx.font = `800 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = lft ? 'right' : 'left'; ctx.textBaseline = 'middle'; ctx.fillText('+' + (s.q.length - 14), sx0, y + ps * 3.8); } }
+  for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * k, 0, TAU); ctx.fill(); }
+  ctx.globalAlpha = 1; ctx.restore();
+  hud(G, L, dark); if (G.inspect) inspectCard(G, L); if (G.choice) choiceCard(G, L);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const t of TXT) { const a = t.t < 1 ? 1 : 1 - (t.t - 1) / 0.3; ctx.globalAlpha = Math.max(0, a); ctx.font = `800 ${Math.round(t.size * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(t.txt, t.x, t.y - t.t * 24 * k); ctx.fillStyle = t.col; ctx.fillText(t.txt, t.x, t.y - t.t * 24 * k); }
+  ctx.globalAlpha = 1;
+  if (hint) { const a = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; const w = Math.min(W - 24, ctx.measureText(hint.txt).width + 30), hy = L.bar.y - 30 * k; ctx.fillStyle = 'rgba(20,24,34,.85)'; rrect(W / 2 - w / 2, hy - 17 * k, w, 34 * k, 12); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillText(hint.txt, W / 2, hy, W - 40); ctx.globalAlpha = 1; }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
+}
+// the home screen: a quiet metro map behind the menu, with trains gliding along it
+const HOME = [['#e8443a', [[-0.1, 0.18], [0.3, 0.18], [0.55, 0.42], [1.1, 0.42]]], ['#2a7ad8', [[0.2, -0.05], [0.2, 0.3], [0.45, 0.55], [0.45, 1.05]]], ['#f0b020', [[-0.1, 0.78], [0.35, 0.78], [0.7, 0.5], [0.7, 0.1], [1.1, 0.1]]], ['#2aa860', [[0.85, 1.05], [0.85, 0.7], [1.1, 0.6]]]];
+function homeMap(now) { ctx.save(); ctx.globalAlpha = 0.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const [col, P] of HOME) { ctx.strokeStyle = col; ctx.lineWidth = 9; ctx.beginPath(); P.forEach(([x, y], i) => i ? ctx.lineTo(x * W, y * H) : ctx.moveTo(x * W, y * H)); ctx.stroke();
+    let tot = 0; const seg = []; for (let i = 0; i < P.length - 1; i++) { const d = Math.hypot((P[i + 1][0] - P[i][0]) * W, (P[i + 1][1] - P[i][1]) * H); seg.push(d); tot += d; }
+    let u = ((now * 40 + col.charCodeAt(2) * 7) % tot); for (let i = 0; i < seg.length; i++) { if (u <= seg[i]) { const f = u / seg[i], x = (P[i][0] + (P[i + 1][0] - P[i][0]) * f) * W, y = (P[i][1] + (P[i + 1][1] - P[i][1]) * f) * H; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 9, 0, TAU); ctx.fill(); break; } u -= seg[i]; }
+    P.slice(1, -1).forEach(([x, y], i) => shape(TYPES[(i + col.length) % 3], x * W, y * H, 11, '#1e2230', '#f6f4ee', 3)); }
+  ctx.restore(); }
+function hud(G, L, dark) { const c = G.cfg, ink = dark ? '#eef2f8' : '#22252e', sub = dark ? 'rgba(238,242,248,.7)' : 'rgba(34,37,46,.65)';
+  if (G.lesson) lessonPanel(G);
+  else { ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = ink; ctx.font = `800 ${Math.round(17 * k)}px ${BC}`; ctx.fillText(c.endless ? 'ENDLESS' : G.city.toUpperCase(), 14, 20 * k);
+    ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = sub; const avg = G.waitN ? Math.round(G.waitSum / G.waitN) : 0; ctx.fillText(c.endless ? `Week ${G.week + 1} · wait ${avg}s` : `Week ${G.week + 1} of ${c.weeks} · wait ${avg}s`, 14, 40 * k);
+    // the week: a thin bar of days
+    const wx = 14, ww = W * 0.36, wy = 52 * k; ctx.fillStyle = dark ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.1)'; rrect(wx, wy, ww, 5 * k, 3); ctx.fill(); ctx.fillStyle = '#ff6a50'; rrect(wx, wy, Math.max(4, ww * G.weekT / WEEK), 5 * k, 3); ctx.fill();
+    ctx.textAlign = 'right'; ctx.fillStyle = ink; ctx.font = `800 ${Math.round(24 * k)}px ${BC}`; ctx.fillText(c.endless ? `${G.delivered}` : `${G.delivered}/${c.target}`, W - 14, 22 * k);
+    ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = sub; ctx.fillText('PASSENGERS', W - 14, 42 * k);
+    if (!c.endless) { const px = W - 14 - W * 0.3; ctx.fillStyle = dark ? 'rgba(255,255,255,.14)' : 'rgba(0,0,0,.1)'; rrect(px, wy, W * 0.3, 5 * k, 3); ctx.fill(); ctx.fillStyle = '#2aa860'; rrect(px, wy, Math.max(4, W * 0.3 * Math.min(1, G.delivered / c.target)), 5 * k, 3); ctx.fill(); }
+    if (G.rush && G.rush.warn > 0) { ctx.textAlign = 'center'; ctx.fillStyle = '#e0a020'; ctx.font = `800 ${Math.round(13 * k)}px ${BC}`; ctx.fillText(`RUSH HOUR IN ${Math.ceil(G.rush.warn)}`, W / 2, 54 * k); }
+    else if (G.rush) { ctx.textAlign = 'center'; ctx.fillStyle = '#e0a020'; ctx.font = `800 ${Math.round(13 * k)}px ${BC}`; ctx.fillText('RUSH HOUR', W / 2, 54 * k); } }
+  // the bottom bar: lines (a filled dot for each in use, a ring for each free), trains, bridges, speed
+  const B = L.bar; ctx.fillStyle = dark ? 'rgba(10,12,20,.75)' : 'rgba(255,255,255,.85)'; rrect(B.x, B.y, B.w, B.h, 16 * k); ctx.fill(); ctx.strokeStyle = dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.1)'; ctx.lineWidth = 1; rrect(B.x, B.y, B.w, B.h, 16 * k); ctx.stroke();
+  const cy = B.y + B.h / 2; let x = B.x + 18 * k; const used = new Set(G.L.map(l => l.col));
+  for (let i = 0; i < G.L.length + G.free.lines; i++) { const col = i < G.L.length ? G.L[i].col : LCOL.filter(c2 => !used.has(c2))[i - G.L.length] || '#999'; ctx.beginPath(); ctx.arc(x, cy - 8 * k, 8 * k, 0, TAU); if (i < G.L.length) { ctx.fillStyle = col; ctx.fill(); } else { ctx.strokeStyle = col; ctx.lineWidth = 3 * k; ctx.stroke(); } x += 21 * k; }
+  ctx.textAlign = 'left'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = sub; ctx.fillText(G.free.lines ? `${G.free.lines} LINE${G.free.lines > 1 ? 'S' : ''} FREE` : 'LINES', B.x + 10 * k, cy + 14 * k);
+  const tx = B.x + B.w * 0.47; ctx.font = `800 ${Math.round(17 * k)}px ${BC}`; ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.fillText(`🚆 ${G.free.trains}`, tx, cy - 6 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = sub; ctx.fillText('TRAINS', tx, cy + 14 * k);
+  if (G.river) { const bx = B.x + B.w * 0.66; ctx.font = `800 ${Math.round(17 * k)}px ${BC}`; ctx.fillStyle = ink; ctx.fillText(`🌉 ${bridgesLeft(G)}`, bx, cy - 6 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = sub; ctx.fillText('BRIDGES', bx, cy + 14 * k); }
+  const S = L.speed; ctx.fillStyle = G.speed > 1 ? '#ff6a50' : (dark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.07)'); rrect(S.x, S.y, S.w, S.h, 12 * k); ctx.fill(); ctx.fillStyle = G.speed > 1 ? '#fff' : ink; ctx.font = `800 ${Math.round(16 * k)}px ${BC}`; ctx.fillText(G.speed > 1 ? '▶▶' : '▶', S.x + S.w / 2, S.y + S.h / 2 - 4 * k); ctx.font = `700 ${Math.round(9 * k)}px ${BC}`; ctx.fillText(G.speed > 1 ? 'FAST' : 'SPEED', S.x + S.w / 2, S.y + S.h - 9 * k); }
+function inspectCard(G, L) { const I = inspect(G, G.inspect.id); if (!I) return; const [sx, sy] = toPx(L, I.s.x, I.s.y), lines = [`${TNAME[I.s.type].replace(/^(a |the )/, '').toUpperCase()} · ${I.s.q.length} WAITING`].concat(I.reasons.length ? I.reasons : ['Running well.']);
+  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const w = Math.min(W - 20, Math.max(...lines.map(t => ctx.measureText(t).width)) + 26), h = 14 * k + lines.length * 19 * k, x = clamp(sx - w / 2, 10, W - w - 10), y = sy > H * 0.5 ? sy - h - 28 * k : sy + 28 * k;
+  ctx.fillStyle = 'rgba(20,24,34,.92)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; lines.forEach((t, i) => { ctx.fillStyle = i ? '#fff' : '#ffd36a'; ctx.fillText(t, x + 13, y + 8 * k + i * 19 * k); }); }
+const CHOICE = { line: ['🛤️', 'A NEW LINE', 'One more line to draw'], train: ['🚆', 'ANOTHER TRAIN', 'A second spare train'], bridge: ['🌉', 'TWO BRIDGES', 'Cross the river twice more'], carriage: ['🚃', 'A CARRIAGE', 'Your fullest train carries 4 more'], platform: ['🏢', 'BIGGER STATIONS', 'Every station holds 2 more'] };
+function choiceCard(G, L) { ctx.fillStyle = 'rgba(10,12,20,.55)'; ctx.fillRect(0, 0, W, H); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(24 * k)}px ${BC}`; ctx.fillText(`WEEK ${G.week} IS OVER`, W / 2, L.ch[0].y - 58 * k);
+  ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = '#d8dde8'; ctx.fillText('A new train is here. Choose one more:', W / 2, L.ch[0].y - 28 * k);
+  G.choice.opts.forEach((o, i) => { const r = L.ch[i], c = CHOICE[o]; ctx.fillStyle = '#f6f4ee'; rrect(r.x, r.y, r.w, r.h, 16 * k); ctx.fill(); ctx.textAlign = 'left'; ctx.font = `${Math.round(34 * k)}px ${BC}`; ctx.fillText(c[0], r.x + 18 * k, r.y + r.h / 2);
+    ctx.fillStyle = '#22252e'; ctx.font = `800 ${Math.round(18 * k)}px ${BC}`; ctx.fillText(c[1], r.x + 74 * k, r.y + r.h / 2 - 12 * k); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#555'; ctx.fillText(c[2], r.x + 74 * k, r.y + r.h / 2 + 14 * k); }); }
+function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function lessonPanel(G) { const D = G.lesson, st0 = D.steps[D.i], x = 12, w = W - 24, y = 46 * k; ctx.save();
+  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st0.how, w - 24), h = 50 * k + lines.length * 17 * k;
+  ctx.fillStyle = 'rgba(20,24,34,.88)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,106,80,.8)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ff9a80'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3`, x + 12, y + 9 * k);
+  ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(17 * k)}px ${BC}`; ctx.fillText(st0.title, x + 12, y + 23 * k);
+  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 45 * k + i * 17 * k));
+  for (let i = 0; i < st0.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st0.need - 1 - i) * 18 * k, y + 16 * k, 6 * k, 0, TAU); if (i < D.n || D.done && i < st0.need) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
+  ctx.restore(); }
+// ===================== SOUND: the metro (PLAYBOOK S1-S11) =====================
+// Gentle and calm (his direction): soft two-note chimes as trains stop, a light ding per passenger set down (pitched by the
+// shape they wanted), a pop for a new station, a zip as track is laid. Warnings are one soft low pulse, never an alarm.
+// Music (its own switch): slow electric-piano chords with a light pulse, getting a little busier as the city grows.
+let trainN = 0;
+const sfx = {
+  click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  pop() { tone(660 * vary(0.03), 0.12, 0.07, 'sine', 0, 990); tone(1320, 0.08, 0.03, 'sine', 0.03); },
+  build(i = 1) { noise(0.12, 2400, 0.04, 'bandpass', 2); tone(note(392, 2 + (i % 5)), 0.2, 0.07, 'triangle', 0.02, null, 2600); },
+  trim() { tone(520, 0.12, 0.05, 'triangle', 0, 330); noise(0.08, 900, 0.04, 'bandpass', 1.5); },
+  train() { tone(587, 0.18, 0.07, 'sine'); tone(880, 0.25, 0.06, 'sine', 0.12); },
+  deliver(i = 0) { tone(note(784, i % 6) * vary(0.01), 0.18, 0.035, 'sine'); },
+  stop(i = 0) { if (!gate('stop', 400)) return; tone(note(523.3, i % 5), 0.3, 0.025, 'sine'); tone(note(523.3, (i % 5) + 2), 0.35, 0.02, 'sine', 0.14); },
+  warn() { if (!gate('warn', 1500)) return; tone(196, 0.5, 0.08, 'sine', 0, 185); tone(196, 0.5, 0.05, 'sine', 0.35, 175); },
+  week() { [0, 2, 4, 7].forEach((q, j) => tone(note(523.3, q), 0.6, 0.06, 'sine', j * 0.1)); },
+  combo(i = 0) { [0, 2, 4].forEach((q, j) => tone(note(523.3, q + (i | 0)), 0.4, 0.05, 'triangle', j * 0.07)); },
+  no() { if (!gate('no', 250)) return; tone(220, 0.12, 0.05, 'triangle', 0, 180, 900); },
+  ding() { tone(988, 0.5, 0.08, 'sine'); tone(1480, 0.35, 0.04, 'sine', 0.02); },
+  coin(i = 0) { tone(note(784, Math.min(10, i + 4)), 0.18, 0.05, 'triangle'); tone(note(784, Math.min(14, i + 8)), 0.18, 0.04, 'triangle', 0.06); },
+  star(i = 0) { tone(note(784, 2 + i * 2), 0.45, 0.08, 'sine'); },
+  win() { [0, 2, 4, 5, 7].forEach((q, j) => tone(note(392, q + 3), 0.7, 0.07, 'triangle', j * 0.11)); },
+  lose() { tone(330, 0.5, 0.05, 'triangle', 0, 311); tone(262, 0.8, 0.05, 'triangle', 0.35, 247); },
+};
+let mus = { t: 0, i: 0 };
+const CHORDS = [[0, 4, 7, 11], [9, 12, 16, 19], [5, 9, 12, 16], [7, 11, 14, 17]];
+const ep = (f, dur, vol, when = 0) => { tone(f, dur, vol, 'sine', when, null, 2200); tone(f * 2, dur * 0.4, vol * 0.25, 'sine', when); };      // a soft electric-piano note
+function soundStep(G, dt) { if (!actx || MUTE || paused) return;
+  if (G && !G.over && !G.choice && SET.sfx) { trainN += dt; if (trainN > 0.5) { trainN = 0; for (const tr of G.trains) if (tr.dwell > 0.2 && tr.dwell < 0.7 && Math.random() < 0.25) { sfx.stop(tr.line); break; } } }
+  mus.t += dt; const beat = 0.6; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % CHORDS.length], busyCity = G && G.S ? Math.min(1, G.S.length / 18) : 0;
+  const semi = q => 220 * Math.pow(2, q / 12);
+  music(() => { if (i % 8 === 0) ch.forEach((q, j) => ep(semi(q), 3.6, 0.018, j * 0.03)); if (i % 2 === 1) ep(semi(ch[(i >> 1) % 4] + 12), 0.8, 0.012);
+    if (busyCity > 0.4 && i % 4 === 2) tone(semi(ch[0] - 12), 0.4, 0.02, 'triangle'); }); }
+
+// ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
+// What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
+//   - level memory: it opens on the level he was on; a win saves the next level at once; lower levels open, higher ones locked
+//   - the pause menu: Resume, Restart, Levels (#pResume, #pRestart, #pLevels) and Home; window.gameFeedLevels() for the feed
+//   - window.gameFeedStart('mini'): playing within a second of a tap on the card, at his own level, no menu or countdown
+//   - help after three losses on a level (it only gives time: makeCfg's help), stars, best, a short loss moment (P23)
+//   - the lessons of the first three levels (saved once passed)
+//   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
+let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
+document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause', 'ovAqua', 'ovSet'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
+const helpOn = () => (streaks[level] || 0) >= 3;
+const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
+function showHome() {
+  savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
+  $('hLvl').textContent = level;
+  const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level), bt = best[level];
+  const NEW = { 2: 'the river (bridges)', 3: 'rush hours', 4: 'the stadium ★', 6: 'stations closing for repairs', 7: 'the hospital ✚', 11: 'the market ◆' };
+  $('hStat').innerHTML = [`🪙 <b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `<b>${cityOf(level)}</b> · carry <b>${cf.target}</b> in <b>${cf.weeks}</b> weeks`, NEW[level] ? `New: <b>${NEW[level]}</b>` : '', bt ? `Your best here: <b>${bt}</b> 🪙` : '', helpOn() ? '<span class="help">Help is on: calmer stations.</span>' : ''].filter(Boolean).join('<br>');
+  show('ovHome');
+}
+let practiceOn = false;
+function startGame(mini) {
+  audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
+  G = newGame(level, { help: helpOn(), teach: !practiceOn, practice: practiceOn, mini: !!mini, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
+  TXT.length = 0; PARTS.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.banner = null; ui.drag = null; ui.hold = null; if (V3 && !V3.none) V3.for = null;
+  if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
+  last = performance.now(); warm = 30; winN = 0; winSum = 0;
+}
+function saveResult(G) {      // a win saves the next level at once (leaving before "Next" still brings him back to it)
+  const r = G.res, L = G.N; if (HEADLESS) return; const starsBefore = starsAll();
+  if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
+    if (r.coins > (best[L] || 0)) { r.nb = !!best[L]; best[L] = r.coins; store.set('best', best); } }
+  else streaks[L] = (streaks[L] || 0) + 1;
+  const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
+  store.set('streaks', streaks); if ((r.best || 0) > store.get('streakBest', 0)) { r.streakNB = true; store.set('streakBest', r.best); }
+  { const sb = starsAll(); r.newSkins = SKINS.filter(q => q.stars > starsBefore && q.stars <= sb).map(q => q.name).join(', '); }
+}
+function spark(log, target) {      // the animated summary: passengers carried, week by week (the line draws itself)
+  const pts = [0].concat(log), top = Math.max(target < 1e8 ? target : 0, ...pts, 1), w = 240, h = 70, P = pts.map((v, i) => [10 + i * (w - 20) / Math.max(1, pts.length - 1), h - 8 - (v / top) * (h - 16)]);
+  const d = P.map((p2, i) => (i ? 'L' : 'M') + p2[0].toFixed(1) + ' ' + p2[1].toFixed(1)).join(' '), goal = target < 1e8 ? `<line x1="10" x2="${w - 10}" y1="8" y2="8" stroke="#2aa860" stroke-dasharray="4 4" stroke-width="1.5"/>` : '';
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:block;margin:8px auto 2px;max-width:100%">${goal}<path d="${d}" fill="none" stroke="#ff6a50" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="600" stroke-dashoffset="600"><animate attributeName="stroke-dashoffset" from="600" to="0" dur="1.4s" fill="freeze"/></path>${P.slice(1).map((p2, i) => `<circle cx="${p2[0]}" cy="${p2[1]}" r="4" fill="#fff" stroke="#ff6a50" stroke-width="2" opacity="0"><animate attributeName="opacity" from="0" to="1" begin="${(0.2 + 1.2 * (i + 1) / P.length).toFixed(2)}s" dur="0.2s" fill="freeze"/></circle>`).join('')}</svg><small>carried, week by week</small>`; }
+function showEnd() {
+  const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
+  $('eTitle').textContent = r.win ? (r.stars === 3 ? 'SMOOTH RUNNING!' : 'CITY CONNECTED!') : r.time ? 'OUT OF TIME' : 'METRO CLOSED'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
+  const why = r.why ? `Too many waiting at ${TNAME[r.why.type]} (${r.why.waiting}). In play, tap a crowded station to see why.` : r.time ? `The last week ended <b>${r.target - r.delivered}</b> short. Put spare trains on the busiest line.` : '';
+  $('eSub').innerHTML = `🚇 <b>${r.delivered}</b>${r.target < 1e8 ? '/' + r.target : ''} carried · wait <b>${r.avg}s</b> · <b>${r.stations}</b> stations` + spark(r.log, r.target) + (why ? `<br>${why}` : '') + (r.bn ? `<br>Busiest stretch: <b>${r.bn}</b> boarded` : '') + `<br><b>+${r.coins} 🪙</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '')
+    + (r.newSkins ? `<br><b class="nb">NEW MAP: ${r.newSkins.toUpperCase()}</b>` : '') + (r.win && r.stars < 3 ? '<br>Three stars: an average wait under 18 seconds.' : '')
+    + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: calmer stations.</span>' : '');
+  renderShop();
+  $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
+  $('eAlt').classList.toggle('hidden', !r.win);
+  show('ovEnd');
+  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+}
+$('playBtn').onclick = () => { audio(); sfx.click(); practiceOn = false; startGame(); };
+$('practiceBtn').onclick = () => { audio(); sfx.click(); practiceOn = true; startGame(); };
+window.gameFeedStart = () => { savedLevel(); audio(); practiceOn = false; startGame(true); };      // the feed's instant start: his level, playing at once
+$('aquaBtn').onclick = () => { sfx.click(); showAqua(); };
+$('rulesBtn').onclick = () => { sfx.click(); show('ovRules'); };
+$('levelsBtn').onclick = () => { sfx.click(); showLevels('home'); };
+$('eLevels').onclick = () => showLevels('home');
+$('eMain').onclick = () => { if ($('eMain').dataset.act === 'next') level = Math.min(unlocked, G.N + 1); startGame(); };
+$('eAlt').onclick = () => { level = G.N; startGame(); };
+let lvFrom = 'home', lvUnder = null;
+function showLevels(from) {
+  lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
+  const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
+  for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 5 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'New cities, a river, rush hours, closures and new kinds of place as you go.' : 'Carry enough passengers in time to open the next level.';
+  show('ovLevels');
+}
+$('lvGrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-l]'); if (!b || b.disabled) return;
+  level = +b.dataset.l; store.set('level', level);
+  if (lvFrom === 'home') showHome(); else { sfx.click(); startGame(); }      // picked from the pause menu or the feed: it starts at once
+});
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => {
+  const lv = !$('ovLevels').classList.contains('hidden');
+  if (lv && lvFrom === 'pause' && G && !G.over) openPause(); else if (lv && lvFrom === 'feed' && lvUnder) show(lvUnder); else showHome();
+});
+function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
+MUTE = !!store.get('mute', false); sndIcon();
+$('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
+// pause: the same three controls in every game
+function openPause() { paused = true; ui.drag = null; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+$('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
+$('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
+$('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
+$('pLevels').onclick = () => showLevels('pause');
+$('pQuit').onclick = () => showHome();
+window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
+document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
+// input (one thumb): drag from a station through stations and let go on one to build; drag the middle of a stretch onto a
+// station to route it through; tap a line to add a train, its end tab to shorten it, a station to see how it is doing.
+const inR = (r, x, y, p2 = 6) => r && x >= r.x - p2 && x <= r.x + r.w + p2 && y >= r.y - p2 && y <= r.y + r.h + p2;
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const L = layout(G), x = e.clientX, y = e.clientY;
+  if (G.choice) { L.ch.forEach((r, i) => { if (inR(r, x, y)) { sfx.click(); choose(G, i); } }); return; }
+  if (inR(L.speed, x, y, 4)) { G.speed = G.speed > 1 ? 1 : 2; sfx.click(); vibe(HAP.tick); return; }
+  if (inR(L.bar, x, y, 0)) return;
+  const p0 = toW(L, x, y), s0 = hitStation(G, p0), d = { id: e.pointerId, x0: x, y0: y, px: [x, y], pts: [p0], moved: false, hits: s0 ? [s0.id] : [], seg: null, col: null };
+  if (s0) { const end = G.L.filter(l => l.st[0] === s0.id || l.st[l.st.length - 1] === s0.id).pop(); d.col = end ? end.col : (LCOL.find(c => !G.L.some(l => l.col === c)) || '#888'); }
+  else { const sg = hitSegment(G, p0, 0.45); if (sg) { d.seg = { a: sg.l.st[sg.i], b: sg.l.st[sg.i + 1] }; d.col = sg.l.col; } }
+  ui.drag = d; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; const L = layout(G), x = e.clientX, y = e.clientY; if (Math.hypot(x - d.x0, y - d.y0) > 10) d.moved = true; d.px = [x, y];
+  const last = d.pts[d.pts.length - 1], p = toW(L, x, y); if (Math.hypot(p.x - last.x, p.y - last.y) > 0.15) { d.pts.push(p); if (!d.seg && d.hits.length) { const s = hitStation(G, p, 0.5); if (s && !d.hits.includes(s.id)) { d.hits.push(s.id); sfx.click(); vibe(HAP.tick); } } } });
+function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (!G || G.over || paused) return; const L = layout(G);
+  d.pts.push(toW(L, e.clientX, e.clientY)); ui.lastDragLong = d.moved && Math.hypot(e.clientX - d.x0, e.clientY - d.y0) > 40;
+  if (!d.moved) gesture(G, [d.pts[0]], true); else gesture(G, d.pts, false); }
+cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', e => { if (ui.drag && e.pointerId === ui.drag.id) ui.drag = null; });
+// your map: the paper it is drawn on, opened by the stars you win
+const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
+function showAqua() { const sel = store.get('skin', 'classic');
+  $('aqSub').innerHTML = `<b>${skinsOpen()}</b> of ${SKINS.length} maps · ★ ${starsAll()}<br>Tap one to draw on it.`;
+  $('aqGrid').innerHTML = SKINS.map((q, i) => `<div class="aq ${skinOpen(q) ? '' : 'off'}" data-i="${i}" style="${q.id === sel ? 'box-shadow:inset 0 0 0 2px var(--acc)' : ''}"><div style="width:48px;height:20px;border-radius:6px;margin:12px auto 8px;background:${q.col};border:1px solid rgba(255,255,255,.3)"></div><b>${q.name}</b><small>${skinOpen(q) ? (q.id === sel ? 'IN USE' : 'TAP TO CHOOSE') : '★ ' + q.stars}</small></div>`).join('');
+  $('aqGrid').querySelectorAll('.aq').forEach(el => { const q = SKINS[+el.dataset.i]; el.onclick = () => { if (!skinOpen(q)) { sfx.no(); return; } store.set('skin', q.id); sfx.click(); showAqua(); }; }); show('ovAqua'); }
+
+// ---------- the pro shop: upgrades bought with coins; they stay with you (nothing expires) ----------
+const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
+function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE DEPOT</span><span>🪙 ${bank}</span></h3><div class="grid">`;
+  for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
+    h += `<button class="up ${max ? 'max' : can ? 'can' : 'no'}" data-u="${u.id}"><span class="cost">${max ? 'MAX' : cost + ' 🪙'}</span><b>${u.name}</b><span class="lv">${'●'.repeat(lv)}${'○'.repeat(u.max - lv)}</span><small>${u.desc}</small></button>`; }
+  el.innerHTML = h + '</div>'; }
+$('eShop').addEventListener('click', e => { const b = e.target.closest('[data-u]'); if (!b) return; audio(); const u = UPGRADES.find(q => q.id === b.dataset.u), ups = store.get('ups', {}) || {}, lv = ups[u.id] | 0, bank = store.get('bank', 0); if (lv >= u.max) return; const cost = u.cost(lv); if (bank < cost) { sfx.no(); return; }
+  store.set('bank', bank - cost); ups[u.id] = lv + 1; store.set('ups', ups); sfx.combo(lv + 2); vibe(HAP.light); renderShop(); const nb = $('eShop').querySelector(`[data-u="${u.id}"]`); if (nb) nb.classList.add('bought'); });
+// ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
+const STEPS = W3 ? W3.Q : [{ pr: 2 }, { pr: 1.5 }, { pr: 1 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections
+let stepN = clamp(store.get('smooth', 0) | 0, 0, STEPS.length - 1), ftAvg = 16.7, warm = 30, winN = 0, winSum = 0;
+function applyStep() { DPR_CAP = Math.min(2, STEPS[stepN].pr + 0.5); resize(); if (W3 && W3.ok) W3.setQuality(stepN); }
+function measure(ms) {
+  if (ms > 250) { warm = 20; return; } ftAvg += (Math.min(ms, 120) - ftAvg) * 0.06; if (warm > 0) { warm--; return; }
+  winSum += Math.min(ms, 100); if (++winN < 60) return; const avg = winSum / winN; winN = 0; winSum = 0;
+  if (avg > 21 && stepN < STEPS.length - 1) { stepN++; store.set('smooth', stepN); applyStep(); warm = 20; }
+}
+// ---------- the frame loop ----------
+let last = performance.now(), endT = 0;
+function frame(now) {
+  const ms = now - last, rdt = clamp(ms / 1000, 0, 0.05); last = now;
+  if (HEADLESS) { requestAnimationFrame(frame); return; }
+  if (G && !paused && !G.over) measure(ms);
+  if (G && !paused) {
+    let dt = rdt; if (FX.stop > 0) { FX.stop -= rdt; dt = 0; } if (FX.slow > 0) { FX.slow -= rdt; dt *= 0.3; }      // a heartbeat of stillness on a hit (P7)
+    if (!G.over) step(G, dt);
+    for (const e of G.ev) onEvent(G, e); if (tutRun && G.ev.some(e => e.k === 'lessondone')) tutNext();
+    if (G.ev.length && G.over && !G.saved) { G.saved = true; saveResult(G); }
+    G.ev.length = 0;
+    if (G.over) { endT += rdt; if (endT > (G.res.win ? 0.6 : 0.5)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
+  }
+  fxStep(rdt); draw(now / 1000, rdt); soundStep(G, rdt);
+  requestAnimationFrame(frame);
+}
+// ---------- the test hook (robots, tests, card clips) ----------
+window.__sim = {
+  async soundCheck() {   // renders every sound offline: catches errors and clipping
+    const out = {}, keep = [actx, BUS, AMB, MUTE];
+    for (const key of Object.keys(sfx)) {
+      const oc = new OfflineAudioContext(1, 44100 * 3, 44100); actx = oc; MUTE = false;
+      const comp = oc.createDynamicsCompressor(); comp.threshold.value = -18; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.15;
+      BUS = oc.createGain(); BUS.gain.value = 0.9; BUS.connect(comp); comp.connect(oc.destination); AMB = oc.createGain(); AMB.connect(BUS);
+      for (const q in lastPlay) delete lastPlay[q]; for (const q in NB) delete NB[q];
+      let err = null; try { sfx[key](1, 1); } catch (e) { err = String(e); }
+      const buf = await oc.startRendering(), ch = buf.getChannelData(0); let pk = 0; for (const x of ch) pk = Math.max(pk, Math.abs(x));
+      out[key] = err || +pk.toFixed(3);
+    }
+    [actx, BUS, AMB, MUTE] = keep; for (const q in NB) delete NB[q];
+    return out;
+  },
+  start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
+  step(dt) { step(G, dt); G.ev.length = 0; },
+  stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
+  adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
+  frame() { draw(performance.now() / 1000, 1 / 60); },
+  x() { return { toPx, toW, gesture, hitStation, hitSegment, hitTab, st, inspect, choose, addTrain, newLine, extendLine, insertStation, trimLine, bridgesLeft, netChanged, k, TYPES }; }, layout() { return layout(G); }, ui, store,
+  practice(on) { practiceOn = on; }, showAqua, mySkin, SKINS, renderShop, get V3() { return V3; }, W3,
+  go(N) { HEADLESS = false; level = N; startGame(); },
+  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
+  skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
+  get G() { return G; }
+};
+let tutForce = null;
+// ---------- tutorials are optional (his rule, 18 Nov 2026): a SKIP TUTORIAL button on every lesson, and a Tutorial button
+// always there (home and pause) that plays the lessons again, whatever level he is on ----------
+let tutRun = null;
+function startTutorial() { if (typeof LESSONS === 'undefined') return; const ns = [1, 2, 3].filter(n => LESSONS[n]); if (!ns.length) return; tutRun = { ns, i: 0, back: Math.min(Math.max(1, store.get('level', 1) | 0), unlocked) }; runTut(); }
+function runTut() { const N = tutRun.ns[tutRun.i]; tutForce = N - 1; const keep = level; level = N; startGame(); level = keep; tutForce = null; }
+function tutNext() { if (!tutRun) return; tutRun.i++; if (tutRun.i < tutRun.ns.length) { setTimeout(() => { if (tutRun) runTut(); }, 1200); return; } const back = tutRun.back; tutRun = null; setTimeout(() => { level = back; startGame(); }, 1500); }
+function skipTutorial() { if (!G || !G.lesson) return; audio(); sfx.click(); store.set('taught', 3); const back = tutRun ? tutRun.back : G.N; tutRun = null; level = back; startGame(); }
+$('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
+['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
+$('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
+$('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
+setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+window.gameFeedTutorial = () => { audio(); startTutorial(); };
+// ---------- settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; the sound side is in the juice kit) ----------
+Object.assign(SET, store.get('settings', {}) || {});
+let setFrom = 'ovHome';
+function renderSet() { const t = (id, on, txt) => { $(id).textContent = txt || (on ? 'ON' : 'OFF'); $(id).classList.toggle('off', !on); }; t('tMus', SET.mus); t('tSfx', SET.sfx); t('tVib', SET.vib); t('tVk', SET.vib, SET.vk < 0.8 ? 'LOW' : SET.vk > 1.2 ? 'STRONG' : 'NORMAL'); }
+function openSet(from) { setFrom = from; renderSet(); show('ovSet'); }
+const saveSet = () => { store.set('settings', SET); applySet(); renderSet(); };
+$('setBtn').onclick = () => { audio(); sfx.click(); openSet('ovHome'); };
+$('pSet').onclick = () => { sfx.click(); openSet('ovPause'); };
+$('tMus').onclick = () => { audio(); SET.mus = !SET.mus; saveSet(); };
+$('tSfx').onclick = () => { audio(); SET.sfx = !SET.sfx; saveSet(); if (SET.sfx) sfx.click(); };
+$('tVib').onclick = () => { SET.vib = !SET.vib; saveSet(); vibe(HAP.light); };
+$('tVk').onclick = () => { SET.vk = SET.vk < 0.8 ? 1 : SET.vk > 1.2 ? 0.5 : 1.6; saveSet(); vibe(HAP.thud); };
+$('setBack').onclick = () => { sfx.click(); show(setFrom); };
+window.gameFeedSettings = () => openSet(G && !G.over ? 'ovPause' : 'ovHome');
+applyStep(); showHome(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

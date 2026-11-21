@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**93 games** so far. Next number: **94**.
+**94 games** so far. Next number: **95**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -101,6 +101,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 91 | **Timber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/U1EJ7pKgjz82uEsUNSfrUC) | `games/timber/index.html` |
 | 92 | **Ice Hockey** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/EzMRbcsDsjgxH4pd9X6roQ) | `games/hockey/index.html` |
 | 93 | **Tennis** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/9xhgx9JuVzZ2T8tj3V2Tpz) | `games/tennis/index.html` |
+| 94 | **Metro Map** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Qm5Mpwqk3dH9Jc1KAUGrEu) | `games/metro/index.html` |
 
 ## What each game is
 
@@ -197,10 +198,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 91. **Timber**: Fell trees into the open strip: drag to aim, hold NOTCH, hold SAW and let go to leave the hinge, tap WEDGE; lean, gusts, hikers and cabins decide where it may go.
 92. **Ice Hockey**: Three-on-three ice hockey, played sideways: skate with the stick, pass, tap or hold to shoot, one-timers; on defence switch and poke. Two-minute matches or first to three.
 93. **Tennis**: Singles from behind your baseline: a stick to move, a swipe to swing (direction aims, length = depth, speed = pace; lobs, slices, volleys); serves with a timing ring; first to 7 or games to 3; a ball machine for practice.
+94. **Metro Map**: A city grows on a paper map: drag lines between stations, passengers ride to the shape they want and change lines on their own; limited lines, trains and bridges, a choice every week, and crowds that build slowly.
 
 ## Up next (designed, not built yet)
 
-94. **Metro Map**: his idea 19: draw metro lines on a 2D city map so passengers get where they are going. Spec: `specs/his-list-2026-11-20.md`.
 95. **Bin Round**: his idea 20: work at the back of a bin lorry; calm, cannot lose. Spec: `specs/his-list-2026-11-20.md`.
 96. **(my idea for set 17)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 97. **Hoops 3v3**: his idea 14: three-a-side basketball matches; move, pass, shoot with a timing meter, defend. Spec: `specs/his-list-2026-11-20.md`.
