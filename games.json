@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 103,
+  "next_number": 104,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3484,20 +3484,42 @@
         "P15"
       ],
       "summary": "His idea 25: stand on the head of a giant worm swimming through the dunes. Left thumb steers (heavy, late turns), hold SURGE to speed up, hold BRACE for knocks and landings; keep your balance, breach over dune crests, pass every pair of waystones before sunset. Canyons, cracked sand, storms, ruins, three worms, shortcuts, a challenge per level, free roam."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 103,
       "id": "skydive",
       "name": "Skydive",
-      "set": 19,
-      "summary": "his idea 28: jump, steer the freefall, open the parachute, land on the target; rings, wind, flare.",
-      "spec": "specs/his-list-2026-11-21.md",
-      "from": "his idea",
-      "intensity": 2,
-      "thumbs": 2
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-21",
+      "path": "games/skydive/index.html",
+      "artifact": "https://claude.ai/artifact/MNp1BHLVL7mAUuG2g3LBQS",
+      "artifact_slug": "a5025be9-8d6f-4e4c-8f52-313bb480b8ef",
+      "apk_repo": null,
+      "storage_prefix": "sky.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Jump, fly the freefall, open the canopy, land on the X.",
+        "genre": "Sky sport",
+        "intensity": 2,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P5",
+        "P13",
+        "P20"
+      ],
+      "summary": "His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode."
+    }
+  ],
+  "planned": [
     {
       "number": 104,
       "id": "detective",

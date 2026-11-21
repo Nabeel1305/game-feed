@@ -1257,6 +1257,21 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   a camera behind a long worm must come higher and closer in canyons (it went into the walls) and be clamped inside them.
 - Vertex colours are linear: sand written as sRGB looked grey; convert with a 2.2 power.
 
+### 103. Skydive (`games/skydive/`): his idea 28, freefall, canopy and a landing on the X (sideways, two thumbs, 3D)
+- **The wind must not carry you to the target.** With the X downwind of the door, a jumper who did nothing drifted towards
+  it and random thumbs won 3 in 120; the wind now blows across the line from the door to the X, and the plane flies across it.
+- **Robots fly a pattern, not a line**: "the heading whose straight-line landing is nearest" lands 30-40 m off, because the
+  180-degree turn onto final eats the height. Aim to be downwind of the X at 95 m (searching heading and brakes for the
+  straight flight that passes nearest), then the final into the wind: 10-15 m off. Searching three brake settings helps.
+- **Rings must be reachable one after another**: 150 m of height apart and no farther sideways than the track speed covers
+  in that time; alternating them 100+ m left and right 1 s apart was impossible even for the robots.
+- **The flare must be short-lived and late**: with a long flare (or one that pinned the sink at 1.2 m/s) flaring at 9 m ran
+  out and stalled; 1.8 m/s for 2.6 s, and the right moment is 2-6 m (the ground ring turns green then).
+- **Assist on the first jumps (his "first jump" direction)**: levels 1-2 flare for you at 4.5 m and the flare lasts longer;
+  hard landings lose only from level 4. Letting hard landings pass at 1-3 let blind thumbs win.
+- **Don't rebuild the world when only the rings change** (lessons replace the rings every few seconds): two separate keys.
+- New settings rows (landing guide, camera shake) sit with the kit's switches; `optGuide()` is always on for the robots.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
