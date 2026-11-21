@@ -1156,6 +1156,21 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   is your eyes up on it.
 - Foam and rip shading need soft canvas textures (radial and side-faded gradients), or they read as grey tiles and runways.
 
+### 97. Hoops 3v3 (`games/hoops3/`): his idea 14, three-a-side basketball (Ice Hockey's sideways frame)
+- **Built on Ice Hockey**: part1 (the sideways stage, toStage), part5 (stick + three buttons) and the robots carried over; the
+  rules, court and sounds are new. Drag-to-aim from PASS turns the screen drag into court directions with three projected
+  points (the same trick works for any sideways game).
+- **A catch must not reset the shot clock**: `give()` reset it whenever the ball had no owner, i.e. after every pass, and the
+  other team held the ball for 30 seconds. Possession is now tracked by team (`G.possT`).
+- **A shot meter can be counted, by people (NBA Playgrounds' reviewers did) and by blind thumbs**: press-release lockstep at
+  0.7 s hit the green every time. Every shot now has its own meter speed and its own green height. Letting go at once is a
+  pump fake and holding too long comes down without a shot, so a thumb that never looks never shoots.
+- **When "you" control whoever has the ball, rebounds hand a blind thumb free layups**: offensive rebounds need a closer touch
+  (the defenders have inside position), and a putback within 2.5 s is half as likely.
+- **Blind wins came from the other team scoring almost nothing**: when your man is left alone, the other team gives him the ball
+  (75%), their shooting is better, and matches are a little longer (2:20 to 2:50) so one lucky shot decides less.
+- test_play's blind run takes about 20 minutes for a two-thumb sports game with 2.5-minute matches: run it in the background.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
