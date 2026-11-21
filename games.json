@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 87,
+  "next_number": 88,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2955,20 +2955,42 @@
         "P13"
       ],
       "summary": "Mine: you are the sheepdog. Hold on the field and she runs there, let go and she lies down, tap to bark. Sheep are pushed, not commanded: they flow away from her, keep together and scatter if rushed. Gather strays, drive the flock round trees and over the bridge into the pen before sunset; lambs, a stubborn ram, and a fox at dusk."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 87,
       "id": "sumo",
       "name": "Sumo",
-      "set": 16,
-      "intensity": 4,
-      "thumbs": 2,
-      "summary": "his idea 21: heavy sumo bouts; push, grip, dodge, balance and stamina; vibration in every collision.",
-      "spec": "specs/his-list-2026-11-20.md",
-      "from": "his idea"
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-20",
+      "path": "games/sumo/index.html",
+      "artifact": "https://claude.ai/artifact/VEexSYk1McG5bP4BVL8cCM",
+      "artifact_slug": "e4a7f14f-ec8a-49a1-8499-41c29d04fb46",
+      "apk_repo": null,
+      "storage_prefix": "smo.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Grip, push, pull: out of the ring!",
+        "genre": "Fighting / sumo",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Bungee",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P4",
+        "P7",
+        "P12"
+      ],
+      "summary": "His idea 21: you are a huge sumo wrestler. A floating stick (up = into him) and three big buttons: PUSH (tap a shove, hold a big push), GRIP (hold his belt: drive, pull, turn), DODGE. Lean, stamina and the opening charge matter: pull or sidestep a man who lunges, turn him at the edge. Seven rivals (chargers, anchors, pullers), tournaments every fifth level, technique names in slow motion."
+    }
+  ],
+  "planned": [
     {
       "number": 88,
       "id": "memory",

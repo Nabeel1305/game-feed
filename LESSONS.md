@@ -999,6 +999,26 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - The flock is slow to simulate (35 us a step), so BLIND has two moves (thumb somewhere or let go; bark): 31 strings, about
   30 s of blind games instead of 15 minutes.
 
+### 87. Sumo (`games/sumo/`): his idea 21, two bodies and their weight (built on Roach Run's shell)
+- **The model is forces between two men, not a ragdoll**: in contact, drive (stick up, cubed, so a wandering stick barely
+  pushes; x strength, stamina, x1.25 with a grip, less with heels on the straw) against drive, or against half his footing
+  if he does not push back; a small random shift in footing every second so no stand-off lasts; once your feet go backwards
+  they are a little harder to stop. Every one of these was needed: without them bouts ran 40 s to the judges, or an even
+  push contest never ended.
+- **Pulls and sidesteps only work on a man who is committed**: a pull's strength grows with how far he leans past 0.3 (an
+  upright man shrugs it off); a sidestep makes him stumble only if he is lunging at you (lean over 0.6, moving over
+  1.2 m/s, within 1.6 m), and a stumbling man falls only to a shove. Earlier versions let blind grip-and-pull or dodge
+  spam win one game in a hundred.
+- **The rivals feel what you do at once** (a reflex that cuts their thinking time when you start a push, pull or turn), keep
+  strength back when nothing is happening, rest after a burst, take hold and turn at their own edge, and never walk
+  themselves out (any outward step within 0.75 m of the straw is removed unless gripping). Their style changes the numbers:
+  chargers strong but leaning, anchors heavy, pullers wait and snap.
+- **Tests' still partner**: `G.noAI = true` stops the rival thinking (the touch tests step the rules with it).
+- **Z-fighting**: the hall floor at y 0 under the dohyo's top made a dark wedge with stripes: the floor sits at -0.6 now.
+- **The camera** stands behind you and 1.5 m to the side, high: from straight behind your own body hid him.
+- Node replicas of the browser tests (`/tmp/sumofull.js`: all 13,056 blind games in 20 s with two processes) made the
+  balancing quick; the blind count must be checked after every change to the physics, not just the rivals.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

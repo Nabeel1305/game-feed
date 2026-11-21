@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**86 games** so far. Next number: **87**.
+**87 games** so far. Next number: **88**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -94,6 +94,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 84 | **Roach Run** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/WrCQwuCfZPhKXqQWiBhMQK) | `games/roach/index.html` |
 | 85 | **Hoop Shot** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/GXVs6uZB3qLZNobg7WK88P) | `games/hoopshot/index.html` |
 | 86 | **Sheepdog** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/KrB8iBmTv8RFNTsrXVe8L3) | `games/sheepdog/index.html` |
+| 87 | **Sumo** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/VEexSYk1McG5bP4BVL8cCM) | `games/sumo/index.html` |
 
 ## What each game is
 
@@ -183,10 +184,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 84. **Roach Run**: His idea 12: a cockroach leaves its crack in the wall at night, runs through a huge 3D house for crumbs and big pieces and carries them home before dawn, dodging slippers (a growing shadow aimed where it is heading) and bug spray (the can comes down first, the cloud lingers). Floating stick, SPRINT with stamina, HIDE near hiding places, DROP to escape.
 85. **Hoop Shot**: His idea 13: basketball purely shooting. Pull back from anywhere for power, sideways to aim, let go; the path's dots show early on; misses say too strong, too weak, left or right; swishes, streaks and the crowd. Four courts; every fifth level a challenge (bank shots, a moving spot, around the world); Practice with unlimited balls.
 86. **Sheepdog**: Mine: you are the sheepdog. Hold on the field and she runs there, let go and she lies down, tap to bark. Sheep are pushed, not commanded: they flow away from her, keep together and scatter if rushed. Gather strays, drive the flock round trees and over the bridge into the pen before sunset; lambs, a stubborn ram, and a fox at dusk.
+87. **Sumo**: His idea 21: you are a huge sumo wrestler. A floating stick (up = into him) and three big buttons: PUSH (tap a shove, hold a big push), GRIP (hold his belt: drive, pull, turn), DODGE. Lean, stamina and the opening charge matter: pull or sidestep a man who lunges, turn him at the edge. Seven rivals (chargers, anchors, pullers), tournaments every fifth level, technique names in slow motion.
 
 ## Up next (designed, not built yet)
 
-87. **Sumo**: his idea 21: heavy sumo bouts; push, grip, dodge, balance and stamina; vibration in every collision. Spec: `specs/his-list-2026-11-20.md`.
 88. **Memory Lane**: his idea 23: see a scene, it hides, recall or rebuild it; positions, sequences, what is missing, what changed. Spec: `specs/his-list-2026-11-20.md`.
 89. **Spy**: his idea 18: sneak in, photograph the secret document, escape; vision cones, noise, gadgets. Spec: `specs/his-list-2026-11-20.md`.
 90. **Mocktail Bar**: his idea 24: mix alcohol-free drinks to order; pour, shake, stir, garnish; customers say what was wrong. Spec: `specs/his-list-2026-11-20.md`.
