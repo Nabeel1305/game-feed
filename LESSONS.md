@@ -1092,6 +1092,24 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **An AI carrier frozen in a corner** (its dribble target was clamped onto its own spot): dribble toward the slot instead.
 - The 2D overlay draws the puck's trail from projected history, so the puck never gets lost among the lines.
 
+### 93. Tennis (`games/tennis/`): his idea 17, singles with a swipe (Timber's shell, portrait)
+- **The swipe is direction, length and speed** (Tennis Clash's scheme), measured from touch-down to lift-off. The contact is
+  the lift-off, and a 0.2 s buffer after it lets a swing made a moment early still meet the ball. Speed is scaled
+  (x0.6) so an ordinary flick is a drive, and a slow, long swipe is a lob.
+- **Plan off a shot counter, not the velocity**: the AI and the robot used `vx + vz` to notice a new ball, and every bounce
+  changed it, so both re-thought (with their reaction delay) at each bounce and never got there. `launch()` now numbers
+  each ball (`b.id`).
+- **Take the ball on the rise**: the contact point is the first moment after the bounce when the ball is between 0.5 and
+  1.6 m high and inside the court plus 3 m. Waiting for it to drop sent the AI 8 m behind the baseline.
+- **Receivers stand diagonally** across from the server. With them on the wrong side, every serve was an ace and blind
+  play won by serving.
+- **Lockstep blind beats** found a fixed toss-to-swipe delay that hit the top of the toss every time. Each toss is now a
+  little different (vy 4.7 to 5.7), and the serve lesson only counts a swipe made on the green.
+- **A serve clock** (ten seconds, then a fault) ends matches where nobody serves. Without it, half the blind games hit the
+  robots' time limit.
+- Speeds that feel right on a phone: drives travel at about dist/(12.5 + 10 x pace) seconds, slowed by a quarter at level 1.
+  Honest robots aiming at the open court (+/-2.7 m) give 8 to 15 shot rallies and minute-long matches.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

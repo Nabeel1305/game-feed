@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**92 games** so far. Next number: **93**.
+**93 games** so far. Next number: **94**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -100,6 +100,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 90 | **Mocktail Bar** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/NrWYydXp9zpa7CVj3kNZ79) | `games/mocktail/index.html` |
 | 91 | **Timber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/U1EJ7pKgjz82uEsUNSfrUC) | `games/timber/index.html` |
 | 92 | **Ice Hockey** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/EzMRbcsDsjgxH4pd9X6roQ) | `games/hockey/index.html` |
+| 93 | **Tennis** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/9xhgx9JuVzZ2T8tj3V2Tpz) | `games/tennis/index.html` |
 
 ## What each game is
 
@@ -195,10 +196,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 90. **Mocktail Bar**: A mocktail bar: read the order (or a feeling), pick the glass, pour to the parts, muddle, shake, stir or layer, garnish and serve; the customer's face and words say what was right or wrong.
 91. **Timber**: Fell trees into the open strip: drag to aim, hold NOTCH, hold SAW and let go to leave the hinge, tap WEDGE; lean, gusts, hikers and cabins decide where it may go.
 92. **Ice Hockey**: Three-on-three ice hockey, played sideways: skate with the stick, pass, tap or hold to shoot, one-timers; on defence switch and poke. Two-minute matches or first to three.
+93. **Tennis**: Singles from behind your baseline: a stick to move, a swipe to swing (direction aims, length = depth, speed = pace; lobs, slices, volleys); serves with a timing ring; first to 7 or games to 3; a ball machine for practice.
 
 ## Up next (designed, not built yet)
 
-93. **Tennis**: his idea 17: rallies to matches; joystick to move, swipe to swing; serves, lobs, slices, volleys. Spec: `specs/his-list-2026-11-20.md`.
 94. **Metro Map**: his idea 19: draw metro lines on a 2D city map so passengers get where they are going. Spec: `specs/his-list-2026-11-20.md`.
 95. **Bin Round**: his idea 20: work at the back of a bin lorry; calm, cannot lose. Spec: `specs/his-list-2026-11-20.md`.
 96. **(my idea for set 17)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.

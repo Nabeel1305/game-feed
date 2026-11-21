@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 93,
+  "next_number": 94,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3153,20 +3153,42 @@
         "P15"
       ],
       "summary": "Three-on-three ice hockey, played sideways: skate with the stick, pass, tap or hold to shoot, one-timers; on defence switch and poke. Two-minute matches or first to three."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 93,
       "id": "tennis",
       "name": "Tennis",
-      "set": 17,
-      "intensity": 4,
-      "thumbs": 2,
-      "summary": "his idea 17: rallies to matches; joystick to move, swipe to swing; serves, lobs, slices, volleys.",
-      "spec": "specs/his-list-2026-11-20.md",
-      "from": "his idea"
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-21",
+      "path": "games/tennis/index.html",
+      "artifact": "https://claude.ai/artifact/9xhgx9JuVzZ2T8tj3V2Tpz",
+      "artifact_slug": "4890178d-264a-4fd8-ae68-3c831b9af0af",
+      "apk_repo": null,
+      "storage_prefix": "ten.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Swipe to swing: pull them wide, then hit into the gap.",
+        "genre": "Sports / tennis",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Racing Sans One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P6",
+        "P12",
+        "P15"
+      ],
+      "summary": "Singles from behind your baseline: a stick to move, a swipe to swing (direction aims, length = depth, speed = pace; lobs, slices, volleys); serves with a timing ring; first to 7 or games to 3; a ball machine for practice."
+    }
+  ],
+  "planned": [
     {
       "number": 94,
       "id": "metro",
