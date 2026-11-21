@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 95,
+  "next_number": 96,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3219,20 +3219,42 @@
         "P22"
       ],
       "summary": "A city grows on a paper map: drag lines between stations, passengers ride to the shape they want and change lines on their own; limited lines, trains and bridges, a choice every week, and crowds that build slowly."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 95,
       "id": "binround",
       "name": "Bin Round",
-      "set": 17,
-      "intensity": 1,
-      "thumbs": 1,
-      "summary": "his idea 20: work at the back of a bin lorry; calm, cannot lose.",
-      "spec": "specs/his-list-2026-11-20.md",
-      "from": "his idea"
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-21",
+      "path": "games/binround/index.html",
+      "artifact": "https://claude.ai/artifact/RcubQUAveDCoMU9tSRpmkL",
+      "artifact_slug": "c75ec580-672b-4ba0-bf92-0c8bc91ff539",
+      "apk_repo": null,
+      "storage_prefix": "bin.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Hop off, empty the bins, wave to the neighbours.",
+        "genre": "Calm / job",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Fredoka",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P16",
+        "P19",
+        "P21"
+      ],
+      "summary": "Ride on the back of a bin lorry along a calm street: tap a bin to fetch it, hold to empty it and let go in the green; recycling, garden waste and the odd armchair; residents wave, nothing can be lost."
+    }
+  ],
+  "planned": [
     {
       "number": 96,
       "id": "mine17",

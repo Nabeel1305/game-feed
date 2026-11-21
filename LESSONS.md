@@ -1126,6 +1126,21 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Queues beside stations near the right edge go to the left**, or they run off the screen.
 - The overlay behind cards is darker than other games' (the paper map is light and showed through the end card).
 
+### 95. Bin Round (`games/binround/`): his idea 20, a calm bin round in 3D where nothing can be lost (Timber's shell)
+- **A game you cannot lose still needs spam to fail**: here "winning" is finishing a round, and a blind thumb must never
+  finish one. test_play's "it gets harder" check became "later rounds are longer and fuller" (round time at street 40 over
+  1.6 x street 3), since nobody can lose a street.
+- **What stopped blind thumbs**: a press only lifts a bin that is already at the lorry (a thumb held down while you walk does
+  nothing); holding on too long spills bits and brings the bin back down *full* (if a spill still emptied it, a thumb held
+  down for ever finished every round); a wrong release costs a moment while the bin comes down; and street 1 has two things
+  at every house. Random moves went from 5 of 480 rounds to 0.
+- **Portrait framing in a street**: a camera behind the lorry had the lorry hiding the work. The lorry now stops just *past*
+  the gate, and the camera stands over the pavement looking along the line of bins (fov 62), with the lorry ahead and to the side.
+- **Three.js prisms for roofs**: CylinderGeometry(1, 1, 1, 3) with rotation.x = -PI/2 puts the ridge along z with the point
+  up; scale x = width, y = length, z = height. Rotating it about z as well turned the roofs into black wedges.
+- **Lamp posts near a stop** stood between the camera and the bins: none within 17 m behind or 7 m past a stop.
+- **Stop here** ends with over = 'lost' and `res.rest`; saveResult must not count it as a loss (no help after "losses").
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
