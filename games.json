@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 102,
+  "next_number": 103,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3451,20 +3451,42 @@
       ],
       "summary": "Mine: calm one-thumb hot air ballooning, upright: hold to burn, let go to sink, steer by climbing into the wind that goes your way; drop markers on the X, land near the field; wires, turning winds, warm air.",
       "from": "mine"
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 102,
       "id": "sandworm",
       "name": "Sandworm Rider",
-      "set": 19,
-      "summary": "his idea 25: ride a giant original sandworm through dunes, canyons and storms; steer, surge, brace, checkpoints.",
-      "spec": "specs/his-list-2026-11-21.md",
-      "from": "his idea",
-      "intensity": 4,
-      "thumbs": 2
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-21",
+      "path": "games/sandworm/index.html",
+      "artifact": "https://claude.ai/artifact/PbXWEHsATZqDX9T7CuvtmZ",
+      "artifact_slug": "b6fb232e-7182-46f1-a3fe-f8d3cf37222c",
+      "apk_repo": null,
+      "storage_prefix": "swr.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Ride a giant worm through the dunes: surge, brace, breach.",
+        "genre": "Riding / desert",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Cinzel Decorative",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P6",
+        "P12",
+        "P15"
+      ],
+      "summary": "His idea 25: stand on the head of a giant worm swimming through the dunes. Left thumb steers (heavy, late turns), hold SURGE to speed up, hold BRACE for knocks and landings; keep your balance, breach over dune crests, pass every pair of waystones before sunset. Canyons, cracked sand, storms, ruins, three worms, shortcuts, a challenge per level, free roam."
+    }
+  ],
+  "planned": [
     {
       "number": 103,
       "id": "skydive",

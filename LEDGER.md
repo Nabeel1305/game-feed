@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**101 games** so far. Next number: **102**.
+**102 games** so far. Next number: **103**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -109,6 +109,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 99 | **Rock Climb** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/JLU7eXVLjB4YVHbcXNtA2a) | `games/climb/index.html` |
 | 100 | **Dentist** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/VNy4QXi8pVMuLkLQ6Wdn1B) | `games/dentist/index.html` |
 | 101 | **Balloon Drift** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX) | `games/balloon/index.html` |
+| 102 | **Sandworm Rider** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/PbXWEHsATZqDX9T7CuvtmZ) | `games/sandworm/index.html` |
 
 ## What each game is
 
@@ -213,10 +214,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 99. **Rock Climb**: Calm one-thumb climbing, upright: drag a hand (later a foot) onto a hold that lights up; manage your grip, rest on ledges, read slopers and side-pulls, jump to far holds; the rope catches you at your last bolt.
 100. **Dentist**: Calm one-thumb dentist, upright: a 3D clinic and a 2D close-up of the mouth; brush, scrape and polish, find cavities with the mirror and X-ray, drill-rinse-fill-smooth-set, chips, crowns, braces, extractions; keep them comfortable; before-and-after smiles.
 101. **Balloon Drift**: Mine: calm one-thumb hot air ballooning, upright: hold to burn, let go to sink, steer by climbing into the wind that goes your way; drop markers on the X, land near the field; wires, turning winds, warm air.
+102. **Sandworm Rider**: His idea 25: stand on the head of a giant worm swimming through the dunes. Left thumb steers (heavy, late turns), hold SURGE to speed up, hold BRACE for knocks and landings; keep your balance, breach over dune crests, pass every pair of waystones before sunset. Canyons, cracked sand, storms, ruins, three worms, shortcuts, a challenge per level, free roam.
 
 ## Up next (designed, not built yet)
 
-102. **Sandworm Rider**: his idea 25: ride a giant original sandworm through dunes, canyons and storms; steer, surge, brace, checkpoints. Spec: `specs/his-list-2026-11-21.md`.
 103. **Skydive**: his idea 28: jump, steer the freefall, open the parachute, land on the target; rings, wind, flare. Spec: `specs/his-list-2026-11-21.md`.
 104. **Detective**: his idea 33: investigate scenes, interview suspects, connect clues on a board, accuse with evidence. Spec: `specs/his-list-2026-11-21.md`.
 105. **Convoy Escort**: his idea 34: command an escort ship, hunt submarines with sonar and depth charges, keep the convoy safe. Spec: `specs/his-list-2026-11-21.md`.

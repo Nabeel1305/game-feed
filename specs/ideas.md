@@ -178,3 +178,4 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 18 | 99 | Rock Climb | 22 (upright, one thumb, rope and bolts, two lines, jumps) | 2 | 1 |
 | 18 | 100 | Dentist | 30 (3D clinic, 2D mouth; cleaning to extractions; comfort) | 1 | 1 |
 | 18 | 101 | Balloon Drift (mine) | steer a hot air balloon by the winds at each height; drop markers on the X, land near the field | 2 | 1 |
+| 19 | 102 | Sandworm Rider | 25 (sideways, stick + SURGE + BRACE, balance, breaches, canyons, storms, free roam) | 4 | 2 |

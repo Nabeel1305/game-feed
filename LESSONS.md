@@ -1239,6 +1239,24 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **A minimum-detector needs a margin** (3 m): it fired on jitter and dropped markers at once.
 - Lessons start in the air (no slow take-off), and place their X where the ring will be in 20 s at this height.
 
+### 102. Sandworm Rider (`games/sandworm/`): his idea 25, riding a giant worm through waystones (sideways, two thumbs, 3D)
+- **Walls make a funnel: in the open, have none.** With soft walls on every leg (bounce or turn-you-along), a worm left alone
+  pinballed down the corridor and won; blind holding of BRACE won 1 in 2. Walls now exist only in canyon legs; in the open
+  dunes a worm going straight rides off into the desert until sunset. Waystones are a gate (10 m + a eighth of the width),
+  not the whole corridor, every waystone turns the way 25-60 degrees, and the ride starts 0.3 rad off line.
+- **An unsticking rescue must not steer.** "Wedged for 1.6 s: dive under and come up past" first put the worm back on the
+  route facing along it, which a blind player could ride to a win; it now just carries the head 26 m forward on its own heading.
+- **Detect stuck by distance, not speed**: knocks drop the speed below a threshold and it climbs back between them, so a
+  speed timer never fired; less than 10 m moved in 1.6 s does.
+- **One knock per contact** (a cooldown per rock, and for walls), or one rock drained balance 60 times a second.
+- **Rocks always leave a way past**: drop any rock with less than 16 m beside it, any in a canyon, any by a waystone.
+- **Breach from the sand's curvature**: the head flies out when it is climbing (vy > 4) and the sand under it falls away faster
+  than 5 m/s^2 at speed; counting it inside `step` (not by reading events in `lessonTick`, which ran before they were made).
+- **A one-line `for` with a trailing `//` comment** swallowed the rest of the line: keep comments off packed lines.
+- **Sideways HUD**: the stick only uses left-right; SURGE and BRACE sit side by side so the right thumb slides between them;
+  a camera behind a long worm must come higher and closer in canyons (it went into the walls) and be clamped inside them.
+- Vertex colours are linear: sand written as sRGB looked grey; convert with a 2.2 power.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
