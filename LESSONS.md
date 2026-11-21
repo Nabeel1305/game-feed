@@ -1188,6 +1188,24 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   into the game, draw, swap them back; the rules never step while it runs. Offer it after a touchdown or a 15-yard gain.
 - Set a down's spot by calling `toPick()` after changing `G.los`, or the players stay where the last play lined them up.
 
+### 99. Rock Climb (`games/climb/`): his idea 22, one-thumb climbing (upright, 3D; Beach Watch's frame)
+- **The body is solved, not simulated**: four holds in, hips out (`solve()`: a few dozen relaxation steps that keep every limb
+  within reach, with a push upwards so the climber stands on its feet). Rules that read like climbing: no splits (a foot stays
+  under its hip), a hand on a hold below the hips is no use, the body hangs below the hands. Strain counts the arms only.
+- **Approach holds need the body solved high**: slopers (below the shoulders) were unreachable when the solver sat the hips
+  low; standing tall fixed it. Side-pulls' facing must follow the line (towards where the body will be), not the wall side.
+- **Every line must reach the top**: a last hold within 0.6 m of the top ledge; slopers only after short steps; jumps only
+  where a jump really reaches (the bot found routes that ended 1.5 m short).
+- **Manual feet that can strand you are no fun**: from level 6 your feet still scramble to the nearest footholds that work when a
+  hand moves; dragging a foot is for a better hold (more support), not to get unstuck. Auto feet keeps the best holds.
+- **A climbing robot needs a map**: `toTop()` (distance to the top over hand holds) guides the honest climber off dead ends;
+  without it, it climbed into corners and waited for ever. When no hand can gain, it steps a foot up.
+- **Blind moves must be cheap**: a blind move that called `targets()` (every hold, each with an auto-feet search) took 40 s per
+  game; `move()` now tries only the holds within the snap radius of the finger, nearest first.
+- **Lesson counters must stop at done**: a condition that stays true (a full grip) called lessonSee every frame and restarted
+  the "done" wait for ever. One clip per bolt height (two lines' bolts at 3 m clipped together).
+- Fall = back to the last bolt with a full grip (hanging on the rope is a rest): kinder, and no repeat-fall spiral.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

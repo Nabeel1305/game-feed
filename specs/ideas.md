@@ -175,5 +175,5 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 17 | 96 | Beach Watch (mine) | lifeguard on the tower: read the water, whistle drifters back, bring people in across the rip | 3 | 1 |
 | 18 | 97 | Hoops 3v3 | 14 (three-a-side, sideways, tournament mode) | 4 | 2 |
 | 18 | 98 | Gridiron | 15 (five-a-side, sideways, plays + defence, replays) | 4 | 2 |
-| 18 | 99 | Rock Climb | 22 | 2 | 1 |
+| 18 | 99 | Rock Climb | 22 (upright, one thumb, rope and bolts, two lines, jumps) | 2 | 1 |
 | 18 | 100 | (mine) | | | |
