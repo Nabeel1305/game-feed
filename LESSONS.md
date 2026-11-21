@@ -1059,6 +1059,18 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   1.2 rad); a garnish dropped near the glass, or simply tapped, lands.
 - The test hook gives the page's lexical names to Playwright through `__sim.x()` (they are not on `window`).
 
+### 91. Timber (`games/timber/`): my idea for set 16, felling trees by notch, back cut and hinge (built on Mocktail Bar's shell)
+- **One tree at a time, each in its own clearing at the origin**: the forest (one instanced mesh of 260 pines) is placed again
+  round every tree, kept out of the strip and its hazards, so nothing has to stream in.
+- **The tree tips only when the hinge is thin enough for what pushes it** (lean along the line, wind, wedges, the open notch):
+  so a straight tree stopped in the green sits and needs wedges, a forward-leaning one goes early, and holding SAW on after
+  it goes keeps cutting the hinge for half a second. Control = notch quality x hinge quality; the lean and gusts are scaled by it.
+- **The camera sits behind and a little to the side of the trunk** (straight behind, the trunk hid the line and the strip),
+  shifted up with `setViewOffset` so the strip sits above the ring and the buttons.
+- **The ring (a cross-section) is the main readout**: colour only the wood left once it is near the hinge size, or the whole
+  trunk looks like a "thick hinge" while cutting.
+- Fences are five posts (five small circles) in a row beside the strip, so the hit test stays circle-against-segment.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

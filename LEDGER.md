@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**90 games** so far. Next number: **91**.
+**91 games** so far. Next number: **92**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -98,6 +98,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 88 | **Memory Lane** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/7ZowZ6JzzBgUhvZbiW6nXW) | `games/memory/index.html` |
 | 89 | **Spy** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UnrV6PKUb59o1q6VQWGePJ) | `games/spy/index.html` |
 | 90 | **Mocktail Bar** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/NrWYydXp9zpa7CVj3kNZ79) | `games/mocktail/index.html` |
+| 91 | **Timber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/U1EJ7pKgjz82uEsUNSfrUC) | `games/timber/index.html` |
 
 ## What each game is
 
@@ -191,10 +192,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 88. **Memory Lane**: His idea 23: look at a little scene, it is covered, then answer: which were there, put them back (drag), the order they lit up (each with its note), what is missing, what changed. Five rounds a level, 80% passes; your answer beside the scene with the differences ringed. More things, look-alikes and a shorter look, one at a time; a longer look and a Timed mode on the home screen.
 89. **Spy**: His idea 18: get into the building from the van, photograph the secret file and get out unseen. A floating stick (push far to run), CROUCH and one ACTION button that says what it does (open, hide, photograph, take, throw a coin). Guards' sight shown as torch fans cut by walls; a glimpse makes them look, then come, then run. Keycards, cameras, files on one of several desks as you go.
 90. **Mocktail Bar**: A mocktail bar: read the order (or a feeling), pick the glass, pour to the parts, muddle, shake, stir or layer, garnish and serve; the customer's face and words say what was right or wrong.
+91. **Timber**: Fell trees into the open strip: drag to aim, hold NOTCH, hold SAW and let go to leave the hinge, tap WEDGE; lean, gusts, hikers and cabins decide where it may go.
 
 ## Up next (designed, not built yet)
 
-91. **(my idea for set 16)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 92. **Ice Hockey**: his idea 16: three skaters and a goalie a side; pass, shoot, burst; rebounds and boards. Spec: `specs/his-list-2026-11-20.md`.
 93. **Tennis**: his idea 17: rallies to matches; joystick to move, swipe to swing; serves, lobs, slices, volleys. Spec: `specs/his-list-2026-11-20.md`.
 94. **Metro Map**: his idea 19: draw metro lines on a 2D city map so passengers get where they are going. Spec: `specs/his-list-2026-11-20.md`.

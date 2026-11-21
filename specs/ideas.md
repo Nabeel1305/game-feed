@@ -167,7 +167,7 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 16 | 88 | Memory Lane | 23 | 1 | 1 |
 | 16 | 89 | Spy | 18 | 3 | 2 |
 | 16 | 90 | Mocktail Bar | 24 | 1 | 1 |
-| 16 | 91 | (mine) | | | |
+| 16 | 91 | Timber (mine) | fell each tree into its strip: notch, back cut, hinge, wedges | 2 | 1 |
 | 17 | 92 | Ice Hockey | 16 | 5 | 2 |
 | 17 | 93 | Tennis | 17 | 4 | 2 |
 | 17 | 94 | Metro Map | 19 | 2 | 1 |
