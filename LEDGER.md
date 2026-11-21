@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**99 games** so far. Next number: **100**.
+**100 games** so far. Next number: **101**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -107,6 +107,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 97 | **Hoops 3v3** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/8A1QSknEYSt3PSPatoGo7m) | `games/hoops3/index.html` |
 | 98 | **Gridiron** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/HvQWqkpk5GnA3h1CkKC5dV) | `games/gridiron/index.html` |
 | 99 | **Rock Climb** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/JLU7eXVLjB4YVHbcXNtA2a) | `games/climb/index.html` |
+| 100 | **Dentist** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/VNy4QXi8pVMuLkLQ6Wdn1B) | `games/dentist/index.html` |
 
 ## What each game is
 
@@ -209,10 +210,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 97. **Hoops 3v3**: Three-a-side basketball played sideways: a stick and PASS / SHOOT / SPRINT, a shot meter with a moving green, layups and dunks, steals that can leave you off balance, a 12-second shot clock, and a three-game tournament.
 98. **Gridiron**: Five-a-side arcade American football, sideways: pick a play, SNAP, throw to a receiver's button or hand off and run; defend with SWITCH and TACKLE; replays of big plays.
 99. **Rock Climb**: Calm one-thumb climbing, upright: drag a hand (later a foot) onto a hold that lights up; manage your grip, rest on ledges, read slopers and side-pulls, jump to far holds; the rope catches you at your last bolt.
+100. **Dentist**: Calm one-thumb dentist, upright: a 3D clinic and a 2D close-up of the mouth; brush, scrape and polish, find cavities with the mirror and X-ray, drill-rinse-fill-smooth-set, chips, crowns, braces, extractions; keep them comfortable; before-and-after smiles.
 
 ## Up next (designed, not built yet)
 
-100. **Dentist**: his idea 30: examine patients, find the problems, treat them: cleaning first, then fillings, crowns, braces; comfort meter. Spec: `specs/his-list-2026-11-21.md`.
 101. **(my idea for set 18)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 102. **Sandworm Rider**: his idea 25: ride a giant original sandworm through dunes, canyons and storms; steer, surge, brace, checkpoints. Spec: `specs/his-list-2026-11-21.md`.
 103. **Skydive**: his idea 28: jump, steer the freefall, open the parachute, land on the target; rings, wind, flare. Spec: `specs/his-list-2026-11-21.md`.

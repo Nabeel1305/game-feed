@@ -1206,6 +1206,23 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   the "done" wait for ever. One clip per bolt height (two lines' bolts at 3 m clipped together).
 - Fall = back to the last bolt with a full grip (hanging on the rope is a rest): kinder, and no repeat-fall spiral.
 
+### 100. Dentist (`games/dentist/`): his idea 30, a calm one-thumb clinic (3D room, 2D mouth)
+- **3D where it reads, 2D where it must be touched**: the clinic, the chair and the patient's face are 3D (arrival, complaint,
+  smile); the mouth close-up is a flat 2D arch (a U of ten teeth per row) because small targets read and touch better flat. The
+  3D picture is not drawn while the close-up covers the screen.
+- **A surface you clean is a grid of cells with layers** (food, plaque, tartar, stain, decay, hole, dust, filling, excess,
+  cure, chip, crack): every tool is a few lines that change layers under it at a rate set by the stroke's speed. Calm speeds
+  work; too fast is "rough" (hurts, cleans nothing): that one rule beats blind scrubbing.
+- **No last speck**: a tooth at 92% clean is clean (the rest vanishes with a ding).
+- **The tool works above the fingertip** (46 px): the thumb never hides the tooth.
+- **Robots that follow a path need their holds kept**: a job whose last point was a hold ended at once (the wire key and the
+  blue light never ran); a hold that does nothing at rest (the shaper needs movement) stalled for ever; a drill pause that
+  lifted the hand left the job steering a hand that was up. Always: end a job, then plan again.
+- **Per-gesture flags belong to the gesture**: the X-ray's "done" flag lived on the hand and stayed set for the next patient.
+- **Clock from the work, not the level**: the day's time is each patient's estimated work times a factor that tightens with
+  level (2.2 down to about 0.75); the robot's hand speed scales with its reaction so ordinary and sloppy differ at level 40.
+- Drill sound has its own Settings switch (soft, quieter, off), as he asked for adjustable drill sounds.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
