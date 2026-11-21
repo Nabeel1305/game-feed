@@ -1223,6 +1223,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   level (2.2 down to about 0.75); the robot's hand speed scales with its reaction so ordinary and sloppy differ at level 40.
 - Drill sound has its own Settings switch (soft, quieter, off), as he asked for adjustable drill sounds.
 
+### 101. Balloon Drift (`games/balloon/`): mine, steering by the wind at each height (upright, one thumb, 3D)
+- **Place targets by flying a plan**: each X is where a simple balloon gets to by riding one wind and then a different one
+  (climbing or sinking at 2 m/s between them, carried by the winds on the way). Placing them by adding wind vectors ignored
+  the climb and made half of them unreachable; using two different winds means staying at one height never gets there.
+- **Heights are above the ground** (winds, the ceiling, the ring), or hills put the balloon "inside" a wind layer.
+- **A lagging control needs a controller on the thing you change**: steering the climb rate directly with on/off burns
+  oscillated for ever; aiming the envelope's heat at the heat that gives the wanted climb is steady. The heat itself must
+  answer within a second or two (cooling 0.03/s): with slow cooling, letting go kept the balloon climbing for 20 s.
+- **Planning robots must look along a path, not a line**: the best height is the one whose simulated path (climb, then drift)
+  comes closest to the goal, plus a little of the end distance (ties otherwise keep it where it is). Land when the predicted
+  touchdown point is as close to the field as it gets; aim upwind of the field by the drift of the descent.
+- **Scoring that falls off fast beats random tapping**: a quadratic fall-off (1000 at the centre, 0 at 120 m) and a goal of
+  38% of the best; a linear one let random drops at 60-100 m pass level 1.
+- **A minimum-detector needs a margin** (3 m): it fired on jitter and dropped markers at once.
+- Lessons start in the air (no slow take-off), and place their X where the ring will be in 20 s at this height.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
