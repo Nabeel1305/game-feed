@@ -1272,6 +1272,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Don't rebuild the world when only the rings change** (lessons replace the rings every few seconds): two separate keys.
 - New settings rows (landing guide, camera shake) sit with the kit's switches; `optGuide()` is always on for the robots.
 
+### 104. Detective (`games/detective/`): his idea 33, generated mysteries (upright, one thumb, 3D rooms + a paper panel)
+- **Make the truth first, then the clues**: who, how, when and where everyone really was; every clue is derived from that
+  (the trace of the method, the moment it stopped, the culprit's own thing at the scene, what ties them to the method, a
+  secret-keeper's secret and what clears them, confirmations for the rest). Fair by construction, and endless.
+- **The accusation is the spam gate**: four parts at once (who x how x when x two clues from all found) is about 1 in 1,600 at
+  level 1, with two tries. Tapping every object finds every clue, and that is fine: finding is not solving.
+- **A lesson must not be finishable by blind cycling**: lesson 1 counts only hidden marks (the right side facing and a tap
+  on a small spot), and lesson 2 resets on a clue shown to the wrong person.
+- **Names clash with the kit**: `note` (music) and `hint` (the hint bubble) are the kit's; the game's are `addNote`, `askHint`.
+- **3D in half the screen**: give W3.init `dims: () => [W, H/2]` and CSS the GL canvas to 50vh, so W3.screen gives the half's
+  own pixels; the panel is DOM (lists and choices read better flat, and the test can tap real buttons).
+- **Taps on a turned object must use the same scale as the mark**: pixels per stage unit = (H/2)/(tan(fov/2) * distance),
+  times the face's half-size; one function for both (faceUV/faceXY).
+- Every object says what it holds when looked at ("letters and bills, nothing out of place"), with the same "turn it to see
+  every side" on all of them, so the words never give a hidden clue away.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

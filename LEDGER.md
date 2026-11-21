@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**103 games** so far. Next number: **104**.
+**104 games** so far. Next number: **105**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -111,6 +111,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 101 | **Balloon Drift** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX) | `games/balloon/index.html` |
 | 102 | **Sandworm Rider** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/PbXWEHsATZqDX9T7CuvtmZ) | `games/sandworm/index.html` |
 | 103 | **Skydive** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MNp1BHLVL7mAUuG2g3LBQS) | `games/skydive/index.html` |
+| 104 | **Detective** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/DoNRuvKurjoX26yW9XdhHv) | `games/detective/index.html` |
 
 ## What each game is
 
@@ -217,10 +218,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 101. **Balloon Drift**: Mine: calm one-thumb hot air ballooning, upright: hold to burn, let go to sink, steer by climbing into the wind that goes your way; drop markers on the X, land near the field; wires, turning winds, warm air.
 102. **Sandworm Rider**: His idea 25: stand on the head of a giant worm swimming through the dunes. Left thumb steers (heavy, late turns), hold SURGE to speed up, hold BRACE for knocks and landings; keep your balance, breach over dune crests, pass every pair of waystones before sunset. Canyons, cracked sand, storms, ruins, three worms, shortcuts, a challenge per level, free roam.
 103. **Skydive**: His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode.
+104. **Detective**: His idea 33: generated cases (thefts, sabotage, fraud, disappearances, locked rooms) in a house, hotel, museum, train or office. Tap objects in the 3D room, turn them over to find hidden marks, question suspects and show them clues (liars crack, secret-keepers own up), link clues in the notebook, then accuse with who, how, when and two proving clues.
 
 ## Up next (designed, not built yet)
 
-104. **Detective**: his idea 33: investigate scenes, interview suspects, connect clues on a board, accuse with evidence. Spec: `specs/his-list-2026-11-21.md`.
 105. **Convoy Escort**: his idea 34: command an escort ship, hunt submarines with sonar and depth charges, keep the convoy safe. Spec: `specs/his-list-2026-11-21.md`.
 106. **(my idea for set 19)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 107. **Joust**: his idea 26: charge on horseback, aim the lance, brace at contact, unseat rivals; tournaments. Spec: `specs/his-list-2026-11-21.md`.

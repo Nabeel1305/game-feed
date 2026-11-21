@@ -180,3 +180,4 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 18 | 101 | Balloon Drift (mine) | steer a hot air balloon by the winds at each height; drop markers on the X, land near the field | 2 | 1 |
 | 19 | 102 | Sandworm Rider | 25 (sideways, stick + SURGE + BRACE, balance, breaches, canyons, storms, free roam) | 4 | 2 |
 | 19 | 103 | Skydive | 28 (sideways, stick + TUCK/CHUTE/FLARE, rings, wind, rooftops, scenic mode) | 2 | 2 |
+| 19 | 104 | Detective | 33 (generated cases, 3D rooms, turn objects, show clues, notebook links, who/how/when/proof) | 1 | 1 |

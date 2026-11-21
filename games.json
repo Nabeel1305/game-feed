@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 104,
+  "next_number": 105,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3517,20 +3517,42 @@
         "P20"
       ],
       "summary": "His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 104,
       "id": "detective",
       "name": "Detective",
-      "set": 19,
-      "summary": "his idea 33: investigate scenes, interview suspects, connect clues on a board, accuse with evidence.",
-      "spec": "specs/his-list-2026-11-21.md",
-      "from": "his idea",
-      "intensity": 1,
-      "thumbs": 1
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-22",
+      "path": "games/detective/index.html",
+      "artifact": "https://claude.ai/artifact/DoNRuvKurjoX26yW9XdhHv",
+      "artifact_slug": "67a71570-dc9d-4042-b911-073c2cc61c35",
+      "apk_repo": null,
+      "storage_prefix": "det.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Search the scene, question the suspects, prove who did it.",
+        "genre": "Mystery / deduction",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Special Elite",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P5",
+        "P12",
+        "P15"
+      ],
+      "summary": "His idea 33: generated cases (thefts, sabotage, fraud, disappearances, locked rooms) in a house, hotel, museum, train or office. Tap objects in the 3D room, turn them over to find hidden marks, question suspects and show them clues (liars crack, secret-keepers own up), link clues in the notebook, then accuse with who, how, when and two proving clues."
+    }
+  ],
+  "planned": [
     {
       "number": 105,
       "id": "convoy",
