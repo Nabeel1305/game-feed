@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**95 games** so far. Next number: **96**.
+**96 games** so far. Next number: **97**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -103,6 +103,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 93 | **Tennis** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/9xhgx9JuVzZ2T8tj3V2Tpz) | `games/tennis/index.html` |
 | 94 | **Metro Map** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/Qm5Mpwqk3dH9Jc1KAUGrEu) | `games/metro/index.html` |
 | 95 | **Bin Round** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/RcubQUAveDCoMU9tSRpmkL) | `games/binround/index.html` |
+| 96 | **Beach Watch** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6iG5XZKSQ3wRGTHYUJQnxY) | `games/lifeguard/index.html` |
 
 ## What each game is
 
@@ -201,10 +202,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 93. **Tennis**: Singles from behind your baseline: a stick to move, a swipe to swing (direction aims, length = depth, speed = pace; lobs, slices, volleys); serves with a timing ring; first to 7 or games to 3; a ball machine for practice.
 94. **Metro Map**: A city grows on a paper map: drag lines between stations, passengers ride to the shape they want and change lines on their own; limited lines, trains and bridges, a choice every week, and crowds that build slowly.
 95. **Bin Round**: Ride on the back of a bin lorry along a calm street: tap a bin to fetch it, hold to empty it and let go in the green; recycling, garden waste and the odd armchair; residents wave, nothing can be lost.
+96. **Beach Watch**: Lifeguard on the tower: read the water, whistle drifters back, swim out to anyone in trouble and bring them in across the rip, flag the rips; miss two and the beach closes.
 
 ## Up next (designed, not built yet)
 
-96. **(my idea for set 17)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 97. **Hoops 3v3**: his idea 14: three-a-side basketball matches; move, pass, shoot with a timing meter, defend. Spec: `specs/his-list-2026-11-20.md`.
 98. **Gridiron**: his idea 15: arcade American football; pick a play, throw to a receiver, run, tackle. Spec: `specs/his-list-2026-11-20.md`.
 99. **Rock Climb**: his idea 22: climb rock faces hold by hold; grip, stamina, routes, a safety rope. Spec: `specs/his-list-2026-11-20.md`.

@@ -1141,6 +1141,21 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Lamp posts near a stop** stood between the camera and the bins: none within 17 m behind or 7 m past a stop.
 - **Stop here** ends with over = 'lost' and `res.rest`; saveResult must not count it as a loss (no help after "losses").
 
+### 96. Beach Watch (`games/lifeguard/`): my idea for set 17, a lifeguard reading the water (Timber's shell, 3D)
+- **When the whole game is "tap the right person", a thumb that taps people at random is the spam to beat.** BLIND has a
+  second move, `s`: tap whichever swimmer is nearest. What stopped it: a tap on someone fine sends you out on a false alarm,
+  and you cannot act again until you are back up the tower; a tap on someone fine while you are already out costs 3 s of
+  "look first"; beach 1 has eight people and four tired swimmers, and two misses close it. Random tapping went from 41% of
+  rounds won to none.
+- **Whistled swimmers must not turn straight back into "at risk"**: one whistled past the buoys was still past them, so the
+  next frame put them at risk again (whistle loops). Risk checks wait while a whistled swimmer swims back.
+- **Lessons that are a guess among swimmers**: in a lesson every wrong tap (a fine swimmer, empty water) starts the count
+  again, the others stay well clear of the rips, and the whistle lesson needs three. Otherwise a blind thumb finished them.
+- **A portrait view of a wide beach**: the world is squeezed sideways for the picture only (VX = 0.62; the rules keep metres),
+  taps on people use their position on the screen, other taps a ray onto the water. The tower itself is hidden: the camera
+  is your eyes up on it.
+- Foam and rip shading need soft canvas textures (radial and side-faded gradients), or they read as grey tiles and runways.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
