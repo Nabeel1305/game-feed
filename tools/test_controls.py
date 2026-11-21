@@ -199,7 +199,7 @@ def ladder(browser, base, g, errs):
     t = time.time()
     while time.time() - t < 25 and not pg.evaluate(c['won']):
         pg.evaluate(c['win']); pg.wait_for_timeout(200)
-    ok(wait(pg, f"JSON.parse(localStorage.getItem('{pre}level')) === 6 && JSON.parse(localStorage.getItem('{pre}unlocked')) === 6", 3000),
+    ok(wait(pg, f"JSON.parse(localStorage.getItem('{pre}level')) === 6 && JSON.parse(localStorage.getItem('{pre}unlocked')) === 6", 9000),      # (a slow runner draws a heavy 3D game at a frame or two a second)
        T('winning his highest level opens and saves the next'), f"level {saved(pg, pre)}, unlocked {saved(pg, pre, 'unlocked')}")
     ok(wait(pg, f"(() => {{ const e = document.querySelector('{c['end']}'); return !!e && e.getClientRects().length > 0; }})()", 9000), T('the result screen appears'))
     pg.wait_for_timeout(300)
