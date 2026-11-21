@@ -1019,6 +1019,18 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - Node replicas of the browser tests (`/tmp/sumofull.js`: all 13,056 blind games in 20 s with two processes) made the
   balancing quick; the blind count must be checked after every change to the physics, not just the rivals.
 
+### 88. Memory Lane (`games/memory/`): his idea 23, five kinds of remembering (built on the 2D starter kit)
+- **Every question is made with the scene** (the options, the missing thing, the change), so the answer is checked against what
+  was really shown, and the review can draw WHAT WAS THERE beside YOUR ANSWER with rings.
+- **One difficulty at a time**: things (3 to 10), look-alikes (same family or another plate colour) and a shorter look each
+  step up on their own level of every three. The honest robot has a memory that fills up (each thing remembered with a
+  chance that falls with load, look-alikes and too short a look); without the gentler curve it fell off a cliff after 20.
+- **The kit defines `pick`** (part1): a game function of the same name breaks the page; this one is `tapSlot`.
+- **An object of answers is built in full**: `{ missing: `...${itemName(r.gone)}` }[type]` ran every entry and crashed on the
+  others; use functions.
+- **Emoji are drawn once per size** onto small canvases and copied (text with emoji is slow); wrapped text is cached.
+- Lessons count two right answers **in a row**, so blind tapping cannot luck its way through the lesson (one in twenty).
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

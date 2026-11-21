@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 88,
+  "next_number": 89,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -2988,20 +2988,42 @@
         "P12"
       ],
       "summary": "His idea 21: you are a huge sumo wrestler. A floating stick (up = into him) and three big buttons: PUSH (tap a shove, hold a big push), GRIP (hold his belt: drive, pull, turn), DODGE. Lean, stamina and the opening charge matter: pull or sidestep a man who lunges, turn him at the edge. Seven rivals (chargers, anchors, pullers), tournaments every fifth level, technique names in slow motion."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 88,
       "id": "memory",
       "name": "Memory Lane",
-      "set": 16,
-      "intensity": 1,
-      "thumbs": 1,
-      "summary": "his idea 23: see a scene, it hides, recall or rebuild it; positions, sequences, what is missing, what changed.",
-      "spec": "specs/his-list-2026-11-20.md",
-      "from": "his idea"
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-21",
+      "path": "games/memory/index.html",
+      "artifact": "https://claude.ai/artifact/7ZowZ6JzzBgUhvZbiW6nXW",
+      "artifact_slug": "352b8f8d-beb9-491d-ae0c-7afb424597f5",
+      "apk_repo": null,
+      "storage_prefix": "mem.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Look closely… now what was there?",
+        "genre": "Memory / puzzle",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Fredoka",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P5",
+        "P13",
+        "P12"
+      ],
+      "summary": "His idea 23: look at a little scene, it is covered, then answer: which were there, put them back (drag), the order they lit up (each with its note), what is missing, what changed. Five rounds a level, 80% passes; your answer beside the scene with the differences ringed. More things, look-alikes and a shorter look, one at a time; a longer look and a Timed mode on the home screen."
+    }
+  ],
+  "planned": [
     {
       "number": 89,
       "id": "spy",
