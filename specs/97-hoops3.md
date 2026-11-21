@@ -3,7 +3,7 @@
 ## The idea (his words, then mine)
 His idea 14 (20 Nov 2026): "play full basketball matches, including movement, passing, defending and shooting", with his
 directions (specs/his-list-2026-11-20.md). Mine: three-a-side on a compact full court, sideways, built on Ice Hockey's frame
-(the same sideways stage, stick and three buttons), with basketball's own rules: a shot meter, layups and dunks, a 14-second
+(the same sideways stage, stick and three buttons), with basketball's own rules: a shot meter, layups and dunks, a 12-second
 shot clock, steals that can leave you off balance, two- and three-pointers.
 
 **3D:** a raised sideline camera over a park court at first (sunset, a chain-link fence, trees), then gyms and arenas with a crowd.
