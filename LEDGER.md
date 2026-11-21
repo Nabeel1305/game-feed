@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**97 games** so far. Next number: **98**.
+**98 games** so far. Next number: **99**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -105,6 +105,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 95 | **Bin Round** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/RcubQUAveDCoMU9tSRpmkL) | `games/binround/index.html` |
 | 96 | **Beach Watch** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/6iG5XZKSQ3wRGTHYUJQnxY) | `games/lifeguard/index.html` |
 | 97 | **Hoops 3v3** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/8A1QSknEYSt3PSPatoGo7m) | `games/hoops3/index.html` |
+| 98 | **Gridiron** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/HvQWqkpk5GnA3h1CkKC5dV) | `games/gridiron/index.html` |
 
 ## What each game is
 
@@ -205,10 +206,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 95. **Bin Round**: Ride on the back of a bin lorry along a calm street: tap a bin to fetch it, hold to empty it and let go in the green; recycling, garden waste and the odd armchair; residents wave, nothing can be lost.
 96. **Beach Watch**: Lifeguard on the tower: read the water, whistle drifters back, swim out to anyone in trouble and bring them in across the rip, flag the rips; miss two and the beach closes.
 97. **Hoops 3v3**: Three-a-side basketball played sideways: a stick and PASS / SHOOT / SPRINT, a shot meter with a moving green, layups and dunks, steals that can leave you off balance, a 12-second shot clock, and a three-game tournament.
+98. **Gridiron**: Five-a-side arcade American football, sideways: pick a play, SNAP, throw to a receiver's button or hand off and run; defend with SWITCH and TACKLE; replays of big plays.
 
 ## Up next (designed, not built yet)
 
-98. **Gridiron**: his idea 15: arcade American football; pick a play, throw to a receiver, run, tackle. Spec: `specs/his-list-2026-11-20.md`.
 99. **Rock Climb**: his idea 22: climb rock faces hold by hold; grip, stamina, routes, a safety rope. Spec: `specs/his-list-2026-11-20.md`.
 100. **Dentist**: his idea 30: examine patients, find the problems, treat them: cleaning first, then fillings, crowns, braces; comfort meter. Spec: `specs/his-list-2026-11-21.md`.
 101. **(my idea for set 18)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.

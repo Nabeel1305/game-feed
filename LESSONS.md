@@ -1171,6 +1171,23 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   (75%), their shooting is better, and matches are a little longer (2:20 to 2:50) so one lucky shot decides less.
 - test_play's blind run takes about 20 minutes for a two-thumb sports game with 2.5-minute matches: run it in the background.
 
+### 98. Gridiron (`games/gridiron/`): his idea 15, five-a-side American football (Hoops 3v3's sideways frame)
+- **Built on Hoops 3v3**: part1 and part5 (sideways stage, stick + three buttons) carried over; the buttons change with the
+  moment (`btnLabels`: HANDOFF/DODGE/TACKLE...) and a button floats over each receiver, coloured by how open he is.
+- **Separate challenge levels (two first downs, score from the 10, stop a drive) leaked wins to random tapping**: a random
+  run of four plays sometimes breaks one. They became the three lessons, and every level is a match: a random thumb wins a
+  play now and then, never a match, because the other team scores too.
+- **Random wins came from 7-0 matches where the AI offence did nothing**: every drive now starts from the 32 (overtime from the 50) rather
+  than the 45, so a lucky random play rarely goes the whole way, and a quarterback who runs past the line is a target for every
+  defender, not just the spy. Random moves: 0 of 480; blind: 0 of 650 (node) before the browser run.
+- **Line play needs rules or every collision is a block**: only designated blockers can hold a man (with immunity after), the
+  quarterback is clamped behind the line unless you steer him up, and rushers go round the centre instead of into him.
+- **Lessons must count only the player's own deeds**: AI teammates were making the lesson-3 tackles, and a touchdown did not
+  count as "past the yellow line".
+- **A replay is cheap**: record each live frame (positions, ball, lines: about 70 numbers), and to show it swap the numbers
+  into the game, draw, swap them back; the rules never step while it runs. Offer it after a touchdown or a 15-yard gain.
+- Set a down's spot by calling `toPick()` after changing `G.los`, or the players stay where the last play lined them up.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
