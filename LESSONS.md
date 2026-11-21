@@ -1047,6 +1047,18 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **A clock (the shift change)** ends every mission, so blind play ends too (1,984 blind games in 20 s).
 - A furniture grid for lookups (thousands a second); the guards' fans are cast against walls on the floor each frame.
 
+### 90. Mocktail Bar (`games/mocktail/`): his idea 24, a bar with a taste system (built on Hoop Shot's shell)
+- **3D above, a 2D tray below**: the counter, the customer and the glass in the top 60%; tabs of bottles, glasses, ice,
+  tools, a big hold-to-POUR and SERVE under the thumb. The camera's view is shifted up (`setViewOffset` onto a taller
+  picture) so the glass sits just above the tray; in portrait a wide view (fov 72) keeps the customer from filling it.
+- **Every taste comes from what is in the glass** (sweet, sour, bitter, fruity, fizz, weight per ingredient), so a feeling
+  order accepts any drink that fits; `solve()` checks every feeling is possible with the bottles open on that level.
+- **A dead branch hid a bug**: an `if (false) {...} else {...}` left from editing made the else overwrite every feeling order,
+  so no customer ever asked for a feeling; the touch test that looks for one caught it. Search for `if (false)` after edits.
+- **Forgiving gestures**: a shake counts only after 26 px of travel each way; a stir adds only smooth turns (no jumps over
+  1.2 rad); a garnish dropped near the glass, or simply tapped, lands.
+- The test hook gives the page's lexical names to Playwright through `__sim.x()` (they are not on `window`).
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
