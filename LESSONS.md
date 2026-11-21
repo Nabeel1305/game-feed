@@ -1031,6 +1031,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Emoji are drawn once per size** onto small canvases and copied (text with emoji is slow); wrapped text is cached.
 - Lessons count two right answers **in a row**, so blind tapping cannot luck its way through the lesson (one in twenty).
 
+### 89. Spy (`games/spy/`): his idea 18, stealth in a building of rooms (built on Roach Run's shell)
+- **A grid of 1 m cells** (walls, shut/open/locked doors, pavement) with furniture on top (desks hide a crouching spy,
+  cupboards and closets always block sight); rooms in rows with a corridor through the middle; every room reachable.
+- **Name clashes with the kit**: a game function called `noise` replaced the juice kit's sound `noise()` and broke every sound
+  (now `makeNoise`); check new top-level names against `tools/juice-kit.js` and part1.
+- **Doorways are a metre wide and the spy 0.6 m**: movement lines her up with the cell she is in when she pushes into a
+  wall (sliding into doors); without it a thumb (and the robot) stuck on door frames.
+- **ACTION has one label at a time**: walking at a door puts OPEN DOOR first, even beside a cupboard.
+- **Running footsteps**: the walk step counter reset before the run one could fire; nobody ever heard running.
+- **The honest robot**: A* over a cost grid (cells in a guard's cone cost a lot, near a guard less), waits when its next
+  steps are seen, steps out of sight when a guard grows curious (trying directions along which its whole body fits), runs
+  when spotted (a cupboard if one is near), keeps still while a guard searches nearby, comes out of a cupboard after a while
+  if nobody is looking, and picks the nearest desk it can actually reach (one behind a locked door means: keycard first).
+- **A clock (the shift change)** ends every mission, so blind play ends too (1,984 blind games in 20 s).
+- A furniture grid for lookups (thousands a second); the guards' fans are cast against walls on the floor each frame.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

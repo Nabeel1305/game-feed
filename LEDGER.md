@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**88 games** so far. Next number: **89**.
+**89 games** so far. Next number: **90**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -96,6 +96,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 86 | **Sheepdog** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/KrB8iBmTv8RFNTsrXVe8L3) | `games/sheepdog/index.html` |
 | 87 | **Sumo** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/VEexSYk1McG5bP4BVL8cCM) | `games/sumo/index.html` |
 | 88 | **Memory Lane** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/7ZowZ6JzzBgUhvZbiW6nXW) | `games/memory/index.html` |
+| 89 | **Spy** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UnrV6PKUb59o1q6VQWGePJ) | `games/spy/index.html` |
 
 ## What each game is
 
@@ -187,10 +188,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 86. **Sheepdog**: Mine: you are the sheepdog. Hold on the field and she runs there, let go and she lies down, tap to bark. Sheep are pushed, not commanded: they flow away from her, keep together and scatter if rushed. Gather strays, drive the flock round trees and over the bridge into the pen before sunset; lambs, a stubborn ram, and a fox at dusk.
 87. **Sumo**: His idea 21: you are a huge sumo wrestler. A floating stick (up = into him) and three big buttons: PUSH (tap a shove, hold a big push), GRIP (hold his belt: drive, pull, turn), DODGE. Lean, stamina and the opening charge matter: pull or sidestep a man who lunges, turn him at the edge. Seven rivals (chargers, anchors, pullers), tournaments every fifth level, technique names in slow motion.
 88. **Memory Lane**: His idea 23: look at a little scene, it is covered, then answer: which were there, put them back (drag), the order they lit up (each with its note), what is missing, what changed. Five rounds a level, 80% passes; your answer beside the scene with the differences ringed. More things, look-alikes and a shorter look, one at a time; a longer look and a Timed mode on the home screen.
+89. **Spy**: His idea 18: get into the building from the van, photograph the secret file and get out unseen. A floating stick (push far to run), CROUCH and one ACTION button that says what it does (open, hide, photograph, take, throw a coin). Guards' sight shown as torch fans cut by walls; a glimpse makes them look, then come, then run. Keycards, cameras, files on one of several desks as you go.
 
 ## Up next (designed, not built yet)
 
-89. **Spy**: his idea 18: sneak in, photograph the secret document, escape; vision cones, noise, gadgets. Spec: `specs/his-list-2026-11-20.md`.
 90. **Mocktail Bar**: his idea 24: mix alcohol-free drinks to order; pour, shake, stir, garnish; customers say what was wrong. Spec: `specs/his-list-2026-11-20.md`.
 91. **(my idea for set 16)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 92. **Ice Hockey**: his idea 16: three skaters and a goalie a side; pass, shoot, burst; rebounds and boards. Spec: `specs/his-list-2026-11-20.md`.
@@ -201,4 +202,15 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 97. **Hoops 3v3**: his idea 14: three-a-side basketball matches; move, pass, shoot with a timing meter, defend. Spec: `specs/his-list-2026-11-20.md`.
 98. **Gridiron**: his idea 15: arcade American football; pick a play, throw to a receiver, run, tackle. Spec: `specs/his-list-2026-11-20.md`.
 99. **Rock Climb**: his idea 22: climb rock faces hold by hold; grip, stamina, routes, a safety rope. Spec: `specs/his-list-2026-11-20.md`.
-100. **(my idea for set 18)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
+100. **Dentist**: his idea 30: examine patients, find the problems, treat them: cleaning first, then fillings, crowns, braces; comfort meter. Spec: `specs/his-list-2026-11-21.md`.
+101. **(my idea for set 18)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
+102. **Sandworm Rider**: his idea 25: ride a giant original sandworm through dunes, canyons and storms; steer, surge, brace, checkpoints. Spec: `specs/his-list-2026-11-21.md`.
+103. **Skydive**: his idea 28: jump, steer the freefall, open the parachute, land on the target; rings, wind, flare. Spec: `specs/his-list-2026-11-21.md`.
+104. **Detective**: his idea 33: investigate scenes, interview suspects, connect clues on a board, accuse with evidence. Spec: `specs/his-list-2026-11-21.md`.
+105. **Convoy Escort**: his idea 34: command an escort ship, hunt submarines with sonar and depth charges, keep the convoy safe. Spec: `specs/his-list-2026-11-21.md`.
+106. **(my idea for set 19)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
+107. **Joust**: his idea 26: charge on horseback, aim the lance, brace at contact, unseat rivals; tournaments. Spec: `specs/his-list-2026-11-21.md`.
+108. **Splash Course**: his idea 32: an obstacle course above water: giant balls, sweeper, punching wall, conveyor, rotating cross; funny falls. Spec: `specs/his-list-2026-11-21.md`.
+109. **Surf**: his idea 29: catch waves, carve, ride the barrel, tricks off the lip; balance and wipeouts. Spec: `specs/his-list-2026-11-21.md`.
+110. **Santa's Round**: his idea 31: fly the sleigh, land on roofs, sneak in, leave the right presents, do not wake anyone. Spec: `specs/his-list-2026-11-21.md`.
+111. **(my idea for set 20)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.

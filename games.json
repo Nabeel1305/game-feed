@@ -3026,12 +3026,12 @@
       "number": 89,
       "id": "spy",
       "name": "Spy",
-      "status": "in-progress",
+      "status": "testing",
       "version": "0.1.0",
       "added": "2026-11-21",
       "path": "games/spy/index.html",
-      "artifact": null,
-      "artifact_slug": null,
+      "artifact": "https://claude.ai/artifact/UnrV6PKUb59o1q6VQWGePJ",
+      "artifact_slug": "e10db594-021f-4610-854f-d22874c7ab49",
       "apk_repo": null,
       "storage_prefix": "spy.",
       "feed": {
@@ -3047,22 +3047,16 @@
         "font": "Special Elite",
         "live": "window.__sim && window.__sim.playing()"
       },
-      "principles": [],
-      "summary": ""
+      "principles": [
+        "P4",
+        "P6",
+        "P15",
+        "P17"
+      ],
+      "summary": "His idea 18: get into the building from the van, photograph the secret file and get out unseen. A floating stick (push far to run), CROUCH and one ACTION button that says what it does (open, hide, photograph, take, throw a coin). Guards' sight shown as torch fans cut by walls; a glimpse makes them look, then come, then run. Keycards, cameras, files on one of several desks as you go."
     }
   ],
   "planned": [
-    {
-      "number": 89,
-      "id": "spy",
-      "name": "Spy",
-      "set": 16,
-      "intensity": 3,
-      "thumbs": 2,
-      "summary": "his idea 18: sneak in, photograph the secret document, escape; vision cones, noise, gadgets.",
-      "spec": "specs/his-list-2026-11-20.md",
-      "from": "his idea"
-    },
     {
       "number": 90,
       "id": "mocktail",
