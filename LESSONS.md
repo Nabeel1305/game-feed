@@ -1071,6 +1071,27 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   trunk looks like a "thick hinge" while cutting.
 - Fences are five posts (five small circles) in a row beside the strip, so the hit test stays circle-against-segment.
 
+### 92. Ice Hockey (`games/hockey/`): his idea 16, three-a-side on a compact rink (Timber's shell, turned sideways like Eleven)
+- **Sideways on the kit shell**: wrap everything from `#gl` to the last overlay in `<div id="stage">`, swap `position:fixed`
+  for `absolute` in the CSS, take Eleven's `resize()`/`toStage()`, pass `dims: () => [W, H]` to `W3.init`, and turn every
+  touch through `toStage` first. The pause button goes top left, out of the scoreboard.
+- **Blind hockey is hard to beat on a small rink**: random thumbs reach the slot often. What finally parted blind from honest
+  (25,920 blind matches, 23 wins; random 0 in 240):
+  - The stick aims. The shot goes where the stick's line meets the goal line (within a metre of the posts snaps on), and
+    off the net it goes wide.
+  - No aim goes straight at the goalie and he has it. From more than 12 m he sees it all the way (99.7%).
+  - Facing away gives a weak, wild backhand. A shot snatched the moment the puck arrives is weak, unless it is a one-timer
+    from the slot, facing the net.
+  - A pass or loose puck that slides at the net is the goalie's. A goal needs a shot, or a rebound from your own aimed shot.
+  - A poke only works facing the puck, and a steal gives the puck straight to the poker. Otherwise the victim, who stays
+    close, simply picks it up again.
+  - Their forwards get an "open shot" bonus when nobody is within 2.5 m: they punish a team that does not defend.
+- **Goalie bugs**: deciding a save only when the shot was 0.12 s out missed slow, sideways pucks and pucks projected just
+  wide that crossed just inside. Watch by distance too, keep watching a shot heading wide, and give the goalie his chance
+  at the moment of crossing if nothing decided it yet.
+- **An AI carrier frozen in a corner** (its dribble target was clamped onto its own spot): dribble toward the slot instead.
+- The 2D overlay draws the puck's trail from projected history, so the puck never gets lost among the lines.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

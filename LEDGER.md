@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**91 games** so far. Next number: **92**.
+**92 games** so far. Next number: **93**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -99,6 +99,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 89 | **Spy** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/UnrV6PKUb59o1q6VQWGePJ) | `games/spy/index.html` |
 | 90 | **Mocktail Bar** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/NrWYydXp9zpa7CVj3kNZ79) | `games/mocktail/index.html` |
 | 91 | **Timber** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/U1EJ7pKgjz82uEsUNSfrUC) | `games/timber/index.html` |
+| 92 | **Ice Hockey** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/EzMRbcsDsjgxH4pd9X6roQ) | `games/hockey/index.html` |
 
 ## What each game is
 
@@ -193,10 +194,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 89. **Spy**: His idea 18: get into the building from the van, photograph the secret file and get out unseen. A floating stick (push far to run), CROUCH and one ACTION button that says what it does (open, hide, photograph, take, throw a coin). Guards' sight shown as torch fans cut by walls; a glimpse makes them look, then come, then run. Keycards, cameras, files on one of several desks as you go.
 90. **Mocktail Bar**: A mocktail bar: read the order (or a feeling), pick the glass, pour to the parts, muddle, shake, stir or layer, garnish and serve; the customer's face and words say what was right or wrong.
 91. **Timber**: Fell trees into the open strip: drag to aim, hold NOTCH, hold SAW and let go to leave the hinge, tap WEDGE; lean, gusts, hikers and cabins decide where it may go.
+92. **Ice Hockey**: Three-on-three ice hockey, played sideways: skate with the stick, pass, tap or hold to shoot, one-timers; on defence switch and poke. Two-minute matches or first to three.
 
 ## Up next (designed, not built yet)
 
-92. **Ice Hockey**: his idea 16: three skaters and a goalie a side; pass, shoot, burst; rebounds and boards. Spec: `specs/his-list-2026-11-20.md`.
 93. **Tennis**: his idea 17: rallies to matches; joystick to move, swipe to swing; serves, lobs, slices, volleys. Spec: `specs/his-list-2026-11-20.md`.
 94. **Metro Map**: his idea 19: draw metro lines on a 2D city map so passengers get where they are going. Spec: `specs/his-list-2026-11-20.md`.
 95. **Bin Round**: his idea 20: work at the back of a bin lorry; calm, cannot lose. Spec: `specs/his-list-2026-11-20.md`.
