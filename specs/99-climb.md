@@ -82,9 +82,9 @@ Lessons: 1 REACH (three GOLD holds in a row; any other move starts the count aga
 bar is full), 3 THE ROPE (climb past two bolts).
 
 ## Engagement factors chosen
-P4 the near goal always in sight (the next lit hold, the next bolt, the top ledge), P6 every input answers back (a grab sound
-per hold, chalk puffs, the clack of the clip), P13 visible personal best (best time and coins per level), P17 a calm game with
-tension that comes and goes (rest, push, rest). Sound rules S1-S11.
+P4 fair, readable failure (shaking arms, GRIP GOING!, breathing and a moment to rest before a slip; the rope and the words
+say why), P6 every input answers back (a grab sound per hold, chalk puffs, the clack of the clip), P13 visible personal best
+(best time and coins per level), P14 goal-gradient (the height against the top, the next bolt, the next lit hold). Sound rules S1-S11.
 Longevity L1-L10: three short lessons; one thumb, drag and let go; falls explained (where your grip went); the top in sight;
 height, time, moves and rests after every climb; places, overhangs, jumps; the hard line or the restful one; Play it again at
 once; kits and the kit bag (chalk, shoes, forearms); best time per level.
