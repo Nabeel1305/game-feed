@@ -1304,6 +1304,17 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Removing a branch leaves an orphan `else`**: twice now (sandworm's free mode removed from saveResult and the end card);
   run `node --check` on every part after a structural edit.
 
+### 106. Pottery Wheel (`games/pottery/`): mine, throwing a pot to an order (upright, one thumb, 3D)
+- **A profile is the whole game**: the pot is radius-by-height (half-centimetre slices), a wall thickness and a height; pulls
+  keep the volume (thinner, taller), shaping pulls slices towards the thumb with a soft bump, trimming cuts the height. The
+  3D pot is a LatheGeometry of that profile (outside, rim, inside), rebuilt only when it changes.
+- **Height must be correctable**: a single pull overshot the order by 25% and nothing could bring it back; the trim wire fixed
+  it (and real potters trim the rim anyway).
+- **A plain cylinder must lose to every order** (a bowl as the first, curved shapes only), or pulling alone would pass.
+- **Measure the screen mapping from the camera** (two projected points of the pot's plane) for touches and the dotted outline;
+  it stays right when the camera moves.
+- **A speed threshold must be reachable by a real flick**: tearing at 95 cm/s never happened in a touch test; 75 down to 45.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 106,
+  "next_number": 107,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3583,18 +3583,43 @@
         "P15"
       ],
       "summary": "His idea 34: command an escort ship guarding merchant ships to the harbour. Steer with a heavy wheel and a throttle; hydrophones and sonar pings show where submarines may be (rings that tighten when sure and grow when old); depth charges at shallow, medium or deep, the deck gun for surfaced boats; stay close and they will not fire; crew teams repair, fight fires and rescue. Night runs, rescues, a damaged ship, other escorts later."
+    },
+    {
+      "number": 106,
+      "id": "pottery",
+      "name": "Pottery Wheel",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-22",
+      "path": "games/pottery/index.html",
+      "artifact": "https://claude.ai/artifact/CKQSrVfQeUR3YjaxGHgR6S",
+      "artifact_slug": "5ba65cb0-f3d3-46ac-94d8-1d7dde404853",
+      "apk_repo": null,
+      "storage_prefix": "pot.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Throw a pot on the wheel: pull it up, shape it, fire it.",
+        "genre": "Craft / calm",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Fraunces",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P6",
+        "P13",
+        "P17",
+        "P21"
+      ],
+      "summary": "Mine, the calm one for set 19: a customer's order (a bowl, cup, vase, jug, bottle, dish, tall vase or moon jar, and a glaze). Centre the clay with steady pressure, pull the walls up with steady drags (too fast tears), shape the spinning pot to the dotted outline, trim the rim, glaze and fire it; thin or leaning walls slump; rare kiln surprises.",
+      "from": null
     }
   ],
   "planned": [
-    {
-      "number": 106,
-      "id": "mine19",
-      "name": "(my idea for set 19)",
-      "set": 19,
-      "summary": "One of mine, to balance the set (picked when the set is built).",
-      "spec": "specs/ideas.md",
-      "from": "mine"
-    },
     {
       "number": 107,
       "id": "joust",

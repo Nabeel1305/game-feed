@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**105 games** so far. Next number: **106**.
+**106 games** so far. Next number: **107**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -113,6 +113,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 103 | **Skydive** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/MNp1BHLVL7mAUuG2g3LBQS) | `games/skydive/index.html` |
 | 104 | **Detective** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/DoNRuvKurjoX26yW9XdhHv) | `games/detective/index.html` |
 | 105 | **Convoy Escort** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/69SNiM1Z8ufMyXTYu3R4xD) | `games/convoy/index.html` |
+| 106 | **Pottery Wheel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CKQSrVfQeUR3YjaxGHgR6S) | `games/pottery/index.html` |
 
 ## What each game is
 
@@ -221,10 +222,10 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 103. **Skydive**: His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode.
 104. **Detective**: His idea 33: generated cases (thefts, sabotage, fraud, disappearances, locked rooms) in a house, hotel, museum, train or office. Tap objects in the 3D room, turn them over to find hidden marks, question suspects and show them clues (liars crack, secret-keepers own up), link clues in the notebook, then accuse with who, how, when and two proving clues.
 105. **Convoy Escort**: His idea 34: command an escort ship guarding merchant ships to the harbour. Steer with a heavy wheel and a throttle; hydrophones and sonar pings show where submarines may be (rings that tighten when sure and grow when old); depth charges at shallow, medium or deep, the deck gun for surfaced boats; stay close and they will not fire; crew teams repair, fight fires and rescue. Night runs, rescues, a damaged ship, other escorts later.
+106. **Pottery Wheel**: Mine, the calm one for set 19: a customer's order (a bowl, cup, vase, jug, bottle, dish, tall vase or moon jar, and a glaze). Centre the clay with steady pressure, pull the walls up with steady drags (too fast tears), shape the spinning pot to the dotted outline, trim the rim, glaze and fire it; thin or leaning walls slump; rare kiln surprises.
 
 ## Up next (designed, not built yet)
 
-106. **(my idea for set 19)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
 107. **Joust**: his idea 26: charge on horseback, aim the lance, brace at contact, unseat rivals; tournaments. Spec: `specs/his-list-2026-11-21.md`.
 108. **Splash Course**: his idea 32: an obstacle course above water: giant balls, sweeper, punching wall, conveyor, rotating cross; funny falls. Spec: `specs/his-list-2026-11-21.md`.
 109. **Surf**: his idea 29: catch waves, carve, ride the barrel, tricks off the lip; balance and wipeouts. Spec: `specs/his-list-2026-11-21.md`.

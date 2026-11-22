@@ -182,3 +182,4 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 19 | 103 | Skydive | 28 (sideways, stick + TUCK/CHUTE/FLARE, rings, wind, rooftops, scenic mode) | 2 | 2 |
 | 19 | 104 | Detective | 33 (generated cases, 3D rooms, turn objects, show clues, notebook links, who/how/when/proof) | 1 | 1 |
 | 19 | 105 | Convoy Escort | 34 (sideways, wheel + throttle, ping/drop/depth/gun, crew jobs, deterrence, other escorts later) | 3 | 2 |
+| 19 | 106 | Pottery Wheel (mine) | centre, pull, shape and trim a pot to a customer's outline; glaze and fire it | 1 | 1 |
