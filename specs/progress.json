@@ -3,7 +3,10 @@
  "shared": [
   "tools/world3d.js: a fill light from behind the player's eye; brighter night, dusk, rain and storm; thinner fog. Affects all 82 3D games. Regression: every game loads; robot play of all 103 showed no errors; pictures of 20 dark-level games looked at before and after.",
   "tools/juice-kit.js: the band (music) for 100 games; a Settings card added where missing. Its room echo was first a convolution reverb: two touch tests (Tennis, Ice Hockey) then failed on timing, so it is now two cheap feedback echoes; both pass again. Regression: every game's own touch test re-run (104 have one; all pass, three needed a second run under load: Powder, Drift Kings, Kart Kingdom), tools/test_controls.py for all 111, tools/check.py.",
-  "Kart Kingdom's own `music` renamed `trackMusic` (it clashed with the kit)."
+  "Kart Kingdom's own `music` renamed `trackMusic` (it clashed with the kit).",
+  "Regression at the end of the second pass (22 Nov, build 720f575): `tools/check.py` all 111 games pass; `tools/test_controls.py` for all 111 in one run, 3540 checks pass; `tools/win_sweep.py` (a win in the first instant and a moment later) all 103 games from 9 on: the result card comes, nothing throws; each changed game's `test_touch.py` and `test_play.py` pass (the three team games' long test_play excepted).",
+  "Splash Course's empty-ghost crash was the reason GitHub's checks failed on both earlier pushes of 22 Nov (nothing was published in between; the app's eight games were not affected). `tools/test_controls.py` now goes on to the next game when one game's test falls over, and prints that game's page errors.",
+  "GitHub's own checks passed on that build (run 45038106717, 22 Nov): the first green run since Santa's Round."
  ],
  "games": {
   "bottle-cap-flick": {
