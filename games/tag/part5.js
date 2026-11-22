@@ -87,8 +87,9 @@ $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (easy): the thumb lands anywhere and drags: a floating stick (screen right is world +x, screen down is world +z).
-// Two quick taps: DASH.
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (ui.stick && ui.stick.id !== e.pointerId) return; ui.stick = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now() }; tapAt(G); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+// The DASH button (bottom right): a burst of speed. (Two quick taps still dash too.)
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; { const D = dashBtn(); if (Math.hypot(e.clientX - D.x, e.clientY - D.y) < D.r + 10 * k) { dash(G); return; } }      /* 22 Nov 2026: a DASH button (two quick taps was a hidden gesture; it still works) */
+  if (ui.stick && ui.stick.id !== e.pointerId) return; ui.stick = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now() }; tapAt(G); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const s = ui.stick; if (!s || s.id !== e.pointerId || !G || G.over || paused) return; s.x = e.clientX; s.y = e.clientY; const R = 46 * k, dx = s.x - s.x0, dy = s.y - s.y0, m = Math.hypot(dx, dy);
   if (m > R) { s.x0 = s.x - dx / m * R; s.y0 = s.y - dy / m * R; }      // the stick follows the thumb if it wanders
   if (m > 6 * k) stick(G, dx / R, dy / R); });
@@ -135,7 +136,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  stick(x, z) { stick(G, x, z); }, dash() { return dash(G); }, tapAt() { return tapAt(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
+  stick(x, z) { stick(G, x, z); }, dash() { return dash(G); }, dashBtn() { return dashBtn(); }, tapAt() { return tapAt(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

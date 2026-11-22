@@ -89,14 +89,14 @@ $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (two thumbs): the left thumb lands anywhere on the left and slides (a floating stick: up runs away from you, into the
-// room); the right thumb holds SPRINT, taps HIDE or DROP when they show. A lost touch never leaves the roach running.
+// room); push it all the way and the roach sprints; HIDE and DROP are taps when they show. A lost touch never leaves the roach running.
 const inR = (r, x, y, p = 8) => r && x >= r.x - p && x <= r.x + r.w + p && y >= r.y - p && y <= r.y + r.h + p;
 let runId = null;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const B = btnRects(G), x = e.clientX, y = e.clientY;
-  if (inR(B.hide, x, y)) { hideBtn(G); return; } if (inR(B.drop, x, y)) { dropBtn(G); return; } if (inR(B.run, x, y, 14)) { runId = e.pointerId; sprint(G, true); return; }
+  if (inR(B.hide, x, y)) { hideBtn(G); return; } if (inR(B.drop, x, y)) { dropBtn(G); return; }
   if (ui.drag || x > W * 0.62) return; ui.drag = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const R = 46 * k; stick(G, clamp((d.x - d.x0) / R, -1, 1), clamp((d.y0 - d.y) / R, -1, 1)); });
-function endTouch(e) { if (e.pointerId === runId) { runId = null; if (G) sprint(G, false); } const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) stick(G, 0, 0); }
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const R = 46 * k; const sx = clamp((d.x - d.x0) / R, -1, 1), sz = clamp((d.y0 - d.y) / R, -1, 1); stick(G, sx, sz); sprint(G, Math.hypot(sx, sz) > 0.92); });      /* 22 Nov 2026: no SPRINT button; a full push sprints, a gentle one walks */
+function endTouch(e) { if (e.pointerId === runId) { runId = null; if (G) sprint(G, false); } const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) { stick(G, 0, 0); sprint(G, false); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const KEYS = new Set(); const keyStick = () => { if (!G || G.over || paused) return; const x = (KEYS.has('ArrowRight') || KEYS.has('KeyD') ? 1 : 0) - (KEYS.has('ArrowLeft') || KEYS.has('KeyA') ? 1 : 0), z = (KEYS.has('ArrowUp') || KEYS.has('KeyW') ? 1 : 0) - (KEYS.has('ArrowDown') || KEYS.has('KeyS') ? 1 : 0); stick(G, x, z); sprint(G, KEYS.has('ShiftLeft') || KEYS.has('ShiftRight')); };
 addEventListener('keydown', e => { if (e.repeat) return; KEYS.add(e.code); if (G && !G.over && !paused) { if (e.code === 'KeyH') hideBtn(G); if (e.code === 'KeyX') dropBtn(G); } keyStick(); }); addEventListener('keyup', e => { KEYS.delete(e.code); keyStick(); });

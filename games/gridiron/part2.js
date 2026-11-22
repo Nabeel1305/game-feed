@@ -8,7 +8,7 @@
 const RULES = [
   'Before each play, <b>pick a play</b>: its routes are drawn on the field. Then <b>SNAP</b>.',
   'Passing: tap the <b>button over a receiver</b> to throw. <b>Green</b> = open, <b>red</b> = covered. Short is safe; deep is a risk.',
-  'Running plays: <b>HANDOFF</b>. With the ball: the stick runs, <b>SPRINT</b> to go faster, <b>DODGE</b> just before a tackle.',
+  'Running plays: <b>HANDOFF</b>. With the ball: the stick runs (push it all the way to sprint), <b>DODGE</b> just before a tackle.',
   '<b>Four downs to gain ten yards</b> (the yellow line). Reach the end zone: <b>touchdown</b>, 7 points.',
   'Defending: <b>SWITCH</b> to the player nearest the ball, <b>TACKLE</b> when you are close.',
 ];

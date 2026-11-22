@@ -12,7 +12,7 @@ const RULES = [
   '<b>Left thumb</b>: a floating stick. Push the way you want to run.',
   'Touch food to pick it up. Bring enough back to <b>your crack</b> (the glowing gap) before the lights come on.',
   '<b>Crumbs</b> are light. <b>Big pieces</b> are worth three but slow you: <b>DROP</b> one to escape.',
-  '<b>SPRINT</b> (right thumb) uses the stamina bar; it refills when you walk, stop or hide.',
+  'Push the stick <b>all the way to SPRINT</b>: it uses the stamina ring, which refills when you walk, stop or hide.',
   'Out in the open (and in the <b>light</b>) people notice you. <b>Under furniture</b> they cannot see you; <b>HIDE</b> appears near a hiding place.',
   'A <b>shadow</b> on the floor: a slipper is coming where you were heading. Turn away! The <b>spray can</b> comes down before it sprays: get round the cloud.',
 ];
@@ -196,7 +196,7 @@ function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.st
 // ---------- LESSONS ----------
 const LESSONS = {
   1: [{ id: 'eat', title: 'RUN, GRAB, GET HOME', how: 'Left thumb: push the stick to run. Touch the crumbs to pick them up, then bring them back to your crack (the glowing gap). 3 crumbs.', need: 3 }],
-  2: [{ id: 'slip', title: 'DODGE THE SLIPPER', how: 'A shadow on the floor: a slipper is coming, aimed where you are heading. Turn away, or hold SPRINT (right thumb). Dodge 3.', need: 3, force: true }],
+  2: [{ id: 'slip', title: 'DODGE THE SLIPPER', how: 'A shadow on the floor: a slipper is coming, aimed where you are heading. Turn away, or push the stick all the way to SPRINT. Dodge 3.', need: 3, force: true }],
   3: [{ id: 'hide', title: 'HIDE FROM THE SPRAY', how: 'The can comes down and aims: get out of its line, under furniture, or into a hiding place with HIDE. Live through 2 sprays.', need: 2, force: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, force: !!LESSONS[G.N][0].force }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }

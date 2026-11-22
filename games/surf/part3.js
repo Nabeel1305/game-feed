@@ -85,9 +85,9 @@ function scrOf(x, y, z) { if (!V3 || V3.none) return null; return W3.screen(new 
 // ---------- events ----------
 function onEvent(G, e) { const P = G.p, sp = surferPos(G), sc = scrOf(sp.x, sp.y + 1, sp.z) || { x: W / 2, y: H / 2 };
   switch (e.k) {
-    case 'wave': ui.banner = { txt: G.lesson ? 'A WAVE IS COMING' : `WAVE ${e.n} OF ${G.free ? '∞' : G.cfg.rides}`, sub: 'Hold PADDLE, swipe up when it lifts you', t: 0, secs: 2.2, small: true }; ui.snap = true; TRAIL.length = 0; sfx.swell(); break;
+    case 'wave': ui.banner = { txt: G.lesson ? 'A WAVE IS COMING' : `WAVE ${e.n} OF ${G.free ? '∞' : G.cfg.rides}`, sub: 'Hold PADDLE, let go when the ring turns green', t: 0, secs: 2.2, small: true }; ui.snap = true; TRAIL.length = 0; sfx.swell(); break;
     case 'early': hint = { txt: 'Too early: wait until the wave lifts you (the ring turns green).', t: 0, secs: 2 }; sfx.no(); break;
-    case 'missed': hint = { txt: e.why === 'paddle' ? 'Missed it: hold PADDLE as the wave comes, to match its speed.' : 'Missed it: swipe up while the ring is green.', t: 0, secs: 2.6 }; sfx.no(); break;
+    case 'missed': hint = { txt: e.why === 'paddle' ? 'Missed it: hold PADDLE as the wave comes, to match its speed.' : 'Missed it: let go of PADDLE while the ring is green.', t: 0, secs: 2.6 }; sfx.no(); break;
     case 'stand': sfx.stand(); vibe(HAP.light); say('UP!', sc.x, sc.y - 30 * k, '#fff', 26); break;
     case 'move': { const big = e.pts >= 150; sfx.move(e.id, e.combo); if (e.id !== 'carve') vibe(HAP.light); burst(sc.x, sc.y + 20 * k, '#ffffff', big ? 26 : 12, big ? 260 : 160);
       say(`${e.label} +${e.pts}`, W / 2, H * 0.3, e.rep ? '#c8e8ff' : '#ffd36a', big ? 30 : 24); if (e.rep >= 2) tip2('rep', 'The same move again scores less: mix them up (snaps, cutbacks, airs, barrels).', 3); if (e.combo >= 2) say(`COMBO x${(1 + 0.2 * e.combo).toFixed(1)}`, W / 2, H * 0.3 + 30 * k, '#8fe0ab', 18); } break;
@@ -134,7 +134,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), P = G.p
     txt(G.free ? `wave ${G.ride} · free surf` : G.lesson ? 'lesson' : `wave ${G.ride} / ${G.cfg.rides}`, W / 2 + 120 * k, y + 1, '#fff', `700 ${Math.round(12 * k)}px ${BC}`); }
   if (G.phase === 'wait') { const sp = surferPos(G), sc = scrOf(sp.x, sp.y + 0.6, sp.z); if (sc) { const d = G.pt - G.tL, inWin = d >= -G.cfg.early && d <= G.cfg.win, u = clamp(1 - (G.tL - G.pt) / 2.5, 0, 1);
       ctx.lineWidth = 6 * k; ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(sc.x, sc.y, 34 * k, 0, TAU); ctx.stroke(); ctx.strokeStyle = inWin ? '#8fe0ab' : d > G.cfg.win ? '#ff8a7a' : '#ffd36a'; ctx.beginPath(); ctx.arc(sc.x, sc.y, 34 * k, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke();
-      txt(inWin ? 'SWIPE UP!' : G.crouch ? 'PADDLING…' : 'HOLD PADDLE', sc.x, sc.y - 52 * k, inWin ? '#8fe0ab' : '#fff', `400 ${Math.round(16 * k)}px ${TF}`);
+      txt(inWin ? 'LET GO!' : G.crouch ? 'PADDLING…' : 'HOLD PADDLE', sc.x, sc.y - 52 * k, inWin ? '#8fe0ab' : '#fff', `400 ${Math.round(16 * k)}px ${TF}`);
       ctx.fillStyle = 'rgba(0,40,60,.55)'; rrect(sc.x - 40 * k, sc.y + 44 * k, 80 * k, 8 * k, 4); ctx.fill(); ctx.fillStyle = G.paddle >= 0.55 ? '#8fe0ab' : '#ffd36a'; rrect(sc.x - 40 * k, sc.y + 44 * k, 80 * k * G.paddle, 8 * k, 4); ctx.fill(); } }
   if (G.phase === 'ride') { // the curl behind you, the balance
     const gap = P.x - G.xb, bx = 16 * k, by = H * 0.3; txt('curl', bx + 10 * k, by - 14 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(11 * k)}px ${BC}`); ctx.fillStyle = 'rgba(0,40,60,.55)'; rrect(bx, by, 16 * k, 100 * k, 6); ctx.fill(); const u = clamp(1 - gap / 20, 0, 1); ctx.fillStyle = u > 0.85 ? '#ff6a4a' : u > 0.55 ? '#ffd36a' : '#8fe0ab'; rrect(bx, by + 100 * k * (1 - u), 16 * k, 100 * k * u, 6); ctx.fill();
@@ -144,7 +144,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), P = G.p
   // the steering stick (left)
   if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); const dx = s2.x - s2.x0, dy = s2.y - s2.y0, m = Math.hypot(dx, dy), c = m > R ? R / m : 1; ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(s2.x0 + dx * c, s2.y0 + dy * c, 22 * k, 0, TAU); ctx.fill(); }
   else if (G.t < 8 || G.lesson) txt('STEER ⬆⬇', 110 * k, H - 70 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(13 * k)}px ${BC}`);
-  if (G.phase === 'ride' && P.air) txt('SWIPE TO SPIN · PUSH DOWN TO LAND', W * 0.7, H * 0.55, '#fff', `700 ${Math.round(13 * k)}px ${BC}`);
+  if (G.phase === 'ride' && P.air) txt('TAP TO SPIN · PUSH DOWN TO LAND', W * 0.7, H * 0.55, '#fff', `700 ${Math.round(13 * k)}px ${BC}`);
   // CROUCH / PADDLE (right)
   { const B = L.cr, on = G.crouch; ctx.globalAlpha = 0.92; ctx.fillStyle = on ? '#1a8aa8' : 'rgba(0,40,60,.55)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#8fe0ff'; ctx.lineWidth = 3; ctx.stroke();
     txt(G.phase === 'wait' ? 'PADDLE' : 'CROUCH', B.x, B.y - 4 * k, '#fff', `400 ${Math.round(18 * k)}px ${TF}`); txt('hold', B.x, B.y + 17 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`); ctx.globalAlpha = 1; }

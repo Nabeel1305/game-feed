@@ -88,7 +88,7 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
 cv.addEventListener('pointermove', e => { for (const side of ['L', 'R']) { const u = ui[side]; if (!u || u.id !== e.pointerId) continue; u.x = e.clientX; u.y = e.clientY; if (Math.hypot(u.x - u.x0, u.y - u.y0) > 12 * k) u.moved = true; if (side === 'L' && G) steer(G, -clamp((u.x - u.x0) / (46 * k), -1, 1)); } });      // screen right is the world's -x from behind the boat
 function endTouch(e) { for (const side of ['L', 'R']) { const u = ui[side]; if (!u || u.id !== e.pointerId) continue; ui[side] = null; if (!G) continue;
   if (side === 'L') steer(G, 0);
-  else { haul(G, false); const dx = u.x - u.x0, dy = u.y - u.y0; if (G.ph === 'chase' && -dy > 30 * k) { const len = Math.hypot(dx, dy); throwHarpoon(G, -Math.atan2(dx, -dy) * 0.9, 6 + clamp((len - 30 * k) / (230 * k), 0, 1) * 24); } } } }
+  else { haul(G, false); if (G.ph === 'chase' && e.type !== 'pointercancel' && (u.moved || performance.now() - u.t0 > 160)) { const A = throwAim(u, G); throwHarpoon(G, A.aim, A.dist); } } } }      /* 22 Nov 2026: hold, move the ring on the water, let go (the blind swipe was the same mistake as Hunter's) */
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections

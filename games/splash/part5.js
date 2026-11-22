@@ -33,7 +33,7 @@ function saveResult(G) {      // a win saves the next level at once (leaving bef
   const r = G.res, L = G.N; if (HEADLESS) return; const starsBefore = starsAll();
   if (practiceOn) { }
   else if (r.win) { streaks[L] = 0; stars[L] = Math.max(stars[L] || 0, r.stars); unlocked = Math.max(unlocked, L + 1); level = Math.min(unlocked, L + 1); store.set('level', level); store.set('unlocked', unlocked); store.set('stars', stars);
-    if (!best[L] || r.time < best[L]) { r.nb = !!best[L]; best[L] = +r.time.toFixed(2); store.set('best', best); if (r.trace) { store.set('ghost' + L, r.trace); ghostFor = null; } } }
+    if (!best[L] || r.time < best[L]) { r.nb = !!best[L]; best[L] = +r.time.toFixed(2); store.set('best', best); if (r.trace && r.trace.length > 1) { store.set('ghost' + L, r.trace); ghostFor = null; } } }
   else streaks[L] = (streaks[L] || 0) + 1;
   const before = rankOf(store.get('earned', 0)); store.set('bank', store.get('bank', 0) + r.coins); store.set('earned', store.get('earned', 0) + r.coins); r.rankUp = rankOf(store.get('earned', 0)) !== before ? rankOf(store.get('earned', 0)) : null;
   store.set('streaks', streaks); if ((r.best || 0) > store.get('streakBest', 0)) { r.streakNB = true; store.set('streakBest', r.best); }

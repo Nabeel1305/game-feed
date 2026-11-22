@@ -6,7 +6,7 @@
 
 const RULES = [
   '<b>Cast to the rings.</b> Pull your thumb down and let go: the float flies the other way. Fish are where the water rings.',
-  '<b>Wait for it.</b> Little dips are fish nibbling. Strike only when the float is <b>pulled right under</b>: flick your thumb up.',
+  '<b>Wait for it.</b> Little dips are fish nibbling. Strike only when the float is <b>pulled right under</b>: <b>tap</b>.',
   '<b>Too soon scares them off.</b> Strike at a nibble and the fish bolts; keep doing it and the whole lake goes quiet.',
   '<b>Hold to reel.</b> Keep the line tight or the hook falls out.',
   '<b>Let go when it runs.</b> When the fish thrashes and pulls, lift your thumb, or the line snaps. Hold again when it calms.',
@@ -220,7 +220,7 @@ function finish(G, win, why) {
 // ---------- LESSONS: the first three trips teach every move, two or three times each, before the clock runs ----------
 const LESSONS = {
   1: [{ id: 'cast', title: 'CAST TO THE RINGS', how: 'Pull your thumb down, then let go: the float flies the other way. Land it inside the rings, where fish are rising.', need: 2, ok: w => w === 'inspot', soft: 1 },
-      { id: 'strike', title: 'STRIKE WHEN IT GOES UNDER', how: 'Wait. A little dip is a nibble: leave it. When the float is pulled right under, flick your thumb up.', need: 2, ok: w => w === 'hooked', nib: 1, soft: 1, calm: 1 },
+      { id: 'strike', title: 'STRIKE WHEN IT GOES UNDER', how: 'Wait. A little dip is a nibble: leave it. When the float is pulled right under, TAP.', need: 2, ok: w => w === 'hooked', nib: 1, soft: 1, calm: 1 },
       { id: 'reel', title: 'HOLD TO REEL IT IN', how: 'Hold your thumb on the screen to wind the fish in. Lift it and the line goes slack.', need: 2, ok: w => w === 'caught', soft: 1, calm: 1 }],
   2: [{ id: 'run', title: 'LET GO WHEN IT RUNS', how: 'When the fish thrashes and the line screams, lift your thumb, or it snaps. Hold again when it calms down.', need: 3, ok: w => w === 'survived', calm: 1 },
       { id: 'steer', title: 'STEER IT FROM THE WEEDS', how: 'Watch which way the line moves. While you hold, drag your thumb the other way to pull it back out.', need: 2, ok: w => w === 'turned' }],

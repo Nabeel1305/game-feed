@@ -59,7 +59,7 @@ with sync_playwright() as p:
         touch('touchEnd', [(1, *a1)]); ok(E("__sim.G.stick.x") == 0 and E("__sim.G.stick.z") == 0, f'{tag}: letting go stops')
         a1 = toScreen(sx + 90, sy); touch('touchStart', [(1, *a0)]); touch('touchMove', [(1, *a1)]); pg.wait_for_timeout(40)
         st = E("[__sim.G.stick.x, __sim.G.stick.z]"); ok(st[0] < -0.8, f'{tag}: dragging right goes to the right of the picture', str(st)); touch('touchEnd', [(1, *a1)])
-        sp = toScreen(L['c']['x'], L['c']['y']); touch('touchStart', [(5, *sp)]); pg.wait_for_timeout(60); ok(E("__sim.x().me(__sim.G).sprint") is True, f'{tag}: holding SPRINT sprints'); touch('touchEnd', [(5, *sp)]); pg.wait_for_timeout(60); ok(E("__sim.x().me(__sim.G).sprint") is False, f'{tag}: and letting go stops it')
+        a2 = toScreen(sx, sy - 70); touch('touchStart', [(1, *a0)]); touch('touchMove', [(1, *a2)]); pg.wait_for_timeout(60); ok(E("__sim.x().me(__sim.G).sprint") is True, f'{tag}: a full push of the stick sprints'); touch('touchEnd', [(1, *a2)]); pg.wait_for_timeout(60)
         # defence
         E(FRESH); E("(() => { const G = __sim.G; G.att = 1; G.plan = [1]; G.drive = 0; __sim.x().startDrive(G); G.pause = 0; G.play = 'dive'; G.pickT = 0; __sim.x().snap(G); G.P.forEach(q => q.think = 99); })()")
         ok(E("__sim.x().btnLabels(__sim.G).a") == 'TACKLE' and E("__sim.x().btnLabels(__sim.G).b") == 'SWITCH', f'{tag}: on defence the buttons are TACKLE and SWITCH')

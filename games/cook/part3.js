@@ -109,7 +109,8 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D kitchen.', W / 2, H / 2); return; }
   const T = V.T, cam = W3.cam, g = G || idleG(), t = now, sp = spots(g); setWeather(g);
-  const asp = innerWidth / innerHeight; cam.position.set(0, TOP + 0.95 + (asp < 0.6 ? 0.22 : 0), 0.62 + (asp < 0.6 ? 0.26 : 0)); cam.fov = asp < 0.6 ? 64 : 50; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.4);
+  const asp = innerWidth / innerHeight; /* 22 Nov 2026 (the audit): on a phone the camera looks more nearly straight down, so the hob, the board and the food fill the screen instead of a dark wall above and glare below */
+  if (asp < 0.6) { cam.position.set(0, TOP + 1.5, 0.2); cam.fov = 60; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.34); } else { cam.position.set(0, TOP + 0.95, 0.62); cam.fov = 50; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.4); }
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   // stations
   V.pans.forEach((p, i) => { const s = sp.pans[i]; p.visible = V.burners[i].visible = !!s; if (s) { place(p, s.x, s.z); place(V.burners[i], s.x, s.z, TOP + 0.013); V.burners[i].material.opacity = 0.6 + Math.sin(t * 7 + i) * 0.1; } });

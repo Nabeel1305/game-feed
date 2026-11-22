@@ -33,6 +33,7 @@ with sync_playwright() as p:
         E("(() => { const G = __sim.G; G.pt = G.tL - 1.0; })()")
         touch('touchStart', [at(2, C['x'], C['y'])]); pg.wait_for_timeout(150); ok(E("__sim.G.crouch") is True, f'{tag}: holding PADDLE paddles')
         pg.wait_for_timeout(900); touch('touchEnd', [at(2, C['x'], C['y'])])
+        pg.wait_for_timeout(60); ok(E("__sim.G.phase") == 'ride', f'{tag}: letting go of PADDLE in the green ring stands you up', E("__sim.G.phase")); E("(() => { const G = __sim.G; G.phase = 'wait'; })()")
         E("(() => { const G = __sim.G; G.pt = G.tL; G.paddle = 1; })()")
         sw = (Wd * 0.75, Ht * 0.45)
         touch('touchStart', [at(3, sw[0], sw[1])]); touch('touchMove', [at(3, sw[0], sw[1] - 30)]); touch('touchMove', [at(3, sw[0], sw[1] - 70)]); touch('touchEnd', [at(3, sw[0], sw[1] - 70)]); pg.wait_for_timeout(100)

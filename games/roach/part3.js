@@ -124,8 +124,8 @@ function sync(V, g, dt) { const m = g.me, T = V.T; V.t += dt;
   V.puffs.forEach((P, i) => { const q = g.puffs[i]; P.visible = !!q; if (q) { P.position.set(q.x, q.r * 0.5, -q.z); P.scale.set(q.r, q.r * 0.7, q.r); P.material.opacity = 0.32 * q.a; } });
   // the camera: out of the crack at the start, then a little above and behind
   const asp = innerWidth / innerHeight, portrait = asp < 0.8; ui.look = m.out ? Math.min(1, ui.look + dt * 1.6) : 0; const f = ui.look * ui.look * (3 - 2 * ui.look);
-  const cx2 = clamp(m.x, 40, RW - 40), cz2 = m.z; const back = portrait ? 34 : 30, up = portrait ? 30 : 26;
-  const cpF = [cx2, up, -cz2 + back], clF = [cx2, 0, -cz2 - (portrait ? 26 : 22)], cpS = [CX, 4, 1.5], clS = [CX, 5, -90];
+  const cx2 = clamp(m.x, 40, RW - 40), cz2 = m.z; const back = portrait ? 23 : 21, up = portrait ? 21 : 18;      /* 22 Nov 2026: a third closer (the roach was a speck on the floor) */
+  const cpF = [cx2, up, -cz2 + back], clF = [cx2, 0, -cz2 - (portrait ? 17 : 15)], cpS = [CX, 4, 1.5], clS = [CX, 5, -90];
   const cp = cpS.map((v, i) => v + (cpF[i] - v) * f), cl = clS.map((v, i) => v + (clF[i] - v) * f);
   if (ui.snap || !ui.cam) { ui.cam = { p: cp.slice(), l: cl.slice() }; ui.snap = false; }
   const kk = Math.min(1, dt * 7); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (cp[i] - ui.cam.p[i]) * kk; ui.cam.l[i] += (cl[i] - ui.cam.l[i]) * kk; }
@@ -177,7 +177,7 @@ function draw(now, dt) {
   if (G && G.me && G.me.cough > 0.05) { const a = G.me.cough; const gr = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.3, W / 2, H / 2, Math.max(W, H) * 0.7); gr.addColorStop(0, 'rgba(200,240,90,0)'); gr.addColorStop(1, `rgba(200,240,90,${a * 0.55})`); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H); }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,220,${FX.flash * 0.6})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the 2D layer: the food bar, the night clock, the eye, the stick and the buttons ----------
-function btnRects(G) { const b = 96 * k, s = 64 * k, m = G && G.me; return { run: { x: W - b - 16, y: H - b - 28 * k, w: b, h: b }, hide: m && (m.hidden || hideNear(G)) ? { x: W - b - 16 - 4 * k, y: H - b - 28 * k - s - 18 * k, w: b + 8 * k, h: s } : null, drop: m && m.load.some(q => q.big) ? { x: W - b - 16 - s - 20 * k, y: H - s - 34 * k, w: s, h: s } : null }; }
+function btnRects(G) { const b = 96 * k, s = 64 * k, m = G && G.me; return { run: null, hide: m && (m.hidden || hideNear(G)) ? { x: W - b - 16 - 4 * k, y: H - b - 28 * k - s - 18 * k, w: b + 8 * k, h: s } : null, drop: m && m.load.some(q => q.big) ? { x: W - b - 16 - s - 20 * k, y: H - s - 34 * k, w: s, h: s } : null }; }
 function hud(G, now) { ctx.textBaseline = 'middle'; const m = G.me, c = G.cfg;
   if (G.lesson) lessonPanel(G);
   else { const x0 = 12, y0 = 62 * k, w = W - 24; ctx.fillStyle = 'rgba(24,16,10,.66)'; rrect(x0, y0 - 18 * k, w, 52 * k, 14 * k); ctx.fill();
@@ -196,10 +196,10 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const m = G.me, c = G.cfg;
   // the stick
   if (ui.drag) { const d2 = ui.drag, R = 46 * k, dx = clamp(d2.x - d2.x0, -R, R), dy = clamp(d2.y - d2.y0, -R, R); ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(d2.x0, d2.y0, R, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(255,208,128,.6)'; ctx.beginPath(); ctx.arc(d2.x0 + dx, d2.y0 + dy, 22 * k, 0, TAU); ctx.fill(); }
   else if (!m.out && !G.over) { ctx.globalAlpha = 0.55 + 0.35 * Math.sin(now * 4); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(W * 0.24, H - 120 * k, 46 * k, 0, TAU); ctx.stroke(); ctx.font = `400 ${Math.round(13 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('PUSH TO RUN', W * 0.24, H - 120 * k); ctx.globalAlpha = 1; }
-  // the buttons: SPRINT (with its stamina ring), HIDE, DROP
-  const B = btnRects(G), r = B.run, cxr = r.x + r.w / 2, cyr = r.y + r.h / 2, st = m.stam / c.stam; ctx.fillStyle = m.running ? 'rgba(255,140,40,.85)' : 'rgba(24,16,10,.6)'; ctx.beginPath(); ctx.arc(cxr, cyr, r.w / 2, 0, TAU); ctx.fill();
-  ctx.strokeStyle = m.tired ? '#ff5a4a' : '#ffd080'; ctx.lineWidth = 6 * k; ctx.beginPath(); ctx.arc(cxr, cyr, r.w / 2 - 4 * k, -Math.PI / 2, -Math.PI / 2 + TAU * st); ctx.stroke();
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(16 * k)}px ${TF}`; ctx.fillText(m.tired ? 'PUFF..' : 'SPRINT', cxr, cyr);
+  // stamina: a ring round the stick (orange while sprinting, red when puffed), and HIDE, DROP
+  const B = btnRects(G), st = m.stam / c.stam;
+  if (ui.drag) { const d3 = ui.drag, R3 = 46 * k + 7 * k; ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 6 * k; ctx.beginPath(); ctx.arc(d3.x0, d3.y0, R3, 0, TAU); ctx.stroke(); ctx.strokeStyle = m.tired ? '#ff5a4a' : m.running ? '#ff9a30' : '#ffd080'; ctx.beginPath(); ctx.arc(d3.x0, d3.y0, R3, -Math.PI / 2, -Math.PI / 2 + TAU * st); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(m.tired ? 'OUT OF PUFF' : m.running ? 'SPRINTING' : 'PUSH ALL THE WAY TO SPRINT', clamp(d3.x0, 90 * k, W - 90 * k), d3.y0 + R3 + 14 * k); }
   for (const [key, txt, col] of [['hide', m.hidden ? 'COME OUT' : 'HIDE', '#5a8ad8'], ['drop', 'DROP', '#b86a2a']]) { const q = B[key]; if (!q) continue; ctx.fillStyle = col; ctx.globalAlpha = 0.9; rrect(q.x, q.y, q.w, q.h, 16 * k); ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; rrect(q.x, q.y, q.w, q.h, 16 * k); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(txt, q.x + q.w / 2, q.y + q.h / 2); }
   if (m.cough > 0.05) { ctx.fillStyle = 'rgba(24,16,10,.7)'; rrect(W / 2 - 70 * k, H * 0.66, 140 * k, 16 * k, 8 * k); ctx.fill(); ctx.fillStyle = '#c8f060'; rrect(W / 2 - 70 * k, H * 0.66, 140 * k * m.cough, 16 * k, 8 * k); ctx.fill(); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.fillText('COUGH! GET OUT OF THE CLOUD', W / 2, H * 0.66 - 10 * k); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }

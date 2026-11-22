@@ -10,7 +10,7 @@ const RULES = [
   '<b>Slide your thumb left and right to steer.</b> Push it up for a burst of speed: it tires you, so save it.',
   '<b>Tap FLANK</b> on a side: a packmate races up that side of her, and she swerves away from it, towards you.',
   '<b>Her head turns before she swerves.</b> Cut the corner.',
-  '<b>Strike from her side:</b> flick towards her when you are close and alongside. From straight behind, she kicks.',
+  '<b>Strike from her side:</b> tap <b>BITE</b> when you are close and alongside. From straight behind, she kicks.',
   'Reach her before the trees. Three hunts lost and the pack goes hungry.',
 ];
 const WEATHERS = ['dusk', 'overcast', 'mist', 'golden', 'storm', 'dawn', 'night', 'sunset', 'overcast', 'mist'];
@@ -94,7 +94,7 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'RUN HER DOWN', how: 'Slide your thumb left or right to steer at the marked elk. Push it up for a burst. When you are close and BESIDE her, flick towards her.', need: 1, ok: w => w === 'caught', start: 14 }],
+  1: [{ id: 'run', title: 'RUN HER DOWN', how: 'Slide your thumb left or right to steer at the marked elk. Push it up for a burst. When you are close and BESIDE her, the BITE button glows: tap it.', need: 1, ok: w => w === 'caught', start: 14 }],
   2: [{ id: 'cut', title: 'CUT THE CORNER', how: 'Her head turns before she swerves. Steer to where she is going, come up alongside, and strike from the side.', need: 1, ok: w => w === 'caught' }],
   3: [{ id: 'flank', title: 'USE THE PACK', how: 'Tap FLANK on a side: a packmate runs up that side of her and she swerves the other way, towards you. Then strike.', need: 1, ok: w => w === 'caught' }],
 };

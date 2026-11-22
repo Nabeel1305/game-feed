@@ -93,6 +93,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (one thumb): hold anywhere to fire the burner, let go to stop; a quick flick down vents; 🎯 drops a marker.
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const x = e.clientX, y = e.clientY, L = layout(G);
   if (Math.hypot(x - L.drop.x, y - L.drop.y) < L.drop.r + 8 * k) { if (!dropMarker(G)) sfx.no(); return; }
+  if (Math.hypot(x - L.vent.x, y - L.vent.y) < L.vent.r + 8 * k) { burn(G, false); vent(G); return; }      /* 22 Nov 2026: a VENT button (the flick down was a hidden gesture; it still works) */
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} ui.touch = { id: e.pointerId, x, y, t: performance.now() }; burn(G, true); });
 cv.addEventListener('pointermove', e => { const T = ui.touch; if (!T || T.id !== e.pointerId || !G) return; if (e.clientY - T.y > 55 * k && performance.now() - T.t < 450) { burn(G, false); vent(G); ui.touch = null; } });
 function endTouch(e) { const T = ui.touch; if (!T || T.id !== e.pointerId) return; ui.touch = null; if (G) burn(G, false); }

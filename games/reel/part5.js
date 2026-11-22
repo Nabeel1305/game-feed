@@ -106,6 +106,7 @@ function endTouch(e) {
   if (G.ph === 'fight') { G.in.hold = false; ui.drag = null; return; }
   if (ui.drag && ui.drag.mode === 'cast' && ui.aim) { const A = ui.aim; if (G.ph === 'reelin') G.ph = 'idle'; cast(G, A.x, A.z); }
   else if (dy < -30 * k && ms < 900 && -dy > Math.abs(dx) * 0.8) strike(G);
+  else if (Math.hypot(dx, dy) < 16 * k && ms < 450 && (G.ph === 'wait' || G.ph === 'bite')) strike(G);      /* 22 Nov 2026: a TAP strikes (the flick up was a hidden gesture; it still works) */
   ui.aim = null; ui.drag = null;
 }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);

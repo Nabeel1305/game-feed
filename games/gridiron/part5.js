@@ -101,10 +101,9 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
   for (const r of recvButtons(G)) if (Math.hypot(x - r.x, y - r.y) < r.r + 10 * k) { throwTo(G, r.id); return; }
   if (inC(L.a, x, y)) { ui.btn.a = e.pointerId; if (!btnA(G)) sfx.no(); return; }
   if (inC(L.b, x, y)) { ui.btn.b = e.pointerId; if (!btnB(G)) sfx.no(); return; }
-  if (inC(L.c, x, y)) { ui.btn.c = e.pointerId; sprintOn(G, true); return; }
   if (x < W * 0.55 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
-cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId || !G) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; const R = 56 * k, dx = (x - s2.x0) / R, dy = (y - s2.y0) / R, d = Math.hypot(dx, dy); setStick(G, d < 0.12 ? 0 : -dx, d < 0.12 ? 0 : -dy); });      // from behind the team: up the screen is down the field, left is +x
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); }
+cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId || !G) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; const R = 56 * k, dx = (x - s2.x0) / R, dy = (y - s2.y0) / R, d = Math.hypot(dx, dy); setStick(G, d < 0.12 ? 0 : -dx, d < 0.12 ? 0 : -dy); sprintOn(G, d > 0.9); });      // from behind the team: up the screen is down the field, left is +x
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) { setStick(G, 0, 0); sprintOn(G, false); } }
   if (ui.btn.a === e.pointerId) ui.btn.a = null; if (ui.btn.b === e.pointerId) ui.btn.b = null; if (ui.btn.c === e.pointerId) { ui.btn.c = null; if (G) sprintOn(G, false); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;

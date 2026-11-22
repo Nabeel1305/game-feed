@@ -4833,8 +4833,11 @@ function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
-    const sr = actx.sampleRate, n = Math.floor(sr * 1.7), ir = actx.createBuffer(2, n, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { const e = Math.pow(1 - i / n, 3.2); lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * e * (i < 400 ? i / 400 : 1); } }
-    B.rev = actx.createConvolver(); B.rev.buffer = ir; B.wet = actx.createGain(); B.wet.gain.value = 0.5; B.rev.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
+    // the room: two short echoes that feed each other through a soft filter. (It was a convolution reverb at first: lovely, but
+    // heavy work for a phone's sound thread, and under it two touch tests began to fail on timing. This costs almost nothing.)
+    B.rev = actx.createGain(); B.wet = actx.createGain(); B.wet.gain.value = 0.42; const d1 = actx.createDelay(0.5), d2 = actx.createDelay(0.5), f1 = actx.createGain(), f2 = actx.createGain(), lp = actx.createBiquadFilter();
+    d1.delayTime.value = 0.113; d2.delayTime.value = 0.171; f1.gain.value = 0.34; f2.gain.value = 0.3; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    B.rev.connect(lp); lp.connect(d1); lp.connect(d2); d1.connect(f1); f1.connect(d2); d2.connect(f2); f2.connect(d1); d1.connect(B.wet); d2.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
 const bfr = m => 440 * Math.pow(2, (m - 69) / 12);
 // a note's loudness shape, then to the room: g (gain node) from 0 up to v in att, down over dur, away after
 function bEnv(src, t, v, att, dur, rel, rv) { const B = BAND, g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * 0.35), t + att + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0002, t + att + dur + rel); src.connect(g); g.connect(B.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(B.rev); } return g; }
@@ -4896,7 +4899,7 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
-if (typeof window !== 'undefined' && !BAND.timer) BAND.timer = setInterval(bandTick, 60);
+if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
 
 // ===================== THE 3D WORLD (tools/world3d.js), shared by every 3D game =====================
 // His rules (17 Nov 2026): every game is 3D, seen from where the player stands; weather and light change; as real-looking as it
@@ -5120,7 +5123,7 @@ const W3 = (() => {
 // World: metres; x across the screen, z down it (the camera looks up the yard, towards -z). Screen right is world +x.
 
 const RULES = [
-  '<b>Drag anywhere</b> to run: your thumb is the stick. <b>Tap twice quickly</b> to DASH.',
+  '<b>Drag anywhere</b> to run: your thumb is the stick. Tap <b>DASH</b> for a burst of speed.',
   '<b>CHASE:</b> you are IT. Tag every kid before the bell.',
   '<b>RUN:</b> they are IT. Keep away till the bell. Three hearts.',
   '<b>FREEZE:</b> freeze them all at once. Free kids unfreeze their friends.',
@@ -5285,7 +5288,7 @@ function finish(G, win, why) {
 // ---------- LESSONS ----------
 const LESSONS = {
   1: [{ id: 'run', title: 'YOU ARE IT!', how: 'Put your thumb down anywhere and drag: you run that way. Tag all three kids.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 3 },
-      { id: 'dash', title: 'DASH', how: 'Tap twice quickly to DASH: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
+      { id: 'dash', title: 'DASH', how: 'Tap the DASH button: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
   2: [{ id: 'flee', title: 'THEY ARE IT!', how: 'The kid in red is IT. Keep away from him for 15 seconds. Dash when he gets close.', need: 1, ok: w => w === 'survived', mode: 'run', kids: 1, survive: 15 }],
   3: [{ id: 'freeze', title: 'FREEZE TAG', how: 'Freeze all four. Free kids can unfreeze a friend with a touch: get them all.', need: 1, ok: w => w === 'all', mode: 'freeze', kids: 4 }],
 };
@@ -5433,7 +5436,7 @@ function onEvent(G, e) {
     case 'power': sfx.power(); vibe(HAP.light); say({ speed: 'SPEED!', ghost: 'GHOST!', shield: 'SHIELD ON', freeze: 'FREEZE WHISTLE!' }[e.p], cx, cy + 40, '#fff', 26); if (e.p === 'freeze') { sfx.whistle(); FX.flash = 0.4; } break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffe060', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
-    case 'lessonmiss': if (e.why === 'nodash') say('DASH TO TAG! TAP TWICE', cx, H * 0.55, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': if (e.why === 'nodash') say('DASH TO TAG! TAP DASH', cx, H * 0.55, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
     case 'lessondone': say('YOU GOT IT. NOW PLAY!', cx, H * 0.5, '#ffe060', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); vibe(HAP.best); FX.flash = 0.8; say(G.mode === 'chase' || G.mode === 'freeze' ? 'GOT THEM ALL!' : 'THE BELL! SAFE!', cx, cy, '#ffe060', 32); break;
     case 'lost': sfx.lose(); say(e.why === 'bell' ? 'THE BELL!' : 'CAUGHT!', cx, cy, '#ffb4a8', 32); break;
@@ -5480,6 +5483,7 @@ function draw(now, dt) {
   if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.18})`; ctx.fillRect(0, 0, W, H); }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,248,220,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
 }
+function dashBtn() { return { x: W - 64 * k, y: H - 92 * k, r: 44 * k }; }
 function hud(G, t) {
   const c = G.cfg, me = G.me, x = 14, mode = G.mode, it = mode === 'chase' || mode === 'freeze';
   if (G.lesson) lessonPanel(G);
@@ -5500,10 +5504,13 @@ function hud(G, t) {
     ctx.save(); ctx.translate(ax, ay); ctx.rotate(an); ctx.fillStyle = q.it ? '#ff5a4a' : q.frozen ? '#9fdcff' : '#ffe060'; ctx.beginPath(); ctx.moveTo(12 * k, 0); ctx.lineTo(-6 * k, -8 * k); ctx.lineTo(-6 * k, 8 * k); ctx.closePath(); ctx.fill(); ctx.restore(); }
   // frozen kids being thawed: a ring filling
   for (const q of G.kids) if (q.frozen && q.thaw > 0) { const s = scr(q.x, 2, q.z); ctx.strokeStyle = '#ffb4a8'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s.x, s.y, 14 * k, -Math.PI / 2, -Math.PI / 2 + TAU * q.thaw / c.unfreeze); ctx.stroke(); }
+  { const D = dashBtn(), u = 1 - me.cd / c.dashCD, ready = u >= 1, glow = G.lesson && G.lesson.id === 'dash' && ready; ctx.fillStyle = ready ? 'rgba(255,150,40,.92)' : 'rgba(20,24,40,.55)'; ctx.beginPath(); ctx.arc(D.x, D.y, D.r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = glow ? '#ffe060' : 'rgba(255,255,255,.8)'; ctx.lineWidth = glow ? 5 + 2 * Math.sin(now * 8) : 3; ctx.beginPath(); ctx.arc(D.x, D.y, D.r, -Math.PI / 2, -Math.PI / 2 + TAU * clamp(u, 0, 1)); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(17 * k)}px ${BC}`; ctx.fillText('DASH', D.x, D.y); }
   // the stick under the thumb, and the dash ring
   const st = ui.stick; if (st) { ctx.globalAlpha = 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(st.x0, st.y0, 46 * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 0.85; ctx.fillStyle = '#fff'; ctx.beginPath(); const dx = clamp(st.x - st.x0, -46 * k, 46 * k), dy = clamp(st.y - st.y0, -46 * k, 46 * k); ctx.arc(st.x0 + dx, st.y0 + dy, 18 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
   { const s = scr(me.x, 0.05, me.z), r = 22 * k, u = 1 - me.cd / c.dashCD; if (u < 1) { ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s.x, s.y + 6 * k, r, 0, TAU); ctx.stroke(); ctx.strokeStyle = '#ffe060'; ctx.beginPath(); ctx.arc(s.x, s.y + 6 * k, r, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke(); } }
-  if (G.N <= 3 && G.t < 6 && !G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('DRAG TO RUN · TAP TWICE TO DASH', W / 2, H - 50 * k); ctx.fillText('DRAG TO RUN · TAP TWICE TO DASH', W / 2, H - 50 * k); }
+  if (G.N <= 3 && G.t < 6 && !G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); ctx.fillText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) {
@@ -5641,8 +5648,9 @@ $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (easy): the thumb lands anywhere and drags: a floating stick (screen right is world +x, screen down is world +z).
-// Two quick taps: DASH.
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (ui.stick && ui.stick.id !== e.pointerId) return; ui.stick = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now() }; tapAt(G); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+// The DASH button (bottom right): a burst of speed. (Two quick taps still dash too.)
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; { const D = dashBtn(); if (Math.hypot(e.clientX - D.x, e.clientY - D.y) < D.r + 10 * k) { dash(G); return; } }      /* 22 Nov 2026: a DASH button (two quick taps was a hidden gesture; it still works) */
+  if (ui.stick && ui.stick.id !== e.pointerId) return; ui.stick = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now() }; tapAt(G); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const s = ui.stick; if (!s || s.id !== e.pointerId || !G || G.over || paused) return; s.x = e.clientX; s.y = e.clientY; const R = 46 * k, dx = s.x - s.x0, dy = s.y - s.y0, m = Math.hypot(dx, dy);
   if (m > R) { s.x0 = s.x - dx / m * R; s.y0 = s.y - dy / m * R; }      // the stick follows the thumb if it wanders
   if (m > 6 * k) stick(G, dx / R, dy / R); });
@@ -5702,7 +5710,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  stick(x, z) { stick(G, x, z); }, dash() { return dash(G); }, tapAt() { return tapAt(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
+  stick(x, z) { stick(G, x, z); }, dash() { return dash(G); }, dashBtn() { return dashBtn(); }, tapAt() { return tapAt(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

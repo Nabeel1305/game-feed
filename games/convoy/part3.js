@@ -111,10 +111,16 @@ function draw(now, dt) {
     ctx.fillStyle = 'rgba(10,20,26,.92)'; rrect(W / 2 - w / 2, hy - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the HUD ----------
-function layout(G) { return { ping: { x: W - 74 * k, y: H - 80 * k, r: 48 * k }, drop: { x: W - 186 * k, y: H - 66 * k, r: 40 * k }, gun: { x: W - 74 * k, y: H - 192 * k, r: 34 * k },
-  depth: [0, 1, 2].map(i => ({ x: W - 262 * k + i * 76 * k * 0, y: H - 150 * k + i * 0, w: 70 * k, h: 30 * k })).map((b, i) => ({ x: W - 300 * k + i * 74 * k, y: H - 150 * k, w: 70 * k, h: 30 * k })),
-  thr: [0, 1, 2, 3].map(i => ({ x: 12 * k, y: H - 44 * k - (3 - i) * 0 - i * 38 * k, w: 70 * k, h: 32 * k })).reverse(),
-  crew: ['repair', 'fire', 'rescue'].map((j, i) => ({ job: j, x: 12 * k + i * 66 * k, y: 52 * k, w: 62 * k, h: 34 * k })),
+// what the crew should do now, most urgent first (null: nothing to do, or nobody free)
+function crewNeed(G) { const me = G.me; if (!G.crew.some(c => !c.job)) return null; const busy = j => G.crew.some(c => c.job === j);
+  if (me.fire > 0 && !busy('fire')) return 'fire'; if ((!me.engOk || !me.sonarOk || !me.gunOk || me.flood > 0) && !busy('repair')) return 'repair'; if (G.surv.some(s => Math.hypot(s.x - me.x, s.z - me.z) < 220) && !busy('rescue')) return 'rescue'; return null; }
+// 22 Nov 2026 (the audit: thirteen buttons was far too many): the wheel, PING and DROP are always there; SPEED and DEPTH are one
+// button each (a tap moves to the next setting); GUN shows only when a submarine is on the surface, and one CREW button only
+// when there is a job to do (it sends a team to the most urgent one).
+function layout(G) { const need = G ? crewNeed(G) : null, surf = G ? G.subs.some(s => s.surf && !s.gone && Math.hypot(s.x - G.me.x, s.z - G.me.z) < 1600) : false;
+  return { ping: { x: W - 74 * k, y: H - 80 * k, r: 48 * k }, drop: { x: W - 186 * k, y: H - 66 * k, r: 40 * k }, gun: surf ? { x: W - 74 * k, y: H - 192 * k, r: 34 * k } : null,
+  depthBtn: { x: W - 246 * k, y: H - 150 * k, w: 120 * k, h: 36 * k }, speed: { x: 12 * k, y: H - 48 * k, w: 124 * k, h: 38 * k },
+  crewBtn: need ? { job: need, x: 12 * k, y: 52 * k, w: 150 * k, h: 38 * k } : null,
   fast: { x: W - 118 * k, y: 10 * k, w: 50 * k, h: 34 * k }, map: { x: W - 62 * k, y: 10 * k, w: 50 * k, h: 34 * k } }; }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,20,26,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
@@ -134,11 +140,10 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   // crew reports (the newest two)
   if (!G.lesson) G.reports.slice(-2).forEach((r, i, a) => { const age = G.t - r.t; if (age > 9) return; ctx.globalAlpha = clamp(1.4 - age / 7, 0, 1); txt('📻 ' + r.txt, W / 2, 56 * k + i * 18 * k, r.pri >= 3 ? '#ff8a7a' : r.pri === 2 ? '#ffd36a' : '#e8f4ff', `700 ${Math.round(12 * k)}px ${BC}`); ctx.globalAlpha = 1; });
   // crew jobs
-  L.crew.forEach(b => { const busy = G.crew.some(c => c.job === b.job), need = b.job === 'repair' ? (!me.engOk || !me.sonarOk || !me.gunOk || me.flood > 0) : b.job === 'fire' ? me.fire > 0 : G.surv.length > 0; rbtn(b, { repair: '🔧 REPAIR', fire: '🔥 FIRE', rescue: '🛟 RESCUE' }[b.job], busy, '#3a7a5a', !need && !busy); });
-  txt(`crew: ${G.crew.filter(c => !c.job).length} of ${G.crew.length} free`, 12 * k, 98 * k, 'rgba(255,255,255,.8)', `700 ${Math.round(11 * k)}px ${BC}`, 'left');
+  if (L.crewBtn) { const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 160); ctx.globalAlpha = 0.75 + 0.25 * pulse; rbtn(L.crewBtn, { repair: '🔧 TAP: REPAIR', fire: '🔥 TAP: FIGHT THE FIRE', rescue: '🛟 TAP: RESCUE THEM' }[L.crewBtn.job], true, '#3a7a5a'); ctx.globalAlpha = 1; }
+  { const jobs = G.crew.filter(c => c.job).map(c => ({ repair: 'repairing', fire: 'fighting the fire', rescue: 'rescuing' }[c.job])); if (jobs.length) txt('crew: ' + jobs.join(', '), 12 * k, (L.crewBtn ? 102 : 64) * k, 'rgba(255,255,255,.8)', `700 ${Math.round(11 * k)}px ${BC}`, 'left'); }
   // throttle
-  const TN = ['FULL', 'CRUISE', 'STOP', 'REVERSE']; L.thr.forEach((b, i) => rbtn(b, TN[i], me.thr === 3 - i, '#3a6a9a'));
-  txt(`${Math.round(Math.abs(me.v) * 1.94)} kn`, 12 * k + 35 * k, H - 44 * k - 4 * 38 * k + 14 * k, '#fff', `700 ${Math.round(12 * k)}px ${BC}`);
+  rbtn(L.speed, `SPEED: ${['REVERSE', 'STOP', 'CRUISE', 'FULL'][me.thr]}`, me.thr === 3, '#3a6a9a'); txt(`${Math.round(Math.abs(me.v) * 1.94)} kn · tap to change`, L.speed.x + L.speed.w / 2, L.speed.y - 10 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`);
   // fast-forward and map
   rbtn(L.fast, G.fast > 1 ? '⏩ ×6' : '⏩', G.fast > 1, '#3a6a9a', danger(G)); rbtn(L.map, '🗺 MAP', ui.map, '#3a6a9a');
   // the wheel (floating stick)
@@ -147,9 +152,9 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   // the action buttons: PING, the depth setting and DROP, GUN
   const surf = G.subs.some(s => s.surf && !s.gone && Math.hypot(s.x - me.x, s.z - me.z) < 1600);
   cbtn(L.ping, 'PING', me.pingCd > 0 ? me.pingCd.toFixed(1) : 'sonar', '#7ad0ff', me.pingCd <= 0 && me.sonarOk);
-  L.depth.forEach((b, i) => rbtn(b, DEPTHS[i].name, me.depth === i, '#9a6a2a'));
+  rbtn(L.depthBtn, `DEPTH: ${DEPTHS[me.depth].name}`, true, '#9a6a2a'); txt('tap to change', L.depthBtn.x + L.depthBtn.w / 2, L.depthBtn.y - 9 * k, 'rgba(255,255,255,.8)', `700 ${Math.round(10 * k)}px ${BC}`);
   cbtn(L.drop, 'DROP', `${me.charges} left`, '#ffb347', me.reload <= 0 && me.charges > 0, G.contacts.some(c => c.sure && Math.hypot(c.x - me.x, c.z - me.z) < 70));
-  cbtn(L.gun, 'GUN', surf ? 'fire!' : '', '#ff8a6a', surf && me.gunOk && me.gunCd <= 0, surf);
+  if (L.gun) cbtn(L.gun, 'GUN', 'fire!', '#ff8a6a', me.gunOk && me.gunCd <= 0, true);
   if (ui.map) tacMap(G);
   if (ui.banner) banner(); }
 // the tactical map: the convoy, you, the other escorts, the contacts and their rings, torpedoes, the way to the harbour

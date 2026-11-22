@@ -6,11 +6,11 @@
 // surfaces, and get the convoy home. Units: metres, seconds; x east, z north.
 
 const RULES = [
-  '<b>Steer</b> with the left thumb (the ship is heavy: the dashed line shows where you are going). <b>Throttle</b>: reverse, stop, cruise, full.',
+  '<b>Steer</b> with the left thumb (the ship is heavy: the dashed line shows where you are going). Tap <b>SPEED</b> to change between stop, cruise and full.',
   '<b>PING</b> the sonar: a submarine in range shows as a ring where it may be. Ping again and the ring tightens. An old ring grows: it has moved.',
-  '<b>DEPTH CHARGES</b> drop behind you: run over the ring and drop. Set <b>shallow, medium or deep</b>: one that just fired is shallow, one that has just dived is deep.',
+  '<b>DEPTH CHARGES</b> drop behind you: run over the ring and drop. Tap <b>DEPTH</b> for shallow, medium or deep: one that just fired is shallow, one that has just dived is deep.',
   'A submarine will not fire with an escort close by: stay near the ship it is after. Surfaced, it can be shelled with the <b>GUN</b>.',
-  'Your <b>crew</b> can repair, fight fires and rescue survivors, one job per team. Get enough of the convoy to the harbour.',
+  'When there is damage, a fire or survivors close by, a <b>CREW</b> button appears: tap it to send a team. Get enough of the convoy to the harbour.',
 ];
 const SKINS = [{ id: 'grey', name: 'Navy grey', col: 0x7a8288, stars: 0 }, { id: 'dazzle', name: 'Dazzle', col: 0x4a6a8a, stars: 6 }, { id: 'dark', name: 'Night blue', col: 0x2a3440, stars: 14 },
   { id: 'arctic', name: 'Arctic white', col: 0xd8dde2, stars: 24 }, { id: 'sea', name: 'Sea green', col: 0x4a6a5a, stars: 36 }, { id: 'gold', name: 'Admiral', col: 0x9a8a5a, stars: 50 }];

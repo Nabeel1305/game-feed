@@ -45,7 +45,7 @@ function buildWorld() {
   for (let d = 30; d <= 900; d += 30) for (let k = -4; k <= 4; k++) addL(k * 1.6, 0.6 + d * 0.004, d, [1, 0.97, 0.9]);
   for (let k = -12; k <= 12; k++) if (Math.abs(k) > 3) addL(k * 1.6, 0.4, 2, [0.3, 1, 0.4]);
   const lg = new T.BufferGeometry(); lg.setAttribute('position', new T.Float32BufferAttribute(lp, 3)); lg.setAttribute('color', new T.Float32BufferAttribute(lc, 3));
-  const lights = new T.Points(lg, new T.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false })); S.add(lights);
+  const lights = new T.Points(lg, new T.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false, fog: false })); S.add(lights);
   const papi = []; for (let i = 0; i < 4; i++) { const m = new T.Mesh(new T.SphereGeometry(0.9, 10, 8), new T.MeshBasicMaterial({ color: 0xffffff })); m.position.set(-34 - i * 9, 1, -AIM); S.add(m); papi.push(m); }
   // a town to one side (lit at night)
   const tc = document.createElement('canvas'); tc.width = 64; tc.height = 64; { const g = tc.getContext('2d'); g.fillStyle = '#6b6862'; g.fillRect(0, 0, 64, 64); for (let y = 4; y < 64; y += 10) for (let x = 4; x < 64; x += 10) { g.fillStyle = R0() < 0.4 ? '#ffd28a' : '#2a2c30'; g.fillRect(x, y, 5, 6); } }
@@ -82,7 +82,9 @@ function buildWorld() {
 function setWeather(G) {
   const V = buildWorld(); if (V.none || V.sky === G.weather) return; V.sky = G.weather;
   W3.setSky(G.weather, { azim: { dawn: 110, sunset: 220, golden: 230, dusk: 205 }[G.weather] || 150, wind: [G.wind * 0.1, 0.2] });
-  const dark = W3.S.night || G.weather === 'dusk' || G.weather === 'storm'; V.townM.emissiveIntensity = dark ? 1.2 : 0; V.land.intensity = dark ? 300 : 0; V.lights.material.size = dark ? 4 : 2.5;
+  const dark = W3.S.night || G.weather === 'dusk' || G.weather === 'storm'; V.townM.emissiveIntensity = dark ? 1.2 : 0; V.land.intensity = dark ? 300 : 0; V.lights.material.size = dark ? 5.5 : 3;
+  /* 22 Nov 2026 (the audit): night approaches were black, with no runway to see. The runway's lights now shine through dark and haze (as real ones do), and the night is lifted so the land can be read. */
+  if (dark) { W3.S.exposure *= 1.5; W3.R.toneMappingExposure = W3.S.exposure; W3.S.hemiI *= 1.4; W3.hemi.intensity = W3.S.hemiI; W3.scene.fog.far *= 1.6; }
   // rain and fog thicken the air down low: the runway comes out of the murk late
   W3.S.onBolt = () => { if (!HEADLESS && sfx.thunder) setTimeout(() => sfx.thunder(), 300 + Math.random() * 900); };
 }

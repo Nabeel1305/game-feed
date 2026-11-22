@@ -96,6 +96,35 @@ async function doPass() { if (!playing() || !G.case || G.wait > 0) return; const
   $('passBtn').disabled = true; $('passBtn').textContent = SAMPLE ? 'The clerk is reading…' : '⚖ PASS SENTENCE'; const S = await clerkRead(text); $('passBtn').textContent = '⚖ PASS SENTENCE'; $('passBtn').disabled = false;
   if (!G || G.over) return; pending = { S, text }; $('readBack').innerHTML = `<b>The clerk reads:</b> ${esc(readBack(S))}`; setPhase('read'); sfx.paper(); if (document.activeElement) document.activeElement.blur(); }
 $('passBtn').onclick = () => { audio(); doPass(); };
+// ---------- the sentence builder (22 Nov 2026, the audit: nobody wants to type a sentence on a phone) ----------
+// Tap a button to add a part of the sentence; − and + change how much. The words appear in the box exactly as if written, and
+// the box can still be typed in (his idea was a sentence in your own words: that stays; this is the quick way to write one).
+const BUILD = [
+  { id: 'prison', label: 'Prison', steps: [1, 2, 3, 4, 6, 9, 12, 18, 24, 30, 36, 48, 60, 84, 120, 180, 240, 300], at: 4, say: n => `${mth(n)} in prison` },
+  { id: 'susp', label: 'Suspended', needs: 'prison', steps: [12, 18, 24], at: 2, say: n => `suspended for ${mth(n)}` },
+  { id: 'hours', label: 'Unpaid work', steps: [40, 60, 80, 100, 120, 150, 200, 240, 300], at: 3, say: n => `${n} hours of unpaid work` },
+  { id: 'fine', label: 'Fine', steps: [50, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000], at: 2, say: n => `a fine of £${n}` },
+  { id: 'comp', label: 'Compensation', steps: [50, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 5000], at: 3, say: n => `£${n} compensation` },
+  { id: 'prob', label: 'Probation', steps: [6, 12, 18, 24, 36], at: 1, say: n => `${mth(n)} probation` },
+  { id: 'ban', label: 'Driving ban', steps: [6, 12, 18, 24, 36, 60], at: 1, say: n => `a ${mth(n).replace(/s$/, '')} driving ban` },
+  { id: 'disch', label: 'Discharge', steps: [0, 1], at: 0, say: n => n ? 'an absolute discharge' : 'a conditional discharge' },
+  { id: 'free', label: 'Not guilty', solo: true, say: () => 'not guilty' },
+];
+function mth(n) { return n >= 24 && n % 12 === 0 ? `${n / 12} years` : n === 12 ? '12 months' : `${n} month${n === 1 ? '' : 's'}`; }
+let built = {};
+function builderReset() { built = {}; builderDraw(); }
+function builderText() { const out = []; for (const b of BUILD) { if (!(b.id in built) || b.id === 'susp') continue; let t = b.say(b.steps ? b.steps[built[b.id]] : 0); if (b.id === 'prison' && 'susp' in built) t += ' ' + BUILD[1].say(BUILD[1].steps[built.susp]); out.push(t); } return out.join(', '); }
+function builderDraw() { const C = $('chips'), B = $('built'); if (!C) return;
+  C.innerHTML = BUILD.map(b => `<button data-b="${b.id}" class="${b.id in built ? 'on' : ''}">${b.id in built ? '✓ ' : '+ '}${b.label}</button>`).join('');
+  B.innerHTML = BUILD.filter(b => b.id in built && b.steps).map(b => `<div class="bl"><button data-s="${b.id}" data-d="-1">−</button><span>${b.id === 'disch' ? b.say(b.steps[built[b.id]]) : b.say(b.steps[built[b.id]])}</span><button data-s="${b.id}" data-d="1">+</button></div>`).join(''); }
+function builderApply() { $('sentText').value = builderText(); builderDraw(); }
+$('chips').addEventListener('click', e => { const id = e.target.dataset.b; if (!id) return; audio(); sfx.click(); const b = BUILD.find(q => q.id === id);
+  if (id in built) { delete built[id]; if (id === 'prison') delete built.susp; }
+  else { if (b.solo) built = {}; else delete built.free; if (b.needs && !(b.needs in built)) built[b.needs] = BUILD.find(q => q.id === b.needs).at; built[id] = b.steps ? b.at : 0; }
+  builderApply(); });
+$('built').addEventListener('click', e => { const id = e.target.dataset.s; if (!id) return; audio(); sfx.click(); const b = BUILD.find(q => q.id === id); built[id] = clamp(built[id] + (+e.target.dataset.d), 0, b.steps.length - 1); builderApply(); });
+$('sentText').addEventListener('input', () => { if (Object.keys(built).length) { built = {}; builderDraw(); } });      // typed by hand: the box is what counts
+builderDraw();
 $('sentText').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doPass(); } });
 $('confBtn').onclick = () => { audio(); if (!pending || !playing()) return; const p = pending; pending = null; sentence(G, p.S, p.text); };
 $('editBtn').onclick = () => { sfx.click(); pending = null; setPhase('write'); $('sentText').focus(); };

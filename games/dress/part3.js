@@ -72,6 +72,11 @@ function buildWorld() {
   V.model = new T.Group(); S.add(V.model); V.skin = M(0x8d5524, { roughness: 0.55 });
   const B = (g, x, y, z, sx, sy, sz, m) => { const ms = new T.Mesh(g, m); ms.position.set(x, y, z); ms.scale.set(sx, sy, sz); ms.castShadow = true; V.model.add(ms); return ms; };
   B(V.sphG, 0, 1.66, 0, 0.1, 0.12, 0.11, V.skin); B(V.cylG, 0, 1.53, 0, 0.042, 0.1, 0.042, V.skin);
+  // a face (22 Nov 2026, the audit: she was a faceless wooden figure): eyes with a glint, brows, lips, a little blush
+  { const dark = M(0x1a0f0a, { roughness: 0.4 }), white = M(0xffffff, { roughness: 0.2 }), lip = M(0xc23a52, { roughness: 0.35 }), blush = M(0xb5503a, { roughness: 0.8, transparent: true, opacity: 0.45 });
+    for (const s of [-1, 1]) { B(V.sphG, s * 0.036, 1.672, 0.094, 0.02, 0.014, 0.012, white).castShadow = false; B(V.sphG, s * 0.036, 1.672, 0.101, 0.011, 0.012, 0.008, dark).castShadow = false; B(V.sphG, s * 0.039, 1.676, 0.107, 0.0035, 0.0035, 0.003, white).castShadow = false;
+      const br = B(V.boxG, s * 0.037, 1.697, 0.097, 0.03, 0.005, 0.006, dark); br.rotation.z = -s * 0.16; br.castShadow = false; B(V.sphG, s * 0.062, 1.638, 0.078, 0.02, 0.014, 0.01, blush).castShadow = false; }
+    B(V.sphG, 0, 1.612, 0.098, 0.026, 0.008, 0.012, lip).castShadow = false; B(V.sphG, 0, 1.642, 0.108, 0.011, 0.014, 0.012, V.skin).castShadow = false; }
   V.hair = B(V.sphG, 0, 1.7, -0.02, 0.115, 0.1, 0.12, M(0x1a0f0a, { roughness: 0.7 })); V.bun = B(V.sphG, 0, 1.73, -0.11, 0.06, 0.06, 0.06, V.hair.material);
   V.torso = B(new T.CapsuleGeometry(0.12, 0.3, 4, 12), 0, 1.25, 0, 1.0, 1, 0.7, V.skin);
   V.legs = [-0.06, 0.06].map(x => { const l = new T.Mesh(new T.CapsuleGeometry(0.045, 0.85, 3, 8), V.skin); l.position.set(x, 0.5, 0); l.castShadow = true; V.model.add(l); const sh = new T.Mesh(V.boxG, M(0xd8202e, { roughness: 0.3 })); sh.scale.set(0.07, 0.05, 0.16); sh.position.set(x, 0.03, 0.03); V.model.add(sh); return { l, sh }; });
@@ -116,7 +121,7 @@ function sync(V, g, dt) { const T = V.T; V.t += dt;
   // the camera
   const asp = innerWidth / innerHeight, portrait = asp < 0.8; let cp, cl;
   if (run) { cp = [0.6, 1.05, 3.2]; cl = [0, 1.0, V.model.position.z - 1]; }
-  else { const dist = portrait ? 4.1 : 3.2; cp = [0.25, 1.15, dist]; cl = [0, portrait ? 0.82 : 0.95, 0]; }
+  else { const dist = portrait ? 4.1 : 3.2; cp = [0.25, 1.15, dist]; cl = [0, portrait ? (g.lesson ? 1.13 : 1.0) : 0.95, 0]; }      /* looks a little higher, so her head is under the client's card, not behind it */
   if (ui.snap || !ui.cam) { ui.cam = { p: cp.slice(), l: cl.slice() }; ui.snap = false; } const kk = Math.min(1, dt * 3); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (cp[i] - ui.cam.p[i]) * kk; ui.cam.l[i] += (cl[i] - ui.cam.l[i]) * kk; }
   const cam = W3.cam; cam.fov = portrait ? 46 : 36; cam.aspect = asp; cam.updateProjectionMatrix(); cam.position.set(...ui.cam.p); cam.lookAt(...ui.cam.l); cam.updateMatrixWorld(); W3.setFocus(0, 1, V.model.position.z, 4); }
 // ---------- the option panel (bottom) and the brief card (top) ----------

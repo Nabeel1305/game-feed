@@ -4828,8 +4828,11 @@ function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
-    const sr = actx.sampleRate, n = Math.floor(sr * 1.7), ir = actx.createBuffer(2, n, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { const e = Math.pow(1 - i / n, 3.2); lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * e * (i < 400 ? i / 400 : 1); } }
-    B.rev = actx.createConvolver(); B.rev.buffer = ir; B.wet = actx.createGain(); B.wet.gain.value = 0.5; B.rev.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
+    // the room: two short echoes that feed each other through a soft filter. (It was a convolution reverb at first: lovely, but
+    // heavy work for a phone's sound thread, and under it two touch tests began to fail on timing. This costs almost nothing.)
+    B.rev = actx.createGain(); B.wet = actx.createGain(); B.wet.gain.value = 0.42; const d1 = actx.createDelay(0.5), d2 = actx.createDelay(0.5), f1 = actx.createGain(), f2 = actx.createGain(), lp = actx.createBiquadFilter();
+    d1.delayTime.value = 0.113; d2.delayTime.value = 0.171; f1.gain.value = 0.34; f2.gain.value = 0.3; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    B.rev.connect(lp); lp.connect(d1); lp.connect(d2); d1.connect(f1); f1.connect(d2); d2.connect(f2); f2.connect(d1); d1.connect(B.wet); d2.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
 const bfr = m => 440 * Math.pow(2, (m - 69) / 12);
 // a note's loudness shape, then to the room: g (gain node) from 0 up to v in att, down over dur, away after
 function bEnv(src, t, v, att, dur, rel, rv) { const B = BAND, g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * 0.35), t + att + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0002, t + att + dur + rel); src.connect(g); g.connect(B.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(B.rev); } return g; }
@@ -4891,7 +4894,7 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
-if (typeof window !== 'undefined' && !BAND.timer) BAND.timer = setInterval(bandTick, 60);
+if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
 
 // ===================== THE 3D WORLD (tools/world3d.js), shared by every 3D game =====================
 // His rules (17 Nov 2026): every game is 3D, seen from where the player stands; weather and light change; as real-looking as it
@@ -5113,8 +5116,8 @@ const W3 = (() => {
 // World: metres; x across, y up, z forwards from the start (the course runs towards +z).
 
 const RULES = [
-  '<b>Two sticks, like a real drone.</b> Left thumb: up to climb, down to sink, left and right to turn.',
-  '<b>Right thumb:</b> up to fly forwards, down to brake and back, left and right to slide sideways.',
+  '<b>One thumb.</b> Hold it down anywhere and the drone flies forwards. Slide left or right to turn, up to climb, down to sink.',
+  '<b>Lift your thumb</b> and the drone levels out and brakes to a hover.',
   '<b>Fly through the glowing hoop</b>, then the next. Each hoop gives back a few seconds.',
   'The drone drifts and the wind pushes it: ease off early. Touch a rim, a tree or a wall and it crashes.',
   'Three crashes, or the clock at zero, and the run is over.',
@@ -5161,7 +5164,9 @@ function makeCourse(G, only) {
   if (!L) for (let i = 0, tries = 0; i < Math.round(c.f / 8) && tries < 100; tries++) { const wx = (R() - 0.5) * 80, wz = 20 + R() * zEnd, w = 6 + R() * 10, h = 4 + R() * 8; if (near(wx, wz, 6 + w / 2)) continue; G.walls.push({ x: wx, z: wz, w, d: 4 + R() * 6, h }); i++; }
 }
 // ---------- the thumbs ----------
-function sticks(G, thr, yaw, pitch, roll) { const I = G.in; I.thr = clamp(thr, -1, 1); I.yaw = clamp(yaw, -1, 1); I.pitch = clamp(pitch, -1, 1); I.roll = clamp(roll, -1, 1); }
+// coord (22 Nov 2026, one-thumb flying): the drone flies where it points; sideways drift from turns and wind is trimmed out for you,
+// because one thumb has no way to slide sideways. The robots fly all four axes without it.
+function sticks(G, thr, yaw, pitch, roll, coord) { const I = G.in; I.thr = clamp(thr, -1, 1); I.yaw = clamp(yaw, -1, 1); I.pitch = clamp(pitch, -1, 1); I.roll = clamp(roll, -1, 1); I.coord = !!coord; }
 // ---------- every frame ----------
 function hoopPos(G, h) { return { x: h.x0 + (h.mv ? Math.sin(G.t * 0.8 + h.ph) * h.mv : 0), y: h.y, z: h.z }; }
 function step(G, dt) {
@@ -5175,6 +5180,7 @@ function step(G, dt) {
   const tvx = s * fwd + co * side, tvz = co * fwd - s * side, k1 = Math.min(1, c.drag * dt);
   const gust = c.gust * Math.sin(G.t * 0.7 + G.windA) * Math.sin(G.t * 0.23), wx = Math.sin(G.windA) * (c.wind + gust), wz = Math.cos(G.windA) * (c.wind + gust) * 0.4;
   d.vx += (tvx - d.vx) * k1 + wx * dt * 0.6; d.vz += (tvz - d.vz) * k1 + wz * dt * 0.6; d.vy += (I.thr * c.climb - d.vy) * Math.min(1, dt * 3);
+  if (I.coord) { const vs = d.vx * co - d.vz * s, kk = Math.min(1, dt * 4); d.vx -= co * vs * kk; d.vz += s * vs * kk; }
   d.tilt += (I.pitch * 0.35 - d.tilt) * Math.min(1, dt * 6); d.bank += (-I.roll * 0.35 - I.yaw * 0.12 - d.bank) * Math.min(1, dt * 6);
   const px = d.x, py = d.y, pz = d.z; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
   // the ground, trees, walls
@@ -5207,9 +5213,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'fly', title: 'FORWARDS AND TURN', how: 'Right thumb up: fly forwards. Left thumb left or right: turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
-  2: [{ id: 'climb', title: 'UP AND DOWN', how: 'These hoops are high and low. Left thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
-  3: [{ id: 'slide', title: 'SLIDE AND BRAKE', how: 'Right thumb left or right slides sideways; pull it down to brake before a hoop. The drone drifts: ease off early. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
+  1: [{ id: 'fly', title: 'FORWARDS AND TURN', how: 'Hold your thumb down: the drone flies forwards. Slide it left or right to turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
+  2: [{ id: 'climb', title: 'UP AND DOWN', how: 'These hoops are high and low. Slide your thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
+  3: [{ id: 'slide', title: 'LIFT TO BRAKE', how: 'Lift your thumb and the drone brakes to a hover. It drifts: lift early before a tight hoop, line up, then hold again. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; makeCourse(G); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5350,11 +5356,11 @@ function hud(G, t) {
     ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.strokeText(`HOOP ${Math.min(G.next + 1, G.hoops.length)} / ${G.hoops.length}`, W - 16, ty + 4 * k); ctx.fillText(`HOOP ${Math.min(G.next + 1, G.hoops.length)} / ${G.hoops.length}`, W - 16, ty + 4 * k);
     for (let i = 0; i < c.lives; i++) { ctx.beginPath(); ctx.arc(W - 22 - i * 16 * k, ty + 28 * k, 5 * k, 0, TAU); ctx.fillStyle = i < G.lives ? '#40f0ff' : 'rgba(255,255,255,.25)'; ctx.fill(); }
     if (c.wind > 0.3) { ctx.save(); ctx.translate(W - 30 * k, ty + 52 * k); ctx.rotate(G.windA - G.d.yaw - Math.PI / 2); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-10 * k, 0); ctx.lineTo(10 * k, 0); ctx.lineTo(4 * k, -5 * k); ctx.moveTo(10 * k, 0); ctx.lineTo(4 * k, 5 * k); ctx.stroke(); ctx.restore(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(9 * k)}px ${BC}`; ctx.textAlign = 'right'; ctx.fillText('WIND', W - 44 * k, ty + 48 * k); } }
-  // the two sticks
-  for (const side of ['L', 'R']) { const s = ui.sticks[side], bx = side === 'L' ? W * 0.22 : W * 0.78, by = H - 120 * k, cx = s ? s.x0 : bx, cy = s ? s.y0 : by, r = 54 * k;
-    ctx.globalAlpha = s ? 0.85 : 0.35; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
+  // the one stick: where your thumb is; a hint until you have flown a little
+  { const s = ui.sticks.L, cx = s ? s.x0 : W / 2, cy = s ? s.y0 : H - 130 * k, r = 54 * k; ctx.globalAlpha = s ? 0.85 : 0.4; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
     const kx = s ? cx + clamp(s.x - s.x0, -r, r) : cx, ky = s ? cy + clamp(s.y - s.y0, -r, r) : cy; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(kx, ky, 18 * k, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (!s) ctx.fillText(side === 'L' ? 'CLIMB · TURN' : 'FLY · SLIDE', cx, cy + r + 14 * k); ctx.globalAlpha = 1; }
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('◀ TURN ▶', cx, cy + r + 13 * k); ctx.fillText(s ? '▲ CLIMB' : 'slide up to climb', cx, cy - r - 12 * k);
+    if (!s) { ctx.globalAlpha = 0.95; ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.strokeText('HOLD YOUR THUMB DOWN TO FLY', W / 2, H - 236 * k); ctx.fillText('HOLD YOUR THUMB DOWN TO FLY', W / 2, H - 236 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('lift it to brake', W / 2, H - 218 * k); } ctx.globalAlpha = 1; }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) {
@@ -5478,11 +5484,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (made for a drone): two sticks, like a real controller. A thumb on the left half is the left stick (up and down:
 // climb and sink; left and right: turn), on the right half the right stick (up and down: forwards and back; left and right:
 // slide). Each stick is centred where the thumb lands and springs back when it lifts.
-function applySticks() { if (!G) return; const L = ui.sticks.L, R = ui.sticks.R, r = 54 * k, v = (s, a) => s ? clamp((a === 'x' ? s.x - s.x0 : s.y0 - s.y) / r, -1, 1) : 0;
-  sticks(G, v(L, 'y'), -v(L, 'x'), v(R, 'y'), -v(R, 'x')); }      // the camera looks along the drone, so screen right is the world's -x
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const side = e.clientX < W / 2 ? 'L' : 'R'; if (ui.sticks[side]) return; ui.sticks[side] = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; applySticks(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { for (const s of Object.values(ui.sticks)) if (s && s.id === e.pointerId) { s.x = e.clientX; s.y = e.clientY; } applySticks(); });
-function endTouch(e) { for (const k2 of ['L', 'R']) if (ui.sticks[k2] && ui.sticks[k2].id === e.pointerId) ui.sticks[k2] = null; applySticks(); }
+// ONE THUMB (22 Nov 2026, the audit: two sticks was against his rule and too much for a first-timer). Hold a thumb down anywhere and
+// the drone flies forwards; slide the thumb left or right to turn, up or down to climb or sink; lift it and the drone levels and
+// brakes to a hover. (The rules still have all four axes: the robots fly with them.)
+function applySticks() { if (!G) return; const S = ui.sticks.L, r = 54 * k; if (!S) { sticks(G, 0, 0, 0, 0, true); return; }
+  const dx = clamp((S.x - S.x0) / r, -1, 1), dy = clamp((S.y0 - S.y) / r, -1, 1), dz = v => Math.abs(v) < 0.12 ? 0 : v;
+  sticks(G, dz(dy), -dz(dx), 0.92 - 0.47 * Math.max(Math.abs(dx), Math.abs(dy) * 0.6), 0, true); }      // a hard turn or climb slows it: you can thread a tight hoop      // the camera looks along the drone, so screen right is the world's -x
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (ui.sticks.L) return; ui.sticks.L = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; applySticks(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const s = ui.sticks.L; if (s && s.id === e.pointerId) { s.x = e.clientX; s.y = e.clientY; applySticks(); } });
+function endTouch(e) { if (ui.sticks.L && ui.sticks.L.id === e.pointerId) { ui.sticks.L = null; applySticks(); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections

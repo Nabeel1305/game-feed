@@ -27,6 +27,31 @@ genius, and that's what you forget." What that changed, for every game from now 
 - **Controls a first-timer gets at once:** a stick, a labelled button or two, and holds and taps. No swipes with meaning, no
   circles, no pull-backs, no drags onto targets, no separate SPRINT button (a full push of the stick sprints). On the first
   levels the next thing to touch glows and one yellow line says what to do (Mocktail Bar's `nextStep`).
+- **Hidden gestures become something you can see** (second pass, 22 Nov): a double tap (Tag), a flick (Wolf Pack, Reel 'Em In,
+  Balloon), a swipe up at the right moment (Surf), a swipe whose direction and length aim a throw (Whaling, as Hunter was) are
+  all things nobody finds by themselves. Each is now a labelled button, a plain tap, a hold-and-let-go, or a ring drawn where the
+  throw will land. The old gesture still works. What stays: gestures the whole genre uses and the screen shows (lane swipes in a
+  runner, a slingshot with its arc drawn, swapping sweets, dragging a line between stations). Two sticks became one thumb in
+  Drone Pilot: with one thumb there is no way to slide sideways, so the rules trim the sideways drift for you (`coord`), and a
+  robot with only turn, climb and lift must still win (40 of 42 runs on levels 1 to 25).
+- **A long list of buttons is a design fault, not a feature** (Convoy Escort: thirteen down to five): one button that steps
+  through its settings (SPEED, DEPTH), and buttons that only exist while they can be used (GUN, CREW).
+- **Typing is not a control** (The Bench): the sentence is built from taps; typing stays as an extra.
+- **Sound work must be cheap**: the band's first room echo was a convolution reverb; on a busy machine two touch tests (Tennis,
+  Ice Hockey) began to fail on timing, and a phone is slower than that. It is two short feedback echoes now. Re-run every game's
+  `test_touch.py` after a change to the kit, not a sample.
+- **Canvas `filter` on every draw call is slow** (Cake Boss icing): draw plain on an offscreen canvas, then one filtered blit.
+- **`tools/test_controls.py` takes one id or none** (extra ids are ignored), and it rebuilds `out/app`: never two at once, and
+  not beside `tools/check.py`. A failure at the end of the full run under load is run again alone before it is believed.
+- **Look at GitHub after every push** (`gh run list --limit 3`). Both pushes of 22 Nov failed there and I did not look: Splash
+  Course's result card never came in the full controls run. The cause was real: a run ended in its first instant (only a robot
+  can) saved an empty ghost trace, and drawing an empty ghost threw on every frame, so the game froze. "It passes alone" was the
+  machine being fast, not the game being right. **Win at odd moments** (start, then `__sim.winNow()` after 0, 0.3, 1, 4, 9 s):
+  the card must come and nothing may throw. Anything saved from a run (a ghost, a best) is checked before it is used.
+- **The record of the audit is `PROGRESS.md`** (from `specs/progress.json`, `python3 tools/progress.py`): one entry per game
+  with what was seen, what was changed, what was checked and how, and what is still open. "Verified" means: loads clean, its
+  touch test and controls test pass on the current build, its picture has been looked at after the change, and nothing known is
+  open. It never means heard by ear or felt on a phone: those are his.
 - **The thing the game is about fills the screen.** Mocktail Bar is first person, looking down at the glass. Hunter's lens is
   longer and its grass shorter, so the animal is not a speck.
 - **Team-mates get open** (Eleven `support`, Ice Hockey `getOpen`, Hoops `brain`): three times a second a team-mate without the

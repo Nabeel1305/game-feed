@@ -21,7 +21,7 @@ with sync_playwright() as p:
     touch('touchEnd', []); ok(pg.evaluate('__sim.G.steer') == 0, 'lifted: straight on')
     def swipe(x0, y0, x1, y1): touch('touchStart', [(2, x0, y0)]); [touch('touchMove', [(2, x0 + (x1 - x0) * j / 6, y0 + (y1 - y0) * j / 6)]) for j in range(1, 7)]; touch('touchEnd', [])
     swipe(300, 720, 360, 560); d = pg.evaluate('__sim.G.darts[0]'); h = pg.evaluate('__sim.G.boat.h'); bx, bz = pg.evaluate('[__sim.G.boat.x, __sim.G.boat.z]')
-    a = math.atan2(d['tx'] - bx, d['tz'] - bz) - h if d else 0; ok(d and a < -0.1, 'a swipe up and to the right throws to the right of the screen', str(d))
+    a = math.atan2(d['tx'] - bx, d['tz'] - bz) - h if d else 0; ok(d and a < -0.1, 'the ring dragged up and to the right: the throw goes to the right of the screen', str(d))
     pg.evaluate('__sim.adv(1.5)'); n0 = pg.evaluate('__sim.G.harps'); swipe(300, 760, 300, 690); d1 = pg.evaluate('__sim.G.darts[0]'); pg.evaluate('__sim.adv(1.5)'); swipe(300, 760, 300, 520); d2 = pg.evaluate('__sim.G.darts[0]')
     ok(d1 and d2 and d2['dist'] > d1['dist'] + 6, 'a longer swipe throws further', f"{d1 and d1['dist']} {d2 and d2['dist']}")
     pg.evaluate("(() => { const G = __sim.G; G.ph = 'ride'; G.line = 40; G.T = 0.4; G.whale.next = 99; G.whale.warn = 0; G.whale.surge = 0; G.harps = 3; })()")

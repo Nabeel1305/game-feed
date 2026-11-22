@@ -289,9 +289,13 @@ def main():
         for g in games:
             if only and g['id'] != only: continue
             t0 = time.time()
-            if g['id'] in LADDER or os.path.exists(os.path.join(root, 'games', g['id'], 'part5.js')) and 'winNow' in open(os.path.join(root, 'games', g['id'], 'part5.js')).read(): ladder(browser, base, g, errs)
-            elif g['id'] == 'bottle-cap-flick': bottle_cap(browser, base, g, errs)
-            else: ok(False, f"{g['id']}: tools/test_controls.py does not know how to test this game's controls yet")
+            try:
+                if g['id'] in LADDER or os.path.exists(os.path.join(root, 'games', g['id'], 'part5.js')) and 'winNow' in open(os.path.join(root, 'games', g['id'], 'part5.js')).read(): ladder(browser, base, g, errs)
+                elif g['id'] == 'bottle-cap-flick': bottle_cap(browser, base, g, errs)
+                else: ok(False, f"{g['id']}: tools/test_controls.py does not know how to test this game's controls yet")
+            except Exception as e:      # one game's test falling over must not hide the games after it, or its own page errors (22 Nov 2026: Splash Course)
+                ok(False, f"{g['id']}: its test could not go on", str(e).split('\n')[0][:160] + ' | page errors: ' + ('; '.join(x for x in errs if x.startswith(g['id'] + ':'))[:300] or 'none'))
+                for c in list(browser.contexts): c.close()
             print(f"  {g['id']}: done in {time.time() - t0:.0f}s")
         browser.close()
     for srv in servers: srv.shutdown()

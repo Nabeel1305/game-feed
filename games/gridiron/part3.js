@@ -60,7 +60,8 @@ function player(V) { const T = V.T, M = V.M, g = new T.Group(), jersey = M(0x2a5
 function sync(V, G, dt) { V.t += dt; const b = G.ball;
   if (V.for !== G.seed + ':' + G.N) { V.for = G.seed + ':' + G.N; V.field.material.map = fieldTex(G); V.field.material.needsUpdate = true; W3.setSky(G.place === 0 ? 'golden' : G.place === 1 ? 'dusk' : 'night'); V.lamp.intensity = G.place === 0 ? 30 : 120; V.crowd.visible = G.place > 0; }
   const mine = mySkin().col, foe = G.kit[0];
-  G.P.forEach((p, i) => { const m = V.men[i], v = Math.hypot(p.vx, p.vz), c = p.t === 0 ? mine : foe; m.jersey.color.setHex(c); m.helm.color.setHex(c); m.g.position.set(p.x, 0, p.z); m.g.rotation.y = -p.face;
+  G.P.forEach((p, i) => { const m = V.men[i], v = Math.hypot(p.vx, p.vz), c = p.t === 0 ? mine : foe; m.jersey.color.setHex(c); m.helm.color.setHex(c); m.g.position.set(p.x, 0, p.z); m.g.rotation.y = -p.face; m.g.scale.setScalar(1.45);      /* 22 Nov 2026: players were specks; bigger, each on a disc of his team's colour */
+    if (!m.disc) { m.disc = new V.T.Mesh(new V.T.CircleGeometry(0.95, 20), new V.T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false })); m.disc.rotation.x = -Math.PI / 2; V.S.add(m.disc); } m.disc.position.set(p.x, 0.03, p.z); m.disc.material.color.setHex(p.t === 0 ? 0x4aa0ff : 0xff5a4a);
     m.ph += dt * (2 + v * 1.4); const sw = Math.sin(m.ph) * Math.min(0.7, v * 0.1); m.legs[0].rotation.z = sw; m.legs[1].rotation.z = -sw; m.g.rotation.z = p.held > 0 ? 0.35 : 0; m.g.position.y = p.dodge > 0 ? 0.25 : 0; });
   const o = b.own; V.ring.visible = !!o && b.kind === 'held'; if (o) V.ring.position.set(o.x, 0.04, o.z); V.ring.material.color.setHex(o && o.t === 0 ? 0xffe040 : 0xff6a4a);
   const c = me(G); V.myRing.visible = G.phase === 'live' && c !== o; V.myRing.position.set(c.x, 0.04, c.z);
@@ -147,8 +148,8 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), b = G.b
   // the stick
   const s2 = ui.stick; if (s2) { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, 56 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2; ctx.stroke(); const dx = s2.x - s2.x0, dy = s2.y - s2.y0, d = Math.hypot(dx, dy), m = Math.min(1, 56 * k / (d || 1)); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx * m, s2.y0 + dy * m, 24 * k, 0, TAU); ctx.fill(); }
   else if (G.phase === 'live') { ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(90 * k, H - 90 * k, 56 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('MOVE', 90 * k, H - 90 * k); }
-  if (G.phase === 'live') { const lab = btnLabels(G); btn(L.a, lab.a, '', '#ffe060', !!ui.btn.a); btn(L.b, lab.b, '', '#9ad8ff', !!ui.btn.b); btn(L.c, lab.c, '', '#9be3b5', p.sprint);
-    ctx.strokeStyle = p.st >= 0.25 ? '#9be3b5' : '#ff7a6a'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.arc(L.c.x, L.c.y, L.c.r + 5 * k, -Math.PI / 2, -Math.PI / 2 + TAU * p.st); ctx.stroke(); }
+  if (G.phase === 'live') { const lab = btnLabels(G); btn(L.a, lab.a, '', '#ffe060', !!ui.btn.a); btn(L.b, lab.b, '', '#9ad8ff', !!ui.btn.b); /* (no SPRINT button since 22 Nov 2026: push the stick all the way) */
+    { const sx = 26 * k, sy = H - 26 * k; ctx.fillStyle = 'rgba(0,0,0,.35)'; rrect(sx, sy, 70 * k, 7 * k, 3 * k); ctx.fill(); ctx.fillStyle = p.st >= 0.25 ? '#9be3b5' : '#ff7a6a'; rrect(sx, sy, 70 * k * clamp(p.st, 0, 1), 7 * k, 3 * k); ctx.fill(); } }
   if (ui.banner) banner(); }
 function banner() { const B = ui.banner; ctx.textAlign = 'center'; ctx.font = `600 ${Math.round(52 * k)}px ${TF}`; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(8,20,10,.75)'; ctx.strokeText(B.txt, W / 2, H * 0.3); ctx.fillStyle = B.col || '#fff'; ctx.fillText(B.txt, W / 2, H * 0.3); }
 // what the three buttons do now

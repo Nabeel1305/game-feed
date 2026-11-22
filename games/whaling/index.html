@@ -4828,8 +4828,11 @@ function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
-    const sr = actx.sampleRate, n = Math.floor(sr * 1.7), ir = actx.createBuffer(2, n, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { const e = Math.pow(1 - i / n, 3.2); lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * e * (i < 400 ? i / 400 : 1); } }
-    B.rev = actx.createConvolver(); B.rev.buffer = ir; B.wet = actx.createGain(); B.wet.gain.value = 0.5; B.rev.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
+    // the room: two short echoes that feed each other through a soft filter. (It was a convolution reverb at first: lovely, but
+    // heavy work for a phone's sound thread, and under it two touch tests began to fail on timing. This costs almost nothing.)
+    B.rev = actx.createGain(); B.wet = actx.createGain(); B.wet.gain.value = 0.42; const d1 = actx.createDelay(0.5), d2 = actx.createDelay(0.5), f1 = actx.createGain(), f2 = actx.createGain(), lp = actx.createBiquadFilter();
+    d1.delayTime.value = 0.113; d2.delayTime.value = 0.171; f1.gain.value = 0.34; f2.gain.value = 0.3; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    B.rev.connect(lp); lp.connect(d1); lp.connect(d2); d1.connect(f1); f1.connect(d2); d2.connect(f2); f2.connect(d1); d1.connect(B.wet); d2.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
 const bfr = m => 440 * Math.pow(2, (m - 69) / 12);
 // a note's loudness shape, then to the room: g (gain node) from 0 up to v in att, down over dur, away after
 function bEnv(src, t, v, att, dur, rel, rv) { const B = BAND, g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * 0.35), t + att + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0002, t + att + dur + rel); src.connect(g); g.connect(B.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(B.rev); } return g; }
@@ -4891,7 +4894,7 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
-if (typeof window !== 'undefined' && !BAND.timer) BAND.timer = setInterval(bandTick, 60);
+if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
 
 // ===================== THE 3D WORLD (tools/world3d.js), shared by every 3D game =====================
 // His rules (17 Nov 2026): every game is 3D, seen from where the player stands; weather and light change; as real-looking as it
@@ -5117,7 +5120,7 @@ const W3 = (() => {
 
 const RULES = [
   '<b>The chase:</b> the crew rows. Your left thumb steers. Row to the spout; she dives and comes up again.',
-  '<b>The throw:</b> swipe up with your right thumb towards her back while she is up. Direction is aim, length is distance. Lead her.',
+  '<b>The throw:</b> hold your right thumb down: a ring shows where the harpoon will land. Move the ring onto her back (ahead of her: she is moving) and let go.',
   '<b>The ride:</b> hold your right thumb to haul the line in: that tires her. Lift it to let the line run.',
   '<b>When her flukes rise and the water whitens, let go!</b> Haul through a run and the line snaps.',
   'Keep the bow pointing at her (left thumb) or the boat heels over. Three whales lost and the voyage is over.',
@@ -5215,7 +5218,7 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'throw', title: 'ROW, THEN THROW', how: 'Steer towards her spout with your left thumb. When she is up and close, swipe up with your right thumb towards her back.', need: 1, ok: w => w === 'hit' },
+  1: [{ id: 'throw', title: 'ROW, THEN THROW', how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
       { id: 'haul', title: 'HAUL WHEN SHE IS CALM', how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],
   2: [{ id: 'bow', title: 'BOW TOWARDS HER', how: 'She swerves. Keep the bow pointing at her with your left thumb, or the boat heels over. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
   3: [{ id: 'lead', title: 'LEAD HER', how: 'This one is quicker. The harpoon takes a moment to fly: throw a little ahead of where she is going.', need: 1, ok: w => w === 'caught' }],
@@ -5348,6 +5351,8 @@ function onEvent(G, e) {
   }
 }
 const VW = new (window.THREE ? THREE.Vector3 : Object)();
+// where the right thumb is aiming: it starts straight ahead at half range; sideways turns it, up is further, down is nearer
+function throwAim(u, G) { const dx = u.x - u.x0, dy = u.y - u.y0; return { aim: -clamp(dx / (150 * k), -0.9, 0.9), dist: clamp(15 - dy / (170 * k) * 15, 6, G.cfg.range) }; }
 function wScreen(x, y, z) { W3.cam.updateMatrixWorld(); VW.set(x, y, z); return W3.screen(VW); }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
@@ -5401,8 +5406,10 @@ function hud(G, t) {
     ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = dist < c.range ? '#9be3b5' : '#fff';
     if (on && w.up) { ctx.strokeText(`${Math.round(dist)} m${dist < c.range ? ' · IN RANGE' : ''}`, p.x, p.y - 34 * k); ctx.fillText(`${Math.round(dist)} m${dist < c.range ? ' · IN RANGE' : ''}`, p.x, p.y - 34 * k); }
     if (!on || !w.up) { let ax = p.x - W / 2, ay = p.y - H / 2; if (!p.front) { ax = -ax; ay = -ay; } if (on) { ax = p.x - W / 2; ay = p.y - H / 2; } const s2 = Math.min((W / 2 - 30) / Math.abs(ax || 1e-3), (H / 2 - 120) / Math.abs(ay || 1e-3), on ? 1 : 1e9); ctx.save(); ctx.translate(W / 2 + ax * s2, H / 2 + ay * s2); if (!on) { ctx.rotate(Math.atan2(ay, ax)); ctx.fillStyle = w.up ? '#e8f4ff' : 'rgba(232,244,255,.45)'; ctx.beginPath(); ctx.moveTo(16 * k, 0); ctx.lineTo(-8 * k, -10 * k); ctx.lineTo(-8 * k, 10 * k); ctx.closePath(); ctx.fill(); } else { ctx.strokeStyle = 'rgba(232,244,255,.5)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(0, 0, 16 * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = 'rgba(232,244,255,.7)'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('DIVING', 0, 28 * k); } ctx.restore(); }
-    // the swipe being drawn
-    if (ui.R && ui.R.moved) { const r = ui.R; ctx.strokeStyle = 'rgba(255,240,200,.85)'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.moveTo(r.x0, r.y0); ctx.lineTo(r.x, r.y); ctx.stroke(); }
+    // the throw being aimed (22 Nov 2026): a ring on the water where the harpoon will land, moved by the right thumb
+    if (ui.R) { const A = throwAim(ui.R, G), b = G.boat, a2 = b.h + A.aim, tx = b.x + Math.sin(a2) * A.dist, tz = b.z + Math.cos(a2) * A.dist, s0 = wScreen(b.x, 1.2, b.z), s1 = wScreen(tx, 0.3, tz), s2 = wScreen(tx + 2.2, 0.3, tz);
+      if (s1 && s1.front !== false) { const rr = Math.max(12 * k, Math.abs((s2 ? s2.x : s1.x + 20) - s1.x)), hit = on && w.up && Math.hypot(w.x - tx, w.z - tz) < 4; ctx.strokeStyle = hit ? '#7dff9a' : '#ffe9a8'; ctx.lineWidth = 3 * k; ctx.setLineDash([8 * k, 8 * k]); ctx.beginPath(); if (s0) ctx.moveTo(s0.x, s0.y); else ctx.moveTo(W / 2, H * 0.7); ctx.quadraticCurveTo((s0 ? s0.x : W / 2) * 0.5 + s1.x * 0.5, Math.min(s0 ? s0.y : H * 0.7, s1.y) - 70 * k, s1.x, s1.y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.ellipse(s1.x, s1.y, rr, rr * 0.42, 0, 0, TAU); ctx.stroke(); ctx.fillStyle = hit ? 'rgba(125,255,154,.25)' : 'rgba(255,233,168,.18)'; ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 3; ctx.strokeText('LET GO TO THROW', s1.x, s1.y + rr * 0.42 + 16 * k); ctx.fillText('LET GO TO THROW', s1.x, s1.y + rr * 0.42 + 16 * k); } }
   }
   if (G.ph === 'ride' && w) {
     // the tension gauge: the band that tires her, the red where it snaps
@@ -5421,7 +5428,7 @@ function hud(G, t) {
   const lb = ui.L, rb = ui.R; ctx.globalAlpha = 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
   const lx = lb ? lb.x0 : W * 0.22, ly = lb ? lb.y0 : H - 110 * k; ctx.beginPath(); ctx.arc(lx, ly, 46 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx - G.steer * 46 * k, ly, 14 * k, 0, TAU); ctx.fill();
   ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('STEER', lx, ly + 62 * k);
-  const rx = W * 0.78, ry = H - 110 * k; ctx.fillText(G.ph === 'ride' ? (G.haul ? 'HAULING' : 'HOLD TO HAUL') : 'SWIPE UP TO THROW', rx, ry + 62 * k); if (G.ph === 'ride') { ctx.globalAlpha = G.haul ? 0.9 : 0.5; ctx.beginPath(); ctx.arc(rx, ry, 30 * k, 0, TAU); ctx.fillStyle = G.haul ? '#9be3b5' : 'rgba(255,255,255,.3)'; ctx.fill(); }
+  const rx = W * 0.78, ry = H - 110 * k; ctx.fillText(G.ph === 'ride' ? (G.haul ? 'HAULING' : 'HOLD TO HAUL') : 'HOLD · MOVE THE RING · LET GO', rx, ry + 62 * k); if (G.ph === 'ride') { ctx.globalAlpha = G.haul ? 0.9 : 0.5; ctx.beginPath(); ctx.arc(rx, ry, 30 * k, 0, TAU); ctx.fillStyle = G.haul ? '#9be3b5' : 'rgba(255,255,255,.3)'; ctx.fill(); }
   ctx.globalAlpha = 1;
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
@@ -5559,7 +5566,7 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
 cv.addEventListener('pointermove', e => { for (const side of ['L', 'R']) { const u = ui[side]; if (!u || u.id !== e.pointerId) continue; u.x = e.clientX; u.y = e.clientY; if (Math.hypot(u.x - u.x0, u.y - u.y0) > 12 * k) u.moved = true; if (side === 'L' && G) steer(G, -clamp((u.x - u.x0) / (46 * k), -1, 1)); } });      // screen right is the world's -x from behind the boat
 function endTouch(e) { for (const side of ['L', 'R']) { const u = ui[side]; if (!u || u.id !== e.pointerId) continue; ui[side] = null; if (!G) continue;
   if (side === 'L') steer(G, 0);
-  else { haul(G, false); const dx = u.x - u.x0, dy = u.y - u.y0; if (G.ph === 'chase' && -dy > 30 * k) { const len = Math.hypot(dx, dy); throwHarpoon(G, -Math.atan2(dx, -dy) * 0.9, 6 + clamp((len - 30 * k) / (230 * k), 0, 1) * 24); } } } }
+  else { haul(G, false); if (G.ph === 'chase' && e.type !== 'pointercancel' && (u.moved || performance.now() - u.t0 > 160)) { const A = throwAim(u, G); throwHarpoon(G, A.aim, A.dist); } } } }      /* 22 Nov 2026: hold, move the ring on the water, let go (the blind swipe was the same mistake as Hunter's) */
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections

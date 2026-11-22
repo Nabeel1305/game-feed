@@ -5,10 +5,10 @@
 // The face: x along the shore (metres, + the way the wave peels), s from 0 at the base to 1 at the lip; heading th (0 along
 // the wave, + up the face); speed v (m/s).
 const RULES = [
-  '<b>Catch it:</b> hold PADDLE as the wave comes; when it lifts you (the ring turns green), swipe up to stand.',
+  '<b>Catch it:</b> hold PADDLE as the wave comes; when it lifts you (the ring turns green), <b>let go</b>: you stand up.',
   '<b>Left thumb: steer.</b> Push the way you want to ride: up the face to climb, down to drop. Down gains speed, up spends it.',
   '<b>Stay ahead of the curl</b>, the breaking part chasing you. Pump up and down for speed.',
-  '<b>Tricks:</b> turn hard at the lip (a snap), turn back towards the curl and out again (a cutback), fly off the lip and swipe to spin, then point down to land. Hold CROUCH inside a barrel.',
+  '<b>Tricks:</b> turn hard at the lip (a snap), turn back towards the curl and out again (a cutback), fly off the lip and tap to spin, then point down to land. Hold CROUCH inside a barrel.',
   'The same move again scores less: mix them up. Beat the target over three waves.',
 ];
 const SKINS = [{ id: 'sun', name: 'Sunburst', col: 0xffb020, col2: 0xff5a3a, stars: 0 }, { id: 'reef', name: 'Reef', col: 0x2ad8c0, col2: 0x1a5aa8, stars: 5 }, { id: 'kelp', name: 'Kelp', col: 0x5aa82a, col2: 0xf0e8c0, stars: 12 },
@@ -117,7 +117,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.score = Math.max(G.score, G.cfg.target); finish(G, true, 'target'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'ride', title: 'CATCH AND RIDE', how: 'Hold PADDLE as the wave comes; when the ring turns green, swipe up to stand. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
+  1: [{ id: 'ride', title: 'CATCH AND RIDE', how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
   2: [{ id: 'snap', title: 'SNAP OFF THE LIP', how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],
   3: [{ id: 'barrel', title: 'GET BARRELLED', how: 'Where the wave throws over (the dark hollow), drop low on the face and hold CROUCH: ride through the tube and out the other end.', need: 1 }],
 };

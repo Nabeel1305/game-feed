@@ -67,7 +67,7 @@ function buildRun(G) {
 }
 function setWeather(G) {
   const V = buildWorld(); if (V.none || V.sky === G.weather) return; V.sky = G.weather;
-  W3.setSky(G.weather, { azim: 150, wind: [0.2, 0.1] });
+  W3.setSky(G.weather, { azim: 150, wind: [0.2, 0.1] }); if (W3.S.night || W3.S.rain || G.weather === 'dusk') { W3.S.exposure *= 1.35; W3.R.toneMappingExposure = W3.S.exposure; }
   const shafts = W3.S.rain || W3.S.night || W3.S.name === 'overcast' ? 0 : 1; if (V.run) for (const m of V.run.meshes) if (m.userData.shaft) m.visible = !!shafts;
 }
 function onEvent(G, e) {
@@ -103,9 +103,11 @@ function draw(now, dt) {
   const sw = g.held ? -g.th : Math.atan2(-p.vz, Math.max(0.1, p.vy + 8)) * -0.4; V.P.rotation.set(sw, 0, -g.lean * 0.3);
   for (const a of V.arms) if (a.userData.s) { a.rotation.x = g.held ? Math.sin(t * 2) * 0.1 - g.om * 0.08 : -0.9; a.position.z = g.held ? 0 : 0.2; }
   // the camera: behind and a little above, following along the route, looking ahead to the next vine
-  const nv = g.vines[g.on + 1] || g.vines[g.on], want = new T.Vector3(p.x + 0.8, p.y + 1.8, p.z + 5.5), look = new T.Vector3((p.x + nv.x) / 2, (p.y + nv.y - nv.L * 0.6) / 2 + 0.5, Math.min(p.z - 4, nv.z));
+  const nv = g.vines[g.on + 1] || g.vines[g.on], want = new T.Vector3(p.x + 0.6, p.y + 1.5, p.z + 4.1), look = new T.Vector3((p.x + nv.x) / 2, (p.y + nv.y - nv.L * 0.6) / 2 + 0.5, Math.min(p.z - 4, nv.z));
   if (ui.snap || !V.started) { V.camPos.copy(want); V.look.copy(look); V.started = true; } else { V.camPos.lerp(want, Math.min(1, dt * 4)); V.look.lerp(look, Math.min(1, dt * 4)); } ui.snap = false;
-  cam.position.copy(V.camPos); cam.fov = innerWidth > innerHeight ? 58 : 70; cam.updateProjectionMatrix(); cam.lookAt(V.look);
+  cam.position.copy(V.camPos); cam.fov = innerWidth > innerHeight ? 54 : 64; cam.updateProjectionMatrix(); cam.lookAt(V.look);
+  /* 22 Nov 2026 (the audit): under the trees at dusk, at night and in rain the swinger was a dark speck. The camera is closer, and a soft lamp travels with the swinger so they and the next vine are always lit. */
+  if (!V.lamp) { V.lamp = new T.PointLight(0xfff0d8, 0, 16, 1.4); V.S.add(V.lamp); } V.lamp.position.set(p.x + 0.6, p.y + 1.4, p.z + 2.4); V.lamp.intensity = W3.S.night ? 26 : (W3.S.rain || W3.S.name === 'dusk' || W3.S.name === 'overcast' || W3.S.name === 'mist') ? 16 : 6;
   if (FX.shake > 0) { cam.rotation.x += (Math.random() - 0.5) * FX.shake * 0.002; cam.rotation.y += (Math.random() - 0.5) * FX.shake * 0.002; }
   W3.setFocus(p.x, p.y, p.z, 10);
   W3.render(dt);

@@ -27,6 +27,10 @@ with sync_playwright() as p:
     pg.evaluate("(() => { const G = __sim.G, s = G.spots[0]; G.ph = 'wait'; G.bait = true; G.fl.x = s.x; G.fl.z = s.z; G.B = { s, delay: 50, dips: [], bit: false, t: 0 }; })()")
     n0 = pg.evaluate("__sim.G.spots.length"); m.move(200, 600); m.down(); m.move(200, 520, steps=3); m.move(200, 420, steps=3); m.up(); pg.wait_for_timeout(60)
     r = pg.evaluate("[__sim.G.ph, __sim.G.noise, __sim.G.spots.length]"); ok(r[1] >= 0.9 and r[0] == 'reelin', 'striking too soon scares the fish off and makes the lake quieter', str(r))
+    # the bite, then a TAP: fish on (22 Nov 2026)
+    pg.evaluate("__sim.adv(1.5); (() => { const G = __sim.G, s = G.spots[0] || null; if (!s) return; G.ph = 'bite'; G.ph_t = 0; G.bait = true; G.fl.x = s.x; G.fl.z = s.z; G.B = { s, delay: 0, dips: [], bit: true, t: 0 }; })()")
+    m.move(200, 600); m.down(); m.up(); pg.wait_for_timeout(60); ok(pg.evaluate("__sim.G.ph") == 'fight', 'a tap on the bite hooks the fish', pg.evaluate("__sim.G.ph"))
+    pg.evaluate("__sim.go ? 0 : 0"); pg.evaluate("(() => { const G = __sim.G; G.ph = 'idle'; G.F = null; G.in.hold = false; })()")
     # the bite, then a flick up: fish on
     pg.evaluate("__sim.adv(1.5); (() => { const G = __sim.G, s = G.spots[0] || null; if (!s) return; G.ph = 'bite'; G.ph_t = 0; G.bait = true; G.fl.x = s.x; G.fl.z = s.z; G.B = { s, delay: 0, dips: [], bit: true, t: 0 }; })()")
     m.move(200, 600); m.down(); m.move(200, 520, steps=3); m.move(200, 430, steps=3); m.up(); pg.wait_for_timeout(60)

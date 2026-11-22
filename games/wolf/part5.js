@@ -83,9 +83,10 @@ window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contai
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (made for running with a pack): the thumb lands anywhere and slides: left and right steer, pushed up is a burst; a
 // quick flick is the strike; the FLANK buttons at the bottom corners send a packmate up that side.
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const fr = flankRects(), x = e.clientX, y = e.clientY;
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const fr = flankRects(), x = e.clientX, y = e.clientY;
   for (const [s, r] of [[-1, fr.L], [1, fr.R]]) if (x > r.x && x < r.x + r.w && y > r.y && y < r.y + r.h) { flank(G, s); return; }
-  ui.drag = { id: e.pointerId, x0: x, y0: y, x, y, hist: [[x, y, performance.now()]] }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+  { const B = biteBtn(); if (Math.hypot(x - B.x, y - B.y) < B.r + 10 * k) { const w = G.wolf, p = G.prey; if (w && p) strike(G, Math.atan2(p.x - w.x, p.z - w.z) - w.h); return; } }      /* 22 Nov 2026: a BITE button, aimed at her for you (the flick was a hidden gesture; it still works) */
+  if (ui.drag) return; ui.drag = { id: e.pointerId, x0: x, y0: y, x, y, hist: [[x, y, performance.now()]] }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const now = performance.now(); d.hist.push([d.x, d.y, now]); while (d.hist.length > 2 && now - d.hist[0][2] > 120) d.hist.shift();
   const h0 = d.hist[0], v = Math.hypot(d.x - h0[0], d.y - h0[1]) / Math.max(1, now - h0[2]) * 1000;
   if (v > 1500 * k && !d.flicked) { d.flicked = true; strike(G, -Math.atan2(d.x - h0[0], -(d.y - h0[1]))); d.x0 = d.x; d.y0 = d.y; }
@@ -128,7 +129,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  steer(v) { steer(G, v); }, burst(on) { burst(G, on); }, flank(s) { flank(G, s); }, strike(a) { strike(G, a); }, flankRects, wScreen, ui, get V3() { return V3; }, W3,
+  steer(v) { steer(G, v); }, burst(on) { burst(G, on); }, flank(s) { flank(G, s); }, strike(a) { strike(G, a); }, flankRects, biteBtn, wScreen, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

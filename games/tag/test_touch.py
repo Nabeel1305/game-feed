@@ -24,6 +24,9 @@ with sync_playwright() as p:
     x1 = pg.evaluate("(() => { const s = __sim.scr(__sim.G.me.x, 0, __sim.G.me.z); return s.x; })()"); ok(x1 > x0, 'and on the screen you move right', str([x0, x1]))
     touch('touchMove', [(1, 200, 540)]); pg.wait_for_timeout(500); c = me(); ok(c[1] < bb[1] - 1, 'drag up: you run up the yard', str([bb, c]))
     touch('touchEnd', []); pg.wait_for_timeout(400); d = me(); pg.wait_for_timeout(300); e = me(); ok(abs(e[0] - d[0]) + abs(e[1] - d[1]) < 0.3, 'let go: you stop', str([d, e]))
+    # the DASH button
+    pg.evaluate("__sim.G.me.cd = 0; __sim.G.me.dash = 0"); D = pg.evaluate("__sim.dashBtn()"); touch('touchStart', [(1, 150, 600)]); touch('touchMove', [(1, 190, 600)]); touch('touchStart', [(1, 190, 600), (2, D['x'], D['y'])]); pg.wait_for_timeout(40)
+    ok(pg.evaluate("__sim.G.me.dash") > 0, 'the DASH button dashes while the other thumb runs', str(pg.evaluate("[__sim.G.me.dash, __sim.G.me.cd]"))); touch('touchEnd', []); pg.wait_for_timeout(700)
     # two quick taps: dash
     pg.evaluate("__sim.G.me.cd = 0"); touch('touchStart', [(1, 200, 600)]); touch('touchMove', [(1, 240, 600)]); touch('touchEnd', []); pg.wait_for_timeout(60); touch('touchStart', [(1, 200, 600)])
     ok(pg.evaluate("__sim.G.me.dash") > 0, 'two quick taps: DASH', str(pg.evaluate("[__sim.G.me.dash, __sim.G.me.cd]")))

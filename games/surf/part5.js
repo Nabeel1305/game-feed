@@ -101,7 +101,8 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
 cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
   if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; stickTo(x - s2.x0, y - s2.y0); return; }
   const S = ui.sw; if (S && S.id === e.pointerId && !S.done) { const dx = x - S.x0, dy = y - S.y0; if (Math.hypot(dx, dy) > 34 * k) { S.done = true; swipe(G, dx / (Math.hypot(dx, dy)), dy / Math.hypot(dx, dy)); if (ui.crId === e.pointerId && G.phase === 'wait' && dy < 0) { } } } });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.crId === e.pointerId) { ui.crId = null; if (G) crouchOn(G, false); } if (ui.sw && ui.sw.id === e.pointerId) ui.sw = null; }
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.crId === e.pointerId) { ui.crId = null; if (G) { if (G.phase === 'wait' && G.pt - G.tL >= -G.cfg.early) standUp(G); crouchOn(G, false); } }      /* 22 Nov 2026: LET GO of PADDLE in the green ring and you stand (the swipe up was a hidden gesture; it still works) */
+  if (ui.sw && ui.sw.id === e.pointerId) { if (!ui.sw.done && G && G.phase === 'ride' && G.p.air) swipe(G, 1, 0); ui.sw = null; } }      /* a tap in the air spins */
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'sun');

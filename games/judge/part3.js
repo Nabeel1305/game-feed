@@ -25,8 +25,8 @@ function renderCase(G) { if (HEADLESS || !G || !G.case) return; const K = G.case
     + (K.victim ? `<p class="vic">${esc(K.victim)}</p>` : '')
     + `<div class="law">⚖ Maximum: ${K.mand ? 'life imprisonment is mandatory' : K.max === Infinity ? 'life imprisonment' : K.max === 0 ? 'no prison (fine or community order)' : fmtM(K.max) + ' in prison'}${K.money && K.loss ? ` · the victim lost £${K.loss.toLocaleString()}` : ''}${K.drive ? ' · a driving ban is usual' : ''}`
     + (upLv('clerk') ? `<br>Usual for a first offender: ${rangeWords(off.c - off.w * 0.6, off.c + off.w * 0.6)}` : '') + '</div>';
-  $('caseCard').scrollTop = 0; $('sentText').value = ''; setPhase('write'); }
-function setPhase(p) { const w = p === 'write'; $('sentText').classList.toggle('hidden', !w); $('sentRow').classList.toggle('hidden', !w); $('readBack').classList.toggle('hidden', w); $('readRow').classList.toggle('hidden', w || p === 'wait'); $('passBtn').disabled = false; }
+  $('caseCard').scrollTop = 0; $('sentText').value = ''; if (typeof builderReset === 'function') builderReset(); setPhase('write'); }
+function setPhase(p) { const w = p === 'write'; $('chips').classList.toggle('hidden', !w); $('built').classList.toggle('hidden', !w); $('sentText').classList.toggle('hidden', !w); $('sentRow').classList.toggle('hidden', !w); $('readBack').classList.toggle('hidden', w); $('readRow').classList.toggle('hidden', w || p === 'wait'); $('passBtn').disabled = false; }
 // how the game reacts
 function onEvent(G, e) { const cx = W / 2, top = sceneH();
   switch (e.k) {

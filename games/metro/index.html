@@ -280,8 +280,11 @@ function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
-    const sr = actx.sampleRate, n = Math.floor(sr * 1.7), ir = actx.createBuffer(2, n, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { const e = Math.pow(1 - i / n, 3.2); lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * e * (i < 400 ? i / 400 : 1); } }
-    B.rev = actx.createConvolver(); B.rev.buffer = ir; B.wet = actx.createGain(); B.wet.gain.value = 0.5; B.rev.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
+    // the room: two short echoes that feed each other through a soft filter. (It was a convolution reverb at first: lovely, but
+    // heavy work for a phone's sound thread, and under it two touch tests began to fail on timing. This costs almost nothing.)
+    B.rev = actx.createGain(); B.wet = actx.createGain(); B.wet.gain.value = 0.42; const d1 = actx.createDelay(0.5), d2 = actx.createDelay(0.5), f1 = actx.createGain(), f2 = actx.createGain(), lp = actx.createBiquadFilter();
+    d1.delayTime.value = 0.113; d2.delayTime.value = 0.171; f1.gain.value = 0.34; f2.gain.value = 0.3; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    B.rev.connect(lp); lp.connect(d1); lp.connect(d2); d1.connect(f1); f1.connect(d2); d2.connect(f2); f2.connect(d1); d1.connect(B.wet); d2.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
 const bfr = m => 440 * Math.pow(2, (m - 69) / 12);
 // a note's loudness shape, then to the room: g (gain node) from 0 up to v in att, down over dur, away after
 function bEnv(src, t, v, att, dur, rel, rv) { const B = BAND, g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * 0.35), t + att + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0002, t + att + dur + rel); src.connect(g); g.connect(B.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(B.rev); } return g; }
@@ -343,7 +346,7 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
-if (typeof window !== 'undefined' && !BAND.timer) BAND.timer = setInterval(bandTick, 60);
+if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
 
 const W3 = null, THREE = undefined;      // a 2D game: no 3D world
 // ===================== THE RULES: Metro Map (his idea 19, 20 Nov 2026) =====================

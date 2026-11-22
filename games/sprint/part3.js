@@ -177,8 +177,9 @@ function sync(V, g, dt) { const T = V.T, y = g.you, bend = g.D >= 200, D = visD(
   // the camera: low beside you in the blocks; behind you down the track; the side for the photo finish
   const P = trackAt(YOU_LANE, D - y.s, bend), fx = Math.sin(P.yaw), fz = Math.cos(P.yaw), rx = -fz, rz = fx, u = D - y.s, asp = innerWidth / innerHeight, portrait = asp < 0.8;
   let cp, cl;
-  if (!y.started && g.phase !== 'run') { const push = g.phase === 'set' ? 1 - clamp(g.ph / 2.5, 0, 1) * 0.4 : 0; cp = [P.x + fx * (3.6 - push) + rx * 0.9, 1.25 - push * 0.3, P.z + fz * (3.6 - push) + rz * 0.9]; cl = [P.x - fx * 0.6, 0.5, P.z - fz * 0.6]; }
-  else if (!g.yard && y.started && (u < 6 || y.fin != null)) { cp = [LS / 2 + (portrait ? 3.5 : 2.5), 1.9, RK - (portrait ? 7.5 : 6)]; cl = [Math.min(LS / 2 + 4, P.x + 0.5), 1.0, rc(4)]; }
+  if (!y.started && g.phase !== 'run') { const push = g.phase === 'set' ? 1 - clamp(g.ph / 2.5, 0, 1) * 0.4 : 0; cp = [P.x - fx * (4.2 - push) + rx * 1.7, 1.75 - push * 0.2, P.z - fz * (4.2 - push) + rz * 1.7]; cl = [P.x + fx * 5, 0.7, P.z + fz * 5]; }      /* 22 Nov 2026: from behind your shoulder, looking down your lane (it used to sit in front of you and your head filled the screen) */
+  else if (y.fin != null) { cp = [P.x + fx * 4.2 + rx * 1.8, 1.6, P.z + fz * 4.2 + rz * 1.8]; cl = [P.x, 1.0, P.z]; }      /* after the line: round in front of you as you slow (it used to end up staring at the stands) */
+  else if (!g.yard && y.started && u < 6) { cp = [LS / 2 + (portrait ? 3.5 : 2.5), 1.9, RK - (portrait ? 7.5 : 6)]; cl = [Math.min(LS / 2 + 4, P.x + 0.5), 1.0, rc(4)]; }
   else { const back = portrait ? 5.2 : 4.6, up = portrait ? 2.7 : 2.2, side = portrait ? 0.55 : 0.5; cp = [P.x - fx * back + rx * side, up, P.z - fz * back + rz * side]; cl = [P.x + fx * 8, 0.9, P.z + fz * 8]; }
   if (ui.snap || !ui.cam) { ui.cam = { p: cp.slice(), l: cl.slice() }; ui.snap = false; }
   const kk = Math.min(1, dt * (y.started ? 7 : 3)); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (cp[i] - ui.cam.p[i]) * kk; ui.cam.l[i] += (cl[i] - ui.cam.l[i]) * kk; }

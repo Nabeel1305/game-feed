@@ -5,7 +5,7 @@
 // (the closer, the more points), then land softly in the landing field. Units: metres; x east, z north, y up.
 
 const RULES = [
-  '<b>Hold anywhere to fire the burner</b>: the balloon warms and rises, a little late. Let go and it cools and sinks. Flick down to vent: sink faster.',
+  '<b>Hold anywhere to fire the burner</b>: the balloon warms and rises, a little late. Let go and it cools and sinks. Tap <b>VENT</b> to sink faster.',
   '<b>You cannot steer, the wind does.</b> The bar on the right shows the wind at each height: climb or sink into the one that carries you to the X.',
   '<b>🎯 Drop a marker</b> when the ring on the ground (where it will land) is on the X. Closer is more points.',
   '<b>Land softly in the landing field</b> (the green square): sink slowly, a short burn just before the ground.',

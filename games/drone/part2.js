@@ -7,8 +7,8 @@
 // World: metres; x across, y up, z forwards from the start (the course runs towards +z).
 
 const RULES = [
-  '<b>Two sticks, like a real drone.</b> Left thumb: up to climb, down to sink, left and right to turn.',
-  '<b>Right thumb:</b> up to fly forwards, down to brake and back, left and right to slide sideways.',
+  '<b>One thumb.</b> Hold it down anywhere and the drone flies forwards. Slide left or right to turn, up to climb, down to sink.',
+  '<b>Lift your thumb</b> and the drone levels out and brakes to a hover.',
   '<b>Fly through the glowing hoop</b>, then the next. Each hoop gives back a few seconds.',
   'The drone drifts and the wind pushes it: ease off early. Touch a rim, a tree or a wall and it crashes.',
   'Three crashes, or the clock at zero, and the run is over.',
@@ -55,7 +55,9 @@ function makeCourse(G, only) {
   if (!L) for (let i = 0, tries = 0; i < Math.round(c.f / 8) && tries < 100; tries++) { const wx = (R() - 0.5) * 80, wz = 20 + R() * zEnd, w = 6 + R() * 10, h = 4 + R() * 8; if (near(wx, wz, 6 + w / 2)) continue; G.walls.push({ x: wx, z: wz, w, d: 4 + R() * 6, h }); i++; }
 }
 // ---------- the thumbs ----------
-function sticks(G, thr, yaw, pitch, roll) { const I = G.in; I.thr = clamp(thr, -1, 1); I.yaw = clamp(yaw, -1, 1); I.pitch = clamp(pitch, -1, 1); I.roll = clamp(roll, -1, 1); }
+// coord (22 Nov 2026, one-thumb flying): the drone flies where it points; sideways drift from turns and wind is trimmed out for you,
+// because one thumb has no way to slide sideways. The robots fly all four axes without it.
+function sticks(G, thr, yaw, pitch, roll, coord) { const I = G.in; I.thr = clamp(thr, -1, 1); I.yaw = clamp(yaw, -1, 1); I.pitch = clamp(pitch, -1, 1); I.roll = clamp(roll, -1, 1); I.coord = !!coord; }
 // ---------- every frame ----------
 function hoopPos(G, h) { return { x: h.x0 + (h.mv ? Math.sin(G.t * 0.8 + h.ph) * h.mv : 0), y: h.y, z: h.z }; }
 function step(G, dt) {
@@ -69,6 +71,7 @@ function step(G, dt) {
   const tvx = s * fwd + co * side, tvz = co * fwd - s * side, k1 = Math.min(1, c.drag * dt);
   const gust = c.gust * Math.sin(G.t * 0.7 + G.windA) * Math.sin(G.t * 0.23), wx = Math.sin(G.windA) * (c.wind + gust), wz = Math.cos(G.windA) * (c.wind + gust) * 0.4;
   d.vx += (tvx - d.vx) * k1 + wx * dt * 0.6; d.vz += (tvz - d.vz) * k1 + wz * dt * 0.6; d.vy += (I.thr * c.climb - d.vy) * Math.min(1, dt * 3);
+  if (I.coord) { const vs = d.vx * co - d.vz * s, kk = Math.min(1, dt * 4); d.vx -= co * vs * kk; d.vz += s * vs * kk; }
   d.tilt += (I.pitch * 0.35 - d.tilt) * Math.min(1, dt * 6); d.bank += (-I.roll * 0.35 - I.yaw * 0.12 - d.bank) * Math.min(1, dt * 6);
   const px = d.x, py = d.y, pz = d.z; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
   // the ground, trees, walls
@@ -101,9 +104,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'fly', title: 'FORWARDS AND TURN', how: 'Right thumb up: fly forwards. Left thumb left or right: turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
-  2: [{ id: 'climb', title: 'UP AND DOWN', how: 'These hoops are high and low. Left thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
-  3: [{ id: 'slide', title: 'SLIDE AND BRAKE', how: 'Right thumb left or right slides sideways; pull it down to brake before a hoop. The drone drifts: ease off early. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
+  1: [{ id: 'fly', title: 'FORWARDS AND TURN', how: 'Hold your thumb down: the drone flies forwards. Slide it left or right to turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
+  2: [{ id: 'climb', title: 'UP AND DOWN', how: 'These hoops are high and low. Slide your thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
+  3: [{ id: 'slide', title: 'LIFT TO BRAKE', how: 'Lift your thumb and the drone brakes to a hover. It drifts: lift early before a tight hoop, line up, then hold again. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; makeCourse(G); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

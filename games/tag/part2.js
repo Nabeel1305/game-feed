@@ -9,7 +9,7 @@
 // World: metres; x across the screen, z down it (the camera looks up the yard, towards -z). Screen right is world +x.
 
 const RULES = [
-  '<b>Drag anywhere</b> to run: your thumb is the stick. <b>Tap twice quickly</b> to DASH.',
+  '<b>Drag anywhere</b> to run: your thumb is the stick. Tap <b>DASH</b> for a burst of speed.',
   '<b>CHASE:</b> you are IT. Tag every kid before the bell.',
   '<b>RUN:</b> they are IT. Keep away till the bell. Three hearts.',
   '<b>FREEZE:</b> freeze them all at once. Free kids unfreeze their friends.',
@@ -174,7 +174,7 @@ function finish(G, win, why) {
 // ---------- LESSONS ----------
 const LESSONS = {
   1: [{ id: 'run', title: 'YOU ARE IT!', how: 'Put your thumb down anywhere and drag: you run that way. Tag all three kids.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 3 },
-      { id: 'dash', title: 'DASH', how: 'Tap twice quickly to DASH: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
+      { id: 'dash', title: 'DASH', how: 'Tap the DASH button: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
   2: [{ id: 'flee', title: 'THEY ARE IT!', how: 'The kid in red is IT. Keep away from him for 15 seconds. Dash when he gets close.', need: 1, ok: w => w === 'survived', mode: 'run', kids: 1, survive: 15 }],
   3: [{ id: 'freeze', title: 'FREEZE TAG', how: 'Freeze all four. Free kids can unfreeze a friend with a touch: get them all.', need: 1, ok: w => w === 'all', mode: 'freeze', kids: 4 }],
 };

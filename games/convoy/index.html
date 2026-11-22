@@ -4857,8 +4857,11 @@ function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
-    const sr = actx.sampleRate, n = Math.floor(sr * 1.7), ir = actx.createBuffer(2, n, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { const e = Math.pow(1 - i / n, 3.2); lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * e * (i < 400 ? i / 400 : 1); } }
-    B.rev = actx.createConvolver(); B.rev.buffer = ir; B.wet = actx.createGain(); B.wet.gain.value = 0.5; B.rev.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
+    // the room: two short echoes that feed each other through a soft filter. (It was a convolution reverb at first: lovely, but
+    // heavy work for a phone's sound thread, and under it two touch tests began to fail on timing. This costs almost nothing.)
+    B.rev = actx.createGain(); B.wet = actx.createGain(); B.wet.gain.value = 0.42; const d1 = actx.createDelay(0.5), d2 = actx.createDelay(0.5), f1 = actx.createGain(), f2 = actx.createGain(), lp = actx.createBiquadFilter();
+    d1.delayTime.value = 0.113; d2.delayTime.value = 0.171; f1.gain.value = 0.34; f2.gain.value = 0.3; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    B.rev.connect(lp); lp.connect(d1); lp.connect(d2); d1.connect(f1); f1.connect(d2); d2.connect(f2); f2.connect(d1); d1.connect(B.wet); d2.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
 const bfr = m => 440 * Math.pow(2, (m - 69) / 12);
 // a note's loudness shape, then to the room: g (gain node) from 0 up to v in att, down over dur, away after
 function bEnv(src, t, v, att, dur, rel, rv) { const B = BAND, g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * 0.35), t + att + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0002, t + att + dur + rel); src.connect(g); g.connect(B.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(B.rev); } return g; }
@@ -4920,7 +4923,7 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
-if (typeof window !== 'undefined' && !BAND.timer) BAND.timer = setInterval(bandTick, 60);
+if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
 
 // ===================== THE 3D WORLD (tools/world3d.js), shared by every 3D game =====================
 // His rules (17 Nov 2026): every game is 3D, seen from where the player stands; weather and light change; as real-looking as it
@@ -5141,11 +5144,11 @@ const W3 = (() => {
 // surfaces, and get the convoy home. Units: metres, seconds; x east, z north.
 
 const RULES = [
-  '<b>Steer</b> with the left thumb (the ship is heavy: the dashed line shows where you are going). <b>Throttle</b>: reverse, stop, cruise, full.',
+  '<b>Steer</b> with the left thumb (the ship is heavy: the dashed line shows where you are going). Tap <b>SPEED</b> to change between stop, cruise and full.',
   '<b>PING</b> the sonar: a submarine in range shows as a ring where it may be. Ping again and the ring tightens. An old ring grows: it has moved.',
-  '<b>DEPTH CHARGES</b> drop behind you: run over the ring and drop. Set <b>shallow, medium or deep</b>: one that just fired is shallow, one that has just dived is deep.',
+  '<b>DEPTH CHARGES</b> drop behind you: run over the ring and drop. Tap <b>DEPTH</b> for shallow, medium or deep: one that just fired is shallow, one that has just dived is deep.',
   'A submarine will not fire with an escort close by: stay near the ship it is after. Surfaced, it can be shelled with the <b>GUN</b>.',
-  'Your <b>crew</b> can repair, fight fires and rescue survivors, one job per team. Get enough of the convoy to the harbour.',
+  'When there is damage, a fire or survivors close by, a <b>CREW</b> button appears: tap it to send a team. Get enough of the convoy to the harbour.',
 ];
 const SKINS = [{ id: 'grey', name: 'Navy grey', col: 0x7a8288, stars: 0 }, { id: 'dazzle', name: 'Dazzle', col: 0x4a6a8a, stars: 6 }, { id: 'dark', name: 'Night blue', col: 0x2a3440, stars: 14 },
   { id: 'arctic', name: 'Arctic white', col: 0xd8dde2, stars: 24 }, { id: 'sea', name: 'Sea green', col: 0x4a6a5a, stars: 36 }, { id: 'gold', name: 'Admiral', col: 0x9a8a5a, stars: 50 }];
@@ -5460,10 +5463,16 @@ function draw(now, dt) {
     ctx.fillStyle = 'rgba(10,20,26,.92)'; rrect(W / 2 - w / 2, hy - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the HUD ----------
-function layout(G) { return { ping: { x: W - 74 * k, y: H - 80 * k, r: 48 * k }, drop: { x: W - 186 * k, y: H - 66 * k, r: 40 * k }, gun: { x: W - 74 * k, y: H - 192 * k, r: 34 * k },
-  depth: [0, 1, 2].map(i => ({ x: W - 262 * k + i * 76 * k * 0, y: H - 150 * k + i * 0, w: 70 * k, h: 30 * k })).map((b, i) => ({ x: W - 300 * k + i * 74 * k, y: H - 150 * k, w: 70 * k, h: 30 * k })),
-  thr: [0, 1, 2, 3].map(i => ({ x: 12 * k, y: H - 44 * k - (3 - i) * 0 - i * 38 * k, w: 70 * k, h: 32 * k })).reverse(),
-  crew: ['repair', 'fire', 'rescue'].map((j, i) => ({ job: j, x: 12 * k + i * 66 * k, y: 52 * k, w: 62 * k, h: 34 * k })),
+// what the crew should do now, most urgent first (null: nothing to do, or nobody free)
+function crewNeed(G) { const me = G.me; if (!G.crew.some(c => !c.job)) return null; const busy = j => G.crew.some(c => c.job === j);
+  if (me.fire > 0 && !busy('fire')) return 'fire'; if ((!me.engOk || !me.sonarOk || !me.gunOk || me.flood > 0) && !busy('repair')) return 'repair'; if (G.surv.some(s => Math.hypot(s.x - me.x, s.z - me.z) < 220) && !busy('rescue')) return 'rescue'; return null; }
+// 22 Nov 2026 (the audit: thirteen buttons was far too many): the wheel, PING and DROP are always there; SPEED and DEPTH are one
+// button each (a tap moves to the next setting); GUN shows only when a submarine is on the surface, and one CREW button only
+// when there is a job to do (it sends a team to the most urgent one).
+function layout(G) { const need = G ? crewNeed(G) : null, surf = G ? G.subs.some(s => s.surf && !s.gone && Math.hypot(s.x - G.me.x, s.z - G.me.z) < 1600) : false;
+  return { ping: { x: W - 74 * k, y: H - 80 * k, r: 48 * k }, drop: { x: W - 186 * k, y: H - 66 * k, r: 40 * k }, gun: surf ? { x: W - 74 * k, y: H - 192 * k, r: 34 * k } : null,
+  depthBtn: { x: W - 246 * k, y: H - 150 * k, w: 120 * k, h: 36 * k }, speed: { x: 12 * k, y: H - 48 * k, w: 124 * k, h: 38 * k },
+  crewBtn: need ? { job: need, x: 12 * k, y: 52 * k, w: 150 * k, h: 38 * k } : null,
   fast: { x: W - 118 * k, y: 10 * k, w: 50 * k, h: 34 * k }, map: { x: W - 62 * k, y: 10 * k, w: 50 * k, h: 34 * k } }; }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,20,26,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
@@ -5483,11 +5492,10 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   // crew reports (the newest two)
   if (!G.lesson) G.reports.slice(-2).forEach((r, i, a) => { const age = G.t - r.t; if (age > 9) return; ctx.globalAlpha = clamp(1.4 - age / 7, 0, 1); txt('📻 ' + r.txt, W / 2, 56 * k + i * 18 * k, r.pri >= 3 ? '#ff8a7a' : r.pri === 2 ? '#ffd36a' : '#e8f4ff', `700 ${Math.round(12 * k)}px ${BC}`); ctx.globalAlpha = 1; });
   // crew jobs
-  L.crew.forEach(b => { const busy = G.crew.some(c => c.job === b.job), need = b.job === 'repair' ? (!me.engOk || !me.sonarOk || !me.gunOk || me.flood > 0) : b.job === 'fire' ? me.fire > 0 : G.surv.length > 0; rbtn(b, { repair: '🔧 REPAIR', fire: '🔥 FIRE', rescue: '🛟 RESCUE' }[b.job], busy, '#3a7a5a', !need && !busy); });
-  txt(`crew: ${G.crew.filter(c => !c.job).length} of ${G.crew.length} free`, 12 * k, 98 * k, 'rgba(255,255,255,.8)', `700 ${Math.round(11 * k)}px ${BC}`, 'left');
+  if (L.crewBtn) { const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 160); ctx.globalAlpha = 0.75 + 0.25 * pulse; rbtn(L.crewBtn, { repair: '🔧 TAP: REPAIR', fire: '🔥 TAP: FIGHT THE FIRE', rescue: '🛟 TAP: RESCUE THEM' }[L.crewBtn.job], true, '#3a7a5a'); ctx.globalAlpha = 1; }
+  { const jobs = G.crew.filter(c => c.job).map(c => ({ repair: 'repairing', fire: 'fighting the fire', rescue: 'rescuing' }[c.job])); if (jobs.length) txt('crew: ' + jobs.join(', '), 12 * k, (L.crewBtn ? 102 : 64) * k, 'rgba(255,255,255,.8)', `700 ${Math.round(11 * k)}px ${BC}`, 'left'); }
   // throttle
-  const TN = ['FULL', 'CRUISE', 'STOP', 'REVERSE']; L.thr.forEach((b, i) => rbtn(b, TN[i], me.thr === 3 - i, '#3a6a9a'));
-  txt(`${Math.round(Math.abs(me.v) * 1.94)} kn`, 12 * k + 35 * k, H - 44 * k - 4 * 38 * k + 14 * k, '#fff', `700 ${Math.round(12 * k)}px ${BC}`);
+  rbtn(L.speed, `SPEED: ${['REVERSE', 'STOP', 'CRUISE', 'FULL'][me.thr]}`, me.thr === 3, '#3a6a9a'); txt(`${Math.round(Math.abs(me.v) * 1.94)} kn · tap to change`, L.speed.x + L.speed.w / 2, L.speed.y - 10 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`);
   // fast-forward and map
   rbtn(L.fast, G.fast > 1 ? '⏩ ×6' : '⏩', G.fast > 1, '#3a6a9a', danger(G)); rbtn(L.map, '🗺 MAP', ui.map, '#3a6a9a');
   // the wheel (floating stick)
@@ -5496,9 +5504,9 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   // the action buttons: PING, the depth setting and DROP, GUN
   const surf = G.subs.some(s => s.surf && !s.gone && Math.hypot(s.x - me.x, s.z - me.z) < 1600);
   cbtn(L.ping, 'PING', me.pingCd > 0 ? me.pingCd.toFixed(1) : 'sonar', '#7ad0ff', me.pingCd <= 0 && me.sonarOk);
-  L.depth.forEach((b, i) => rbtn(b, DEPTHS[i].name, me.depth === i, '#9a6a2a'));
+  rbtn(L.depthBtn, `DEPTH: ${DEPTHS[me.depth].name}`, true, '#9a6a2a'); txt('tap to change', L.depthBtn.x + L.depthBtn.w / 2, L.depthBtn.y - 9 * k, 'rgba(255,255,255,.8)', `700 ${Math.round(10 * k)}px ${BC}`);
   cbtn(L.drop, 'DROP', `${me.charges} left`, '#ffb347', me.reload <= 0 && me.charges > 0, G.contacts.some(c => c.sure && Math.hypot(c.x - me.x, c.z - me.z) < 70));
-  cbtn(L.gun, 'GUN', surf ? 'fire!' : '', '#ff8a6a', surf && me.gunOk && me.gunCd <= 0, surf);
+  if (L.gun) cbtn(L.gun, 'GUN', 'fire!', '#ff8a6a', me.gunOk && me.gunCd <= 0, true);
   if (ui.map) tacMap(G);
   if (ui.banner) banner(); }
 // the tactical map: the convoy, you, the other escorts, the contacts and their rings, torpedoes, the way to the harbour
@@ -5657,10 +5665,10 @@ const inC = (b, x, y, pad = 12) => Math.hypot(x - b.x, y - b.y) < b.r + pad * k,
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
   if (inC(L.ping, x, y)) { if (!ping(G)) sfx.no(); return; }
   if (inC(L.drop, x, y)) { if (!dropCharges(G)) sfx.no(); return; }
-  if (inC(L.gun, x, y)) { gun(G); return; }
-  for (let i = 0; i < 3; i++) if (inR(L.depth[i], x, y)) { setDepth(G, i); sfx.click(); return; }
-  for (let i = 0; i < 4; i++) if (inR(L.thr[i], x, y)) { throttle(G, 3 - i); sfx.click(); return; }
-  for (const b of L.crew) if (inR(b, x, y)) { if (!crewJob(G, b.job)) sfx.no(); return; }
+  if (L.gun && inC(L.gun, x, y)) { gun(G); return; }
+  if (inR(L.depthBtn, x, y)) { setDepth(G, (G.me.depth + 1) % 3); sfx.click(); return; }
+  if (inR(L.speed, x, y)) { throttle(G, G.me.thr >= 3 ? 1 : G.me.thr + 1); sfx.click(); return; }      /* STOP -> CRUISE -> FULL -> STOP */
+  if (L.crewBtn && inR(L.crewBtn, x, y)) { if (!crewJob(G, L.crewBtn.job)) sfx.no(); return; }
   if (inR(L.fast, x, y)) { fastOn(G, G.fast === 1); return; }
   if (inR(L.map, x, y)) { ui.map = !ui.map; sfx.click(); return; }
   if (x < W * 0.6 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });

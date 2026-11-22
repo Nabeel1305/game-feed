@@ -95,10 +95,10 @@ const inC = (b, x, y, pad = 12) => Math.hypot(x - b.x, y - b.y) < b.r + pad * k,
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
   if (inC(L.ping, x, y)) { if (!ping(G)) sfx.no(); return; }
   if (inC(L.drop, x, y)) { if (!dropCharges(G)) sfx.no(); return; }
-  if (inC(L.gun, x, y)) { gun(G); return; }
-  for (let i = 0; i < 3; i++) if (inR(L.depth[i], x, y)) { setDepth(G, i); sfx.click(); return; }
-  for (let i = 0; i < 4; i++) if (inR(L.thr[i], x, y)) { throttle(G, 3 - i); sfx.click(); return; }
-  for (const b of L.crew) if (inR(b, x, y)) { if (!crewJob(G, b.job)) sfx.no(); return; }
+  if (L.gun && inC(L.gun, x, y)) { gun(G); return; }
+  if (inR(L.depthBtn, x, y)) { setDepth(G, (G.me.depth + 1) % 3); sfx.click(); return; }
+  if (inR(L.speed, x, y)) { throttle(G, G.me.thr >= 3 ? 1 : G.me.thr + 1); sfx.click(); return; }      /* STOP -> CRUISE -> FULL -> STOP */
+  if (L.crewBtn && inR(L.crewBtn, x, y)) { if (!crewJob(G, L.crewBtn.job)) sfx.no(); return; }
   if (inR(L.fast, x, y)) { fastOn(G, G.fast === 1); return; }
   if (inR(L.map, x, y)) { ui.map = !ui.map; sfx.click(); return; }
   if (x < W * 0.6 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });

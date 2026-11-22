@@ -86,6 +86,8 @@ function onEvent(G, e) {
   }
 }
 const VW = new (window.THREE ? THREE.Vector3 : Object)();
+// where the right thumb is aiming: it starts straight ahead at half range; sideways turns it, up is further, down is nearer
+function throwAim(u, G) { const dx = u.x - u.x0, dy = u.y - u.y0; return { aim: -clamp(dx / (150 * k), -0.9, 0.9), dist: clamp(15 - dy / (170 * k) * 15, 6, G.cfg.range) }; }
 function wScreen(x, y, z) { W3.cam.updateMatrixWorld(); VW.set(x, y, z); return W3.screen(VW); }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
@@ -139,8 +141,10 @@ function hud(G, t) {
     ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = dist < c.range ? '#9be3b5' : '#fff';
     if (on && w.up) { ctx.strokeText(`${Math.round(dist)} m${dist < c.range ? ' · IN RANGE' : ''}`, p.x, p.y - 34 * k); ctx.fillText(`${Math.round(dist)} m${dist < c.range ? ' · IN RANGE' : ''}`, p.x, p.y - 34 * k); }
     if (!on || !w.up) { let ax = p.x - W / 2, ay = p.y - H / 2; if (!p.front) { ax = -ax; ay = -ay; } if (on) { ax = p.x - W / 2; ay = p.y - H / 2; } const s2 = Math.min((W / 2 - 30) / Math.abs(ax || 1e-3), (H / 2 - 120) / Math.abs(ay || 1e-3), on ? 1 : 1e9); ctx.save(); ctx.translate(W / 2 + ax * s2, H / 2 + ay * s2); if (!on) { ctx.rotate(Math.atan2(ay, ax)); ctx.fillStyle = w.up ? '#e8f4ff' : 'rgba(232,244,255,.45)'; ctx.beginPath(); ctx.moveTo(16 * k, 0); ctx.lineTo(-8 * k, -10 * k); ctx.lineTo(-8 * k, 10 * k); ctx.closePath(); ctx.fill(); } else { ctx.strokeStyle = 'rgba(232,244,255,.5)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(0, 0, 16 * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = 'rgba(232,244,255,.7)'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('DIVING', 0, 28 * k); } ctx.restore(); }
-    // the swipe being drawn
-    if (ui.R && ui.R.moved) { const r = ui.R; ctx.strokeStyle = 'rgba(255,240,200,.85)'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.moveTo(r.x0, r.y0); ctx.lineTo(r.x, r.y); ctx.stroke(); }
+    // the throw being aimed (22 Nov 2026): a ring on the water where the harpoon will land, moved by the right thumb
+    if (ui.R) { const A = throwAim(ui.R, G), b = G.boat, a2 = b.h + A.aim, tx = b.x + Math.sin(a2) * A.dist, tz = b.z + Math.cos(a2) * A.dist, s0 = wScreen(b.x, 1.2, b.z), s1 = wScreen(tx, 0.3, tz), s2 = wScreen(tx + 2.2, 0.3, tz);
+      if (s1 && s1.front !== false) { const rr = Math.max(12 * k, Math.abs((s2 ? s2.x : s1.x + 20) - s1.x)), hit = on && w.up && Math.hypot(w.x - tx, w.z - tz) < 4; ctx.strokeStyle = hit ? '#7dff9a' : '#ffe9a8'; ctx.lineWidth = 3 * k; ctx.setLineDash([8 * k, 8 * k]); ctx.beginPath(); if (s0) ctx.moveTo(s0.x, s0.y); else ctx.moveTo(W / 2, H * 0.7); ctx.quadraticCurveTo((s0 ? s0.x : W / 2) * 0.5 + s1.x * 0.5, Math.min(s0 ? s0.y : H * 0.7, s1.y) - 70 * k, s1.x, s1.y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.ellipse(s1.x, s1.y, rr, rr * 0.42, 0, 0, TAU); ctx.stroke(); ctx.fillStyle = hit ? 'rgba(125,255,154,.25)' : 'rgba(255,233,168,.18)'; ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 3; ctx.strokeText('LET GO TO THROW', s1.x, s1.y + rr * 0.42 + 16 * k); ctx.fillText('LET GO TO THROW', s1.x, s1.y + rr * 0.42 + 16 * k); } }
   }
   if (G.ph === 'ride' && w) {
     // the tension gauge: the band that tires her, the red where it snaps
@@ -159,7 +163,7 @@ function hud(G, t) {
   const lb = ui.L, rb = ui.R; ctx.globalAlpha = 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
   const lx = lb ? lb.x0 : W * 0.22, ly = lb ? lb.y0 : H - 110 * k; ctx.beginPath(); ctx.arc(lx, ly, 46 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx - G.steer * 46 * k, ly, 14 * k, 0, TAU); ctx.fill();
   ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('STEER', lx, ly + 62 * k);
-  const rx = W * 0.78, ry = H - 110 * k; ctx.fillText(G.ph === 'ride' ? (G.haul ? 'HAULING' : 'HOLD TO HAUL') : 'SWIPE UP TO THROW', rx, ry + 62 * k); if (G.ph === 'ride') { ctx.globalAlpha = G.haul ? 0.9 : 0.5; ctx.beginPath(); ctx.arc(rx, ry, 30 * k, 0, TAU); ctx.fillStyle = G.haul ? '#9be3b5' : 'rgba(255,255,255,.3)'; ctx.fill(); }
+  const rx = W * 0.78, ry = H - 110 * k; ctx.fillText(G.ph === 'ride' ? (G.haul ? 'HAULING' : 'HOLD TO HAUL') : 'HOLD · MOVE THE RING · LET GO', rx, ry + 62 * k); if (G.ph === 'ride') { ctx.globalAlpha = G.haul ? 0.9 : 0.5; ctx.beginPath(); ctx.arc(rx, ry, 30 * k, 0, TAU); ctx.fillStyle = G.haul ? '#9be3b5' : 'rgba(255,255,255,.3)'; ctx.fill(); }
   ctx.globalAlpha = 1;
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }

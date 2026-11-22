@@ -84,11 +84,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (made for a drone): two sticks, like a real controller. A thumb on the left half is the left stick (up and down:
 // climb and sink; left and right: turn), on the right half the right stick (up and down: forwards and back; left and right:
 // slide). Each stick is centred where the thumb lands and springs back when it lifts.
-function applySticks() { if (!G) return; const L = ui.sticks.L, R = ui.sticks.R, r = 54 * k, v = (s, a) => s ? clamp((a === 'x' ? s.x - s.x0 : s.y0 - s.y) / r, -1, 1) : 0;
-  sticks(G, v(L, 'y'), -v(L, 'x'), v(R, 'y'), -v(R, 'x')); }      // the camera looks along the drone, so screen right is the world's -x
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const side = e.clientX < W / 2 ? 'L' : 'R'; if (ui.sticks[side]) return; ui.sticks[side] = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; applySticks(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { for (const s of Object.values(ui.sticks)) if (s && s.id === e.pointerId) { s.x = e.clientX; s.y = e.clientY; } applySticks(); });
-function endTouch(e) { for (const k2 of ['L', 'R']) if (ui.sticks[k2] && ui.sticks[k2].id === e.pointerId) ui.sticks[k2] = null; applySticks(); }
+// ONE THUMB (22 Nov 2026, the audit: two sticks was against his rule and too much for a first-timer). Hold a thumb down anywhere and
+// the drone flies forwards; slide the thumb left or right to turn, up or down to climb or sink; lift it and the drone levels and
+// brakes to a hover. (The rules still have all four axes: the robots fly with them.)
+function applySticks() { if (!G) return; const S = ui.sticks.L, r = 54 * k; if (!S) { sticks(G, 0, 0, 0, 0, true); return; }
+  const dx = clamp((S.x - S.x0) / r, -1, 1), dy = clamp((S.y0 - S.y) / r, -1, 1), dz = v => Math.abs(v) < 0.12 ? 0 : v;
+  sticks(G, dz(dy), -dz(dx), 0.92 - 0.47 * Math.max(Math.abs(dx), Math.abs(dy) * 0.6), 0, true); }      // a hard turn or climb slows it: you can thread a tight hoop      // the camera looks along the drone, so screen right is the world's -x
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (ui.sticks.L) return; ui.sticks.L = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; applySticks(); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const s = ui.sticks.L; if (s && s.id === e.pointerId) { s.x = e.clientX; s.y = e.clientY; applySticks(); } });
+function endTouch(e) { if (ui.sticks.L && ui.sticks.L.id === e.pointerId) { ui.sticks.L = null; applySticks(); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections

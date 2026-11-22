@@ -60,8 +60,8 @@ function onEvent(G, e) {
     case 'tell': if (!HEADLESS) sfx.snort(); break;
     case 'jink': break;
     case 'flank': sfx.yip(); say(e.side < 0 ? '◀ FLANK LEFT' : 'FLANK RIGHT ▶', cx, cy + 30 * k, '#cfe6ff', 18); break;
-    case 'wide': sfx.snap(); say('FLICK AT HER!', W / 2, H * 0.3, '#ffd0c4', 22); tip('wide', 'Flick towards her, not away', 2.4); break;
-    case 'short': sfx.snap(); say('TOO FAR!', cx, cy, '#ffd0c4', 22); tip('far', 'Get close and beside her first, then flick', 2.6); break;
+    case 'wide': sfx.snap(); say('MISSED!', W / 2, H * 0.3, '#ffd0c4', 22); tip('wide', 'Tap BITE when you are beside her', 2.4); break;
+    case 'short': sfx.snap(); say('TOO FAR!', cx, cy, '#ffd0c4', 22); tip('far', 'Get close and beside her first, then BITE', 2.6); break;
     case 'slip': sfx.snap(); say('FROM THE SIDE!', cx, cy, '#ffd0c4', 22); tip('side', 'Strike from beside her, not from straight behind', 2.6); break;
     case 'kicked': sfx.kick(); FX.red = 0.6; FX.shake = 14; vibe(HAP.thud); say('KICKED!', cx, cy, '#ffb4a8', 28); tip('kick', 'Behind her you get kicked: come up alongside', 3); break;
     case 'caught': sfx.caught(e.n); FX.shake = 10; FX.flash = 0.5; vibe(HAP.best); say('BROUGHT DOWN!', cx, cy, '#ffe08a', 28); break;
@@ -106,6 +106,7 @@ function draw(now, dt) {
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
 }
 let IG = null; function idleG() { if (!IG || IG.over || (IG.ph === 'down' && IG.gap < 0.2)) { IG = newGame(4, { seed: (Math.random() * 1e6) | 0 }); IG.mem = {}; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
+function biteBtn() { return { x: W - 62 * k, y: H - 132 * k, r: 42 * k }; }
 function flankRects() { const w = 96 * k, h = 46 * k, y = H - h - 20 * k; return { L: { x: 12, y, w, h }, R: { x: W - 12 - w, y, w, h } }; }
 function hud(G, t) {
   const c = G.cfg, w = G.wolf, p = G.prey;
@@ -123,6 +124,8 @@ function hud(G, t) {
     ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(ready ? 18 : 12 * 1) * k}px ${BC}`; ctx.fillStyle = ready ? '#ffe08a' : d < c.strike ? '#ff9a7a' : '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.6)'; const s = ready ? 'STRIKE!' : d < c.strike ? 'GET BESIDE HER' : `${Math.round(d)} m`; ctx.strokeText(s, ps.x, ps.y); ctx.fillText(s, ps.x, ps.y);
     if (p.tell > 0) { ctx.fillStyle = '#ffd36a'; ctx.font = `800 ${Math.round(22 * k)}px ${BC}`; ctx.fillText(p.turnTo > 0 === (Math.cos(w.h - p.h) > 0) ? '↰' : '↱', ps.x, ps.y - 26 * k); } }
   // flank buttons and the thumb
+  if (G.ph === 'chase' && G.prey) { const B = biteBtn(), w = G.wolf, near = Math.hypot(G.prey.x - w.x, G.prey.z - w.z) <= G.cfg.strike; ctx.globalAlpha = near ? 1 : 0.45; ctx.fillStyle = near ? 'rgba(210,50,40,.95)' : 'rgba(20,30,40,.7)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r, 0, TAU); ctx.fill(); ctx.strokeStyle = near ? '#ffe060' : '#cfe6ff'; ctx.lineWidth = near ? 4 + 2 * Math.sin(t * 9) : 2; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(18 * k)}px ${BC}`; ctx.fillText('BITE', B.x, B.y); ctx.globalAlpha = 1; }
   const fr = flankRects(), ready = G.flankCD <= 0;
   for (const [s, r] of [['L', fr.L], ['R', fr.R]]) { ctx.globalAlpha = ready ? 0.9 : 0.4; ctx.fillStyle = 'rgba(20,30,40,.7)'; rrect(r.x, r.y, r.w, r.h, 14 * k); ctx.fill(); ctx.strokeStyle = '#cfe6ff'; ctx.lineWidth = 2; rrect(r.x, r.y, r.w, r.h, 14 * k); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(s === 'L' ? '◀ FLANK' : 'FLANK ▶', r.x + r.w / 2, r.y + r.h / 2); }
   ctx.globalAlpha = 1; if (ui.drag) { const d2 = ui.drag; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(d2.x0, d2.y0, 40 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = G.in.burst ? '#9be3ff' : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(d2.x0 + clamp(d2.x - d2.x0, -40 * k, 40 * k), d2.y0 + clamp(d2.y - d2.y0, -40 * k, 40 * k), 14 * k, 0, TAU); ctx.fill(); }

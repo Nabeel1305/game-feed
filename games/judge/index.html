@@ -59,14 +59,16 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 #caseCard .law{font-size:12.5px;font-weight:800;color:#5a4320;margin-top:8px;border-top:1px dashed rgba(90,67,32,.35);padding-top:6px}
 #caseCard .lesson{background:#2a1d10;color:#ffe3a0;border-radius:10px;padding:8px 10px;margin:-2px 0 8px;font-weight:700;font-size:13px}
 #sentBox{margin-top:8px;background:#2a1d10;border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:7px;box-shadow:0 6px 18px rgba(0,0,0,.45)}
-#sentText{width:100%;box-sizing:border-box;min-height:54px;max-height:96px;resize:none;border:0;border-radius:10px;padding:9px 10px;font:inherit;font-size:16px;background:#fffaf0;color:#1a120c;-webkit-user-select:text;user-select:text;touch-action:manipulation}
+#sentText{width:100%;box-sizing:border-box;min-height:44px;max-height:80px;resize:none;border:0;border-radius:10px;padding:9px 10px;font:inherit;font-size:16px;background:#fffaf0;color:#1a120c;-webkit-user-select:text;user-select:text;touch-action:manipulation}
 #sentRow{display:flex;gap:7px}
 #passBtn,#confBtn{flex:1;border:0;border-radius:11px;padding:12px;font:inherit;font-weight:800;font-size:17px;background:var(--acc);color:#1d1204;box-shadow:0 4px 0 var(--acc-dark);cursor:pointer;touch-action:manipulation}
 #passBtn:disabled{opacity:.45}
 #editBtn{border:0;border-radius:11px;padding:12px 14px;font:inherit;font-weight:800;font-size:15px;background:rgba(255,255,255,.14);color:#fff;cursor:pointer}
 #readBack{color:#ffe9bf;font-size:14.5px;line-height:1.4;padding:2px 4px}
 #readBack b{color:#fff}#readRow{display:flex;gap:7px}
-#readBack.hidden,#readRow.hidden,#sentRow.hidden,#sentText.hidden{display:none}
+#readBack.hidden,#readRow.hidden,#sentRow.hidden,#sentText.hidden,#chips.hidden,#built.hidden{display:none}
+#chips{display:flex;flex-wrap:wrap;gap:6px}#chips button{border:0;border-radius:16px;padding:9px 11px;font:inherit;font-weight:800;font-size:14px;background:#4a3620;color:#fff2dc;touch-action:manipulation}#chips button.on{background:var(--acc);color:#1d1204}
+#built{display:flex;flex-direction:column;gap:5px;max-height:136px;overflow-y:auto;touch-action:pan-y}#built .bl{display:flex;align-items:center;gap:8px;background:#3a2a18;border-radius:10px;padding:5px 8px;color:#fff2dc;font-weight:800;font-size:15px}#built .bl span{flex:1}#built .bl button{width:44px;height:38px;border:0;border-radius:9px;font:inherit;font-weight:800;font-size:20px;background:#6a4e2c;color:#fff;touch-action:manipulation}
 .opts{display:flex;gap:8px;margin-top:10px}.opts button{flex:1;border:0;border-radius:12px;padding:10px 6px;font:inherit;font-weight:800;font-size:13px;background:rgba(255,255,255,.1);color:var(--ink);cursor:pointer}.opts button.on{background:rgba(232,184,90,.25);box-shadow:inset 0 0 0 1.5px var(--acc)}
 #eTitle{font-size:32px}.council{text-align:left;margin-top:10px;font-size:13px}.council .cs{background:rgba(255,255,255,.07);border-radius:10px;padding:8px 10px;margin-top:7px}.council .cs b.sc{float:right;font-size:16px}
 .council .why{opacity:.85;font-size:12.5px;margin-top:3px}
@@ -86,7 +88,9 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 <div id="court" class="hidden">
   <div id="caseCard"></div>
   <div id="sentBox">
-    <textarea id="sentText" placeholder="Write your sentence… e.g. 18 months in prison suspended for 2 years, and £500 compensation" maxlength="300"></textarea>
+    <div id="chips"></div>
+    <div id="built"></div>
+    <textarea id="sentText" placeholder="Tap the buttons above, or write your own sentence here" maxlength="300"></textarea>
     <div id="sentRow"><button id="passBtn">⚖ PASS SENTENCE</button></div>
     <div id="readBack" class="hidden"></div>
     <div id="readRow" class="hidden"><button id="editBtn">Change</button><button id="confBtn">⚖ CONFIRM</button></div>
@@ -305,8 +309,11 @@ function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
-    const sr = actx.sampleRate, n = Math.floor(sr * 1.7), ir = actx.createBuffer(2, n, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { const e = Math.pow(1 - i / n, 3.2); lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * e * (i < 400 ? i / 400 : 1); } }
-    B.rev = actx.createConvolver(); B.rev.buffer = ir; B.wet = actx.createGain(); B.wet.gain.value = 0.5; B.rev.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
+    // the room: two short echoes that feed each other through a soft filter. (It was a convolution reverb at first: lovely, but
+    // heavy work for a phone's sound thread, and under it two touch tests began to fail on timing. This costs almost nothing.)
+    B.rev = actx.createGain(); B.wet = actx.createGain(); B.wet.gain.value = 0.42; const d1 = actx.createDelay(0.5), d2 = actx.createDelay(0.5), f1 = actx.createGain(), f2 = actx.createGain(), lp = actx.createBiquadFilter();
+    d1.delayTime.value = 0.113; d2.delayTime.value = 0.171; f1.gain.value = 0.34; f2.gain.value = 0.3; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    B.rev.connect(lp); lp.connect(d1); lp.connect(d2); d1.connect(f1); f1.connect(d2); d2.connect(f2); f2.connect(d1); d1.connect(B.wet); d2.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
 const bfr = m => 440 * Math.pow(2, (m - 69) / 12);
 // a note's loudness shape, then to the room: g (gain node) from 0 up to v in att, down over dur, away after
 function bEnv(src, t, v, att, dur, rel, rv) { const B = BAND, g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * 0.35), t + att + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0002, t + att + dur + rel); src.connect(g); g.connect(B.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(B.rev); } return g; }
@@ -368,7 +375,7 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
-if (typeof window !== 'undefined' && !BAND.timer) BAND.timer = setInterval(bandTick, 60);
+if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
 
 // ===================== RULES: The Bench (game 45, his idea) =====================
 // You are the judge. Case after case is put before you (the defendant has pleaded guilty or been found guilty): read the facts,
@@ -576,9 +583,9 @@ function judgeDocket(G) { const c = G.cfg, avg = Math.round(G.done.reduce((a, e)
   G.ev.push({ k: 'council', avg }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'write', title: 'PASS SENTENCE', how: 'Read the case, then write a sentence in your own words (try "a £150 fine") and tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
+  1: [{ id: 'write', title: 'PASS SENTENCE', how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
   2: [{ id: 'weigh', title: 'WEIGH IT UP', how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],
-  3: [{ id: 'right', title: 'PUT IT RIGHT', how: 'A victim lost money: order compensation as well (e.g. "...and £400 compensation"). Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
+  3: [{ id: 'right', title: 'PUT IT RIGHT', how: 'A victim lost money: add + Compensation as well as the punishment. Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonCase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -635,8 +642,8 @@ function renderCase(G) { if (HEADLESS || !G || !G.case) return; const K = G.case
     + (K.victim ? `<p class="vic">${esc(K.victim)}</p>` : '')
     + `<div class="law">⚖ Maximum: ${K.mand ? 'life imprisonment is mandatory' : K.max === Infinity ? 'life imprisonment' : K.max === 0 ? 'no prison (fine or community order)' : fmtM(K.max) + ' in prison'}${K.money && K.loss ? ` · the victim lost £${K.loss.toLocaleString()}` : ''}${K.drive ? ' · a driving ban is usual' : ''}`
     + (upLv('clerk') ? `<br>Usual for a first offender: ${rangeWords(off.c - off.w * 0.6, off.c + off.w * 0.6)}` : '') + '</div>';
-  $('caseCard').scrollTop = 0; $('sentText').value = ''; setPhase('write'); }
-function setPhase(p) { const w = p === 'write'; $('sentText').classList.toggle('hidden', !w); $('sentRow').classList.toggle('hidden', !w); $('readBack').classList.toggle('hidden', w); $('readRow').classList.toggle('hidden', w || p === 'wait'); $('passBtn').disabled = false; }
+  $('caseCard').scrollTop = 0; $('sentText').value = ''; if (typeof builderReset === 'function') builderReset(); setPhase('write'); }
+function setPhase(p) { const w = p === 'write'; $('chips').classList.toggle('hidden', !w); $('built').classList.toggle('hidden', !w); $('sentText').classList.toggle('hidden', !w); $('sentRow').classList.toggle('hidden', !w); $('readBack').classList.toggle('hidden', w); $('readRow').classList.toggle('hidden', w || p === 'wait'); $('passBtn').disabled = false; }
 // how the game reacts
 function onEvent(G, e) { const cx = W / 2, top = sceneH();
   switch (e.k) {
@@ -823,6 +830,35 @@ async function doPass() { if (!playing() || !G.case || G.wait > 0) return; const
   $('passBtn').disabled = true; $('passBtn').textContent = SAMPLE ? 'The clerk is reading…' : '⚖ PASS SENTENCE'; const S = await clerkRead(text); $('passBtn').textContent = '⚖ PASS SENTENCE'; $('passBtn').disabled = false;
   if (!G || G.over) return; pending = { S, text }; $('readBack').innerHTML = `<b>The clerk reads:</b> ${esc(readBack(S))}`; setPhase('read'); sfx.paper(); if (document.activeElement) document.activeElement.blur(); }
 $('passBtn').onclick = () => { audio(); doPass(); };
+// ---------- the sentence builder (22 Nov 2026, the audit: nobody wants to type a sentence on a phone) ----------
+// Tap a button to add a part of the sentence; − and + change how much. The words appear in the box exactly as if written, and
+// the box can still be typed in (his idea was a sentence in your own words: that stays; this is the quick way to write one).
+const BUILD = [
+  { id: 'prison', label: 'Prison', steps: [1, 2, 3, 4, 6, 9, 12, 18, 24, 30, 36, 48, 60, 84, 120, 180, 240, 300], at: 4, say: n => `${mth(n)} in prison` },
+  { id: 'susp', label: 'Suspended', needs: 'prison', steps: [12, 18, 24], at: 2, say: n => `suspended for ${mth(n)}` },
+  { id: 'hours', label: 'Unpaid work', steps: [40, 60, 80, 100, 120, 150, 200, 240, 300], at: 3, say: n => `${n} hours of unpaid work` },
+  { id: 'fine', label: 'Fine', steps: [50, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000], at: 2, say: n => `a fine of £${n}` },
+  { id: 'comp', label: 'Compensation', steps: [50, 100, 150, 200, 300, 400, 500, 750, 1000, 1500, 2000, 3000, 5000], at: 3, say: n => `£${n} compensation` },
+  { id: 'prob', label: 'Probation', steps: [6, 12, 18, 24, 36], at: 1, say: n => `${mth(n)} probation` },
+  { id: 'ban', label: 'Driving ban', steps: [6, 12, 18, 24, 36, 60], at: 1, say: n => `a ${mth(n).replace(/s$/, '')} driving ban` },
+  { id: 'disch', label: 'Discharge', steps: [0, 1], at: 0, say: n => n ? 'an absolute discharge' : 'a conditional discharge' },
+  { id: 'free', label: 'Not guilty', solo: true, say: () => 'not guilty' },
+];
+function mth(n) { return n >= 24 && n % 12 === 0 ? `${n / 12} years` : n === 12 ? '12 months' : `${n} month${n === 1 ? '' : 's'}`; }
+let built = {};
+function builderReset() { built = {}; builderDraw(); }
+function builderText() { const out = []; for (const b of BUILD) { if (!(b.id in built) || b.id === 'susp') continue; let t = b.say(b.steps ? b.steps[built[b.id]] : 0); if (b.id === 'prison' && 'susp' in built) t += ' ' + BUILD[1].say(BUILD[1].steps[built.susp]); out.push(t); } return out.join(', '); }
+function builderDraw() { const C = $('chips'), B = $('built'); if (!C) return;
+  C.innerHTML = BUILD.map(b => `<button data-b="${b.id}" class="${b.id in built ? 'on' : ''}">${b.id in built ? '✓ ' : '+ '}${b.label}</button>`).join('');
+  B.innerHTML = BUILD.filter(b => b.id in built && b.steps).map(b => `<div class="bl"><button data-s="${b.id}" data-d="-1">−</button><span>${b.id === 'disch' ? b.say(b.steps[built[b.id]]) : b.say(b.steps[built[b.id]])}</span><button data-s="${b.id}" data-d="1">+</button></div>`).join(''); }
+function builderApply() { $('sentText').value = builderText(); builderDraw(); }
+$('chips').addEventListener('click', e => { const id = e.target.dataset.b; if (!id) return; audio(); sfx.click(); const b = BUILD.find(q => q.id === id);
+  if (id in built) { delete built[id]; if (id === 'prison') delete built.susp; }
+  else { if (b.solo) built = {}; else delete built.free; if (b.needs && !(b.needs in built)) built[b.needs] = BUILD.find(q => q.id === b.needs).at; built[id] = b.steps ? b.at : 0; }
+  builderApply(); });
+$('built').addEventListener('click', e => { const id = e.target.dataset.s; if (!id) return; audio(); sfx.click(); const b = BUILD.find(q => q.id === id); built[id] = clamp(built[id] + (+e.target.dataset.d), 0, b.steps.length - 1); builderApply(); });
+$('sentText').addEventListener('input', () => { if (Object.keys(built).length) { built = {}; builderDraw(); } });      // typed by hand: the box is what counts
+builderDraw();
 $('sentText').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doPass(); } });
 $('confBtn').onclick = () => { audio(); if (!pending || !playing()) return; const p = pending; pending = null; sentence(G, p.S, p.text); };
 $('editBtn').onclick = () => { sfx.click(); pending = null; setPhase('write'); $('sentText').focus(); };

@@ -11,7 +11,7 @@
 
 const RULES = [
   '<b>The chase:</b> the crew rows. Your left thumb steers. Row to the spout; she dives and comes up again.',
-  '<b>The throw:</b> swipe up with your right thumb towards her back while she is up. Direction is aim, length is distance. Lead her.',
+  '<b>The throw:</b> hold your right thumb down: a ring shows where the harpoon will land. Move the ring onto her back (ahead of her: she is moving) and let go.',
   '<b>The ride:</b> hold your right thumb to haul the line in: that tires her. Lift it to let the line run.',
   '<b>When her flukes rise and the water whitens, let go!</b> Haul through a run and the line snaps.',
   'Keep the bow pointing at her (left thumb) or the boat heels over. Three whales lost and the voyage is over.',
@@ -109,7 +109,7 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'throw', title: 'ROW, THEN THROW', how: 'Steer towards her spout with your left thumb. When she is up and close, swipe up with your right thumb towards her back.', need: 1, ok: w => w === 'hit' },
+  1: [{ id: 'throw', title: 'ROW, THEN THROW', how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
       { id: 'haul', title: 'HAUL WHEN SHE IS CALM', how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],
   2: [{ id: 'bow', title: 'BOW TOWARDS HER', how: 'She swerves. Keep the bow pointing at her with your left thumb, or the boat heels over. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
   3: [{ id: 'lead', title: 'LEAD HER', how: 'This one is quicker. The harpoon takes a moment to fly: throw a little ahead of where she is going.', need: 1, ok: w => w === 'caught' }],

@@ -104,11 +104,11 @@ function hud(G, t) {
     ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'right'; ctx.strokeText(`HOOP ${Math.min(G.next + 1, G.hoops.length)} / ${G.hoops.length}`, W - 16, ty + 4 * k); ctx.fillText(`HOOP ${Math.min(G.next + 1, G.hoops.length)} / ${G.hoops.length}`, W - 16, ty + 4 * k);
     for (let i = 0; i < c.lives; i++) { ctx.beginPath(); ctx.arc(W - 22 - i * 16 * k, ty + 28 * k, 5 * k, 0, TAU); ctx.fillStyle = i < G.lives ? '#40f0ff' : 'rgba(255,255,255,.25)'; ctx.fill(); }
     if (c.wind > 0.3) { ctx.save(); ctx.translate(W - 30 * k, ty + 52 * k); ctx.rotate(G.windA - G.d.yaw - Math.PI / 2); ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-10 * k, 0); ctx.lineTo(10 * k, 0); ctx.lineTo(4 * k, -5 * k); ctx.moveTo(10 * k, 0); ctx.lineTo(4 * k, 5 * k); ctx.stroke(); ctx.restore(); ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(9 * k)}px ${BC}`; ctx.textAlign = 'right'; ctx.fillText('WIND', W - 44 * k, ty + 48 * k); } }
-  // the two sticks
-  for (const side of ['L', 'R']) { const s = ui.sticks[side], bx = side === 'L' ? W * 0.22 : W * 0.78, by = H - 120 * k, cx = s ? s.x0 : bx, cy = s ? s.y0 : by, r = 54 * k;
-    ctx.globalAlpha = s ? 0.85 : 0.35; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
+  // the one stick: where your thumb is; a hint until you have flown a little
+  { const s = ui.sticks.L, cx = s ? s.x0 : W / 2, cy = s ? s.y0 : H - 130 * k, r = 54 * k; ctx.globalAlpha = s ? 0.85 : 0.4; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.stroke();
     const kx = s ? cx + clamp(s.x - s.x0, -r, r) : cx, ky = s ? cy + clamp(s.y - s.y0, -r, r) : cy; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(kx, ky, 18 * k, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if (!s) ctx.fillText(side === 'L' ? 'CLIMB · TURN' : 'FLY · SLIDE', cx, cy + r + 14 * k); ctx.globalAlpha = 1; }
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('◀ TURN ▶', cx, cy + r + 13 * k); ctx.fillText(s ? '▲ CLIMB' : 'slide up to climb', cx, cy - r - 12 * k);
+    if (!s) { ctx.globalAlpha = 0.95; ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.strokeText('HOLD YOUR THUMB DOWN TO FLY', W / 2, H - 236 * k); ctx.fillText('HOLD YOUR THUMB DOWN TO FLY', W / 2, H - 236 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('lift it to brake', W / 2, H - 218 * k); } ctx.globalAlpha = 1; }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) {

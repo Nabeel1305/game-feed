@@ -33,6 +33,8 @@ with sync_playwright() as p:
     ok(until("__sim.G.b.vy < 0.3", 20000), 'and it stops climbing (a little late)', E("__sim.G.b.vy"))
     touch('touchStart', [(1, (180, 400))]); pg.wait_for_timeout(40); touch('touchMove', [(1, (180, 450))]); touch('touchMove', [(1, (180, 520))]); pg.wait_for_timeout(40); touch('touchEnd', [(1, (180, 520))]); pg.wait_for_timeout(60)
     ok(E("__sim.G.b.vent") > 0 and E("__sim.G.b.burn") is False, 'a quick flick down vents', str([E("__sim.G.b.vent"), E("__sim.G.b.burn")]))
+    pg.wait_for_timeout(1200); E("__sim.G.b.vent = 0"); vb = E("__sim.layout().vent"); touch('touchStart', [(1, (vb['x'], vb['y']))]); pg.wait_for_timeout(40); touch('touchEnd', [(1, (vb['x'], vb['y']))]); pg.wait_for_timeout(40)
+    ok(E("__sim.G.b.vent") > 0 and E("__sim.G.b.burn") is False, 'the VENT button vents (and does not fire the burner)', str([E("__sim.G.b.vent"), E("__sim.G.b.burn")]))
     E("(() => { const G = __sim.G, b = G.b; b.y = groundAt(G, b.x, b.z) + 60; b.heat = neutral(60); b.vy = 0; b.landed = false; b.air = true; })()")
     pr = E("predictDrop(__sim.G)"); tap(D['x'], D['y']); ok(E("__sim.G.markers.length") == 1, '🎯 drops a marker in the air')
     ok(until("!__sim.G.markers[0].falling", 15000), '(it falls)'); m = E("__sim.G.markers[0]"); d = ((m['x'] - pr['x']) ** 2 + (m['z'] - pr['z']) ** 2) ** 0.5

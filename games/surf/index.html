@@ -4858,8 +4858,11 @@ function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
-    const sr = actx.sampleRate, n = Math.floor(sr * 1.7), ir = actx.createBuffer(2, n, sr); for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); let lp = 0; for (let i = 0; i < n; i++) { const e = Math.pow(1 - i / n, 3.2); lp = lp * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = lp * e * (i < 400 ? i / 400 : 1); } }
-    B.rev = actx.createConvolver(); B.rev.buffer = ir; B.wet = actx.createGain(); B.wet.gain.value = 0.5; B.rev.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
+    // the room: two short echoes that feed each other through a soft filter. (It was a convolution reverb at first: lovely, but
+    // heavy work for a phone's sound thread, and under it two touch tests began to fail on timing. This costs almost nothing.)
+    B.rev = actx.createGain(); B.wet = actx.createGain(); B.wet.gain.value = 0.42; const d1 = actx.createDelay(0.5), d2 = actx.createDelay(0.5), f1 = actx.createGain(), f2 = actx.createGain(), lp = actx.createBiquadFilter();
+    d1.delayTime.value = 0.113; d2.delayTime.value = 0.171; f1.gain.value = 0.34; f2.gain.value = 0.3; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    B.rev.connect(lp); lp.connect(d1); lp.connect(d2); d1.connect(f1); f1.connect(d2); d2.connect(f2); f2.connect(d1); d1.connect(B.wet); d2.connect(B.wet); B.wet.connect(B.out); return true; } catch (e) { B.ctx = null; return false; } }
 const bfr = m => 440 * Math.pow(2, (m - 69) / 12);
 // a note's loudness shape, then to the room: g (gain node) from 0 up to v in att, down over dur, away after
 function bEnv(src, t, v, att, dur, rel, rv) { const B = BAND, g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v * 0.35), t + att + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0002, t + att + dur + rel); src.connect(g); g.connect(B.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(B.rev); } return g; }
@@ -4921,7 +4924,7 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
-if (typeof window !== 'undefined' && !BAND.timer) BAND.timer = setInterval(bandTick, 60);
+if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
 
 // ===================== THE 3D WORLD (tools/world3d.js), shared by every 3D game =====================
 // His rules (17 Nov 2026): every game is 3D, seen from where the player stands; weather and light change; as real-looking as it
@@ -5141,10 +5144,10 @@ const W3 = (() => {
 // The face: x along the shore (metres, + the way the wave peels), s from 0 at the base to 1 at the lip; heading th (0 along
 // the wave, + up the face); speed v (m/s).
 const RULES = [
-  '<b>Catch it:</b> hold PADDLE as the wave comes; when it lifts you (the ring turns green), swipe up to stand.',
+  '<b>Catch it:</b> hold PADDLE as the wave comes; when it lifts you (the ring turns green), <b>let go</b>: you stand up.',
   '<b>Left thumb: steer.</b> Push the way you want to ride: up the face to climb, down to drop. Down gains speed, up spends it.',
   '<b>Stay ahead of the curl</b>, the breaking part chasing you. Pump up and down for speed.',
-  '<b>Tricks:</b> turn hard at the lip (a snap), turn back towards the curl and out again (a cutback), fly off the lip and swipe to spin, then point down to land. Hold CROUCH inside a barrel.',
+  '<b>Tricks:</b> turn hard at the lip (a snap), turn back towards the curl and out again (a cutback), fly off the lip and tap to spin, then point down to land. Hold CROUCH inside a barrel.',
   'The same move again scores less: mix them up. Beat the target over three waves.',
 ];
 const SKINS = [{ id: 'sun', name: 'Sunburst', col: 0xffb020, col2: 0xff5a3a, stars: 0 }, { id: 'reef', name: 'Reef', col: 0x2ad8c0, col2: 0x1a5aa8, stars: 5 }, { id: 'kelp', name: 'Kelp', col: 0x5aa82a, col2: 0xf0e8c0, stars: 12 },
@@ -5253,7 +5256,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.score = Math.max(G.score, G.cfg.target); finish(G, true, 'target'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'ride', title: 'CATCH AND RIDE', how: 'Hold PADDLE as the wave comes; when the ring turns green, swipe up to stand. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
+  1: [{ id: 'ride', title: 'CATCH AND RIDE', how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
   2: [{ id: 'snap', title: 'SNAP OFF THE LIP', how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],
   3: [{ id: 'barrel', title: 'GET BARRELLED', how: 'Where the wave throws over (the dark hollow), drop low on the face and hold CROUCH: ride through the tube and out the other end.', need: 1 }],
 };
@@ -5385,9 +5388,9 @@ function scrOf(x, y, z) { if (!V3 || V3.none) return null; return W3.screen(new 
 // ---------- events ----------
 function onEvent(G, e) { const P = G.p, sp = surferPos(G), sc = scrOf(sp.x, sp.y + 1, sp.z) || { x: W / 2, y: H / 2 };
   switch (e.k) {
-    case 'wave': ui.banner = { txt: G.lesson ? 'A WAVE IS COMING' : `WAVE ${e.n} OF ${G.free ? '∞' : G.cfg.rides}`, sub: 'Hold PADDLE, swipe up when it lifts you', t: 0, secs: 2.2, small: true }; ui.snap = true; TRAIL.length = 0; sfx.swell(); break;
+    case 'wave': ui.banner = { txt: G.lesson ? 'A WAVE IS COMING' : `WAVE ${e.n} OF ${G.free ? '∞' : G.cfg.rides}`, sub: 'Hold PADDLE, let go when the ring turns green', t: 0, secs: 2.2, small: true }; ui.snap = true; TRAIL.length = 0; sfx.swell(); break;
     case 'early': hint = { txt: 'Too early: wait until the wave lifts you (the ring turns green).', t: 0, secs: 2 }; sfx.no(); break;
-    case 'missed': hint = { txt: e.why === 'paddle' ? 'Missed it: hold PADDLE as the wave comes, to match its speed.' : 'Missed it: swipe up while the ring is green.', t: 0, secs: 2.6 }; sfx.no(); break;
+    case 'missed': hint = { txt: e.why === 'paddle' ? 'Missed it: hold PADDLE as the wave comes, to match its speed.' : 'Missed it: let go of PADDLE while the ring is green.', t: 0, secs: 2.6 }; sfx.no(); break;
     case 'stand': sfx.stand(); vibe(HAP.light); say('UP!', sc.x, sc.y - 30 * k, '#fff', 26); break;
     case 'move': { const big = e.pts >= 150; sfx.move(e.id, e.combo); if (e.id !== 'carve') vibe(HAP.light); burst(sc.x, sc.y + 20 * k, '#ffffff', big ? 26 : 12, big ? 260 : 160);
       say(`${e.label} +${e.pts}`, W / 2, H * 0.3, e.rep ? '#c8e8ff' : '#ffd36a', big ? 30 : 24); if (e.rep >= 2) tip2('rep', 'The same move again scores less: mix them up (snaps, cutbacks, airs, barrels).', 3); if (e.combo >= 2) say(`COMBO x${(1 + 0.2 * e.combo).toFixed(1)}`, W / 2, H * 0.3 + 30 * k, '#8fe0ab', 18); } break;
@@ -5434,7 +5437,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), P = G.p
     txt(G.free ? `wave ${G.ride} · free surf` : G.lesson ? 'lesson' : `wave ${G.ride} / ${G.cfg.rides}`, W / 2 + 120 * k, y + 1, '#fff', `700 ${Math.round(12 * k)}px ${BC}`); }
   if (G.phase === 'wait') { const sp = surferPos(G), sc = scrOf(sp.x, sp.y + 0.6, sp.z); if (sc) { const d = G.pt - G.tL, inWin = d >= -G.cfg.early && d <= G.cfg.win, u = clamp(1 - (G.tL - G.pt) / 2.5, 0, 1);
       ctx.lineWidth = 6 * k; ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(sc.x, sc.y, 34 * k, 0, TAU); ctx.stroke(); ctx.strokeStyle = inWin ? '#8fe0ab' : d > G.cfg.win ? '#ff8a7a' : '#ffd36a'; ctx.beginPath(); ctx.arc(sc.x, sc.y, 34 * k, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke();
-      txt(inWin ? 'SWIPE UP!' : G.crouch ? 'PADDLING…' : 'HOLD PADDLE', sc.x, sc.y - 52 * k, inWin ? '#8fe0ab' : '#fff', `400 ${Math.round(16 * k)}px ${TF}`);
+      txt(inWin ? 'LET GO!' : G.crouch ? 'PADDLING…' : 'HOLD PADDLE', sc.x, sc.y - 52 * k, inWin ? '#8fe0ab' : '#fff', `400 ${Math.round(16 * k)}px ${TF}`);
       ctx.fillStyle = 'rgba(0,40,60,.55)'; rrect(sc.x - 40 * k, sc.y + 44 * k, 80 * k, 8 * k, 4); ctx.fill(); ctx.fillStyle = G.paddle >= 0.55 ? '#8fe0ab' : '#ffd36a'; rrect(sc.x - 40 * k, sc.y + 44 * k, 80 * k * G.paddle, 8 * k, 4); ctx.fill(); } }
   if (G.phase === 'ride') { // the curl behind you, the balance
     const gap = P.x - G.xb, bx = 16 * k, by = H * 0.3; txt('curl', bx + 10 * k, by - 14 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(11 * k)}px ${BC}`); ctx.fillStyle = 'rgba(0,40,60,.55)'; rrect(bx, by, 16 * k, 100 * k, 6); ctx.fill(); const u = clamp(1 - gap / 20, 0, 1); ctx.fillStyle = u > 0.85 ? '#ff6a4a' : u > 0.55 ? '#ffd36a' : '#8fe0ab'; rrect(bx, by + 100 * k * (1 - u), 16 * k, 100 * k * u, 6); ctx.fill();
@@ -5444,7 +5447,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), P = G.p
   // the steering stick (left)
   if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); const dx = s2.x - s2.x0, dy = s2.y - s2.y0, m = Math.hypot(dx, dy), c = m > R ? R / m : 1; ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(s2.x0 + dx * c, s2.y0 + dy * c, 22 * k, 0, TAU); ctx.fill(); }
   else if (G.t < 8 || G.lesson) txt('STEER ⬆⬇', 110 * k, H - 70 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(13 * k)}px ${BC}`);
-  if (G.phase === 'ride' && P.air) txt('SWIPE TO SPIN · PUSH DOWN TO LAND', W * 0.7, H * 0.55, '#fff', `700 ${Math.round(13 * k)}px ${BC}`);
+  if (G.phase === 'ride' && P.air) txt('TAP TO SPIN · PUSH DOWN TO LAND', W * 0.7, H * 0.55, '#fff', `700 ${Math.round(13 * k)}px ${BC}`);
   // CROUCH / PADDLE (right)
   { const B = L.cr, on = G.crouch; ctx.globalAlpha = 0.92; ctx.fillStyle = on ? '#1a8aa8' : 'rgba(0,40,60,.55)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#8fe0ff'; ctx.lineWidth = 3; ctx.stroke();
     txt(G.phase === 'wait' ? 'PADDLE' : 'CROUCH', B.x, B.y - 4 * k, '#fff', `400 ${Math.round(18 * k)}px ${TF}`); txt('hold', B.x, B.y + 17 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`); ctx.globalAlpha = 1; }
@@ -5593,7 +5596,8 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
 cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
   if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; stickTo(x - s2.x0, y - s2.y0); return; }
   const S = ui.sw; if (S && S.id === e.pointerId && !S.done) { const dx = x - S.x0, dy = y - S.y0; if (Math.hypot(dx, dy) > 34 * k) { S.done = true; swipe(G, dx / (Math.hypot(dx, dy)), dy / Math.hypot(dx, dy)); if (ui.crId === e.pointerId && G.phase === 'wait' && dy < 0) { } } } });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.crId === e.pointerId) { ui.crId = null; if (G) crouchOn(G, false); } if (ui.sw && ui.sw.id === e.pointerId) ui.sw = null; }
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.crId === e.pointerId) { ui.crId = null; if (G) { if (G.phase === 'wait' && G.pt - G.tL >= -G.cfg.early) standUp(G); crouchOn(G, false); } }      /* 22 Nov 2026: LET GO of PADDLE in the green ring and you stand (the swipe up was a hidden gesture; it still works) */
+  if (ui.sw && ui.sw.id === e.pointerId) { if (!ui.sw.done && G && G.phase === 'ride' && G.p.air) swipe(G, 1, 0); ui.sw = null; } }      /* a tap in the air spins */
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'sun');
