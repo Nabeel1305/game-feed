@@ -35,3 +35,5 @@ function soundStep(G, dt) {
   if (quiet) return; bubT -= dt; if (bubT <= 0) { bubT = 0.6 + Math.random() * 2.2; sfx.bubble(); }
   if (G.hunted) sfx.beat();
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('tense', { seed: 35, key: -3, bpm: 99 });

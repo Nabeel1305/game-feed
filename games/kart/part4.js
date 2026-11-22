@@ -33,3 +33,5 @@ function soundStep(G, dt) {
   if (AM.skid) AM.skid.set(quiet || !k.drift ? (k && k.off && v > 0.3 && !quiet ? 0.008 : 0) : 0.02, 0.05);
   if (AM.crowd) AM.crowd.set(quiet ? 0 : G.count > 0 ? 0.01 : 0.003, 0.5);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('race', { seed: 44, key: 0, bpm: 131 });

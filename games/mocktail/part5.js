@@ -82,7 +82,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; ui.drag = null; if (G) pourStop(G); $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; ui.drag = null; ui.stirId = ui.shakeId = null; pourId = null; if (G) pourStop(G); $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -90,24 +90,19 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input: tap tabs, bottles, glasses and tools; HOLD the big POUR; drag a garnish onto the glass (or tap it); in the picture
-// above, swipe up and down to shake (shaker in hand) or draw circles on the glass to stir. Small wobbles of a finger are forgiven.
+// input (easy on purpose): TAP a tab, a glass, ice, fruit or a garnish; HOLD a bottle to pour it (let go to stop); HOLD STIR
+// and HOLD SHAKE; TAP MUDDLE, EMPTY and SERVE. Nothing is swiped, drawn or dragged.
 const inR = (r, x, y, p2 = 4) => r && x >= r.x - p2 && x <= r.x + r.w + p2 && y >= r.y - p2 && y <= r.y + r.h + p2;
 let pourId = null;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const L = layout(G), x = e.clientX, y = e.clientY, D = G.drink, o = G.order;
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
   if (o && o.feel && !o.asked && inR({ x: L.ask.x, y: L.ask.y + 24 * k, w: L.ask.w, h: L.ask.h }, x, y)) { ask(G); return; }
   if (o && o.drink && G.cfg.card !== 'full' && inR({ x: L.book.x, y: L.book.y + 24 * k, w: L.book.w, h: L.book.h }, x, y)) { ui.book = 5; if (G.cfg.card === 'book') o.peek = true; sfx.click(); return; }
-  const t = L.tabs.find(q => inR(q, x, y)); if (t) { ui.tab = t.id; sfx.click(); return; }
-  const it = L.items.find(q => inR(q, x, y)); if (it) { if (it.kind === 'glass') pickGlass(G, it.id); else if (it.kind === 'garn') { ui.drag = { id: e.pointerId, garn: it.id, x, y, x0: x, y0: y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } else select(G, it.id); return; }
-  const tl = L.tools.find(q => inR(q, x, y)); if (tl) { if (tl.id === 'cubes' || tl.id === 'crushed') addIce(G, tl.id); else if (tl.id === 'shaker') useShaker(G); else if (tl.id === 'muddle') muddle(G); else emptyGlass(G); return; }
-  if (inR(L.pour, x, y)) { pourId = e.pointerId; pourStart(G); return; }
   if (inR(L.serve, x, y)) { serve(G); return; }
-  if (y < H * 0.58) { const gp = glassScr(); ui.drag = { id: e.pointerId, x, y, x0: x, y0: y, scene: true, stir: D.glass && D.vessel === 'glass' && Math.hypot(x - gp.x, y - gp.y) < gp.r * 2.6, last: null, dir: 0, py: y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
-cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const D = G.drink; if (!d.scene) return;
-  if (D.vessel === 'shaker') { const dy = d.y - d.py; if (Math.abs(dy) > 26 * k) { const dir = Math.sign(dy); if (dir !== d.dir) { if (d.dir) shake(G); d.dir = dir; } d.py = d.y; } return; }
-  if (d.stir) { const gp = glassScr(), a = Math.atan2(d.y - gp.y, d.x - gp.x); if (Math.hypot(d.x - gp.x, d.y - gp.y) > 10 * k) { if (d.last != null) { let da = a - d.last; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; if (Math.abs(da) < 1.2) stir(G, Math.abs(da) / TAU); } d.last = a; ui.stirA = a; } } });
-function endTouch(e) { if (e.pointerId === pourId) { pourId = null; if (G) pourStop(G); } const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; ui.stirA = null; if (!G) return;
-  if (d.garn) { const gp = glassScr(), moved = Math.hypot(d.x - d.x0, d.y - d.y0) > 14 * k; if (!moved || Math.hypot(d.x - gp.x, d.y - 20 * k - gp.y) < gp.r * 2.8 || d.y < H * 0.58) garnish(G, d.garn); } }
+  const t = L.tabs.find(q => inR(q, x, y)); if (t) { ui.tab = t.id; sfx.click(); return; }
+  const it = L.items.find(q => inR(q, x, y)); if (it) { if (it.kind === 'glass') pickGlass(G, it.id); else if (it.kind === 'garn') garnish(G, it.id); else if (it.kind === 'ice') addIce(G, it.id); else if (it.kind === 'fresh') select(G, it.id); else if (pourId == null && select(G, it.id) && pourStart(G)) pourId = e.pointerId; return; }
+  const tl = L.tools.find(q => inR(q, x, y)); if (tl) { if (tl.id === 'shaker') { if (D.vessel === 'shaker' && D.shaker.length && D.shakes < 6) { ui.shakeId = e.pointerId; ui.shakeAcc = 0.2; } else useShaker(G); } else if (tl.id === 'muddle') { if (!muddle(G)) { sfx.no(); say('ADD MINT OR BERRIES FIRST', W / 2, H * 0.42, '#ffd0e0', 16); } } else if (tl.id === 'stir') { if (D.parts.length && D.vessel === 'glass') ui.stirId = e.pointerId; else sfx.no(); } else emptyGlass(G); return; } });
+function endTouch(e) { if (e.pointerId === pourId) { pourId = null; if (G) pourStop(G); } if (e.pointerId === ui.stirId) { ui.stirId = null; ui.stirA = null; } if (e.pointerId === ui.shakeId) ui.shakeId = null; }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // your bars: the counter's look, opened by the stars you win
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;

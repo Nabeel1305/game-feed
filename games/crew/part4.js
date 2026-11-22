@@ -26,3 +26,5 @@ const sfx = {
 // the hum of the station (a soft low note every few seconds), your footsteps, the meltdown's beeps
 let humT = 0, beepT = 0; function soundStep(G, dt) { if (!G || G.over || paused || G.meet) return; humT -= dt; if (humT <= 0) { humT = 3.2; tone(55, 3.4, 0.018, 'sine'); tone(82.4, 3.4, 0.01, 'sine'); }
   if (G.you.moving) sfx.step(); if (G.melt > 0) { beepT -= dt; if (beepT <= 0) { beepT = G.melt < 10 ? 0.35 : 0.8; tone(880, 0.08, 0.05, 'square', 0, null, 3000); } } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('synth', { seed: 75, key: 1, bpm: 108 });

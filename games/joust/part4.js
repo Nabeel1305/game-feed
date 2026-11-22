@@ -29,3 +29,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   if (G && G.phase === 'charge') return;
   mus.t += dt; const beat = 0.3; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { pluck(note(294, TUNE[i % TUNE.length]), 0.5, 0.014); if (i % 4 === 0) pluck(note(147, TUNE[i % TUNE.length] % 12), 0.9, 0.02); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('epic', { seed: 107, key: 0, bpm: 97 });

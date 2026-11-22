@@ -56,3 +56,5 @@ function soundStep(G, dt) {
   if (g.heli && drive) { AM.chop = (AM.chop || 0) - dt; if (AM.chop <= 0) { AM.chop = 0.09; noise(0.05, 260, 0.035, 'lowpass', 1); } }
   if (g.ph === 'foot') { AM.breath -= dt; if (AM.breath <= 0) { AM.breath = 0.33; tone(110, 0.05, 0.06, 'sine', 0, 70); noise(0.12, 1100, 0.025, 'bandpass', 1, 0.05); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('race', { seed: 24, key: -2, bpm: 142 });

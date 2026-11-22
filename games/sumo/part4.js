@@ -34,3 +34,5 @@ function soundStep(G, dt) { if (!actx) return; if (!hum) hum = bed(110, 0.6, 0, 
   if (MUTE || paused) return; mus.t += dt; const beat = 0.32; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, vol = home || (G && G.phase !== 'fight') ? 1 : 0.35;
   music(() => { if (i % 4 === 0) { tone(60, 0.35, 0.07 * vol, 'sine', 0, 42); noise(0.05, 300, 0.02 * vol, 'lowpass', 1); } if (i % 8 === 6) tone(60, 0.2, 0.04 * vol, 'sine', 0, 45);
     if (vol > 0.5) { const n = FLUTE[i % 16]; if (n >= 0) tone(note(587, n + [0, 0, -2, 3][Math.floor(i / 16) % 4]), 0.45, 0.025, 'sine', 0, null, 2400); } }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('east', { seed: 87, key: -2, bpm: 86 });

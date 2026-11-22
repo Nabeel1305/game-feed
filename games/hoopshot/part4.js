@@ -30,3 +30,5 @@ function soundStep(G, dt) { if (!actx) return; if (!amb) amb = bed(800, 0.3, 0, 
   music(() => { const n = BASS[i % 16]; if (n >= 0) tone(note(55, n + [0, 5, 3, 7][bar]), 0.18, 0.05 * vol, 'triangle', 0, null, 500);
     if (i % 4 === 0) tone(62, 0.16, 0.06 * vol, 'sine', 0, 42); if (i % 4 === 2) noise(0.06, 1900, 0.03 * vol, 'bandpass', 1.3); noise(0.02, 8000, 0.009 * vol, 'highpass', 0.7);
     if (i % 8 === 3) [0, 4, 7].forEach((q, j) => tone(note(330, q + [0, 5, 3, 7][bar]), 0.18, 0.012 * vol, 'sine', j * 0.02)); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('funk', { seed: 85, key: 2, bpm: 109 });

@@ -31,3 +31,5 @@ function soundStep(G, dt) {
   const g = G || (typeof IG !== 'undefined' && IG); if (!g) return; let fry = 0, burn = 0; for (const p of g.pans) if (p) { fry += 0.02 + Math.min(1, p.sides[p.down]) * 0.025; if (p.sides[p.down] > 1.15) burn += 0.03; }
   AM.fry && AM.fry.set(fry, 0.2); AM.burn && AM.burn.set(burn, 0.2); AM.rain && AM.rain.set((W3 && W3.S ? W3.S.rain : 0) * 0.025, 1);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('funk', { seed: 16, key: 0, bpm: 108 });

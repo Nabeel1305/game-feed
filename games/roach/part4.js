@@ -38,3 +38,5 @@ function soundStep(G, dt) { if (!actx) return; if (!room) room = bed(180, 0.5, 0
   if (vol < 0.05) return;
   music(() => { const n = SNEAK[i % 16]; if (n >= 0) pluck(note(196, n + [0, 0, 3, -2][bar]), 0.35, 0.05 * vol);
     if (i % 4 === 0) tone(note(49, [0, 0, 3, -2][bar]), 0.4, 0.05 * vol, 'triangle', 0, null, 300); if (i % 8 === 6) noise(0.03, 7000, 0.01 * vol, 'highpass', 0.7); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('tense', { seed: 84, key: -3, bpm: 97 });

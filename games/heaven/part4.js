@@ -21,3 +21,5 @@ const sfx = {
   lose() { sfx.bell(); tone(220, 0.8, 0.08, 'triangle', 0.4, 165); },
 };
 function soundStep(G, dt) {}
+// the band (tools/juice-kit.js): this game's music
+bandStyle('waltz', { seed: 27, key: -1, bpm: 131 });

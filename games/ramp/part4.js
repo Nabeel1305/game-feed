@@ -23,3 +23,5 @@ function soundStep(G, dt) { if (HEADLESS || !actx) return; if (!AM.on) { AM.on =
   const quiet = MUTE || paused || !G || G.over || G.wait > 0, b = G && G.b, sp = b ? Math.hypot(b.vx, b.vy) : 0;
   if (AM.eng) { AM.eng.set(quiet || !b || b.air ? 0 : 0.05 + (b.boost > 0 ? 0.03 : 0), 0.12); try { AM.eng.f.frequency.setTargetAtTime(110 + sp * 14 + (b && b.boost > 0 ? 120 : 0), actx.currentTime, 0.1); } catch (e) {} }
   if (AM.wind) AM.wind.set(quiet || !b ? 0 : b.air ? 0.04 : 0.008, 0.2); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('western', { seed: 49, key: -3, bpm: 116 });

@@ -31,3 +31,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
     if (o && o.kind === 'wall') for (const gl of o.gloves) { const s = glove(gl, G.t); if (s.st === 'out' && s.e < 0.3 && Math.abs(gl.z - G.p.z) < 6 && gate('punch' + gl.z, 400)) noise(0.12, 1200, 0.04, 'bandpass', 1); } }
   mus.t += dt; const beat = 0.22; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { pluck(note(392, TUNE[i % TUNE.length]), 0.35, 0.013); if (i % 2 === 0) pluck(note(98, [0, 0, 5, 7][(i >> 3) % 4]), 0.5, 0.022); if (i % 4 === 2) noise(0.05, 5000, 0.006, 'highpass', 1); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('island', { seed: 108, key: -2, bpm: 102 });

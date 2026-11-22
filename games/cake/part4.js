@@ -29,3 +29,5 @@ function soundStep(G, dt) { if (!actx || MUTE) return; if (!knifeB) knifeB = bed
   mus.t += dt; if (mus.t >= 0.42) { mus.t -= 0.42; const n = TUNE[mus.i % TUNE.length], bar = Math.floor(mus.i / 16) % 4; mus.i++;
     if (n >= 0 && (mus.i % 2 === 1 || Math.random() < 0.55)) pluck(note(523, n + [0, 2, 0, 3][bar]), 0.9, home ? 0.025 : 0.018);
     if (mus.i % 8 === 1) tone(note(131, [0, 3, 5, 4][bar]), 3.0, home ? 0.025 : 0.018, 'sine'); } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('waltz', { seed: 79, key: 0, bpm: 130 });

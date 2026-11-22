@@ -5,7 +5,7 @@
 // nearest the ball, STEAL (close to the ball: a swipe; under a shot: a contest or a block; tap it again too soon and you are off
 // balance), SPRINT. Your teammates move into space and cut to the basket. A 12-second shot clock. Two and three pointers.
 const RULES = [
-  'The <b>stick</b> (left thumb) moves you. You attack the <b>basket on the right</b>.',
+  'The <b>stick</b> (left thumb) moves you: push it all the way to sprint. You attack the <b>basket on the right</b>. Your teammates move to get free.',
   '<b>PASS</b>: tap for the best teammate (highlighted), or drag from PASS towards the one you want.',
   '<b>SHOOT</b>: hold, and let go when the meter is in the <b>green</b>. Open shots go in more. Near the basket: a layup, or a dunk.',
   'Defending: <b>SWITCH</b> to the player nearest the ball; <b>STEAL</b> when you are close (tap it twice too fast and you lose your balance). Under a shot: a contest.',
@@ -114,7 +114,7 @@ function scoreOrMiss(G) { const b = G.ball, s = b.shot, hx = hoopX(s.t);
     if (G.lesson) { G.pause = 0.6; lessonReset(G); return; } if (G.golden) return finish(G, s.t === 0); return tipOff(G, 1 - s.t); }
   b.kind = 'loose'; b.shotT = s.t; b.x = hx - Math.sign(hx) * 0.6; b.z = 0; const a = (G.rnd() - 0.5) * 2.6; b.vx = -Math.sign(hx) * Math.cos(a) * 3.2; b.vz = Math.sin(a) * 3.2; G.sc = SHOTCLOCK; G.ev.push({ k: 'miss', t: s.t }); lessonSee(G, 'missshot'); }
 // ---------- everyone else ----------
-const SPOTS = [[-4.8, -4.0], [-4.8, 4.0], [-6.6, 0], [-1.4, -5.6], [-1.4, 5.6], [-1.2, 2.2]];      // relative to the attacking hoop: wings, top, corners, the dunker spot
+const SPOTS = [[-4.8, -4.0], [-4.8, 4.0], [-6.6, 0], [-1.4, -5.6], [-1.4, 5.6], [-1.2, 2.2], [-1.2, -2.2], [-6.2, -3.0], [-6.2, 3.0], [-3.6, 0]];      // relative to the attacking hoop: wings, top, corners, the dunker spot
 function brain(G, p, dt) { const c = G.cfg, b = G.ball, R = G.rnd, s = p.t ? -1 : 1, hx = hoopX(p.t), att = b.own ? b.own.t === p.t : (b.kind === 'shot' || b.kind === 'pass') ? b.from.t === p.t : false, sp = speedOf(G, p);
   if (G.lesson && !G.lesson.aiMove && p.t === 1) return stepBody(G, p, 0, 0, dt);
   p.think -= dt;
@@ -128,12 +128,24 @@ function brain(G, p, dt) { const c = G.cfg, b = G.ball, R = G.rnd, s = p.t ? -1 
     const q = bestTarget(G, p); if (q && openness(G, q) > o + 0.6 && laneRisk(G, p, q.x, q.z, 1) < 0.35 && R() < (openness(G, q) > 2.5 ? 0.75 : 0.35) * c.oPassy) return pass(G, p);      // a man left open gets the ball
     if (lane < 0.45 && R() < 0.7) { p.tx = hx + 1.0; p.tz = p.z * 0.6; } else { const sp2 = SPOTS[(R() * 3) | 0]; p.tx = hx + sp2[0] * s; p.tz = sp2[1] * (R() < 0.5 ? 1 : -1); }
     return move(G, p, p.tx, p.tz, sp, dt); }
-  if (att) { // off the ball: into space, now and then a cut to the basket
-    if (p.think <= 0) { p.think = 1.2 + R() * 1.4; const handler = b.own || b.to || b.from; const taken = team(G, p.t).filter(q => q !== p).map(q => q.spot); let best = p.spot, bs = -1e9;
-      for (let i = 0; i < SPOTS.length; i++) { if (taken.includes(i)) continue; const x = hx + SPOTS[i][0] * s, z = SPOTS[i][1]; let o = 99; for (const q of team(G, 1 - p.t)) o = Math.min(o, Math.hypot(q.x - x, q.z - z)); const dh = handler ? Math.hypot(handler.x - x, handler.z - z) : 4; const sc = Math.min(4, o) - Math.abs(dh - 4.5) * 0.3 + R() * 0.6; if (sc > bs) { bs = sc; best = i; } }
-      p.spot = best; p.cut = R() < 0.22 * c.mate && openness(G, p) > 1.2 ? 1.4 : 0; }
-    if (p.cut > 0) { p.cut -= dt; return move(G, p, hx - s * 1.2, p.z * 0.4, sp, dt); }
-    return move(G, p, hx + SPOTS[p.spot][0] * s, SPOTS[p.spot][1], sp * 0.85, dt); }
+  if (att) { // OFF THE BALL (22 Nov 2026, his note: "the players' positioning is horrible... they don't position themselves in a place that
+    // you can give them a pass"): twice a second each team-mate picks the best place to be: free of his marker, with a clear line
+    // from the man with the ball, a good pass away, out of the lane he drives down, and away from the other team-mate. A man held
+    // tight for a second cuts to the basket and comes out the other side.
+    const handler = b.own || b.to || b.from, mate = team(G, p.t).find(q => q !== p && q !== handler); p.tight = openness(G, p) < 1.25 ? (p.tight || 0) + dt : 0;
+    if (p.cut > 0) { p.cut -= dt; return move(G, p, hx - s * 1.2, p.z * 0.35, sp, dt); }
+    if (p.think <= 0 || !p.spotXY) { p.think = p.t && G.N < 8 ? 1.2 + R() * 1.4 : 0.4 + R() * 0.3; /* (the other team is this quick to find space only from level 8) */
+      if (p.tight > 1.1 && dHoop(p, p.t) > 3 && R() < 0.6 * c.mate) { p.cut = 0.85; p.tight = 0; p.spot = -1; }
+      let best = 0, bs = -1e9; const hd = handler ? Math.hypot(hx - handler.x, handler.z) || 1 : 1;
+      for (let i = 0; i < SPOTS.length; i++) { const x = hx + SPOTS[i][0] * s, z = SPOTS[i][1]; let o = 99; for (const q of team(G, 1 - p.t)) o = Math.min(o, Math.hypot(q.x - x, q.z - z));
+        let sc = Math.min(3.5, o) + R() * 0.3;
+        if (handler && handler !== p) { const dh = Math.hypot(handler.x - x, handler.z - z); sc -= Math.abs(dh - 5) * 0.25; if (dh < 3) sc -= 3; sc -= laneRisk(G, handler, x, z, p.t) * 2.5;
+          const ux = (hx - handler.x) / hd, uz = -handler.z / hd, px = x - handler.x, pz = z - handler.z, along = px * ux + pz * uz, off = Math.abs(px * uz - pz * ux); if (along > 0 && along < hd && off < 1.7) sc -= 2.5; }
+        if (mate && mate.spotXY) { const dm = Math.hypot(mate.spotXY[0] - x, mate.spotXY[1] - z); if (dm < 4) sc -= (4 - dm) * 1.2; }
+        sc -= Math.hypot(p.x - x, p.z - z) * 0.12; if (p.spot === i) sc += 0.5;
+        if (sc > bs) { bs = sc; best = i; } }
+      p.spot = best; p.spotXY = [hx + SPOTS[best][0] * s, SPOTS[best][1]]; }
+    return move(G, p, p.spotXY[0], p.spotXY[1], Math.hypot(p.spotXY[0] - p.x, p.spotXY[1] - p.z) > 1.5 ? sp : sp * 0.8, dt); }
   // defending: between my player and the basket; help on a drive; a reach now and then
   const myHoop = hoopX(1 - p.t), mark = team(G, 1 - p.t)[p.i], h = b.own, tgt = mark, gap = p.t ? 1.15 / c.oD : 1.25, dx = myHoop - tgt.x, dz = -tgt.z, dd = Math.hypot(dx, dz) || 1;
   let gx = tgt.x + dx / dd * Math.min(gap, dd * 0.5), gz = tgt.z + dz / dd * Math.min(gap, dd * 0.5);

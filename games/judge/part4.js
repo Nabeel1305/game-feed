@@ -20,3 +20,5 @@ const sfx = {
   lose() { tone(294, 0.5, 0.08, 'triangle', 0, 262); tone(247, 0.8, 0.08, 'triangle', 0.3, 220); },
 };
 function soundStep() {}
+// the band (tools/juice-kit.js): this game's music
+bandStyle('jazz', { seed: 45, key: -2, bpm: 99 });

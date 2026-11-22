@@ -21,3 +21,5 @@ function soundStep(G, dt) {
   AM.hum && AM.hum.set(0.02 + p * 0.03, 0.1); AM.whine && AM.whine.set(0.006 + p * 0.018, 0.1); AM.wind && AM.wind.set(0.01 + (G.cfg.wind || 0) * 0.008, 1); AM.rain && AM.rain.set((W3 && W3.S ? W3.S.rain : 0) * 0.025, 1);
   if (!G.lesson && G.clock < 5 && G.clock > 0) { AM.tick -= dt; if (AM.tick <= 0) { AM.tick = 1; sfx.tick(); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('synth', { seed: 21, key: -3, bpm: 112 });

@@ -28,3 +28,5 @@ function soundStep(G, dt) {
   AM.breath && AM.breath.set(w.bursting ? 0.035 : 0.012, 0.2);
   AM.step -= dt * (w.v / 10); if (AM.step <= 0) { AM.step = 0.18; noise(0.05, 2200 * vary(0.2), 0.03, 'bandpass', 1.5); }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('tense', { seed: 23, key: 0, bpm: 95 });

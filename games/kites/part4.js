@@ -29,3 +29,5 @@ function soundStep(G, dt) { if (!actx || MUTE) return; if (!windB) { windB = bed
   drum.t += dt; const step8 = 0.19; if (drum.t >= step8) { drum.t -= step8; const i = drum.i++ % 16, busy = cr && cr.length, v = home ? 0.03 : 0.022;
     if ([0, 6, 8, 11].includes(i) || (busy && i % 2 === 1)) tone(i % 8 === 0 ? 70 : 95, 0.18, v * (i % 8 === 0 ? 1.4 : 1), 'sine', 0, 50);
     if ([4, 12].includes(i) || (busy && i % 4 === 2)) noise(0.06, 2200, v * 0.6, 'bandpass', 1.5); } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('island', { seed: 81, key: 3, bpm: 104 });

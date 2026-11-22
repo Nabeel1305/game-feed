@@ -18,9 +18,10 @@ function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Mat
   for (const t of TXT) { t.t += dt; t.y -= dt * 18; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
   for (const f of fly) f.t += dt; fly = fly.filter(f => f.t < 0.3); for (const k2 in wob) { wob[k2] -= dt; if (wob[k2] <= 0) delete wob[k2]; } }
 // where everything is
-function lay() { const s = S1(), cw = Math.min((W - 12) / 10, 54 * s), ch = cw * 1.45, top = H * 0.24, rowY = r => top + r * ch * 0.55, x0 = W / 2 - cw * 4.5;
+function lay() { const s = S1(), cw = Math.min((W - 8) / 10, 58 * s), ch = cw * 1.78, top = H * 0.2, rowY = r => top + r * ch * 0.52,      // (22 Nov 2026: taller cards, the table was half empty)
+  x0 = W / 2 - cw * 4.5;
   const pos = (r, i) => { if (r === 3) return { x: x0 + i * cw, y: rowY(3) }; if (r === 2) return { x: x0 + cw * 0.5 + i * cw, y: rowY(2) }; if (r === 1) { const p = Math.floor(i / 2), j = i % 2; return { x: x0 + cw * (1 + p * 3 + j), y: rowY(1) }; } return { x: x0 + cw * (1.5 + i * 3), y: rowY(0) }; };
-  return { s, cw, ch, pos, stock: { x: W * 0.22 - cw * 0.65, y: H * 0.72, w: cw * 1.3, h: ch * 1.3 }, pile: { x: W * 0.5 - cw * 0.65, y: H * 0.72, w: cw * 1.3, h: ch * 1.3 }, undo: { x: W * 0.78 - 30 * s, y: H * 0.74, w: 60 * s, h: 40 * s } }; }
+  return { s, cw, ch, pos, stock: { x: W * 0.24 - cw * 0.85, y: H * 0.66, w: cw * 1.7, h: ch * 1.45 }, pile: { x: W * 0.54 - cw * 0.85, y: H * 0.66, w: cw * 1.7, h: ch * 1.45 }, undo: { x: W * 0.78 - 30 * s, y: H * 0.74, w: 60 * s, h: 40 * s } }; }
 const RED = s => s === 1 || s === 2;
 function drawCard(x, y, w, h, c, up, o = {}) { ctx.save(); ctx.translate(x, y); if (o.rot) ctx.rotate(o.rot);
   ctx.fillStyle = 'rgba(0,0,0,.3)'; rrect(-w / 2 + 2, -h / 2 + 3, w, h, w * 0.12); ctx.fill();

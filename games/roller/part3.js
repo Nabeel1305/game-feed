@@ -52,7 +52,8 @@ function paintMap(V, g) { const x = V.cv.getContext('2d'), im = x.createImageDat
     else if (gv === GLASS) c = p ? cols[p] : glass;
     else { if (p && (g.spilt[j] || g.edge[j])) c = cols[p]; else a = 0; }
     if (!c) { a = 0; c = [0, 0, 0]; } D[o] = c[0]; D[o + 1] = c[1]; D[o + 2] = c[2]; D[o + 3] = a; }
-  const off = document.createElement('canvas'); off.width = GW; off.height = GH; off.getContext('2d').putImageData(im, 0, 0); x.imageSmoothingEnabled = false; x.clearRect(0, 0, V.cv.width, V.cv.height); x.drawImage(off, 0, 0, V.cv.width, V.cv.height);
+  const off = document.createElement('canvas'); off.width = GW; off.height = GH; off.getContext('2d').putImageData(im, 0, 0); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; x.clearRect(0, 0, V.cv.width, V.cv.height); try { x.filter = 'blur(1.2px)'; } catch (e) {} x.drawImage(off, 0, 0, V.cv.width, V.cv.height); try { x.filter = 'none'; } catch (e) {}      /* 22 Nov 2026: paint went on in square pixels; smoothed edges read as paint */
+ 
   // a little texture: brush marks on painted cells
   x.globalAlpha = 0.06; x.fillStyle = '#000'; for (let i = 0; i < 160; i++) x.fillRect((i * 37) % V.cv.width, (i * 91) % V.cv.height, 1, 3); x.globalAlpha = 1; V.tex.needsUpdate = true; }
 // where a touch lands on the board, in cells (x across from the left, y up from the bottom); off the board gives values outside

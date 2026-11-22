@@ -24,3 +24,5 @@ function soundStep(G, dt) { if (HEADLESS || !actx) return; if (!AM.on) { AM.on =
   const quiet = MUTE || paused || !G || G.over, fights = G ? G.units.filter(u => !u.gone && u.fight > 0).length : 0, marching = G && G.phase === 'battle' && G.units.some(u => u.side === 0 && (u.order || u.tgt) && !u.fight);
   if (AM.clash) AM.clash.set(quiet ? 0 : Math.min(0.03, fights * 0.004), 0.2); if (AM.wind) AM.wind.set(quiet ? 0 : 0.006, 0.6);
   if (!quiet && (marching || (G && G.phase === 'deploy'))) { AM.beat -= dt; if (AM.beat <= 0) { AM.beat = G.phase === 'deploy' ? 1.2 : 0.5; sfx.drum(); } } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('epic', { seed: 47, key: 1, bpm: 88 });

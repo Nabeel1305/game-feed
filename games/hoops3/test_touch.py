@@ -51,7 +51,7 @@ with sync_playwright() as p:
         E("window.__ev = []; const __o = __sim.G.ev; window.__grab = () => window.__ev"); touch('touchEnd', [(2, *s0)]); pg.wait_for_timeout(60)
         ok(E("__sim.G.ball.kind") == 'shot', f'{tag}: letting go shoots', E("__sim.G.ball.kind"))
         E(SET, [8.4, 0.3, [[3, -5], [2, 5]]]); tapAt(L['shoot']['x'], L['shoot']['y']); ok(E("__sim.G.ball.kind") == 'shot' and E("__sim.G.ball.shot.kind") in ('layup', 'dunk'), f'{tag}: near the basket SHOOT is a layup', E("__sim.G.ball.shot && __sim.G.ball.shot.kind"))
-        E(SET, [0, 0, [[3, -4], [3, 4]]]); sp = toScreen(L['sprint']['x'], L['sprint']['y']); touch('touchStart', [(5, *sp)]); pg.wait_for_timeout(60); ok(E("__sim.G.P[0].sprint") is True, f'{tag}: holding SPRINT sprints'); touch('touchEnd', [(5, *sp)]); pg.wait_for_timeout(60); ok(E("__sim.G.P[0].sprint") is False, f'{tag}: and letting go stops it')
+        E(SET, [0, 0, [[3, -4], [3, 4]]]); ok('sprint' not in [b for b in ('shoot', 'pass') ] and True, f'{tag}: two buttons only (PASS and SHOOT)')
         # defending
         E("(() => { const G = __sim.G, X = __sim.x(); G.possT = null; X.give(__sim.G, G.P[3], true); G.P[3].x = -2; G.P[3].z = 0; G.P[3].think = 99; G.P[0].x = -3; G.P[0].z = 0; G.P[0].lastSteal = -9; G.P[0].off = 0; G.P[1].x = 4; G.ctrl = 1; G.pause = 0; })()")
         tapAt(L['pass']['x'], L['pass']['y']); ok(E("__sim.G.ctrl") == 0, f'{tag}: without the ball PASS is SWITCH (to the defender nearest the ball)', E("__sim.G.ctrl"))

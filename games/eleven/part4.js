@@ -25,3 +25,5 @@ function soundStep(G, dt) {
   if (HEADLESS || !actx) return; if (!AM.on) { AM.on = true; AM.crowd = bed(700, 0.5, 0.03, 0.25, 'bandpass'); AM.low = bed(240, 0.6, 0.02, 0.18, 'lowpass'); }
   const quiet = MUTE || paused || !G || G.over, near = G && Math.abs(G.ball.x) > 30; if (AM.crowd) AM.crowd.set(quiet ? 0 : near ? 0.045 : 0.03, 0.4); if (AM.low) AM.low.set(quiet ? 0 : 0.02, 0.5);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('sport', { seed: 34, key: -1, bpm: 119 });

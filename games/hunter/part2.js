@@ -6,14 +6,16 @@
 //   steadier your aim. Hit the chest (heart and lungs) to bring it down; the haunch only wounds it and it runs.
 //   sometimes a cave lion stalks you: a growl from one side; swipe that way to turn and face it, and tap the instant it leaps
 //   to brace the spear. Too soon, too late or facing the wrong way and it mauls you.
+//   (22 Nov 2026: the controls were rebuilt to his note: a stick to creep or run, a crosshair moved by the right thumb, a THROW
+//   button, and taps instead of swipes for the lion.)
 // World: metres; you start at x 0, z 0 facing -z (game z grows away from you); y is up.
 
 const RULES = [
-  '<b>Left thumb: hold to creep</b> forward through the grass. Lift it to freeze.',
+  '<b>Left thumb: the stick.</b> Push it gently to creep, all the way to run (it hears running). Up is towards the animal, sideways steps round it. Let go to freeze.',
   '<b>Freeze when it looks.</b> Its ears flick and its head comes up first. Move while it watches and it sees you; see enough and it bolts.',
-  '<b>Right thumb: pull back and let go to throw.</b> The mark on the ground shows where the spear lands. Closer is steadier.',
+  '<b>Right thumb: drag to move the crosshair, tap THROW.</b> It turns green on the chest. Closer is steadier.',
   '<b>Hit the chest</b> to bring it down. A haunch only wounds it, a miss scares it off.',
-  '<b>A growl? A cave lion.</b> Swipe toward it to turn and face it, then tap the instant it leaps to brace your spear.',
+  '<b>A growl? A cave lion.</b> Tap the side it growls from to face it, then tap again the instant it leaps to brace your spear.',
   'Bring down the animals asked for. Three escapes or maulings and the hunt is over.',
 ];
 const WEATHERS = ['golden', 'morning', 'overcast', 'mist', 'dawn', 'sunset', 'storm', 'noon', 'rain', 'dusk'];
@@ -56,7 +58,11 @@ function newAnimal(G) {
 }
 const distA = G => Math.hypot(G.a.x - G.me.x, G.a.z - G.me.z);
 // ---------- the thumbs ----------
-function creep(G, on) { if (G.over) return; G.me.creep = !!on; }
+function creep(G, on) { setMove(G, on ? 0.5 : 0, 0); }
+// the left thumb's stick (22 Nov 2026, his note: "if you go slowly, you creep; if you go faster, you run"): fwd is towards the
+// animal (negative backs away), side steps round it. A gentle push creeps; a full push runs: three times as fast, but it hears
+// running even with its head down, and sees it at once when it looks.
+function setMove(G, fwd, side) { if (G.over) return; const me = G.me, m = Math.hypot(fwd, side); me.creep = m > 0.12; me.run = m > 0.78; me.mf = m > 0.12 ? fwd / m : 0; me.ms = m > 0.12 ? side / m : 0; }
 // a throw at a point on the ground (x, z); the spear flies there in an arc
 function swayOf(G, d) { const A = (0.04 + 0.011 * Math.min(d, 16)) * (1 + Math.min(1, G.cfg.f / 40) * 0.3) * (lessonNow(G) ? 0.6 : 1); return { x: A * Math.sin(G.t * 2.1), z: A * Math.sin(G.t * 1.6 + 1.3) }; }
 function throwAt(G, x, z) {
@@ -90,7 +96,9 @@ function step(G, dt) {
   if (L && L.lion && !Ln) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: 2.6 }; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
   if (Ln && Ln.st === 'gone') { Ln.t += dt; if (Ln.t > 1.2) G.lion = null; }
   // creeping
-  if (me.creep && a.st !== 'flee' && a.st !== 'dead') { const sp = 1.15, d = distA(G); if (d > 5) { me.x += (a.x - me.x) / d * sp * dt; me.z += (a.z - me.z) / d * sp * dt; } me.moved = 0.25; me.crept = true; }
+  if (me.creep && a.st !== 'flee' && a.st !== 'dead') { const sp = me.run ? 3.2 : 1.15, d = distA(G), ux = (a.x - me.x) / d, uz = (a.z - me.z) / d, mf = me.mf == null ? 1 : me.mf, ms = me.ms || 0;
+    if (d > 5 || mf < 0) { me.x += ux * mf * sp * dt; me.z += uz * mf * sp * dt; } me.x += uz * ms * sp * 0.8 * dt; me.z -= ux * ms * sp * 0.8 * dt; me.moved = me.run ? 0.5 : 0.25; me.crept = true;
+    if (me.run) { a.alert += dt * 0.2 * (1 + 14 / Math.max(5, d)); G.ev.push({ k: 'heard' }); if (a.alert >= 1) { if (L) { a.alert = 0.4; lessonMiss(G, 'heard'); } else return bolt(G, 'heard'); } } }
   else me.moved = Math.max(0, me.moved - dt);
   // the animal: grazes (wandering a little), flicks its ears (the tell), looks; sees movement while it looks
   a.t += dt;
@@ -98,7 +106,7 @@ function step(G, dt) {
     if (a.t >= a.next) { a.st = 'tell'; a.t = 0; a.sudden = !L && R() < c.sudden; G.ev.push({ k: 'tell' }); a.creptBefore = me.crept; me.crept = false; } }
   else if (a.st === 'tell') { if (a.t >= (a.sudden ? 0 : c.tell)) { a.st = 'look'; a.t = 0; a.lookFor = c.lookT[0] + R() * (c.lookT[1] - c.lookT[0]); G.ev.push({ k: 'look' }); } }
   else if (a.st === 'look') {
-    const d = distA(G), seen = me.moved > 0 ? c.notice * a.kind.look * (1 + 12 / Math.max(4, d)) * 0.5 : 0;
+    const d = distA(G), seen = me.moved > 0 ? c.notice * a.kind.look * (1 + 12 / Math.max(4, d)) * 0.5 * (me.run ? 2.5 : 1) : 0;
     a.alert += seen * dt; if (seen) G.ev.push({ k: 'seen' });
     if (a.alert >= 1) { if (L) { a.alert = 0.4; lessonMiss(G, 'seen'); } else return bolt(G, 'seen'); }
     if (a.t >= a.lookFor) { a.st = 'graze'; a.t = 0; a.next = c.graze[0] + R() * (c.graze[1] - c.graze[0]); G.ev.push({ k: 'graze' }); if (a.alert < 0.25 && a.creptBefore) lessonSee(G, 'froze'); } }
@@ -133,10 +141,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', how: 'Hold your left thumb down to creep. When its ears flick and its head comes up, lift your thumb and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
-      { id: 'throw', title: 'THROW AT THE CHEST', how: 'Pull your right thumb back and let go. Put the mark on its chest, just behind the front legs.', need: 1, ok: w => w === 'kill', near: 1 }],
+  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
+      { id: 'throw', title: 'THROW AT THE CHEST', how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
   2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', how: 'Creep in, freezing each time it looks, then throw. The closer you are, the steadier the spear.', need: 2, ok: w => w === 'kill' }],
-  3: [{ id: 'lion', title: 'A LION!', how: 'Swipe toward the growl to turn and face it. Tap the moment it leaps to brace your spear.', need: 2, ok: w => w === 'lion', lion: 1 }],
+  3: [{ id: 'lion', title: 'A LION!', how: 'Tap the side the growl comes from to face it. Then wait, and tap the moment it leaps to brace your spear.', need: 2, ok: w => w === 'lion', lion: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); if (lessonNow(G).near) newAnimal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

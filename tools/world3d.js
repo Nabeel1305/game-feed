@@ -18,13 +18,14 @@ const W3 = (() => {
     noon:     { elev: 58, cloud: 0.22, turb: 2.2, ray: 1.2, mie: 0.003, mist: 0.08, sunI: 3.4, sky: 1.1, tint: 0xffffff, fog: 0xbcd3ea, exp: 0.42 },
     golden:   { elev: 7, cloud: 0.42, turb: 6, ray: 2.2, mie: 0.007, mist: 0.25, sunI: 2.6, sky: 0.85, tint: 0xffc27a, fog: 0xc4b6a8, exp: 0.55 },
     sunset:   { elev: 1.2, cloud: 0.5, turb: 9, ray: 3, mie: 0.009, mist: 0.3, sunI: 1.8, sky: 0.7, tint: 0xff9a5c, fog: 0xc8957e, exp: 0.65 },
-    dusk:     { elev: -1.2, cloud: 0.35, turb: 4, ray: 3.5, mie: 0.006, mist: 0.3, sunI: 0.25, sky: 0.6, tint: 0xb48fc8, fog: 0x6a6684, exp: 1.25, moon: 0.4 },
-    night:    { elev: -6.5, cloud: 0.2, turb: 2, ray: 1.5, mie: 0.003, mist: 0.2, sunI: 0, sky: 0.55, tint: 0x9fb4ff, fog: 0x1a2236, exp: 1.7, moon: 1 },
+    dusk:     { elev: -1.2, cloud: 0.35, turb: 4, ray: 3.5, mie: 0.006, mist: 0.3, sunI: 0.25, sky: 0.9, tint: 0xb48fc8, fog: 0x6a6684, exp: 1.25, moon: 0.4 },
+    night:    { elev: -6.5, cloud: 0.2, turb: 2, ray: 1.5, mie: 0.003, mist: 0.2, sunI: 0, sky: 0.85, tint: 0x9fb4ff, fog: 0x1a2236, exp: 1.7, moon: 1 },
     overcast: { elev: 32, cloud: 0.95, turb: 6, ray: 0.5, mie: 0.006, mist: 0.45, sunI: 0.7, sky: 1.15, tint: 0xe6ebf0, fog: 0x8e979f, exp: 0.42, gloom: 0.4 },
-    rain:     { elev: 26, cloud: 1, turb: 6, ray: 0.4, mie: 0.006, mist: 0.6, sunI: 0.3, sky: 1.0, tint: 0xcfd8e2, fog: 0x6c7680, exp: 0.45, rain: 1, gloom: 0.7 },
-    storm:    { elev: 14, cloud: 1, turb: 6, ray: 0.3, mie: 0.006, mist: 0.7, sunI: 0.12, sky: 0.8, tint: 0xb8c3d6, fog: 0x434b55, exp: 0.42, rain: 1.6, storm: 1, gloom: 0.88 },
+    rain:     { elev: 26, cloud: 1, turb: 6, ray: 0.4, mie: 0.006, mist: 0.5, sunI: 0.4, sky: 1.2, tint: 0xcfd8e2, fog: 0x7a848e, exp: 0.52, rain: 1, gloom: 0.6 },
+    storm:    { elev: 14, cloud: 1, turb: 6, ray: 0.3, mie: 0.006, mist: 0.55, sunI: 0.25, sky: 1.15, tint: 0xb8c3d6, fog: 0x55606c, exp: 0.52, rain: 1.6, storm: 1, gloom: 0.8 },
     mist:     { elev: 9, cloud: 0.6, turb: 5, ray: 1.4, mie: 0.006, mist: 1, sunI: 1.4, sky: 1.0, tint: 0xffe2c4, fog: 0xb9bcbc, exp: 0.45, gloom: 0.25 },
   };
+  let fill = null; const fv = new T.Vector3();
   let P = PRESETS.morning, fogBase = new T.Color(0xb9cde0), fogNear = 60, fogFar = 900;
   // quality notches (rule 12): sharpness of the picture, the shadows, the water's reflection
   const Q = [{ pr: 2, shadow: 2048, refl: 512 }, { pr: 1.5, shadow: 2048, refl: 512 }, { pr: 1.2, shadow: 1024, refl: 384 }, { pr: 1, shadow: 1024, refl: 256 }, { pr: 0.8, shadow: 512, refl: 256 }, { pr: 0.66, shadow: 0, refl: 192 }];
@@ -50,6 +51,9 @@ const W3 = (() => {
       envSphere = new T.Mesh(g, new T.MeshBasicMaterial({ vertexColors: true, side: T.BackSide, fog: false })); envScene.add(envSphere); }
     sun = new T.DirectionalLight(0xffffff, 3); sun.castShadow = true; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03; scene.add(sun, sun.target);
     hemi = new T.HemisphereLight(0xbfd6ff, 0x4a4a38, 1); scene.add(hemi);
+    // a soft light from behind the player's eye (22 Nov 2026, the audit): with the sun ahead of the camera, everything facing
+    // the player was a black cut-out, and night levels could not be read. It casts no shadow; S.fill scales it (0 = off).
+    fill = new T.DirectionalLight(0xffffff, 0.5); fill.castShadow = false; scene.add(fill, fill.target);
     moon = new T.Mesh(new T.CircleGeometry(1, 32), new T.MeshBasicMaterial({ color: 0xf4f1e6, fog: false, transparent: true })); moon.renderOrder = -1; scene.add(moon);
     { const n = 1400, pos = new Float32Array(n * 3), R0 = rngW(7); for (let i = 0; i < n; i++) { const u = R0() * 2 - 1, a = R0() * Math.PI * 2, y = Math.abs(u), r = Math.sqrt(1 - y * y); pos.set([Math.cos(a) * r, y, Math.sin(a) * r], i * 3); }
       const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(pos, 3));
@@ -90,8 +94,9 @@ const W3 = (() => {
     sun.color.set(P.tint); sun.intensity = P.sunI; S.sunI = P.sunI;
     const lowSun = Math.max(0, 1 - S.elev / 25);
     hemi.color.set(P.tint).lerp(new T.Color(0x9fc0ff), 0.55 - 0.3 * lowSun); hemi.groundColor.set(0x3b3a2c).lerp(new T.Color(P.fog), 0.25); hemi.intensity = P.sky; S.hemiI = P.sky;
+    S.fillI = S.night ? 1.05 : (P.gloom ? 0.95 : 0.6) + 0.25 * lowSun; fill.color.set(S.night ? 0xb8c8ff : P.tint).lerp(new T.Color(0xffffff), 0.5);
     if (S.night) { sun.color.set(0xa9bcff); const md = new T.Vector3().setFromSphericalCoords(1, (90 - 17) * Math.PI / 180, (P.moonAz != null ? P.moonAz : 200) * Math.PI / 180); S.moonDir = md; sun.intensity = 0.9 * S.night; S.sunI = sun.intensity; }
-    fogBase.set(P.fog); scene.fog.color.copy(fogBase); fogNear = lerp3(120, 4, P.mist); fogFar = lerp3(2400, 140, Math.pow(P.mist, 0.8));
+    fogBase.set(P.fog); scene.fog.color.copy(fogBase); fogNear = lerp3(120, 14, P.mist); fogFar = lerp3(2400, 230, Math.pow(P.mist, 0.8));
     scene.fog.near = fogNear; scene.fog.far = fogFar; R.toneMappingExposure = S.exposure = P.exp;
     rain.material.uniforms.a.value = Math.min(0.75, 0.42 * S.rain); rain.visible = S.rain > 0;
     stars.material.opacity = S.night * (1 - P.cloud) * 0.9; moon.material.opacity = S.night ? 1 - P.cloud * 0.7 : 0; moon.visible = !!S.night;
@@ -102,7 +107,7 @@ const W3 = (() => {
       if (S.night) { hor.multiplyScalar(0.5); gnd.multiplyScalar(0.4); } const pa = envSphere.geometry.attributes.position, ca = envSphere.geometry.attributes.color, c = new T.Color();
       for (let i = 0; i < pa.count; i++) { const y = pa.getY(i) / 100; if (y >= 0) c.copy(hor).lerp(zen, Math.pow(y, 0.6)); else c.copy(hor).lerp(gnd, Math.min(1, -y * 3)); ca.setXYZ(i, c.r, c.g, c.b); } ca.needsUpdate = true; }
     envRT = pmrem.fromScene(envScene, 0, 1, 1000); scene.environment = envRT.texture;
-    scene.environmentIntensity = S.night ? 0.25 : P.cloud > 0.9 ? 0.6 : 0.85;
+    scene.environmentIntensity = S.night ? 0.45 : P.cloud > 0.9 ? 0.7 : 0.85;
     for (const w of waters) waterSky(w);
   }
   const lerp3 = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
@@ -139,6 +144,7 @@ const W3 = (() => {
     if (rain.visible) { const ru = rain.material.uniforms; ru.t.value = S.t; ru.c.value.copy(cam.position); ru.w.value.set(S.wind[0], S.wind[1]); }
     if (S.night) { const md = S.moonDir; moon.position.copy(cam.position).addScaledVector(md, 900); moon.scale.setScalar(28); moon.lookAt(cam.position); stars.position.copy(cam.position); stars.scale.setScalar(950); }
     shadowFollow();
+    cam.getWorldDirection(fv); fill.position.copy(cam.position); fill.target.position.copy(cam.position).add(fv); fill.intensity = (S.fillI || 0) * (S.fill == null ? 1 : S.fill);
     for (const w of waters) if (w.material.uniforms.time) w.material.uniforms.time.value = S.t * (w.userData.speed || 0.6);
     // test machines (no graphics chip, the processor paints a frame in about a second): no 3D picture, like Bandit's plain way,
     // unless a test asks for it: window.__softGL paints one now and then (the path is tried), window.__fullGL every frame

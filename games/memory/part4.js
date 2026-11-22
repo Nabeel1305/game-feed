@@ -28,3 +28,5 @@ const BOX = [0, 4, 7, 12, 7, 4, 0, -1, 2, 5, 9, 14, 9, 5, 2, -1];
 function soundStep(G, dt) { if (!actx || MUTE || paused) return; mus.t += dt; const beat = 0.42; if (mus.t < beat) return; mus.t -= beat;
   const i = mus.i++, busy = G && G.round && (G.round.phase === 'show' || G.round.phase === 'ask'), vol = busy ? 0.4 : 1, n = BOX[i % 16], ch = [0, -3, -5, -1][Math.floor(i / 16) % 4];
   music(() => { if (n >= 0) tone(note(523, n + ch), 0.6, 0.022 * vol, 'sine', 0, null, 3000); if (i % 8 === 0) tone(note(131, ch), 1.2, 0.03 * vol, 'triangle', 0, null, 600); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('calm', { seed: 88, key: 3, bpm: 72 });

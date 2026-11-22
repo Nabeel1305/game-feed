@@ -27,3 +27,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
     if (ph === 'canopy' && Math.abs(G.stick.x) > 0.4) { flutN -= dt; if (flutN <= 0) { flutN = 0.5; noise(0.2, 1500, 0.012, 'bandpass', 1.2); } } }
   mus.t += dt; const beat = 0.48; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CH[Math.floor(i / 8) % CH.length], semi = q => 261.6 * Math.pow(2, q / 12);
   music(() => { if (i % 4 === 0) pluck(semi(ch[0] - 12), 1.6, 0.025); pluck(semi(ch[(i * 3) % 4] + 12), 0.7, 0.011); if (i % 8 === 6) pluck(semi(ch[3] + 12), 1.0, 0.012, 0.1); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('synth', { seed: 103, key: 1, bpm: 110 });

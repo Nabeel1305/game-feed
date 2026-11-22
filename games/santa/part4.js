@@ -35,3 +35,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const inside = 
       if (I.H.room.sl) { snoreN -= dt; if (snoreN <= 0) { snoreN = 2.4; if (!I.stir) noise(1.0, 220, 0.012, 'lowpass', 1); } } } }
   mus.t += dt; const beat = 0.3; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, q = TUNE[i % TUNE.length];
   music(() => { if (q >= 0) pluck(note(523, q), 0.5, inside ? 0.005 : 0.013); if (i % 4 === 0) pluck(note(131, [0, 5, 7, 0][(i >> 2) % 4]), 0.9, inside ? 0.008 : 0.02); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('fest', { seed: 110, key: 1, bpm: 103 });

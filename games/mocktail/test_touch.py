@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Mocktail Bar with real touches: tabs switch the tray; a tap on a glass takes it; a tap on a bottle picks it and HOLDING the
-big POUR pours it for as long as the thumb stays (letting go stops it); ICE and CRUSHED fill and empty the glass; a garnish
-dragged onto the glass (or just tapped) sits on its rim; circles drawn on the glass stir it; SHAKER takes the shaker, a pour
-goes into it, swipes up and down shake it and a second tap pours it out; fresh mint tapped and MUDDLE three times crushes it;
-SERVE hands it over. Then the rules: the recipe made right is liked; too much or too little of something is sent back with
+"""Mocktail Bar with real touches (easy controls, 22 Nov 2026): tabs switch the tray; a tap on a glass takes it; HOLDING a
+bottle pours it for as long as the thumb stays (letting go stops it); ICE CUBES and CRUSHED ICE fill and empty the glass; a
+tap on a garnish puts it on the rim; HOLDING STIR stirs; SHAKER takes the shaker, a pour goes into it, HOLDING the same button
+shakes it and a tap pours it out; fresh mint tapped and MUDDLE three times crushes it; SERVE hands it over. Then the rules: the recipe made right is liked; too much or too little of something is sent back with
 the reason; a wrong glass is only a small note; a layered drink must not be stirred; a feeling order is answered by ASK, and
 any drink that fits it is liked; the 📖 recipe shows the card later on. Pause stops a pour. The Settings switch Music, Sound
 effects and Vibration on their own and remember them. No errors.
@@ -33,29 +32,24 @@ with sync_playwright() as p:
     def tool(i): return mid(next(q for q in E("__sim.layout().tools") if q['id'] == i))
     E("localStorage.setItem('mok.taught', '3'); __sim.go(5)"); until("__sim.G && __sim.G.order && __sim.G.wait <= 0"); order('breeze')
     tabTo('glass'); ok(E("__sim.ui.tab") == 'glass', 'a tab switches the tray'); tap(*item('rocks')); ok(E("__sim.G.drink.glass") == 'rocks', 'a tap on a glass takes it')
-    tabTo('juice'); tap(*item('cranberry')); ok(E("__sim.G.drink.sel") == 'cranberry', 'a tap on a bottle picks it')
-    P = mid(E("__sim.layout().pour")); touch('touchStart', [(2, P)]); pg.wait_for_timeout(120); ok(E("__sim.G.drink.pouring") == 'cranberry', 'holding POUR pours')
+    tabTo('bottles'); P = item('cranberry'); touch('touchStart', [(2, P)]); pg.wait_for_timeout(120); ok(E("__sim.G.drink.pouring") == 'cranberry', 'holding a bottle pours it')
     pg.wait_for_timeout(900); touch('touchEnd', [(2, P)]); pg.wait_for_timeout(60); n1 = E("(__sim.G.drink.parts[0] || {n: 0}).n")
     ok(E("__sim.G.drink.pouring") is None and 0.6 < n1 < 3, 'letting go stops it, with as much as was held', str(n1)); pg.wait_for_timeout(300); ok(E("__sim.G.drink.parts[0].n") == n1, 'and nothing more comes out')
-    tap(*tool('cubes')); ok(E("__sim.G.drink.ice") == 'cubes', 'ICE fills the glass with cubes'); tap(*tool('crushed')); ok(E("__sim.G.drink.ice") == 'crushed', 'CRUSHED swaps them for crushed ice'); tap(*tool('crushed')); ok(E("__sim.G.drink.ice") == 'none', 'a second tap takes the ice out')
-    tabTo('garn'); g = item('cherry'); gp = E("__sim.glassScr()"); touch('touchStart', [(3, g)])
-    for f in (0.3, 0.6, 1.0): touch('touchMove', [(3, (g[0] + (gp['x'] - g[0]) * f, g[1] + (gp['y'] + 20 - g[1]) * f))]); pg.wait_for_timeout(30)
-    touch('touchEnd', [(3, (gp['x'], gp['y'] + 20))]); pg.wait_for_timeout(60); ok(E("__sim.G.drink.garn") == 'cherry', 'a cherry dragged onto the glass sits on it')
-    tap(*item('lime')) if any(q['id'] == 'lime' for q in E("__sim.layout().items")) else None; ok(E("__sim.G.drink.garn") == 'lime', 'a garnish can be just tapped too')
-    gp = E("__sim.glassScr()"); r0 = max(30, gp['r'] * 1.2); import math
-    touch('touchStart', [(4, (gp['x'] + r0, gp['y']))])
-    for i in range(1, 60): a = i * 0.35; touch('touchMove', [(4, (gp['x'] + r0 * math.cos(a), gp['y'] + r0 * math.sin(a)))]); pg.wait_for_timeout(8)
-    touch('touchEnd', [(4, (gp['x'] + r0, gp['y']))]); ok(E("__sim.G.drink.stirred") >= 2.5, 'circles drawn on the glass stir it', str(E("__sim.G.drink.stirred")))
+    tabTo('extras'); tap(*item('cubes')); ok(E("__sim.G.drink.ice") == 'cubes', 'ICE CUBES fills the glass with cubes'); tap(*item('crushed')); ok(E("__sim.G.drink.ice") == 'crushed', 'CRUSHED ICE swaps them for crushed ice'); tap(*item('crushed')); ok(E("__sim.G.drink.ice") == 'none', 'a second tap takes the ice out')
+    tabTo('glass'); tap(*item('cherry')); ok(E("__sim.G.drink.garn") == 'cherry', 'a tap on the cherry puts it on the glass')
+    tap(*item('lime')); ok(E("__sim.G.drink.garn") == 'lime', 'a tap on another garnish swaps it')
+    S = tool('stir'); touch('touchStart', [(4, S)]); pg.wait_for_timeout(400); mid_s = E("__sim.G.drink.stirred"); ok(0 < mid_s, 'holding STIR stirs', str(mid_s))
+    until("__sim.G.drink.stirDone", 6000); touch('touchEnd', [(4, S)]); ok(E("__sim.G.drink.stirred") >= 2.5 and E("__sim.G.drink.mixedAfter") is True, 'held long enough, the drink is stirred', str(E("__sim.G.drink.stirred")))
+    s1 = E("__sim.G.drink.stirred"); pg.wait_for_timeout(300); ok(E("__sim.G.drink.stirred") == s1, 'letting go of STIR stops the spoon')
     # the shaker
     order('pinesour'); E("__sim.G.drink.glass = 'coupe'"); tap(*tool('shaker')); ok(E("__sim.G.drink.vessel") == 'shaker', 'SHAKER takes the shaker')
-    tabTo('juice'); tap(*item('lemon')); P = mid(E("__sim.layout().pour")); touch('touchStart', [(2, P)]); pg.wait_for_timeout(700); touch('touchEnd', [(2, P)]); pg.wait_for_timeout(60)
+    tabTo('bottles'); P = item('lemon'); touch('touchStart', [(2, P)]); pg.wait_for_timeout(700); touch('touchEnd', [(2, P)]); pg.wait_for_timeout(60)
     ok(E("__sim.G.drink.shaker.length") == 1 and not E("__sim.G.drink.parts.length"), 'a pour goes into the shaker, not the glass')
-    touch('touchStart', [(6, (195, 300))]); y = 300
-    for i in range(16): y = 240 if i % 2 == 0 else 360; touch('touchMove', [(6, (195, y))]); pg.wait_for_timeout(25)
-    touch('touchEnd', [(6, (195, y))]); ok(E("__sim.G.drink.shakes") >= 6, 'swipes up and down shake it', str(E("__sim.G.drink.shakes")))
-    tap(*tool('shaker')); ok(E("[__sim.G.drink.vessel, __sim.G.drink.parts.length, !!__sim.G.drink.shook]") == ['glass', 1, True], 'a second tap pours it, shaken, into the glass', str(E("[__sim.G.drink.vessel, __sim.G.drink.parts.length, __sim.G.drink.shook]")))
+    S = tool('shaker'); touch('touchStart', [(6, S)]); pg.wait_for_timeout(350); ok(0 < E("__sim.G.drink.shakes") < 6, 'holding the shaker button shakes it', str(E("__sim.G.drink.shakes")))
+    until("__sim.G.drink.shakes >= 6", 6000); touch('touchEnd', [(6, S)]); ok(E("__sim.G.drink.shakes") >= 6 and E("__sim.G.drink.vessel") == 'shaker', 'six shakes and it is ready (still in the shaker)', str(E("__sim.G.drink.shakes")))
+    tap(*tool('shaker')); ok(E("[__sim.G.drink.vessel, __sim.G.drink.parts.length, !!__sim.G.drink.shook]") == ['glass', 1, True], 'a tap then pours it, shaken, into the glass', str(E("[__sim.G.drink.vessel, __sim.G.drink.parts.length, __sim.G.drink.shook]")))
     # muddling
-    order('nojito'); E("__sim.G.drink.glass = 'highball'"); tabTo('fresh'); tap(*item('mint')); ok(E("__sim.G.drink.fresh") == ['mint'], 'fresh mint goes into the glass')
+    order('nojito'); E("__sim.G.drink.glass = 'highball'"); tabTo('extras'); tap(*item('mint')); ok(E("__sim.G.drink.fresh") == ['mint'], 'fresh mint goes into the glass')
     for i in range(3): tap(*tool('muddle'))
     ok(E("__sim.G.drink.muddled") == 3, 'MUDDLE three times crushes it')
     # serving: the recipe made right is liked; SERVE by touch
@@ -78,7 +72,7 @@ with sync_playwright() as p:
     E("localStorage.setItem('mok.taught', '3'); __sim.go(9)"); until("__sim.G && __sim.G.order && __sim.G.wait <= 0"); order('breeze')
     ok(E("cardLines(__sim.G).length") == 1, 'later on the card shows only the name'); bk = E("__sim.layout().book"); tap(bk['x'] + bk['w'] / 2, bk['y'] + 24 * E("k") + bk['h'] / 2)
     ok(E("cardLines(__sim.G).length") == 2, 'the 📖 recipe shows it')
-    tabTo('juice'); tap(*item('cranberry')); E("__sim.G.drink.glass = 'rocks'"); P = mid(E("__sim.layout().pour")); touch('touchStart', [(2, P)]); pg.wait_for_timeout(150)
+    E("__sim.G.drink.glass = 'rocks'"); tabTo('bottles'); P = item('cranberry'); touch('touchStart', [(2, P)]); pg.wait_for_timeout(150); ok(E("__sim.G.drink.pouring") == 'cranberry', 'a bottle held on a later level pours')
     E("document.getElementById('pauseBtn').click()"); ok(E("__sim.G.drink.pouring") is None, 'pausing stops a pour'); touch('touchEnd', [(2, P)])
     # ---------- Settings ----------
     E("__sim.live(); localStorage.setItem('mok.settings', '{}'); location.reload()"); pg.wait_for_function('typeof window.gameFeedStart === "function"'); pg.wait_for_timeout(600)

@@ -25,3 +25,5 @@ const sfx = {
   lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
 };
 function soundStep(G, dt) {}
+// the band (tools/juice-kit.js): this game's music
+bandStyle('arcade', { seed: 71, key: 2, bpm: 137 });

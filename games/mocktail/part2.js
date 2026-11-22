@@ -7,9 +7,9 @@
 // orders; too many disliked drinks and the shift is over. Free mix (home screen): no customers, save your own creations.
 const RULES = [
   'Read the order. <b>Choose a glass</b>, add <b>ice</b> if it wants it.',
-  '<b>Tap a bottle, then hold POUR</b>: release to stop. The marks on the glass are parts (the card says how many).',
-  '<b>MUDDLE</b> fresh fruit and herbs (tap it a few times), <b>SHAKE</b> in the shaker (swipe up and down), <b>STIR</b> (circles on the glass).',
-  'Drag a <b>garnish</b> onto the glass, then <b>SERVE</b>. They say what they think, and why.',
+  '<b>HOLD a bottle to pour it</b>: let go to stop. The marks beside the glass are parts (the card says how many).',
+  '<b>MUDDLE</b> fresh fruit and herbs (tap it three times), <b>SHAKE</b> in the shaker (hold the button), <b>STIR</b> (hold the button).',
+  'Tap a <b>garnish</b>, then <b>SERVE</b>. They say what they think, and why.',
   'Some ask for a feeling ("sour and fizzy"): any drink that fits is right. <b>ASK</b> one question if you are not sure.',
   'A drink they dislike fails that order: make it again. Too many and the shift is over.',
 ];
@@ -119,8 +119,8 @@ function judge(G) { const D = G.drink, o = G.order, c = G.cfg, why = [], minor =
     for (const id in R.ing) { const want = R.ing[id], got = amt(id); if (got < 0.25) why.push(`You forgot the ${nm(id)}.`); else if (got < want - tol) why.push(`Not enough ${nm(id)} (${want} parts).`); else if (got > want + tol) why.push(`Too much ${nm(id)} (${want} parts).`); }
     for (const p of D.parts) if (!(p.id in R.ing) && p.n > 0.5) why.push(`Why is there ${nm(p.id)} in it?`);
     for (const f of R.fresh || []) { if (!D.fresh.includes(f)) why.push(`You forgot the ${nm(f)}.`); else if (D.muddled < 3) why.push(`The ${nm(f)} needed muddling (crushing).`); }
-    if (R.how === 'shake' && !D.shook) why.push('It needed shaking: in the shaker, swipe up and down.');
-    if (R.how === 'stir' && !D.stirDone) why.push('It needed a stir: circles on the glass.');
+    if (R.how === 'shake' && !D.shook) why.push('It needed shaking: tap SHAKER, pour into it, hold to shake.');
+    if (R.how === 'stir' && !D.stirDone) why.push('It needed a stir: hold STIR.');
     if (R.how === 'layer' && (D.lastPour !== Object.keys(R.ing).find(id => ING[id].heavy) || D.mixedAfter)) why.push(`No layers! Pour the ${nm(Object.keys(R.ing).find(id => ING[id].heavy))} last, and don't stir.`);
     if (R.ice !== D.ice) (R.ice === 'none' ? why : why).push(R.ice === 'none' ? 'No ice in this one.' : R.ice === 'crushed' && D.ice === 'cubes' ? 'It wants crushed ice.' : R.ice === 'cubes' && D.ice === 'crushed' ? 'Ice cubes, not crushed.' : 'Where\'s the ice?');
     if (c.glassMatters && D.glass !== R.glass) minor.push(`It comes in a ${GLASSES[R.glass].name.toLowerCase()} glass.`);
@@ -140,9 +140,9 @@ function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lo
   G.res = { win, stars, why: o.why || null, served: G.served, failed: G.failed, tips: G.tips, log: G.log, coins: win ? G.tips + Math.ceil(G.N / 2) + stars * 3 : Math.max(1, G.tips >> 1) }; G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pour', title: 'POUR TO THE MARKS', how: 'Tap a GLASS. Then tap a bottle and HOLD POUR until it reaches the parts on the card; let go. Then the second bottle. SERVE.', need: 1 }],
+  1: [{ id: 'pour', title: 'POUR TO THE MARKS', how: 'Tap a GLASS. Then HOLD a bottle: it pours while you hold. Let go at the STOP line. Then the next bottle. Tap SERVE.', need: 1 }],
   2: [{ id: 'ice', title: 'GLASS AND ICE', how: 'Each drink has its glass and its ice. Tap the right glass, tap ICE, then pour, garnish if asked, and SERVE.', need: 1 }],
-  3: [{ id: 'garnish', title: 'THE FINISHING TOUCH', how: 'Drag the garnish from the tray onto the glass (or tap it). The card shows which.', need: 1 }],
+  3: [{ id: 'garnish', title: 'THE FINISHING TOUCH', how: 'The finishing touch: tap the garnish (in GLASS · GARNISH). The card shows which.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); nextOrder(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

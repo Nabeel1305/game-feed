@@ -39,3 +39,5 @@ function soundStep(G, dt) {
   if (!G || G.over || HEADLESS || MUTE || paused) return; tramp -= dt;
   if (tramp <= 0 && G.foes.length) { tramp = 0.5; const n = Math.min(1, G.foes.length / 12); noise(0.08, 220, 0.03 + n * 0.05, 'lowpass', 1); }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('epic', { seed: 25, key: 3, bpm: 88 });

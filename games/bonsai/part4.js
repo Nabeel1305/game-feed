@@ -27,3 +27,5 @@ function soundStep(G, dt) {
   const quiet = MUTE || paused || !G || G.over; if (AM.breeze) AM.breeze.set(quiet ? 0 : G.season === 3 ? 0.012 : 0.006, 0.6);
   if (!quiet && G.season < 3) { AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 4 + Math.random() * 7; const b = 2200 + Math.random() * 900; for (let i = 0; i < 3; i++) tone(b * (1 + i * 0.08), 0.07, 0.012, 'sine', i * 0.09, b * 1.25); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('east', { seed: 41, key: -1, bpm: 88 });

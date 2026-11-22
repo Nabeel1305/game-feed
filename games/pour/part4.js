@@ -18,3 +18,5 @@ const sfx = {
   win() { [0, 4, 7, 12, 16].forEach((q, j) => pluck(note(523, q), 1.0, 0.07, j * 0.1)); },
   lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
 };
+// the band (tools/juice-kit.js): this game's music
+bandStyle('calm', { seed: 63, key: -3, bpm: 80 });

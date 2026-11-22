@@ -28,3 +28,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
     if (G && G.phase === 'ride' && !G.p.air) { const P = G.p, near = clamp(1 - (P.x - G.xb) / 20, 0, 1); hissN -= dt; if (hissN <= 0) { hissN = 0.18; noise(0.22, 2400 + P.v * 120, 0.006 + Math.min(0.03, P.v * 0.0015), 'bandpass', 0.7); noise(0.25, 260, 0.01 + near * 0.03 + (P.inTube ? 0.03 : 0), 'lowpass', 0.6); } } }
   mus.t += dt; const beat = 0.32; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { pluck(note(392, TUNE[i % TUNE.length]), 0.6, 0.012); if (i % 4 === 0) pluck(note(98, [0, 5, 7, 5][(i >> 2) % 4]), 0.9, 0.02); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('island', { seed: 109, key: 3, bpm: 106 });

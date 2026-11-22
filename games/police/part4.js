@@ -38,3 +38,5 @@ function soundStep(G, dt) {
   if (drive) { AM.siren -= dt; if (AM.siren <= 0) { AM.siren = 1.1; tone(740, 0.55, 0.035, 'sawtooth', 0, 960, 2400); tone(960, 0.55, 0.035, 'sawtooth', 0.55, 740, 2400); } }
   if (g.ph === 'foot') { AM.breath -= dt; if (AM.breath <= 0) { AM.breath = 0.33; tone(110, 0.05, 0.06, 'sine', 0, 70); noise(0.12, 1100, 0.025, 'bandpass', 1, 0.05); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('synth', { seed: 14, key: -3, bpm: 106 });

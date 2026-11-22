@@ -9,7 +9,7 @@
 //   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
 let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
 document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
-function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause', 'ovSet'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
 function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
 const helpOn = () => (streaks[level] || 0) >= 3;
 const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
@@ -24,7 +24,7 @@ function startGame() {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
   TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; ui.aim = null; ui.drag = null; hint = null;
-  ui.snap = true; ui.aim = null; ui.drag = null; touches.clear();
+  ui.snap = true; ui.aim = null; ui.drag = null; ui.stick = null; ui.ch = null; ui.aiming = null; touches.clear();
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -74,7 +74,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; ui.stick = null; ui.aiming = null; touches.clear(); if (G && !G.over) setMove(G, 0, 0); $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -82,23 +82,23 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (made for hunting, two thumbs): left half held = creep; right half pulled back and let go = throw where the mark shows;
-// when a lion growls, a quick sideways swipe turns you toward it and a quick tap braces the spear.
+// input (22 Nov 2026, his note: "a crosshair that shows you where to aim, moved with one hand, and you creep with the other; if
+// you go slowly you creep, faster you run"): the LEFT thumb is a floating stick (gentle = creep, full = run; up is towards the
+// animal); the RIGHT thumb drags the crosshair, and THROW throws where it is. A lion: tap the side it growls from to face it,
+// then tap when it leaps. No swipes, no pull-backs.
 const touches = new Map();
-function aimAt(dx, dy) { const me = G.me, pull = clamp(dy / (H * 0.32), 0, 1), d = 3 + pull * 34, yaw = (V3 && !V3.none ? V3.yaw : Math.atan2(G.a.x - me.x, G.a.z - me.z)) + clamp(-dx / (W * 0.5), -1, 1) * 0.5;
-  return { x: me.x + Math.sin(yaw) * d, z: me.z + Math.cos(yaw) * d, pull }; }
 const lionOn = () => G && G.lion && G.lion.st !== 'gone';
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const side = e.clientX < W / 2 ? -1 : 1;
-  touches.set(e.pointerId, { x0: e.clientX, y0: e.clientY, t0: performance.now(), side });
-  if (!lionOn() && side < 0) creep(G, true); if (side > 0 && !lionOn()) ui.drag = { mode: 'maybe', pull: 0, id: e.pointerId };
-  try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if (!t || !G) return; const dx = e.clientX - t.x0, dy = e.clientY - t.y0;
-  if (lionOn()) { if (Math.abs(dx) > 40 * k && !t.turned) { t.turned = true; turn(G, dx < 0 ? -1 : 1); } return; }
-  if (ui.drag && ui.drag.id === e.pointerId && dy > 14 * k) { ui.drag.mode = 'aim'; const A = aimAt(dx, dy); ui.drag.pull = A.pull; ui.aim = A; } });
-function endTouch(e) { const t = touches.get(e.pointerId); if (!t) return; touches.delete(e.pointerId); if (!G || G.over || paused) return;
-  if (lionOn()) { if (!t.turned && performance.now() - t.t0 < 400) brace(G); return; }
-  if (t.side < 0) creep(G, false);
-  if (ui.drag && ui.drag.id === e.pointerId) { if (ui.drag.mode === 'aim' && ui.aim) throwAt(G, ui.aim.x, ui.aim.z); ui.drag = null; ui.aim = null; } }
+function stickMove(t, x, y) { const R = 56 * k, dx = (x - t.x0) / R, dy = (y - t.y0) / R; ui.stick.x = x; ui.stick.y = y; setMove(G, clamp(-dy, -1, 1), clamp(dx, -1, 1)); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const x = e.clientX, y = e.clientY, side = x < W / 2 ? -1 : 1, L = layout();
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  if (lionOn()) { const Ln = G.lion; if (Ln.st === 'stalk' && G.me.face !== side) turn(G, side); else brace(G); return; }
+  if (Math.hypot(x - L.fire.x, y - L.fire.y) < L.fire.r * 1.15) { ui.fireT = 0.25; const A = aimPoint(); if (A) { if (!throwAt(G, A.x, A.z)) sfx.no && sfx.no(); } return; }
+  if (side < 0) { if (!ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; touches.set(e.pointerId, { kind: 'stick', x0: x, y0: y }); } return; }
+  touches.set(e.pointerId, { kind: 'aim', lx: x, ly: y }); ui.aiming = e.pointerId; if (!ui.ch) ui.ch = { x: 0, y: 0 }; });
+cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if (!t || !G || paused) return; const x = e.clientX, y = e.clientY;
+  if (t.kind === 'stick') { if (!lionOn()) stickMove(t, x, y); return; }
+  if (t.kind === 'aim') { ui.ch.x = clamp(ui.ch.x + (x - t.lx) * 0.9, -W * 0.45, W * 0.45); ui.ch.y = clamp(ui.ch.y + (y - t.ly) * 0.9, -H * 0.3, H * 0.3); t.lx = x; t.ly = y; } });
+function endTouch(e) { const t = touches.get(e.pointerId); if (!t) return; touches.delete(e.pointerId); if (t.kind === 'stick') { ui.stick = null; if (G && !G.over) setMove(G, 0, 0); } if (ui.aiming === e.pointerId) ui.aiming = null; }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections
@@ -133,7 +133,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  creep(on) { creep(G, on); }, throwAt(x, z) { return throwAt(G, x, z); }, turn(s) { turn(G, s); }, brace() { brace(G); }, ui, get V3() { return V3; }, W3,
+  creep(on) { creep(G, on); }, setMove(f, s) { setMove(G, f, s); }, layout() { return layout(); }, aimPoint() { return aimPoint(); }, throwAt(x, z) { return throwAt(G, x, z); }, turn(s) { turn(G, s); }, brace() { brace(G); }, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
@@ -154,6 +154,20 @@ $('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
 $('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
 setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
 window.gameFeedTutorial = () => { audio(); startTutorial(); };
+// ---------- settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; the sound side is in the juice kit) ----------
+Object.assign(SET, store.get('settings', {}) || {});
+let setFrom = 'ovHome';
+function renderSet() { const t = (id, on, txt) => { $(id).textContent = txt || (on ? 'ON' : 'OFF'); $(id).classList.toggle('off', !on); }; t('tMus', SET.mus); t('tSfx', SET.sfx); t('tVib', SET.vib); t('tVk', SET.vib, SET.vk < 0.8 ? 'LOW' : SET.vk > 1.2 ? 'STRONG' : 'NORMAL'); }
+function openSet(from) { setFrom = from; renderSet(); show('ovSet'); }
+const saveSet = () => { store.set('settings', SET); applySet(); renderSet(); };
+$('setBtn').onclick = () => { audio(); sfx.click(); openSet('ovHome'); };
+$('pSet').onclick = () => { sfx.click(); openSet('ovPause'); };
+$('tMus').onclick = () => { audio(); SET.mus = !SET.mus; saveSet(); };
+$('tSfx').onclick = () => { audio(); SET.sfx = !SET.sfx; saveSet(); if (SET.sfx) sfx.click(); };
+$('tVib').onclick = () => { SET.vib = !SET.vib; saveSet(); vibe(HAP.light); };
+$('tVk').onclick = () => { SET.vk = SET.vk < 0.8 ? 1 : SET.vk > 1.2 ? 0.5 : 1.6; saveSet(); vibe(HAP.thud); };
+$('setBack').onclick = () => { sfx.click(); show(setFrom); };
+window.gameFeedSettings = () => openSet(G && !G.over ? 'ovPause' : 'ovHome');
 applyStep(); showHome(); requestAnimationFrame(frame);
 })();
 </script>

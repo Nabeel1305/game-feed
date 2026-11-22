@@ -102,7 +102,7 @@ function onEvent(G, e) {
   switch (e.k) {
     case 'start': { const c = G.cfg; say(TRACKS[c.track].name.toUpperCase(), cx, H * 0.27, '#ffffff', 22); say(`${CUPS[c.cup].icon} ${CUPS[c.cup].name.toUpperCase()} · ${CLASSES[c.cls]}${c.boss ? ' · BOSS RACE' : ''}`, cx, H * 0.31, '#ffd080', 14); say(c.place === 1 ? 'WIN THE RACE!' : `FINISH TOP ${c.place}`, cx, H * 0.345, '#9be3ff', 16); sfx.go(); if (G.N <= 3) tip('rocket', 'Hold DRIFT as the 2nd light comes on for a ROCKET START!', 3.0); } break;
     case 'light': sfx.light(e.n); if (e.n <= 3 && !G.lesson) say(String(e.n), cx, H * 0.46, ['#7af0a0', '#ffd040', '#ff9a3a', '#ff5a5a'][e.n], 64); break;
-    case 'go': sfx.light(0); say('GO!', cx, H * 0.36, '#7af0a0', 50); FX.flash = 0.2; music.start(G); break;
+    case 'go': sfx.light(0); say('GO!', cx, H * 0.36, '#7af0a0', 50); FX.flash = 0.2; trackMusic.start(G); break;
     case 'rocket': sfx.boost(3); say('ROCKET START!', cx, H * 0.42, '#ffd040', 26); FX.shake = 6; vibe(HAP.sharp); break;
     case 'stall': sfx.no(); say('STALLED! TOO EARLY', cx, H * 0.42, '#ff9a8a', 20); tip('stall', 'Too early! Hold DRIFT only when the SECOND light comes on.', 3); break;
     case 'drift': sfx.drift(); break;
@@ -139,14 +139,14 @@ function onEvent(G, e) {
     case 'star': break;
     case 'starend': break;
     case 'rocketend': break;
-    case 'lap': ui.lapT = 2; if (e.lap < G.cfg.laps) { sfx.lap(e.lap); if (e.lap === G.cfg.laps - 1) { say('FINAL LAP!', cx, H * 0.3, '#ffd080', 34); music.final(); } else say(`LAP ${e.lap + 1}`, cx, H * 0.3, '#ffd080', 30); } break;
-    case 'finish': music.stop(); break;
+    case 'lap': ui.lapT = 2; if (e.lap < G.cfg.laps) { sfx.lap(e.lap); if (e.lap === G.cfg.laps - 1) { say('FINAL LAP!', cx, H * 0.3, '#ffd080', 34); trackMusic.final(); } else say(`LAP ${e.lap + 1}`, cx, H * 0.3, '#ffd080', 30); } break;
+    case 'finish': trackMusic.stop(); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.3, '#ffe08a', 20); sfx.go(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.36, '#9be3b5', 22); sfx.combo(e.n); break;
     case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
     case 'lessondone': say('NOW RACE!', cx, H * 0.3, '#ffe08a', 28); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
-    case 'won': sfx.win(); vibe(HAP.best); FX.flash = 0.4; music.stop(); say(e.place === 1 ? 'YOU WIN!' : `${nth(e.place).toUpperCase()} PLACE!`, cx, H * 0.3, '#ffd040', 36); burst(cx, H * 0.3, '#ffd040', 30, 260); burst(cx, H * 0.3, '#ff5ac8', 20, 220); break;
-    case 'lost': sfx.lose(); music.stop(); say(G.full ? 'THE TOP PLACES ARE TAKEN' : `${nth(e.place).toUpperCase()} PLACE`, cx, H * 0.3, '#ffb4a8', G.full ? 22 : 30); break;
+    case 'won': sfx.win(); vibe(HAP.best); FX.flash = 0.4; trackMusic.stop(); say(e.place === 1 ? 'YOU WIN!' : `${nth(e.place).toUpperCase()} PLACE!`, cx, H * 0.3, '#ffd040', 36); burst(cx, H * 0.3, '#ffd040', 30, 260); burst(cx, H * 0.3, '#ff5ac8', 20, 220); break;
+    case 'lost': sfx.lose(); trackMusic.stop(); say(G.full ? 'THE TOP PLACES ARE TAKEN' : `${nth(e.place).toUpperCase()} PLACE`, cx, H * 0.3, '#ffb4a8', G.full ? 22 : 30); break;
   }
 }
 // ---------- every frame ----------

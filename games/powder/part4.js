@@ -29,3 +29,5 @@ function soundStep(G, dt) {
   if (AM.wind) AM.wind.set(quiet ? 0 : 0.006 + Math.min(1, m.v / 18) * (m.air ? 0.035 : 0.025), 0.3);
   if (AM.edge) AM.edge.set(quiet || m.air || m.crashT > 0 ? 0 : clamp(Math.abs(G.lean) * m.v / 14, 0, 1) * 0.03, 0.08);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('sport', { seed: 36, key: 2, bpm: 115 });

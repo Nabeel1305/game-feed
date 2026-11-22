@@ -183,13 +183,28 @@ function brain(G, p) { const c = G.cfg, u = G.puck, s = p.t ? -1 : 1, spd = (p.r
   // a shot is on: one forward goes to the crease for the rebound
   if (u.shot && u.shot.t === p.t && p.role === 'f' && G.rank[p.t][0] === p) { const gx = goalX(p.t); return [gx - s * 2.2, clamp(u.z, -1.2, 1.2), spd]; }
   const h = home(G, p);
-  if (att) { if (p.role === 'f' && own) { let bx = h[0], bz = h[1], bs = -1e9; for (let i = 0; i < 6; i++) { const cx = clamp(h[0] + (i % 3 - 1) * 3, -HL + 2, HL - 2), cz = clamp(h[1] + (i < 3 ? -2 : 2), -HW + 1.5, HW - 1.5), sc = Math.min(4, openness(G, { x: cx, z: cz, t: p.t })) - lineRisk(G, own, cx, cz) * 1.5; if (sc > bs) { bs = sc; bx = cx; bz = cz; } } return [bx, bz, spd * 0.8]; }
-    return [h[0], h[1], spd * 0.75]; }
+  if (att && own && !(G.lesson && p.t) && (p.t === 0 || c.N >= 8)) { const q = getOpen(G, p, own, h, s); /* (the other team learns it from level 8) */ return [q[0], q[1], q[2] ? spd : spd * 0.8]; }
+  if (att) return [h[0], h[1], spd * 0.75];
   if (own) { const rank = G.rank[p.t].indexOf(p), gx = -goalX(p.t);
     if (rank === 0) { if (p.t) return [own.x + own.vx * 0.2, own.z + own.vz * 0.2, dist(p, own) > 4 ? spd : spd * 0.75]; const dx = gx - own.x, dz = -own.z, d = Math.hypot(dx, dz) || 1; return [own.x + dx / d * 3, own.z + dz / d * 3, spd * 0.6]; }      // your team-mates only shadow: winning it is your job
     if (rank === 1 && p.t === 1 && c.style === 'press') return [own.x + own.vx * 0.3 + s * -1.5, own.z, spd * 0.9];
     if (rank === 1 || (c.style === 'tight' && p.t === 1)) return [own.x + (gx - own.x) * 0.45, own.z * 0.45, spd * 0.85]; }
   return [h[0], h[1], spd * 0.7]; }
+// GETTING OPEN (22 Nov 2026, his note on the team games: "they don't position themselves in a place that you can give them a
+// pass"): three times a second a team-mate without the puck picks the best of a few places: free of his marker, a clear line
+// from the puck, a good pass away, ahead of it if he is a forward (one of them in the slot in front of the net), not on top of
+// another team-mate, not too far from his place in the shape. Returns [x, z, hurry?].
+function getOpen(G, p, own, h, s) { if (p.sup && p.sup.own === own && G.t - p.sup.t < 0.3) return p.sup.r; const gx = goalX(p.t), mates = team(G, p.t), cand = [[h[0], h[1]]];
+  for (let i = 0; i < 6; i++) { const a = i * 1.047 + p.i; cand.push([h[0] + Math.cos(a) * 3.6, h[1] + Math.sin(a) * 3]); }
+  for (const a of [0.8, -0.8, 1.9, -1.9]) cand.push([own.x + s * Math.cos(a) * 6.5, own.z + Math.sin(a) * 6.5]);
+  if (p.role === 'f') for (const dz of [-2.4, 2.4]) cand.push([gx - s * 4, dz]);
+  if (p.sup) cand.push([p.sup.r[0], p.sup.r[1]]);
+  let best = cand[0], bs = -1e9; for (const c of cand) { const cx = clamp(c[0], -HL + 2, HL - 2), cz = clamp(c[1], -HW + 1.5, HW - 1.5), d = Math.hypot(cx - own.x, cz - own.z);
+    let sc = Math.min(4.5, openness(G, { x: cx, z: cz, t: p.t })) - lineRisk(G, own, cx, cz) * 2 - Math.hypot(cx - h[0], cz - h[1]) * 0.1 - Math.abs(d - 7) * 0.1; if (d < 3) sc -= 3;
+    sc += clamp((cx - own.x) * s, -5, 10) * (p.role === 'f' ? 0.12 : 0.02);
+    for (const m of mates) if (m !== p && m.role !== 'g') { const mx = m.sup && m !== own ? m.sup.r[0] : m.x, mz = m.sup && m !== own ? m.sup.r[1] : m.z, dm = Math.hypot(mx - cx, mz - cz); if (dm < 4.5) sc -= (4.5 - dm) * 0.6; }
+    if (p.sup) sc -= Math.hypot(cx - p.sup.r[0], cz - p.sup.r[1]) * 0.06; if (sc > bs) { bs = sc; best = [cx, cz]; } }
+  const r0 = [best[0], best[1], Math.hypot(best[0] - p.x, best[1] - p.z) > 3.5]; p.sup = { t: G.t + (p.i % 4) * 0.02, own, r: r0 }; return r0; }
 function decide(G, p) { const c = G.cfg, gx = goalX(p.t), dg = Math.hypot(gx - p.x, p.z), nf = nearestFoe(G, p), R = G.rnd, s = p.t ? -1 : 1;
   if (G.lesson && p.t === 1) { let m = me(G); for (const q2 of team(G, 0)) if (q2.role !== 'g' && dist(q2, p) < dist(m, p)) m = q2; const side = Math.sign(p.z - m.z) || 1, near = dist(p, m) < 5; p.carry = [p.x + s * 4, clamp(near ? p.z + side * 4 : p.z * 0.8, -HW + 2, HW - 2)]; p.dec = 0.25; return; }      // in a lesson they stroll forward, stepping round you
   if (p.role === 'g') { const q = bestTarget(G, p, { x: s, z: 0 }); if (q) pass(G, p, { x: q.x - p.x, z: q.z - p.z }, true); return; }

@@ -9,7 +9,7 @@
 //   - smoothness: the picture is made less sharp, a notch at a time, if this phone cannot keep up (rule 12)
 let G = null, paused = false, level = 1, unlocked = store.get('unlocked', 1), stars = store.get('stars', {}), streaks = store.get('streaks', {}), best = store.get('best', {});
 document.getElementById('rulesList').innerHTML = RULES.map(r => `<li>${r}</li>`).join('');
-function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
+function show(id) { ['ovHome', 'ovRules', 'ovLevels', 'ovEnd', 'ovPause', 'ovSet'].forEach(key => $(key).classList.toggle('hidden', key !== id)); }
 function savedLevel() { level = Math.min(Math.max(1, store.get('level', 1) | 0), unlocked); }
 const helpOn = () => (streaks[level] || 0) >= 3;
 const playing = () => !!G && !G.over && !paused && $('ovHome').classList.contains('hidden') && $('ovEnd').classList.contains('hidden');
@@ -143,6 +143,20 @@ $('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
 $('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
 setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
 window.gameFeedTutorial = () => { audio(); startTutorial(); };
+// ---------- settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; the sound side is in the juice kit) ----------
+Object.assign(SET, store.get('settings', {}) || {});
+let setFrom = 'ovHome';
+function renderSet() { const t = (id, on, txt) => { $(id).textContent = txt || (on ? 'ON' : 'OFF'); $(id).classList.toggle('off', !on); }; t('tMus', SET.mus); t('tSfx', SET.sfx); t('tVib', SET.vib); t('tVk', SET.vib, SET.vk < 0.8 ? 'LOW' : SET.vk > 1.2 ? 'STRONG' : 'NORMAL'); }
+function openSet(from) { setFrom = from; renderSet(); show('ovSet'); }
+const saveSet = () => { store.set('settings', SET); applySet(); renderSet(); };
+$('setBtn').onclick = () => { audio(); sfx.click(); openSet('ovHome'); };
+$('pSet').onclick = () => { sfx.click(); openSet('ovPause'); };
+$('tMus').onclick = () => { audio(); SET.mus = !SET.mus; saveSet(); };
+$('tSfx').onclick = () => { audio(); SET.sfx = !SET.sfx; saveSet(); if (SET.sfx) sfx.click(); };
+$('tVib').onclick = () => { SET.vib = !SET.vib; saveSet(); vibe(HAP.light); };
+$('tVk').onclick = () => { SET.vk = SET.vk < 0.8 ? 1 : SET.vk > 1.2 ? 0.5 : 1.6; saveSet(); vibe(HAP.thud); };
+$('setBack').onclick = () => { sfx.click(); show(setFrom); };
+window.gameFeedSettings = () => openSet(G && !G.over ? 'ovPause' : 'ovHome');
 applyStep(); showHome(); requestAnimationFrame(frame);
 })();
 </script>

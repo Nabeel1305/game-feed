@@ -26,3 +26,5 @@ function soundStep(G, dt) { if (!actx || MUTE || HEADLESS) return;
   if (!AM.on) { AM.on = true; AM.wind = bed(600, 0.8, 0.015, 0.2, 'bandpass'); AM.bugs = bed(5200, 6, 0.006, 3, 'bandpass'); }
   if (!G || G.over || paused) return; const m = G.me; if (m.v < 0.6) return;
   AM.step -= dt * (m.v / 6); if (AM.step <= 0) { AM.step = m.run ? 0.42 : 0.6; tone(55 * vary(0.08), 0.18, m.run ? 0.16 : 0.09, 'sine', 0, 35); noise(0.08, 400, m.run ? 0.05 : 0.03, 'lowpass', 1); if (m.run) FX.shake = Math.max(FX.shake, 3); } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('tense', { seed: 51, key: 0, bpm: 97 });

@@ -10,7 +10,7 @@
 // World: metres. x along the pitch (our goal at -52.5, theirs at +52.5), z across it (the far touchline -34, near +34).
 const RULES = [
   '<b>Turn your phone sideways.</b> You are gold, attacking to the right.',
-  '<b>Left thumb:</b> run with the ball (or without it). Hold <b>SPRINT</b> to go flat out: it tires him (the bar under him), and at a sprint the ball runs ahead of him, so a defender can nick it. <b>PASS</b> to the team-mate you point at, <b>SHOOT</b> at goal (point up or down for the corner), <b>LOB</b> over the top, or chip a keeper who has come out.',
+  '<b>Left thumb:</b> run with the ball (or without it). Push it <b>all the way to sprint</b>: it tires him (the bar under him), and at a sprint the ball runs ahead of him, so a defender can nick it. The white ring shows who a pass would go to; your team-mates move to get free. <b>PASS</b> to the team-mate you point at, <b>SHOOT</b> at goal (point up or down for the corner), <b>LOB</b> over the top, or chip a keeper who has come out.',
   '<b>Defending:</b> SWITCH to the player nearest the ball, TACKLE, or SLIDE (longer, but miss it and you are down).',
   'Two minutes a match. Win to meet the next team: every team is better than the last. Level at the end: golden goal.',
   'Coins for goals and wins buy training that stays: pace, finishing, passing, a better keeper.',
@@ -230,7 +230,8 @@ function brain(G, p) {
   if (!own) { const near = G.rank[p.t][0];
     if (near === p && (b.kind !== 'pass' || b.last.t !== p.t)) return [b.x + b.vx * 0.3, b.z + b.vz * 0.3, Math.hypot(b.x - p.x, b.z - p.z) > 4 ? spd : spd * 0.8]; }
   const h = home(G, p);
-  if (att) { if (p.role === 'fw' && own) { const lineX = s > 0 ? Math.min(own.x + 18, HL - 8) : Math.max(own.x - 18, -HL + 8); return [s > 0 ? Math.max(h[0], lineX) : Math.min(h[0], lineX), h[1], Math.abs((s > 0 ? Math.max(h[0], lineX) : Math.min(h[0], lineX)) - p.x) > 8 ? spd : spd * 0.7]; } return [h[0], h[1], spd * 0.75]; }
+  if (att && own && !(G.lesson && p.t) && (p.t === 0 || c.N >= 8)) { const q = support(G, p, own, h); /* (the other team learns it from level 8) */ return [q[0], q[1], q[2] ? spd : spd * 0.8]; }
+  if (att) return [h[0], h[1], spd * 0.75];
   // defending: the nearest closes the ball down (them: as hard as their level presses), the next covers, the rest hold the shape
   if (own) { const rank = G.rank[p.t].indexOf(p);
     if (rank === 0) return [own.x + own.vx * 0.2 + (p.t ? 0 : -3), own.z + own.vz * 0.2, p.t ? (dist(p, own) > 6 && c.oPress > 1.1 ? spd : spd * 0.7) : spd * 0.6];      // your team-mates only shadow: winning it is your job
@@ -238,6 +239,30 @@ function brain(G, p) {
     if (rank === 1) { const gx = -goalX(p.t); return [own.x + (gx - own.x) * 0.25, own.z * 0.75, spd * 0.8]; } }
   return [h[0], h[1], spd * 0.7];
 }
+// GETTING OPEN (his note, 22 Nov 2026: "the players' positioning is horrible... they don't position themselves in a place that
+// you can give them a pass"). A team-mate without the ball does not stand on his formation spot: every third of a second he
+// looks at a handful of places (round his spot, round the man on the ball, and in behind for a forward) and goes to the best:
+// clear of markers, with nobody standing in the line of the pass, a sensible pass away (closer when the man on the ball is
+// being pressed), ahead of the ball if he is a forward or midfielder, onside, not on top of another team-mate, and not so far
+// from his spot that the team loses its shape. Returns [x, z, run?].
+function support(G, p, own, h) { if (p.sup && p.sup.own === own && G.t - p.sup.t < 0.33) return p.sup.r;
+  const s = p.t ? -1 : 1, foes = team(G, 1 - p.t), mates = team(G, p.t), pressed = nearestFoe(G, own) < 4.5, rk = G.rank[p.t].indexOf(p), near = rk >= 0 && rk <= 3;
+  let line = 0; for (const o of foes) if (o.role !== 'gk') line = Math.max(line, o.x * s); line = Math.max(line, own.x * s) - 0.6;      // the last defender (or the ball): no further forward than this
+  const cand = [[h[0], h[1]]]; for (let i = 0; i < 6; i++) { const a = i * 1.047 + p.i; cand.push([h[0] + Math.cos(a) * 7, h[1] + Math.sin(a) * 6]); }
+  if (near) for (const a of [0.7, -0.7, 1.6, -1.6, 2.5, -2.5]) { const r2 = pressed ? 9 : 13; cand.push([own.x + s * Math.cos(a) * r2, own.z + Math.sin(a) * r2]); }
+  if (p.role !== 'df') for (const dz of [-9, 0, 9]) cand.push([s * Math.min(line, own.x * s + (p.role === 'fw' ? 24 : 15)), clamp(p.z + dz, -HW + 3, HW - 3)]);
+  if (p.sup) cand.push([p.sup.r[0], p.sup.r[1]]);
+  let best = cand[0], bs = -1e9;
+  for (const c of cand) { const cx = clamp(c[0], -HL + 3, HL - 3), cz = clamp(c[1], -HW + 3, HW - 3), q = { x: cx, z: cz }; if (cx * s > line + 0.6) continue;
+    let open = 99; for (const o of foes) open = Math.min(open, Math.hypot(o.x - cx, o.z - cz));
+    const d = Math.hypot(cx - own.x, cz - own.z), fwd = (cx - own.x) * s;
+    let sc = Math.min(open, 9) * 1.0 - lineRisk(G, own, q) * 2.2 - Math.hypot(cx - h[0], cz - h[1]) * (near ? 0.07 : 0.14);
+    sc += clamp(fwd, -10, 25) * (p.role === 'fw' ? 0.11 : p.role === 'md' ? 0.06 : 0);
+    sc -= Math.abs(d - (pressed && near ? 10 : 16)) * (pressed && near ? 0.22 : 0.06); if (d < 5) sc -= 4; if (d > 36) sc -= 3;
+    for (const m of mates) if (m !== p && m.role !== 'gk') { const mx = m.sup && m !== own ? m.sup.r[0] : m.x, mz = m.sup && m !== own ? m.sup.r[1] : m.z, dm = Math.hypot(mx - cx, mz - cz); if (dm < 9) sc -= (9 - dm) * 0.5; }
+    if (p.sup) sc -= Math.hypot(cx - p.sup.r[0], cz - p.sup.r[1]) * 0.05;
+    if (sc > bs) { bs = sc; best = [cx, cz]; } }
+  const r0 = [best[0], best[1], Math.hypot(best[0] - p.x, best[1] - p.z) > 7]; p.sup = { t: G.t + (p.i % 5) * 0.02, own, r: r0 }; return r0; }
 // the AI on the ball (them, and your team-mates for the moment before you take over)
 function decide(G, p) {
   const c = G.cfg, gx = goalX(p.t), dg = Math.hypot(gx - p.x, p.z), nf = nearestFoe(G, p), R = G.rnd, s = p.t ? -1 : 1;
@@ -261,7 +286,7 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pass', title: 'PASS', how: 'Run with your LEFT thumb. Point at a team-mate and tap PASS. Three passes.', need: 3 },
+  1: [{ id: 'pass', title: 'PASS', how: 'Run with your LEFT thumb. Point at a team-mate (a white ring shows who) and tap PASS. Three passes.', need: 3 },
     { id: 'goal', title: 'SHOOT', how: 'Run at goal and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
   2: [{ id: 'tackle', title: 'WIN IT BACK', how: 'Without the ball, run at the man with it and tap TACKLE when you are close (SLIDE reaches further). Win it twice.', need: 2 }],
   3: [{ id: 'lob', title: 'OVER THE TOP', how: 'Tap LOB to lift the ball over the defenders to a runner. Two lobs that reach a team-mate.', need: 2 }],

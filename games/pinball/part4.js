@@ -36,3 +36,5 @@ function soundStep(G, dt) {
   const quiet = MUTE || paused || !G || G.over, b = G && G.balls.find(q => !q.lane), sp = b ? Math.hypot(b.vx, b.vy) : 0;
   if (AM.roll) AM.roll.set(quiet ? 0 : Math.min(1, sp / 20) * 0.05, 0.05); if (AM.hum) AM.hum.set(quiet ? 0 : 0.008, 0.5);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('synth', { seed: 38, key: -2, bpm: 114 });

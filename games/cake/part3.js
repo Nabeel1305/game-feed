@@ -75,10 +75,11 @@ function tierView(V, g, i) { const T = V.T, t = g.tiers[i], r = t.r, grp = new T
   const ic = new T.Mesh(new T.CylinderGeometry(1, 1, 1, 48, 1, true), icM); ic.scale.set(r + 0.025, TIER_H, r + 0.025); ic.position.y = TIER_H / 2; ic.castShadow = true; grp.add(ic);
   const topM = new T.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.35, clearcoat: 0.4, transparent: true, opacity: 0 }); const top = new T.Mesh(new T.CircleGeometry(r + 0.025, 48), topM); top.rotation.x = -Math.PI / 2; top.position.y = TIER_H + 0.004; grp.add(top);
   return { grp, c, tex, icM, topM, sp, last: -1 }; }
-function paintIcing(V, g, i, tv) { const x = tv.c.getContext('2d'), cov = g.ice && g.ice.cov[i], col = g.colour != null ? ICINGS[g.colour].col : 0xffffff, c3 = new V.T.Color(col);
-  x.clearRect(0, 0, tv.c.width, tv.c.height); if (!cov) return; const css = `rgb(${c3.r * 255 | 0},${c3.g * 255 | 0},${c3.b * 255 | 0})`, dark = `rgba(0,0,0,.08)`;
-  for (let b = 0; b < HB; b++) for (let a = 0; a < AB; a++) { const v = cov[b * AB + a]; if (v <= 0.02) continue; x.globalAlpha = Math.min(1, v * 1.4); x.fillStyle = css; x.fillRect(a * 4 - 1, (HB - 1 - b) * 4 - 1, 6, 6); if (v > 1.2) { x.fillStyle = dark; x.fillRect(a * 4, (HB - 1 - b) * 4, 4, 4); } }
-  x.globalAlpha = 1; tv.tex.needsUpdate = true; tv.topM.color.setHex(col); tv.topM.opacity = clamp(g.ice.top[i] * 1.1, 0, 1); }
+function paintIcing(V, g, i, tv) { if (!tv.c2) { tv.c2 = document.createElement('canvas'); tv.c2.width = tv.c.width; tv.c2.height = tv.c.height; } const x = tv.c2.getContext('2d'), cov = g.ice && g.ice.cov[i], col = g.colour != null ? ICINGS[g.colour].col : 0xffffff, c3 = new V.T.Color(col);
+  x.clearRect(0, 0, tv.c.width, tv.c.height); if (!cov) { tv.c.getContext('2d').clearRect(0, 0, tv.c.width, tv.c.height); return; }      /* 22 Nov 2026: the icing was square blocks; round dabs, then one soft pass over the whole sheet, read as icing */
+  const css = `rgb(${c3.r * 255 | 0},${c3.g * 255 | 0},${c3.b * 255 | 0})`, dark = `rgba(0,0,0,.08)`;
+  for (let b = 0; b < HB; b++) for (let a = 0; a < AB; a++) { const v = cov[b * AB + a]; if (v <= 0.02) continue; x.globalAlpha = Math.min(1, v * 1.4); x.fillStyle = css; x.beginPath(); x.arc(a * 4 + 2, (HB - 1 - b) * 4 + 2, 4.6, 0, TAU); x.fill(); if (v > 1.2) { x.fillStyle = dark; x.beginPath(); x.arc(a * 4 + 2, (HB - 1 - b) * 4 + 2, 2.4, 0, TAU); x.fill(); } }
+  x.globalAlpha = 1; { const y = tv.c.getContext('2d'); y.clearRect(0, 0, tv.c.width, tv.c.height); try { y.filter = 'blur(1.4px)'; } catch (e) {} y.drawImage(tv.c2, 0, 0); try { y.filter = 'none'; } catch (e) {} } tv.tex.needsUpdate = true; tv.topM.color.setHex(col); tv.topM.opacity = clamp(g.ice.top[i] * 1.1, 0, 1); }
 // ---------- each frame ----------
 const SV = window.THREE ? new THREE.Vector3() : null;
 function cakeTopY(g) { return STAND_Y + g.tiers.length * TIER_H; }

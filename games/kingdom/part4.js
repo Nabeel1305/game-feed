@@ -52,7 +52,7 @@ const sfx = {
 // built like a real hook: a two-bar motif, played, answered, varied, played again. Intro, verse, chorus, verse, chorus...
 // Each course has its own key, tempo, chords and hook (seeded). The final lap: faster, a step higher, chorus all the way.
 const MAJ = [0, 2, 4, 5, 7, 9, 11], MIN = [0, 2, 3, 5, 7, 8, 10];
-const music = { on: false, next: 0, step: 0,
+const trackMusic = { on: false, next: 0, step: 0,
   start(G) { if (HEADLESS || !actx) return; const info = TRACKS[G.cfg.track], R = rng(info.seed * 13 + 7), dark = ['haunt', 'lava', 'neon', 'star', 'moon', 'canyon'].includes(info.theme);
     this.sc = dark ? MIN : MAJ; this.root = [110, 116.5, 123.5, 130.8, 138.6, 146.8][(R() * 6) | 0]; this.bpm = 148 + ((R() * 4) | 0) * 4; this.up = 0;
     this.prog = dark ? [[0, 5, 2, 6], [0, 6, 5, 4], [0, 3, 6, 5]][(R() * 3) | 0] : [[0, 4, 5, 3], [5, 3, 0, 4], [0, 3, 4, 3], [0, 5, 3, 4]][(R() * 4) | 0];
@@ -94,5 +94,6 @@ function soundStep(G, dt) {
   if (AM.eng2) { AM.eng2.set(quiet ? 0 : 0.008 + v * 0.015, 0.08); if (AM.eng2.f) AM.eng2.f.frequency.value = 220 + v * 520; }
   if (AM.skid) AM.skid.set(quiet ? 0 : (k && (k.drift || (k.off && !k.air && v > 0.3)) ? 0.012 : 0), 0.05);
   if (AM.crowd) AM.crowd.set(quiet ? 0 : G.count > 0 ? 0.012 : 0.002, 0.5);
-  if (quiet && music.on && (!G || G.over)) music.stop(); music.tick();
+  if (quiet && trackMusic.on && (!G || G.over)) trackMusic.stop(); trackMusic.tick();
 }
+// (Kart Kingdom keeps its own race music, made for each course: no band here)

@@ -26,3 +26,5 @@ function soundStep(G, dt) {
   if (g.held && Math.abs(g.th) > 0.8) sfx.creak();
   AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 1.5 + Math.random() * 4; if (!wet) { const b = 1600 + Math.random() * 2400, n = 2 + (Math.random() * 4 | 0); for (let i = 0; i < n; i++) tone(b * vary(0.1), 0.09, 0.012, 'sine', i * 0.13, b * (0.7 + Math.random() * 0.8)); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('island', { seed: 12, key: 1, bpm: 103 });

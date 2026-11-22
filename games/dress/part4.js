@@ -29,3 +29,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const home = $(
   mus.t += dt; const beat = show ? 0.24 : 0.4; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { if (show) { if (i % 4 === 0) tone(60, 0.3, 0.09, 'sine', 0, 40); if (i % 4 === 2) noise(0.08, 1800, 0.035, 'bandpass', 1.2); noise(0.03, 7000, 0.012, 'highpass', 0.7); if (i % 8 === 0) tone(note(110, [0, 3, 5, 3][Math.floor(i / 8) % 4]), 1.8, 0.035, 'sawtooth', 0, null, 600); }
     else { const n = STUDIO[i % STUDIO.length], bar = Math.floor(i / 16) % 4; if (n >= 0 && (i % 2 === 0 || Math.random() < 0.5)) pluck(note(392, n + [0, 2, 3, 1][bar]), 0.9, home ? 0.025 : 0.018); if (i % 8 === 0) tone(note(98, [0, 2, 3, 1][bar]), 3, home ? 0.02 : 0.015, 'sine'); } }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('funk', { seed: 82, key: 1, bpm: 108 });

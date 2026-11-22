@@ -32,3 +32,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const T = G && 
     if (T.spec.wind) { windN += dt; if (windN > 0.5) { windN = 0; const w = windNow(T, G.t); noise(0.7, 500 + w * 60, 0.004 + w * 0.0035, 'lowpass', 0.6); } } }
   mus.t += dt; const beat = 0.42; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 6) % CHORDS.length];
   music(() => { const pat = [0, 2, 1, 2, 0, 1]; pluck(note(i % 6 === 0 ? 98 : 196, ch[pat[i % 6]]), 1.1, i % 6 === 0 ? 0.05 : 0.03); if (i % 12 === 3) pluck(note(392, ch[2] + 2), 0.9, 0.02, 0.1); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('western', { seed: 91, key: -3, bpm: 108 });

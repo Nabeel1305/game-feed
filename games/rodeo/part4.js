@@ -26,3 +26,5 @@ function soundStep(G, dt) {
   if (HEADLESS || !actx) return; if (!AM.on) { AM.on = true; AM.crowd = bed(650, 0.5, 0.022, 0.3, 'bandpass'); AM.low = bed(200, 0.6, 0.015, 0.2, 'lowpass'); }
   const quiet = MUTE || paused || !G || G.over, tense = G && G.ph === 'ride'; if (AM.crowd) AM.crowd.set(quiet ? 0 : tense ? 0.03 : 0.018, 0.4); if (AM.low) AM.low.set(quiet ? 0 : 0.015, 0.5);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('western', { seed: 33, key: 1, bpm: 106 });

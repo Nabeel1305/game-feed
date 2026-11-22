@@ -42,3 +42,5 @@ function soundStep(G, dt) {
   if (AM.eng && k && k.air && AM.eng.f) AM.eng.f.frequency.value *= 1.25;
   if (AM.crowd) AM.crowd.set(quiet ? 0 : G.count > 0 ? 0.01 : 0.003, 0.5);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('race', { seed: 66, key: -2, bpm: 131 });

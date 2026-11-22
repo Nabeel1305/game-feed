@@ -30,3 +30,5 @@ function soundStep(G, dt) {
   const quiet = MUTE || paused || !G || G.over; if (AM.lap) AM.lap.set(quiet ? 0 : 0.014 + 0.006 * Math.sin(performance.now() / 900), 0.5); if (AM.air) AM.air.set(!quiet && G && G.gust ? 0.012 : 0, 0.6);
   if (quiet) return; birdT -= dt; if (birdT <= 0) { birdT = 4 + Math.random() * 7; if (G.sky === 'night') { for (let i = 0; i < 3; i++) tone(4200, 0.03, 0.006, 'sine', i * 0.07); } else { const b = 1900 + Math.random() * 700; tone(b, 0.12, 0.008, 'sine', 0, b * 1.3); tone(b * 1.2, 0.18, 0.006, 'sine', 0.16, b * 0.9); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('east', { seed: 37, key: 0, bpm: 84 });

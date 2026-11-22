@@ -41,3 +41,5 @@ function soundStep(G, dt) { if (!actx) return; if (!crowdLo) { crowdLo = bed(700
   if (y && y.fin != null && !roar) roar = 2.5; if (y && y.fin == null) roar = 0; if (roar > 0) { roar -= dt; lo += 0.08 * Math.min(1, roar); hi += 0.09 * Math.min(1, roar); }
   if (paused) { lo = hi = 0; }
   crowdLo.set(lo, 0.25); crowdHi.set(hi, 0.25); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('sport', { seed: 77, key: -3, bpm: 114 });

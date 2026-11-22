@@ -43,3 +43,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   music(() => { if (i % 8 === 0) tone(D / 2, beat * 8, 0.02, 'sawtooth', 0, null, 400);
     if (i % 2 === 0) noise(0.08, 180, 0.03, 'lowpass', 1); else if (sp > 0.3) noise(0.05, 900, 0.012, 'bandpass', 1.5);
     if (sp > 0.45 && i % 2 === 0) { const m = MEL[(i / 2) % MEL.length]; tone(semi(m + 12), beat * 1.8, 0.012 + sp * 0.01, 'triangle', 0, null, 1800); } }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('epic', { seed: 102, key: 3, bpm: 88 });

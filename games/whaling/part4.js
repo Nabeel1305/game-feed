@@ -30,3 +30,5 @@ function soundStep(G, dt) {
   if (G.ph === 'chase') { AM.oar -= dt; if (AM.oar <= 0) { AM.oar = 2.2; tone(240 * vary(0.1), 0.06, 0.05, 'triangle', 0, 180, 1500); noise(0.3, 900, 0.03, 'lowpass', 0.8, 0.15); } }
   if (G.ph === 'ride') { AM.creak -= dt; if (AM.creak <= 0) { AM.creak = 0.5 - G.T * 0.3; if (G.T > 0.3) tone(150 + G.T * 260, 0.12, 0.02 + G.T * 0.03, 'sawtooth', 0, 140 + G.T * 220, 1200); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('epic', { seed: 22, key: 2, bpm: 87 });

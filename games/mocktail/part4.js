@@ -32,3 +32,5 @@ function soundStep(G, dt) { if (!actx) return; const D = G && G.drink;
   if (pourN && D && D.pouring && !MUTE && SET.sfx && !paused) { pourN.t += dt; if (pourN.t > 0.12) { pourN.t = 0; const into = D.vessel === 'shaker' ? D.shaker : D.parts, cap = D.vessel === 'shaker' ? 8 : GLASSES[D.glass].cap, f = into.reduce((a, b) => a + b.n, 0) / cap; noise(0.14, 600 + 900 * f, 0.04, 'bandpass', 2.5); } }
   if (MUTE || paused) return; mus.t += dt; const beat = 0.36; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % 4];
   music(() => { if (i % 8 === 0) ch.forEach((q, j) => tone(note(196, q), 2.6, 0.012, 'sine', j * 0.03, null, 1600)); if (i % 2 === 0) noise(0.05, 6000, 0.008, 'highpass', 0.7); if (i % 4 === 2) tone(note(98, ch[0]), 0.3, 0.03, 'triangle', 0, null, 400); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('jazz', { seed: 90, key: -1, bpm: 103 });

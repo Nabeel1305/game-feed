@@ -37,3 +37,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
     if (G.phase === 'climb' || G.phase === 'slip') { const hard = G.st < 0.35 || G.phase === 'slip'; breathN -= dt; if (breathN <= 0 && (hard || !G.resting && G.st < 0.7)) { breathN = hard ? 0.7 : 1.6; sfx.breath(hard); } } }
   mus.t += dt; const beat = 0.6; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % CHORDS.length], semi = q => 220 * Math.pow(2, q / 12);
   music(() => { if (i % 2 === 0) pluck(semi(ch[(i / 2) % 3 | 0] + 12), 1.6, 0.018); if (i % 8 === 0) tone(semi(ch[0] - 12), 3.5, 0.02, 'sine'); if (i % 16 === 11) pluck(semi(ch[2] + 19), 1.2, 0.012); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('calm', { seed: 99, key: 2, bpm: 72 });

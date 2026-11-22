@@ -98,11 +98,10 @@ const inC = (b, x, y, pad = 10) => Math.hypot(x - b.x, y - b.y) < b.r + pad * k;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
   if (inC(L.shoot, x, y)) { ui.btn.shoot = e.pointerId; shootDown(G); return; }
   if (inC(L.pass, x, y)) { ui.btn.pass = e.pointerId; ui.passAt = [x, y]; ui.aim = null; if (!(haveBall(G) && G.ball.own === me(G))) btnPass(G); try { cv.setPointerCapture(e.pointerId); } catch (err) {} return; }
-  if (inC(L.sprint, x, y)) { ui.btn.sprint = e.pointerId; sprintOn(G, true); return; }
   if (x < W * 0.55 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
 cv.addEventListener('pointermove', e => { if (ui.btn.pass === e.pointerId && ui.passAt) { const [x, y] = toStage(e.clientX, e.clientY), dx = x - ui.passAt[0], dy = y - ui.passAt[1], d = Math.hypot(dx, dy); if (d > 18 * k) { const c = scr(0, 0, 0), c2 = scr(1, 0, 0), c3 = scr(0, 0, 1), ax = c2.x - c.x, ay = c2.y - c.y, bx = c3.x - c.x, by = c3.y - c.y, det = ax * by - ay * bx || 1; ui.aim = { x: (dx * by - dy * bx) / det, z: (ax * dy - ay * dx) / det, sx: dx / d, sy: dy / d }; } return; }
-  const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId || !G) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; const R = 56 * k, dx = (x - s2.x0) / R, dy = (y - s2.y0) / R, d = Math.hypot(dx, dy); setStick(G, d < 0.12 ? 0 : dx, d < 0.12 ? 0 : dy); });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); }
+  const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId || !G) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; const R = 56 * k, dx = (x - s2.x0) / R, dy = (y - s2.y0) / R, d = Math.hypot(dx, dy); setStick(G, d < 0.12 ? 0 : dx, d < 0.12 ? 0 : dy); sprintOn(G, d > 0.9); });      // a full push sprints
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) { setStick(G, 0, 0); sprintOn(G, false); } }
   if (ui.btn.shoot === e.pointerId) { ui.btn.shoot = null; if (G) shootUp(G); } if (ui.btn.pass === e.pointerId) { ui.btn.pass = null; if (G && haveBall(G) && G.ball.own === me(G)) btnPass(G, ui.aim); ui.aim = null; ui.passAt = null; } if (ui.btn.sprint === e.pointerId) { ui.btn.sprint = null; if (G) sprintOn(G, false); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // your kits: the team's colour, opened by the stars you win

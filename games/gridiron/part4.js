@@ -27,3 +27,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   if (G && !G.over && SET.sfx && G.phase === 'live') { const o = G.ball.own; roarN += dt; if (roarN > 0.4) { roarN = 0; const run = o ? Math.max(0, o.z - G.los) : 0; noise(0.6, 700, 0.01 + Math.min(0.05, run * 0.003), 'bandpass', 0.6); } }
   mus.t += dt; const beat = 0.25; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, live = G && !G.over && G.phase === 'live';
   music(() => { const v = live ? 0.35 : 1; if (i % 4 === 0) tone(70, 0.2, 0.08 * v, 'sine', 0, 50); if (i % 2 === 1 || i % 8 === 6) noise(0.06, 2200, 0.035 * v, 'bandpass', 2); if (i % 16 === 0) [0, 4, 7].forEach(q => tone(note(196, q), 0.35, 0.025 * v, 'sawtooth', 0, null, 1600)); if (i % 16 === 8) [2, 5, 9].forEach(q => tone(note(196, q), 0.35, 0.02 * v, 'sawtooth', 0, null, 1600)); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('sport', { seed: 98, key: -3, bpm: 122 });

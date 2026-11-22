@@ -25,3 +25,5 @@ const sfx = {
   win() { [0, 4, 7, 12].forEach((q, j) => pluck(note(523, q), 1.0, 0.08, j * 0.12)); },
   lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
 };
+// the band (tools/juice-kit.js): this game's music
+bandStyle('island', { seed: 64, key: 2, bpm: 102 });

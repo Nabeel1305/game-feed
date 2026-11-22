@@ -32,3 +32,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
     birdN -= dt; if (birdN <= 0) { birdN = 5 + Math.random() * 7; if (agl < 80) sfx.bird(); else if (Math.random() < 0.15) sfx.dog(); } }
   mus.t += dt; const beat = 0.5; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 3) % CHORDS.length], semi = q => 261.6 * Math.pow(2, q / 12);
   music(() => { if (i % 3 === 0) pluck(semi(ch[0] - 12), 1.2, 0.03); else pluck(semi(ch[i % 3]), 0.6, 0.016); if (i % 12 === 7) pluck(semi(ch[2] + 12), 0.9, 0.014, 0.1); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('pastoral', { seed: 101, key: -2, bpm: 91 });

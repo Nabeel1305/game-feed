@@ -34,3 +34,5 @@ function soundStep(G, dt) {
   AM.beat -= dt; if (AM.beat <= 0 && tense > 0.15) { AM.beat = 1.05 - tense * 0.5; tone(55, 0.12, 0.12 * tense, 'sine', 0, 45); tone(50, 0.12, 0.08 * tense, 'sine', 0.16, 42); }
   if (g.me.creep) { AM.crunch -= dt; if (AM.crunch <= 0) { AM.crunch = 0.35 + Math.random() * 0.2; noise(0.09, 2200 * vary(0.2), 0.035, 'bandpass', 1.4); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('tense', { seed: 13, key: -1, bpm: 99 });

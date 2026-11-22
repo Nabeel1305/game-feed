@@ -27,3 +27,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const live = G 
   if (G && SET.sfx) { const v = Math.hypot(G.me.vx, G.me.vz); if (v > 1.5) { footN += dt * v * 0.5; if (footN > 1) { footN = 0; noise(0.03, 2200, 0.02, 'bandpass', 2); } } }
   mus.t += dt; const beat = 0.5; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % 4];
   music(() => { const q = live ? 0.35 : 1; if (i % 8 === 0) ch.forEach((x, j) => tone(note(196, x), 3.6, 0.012 * q, 'sine', j * 0.04, null, 1500)); if (i % 2 === 0) pluck(note(392, ch[(i / 2) % 3 | 0]), 0.8, 0.025 * q); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('sport', { seed: 93, key: 0, bpm: 125 });

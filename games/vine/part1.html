@@ -45,6 +45,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 .snd{position:absolute;right:14px;bottom:16px;width:40px;height:40px;border-radius:12px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:18px;cursor:pointer}
 .nb{color:var(--acc)}.help{color:var(--ok);font-size:12.5px}
 #skipTut{position:fixed;right:10px;top:10px;z-index:4;border:0;border-radius:16px;padding:8px 14px;font:inherit;font-weight:800;font-size:14px;background:var(--acc);color:#1d1204;box-shadow:0 3px 10px rgba(0,0,0,.4);cursor:pointer}#skipTut.hidden{display:none}
+.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;font-size:16px;font-weight:800;text-align:left}.tog{min-width:96px;border:0;border-radius:12px;padding:11px 10px;font:inherit;font-weight:800;font-size:15px;background:var(--acc);color:#1d1204;cursor:pointer}.tog.off{background:rgba(255,255,255,.14);color:var(--ink)}
 </style>
 </head>
 <body>
@@ -55,6 +56,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 
 <div class="ov" id="ovHome">
   <button class="snd" id="sndBtn" aria-label="Sound">🔊</button>
+  <button class="snd" id="setBtn" aria-label="Settings" style="right:62px">⚙</button>
   <div class="card">
     <h1 class="tf">Vine</h1>
     <div class="bar"></div>
@@ -96,6 +98,17 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
   </div>
 </div>
 
+<div class="ov hidden" id="ovSet">
+  <div class="card">
+    <h2 class="tf">SETTINGS</h2>
+    <div class="setrow"><span>🎵 Music</span><button class="tog" id="tMus"></button></div>
+    <div class="setrow"><span>🔊 Sound effects</span><button class="tog" id="tSfx"></button></div>
+    <div class="setrow"><span>📳 Vibration</span><button class="tog" id="tVib"></button></div>
+    <div class="setrow"><span>Vibration strength</span><button class="tog" id="tVk"></button></div>
+    <button class="btn" id="setBack">Done</button>
+  </div>
+</div>
+
 <div class="ov hidden" id="ovPause">
   <div class="card">
     <h2 class="tf">PAUSED</h2>
@@ -103,6 +116,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
     <button class="btn" id="pResume">RESUME</button>
     <div class="row2"><button class="btn ghost" id="pRestart">Restart</button><button class="btn ghost" id="pLevels">Levels</button></div>
     <button class="btn ghost quiet" id="pTut">🎓 Tutorial</button>
+    <button class="btn ghost quiet" id="pSet">⚙ Settings</button>
     <button class="btn ghost quiet" id="pQuit">Home</button>
     <p class="sub" id="pDiag" style="opacity:.4;font-size:11px;margin-top:14px"></p>
   </div>

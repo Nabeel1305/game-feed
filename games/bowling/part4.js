@@ -29,3 +29,5 @@ function soundStep(G, dt) {
   if (AM.roll) AM.roll.set(quiet || !rolling ? 0 : (b.gutter ? 0.03 : 0.05) * Math.min(1, Math.hypot(b.vx, b.vz) / 9), 0.08);
   if (AM.crowd) AM.crowd.set(quiet ? 0 : 0.004, 0.5);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('funk', { seed: 40, key: 1, bpm: 105 });

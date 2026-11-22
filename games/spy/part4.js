@@ -33,3 +33,5 @@ function soundStep(G, dt) { if (!actx) return; if (!hum) hum = bed(260, 1.5, 0, 
   if (MUTE || paused) return; mus.t += dt; const beat = 0.24; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, tense = G && !G.over ? Math.min(1, G.watched || 0) : 0, vol = home ? 0.9 : 0.6;
   music(() => { if (i % 2 === 0) tone(note(55, LINE[(i >> 1) % 16] >= 0 ? LINE[(i >> 1) % 16] : 0), 0.22, 0.05 * vol, 'triangle', 0, null, 300); if (i % 4 === 2) noise(0.04, 7000, 0.012 * vol, 'highpass', 0.7);
     if (tense > 0.3 && i % 2 === 1) tone(note(220, [0, 1, 0, 6][(i >> 1) % 4]), 0.2, 0.025 * vol * tense, 'sawtooth', 0, null, 1200); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('tense', { seed: 89, key: 1, bpm: 95 });

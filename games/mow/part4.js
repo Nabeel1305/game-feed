@@ -30,3 +30,5 @@ const AM = { on: false };
 function engine(G) { if (HEADLESS || !actx || typeof bed !== 'function') return; if (!AM.on) { AM.on = true; AM.e = bed(95, 3, 0, 0.06, 'bandpass'); AM.e2 = bed(190, 5, 0, 0.06, 'bandpass'); }
   const q = MUTE || paused || !G || G.over, v = G && G.m ? G.m.v / VMAX : 0;
   if (AM.e) { AM.e.set(q ? 0 : 0.012 + v * 0.02, 0.1); if (AM.e.f) AM.e.f.frequency.value = 80 + v * 60; } if (AM.e2) { AM.e2.set(q ? 0 : 0.005 + v * 0.01, 0.1); if (AM.e2.f) AM.e2.f.frequency.value = 160 + v * 120; } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('pastoral', { seed: 68, key: 1, bpm: 91 });

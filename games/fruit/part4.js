@@ -25,3 +25,5 @@ const sfx = {
 const AM = { on: false, grunt: 3 };
 function soundStep(G, dt) { if (!actx || MUTE || HEADLESS) return; if (!AM.on) { AM.on = true; AM.wind = bed(700, 0.6, 0.01, 0.15, 'bandpass'); }
   if (!G || G.over || paused) return; AM.grunt -= dt; const near = G.mons.filter(m => !m.dead && m.z < 25).length; if (near && AM.grunt <= 0) { AM.grunt = 1.2 + Math.random() * 2; tone(90 + Math.random() * 60, 0.25, 0.03, 'sawtooth', 0, 70, 500); } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('arcade', { seed: 54, key: 1, bpm: 135 });

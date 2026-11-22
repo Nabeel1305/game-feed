@@ -69,9 +69,12 @@ function buildWorld() {
   const men = { torso: part(new T.CapsuleGeometry(0.2, 0.4, 3, 8), 22), shorts: part(new T.CylinderGeometry(0.2, 0.21, 0.24, 8), 22), head: part(new T.SphereGeometry(0.15, 10, 8), 22), hair: part(new T.SphereGeometry(0.158, 10, 6, 0, TAU, 0, Math.PI * 0.55), 22),
     thigh: part(cap(0.085, 0.3), 44), shin: part(cap(0.07, 0.32), 44), boot: part(new T.BoxGeometry(0.11, 0.08, 0.26), 44), upper: part(cap(0.06, 0.22), 44), fore: part(cap(0.052, 0.22), 44) };
   const blob = new T.InstancedMesh(new T.CircleGeometry(0.5, 12), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.3, depthWrite: false }), 23), dB = new T.Object3D(); blob.rotation.x = 0; S.add(blob);
+  // a ring in the team's colour under every player (gold: yours, red: theirs), and a white ring on the man a PASS would go to now
+  const trings = new T.InstancedMesh(new T.RingGeometry(0.62, 0.9, 20), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false }), 22); trings.frustumCulled = false; S.add(trings);
+  const tgt = new T.Mesh(new T.RingGeometry(1.1, 1.4, 28), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false })); tgt.rotation.x = -Math.PI / 2; tgt.visible = false; S.add(tgt);
   const ring = new T.Mesh(new T.RingGeometry(0.75, 0.95, 24), new T.MeshBasicMaterial({ color: 0xffe060, transparent: true, opacity: 0.95, depthWrite: false })); ring.rotation.x = -Math.PI / 2; S.add(ring);
   const ball = new T.Mesh(new T.SphereGeometry(0.2, 14, 10), M(0xffffff, { roughness: 0.4, emissive: 0x404040 })); ball.castShadow = true; S.add(ball);
-  V3 = { T, S, nets, crowdG, flood, lamps, men, blob, dB, ring, ball, kit: null, sky: null, M: [new T.Matrix4(), new T.Matrix4(), new T.Matrix4(), new T.Matrix4()], col: new T.Color() };
+  V3 = { T, S, nets, crowdG, flood, lamps, men, blob, trings, tgt, dB, ring, ball, kit: null, sky: null, M: [new T.Matrix4(), new T.Matrix4(), new T.Matrix4(), new T.Matrix4()], col: new T.Color() };
   W3.setQuality(stepN); return V3;
 }
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
@@ -82,7 +85,7 @@ function placeCam(g, dt) {
   const cam = W3.cam, b = g.ball, asp = W / H; if (Math.abs(cam.aspect - asp) > 0.001) { cam.aspect = asp; cam.fov = asp > 1.6 ? 30 : 36; cam.updateProjectionMatrix(); }
   const fol = ui.follow != null ? g.P[ui.follow] : null, tx = fol ? fol.x : clamp(b.x + (b.own ? Math.cos(b.own.face) * 5 : b.vx * 0.3), -HL + 12, HL - 12), tz = fol ? fol.z : clamp(b.z * 0.75, -22, 22), k2 = ui.snap || fol ? 1 : 1 - Math.exp(-dt * 3);
   CAM.x += (tx - CAM.x) * k2; CAM.z += (tz - CAM.z) * k2; ui.snap = false;
-  const zm = ui.zoom || 1; cam.position.set(CAM.x + (FX.shake ? (Math.random() - 0.5) * FX.shake * 0.04 : 0), 19 * zm, CAM.z + 27 * zm); cam.lookAt(CAM.x, zm < 1 ? 0.9 : 0, CAM.z - 1 * zm); if (fol) { cam.position.set(fol.x + 2.2, 1.6, fol.z + 4.2); cam.lookAt(fol.x, 0.9, fol.z); } cam.updateMatrixWorld();
+  const zm = ui.zoom || 1; cam.position.set(CAM.x + (FX.shake ? (Math.random() - 0.5) * FX.shake * 0.04 : 0), 17.5 * zm, CAM.z + 25 * zm); cam.lookAt(CAM.x, zm < 1 ? 0.9 : 0, CAM.z - 1 * zm); if (fol) { cam.position.set(fol.x + 2.2, 1.6, fol.z + 4.2); cam.lookAt(fol.x, 0.9, fol.z); } cam.updateMatrixWorld();
 }
 // ---------- events ----------
 function onEvent(G, e) {
@@ -116,6 +119,7 @@ function animate(g, t, dt) {
       const sock = t === 0 ? (gk ? 0x1a1a1a : 0xf2c14b) : (gk ? 0x1a1a1a : g.kit[0]);
       Mn.torso.setColorAt(j, c3.setHex(shirt)); Mn.shorts.setColorAt(j, c3.setHex(shorts)); Mn.head.setColorAt(j, c3.setHex(skin)); Mn.hair.setColorAt(j, c3.setHex([0x1a1a1a, 0x3a2414, 0x6a3a1a, 0xc8a060, 0x111111][(j * 7) % 5]));
       for (const q of [0, 1]) { Mn.thigh.setColorAt(j * 2 + q, c3.setHex(skin)); Mn.shin.setColorAt(j * 2 + q, c3.setHex(sock)); Mn.boot.setColorAt(j * 2 + q, c3.setHex(0x111111)); Mn.upper.setColorAt(j * 2 + q, c3.setHex(shirt)); Mn.fore.setColorAt(j * 2 + q, c3.setHex(gk ? shirt : skin)); } }
+    for (let j = 0; j < 22; j++) V.trings.setColorAt(j, c3.setHex(j < 11 ? 0xffd84a : 0xff5a4a)); V.trings.instanceColor.needsUpdate = true;
     for (const k3 in Mn) Mn[k3].instanceColor.needsUpdate = true; }
   // the run: stride length and rate grow with speed, knees lift and heels kick up at a sprint, arms pump with bent elbows,
   // the body leans forward as he accelerates and into his turns, and bobs twice a stride. Standing: knees soft, a little sway.
@@ -127,7 +131,7 @@ function animate(g, t, dt) {
     a.lean += ((0.04 + 0.22 * f * f + clamp(acc * 0.03, -0.1, 0.15)) - a.lean) * Math.min(1, dt * 6); a.roll += ((-(p.turnRate || 0) * f * 0.12) - a.roll) * Math.min(1, dt * 6);
     const sw = Math.min(1, f * 1.6), down = p.down > 0, slide = down && p.tk > 0.3, bob = Math.abs(Math.sin(ph)) * 0.05 * sw - (sp < 0.3 ? 0.03 : 0.0);
     // the whole man: position, facing, lean
-    tf(M0, null, p.x, 0, p.z, 0, Math.PI / 2 - p.face, 0);
+    tf(M0, null, p.x, 0, p.z, 0, Math.PI / 2 - p.face, 0, 1.3, 1.3, 1.3);      // (a third bigger than life: they must be readable on a phone)
     if (down) tf(HIP, M0, 0, slide ? 0.3 : 0.25, 0, slide ? -1.15 : 1.25, 0, 0);
     else tf(HIP, M0, 0, 0.93 + bob - (sp < 0.3 ? 0.04 : 0), 0, a.lean, 0, a.roll);
     put(Mn.shorts, j, tf(TMP, HIP, 0, 0.0, 0)); put(Mn.torso, j, tf(TMP, HIP, 0, 0.36, 0, 0, Math.sin(ph) * 0.12 * sw, 0, 1.12, 1, 0.78));
@@ -146,11 +150,13 @@ function animate(g, t, dt) {
     for (const q of [0, 1]) { const sgn = q ? -1 : 1, s1 = Math.sin(ph + (q ? 0 : Math.PI)); let sh = s1 * (0.2 + 0.7 * sw) * sw, el = -(0.35 + 1.05 * f), out = sgn * 0.12;
       if (sp < 0.3) { sh = 0.05; el = -0.25; } if (p.role === 'gk' && sp < 2) { sh = -0.5; el = -0.9; out = sgn * 0.5; } if (slide) { sh = -0.6; el = -0.4; out = sgn * 0.9; }
       tf(TH, CH, sgn * 0.27, 0.6, 0, sh, 0, out); put(Mn.upper, j * 2 + q, TH); put(Mn.fore, j * 2 + q, tf(SH, TH, 0, -0.33, 0, el, 0, 0)); }
-    V.dB.position.set(p.x, 0.02, p.z); V.dB.rotation.set(-Math.PI / 2, 0, 0); V.dB.scale.setScalar(1); V.dB.updateMatrix(); V.blob.setMatrixAt(j, V.dB.matrix); });
+    V.dB.position.set(p.x, 0.02, p.z); V.dB.rotation.set(-Math.PI / 2, 0, 0); V.dB.scale.setScalar(1.25); V.dB.updateMatrix(); V.blob.setMatrixAt(j, V.dB.matrix); V.dB.position.y = 0.035; V.dB.scale.setScalar(1.15); V.dB.updateMatrix(); V.trings.setMatrixAt(j, V.dB.matrix); });
+  V.trings.instanceMatrix.needsUpdate = true;
   for (const k3 in Mn) Mn[k3].instanceMatrix.needsUpdate = true;
   const b = g.ball; V.ball.position.set(b.x, b.y + 0.2, b.z); V.ball.rotation.z -= b.vx * dt * 3; V.ball.rotation.x += b.vz * dt * 3;
   V.dB.position.set(b.x, 0.02, b.z); V.dB.scale.setScalar(0.45); V.dB.updateMatrix(); V.blob.setMatrixAt(22, V.dB.matrix); V.blob.instanceMatrix.needsUpdate = true;
-  const c = me(g); V.ring.visible = !!G && !g.over; V.ring.position.set(c.x, 0.03, c.z); V.ring.material.color.setHex(g.ball.own === c ? 0xffe060 : 0x9ad8ff);
+  const c = me(g); V.ring.visible = !!G && !g.over; V.ring.position.set(c.x, 0.05, c.z); V.ring.scale.setScalar(1.5);
+  { const q = G && !g.over && g.ball.own === c ? bestTarget(g, c, g.stick, false) : null; V.tgt.visible = !!q; if (q) { V.tgt.position.set(q.x, 0.06, q.z); V.tgt.scale.setScalar(1 + 0.12 * Math.sin(performance.now() / 110)); } } V.ring.material.color.setHex(g.ball.own === c ? 0xffe060 : 0x9ad8ff);
   const goalNet = g.pause > 1 && g.score; V.nets.forEach((n, i) => n.position.x = 0);
   const joy = g.pause > 0.5 && g.lastGoal === 0; V.crowdG.forEach((cg, i) => cg.position.y = joy ? Math.abs(Math.sin(t * 9 + i * 2)) * 0.4 : 0);
 }
@@ -174,8 +180,7 @@ function draw(now, dt) {
 }
 // ---------- the 2D layer ----------
 function buttons(G) { const r = 34 * k, x0 = W - 26 * k - r, y0 = H - 26 * k - r, att = haveBall(G);
-  return [{ k: 'shoot', x: x0, y: y0, r: r * 1.15, label: att ? 'SHOOT' : 'TACKLE', col: '#e8402a' }, { k: 'pass', x: x0 - r * 2.5, y: y0 + r * 0.25, r, label: att ? 'PASS' : 'SWITCH', col: '#2a8ae8' }, { k: 'lob', x: x0 - r * 0.6, y: y0 - r * 2.4, r, label: att ? 'LOB' : 'SLIDE', col: '#f2c14b' },
-    { k: 'sprint', x: x0 - r * 4.9, y: y0 + r * 0.35, r: r * 0.92, label: 'SPRINT', col: '#3ab86a', held: G.sprint }]; }
+  return [{ k: 'shoot', x: x0, y: y0, r: r * 1.15, label: att ? 'SHOOT' : 'TACKLE', col: '#e8402a' }, { k: 'pass', x: x0 - r * 2.5, y: y0 + r * 0.25, r, label: att ? 'PASS' : 'SWITCH', col: '#2a8ae8' }, { k: 'lob', x: x0 - r * 0.6, y: y0 - r * 2.4, r, label: att ? 'LOB' : 'SLIDE', col: '#f2c14b' }]; }      // (no SPRINT button since 22 Nov 2026: push the stick all the way and he sprints)
 function hud(G, t) {
   ctx.textBaseline = 'middle';
   if (!G.lesson) { const y = 22 * k, w = 300 * k; ctx.fillStyle = 'rgba(8,12,24,.75)'; rrect(W / 2 - w / 2, y - 15 * k, w, 30 * k, 10); ctx.fill();

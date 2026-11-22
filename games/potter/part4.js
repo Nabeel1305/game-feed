@@ -23,3 +23,5 @@ function soundStep(G, dt) {
   if (!AM.on) { AM.on = true; AM.hum = bed(95, 3, 0.02, 0.05, 'lowpass'); AM.wet = bed(1400, 0.8, 0, 0.4, 'bandpass'); AM.rain = bed(5000, 0.5, 0, 0.3, 'highpass'); }
   const g = G; AM.wet && AM.wet.set(g && g.touching ? 0.05 : 0, 0.05); AM.rain && AM.rain.set((W3 && W3.S ? W3.S.rain : 0) * 0.02, 1);
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('calm', { seed: 20, key: -1, bpm: 74 });

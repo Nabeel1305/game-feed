@@ -25,3 +25,5 @@ function soundStep(G, dt) { if (!actx || MUTE) return; if (!rollB) rollB = bed(1
   if (rollB) { rollB.set(G && G.thumb && !G.over ? Math.min(0.12, 0.02 + sp * 0.0012) * (G.tool === 'roller' ? 1 : 0.5) : 0, 0.05); try { rollB.f.frequency.setTargetAtTime(G && G.tool === 'brush' ? 4200 : 1500 + Math.min(1500, sp * 12), actx.currentTime, 0.05); } catch (e) {} }
   mus.t += dt; if (mus.t >= 0.36) { mus.t -= 0.36; const n = TUNE[mus.i % TUNE.length], bar = Math.floor(mus.i / 16) % 4; mus.i++; if (n >= 0 && (mus.i % 2 === 1 || Math.random() < 0.5)) pluck(note(330, n + [0, 3, 1, 4][bar]), 0.7, home ? 0.025 : 0.016);
     if (mus.i % 8 === 1) pluck(note(110, [0, 3, 1, 4][bar]), 1.6, home ? 0.03 : 0.022); } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('calm', { seed: 80, key: -2, bpm: 73 });

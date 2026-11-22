@@ -69,8 +69,8 @@ function paintBack(L, g) { const oc = draw.oc || (draw.oc = document.createEleme
   const R0 = rng(31 + (g ? g.place : 0)); for (let i = 0; i < 34; i++) { const x = R0() * W, y = R0() * H, z = 6 + R0() * 22; o.save(); o.translate(x, y); o.rotate(R0() * TAU); o.globalAlpha = 0.05 + R0() * 0.07; o.fillStyle = BCOL[i % 8]; o.beginPath(); o.roundRect(-z / 2, -z / 2, z, z, z * 0.2); o.fill(); o.restore(); }
   if (!g) return; const cs = L.cs;
   // the board: a rounded tray of 64 wells
-  o.fillStyle = 'rgba(5,8,24,.55)'; o.beginPath(); o.roundRect(L.bx - 8, L.by - 8, L.bw + 16, L.bw + 16, 16); o.fill(); o.strokeStyle = 'rgba(255,255,255,.12)'; o.lineWidth = 2; o.stroke();
-  for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) { const x = L.bx + c * cs, y = L.by + r * cs; o.fillStyle = (r + c) % 2 ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.045)'; o.beginPath(); o.roundRect(x + 1.5, y + 1.5, cs - 3, cs - 3, cs * 0.14); o.fill(); } }
+  o.fillStyle = 'rgba(5,8,24,.78)'; o.beginPath(); o.roundRect(L.bx - 8, L.by - 8, L.bw + 16, L.bw + 16, 16); o.fill(); o.strokeStyle = 'rgba(255,255,255,.3)'; o.lineWidth = 2; o.stroke();      // (22 Nov 2026: the wells were too faint to see where a piece would land)
+  for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) { const x = L.bx + c * cs, y = L.by + r * cs; o.fillStyle = (r + c) % 2 ? 'rgba(150,170,255,.2)' : 'rgba(150,170,255,.13)'; o.beginPath(); o.roundRect(x + 1.5, y + 1.5, cs - 3, cs - 3, cs * 0.14); o.fill(); o.strokeStyle = 'rgba(255,255,255,.1)'; o.lineWidth = 1; o.stroke(); } }
 function drawBoard(G, L, now) { const cs = L.cs, sp = dropSpot(L);
   // what the dragged piece would clear lights up first (the promise)
   let lit = null; if (sp && sp.ok) { const w = wouldClear(G, sp.p, sp.r, sp.c); lit = w; for (const r of w.rows) { ctx.fillStyle = `rgba(255,214,90,${0.22 + 0.12 * Math.sin(now * 12)})`; rrect(L.bx - 3, L.by + r * cs, L.bw + 6, cs, 8); ctx.fill(); } for (const c of w.cols) { ctx.fillStyle = `rgba(255,214,90,${0.22 + 0.12 * Math.sin(now * 12)})`; rrect(L.bx + c * cs, L.by - 3, cs, L.bw + 6, 8); ctx.fill(); } }

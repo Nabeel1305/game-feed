@@ -25,3 +25,5 @@ const sfx = {
 const AM = { on: false, bird: 2 };
 function soundStep(G, dt) { if (!actx || MUTE || HEADLESS) return; if (!AM.on) { AM.on = true; AM.wind = bed(800, 0.6, 0.008, 0.15, 'bandpass'); }
   AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 3 + Math.random() * 6; const b = 2200 + Math.random() * 1500; for (let i = 0; i < 3; i++) tone(b * (1 + i * 0.08), 0.07, 0.015, 'sine', i * 0.1, b * 1.2); } }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('calm', { seed: 53, key: 3, bpm: 74 });

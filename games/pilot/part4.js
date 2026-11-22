@@ -25,3 +25,5 @@ function soundStep(G, dt) {
   AM.rain && AM.rain.set((W3 && W3.S ? W3.S.rain : 0) * 0.05, 1); AM.roll && AM.roll.set(g.ph === 'roll' ? a.v / 70 * 0.12 : 0, 0.2);
   if (air && G) { const h = a.y * 3.28; for (const c of [100, 50, 30, 20, 10]) if (h < c && AM.lastCall > c) { sfx.call(c); } AM.lastCall = h; }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('tense', { seed: 15, key: 2, bpm: 96 });

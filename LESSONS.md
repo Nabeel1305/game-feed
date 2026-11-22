@@ -10,6 +10,35 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Every sound must be satisfying.** Crisp, layered, pitch-varied, never harsh or nagging, pleasant on the 50th play. Full rules and code in `PLAYBOOK.md` (Satisfying Sounds).
 - **Engagement factors in every game, always, without being told** (his words: "I shouldn't have to tell you"). They are the research in `PLAYBOOK.md`: pick the ones that suit each game from the player's point of view, never all of them blindly, but never none.
 
+## The audit of 22 Nov 2026 (read `specs/audit-2026-11-22.md` before changing any game from 9 on)
+His words: "we're done making games... fix these 111 games... lots of them are below average... the graphics are just absolutely
+dog shit... some of the soundtracks sound so robotic... the players' positioning is horrible... the controls on that hunter game
+are horrible... the minute someone opens this game, they don't need to be a genius to understand the controls. Because you're a
+genius, and that's what you forget." What that changed, for every game from now on:
+- **Look at it before he does.** `/tmp/audit/shoot.py`-style sheets (level 1's first seconds, then level 5 at 3, 10 and 20 s,
+  played by the game's own robot, the real 3D picture) for every game, every time. Passing tests said nothing about the levels
+  being too dark to see, the hero being a speck, or the drink being a ghost behind a blob.
+- **Light (tools/world3d.js):** a soft light from behind the player's eye in every 3D game (`fill`, `S.fill` scales it), brighter
+  night, dusk, rain and storm, thinner fog. With the sun ahead of the camera everything facing the player was a black cut-out.
+- **Music (tools/juice-kit.js, "the band"):** `bandStyle('jazz', { seed, key, bpm })` in a game's part4 gives it drums, bass,
+  chords and a lead with a tune that comes back, swing, human timing and a little room echo, in one of sixteen styles. While the
+  band plays, the old `music(() => ...)` lines are silent. Rhythm games (Drumline, Black Keys, Beat Dash) and Kart Kingdom keep
+  their own music. **I cannot hear it**: it is checked by rendering it and measuring loudness and balance, not by ear.
+- **Controls a first-timer gets at once:** a stick, a labelled button or two, and holds and taps. No swipes with meaning, no
+  circles, no pull-backs, no drags onto targets, no separate SPRINT button (a full push of the stick sprints). On the first
+  levels the next thing to touch glows and one yellow line says what to do (Mocktail Bar's `nextStep`).
+- **The thing the game is about fills the screen.** Mocktail Bar is first person, looking down at the glass. Hunter's lens is
+  longer and its grass shorter, so the animal is not a speck.
+- **Team-mates get open** (Eleven `support`, Ice Hockey `getOpen`, Hoops `brain`): three times a second a team-mate without the
+  ball picks the best of a handful of places: clear of markers, a clear line from the ball, a sensible pass away, ahead of the
+  ball if he is a forward, not on another team-mate. The other team only learns it from level 8. Every player has a ring in his
+  team's colour, and a white ring shows who a pass would go to.
+- **Never put code after a `//` comment on the same line** (again): three one-line patches today ended in a comment and the rest
+  of the line vanished ("Identifier 'G' has already been declared", and every test of that game timed out). Use `/* */` inside a
+  line, and load every game after a sweep (`typeof window.gameFeedStart === 'function'`, no page errors).
+- **A name in the kit can clash with a game's own**: Kart Kingdom had its own `const music`; the kit's `function music` broke
+  the page only when the kit grew. Kart Kingdom's is now `trackMusic`.
+
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.
 1. **Spamming cannot win. On any level, the first included.** (15 Nov 2026, of Plunder's first build: "Spamming cannot win... Just repeatedly doing something cannot win. There needs to be a little bit of skill. This is why I love the boxing game.") Any repeated move, **at any speed**, must lose on **every** level: mashing, a slow steady beat of one move, a short string of moves on a beat, a control held over or wiggled, a button pressed on a count. "Early levels are for learning" (rule 0) means generous windows and soft punishment for someone who is trying to do the right thing; it never means a rhythm works. How to get there (all of it learned the hard way on Plunder, see its notes):

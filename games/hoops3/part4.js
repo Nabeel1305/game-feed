@@ -30,3 +30,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   mus.t += dt; const beat = 0.3; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, live = G && !G.over && !G.lesson && typeof $ === 'function' && $('ovHome').classList.contains('hidden');
   music(() => { const v = live ? 0.4 : 1; if (i % 4 === 0) tone(60, 0.25, 0.08 * v, 'sine', 0, 42); if (i % 4 === 2) noise(0.12, 1800, 0.04 * v, 'bandpass', 1); if (i % 2 === 1) noise(0.04, 7000, 0.015 * v, 'highpass', 1);
     const bass = [0, 0, 3, 5, 7, 7, 5, 3][(i >> 1) % 8]; if (i % 2 === 0) tone(note(98, bass), 0.22, 0.035 * v, 'triangle'); }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('funk', { seed: 97, key: -1, bpm: 102 });

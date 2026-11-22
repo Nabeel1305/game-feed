@@ -36,3 +36,5 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
     if (G && Math.abs(G.cfg.wind) > 1) { reedN -= dt; if (reedN <= 0) { reedN = 1.4; noise(1.5, 1600, 0.004 * Math.abs(G.cfg.wind), 'bandpass', 0.5); } } }
   mus.t += dt; const beat = 0.5; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { if (i % 2 === 0 || Math.random() < 0.3) pluck(note(196, TUNE[i % TUNE.length]), 1.2, 0.01); if (i % 8 === 0) { const b = [0, 3, 2, 4][(i >> 3) % 4]; pluck(note(98, b), 2.4, 0.018); pluck(note(98, b + 5), 2.4, 0.01, 0.05); } }); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('calm', { seed: 111, key: -1, bpm: 75 });

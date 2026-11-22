@@ -30,3 +30,5 @@ function soundStep(G, dt) { if (!actx) return; engine(); if (!city) { city = bed
   const home = $('ovHome') && !$('ovHome').classList.contains('hidden'), off = !G || paused || home || G.over;
   if (eng) { const b = G && G.bus, v = b ? b.v : 0, rev = b ? 0.3 + 0.7 * b.go : 0, f0 = 38 + v * 3.2 + rev * 18; try { const t = actx.currentTime; eng.o1.frequency.setTargetAtTime(f0, t, 0.1); eng.o2.frequency.setTargetAtTime(f0 * 1.017, t, 0.1); eng.f.frequency.setTargetAtTime(200 + rev * 500 + v * 20, t, 0.1); eng.g.gain.setTargetAtTime(off ? 0 : 0.035 + 0.035 * rev, t, 0.15); } catch (e) {} }
   if (city) city.set(off && !home ? 0 : 0.025, 0.4); if (rainB) rainB.set(!off && W3 && W3.S && W3.S.rain > 0 ? 0.03 : 0, 0.5); }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('jazz', { seed: 78, key: 2, bpm: 99 });

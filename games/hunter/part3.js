@@ -31,7 +31,7 @@ function buildWorld() {
   const grassM = new T.MeshStandardMaterial({ map: gtx, alphaTest: 0.45, side: T.DoubleSide, roughness: 0.9 });
   grassM.onBeforeCompile = sh => { sh.uniforms.wt = W3.S.windU = { value: 0 }; sh.vertexShader = 'uniform float wt;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n float sway = position.y * position.y * 0.09 * sin(wt * 1.7 + instanceMatrix[3].x * 0.3 + instanceMatrix[3].z * 0.21);\n transformed.x += sway; transformed.z += sway * 0.5;'); };
   const NG = 6000, grass = new T.InstancedMesh(clumpG, grassM, NG), D = new T.Object3D(), C = new T.Color();
-  for (let i = 0; i < NG; i++) { const r = Math.pow(R0(), 0.6) * 90, a = R0() * 6.28, x = Math.cos(a) * r * 0.8, z = 25 + Math.sin(a) * r; D.position.set(x, HGT(x, z) - 0.05, -z); D.rotation.set(0, R0() * 3, 0); const s = 0.7 + R0() * 0.6; D.scale.set(s, 0.75 + R0() * 0.45, s); D.updateMatrix(); grass.setMatrixAt(i, D.matrix); C.setHSL(0.13 + R0() * 0.04, 0.3, 0.55 + R0() * 0.25); grass.setColorAt(i, C); }
+  for (let i = 0; i < NG; i++) { const r = Math.pow(R0(), 0.6) * 90, a = R0() * 6.28, x = Math.cos(a) * r * 0.8, z = 25 + Math.sin(a) * r; D.position.set(x, HGT(x, z) - 0.05, -z); D.rotation.set(0, R0() * 3, 0); const s = 0.7 + R0() * 0.6; D.scale.set(s, 0.5 + R0() * 0.3, s); D.updateMatrix(); grass.setMatrixAt(i, D.matrix); C.setHSL(0.13 + R0() * 0.04, 0.3, 0.55 + R0() * 0.25); grass.setColorAt(i, C); }
   S.add(grass);
   // a few pines and boulders
   const trees = []; for (let i = 0; i < 160; i++) { const a = R0() * 6.28, r = 70 + R0() * 500, x = Math.cos(a) * r, z = 40 + Math.sin(a) * r; trees.push({ x, y: HGT(x, z) - 0.3, z: -z, s: 1 + R0() * 1.3, rot: R0() * 6, hue: R0() - 0.5, shade: R0() - 0.6 }); }
@@ -83,15 +83,16 @@ function onEvent(G, e) {
     case 'animal': break;
     case 'tell': sfx.tell(); break;
     case 'look': break;
+    case 'heard': if (gate('heardfx', 500)) sfx.snort(); break;
     case 'seen': if (!gate('seenfx', 400)) break; FX.red = Math.max(FX.red, 0.25); sfx.snort(); break;
     case 'throw': sfx.throw(); vibe(HAP.light); break;
     case 'hit': if (e.vital) { FX.stop = 0.08; FX.shake = 6; sfx.thud(true); vibe(HAP.thud); } else { sfx.thud(false); say('ONLY WOUNDED', cx, cy, '#ffd0c4', 24); } break;
     case 'kill': say(G.kills.length >= G.cfg.goal ? 'THE HUNT IS WON' : 'DOWN!', cx, cy, '#ffe08a', 32); sfx.kill(e.n); FX.flash = 0.6; vibe(HAP.best); break;
     case 'missed': sfx.miss(); say('MISSED', cx, cy, '#ffd0c4', 24); tip('miss', 'Get closer: the spear is steadier', 2.8); break;
     case 'staggers': say('IT STAGGERS: AGAIN!', cx, cy, '#ffe08a', 24); break;
-    case 'bolt': sfx.bolt(); say(e.why === 'seen' ? 'IT SAW YOU!' : 'IT GOT AWAY', cx, cy, '#ffb4a8', 28); FX.red = 0.4; tip('bolt_' + e.why, e.why === 'seen' ? 'Lift your left thumb the moment its ears flick' : 'Aim at the chest, just behind the front legs', 3); break;
+    case 'bolt': sfx.bolt(); say(e.why === 'seen' ? 'IT SAW YOU!' : e.why === 'heard' ? 'IT HEARD YOU RUN!' : 'IT GOT AWAY', cx, cy, '#ffb4a8', 28); FX.red = 0.4; tip('bolt_' + e.why, e.why === 'seen' ? 'Let go of the stick the moment its ears flick' : e.why === 'heard' ? 'Running is loud: creep (a gentle push) when you are close' : 'Aim at the chest, just behind the front legs', 3); break;
     case 'calm': break;
-    case 'growl': sfx.growl(e.side); FX.shake = 4; vibe(HAP.heavy); say(e.side < 0 ? '◀ GROWL' : 'GROWL ▶', e.side < 0 ? W * 0.25 : W * 0.75, H * 0.45, '#ffb48a', 30); tip('lion', 'Swipe toward the growl, then tap when it leaps', 3); break;
+    case 'growl': sfx.growl(e.side); FX.shake = 4; vibe(HAP.heavy); say(e.side < 0 ? '◀ GROWL' : 'GROWL ▶', e.side < 0 ? W * 0.25 : W * 0.75, H * 0.45, '#ffb48a', 30); tip('lion', 'Tap the side of the growl to face it, then tap when it leaps', 3); break;
     case 'turn': sfx.turn(); break;
     case 'leap': sfx.roar(); FX.shake = 10; break;
     case 'lionkill': FX.stop = 0.1; FX.flash = 0.8; FX.shake = 14; sfx.brace(); say('YOU HELD IT!', cx, cy, '#ffe08a', 32); vibe(HAP.best); break;
@@ -104,7 +105,7 @@ function onEvent(G, e) {
     case 'lost': sfx.lose(); break;
   }
 }
-const ui = { snap: false, aim: null, drag: null };
+const ui = { snap: false, aim: null, drag: null, stick: null, ch: null, aiming: null, fireT: 0 };
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D steppe.', W / 2, H / 2); return; }
@@ -121,11 +122,11 @@ function draw(now, dt) {
   const toA = Math.atan2(a.x - me.x, a.z - me.z), Ln = g.lion; let yaw = toA; if (Ln && Ln.st !== 'gone' && me.face) yaw = toA + me.face * Math.PI / 2;
   if (ui.snap) V.yaw = yaw; else { let dy = yaw - V.yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI; V.yaw += dy * Math.min(1, dt * 7); } ui.snap = false;
   const bob = me.creep ? Math.sin(t * 7) * 0.025 : 0, eye = g2w(me.x, me.z, HGT(me.x, me.z) + EYE + bob);
-  cam.position.copy(eye); cam.fov = innerWidth > innerHeight ? 56 : 66; cam.updateProjectionMatrix();
+  cam.position.copy(eye); cam.fov = innerWidth > innerHeight ? 40 : 48; cam.updateProjectionMatrix();      // (a longer lens since 22 Nov 2026: the animal was a speck)
   cam.lookAt(eye.clone().add(new T.Vector3(Math.sin(V.yaw) * 10, -0.35, -Math.cos(V.yaw) * 10))); cam.rotateZ(Math.sin(t * 3.5) * 0.004 * (me.creep ? 3 : 1));
   if (FX.shake > 0) { cam.rotation.x += (Math.random() - 0.5) * FX.shake * 0.002; cam.rotation.y += (Math.random() - 0.5) * FX.shake * 0.002; }
   // my arm and spear, low on the right; drawn back while aiming, gone while a spear flies
-  const fw = new T.Vector3(Math.sin(V.yaw), 0, -Math.cos(V.yaw)), rt = new T.Vector3(Math.cos(V.yaw), 0, Math.sin(V.yaw)), pull = ui.drag && ui.drag.mode === 'aim' ? ui.drag.pull : 0, flyingNow = g.spears.some(s => !s.done);
+  const fw = new T.Vector3(Math.sin(V.yaw), 0, -Math.cos(V.yaw)), rt = new T.Vector3(Math.cos(V.yaw), 0, Math.sin(V.yaw)), pull = ui.aiming != null ? 0.55 : ui.fireT > 0 ? 1 : 0, flyingNow = g.spears.some(s => !s.done);
   V.hand.position.copy(eye).addScaledVector(rt, 0.28).addScaledVector(fw, 0.42 - pull * 0.25).add(new T.Vector3(0, -0.32 + pull * 0.18, 0)); V.hand.rotation.set(0, -V.yaw, 0); V.hand.rotateX(0.12 + pull * 0.25);
   V.hand.userData.sp.visible = !flyingNow; if (Ln && Ln.st !== 'gone') { V.hand.rotateX(-0.1); V.hand.position.addScaledVector(rt, -0.12); }
   // the spear in flight
@@ -134,9 +135,7 @@ function draw(now, dt) {
     const p = g2w(x, z, h), u2 = Math.min(1, u + 0.02), p2 = g2w(s.x0 + (s.tx - s.x0) * u2, s.z0 + (s.tz - s.z0) * u2, HGT(x, z) + 1.2 * (1 - u2) + Math.sin(u2 * Math.PI) * (0.6 + s.T * 2.2) + 0.5 * u2);
     V.flying.position.copy(p); V.flying.lookAt(p.clone().add(p.clone().sub(p2))); }
   if (s && s.done && !s.stuck) { s.stuck = true; const st = V.mkSpear(); st.position.copy(g2w(s.tx, s.tz, HGT(s.tx, s.tz) + 0.6)); st.rotation.set(-1.0, Math.random() * 6, 0); V.S.add(st); V.stuck.push(st); if (V.stuck.length > 6) V.S.remove(V.stuck.shift()); }
-  // the aim mark on the ground
-  V.aim.visible = !!ui.aim; if (ui.aim) { const d = Math.hypot(ui.aim.x - me.x, ui.aim.z - me.z), sw = swayOf(g, d), short = Math.max(0, d - 16) * 0.65; const ax = ui.aim.x + sw.x - (ui.aim.x - me.x) / d * short, az = ui.aim.z + sw.z - (ui.aim.z - me.z) / d * short;
-    V.aim.position.copy(g2w(ax, az, HGT(ax, az) + 0.08)); V.aim.material.color.set(short > 0 ? 0xff8a6a : 0xffffff); V.aim.scale.setScalar(0.7); }
+  V.aim.visible = false; ui.fireT = Math.max(0, ui.fireT - dt);      // (the old mark on the ground is gone: the crosshair shows the aim)
   // the lion: crouched in the grass to the side, coming; then the leap
   if (!V.lion) V.lion = beast('lion');
   if (Ln && Ln.st !== 'gone') { const L2 = V.lion; L2.visible = true; const ang = toA + Ln.side * Math.PI / 2, d = Ln.st === 'stalk' ? Math.max(3.5, 14 - Ln.t / Ln.leapAt * 10) : Math.max(0.6, 3.5 - Ln.t / g.cfg.leap * 3);
@@ -170,10 +169,34 @@ function hud(G) {
     if (open > 0.3) { ctx.fillStyle = a.alert > 0.6 ? '#ff6b5a' : '#ffd36a'; ctx.beginPath(); ctx.arc(ex, ey, r * 0.45 * open, 0, TAU); ctx.fill(); }
     ctx.fillStyle = 'rgba(255,90,70,.9)'; ctx.fillRect(ex - r * 1.5, ey + r + 5, r * 3 * clamp(a.alert, 0, 1), 3 * k);
     ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(`${Math.round(distA(G))} m`, ex, ey + r + 20 * k); } }
-  // thumbs: where they go, faint, for the first hunts
-  if (G.N <= 3 && !G.over && !(G.lion && G.lion.st !== 'gone')) { ctx.globalAlpha = 0.45; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
-    ctx.fillText(G.me.creep ? 'CREEPING…' : 'HOLD: CREEP', W * 0.25, H - 30 * k); ctx.fillText('PULL BACK: THROW', W * 0.75, H - 30 * k); ctx.fillRect(W / 2 - 0.5, H - 60 * k, 1, 50 * k); ctx.globalAlpha = 1; }
+  controlsHud(G);
 }
+// ---------- the controls on screen: the stick (creep / run), the crosshair, THROW; and big prompts for a lion ----------
+function layout() { return { fire: { x: W - 74 * k, y: H - 96 * k, r: 50 * k } }; }
+// where the crosshair points: on the animal (the upright sheet through it that faces you), or the ground in front of it
+function aimPoint() { if (!G || !V3 || V3.none) return G ? { x: G.a.x, z: G.a.z, sx: W / 2, sy: H / 2 } : null; const a = G.a, me = G.me, T = V3.T, cam = W3.cam; cam.updateMatrixWorld(); const c0 = W3.screen(g2w(a.x, a.z, HGT(a.x, a.z) + 0.75 * a.kind.body)), ch = ui.ch || { x: 0, y: 0 }, sx = c0.x + ch.x, sy = c0.y + ch.y;
+  const ray = new T.Raycaster(); ray.setFromCamera(new T.Vector2(sx / W * 2 - 1, -(sy / H * 2 - 1)), cam); const o = ray.ray.origin, d = ray.ray.direction, gy = HGT(a.x, a.z);
+  const n = new T.Vector3(Math.sin(V3.yaw), 0, -Math.cos(V3.yaw)), pa = g2w(a.x, a.z, gy), den = d.dot(n); let P = null;
+  if (Math.abs(den) > 1e-4) { const t = pa.clone().sub(o).dot(n) / den; if (t > 0) P = o.clone().addScaledVector(d, t); }
+  if (!P || P.y < gy - 0.05) { const t = (gy - o.y) / (d.y || -1e-4); if (t > 0) P = o.clone().addScaledVector(d, t); else return { x: a.x, z: a.z, sx, sy }; }
+  const top = gy + 1.55 * a.kind.body, over = Math.max(0, P.y - top) * 4; return { x: P.x + n.x * over, z: -(P.z + n.z * over), sx, sy }; }
+function controlsHud(G) { if (G.over) return; const L = layout(), Ln = G.lion && G.lion.st !== 'gone' ? G.lion : null, a = G.a, me = G.me; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (Ln) { const turned = me.face === Ln.side, pulse = 0.6 + 0.4 * Math.sin(performance.now() / 90);
+    for (const sd of [-1, 1]) { const x0 = sd < 0 ? 0 : W / 2, hot = Ln.st === 'stalk' && !me.face && sd === Ln.side; ctx.fillStyle = hot ? `rgba(255,120,60,${0.25 + 0.2 * pulse})` : 'rgba(0,0,0,.18)'; ctx.fillRect(x0, H * 0.62, W / 2, H * 0.38); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(34 * k)}px ${BC}`; ctx.fillText(sd < 0 ? '◀' : '▶', x0 + W / 4, H * 0.76); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillText(sd < 0 ? 'TAP: FACE LEFT' : 'TAP: FACE RIGHT', x0 + W / 4, H * 0.84); }
+    const msg = Ln.st === 'leap' ? 'NOW! TAP!' : turned ? 'WAIT FOR THE LEAP… THEN TAP' : me.face ? 'WRONG WAY! TAP THE OTHER SIDE' : (Ln.side < 0 ? '◀ A LION ON YOUR LEFT: TAP LEFT' : 'A LION ON YOUR RIGHT: TAP RIGHT ▶'); ctx.font = `700 ${Math.round((Ln.st === 'leap' ? 30 : 17) * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(msg, W / 2, H * 0.56); ctx.fillStyle = Ln.st === 'leap' ? '#ffe08a' : '#fff'; ctx.fillText(msg, W / 2, H * 0.56); return; }
+  // the crosshair: a circle, four marks and a dot; amber on the animal, green on its chest. It sways as your arm does.
+  if (a.st !== 'dead' && a.st !== 'flee' && !G.spears.some(s => !s.done)) { const A = aimPoint(); if (A) { const d = Math.hypot(A.x - me.x, A.z - me.z) || 1, sw = swayOf(G, d), short = Math.max(0, d - 16) * 0.65, lx = A.x + sw.x - (A.x - me.x) / d * short, lz = A.z + sw.z - (A.z - me.z) / d * short, k2 = a.kind;
+      const vx = a.x + Math.sin(a.face) * k2.body * 0.5, vz = a.z + Math.cos(a.face) * k2.body * 0.5, onChest = Math.hypot(lx - vx, lz - vz) < k2.vital * (1 - Math.min(0.3, G.cfg.f / 150)) * (lessonNow(G) ? 1.3 : 1), onBody = Math.hypot(lx - a.x, lz - a.z) < k2.body * 0.75;
+      let ox = 0, oy = 0; if (V3 && !V3.none) { const gy = HGT(a.x, a.z) + 0.75 * k2.body, p0 = W3.screen(g2w(A.x, A.z, gy)), p1 = W3.screen(g2w(lx, lz, gy)); ox = p1.x - p0.x; oy = (p1.y - p0.y) + Math.sin(G.t * 1.6 + 1.3) * 3 * k; }
+      const cx = A.sx + ox, cy = A.sy + oy, col = short > 0 ? '#ff8a6a' : onChest ? '#7dff9a' : onBody ? '#ffd36a' : '#ffffff', r0 = 20 * k; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.45)'; for (let pass = 0; pass < 2; pass++) { ctx.beginPath(); ctx.arc(cx, cy, r0, 0, TAU); for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.moveTo(cx + ux * r0 * 0.55, cy + uy * r0 * 0.55); ctx.lineTo(cx + ux * r0 * 1.5, cy + uy * r0 * 1.5); } ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = col; }
+      ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, 2.5 * k, 0, TAU); ctx.fill(); const lab = short > 0 ? 'TOO FAR' : onChest ? 'CHEST: THROW!' : onBody ? 'ON IT (AIM FOR THE CHEST)' : ''; if (lab) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(lab, cx, cy + r0 * 1.5 + 12 * k); ctx.fillStyle = col; ctx.fillText(lab, cx, cy + r0 * 1.5 + 12 * k); } } }
+  // THROW
+  { const B = L.fire, on = ui.fireT > 0, can = !G.spears.some(s => !s.done) && a.st !== 'dead' && a.st !== 'flee'; ctx.globalAlpha = can ? 0.95 : 0.4; ctx.fillStyle = on ? '#ffd36a' : '#c8502a'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.93 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffe8c8'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(19 * k)}px ${BC}`; ctx.fillText('THROW', B.x, B.y - 2 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('tap', B.x, B.y + 16 * k); ctx.globalAlpha = 1;
+    if (ui.aiming == null && G.N <= 3) { ctx.globalAlpha = 0.8; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.fillText('DRAG HERE TO AIM', W * 0.75, H - 190 * k); ctx.globalAlpha = 1; } }
+  // the stick: an inner ring (creep) and an outer one (run)
+  { const s2 = ui.stick, R = 56 * k, bx = s2 ? s2.x0 : 86 * k, by = s2 ? s2.y0 : H - 100 * k; ctx.globalAlpha = s2 ? 0.9 : 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, R, 0, TAU); ctx.stroke(); ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(bx, by, R * 0.78, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    const dx = s2 ? s2.x - s2.x0 : 0, dy = s2 ? s2.y - s2.y0 : 0, m = Math.hypot(dx, dy), c2 = m > R ? R / m : 1; ctx.fillStyle = me.run ? '#ff9a6a' : me.creep ? '#9be3b5' : 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(bx + dx * c2, by + dy * c2, 20 * k, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'left'; ctx.fillText(me.run ? 'RUNNING (IT HEARS YOU!)' : me.creep ? 'CREEPING…' : 'GENTLE PUSH: CREEP · FULL PUSH: RUN', 12 * k, Math.min(H - 12 * k, by + R + 16 * k)); ctx.textAlign = 'center'; ctx.globalAlpha = 1; } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) {
   const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28, y = 42 * k; ctx.save();

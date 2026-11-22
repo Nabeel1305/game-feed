@@ -45,3 +45,5 @@ function soundStep(G, dt) {
     if (night) { for (let i = 0; i < 6; i++) tone(4400 * vary(0.02), 0.03, 0.012, 'sine', i * 0.06); }
     else if (w !== 'storm' && w !== 'rain') { const b = 2200 + Math.random() * 1400, n = 2 + (Math.random() * 4 | 0); for (let i = 0; i < n; i++) tone(b * vary(0.08), 0.07, 0.014, 'sine', i * 0.11, b * (1.2 + Math.random() * 0.3)); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('pastoral', { seed: 9, key: 0, bpm: 86 });

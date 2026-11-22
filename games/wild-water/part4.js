@@ -28,3 +28,5 @@ function soundStep(G, dt) {
   AM.roar && AM.roar.set(0.05 + foam * 0.16, 0.4); AM.hiss && AM.hiss.set(0.012 + foam * 0.04, 0.4); AM.rain && AM.rain.set(wet * 0.05, 1);
   AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 3 + Math.random() * 6; if (foam < 0.3 && wet === 0) { const b = 2400 + Math.random() * 1200, n = 2 + (Math.random() * 3 | 0); for (let i = 0; i < n; i++) tone(b * vary(0.08), 0.07, 0.012, 'sine', i * 0.12, b * 1.25); } }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('western', { seed: 10, key: -2, bpm: 114 });

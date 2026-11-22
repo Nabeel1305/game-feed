@@ -31,3 +31,5 @@ function soundStep(G, dt) {
   const quiet = MUTE || paused || !G || G.over; if (AM.wind) AM.wind.set(quiet ? 0 : 0.012, 0.6); if (AM.rain) AM.rain.set(!quiet && G && G.weather === 'rain' ? 0.02 : 0, 0.8);
   if (quiet) return; birdT -= dt; if (birdT <= 0) { birdT = 2.5 + Math.random() * 5; const b = 2300 + Math.random() * 900; tone(b, 0.07, 0.01, 'sine', 0, b * 1.25); tone(b * 1.1, 0.07, 0.008, 'sine', 0.09, b * 1.4); }
 }
+// the band (tools/juice-kit.js): this game's music
+bandStyle('arcade', { seed: 32, key: 3, bpm: 135 });
