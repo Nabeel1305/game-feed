@@ -1288,6 +1288,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - Every object says what it holds when looked at ("letters and bills, nothing out of place"), with the same "turn it to see
   every side" on all of them, so the words never give a hidden clue away.
 
+### 105. Convoy Escort (`games/convoy/`): his idea 34, hunting submarines and guarding ships (sideways, two thumbs, 3D)
+- **Unopposed enemies must be deadly, or doing nothing wins.** Merchants with spare hits, sloppy torpedo leads and submarines
+  that fire once and fall behind the convoy let blind thumbs win 1 in 3. Now the lead is solved properly (iterate the
+  intercept), a submarine fires two salvos at two ships, and early merchants sink on one hit.
+- **Deterrence is the core skill, and it must be possible**: a submarine never fires with an escort within ~500 m; it goes
+  deep and comes back later. Hydrophone reports (a bearing and a wide yellow ring) come before the sonar can see it, so the
+  player is never hunting blind (his "never through guesswork alone").
+- **Space the submarines out along the route** (one every 450 m) and cap them at two; from level 8 other escorts guard the
+  far side. Three at once on one escort could not be defended by anyone.
+- **Fast-forward needs a frame budget**: the robots stop at 300 s of frames; missions are 1,400-1,900 m at 7 m/s with x6
+  fast-forward in quiet stretches, dropping back automatically when there is danger.
+- **Lesson objects must not react like the real ones**: the depth-charge lesson's submarine surfaced after the first hit and
+  vanished from the sonar; the lesson keeps it down.
+- **Removing a branch leaves an orphan `else`**: twice now (sandworm's free mode removed from saveResult and the end card);
+  run `node --check` on every part after a structural edit.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

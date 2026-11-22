@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 105,
+  "next_number": 106,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3550,20 +3550,42 @@
         "P15"
       ],
       "summary": "His idea 33: generated cases (thefts, sabotage, fraud, disappearances, locked rooms) in a house, hotel, museum, train or office. Tap objects in the 3D room, turn them over to find hidden marks, question suspects and show them clues (liars crack, secret-keepers own up), link clues in the notebook, then accuse with who, how, when and two proving clues."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 105,
       "id": "convoy",
       "name": "Convoy Escort",
-      "set": 19,
-      "summary": "his idea 34: command an escort ship, hunt submarines with sonar and depth charges, keep the convoy safe.",
-      "spec": "specs/his-list-2026-11-21.md",
-      "from": "his idea",
-      "intensity": 3,
-      "thumbs": 2
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-22",
+      "path": "games/convoy/index.html",
+      "artifact": "https://claude.ai/artifact/69SNiM1Z8ufMyXTYu3R4xD",
+      "artifact_slug": "29ab47ed-4a9d-44ce-a599-50b2494ac70e",
+      "apk_repo": null,
+      "storage_prefix": "cvy.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Command an escort: ping, hunt, depth-charge, bring the convoy home.",
+        "genre": "Naval / tactics",
+        "intensity": 3,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Black Ops One",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P6",
+        "P14",
+        "P15"
+      ],
+      "summary": "His idea 34: command an escort ship guarding merchant ships to the harbour. Steer with a heavy wheel and a throttle; hydrophones and sonar pings show where submarines may be (rings that tighten when sure and grow when old); depth charges at shallow, medium or deep, the deck gun for surfaced boats; stay close and they will not fire; crew teams repair, fight fires and rescue. Night runs, rescues, a damaged ship, other escorts later."
+    }
+  ],
+  "planned": [
     {
       "number": 106,
       "id": "mine19",
