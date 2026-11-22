@@ -1360,6 +1360,21 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **The wave is drawn 1.6 times taller than it rides** (VIS): a 1.6 m wave looked like a strip from the camera's distance.
 - **Three.js looking along +z puts +x on the left**: the wave is drawn mirrored (X = -x) so it peels to the right.
 
+### 110. Santa's Round (`games/santa/`): his idea 31, flying, sneaking and delivering (sideways, two thumbs, 3D)
+- **Two worlds, one scene**: the village and the room (built far away, at x = 600) share the 3D scene; the camera jumps
+  between them on the switch (ui.snap) and the snow is hidden indoors.
+- **Every place you must reach is reachable quietly**: rooms are generated and checked (`roomOK`) after each piece of
+  furniture and each creaky board, from the fireplace to a side of the tree. Stockings and the fireplace take ACT from 1.5 m,
+  so a creaky board in front of one never forces a creak.
+- **Robot spots, not points**: the honest robot walks to the nearest quiet cell from which ACT reaches (`spotNear`); aiming at
+  the object's own cell stopped it 0.35 m short (outside the ACT range) or sent it into furniture.
+- **A deliberate robot mistake must be undoable**: it placed a wrong present, picked it up and placed it again for ever. Holding
+  a wrong present, it now swaps it for the right one (a tap on the sack replaces what you hold).
+- **A careless robot for a real curve**: ordinary and sloppy robots sometimes rush (run) or walk over creaky boards; noise then
+  wakes people and costs a restart. Without that every robot won every level in a third of the night.
+- **Blind play cannot finish a house**: leaving is refused until exactly the wished presents are under the tree and every
+  stocking is full (77,504 blind games won none).
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
