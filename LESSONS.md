@@ -1315,6 +1315,19 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   it stays right when the camera moves.
 - **A speed threshold must be reachable by a real flick**: tearing at 95 cm/s never happened in a touch test; 75 down to 45.
 
+### 107. Joust (`games/joust/`): his idea 26, a tournament (sideways, two thumbs, 3D)
+- **One pass is a four-second charge with a single crash**: everything is decided at `PASS_T`: your tip (aim + the sway of the
+  gallop) against their shield, their error against yours, who was braced. The rules do not need the 3D at all.
+- **A fixed aim must not score by luck**: aiming at the middle and leaning at random won 10% of bouts. Fixed by moving their
+  shield a little every pass, an unbraced lance skidding off for no point, a cap on how far a late lean moves their hit, and
+  a seat cost for leaning far at the crash. The robot aims at `sh0 + shift - sway(PASS_T)` and so is unaffected.
+- **Lessons must need skill, not tries**: "hit the shield three times" was finished by 90 s of blind tapping; now it is three
+  near the middle in a row (a miss starts the count again).
+- **Never end a packed line with a `//` comment when a later edit may append to it**: a comment swallowed the rival's
+  balance update, so nobody could ever be unhorsed. Run the unhorse rule test after any edit of `clash`.
+- **Screen mapping**: aim +x is the screen's right because the camera looks down +z (world -x is screen right); test it by
+  projecting two tips, close enough to the rival that the difference is more than a pixel.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

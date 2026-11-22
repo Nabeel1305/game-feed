@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 107,
+  "next_number": 108,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3617,20 +3617,43 @@
       ],
       "summary": "Mine, the calm one for set 19: a customer's order (a bowl, cup, vase, jug, bottle, dish, tall vase or moon jar, and a glaze). Centre the clay with steady pressure, pull the walls up with steady drags (too fast tears), shape the spinning pot to the dotted outline, trim the rim, glaze and fire it; thin or leaning walls slump; rare kiln surprises.",
       "from": null
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 107,
       "id": "joust",
       "name": "Joust",
-      "set": 20,
-      "summary": "his idea 26: charge on horseback, aim the lance, brace at contact, unseat rivals; tournaments.",
-      "spec": "specs/his-list-2026-11-21.md",
-      "from": "his idea",
-      "intensity": 4,
-      "thumbs": 2
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-22",
+      "path": "games/joust/index.html",
+      "artifact": "https://claude.ai/artifact/7YEdDKBqpVbzBNgsC4ygxX",
+      "artifact_slug": "34f348fe-8a45-4b71-8bb9-a69fd90b79e0",
+      "apk_repo": null,
+      "storage_prefix": "jst.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Charge, aim the swaying lance, brace at the crash: unseat them.",
+        "genre": "Tournament / jousting",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "MedievalSharp",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P4",
+        "P5",
+        "P8",
+        "P11",
+        "P26"
+      ],
+      "summary": "Jousting tournament in 3D lists: the horse gallops by itself; drag right to aim a lance whose tip sways in a learnable figure of eight, slide left to lean, hold BRACE just before the crash. Shield hit 1, braced centre (lance breaks) 2, unhorse them to win outright. Training targets, then six rivals with habits through tournament rounds."
+    }
+  ],
+  "planned": [
     {
       "number": 108,
       "id": "splash",
