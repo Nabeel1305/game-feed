@@ -51,7 +51,7 @@ function toPick(G) { G.phase = 'pick'; G.play = null; G.ball.kind = 'held'; G.ba
 // line up in formation: offense C, QB, RB, WR, WR; defence two linemen, a linebacker, two corners
 function lineUp(G, play) { const L = G.los, c = G.cfg; const off = team(G, G.att), def = team(G, 1 - G.att);
   const op = [['C', 0, -0.5], ['QB', 0, -1.6], ['RB', 0, -5], ['WR', -10, -0.6], ['WR', 10, -0.6]], dp = [['DL', -1.5, 1.2], ['DL', 1.5, 1.2], ['LB', 0, 5], ['CB', -10, 6], ['CB', 10, 6]];
-  off.forEach((p, i) => { const [r, x, z] = op[i]; Object.assign(p, { role: r, x, z: L + z, vx: 0, vz: 0, face: Math.PI / 2, route: null, ri: 0, held: 0, block: null, dodge: 0, sprint: false }); });
+  off.forEach((p, i) => { const [r, x, z] = op[i]; Object.assign(p, { role: r, x, z: L + z, vx: 0, vz: 0, face: Math.PI / 2, route: null, ri: 0, rdone: false, held: 0, block: null, dodge: 0, sprint: false }); });
   def.forEach((p, i) => { const [r, x, z] = dp[i]; Object.assign(p, { role: r, x, z: L + z * (r === 'CB' && c.style === 'deep' ? 1.6 : 1), vx: 0, vz: 0, face: -Math.PI / 2, held: 0, block: null, mark: null, dodge: 0 }); });
   const b = G.ball; b.own = off[0]; b.kind = 'held'; b.x = 0; b.z = L; b.y = 0.3;
   G.ctrl = G.att === 0 ? off[1].id : def[2].id; }
@@ -142,6 +142,10 @@ function brain(G, p, dt) { const c = G.cfg, b = G.ball, o = b.own, off = p.t ===
       let best = null, bd = 99; for (const d of team(G, 1 - p.t)) { const dd = dist(d, o); if (dd < bd && d.z > o.z - 2) { bd = dd; best = d; } } p.blocking = true; if (best) return moveTo(G, p, (best.x + o.x) / 2, (best.z + o.z) / 2 + 0.5, dt); return moveTo(G, p, o.x, o.z + 5, dt); }
     if (p.role === 'C') { const t2 = G.P[p.block]; if (G.liveT > 2.6) return body(G, p, 0, 0, dt); return moveTo(G, p, t2 ? clamp(t2.x, -2, 2) : 0, L - 0.3, dt, speedOf(G, p) * 0.6); }
     if (p.route && b.kind !== 'held' || (p.route && o && o.role === 'QB')) { if (p.role === 'RB' && p.blockFirst && G.liveT < 1.4) return moveTo(G, p, p.x * 0.8, L - 2, dt); const r = p.route[Math.min(p.ri, p.route.length - 1)]; if (dist(p, { x: r[0], z: r[1] }) < 0.8 && p.ri < p.route.length - 1) p.ri++;
+      if (p.ri >= p.route.length - 1 && dist(p, { x: r[0], z: r[1] }) < 0.8) p.rdone = true;
+      // 22 Nov 2026 (his words: "the players don't position themselves in a place that you can give them a pass"): a receiver who has run his route no longer stands still to be covered; he works away from the nearest defender, round the end of his route. (The other team's receivers do it from level 8.)
+      if (p.rdone && !(b.kind === 'air' && b.to === p) && (p.t === 0 || G.N >= 8)) { let nd = null, nb = 1e9; for (const q of G.P) if (q.t !== p.t) { const d2 = dist(p, q); if (d2 < nb) { nb = d2; nd = q; } }
+        if (!nd || nb > 5.5) return body(G, p, 0, 0, dt); const ax = (p.x - nd.x) / (nb || 1), az = (p.z - nd.z) / (nb || 1); return moveTo(G, p, clamp(r[0] + ax * 4, -HW + 1.5, HW - 1.5), r[1] + az * 2.5, dt, speedOf(G, p) * 0.85); }
       if (p.ri >= p.route.length - 1 && dist(p, { x: r[0], z: r[1] }) < 0.8) { if (b.kind === 'air' && b.to === p) return moveTo(G, p, b.tx, b.tz, dt); return body(G, p, 0, 0, dt); }
       if (b.kind === 'air' && b.to === p) return moveTo(G, p, b.tx, b.tz, dt); return moveTo(G, p, r[0], r[1], dt); }
     if (p.role === 'RB' && o && o.role === 'QB' && PLAYS[G.play] && PLAYS[G.play].kind === 'run' && !G.handed) { const r = p.route[0]; return moveTo(G, p, r[0], r[1], dt, speedOf(G, p) * 0.5); }

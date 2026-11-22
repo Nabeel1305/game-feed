@@ -88,7 +88,9 @@ function sync(V, g, dt) { V.t += dt; const d = g.dog;
   if (V.penGlow) V.penGlow.material.emissive && V.penGlow.material.emissive.setRGB(0.25 * Math.max(0, Math.sin(V.t * 3)) * (g.penned ? 0 : 1), 0.2 * Math.max(0, Math.sin(V.t * 3)) * (g.penned ? 0 : 1), 0);
   // the camera: above and behind, looking at the work (the dog, the flock, the way to the pen)
   const live = g.sheep.filter(s => !s.lost && !s.penned); let cx = d.x, cz = d.z; if (live.length) { let sx = 0, sz = 0; for (const s of live) { sx += s.x; sz += s.z; } cx = (sx / live.length) * 0.6 + d.x * 0.4; cz = (sz / live.length) * 0.6 + d.z * 0.4; }
-  const asp = innerWidth / innerHeight, portrait = asp < 0.8, h = portrait ? 25 : 20, back = portrait ? 17 : 15, cp = [cx, h, WZ(cz) + back], cl = [cx, 0, WZ(cz) - (portrait ? 6 : 4)];
+  /* 22 Nov 2026 (the audit: the dog was tiny on an empty field): the camera comes in close and only pulls back as far as the flock is spread */
+  let spread = 0; for (const s of live) spread = Math.max(spread, Math.hypot(s.x - cx, s.z - cz)); spread = Math.max(spread, Math.hypot(d.x - cx, d.z - cz));
+  const asp = innerWidth / innerHeight, portrait = asp < 0.8, zoom = clamp(0.56 + spread / 26, 0.62, 1), h = (portrait ? 25 : 20) * zoom, back = (portrait ? 17 : 15) * zoom, cp = [cx, h, WZ(cz) + back], cl = [cx, 0, WZ(cz) - (portrait ? 6 : 4) * zoom];
   if (ui.snap || !ui.cam) { ui.cam = { p: cp.slice(), l: cl.slice() }; ui.snap = false; }
   const kk = Math.min(1, dt * 1.6); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (cp[i] - ui.cam.p[i]) * kk; ui.cam.l[i] += (cl[i] - ui.cam.l[i]) * kk; }
   const cam = W3.cam; cam.fov = portrait ? 56 : 46; cam.aspect = asp; cam.updateProjectionMatrix(); cam.position.set(...ui.cam.p); cam.lookAt(...ui.cam.l); cam.updateMatrixWorld(); W3.setFocus(cx, 0, WZ(cz), 30); }

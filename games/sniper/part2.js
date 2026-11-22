@@ -16,7 +16,7 @@ const RULES = [
 const CAM = { x: 0, y: 13, z: 4 }, PITCH0 = -0.6, FOV = 54, ZOOM = 7, DART = 55;
 const SHIRTS = [['red', 0xd83a3a], ['blue', 0x3a6ad8], ['green', 0x3aa85a], ['yellow', 0xe8c030], ['white', 0xf0f0f0], ['black', 0x2a2a30], ['purple', 0x8a4ac8], ['orange', 0xe8803a]];
 const HATS = ['no hat', 'a cap', 'a top hat', 'a beanie'], BAGS = ['no bag', 'a briefcase', 'a backpack', 'an umbrella'];
-const PLACES = [{ name: 'Town Square', sky: 'morning', ground: 0xc8bca8 }, { name: 'Harbour', sky: 'golden', ground: 0xb8b0a0 }, { name: 'Market', sky: 'overcast', ground: 0xa8a090 }, { name: 'Night Plaza', sky: 'dusk', ground: 0x8a8478 }];
+const PLACES = [{ name: 'Town Square', sky: 'morning', ground: 0xe6cfa6 }, { name: 'Harbour', sky: 'golden', ground: 0xd8c6a0 }, { name: 'Market', sky: 'overcast', ground: 0xd0b890 }, { name: 'Night Plaza', sky: 'dusk', ground: 0xa89878 }];
 const placeOf = N => Math.floor((N - 1) / 5) % 4;
 const SCOPES = [{ id: 'black', col: '#111111', stars: 0 }, { id: 'red dot', col: '#ff3a3a', stars: 6 }, { id: 'green', col: '#3aff7a', stars: 15 }, { id: 'gold', col: '#ffd040', stars: 30 }];
 const UPGRADES = [

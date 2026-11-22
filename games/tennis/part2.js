@@ -1,6 +1,6 @@
 // ===================== THE RULES: Tennis (his idea 17, 20 Nov 2026) =====================
 // Singles, seen from behind your baseline. Left thumb: the stick moves you. Right thumb: SWIPE to swing as the ball comes:
-// the direction aims it, the length sets how deep, the speed sets the pace (fast = a drive; slow and long = a lob; slow and
+// the direction aims it; the touch layer turns the swipe's LENGTH into the shot (a drop, a drive, a lob) and passes it here as len and speed (fast = a drive; slow and long = a lob; slow and
 // short = a drop shot; a swipe DOWN = a slice). Timing matters: hit it level with you, a little in front. At the net you
 // volley it before it bounces. Serve: the stick picks your spot on the baseline, a tap tosses, a swipe at the top serves.
 // Points are tennis points: in, out, net, two bounces. Short matches are first to seven points (win by two); the long format
@@ -8,7 +8,7 @@
 // World: metres. x across (left -, right +), z along the court (you +, them -), y up. The net at z = 0.
 const RULES = [
   '<b>Left thumb</b>: move. <b>Right thumb: SWIPE</b> to swing as the ball reaches you.',
-  'Swipe <b>direction</b> aims, <b>length</b> = depth, <b>speed</b> = pace. Slow and long: a <b>lob</b>. Swipe <b>down</b>: a <b>slice</b>.',
+  'Swipe <b>direction</b> aims. <b>Length</b> picks the shot, and its name shows as you swipe: short = <b>drop</b>, longer = <b>drive</b> (deeper the longer), longest = <b>lob</b>. Swipe <b>down</b>: a <b>slice</b>.',
   '<b>Timing</b>: swing when the ball is level with you. Early pulls it, late pushes it.',
   '<b>Serve</b>: tap to toss, swipe at the top (the ring turns green).',
   'Move them: a shot into the <b>open court</b> wins points; one straight at them comes back.',
@@ -174,7 +174,7 @@ const LESSONS = {
   1: [{ id: 'rally', title: 'RALLY', how: 'Move under the ball with your LEFT thumb. As it reaches you, SWIPE UP with your right thumb. Hit 4 back over the net.', need: 4 }],
   2: [{ id: 'serve', title: 'SERVE', how: 'TAP to toss the ball. SWIPE UP when the ring turns green, at the top. Land 4 good serves in the box (swipe while the ring is green).', need: 4 }],
   3: [{ id: 'open', title: 'THE OPEN COURT', how: 'Swipe a little LEFT or RIGHT to aim. Hit 2 balls into the glowing corner, away from them.', need: 2 }],
-  5: [{ id: 'lob', title: 'NEW SHOT: THE LOB', how: 'They come to the net. A SLOW, LONG swipe up lifts it over their head. 2 lobs that land in.', need: 2 }],
+  5: [{ id: 'lob', title: 'NEW SHOT: THE LOB', how: 'They come to the net. A very LONG swipe up (until it says LOB) lifts it over their head. 2 lobs that land in.', need: 2 }],
   7: [{ id: 'slice', title: 'NEW SHOT: THE SLICE', how: 'SWIPE DOWN (toward you) to slice: low and skidding. 2 slices that land in.', need: 2 }],
   9: [{ id: 'volley', title: 'NEW SHOT: THE VOLLEY', how: 'At the net, swipe before the ball bounces. 3 volleys that land in.', need: 3 }],
 };
@@ -191,7 +191,7 @@ function lessonPoint(G, w, why) { const st = lessonNow(G), h = G.lessonHit, b = 
   if (h && w === 0 && (why === 'winner' || why === 'ace')) { if (st.id === 'rally' || st.id === 'serve') good = true; else if (st.id === 'open') good = Math.sign(h.tx) === G.lessonOpen && Math.abs(h.tx) > 1.2; else if (st.id === 'lob') good = h.kind === 'lob'; else if (st.id === 'slice') good = h.kind === 'slice'; else if (st.id === 'volley') good = h.kind === 'volley'; }
   G.wait = 1.0; G.next = () => lessonFeed(G);
   if (good) { G.lesson.n++; if (G.lesson.n >= st.need) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { G.rnd = rng(G.seed); G.pts = [0, 0]; G.stats = { rally: 0, best: 0, winners: 0, errors: 0, aces: 0, volleys: 0, lobs: 0, slices: 0, oppErr: 0 }; startPoint(G); G.ev.push({ k: 'start' }); }; return; } G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); }
-  else G.ev.push({ k: 'lessonmiss', how: h ? (st.id === 'open' ? 'Into the GLOWING corner: swipe a little that way.' : st.id === 'lob' ? 'A lob is a SLOW, LONG swipe.' : st.id === 'slice' ? 'A slice is a swipe DOWN.' : st.id === 'volley' ? 'Swipe BEFORE it bounces.' : st.how) : st.how }); }
+  else G.ev.push({ k: 'lessonmiss', how: h ? (st.id === 'open' ? 'Into the GLOWING corner: swipe a little that way.' : st.id === 'lob' ? 'A lob is a very LONG swipe up: keep going until it says LOB.' : st.id === 'slice' ? 'A slice is a swipe DOWN.' : st.id === 'volley' ? 'Swipe BEFORE it bounces.' : st.how) : st.how }); }
 // in a lesson the ball after your shot is not played back: it counts when it lands in (two bounces = in)
 // ---------- for the robots ----------
 const BLIND = {

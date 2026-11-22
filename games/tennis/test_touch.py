@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tennis with real touches: a thumb on the left drags the stick (to the right moves you right); on the right a tap tosses the
 serve and a swipe at the top of the toss serves; in a rally a swipe as the ball arrives hits it back over the net; a swipe to
-the right sends it right of one to the left; a longer swipe goes deeper; a slow long swipe is a lob; a swipe down is a slice;
+the right sends it right of one to the left; a longer swipe goes deeper; the longest swipe is a lob, a short one a drop shot (length picks the shot, not speed); a swipe down is a slice;
 a swing at nothing costs a moment. Then the rules: a ball that lands out loses the point; the net loses it; two bounces win
 it; two faults lose it; first to seven wins only by two; the long format counts 15, 30, 40, deuce and advantage. In practice
 the drill bar changes the drill. The Settings switch Music, Sound effects and Vibration on their own and remember them.
@@ -44,7 +44,10 @@ with sync_playwright() as p:
     r = rallyHit(0, -170, 60); ok(r[0] == 0 and r[3] < 0, 'a swipe up as the ball arrives hits it back over the net', str(r))
     rr = rallyHit(70, -160, 60); rl = rallyHit(-70, -160, 60); ok(rr[2] > rl[2] + 1, 'a swipe to the right sends it right of one to the left', str([rr[2], rl[2]]))
     sh = rallyHit(0, -70, 30); lo = rallyHit(0, -220, 50); ok(sh[0] == 0 and lo[0] == 0 and abs(lo[3]) > abs(sh[3]) * 0.9, 'a longer swipe goes deeper', str([sh[3], lo[3]]))
-    r = rallyHit(0, -220, 300); ok(r[1] == 'lob' and r[4] > 6, 'a slow, long swipe is a lob (high)', str(r))
+    r = rallyHit(0, -250, 60); ok(r[1] == 'lob' and r[4] > 6, 'the longest swipe is a lob (high), however fast it is made', str(r))
+    r = rallyHit(0, -250, 320); ok(r[1] == 'lob', 'and however slowly', str(r))
+    r = rallyHit(0, -170, 320); ok(r[1] == 'drive', 'a middling swipe made slowly is still a drive: speed no longer picks the shot', str(r))
+    r = rallyHit(0, -60, 40); ok(r[1] == 'drop', 'a short swipe is a drop shot', str(r))
     r = rallyHit(0, 170, 70); ok(r[1] == 'slice', 'a swipe down is a slice', str(r))
     E("(() => { const G = __sim.G; G.wait = 0; G.next = null; G.phase = 'rally'; G.ball.live = false; G.me.swing = 0; G.me.cool = 0; })()"); swipe(300, 700, 300, 520, 60); pg.wait_for_timeout(350)
     ok(E("__sim.G.me.cool > 0"), 'a swing at nothing costs a moment')

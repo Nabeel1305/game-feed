@@ -13,7 +13,7 @@ function fxStep(dt) {
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.3) TXT.shift();
   if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; }
 }
-const BED_SP = 2.6, bedPos = b => [(b.c - 1.5) * BED_SP, -1.5 + b.r * BED_SP], COOP = [-7, -6.5], CART = [7, -6.2];
+const BED_SP = 2.6, bedPos = b => [(b.c - 1.5) * BED_SP, -1.5 + b.r * BED_SP], COOP = [-4.3, -6.5], CART = [4.3, -6.2];      /* 22 Nov 2026: drawn in, so the camera can come closer and the beds are bigger */
 const ICON = k2 => k2 === 'egg' ? EGG.icon : CROPS[k2].icon;
 const GROUNDS = { spring: 0x5e9a3a, summer: 0x7a9a3a, autumn: 0x9a8a3a, winter: 0xe8eef4 };
 function buildWorld() {
@@ -104,7 +104,7 @@ function onEvent(G, e) {
 const CAM = { tilt: 1.12, look: [0, 0, -2.5], d: 40, asp: 0 };
 function fitCam(rows) {
   const cam = W3.cam, asp = innerWidth / innerHeight, key = asp + ':' + rows; if (CAM.asp === key) return; CAM.asp = key; cam.fov = 36; cam.aspect = asp; cam.updateProjectionMatrix();
-  const zb = -1.5 + (rows - 1) * BED_SP + 1.4, pts = [[-8.6, 0, -8.5], [8.6, 0, -8.5], [-6, 0, zb], [6, 0, zb], [-8.6, 3, -7], [8.6, 3, -7]]; CAM.look[2] = (zb - 8.5) / 2 - 0.5;
+  const zb = -1.5 + (rows - 1) * BED_SP + 1.4, pts = [[-6.1, 0, -7], [6.1, 0, -7], [-5.5, 0, zb], [5.5, 0, zb], [0, 2.8, -6.4]]; CAM.look[2] = (zb - 8.5) / 2 - 0.5;
   let lo = 8, hi = 200; for (let it = 0; it < 30; it++) { const d = (lo + hi) / 2; place(d); cam.updateMatrixWorld(); let ok = true; for (const p of pts) { SV.set(p[0], p[1], p[2]).project(cam); if (Math.abs(SV.x) > 0.95 || SV.y > 0.6 || SV.y < -0.66) { ok = false; break; } } if (ok) hi = d; else lo = d; }
   CAM.d = hi; place(hi);
 }

@@ -86,7 +86,7 @@ function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2 }; SV.se
 // ---------- what happens, seen and heard ----------
 function onEvent(G, e) { const cx = W / 2, b = G.ball;
   switch (e.k) {
-    case 'start': ui.banner = { txt: G.tour ? `${['QUARTER-FINAL', 'SEMI-FINAL', 'FINAL'][G.tour.round] || 'TOURNAMENT'}` : PLACES[G.place].name.toUpperCase(), t: 0, secs: 1.4, col: '#ffb070' }; sfx.whistle(); tip('start', 'Left thumb: move. Right: PASS, SHOOT (hold, let go in the green), SPRINT.', 3.4); break;
+    case 'start': ui.banner = { txt: G.tour ? `${['QUARTER-FINAL', 'SEMI-FINAL', 'FINAL'][G.tour.round] || 'TOURNAMENT'}` : PLACES[G.place].name.toUpperCase(), t: 0, secs: 1.4, col: '#ffb070' }; sfx.whistle(); tip('start', 'Left thumb: move (push all the way to sprint). Right: PASS, SHOOT (hold, let go in the green).', 3.4); break;
     case 'change': if (e.t === 0) tip('att', 'Your ball: find the open teammate (ringed) or the open shot.', 2.6); else tip('def', 'Defend: stay between your player and the basket. SWITCH, then STEAL when close.', 3.2); break;
     case 'pass': sfx.pass(); break; case 'catch': sfx.catchB(); break;
     case 'gather': sfx.click(); break;

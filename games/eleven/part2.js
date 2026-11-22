@@ -36,13 +36,13 @@ const WEATHERS = ['golden', 'night', 'overcast', 'sunset', 'night', 'rain', 'gol
 function weatherOf(N) { if (N <= 3) return ['golden', 'sunset', 'night'][N - 1]; const R = rng(N * 7741 + 5); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
 
 function makeCfg(N, help) {
-  const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N), e2 = clamp((10 - N) / 9, 0, 1);      // e2: an easing that fades over the first ten levels (the other stops dead after the third)
   return { N, f, help: !!help, boss: N % 10 === 0,
     // them: the better the team, the quicker, sharper and braver
-    oSpd: x(6.4, 8.6, 25) * (help ? 0.95 : 1), oSkill: x(0.25, 0.9, 25), oThink: x(0.65, 0.2, 25), oPass: x(0.65, 0.97, 25), oShot: x(0.4, 0.9, 30), oKeep: x(0.5, 0.95, 30), oPress: x(1.0, 1.7, 25),
-    oRange: x(18, 26, 30), oTackle: x(1.0, 3.0, 25),
+    oSpd: x(6.4, 8.6, 25) * (help ? 0.95 : 1) * (1 - e2 * 0.07),      /* 22 Nov 2026: the first levels are easier to score in (an ordinary player drew 0-0 one match in three; a clumsy one won one in three) */ oSkill: x(0.25, 0.9, 25), oThink: x(0.65, 0.2, 25), oPass: x(0.65, 0.97, 25), oShot: x(0.4, 0.9, 30), oKeep: x(0.46, 0.93, 34) * (1 - e2 * 0.1), oPress: x(1.0, 1.7, 25),
+    oRange: x(18, 26, 30), oTackle: x(1.0, 3.0, 25) * (1 - e2 * 0.35),
     // us
-    uSpd: 7.4 + 0.25 * upLv('pace') + (help ? 0.3 : 0) + e * 0.3, uShot: 0.55 + 0.08 * upLv('finish') + (help ? 0.06 : 0), uPass: 0.8 + 0.05 * upLv('vision'), uKeep: 0.45 + 0.1 * upLv('keeper') + e * 0.1 + (help ? 0.08 : 0), uTackle: 0.62 + 0.08 * upLv('steel'), uAiTackle: 0.22,
+    uSpd: 7.4 + 0.25 * upLv('pace') + (help ? 0.3 : 0) + e * 0.3, uShot: 0.55 + 0.08 * upLv('finish') + (help ? 0.06 : 0) + e2 * 0.16,      /* an aimed shot is surer in the first levels: it helps the player who looks, not the one who taps blind */ uPass: 0.8 + 0.05 * upLv('vision'), uKeep: 0.45 + 0.1 * upLv('keeper') + e * 0.1 + (help ? 0.08 : 0), uTackle: 0.62 + 0.08 * upLv('steel'), uAiTackle: 0.22,
     len: MATCH };
 }
 function newGame(N, o = {}) {

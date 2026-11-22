@@ -68,8 +68,9 @@ with sync_playwright() as p:
             rs = pg.evaluate("([N, o]) => { const out = []; for (let s = 0; s < 5; s++) out.push(__B.runHonest(N, 200 + s, Object.assign({ teach: true }, o))); return out; }", [N, TARGETS[name]])
             took = [round(x['lessons'], 1) if x['lessons'] is not None else None for x in rs]; print(f'  level {N}, {name}: lessons took {took} s')
             ok(all(t is not None and t < 180 for t in took), f'a {name} player gets through the lessons of level {N}', str(took))
-    r = pg.evaluate("() => { const S = __sim; S.start(1, { seed: 3, teach: true }); const G = S.G; for (let i = 0; i < 60 * 90; i++) { if (i % 9 === 0) S.BLIND[Object.keys(S.BLIND)[i % Object.keys(S.BLIND).length]](G); S.step(1 / 60); } return [G.over, !!G.lesson]; }")
-    ok(r[0] is None and r[1], 'nothing is lost while a lesson is on (90 s of blind tapping: still in the lesson, not lost)', str(r))
+    # (22 Nov 2026) The first lesson is one run, which blind tapping can stumble through; what must never happen is the match being lost WHILE a lesson is on.
+    r = pg.evaluate("() => { const S = __sim; let bad = 0, still = 0; for (let k2 = 0; k2 < 6; k2++) { S.start(1, { seed: 3 + k2, teach: true }); const G = S.G; for (let i = 0; i < 60 * 90; i++) { if (i % 9 === 0) S.BLIND[Object.keys(S.BLIND)[i % Object.keys(S.BLIND).length]](G); S.step(1 / 60); if (G.over && G.lesson) { bad++; break; } if (G.over) break; } if (G.lesson) still++; } return [bad, still]; }")
+    ok(r[0] == 0, 'nothing is lost while a lesson is on (six lots of 90 s of blind tapping: never lost with a lesson still up)', str(r))
     print('Sound')
     snd = pg.evaluate('__sim.soundCheck()'); bad = {k: v for k, v in snd.items() if isinstance(v, str) or v > 1.0 or v == 0}
     print('  ', snd); ok(not bad, 'every sound plays, without clipping', str(bad))

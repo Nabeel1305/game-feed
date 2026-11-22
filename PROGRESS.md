@@ -2,7 +2,7 @@
 
 Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by hand.
 
-**Count:** 61 verified, 22 fixing, 16 reviewing, 8 kept, 4 retesting (of 111).
+**Count:** 100 verified, 8 kept, 3 retesting (of 111).
 
 **Statuses:** kept = the first eight, on the app, which he said are good (loaded and controls-tested only); verified = no known critical or major problem, changes retested; retesting = changed, a check still to finish; fixing = a problem is known and not yet fixed; reviewing = looked at by robot play and screenshots, no hands-on pass yet.
 
@@ -25,6 +25,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - Regression at the end of the second pass (22 Nov, build 720f575): `tools/check.py` all 111 games pass; `tools/test_controls.py` for all 111 in one run, 3540 checks pass; `tools/win_sweep.py` (a win in the first instant and a moment later) all 103 games from 9 on: the result card comes, nothing throws; each changed game's `test_touch.py` and `test_play.py` pass (the three team games' long test_play excepted).
 - Splash Course's empty-ghost crash was the reason GitHub's checks failed on both earlier pushes of 22 Nov (nothing was published in between; the app's eight games were not affected). `tools/test_controls.py` now goes on to the next game when one game's test falls over, and prints that game's page errors.
 - GitHub's own checks passed on that build (run 45038106717, 22 Nov): the first green run since Santa's Round.
+- Regression at the end of the third pass (22 Nov, evening): tools/check.py all 111 pass; tools/test_controls.py all 111, 3540 checks pass; tools/win_sweep.py on the 23 games changed: clean; every changed game's test_touch.py passes, and its test_play.py (18 games: all pass; Convoy's ran out of time at 15 minutes with every part it reached passing).
 
 ## Game by game
 
@@ -77,12 +78,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 11 pass (new: a tap on the bite hooks the fish); test_play 15 pass.
 - **Still open:** Casting is still a pull-back-and-let-go (a slingshot with its landing mark drawn): to judge by hand.
 
-### 10. Wild Water (`wild-water`): FIXING
+### 10. Wild Water (`wild-water`): VERIFIED
 - **Where:** `games/wild-water/index.html` · v0.1.2 · Whitewater · 2 thumb(s)
 - **What it is:** A whitewater kayak game in 3D, seen from the cockpit with the bow in front and the paddle in your gloves. Your two thumbs are the two blades: swipe down on the left for a left stroke (it swings the bow right), on the right for a right stroke; swipe up to back-paddle. The current carries you down a winding river through rows of rocks with one gap each, past fallen trees on the outside of the bends, over ledges you must take straight through the smooth tongue, and between slalom gates for stars. Three smashes or rolls and the boat is done. Weather and light change by run. The first three runs teach every stroke.
 - **Problem:** level 5 is a dark storm, rocks hard to read.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use swipe.
+- **Checked:** third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.
 
 ### 11. Soar (`soar`): VERIFIED
 - **Where:** `games/soar/index.html` · v0.1.2 · Flying · 1 thumb(s)
@@ -91,13 +92,14 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
 
 ### 12. Vine (`vine`): VERIFIED
-- **Where:** `games/vine/index.html` · v0.1.3 · Jungle · 1 thumb(s)
+- **Where:** `games/vine/index.html` · v0.1.4 · Jungle · 1 thumb(s)
 - **What it is:** Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move.
 - **Problem:** CRITICAL: level 5 nearly black, the swinger is tiny and lost among the trunks.
 - **Changed:** Camera a quarter closer; a soft lamp travels with the swinger; dark weathers lifted.
+- **Changed:** third pass, 22 Nov evening: anything within arm's reach of the camera is cut away: a vine can no longer hang across the view.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
 - **Checked:** Pictures of level 5 at dusk looked at: the swinger is lit and larger.
-- **Still open:** A vine close to the camera can cross the view for a moment.
+- **Checked:** touch test 6 pass; picture looked at.
 
 ### 13. Hunter (`hunter`): VERIFIED
 - **Where:** `games/hunter/index.html` · v0.2.0 · Hunt · 2 thumb(s)
@@ -108,12 +110,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 14 pass; test_play 15 pass; robots win levels 1-3 and 10; pictures looked at.
 - **Still open:** Running is new: whether creep/run feels right needs his thumb.
 
-### 14. Police Chase (`police`): FIXING
+### 14. Police Chase (`police`): VERIFIED
 - **Where:** `games/police/index.html` · v0.1.2 · Chase · 2 thumb(s)
 - **What it is:** A three-part police chase in 3D through a city at night. Pursuit: hold the left or right side of the screen to steer your patrol car (both to brake) through traffic, and ram the getaway car's back corner from the side to spin him out. On foot: chase him down a brick alley, swiping round crates, over fences and under pipes, and tap to tackle when you are right behind him. Arrest: when he twists one way, swipe the other way to hold him until the cuffs are on. Lights, siren, rain on the tarmac; weather changes by case.
 - **Problem:** white fog swallows the road ahead at level 5.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (9 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use swipe.
+- **Checked:** third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.
 
 ### 15. Pilot (`pilot`): VERIFIED
 - **Where:** `games/pilot/index.html` · v0.1.3 · Flight · 2 thumb(s)
@@ -134,18 +136,22 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 8 pass; pictures of level 1 and level 5 looked at.
 - **Still open:** Dragging food to the pan and a swipe to chop are the genre's own gestures: to judge by hand.
 
-### 17. Country Vet (`vet`): FIXING
-- **Where:** `games/vet/index.html` · v0.1.2 · Animals · 1 thumb(s)
+### 17. Country Vet (`vet`): VERIFIED
+- **Where:** `games/vet/index.html` · v0.1.3 · Animals · 1 thumb(s)
 - **What it is:** Be the vet in an old 3D barn, the farmyard's weather and light through the open door. Dogs, cows, sheep, horses, pigs and goats come in with a thorn, an overgrown hoof, a cut, a fever, caked mud or a sore ear. Read the owner's card, look at her to see where, pick the right tool and use it the way it is really used: pull a thorn out slowly, rasp a hoof to the line, spray and wrap a cut, hold the needle in and lift off when she shivers, brush with the hair, drop into a still ear. Rough handling frightens her: stroke her slowly to calm her. The first three levels teach every tool.
 - **Problem:** at level 1 the first animal is not on screen in the first seconds (empty barn floor); otherwise fine.
+- **Changed:** third pass, 22 Nov evening: the animal is in sight from the first instant (the barn stood empty for a second and a half).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (13 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use circle.
+- **Checked:** touch test 13 pass; picture looked at.
 
-### 18. Lighthouse (`lighthouse`): FIXING
-- **Where:** `games/lighthouse/index.html` · v0.1.2 · Calm · 1 thumb(s)
+### 18. Lighthouse (`lighthouse`): VERIFIED
+- **Where:** `games/lighthouse/index.html` · v0.1.3 · Calm · 1 thumb(s)
 - **What it is:** Keep a lighthouse on a wild night, in 3D, from the gallery at the top: a dark moving sea, rain and lightning or stars and a moon. Lost fishing boats drift towards the rocks. Your thumb is the lamp: hold the beam on a boat until its lamp blinks back, then lead it slowly, round rocks that only show in your light, to the harbour's red and green lights. Several boats can follow the one light. The first three levels teach it.
 - **Problem:** a quarter of the screen is black sky, boats are specks; needs moonlight and a closer view.
+- **Changed:** third pass, 22 Nov evening: the camera looks down more, so the sea fills the screen (a quarter was black sky); far boats are drawn up to two and a half times bigger.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
+- **Checked:** touch test 6 pass; pictures of levels 1 and 5 looked at.
+- **Still open:** At night the sea is dark by design (you search with the lamp): his eye to judge.
 
 ### 19. Hiring (`hiring`): VERIFIED
 - **Where:** `games/hiring/index.html` · v0.1.2 · Office · 1 thumb(s)
@@ -185,18 +191,20 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
 - **Checked:** test_touch 7 pass (new: BITE beside her brings her down while the other thumb steers); test_play 16 pass.
 
-### 24. On the Run (`run`): REVIEWING
+### 24. On the Run (`run`): VERIFIED
 - **Where:** `games/run/index.html` · v0.1.2 · Getaway · 1 thumb(s)
 - **What it is:** Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse; a garage of upgrades and a rank that stay.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use swipe.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): lane swipes, as every runner uses, taught in its lessons. Judged plain enough; nothing changed.
 
-### 25. Castle Siege (`castle`): FIXING
-- **Where:** `games/castle/index.html` · v0.1.2 · Strategy · 1 thumb(s)
+### 25. Castle Siege (`castle`): VERIFIED
+- **Where:** `games/castle/index.html` · v0.1.3 · Strategy · 1 thumb(s)
 - **What it is:** Tower defence in a 3D valley, all taps: build archers, catapults, mages and frost by the road, upgrade them, drop meteors; eight roads, ten kinds of foe and a boss every tenth siege; royal upgrades and rank that stay.
 - **Problem:** murky and dark from above, goblins and towers tiny.
+- **Changed:** third pass, 22 Nov evening: towers and goblins a third bigger.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 checks passed, 0 failed.).
+- **Checked:** touch test 11 pass; pictures looked at (the map is lit and readable since the shared light fix).
 
 ### 26. Tag (`tag`): VERIFIED
 - **Where:** `games/tag/index.html` · v0.1.3 · Action · 1 thumb(s)
@@ -206,32 +214,35 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).
 - **Checked:** test_touch 8 pass (new: the DASH button dashes while the other thumb runs); test_play 15 pass.
 
-### 27. Heaven or Hell (`heaven`): REVIEWING
+### 27. Heaven or Hell (`heaven`): VERIFIED
 - **Where:** `games/heaven/index.html` · v0.1.1 · Puzzle · 1 thumb(s)
 - **What it is:** Keep the gate: weigh each soul's best and worst deed, unseal hidden deeds in the Book of Life, mind the day's rule and the liars, and drag them up, down or to Purgatory; blessings and rank that stay.
 - **First look:** fine (2D).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use swipe.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): a swipe to sort, with the three ways named on screen. Judged plain enough; nothing changed.
 
-### 28. Harvest Valley (`harvest`): FIXING
-- **Where:** `games/harvest/index.html` · v0.1.2 · Farming · 1 thumb(s)
+### 28. Harvest Valley (`harvest`): VERIFIED
+- **Where:** `games/harvest/index.html` · v0.1.3 · Farming · 1 thumb(s)
 - **What it is:** A farm by the day in 3D, all taps: plant, water when a crop asks, pick when it sparkles, collect eggs, shoo crows and fill the cart's orders by sunset; seasons and rain; farm upgrades and rank that stay.
 - **Problem:** dark brown murk, crops tiny, half the screen unused.
+- **Changed:** third pass, 22 Nov evening: the coop and the cart drawn in beside the house so the camera comes closer: the beds are half as big again and fill the width.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (9 checks passed, 0 failed.).
+- **Checked:** touch test 9 pass; pictures looked at.
 
-### 29. Horde (`horde`): REVIEWING
+### 29. Horde (`horde`): VERIFIED
 - **Where:** `games/horde/index.html` · v0.1.2 · Survival · 1 thumb(s)
 - **What it is:** Survive the night horde with one thumb: weapons fire by themselves, you pick an upgrade at every level-up, light three beacons to call the boss and beat it.
 - **First look:** fine; dark vignette is the mood, hero a bit small.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use draw.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): your thumb is the stick. Judged plain enough; nothing changed.
 
-### 30. Mini Golf (`golf`): FIXING
-- **Where:** `games/golf/index.html` · v0.1.2 · Sports · 1 thumb(s)
+### 30. Mini Golf (`golf`): VERIFIED
+- **Where:** `games/golf/index.html` · v0.1.3 · Sports · 1 thumb(s)
 - **What it is:** Calm 3D mini golf: pull back and let go to putt around windmills, bumpers, slopes and water, under par to win, with a shop and ranks.
 - **Problem:** drab dark greens, no charm (needs brighter felt, props).
+- **Changed:** third pass, 22 Nov evening: brighter felt and grass; a hole wider than it is long is looked at from its side so it fills the screen (aim checked on 24 levels: pull down always sends the ball up the screen).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use pull back.
+- **Checked:** touch test 6 pass; pictures looked at.
 
 ### 31. Penalty Kings (`penalty`): VERIFIED
 - **Where:** `games/penalty/index.html` · v0.1.2 · Football · 1 thumb(s)
@@ -239,27 +250,31 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
 
-### 32. Critter Clash (`critters`): REVIEWING
+### 32. Critter Clash (`critters`): VERIFIED
 - **Where:** `games/critters/index.html` · v0.1.2 · Creature battle · 1 thumb(s)
 - **What it is:** Turn-by-turn battles between teams of bouncing critters: fire beats leaf, time the ring for a critical, guard the big attacks, and catch wild critters for your collection.
 - **First look:** good.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).
-- **Still open:** Controls to judge by hand: its rules use type.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): labelled buttons and a timing tap. Judged plain enough; nothing changed.
 
-### 33. Rodeo (`rodeo`): FIXING
-- **Where:** `games/rodeo/index.html` · v0.1.2 · Rodeo · 2 thumb(s)
+### 33. Rodeo (`rodeo`): VERIFIED
+- **Where:** `games/rodeo/index.html` · v0.1.3 · Rodeo · 2 thumb(s)
 - **What it is:** Eight seconds on a bucking bull with two thumbs: hold left or right to lean, read his head to lean against each buck before it lands, grip the spins, and score with the judges.
 - **Problem:** the bull is a brown barrel on sticks; fine otherwise.
+- **Changed:** third pass, 22 Nov evening: the bull has haunches, shoulders, a tufted tail, thicker legs and bigger horns.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
+- **Checked:** touch test 8 pass; pictures looked at.
 
 ### 34. Eleven (`eleven`): RETESTING
-- **Where:** `games/eleven/index.html` · v0.3.0 · Football · 2 thumb(s)
+- **Where:** `games/eleven/index.html` · v0.3.1 · Football · 2 thumb(s)
 - **What it is:** A full eleven-a-side football match played sideways: run with the left thumb, PASS, SHOOT and LOB; beat a team and the next one is better.
 - **Problem:** CRITICAL: (his words) team-mates do not get open for a pass; also the pitch is dark, players are tiny and both teams read as the same dark colour.
 - **Changed:** Team-mates get open for a pass (support): clear of markers, a clear line, a sensible distance, onside. Team rings, a white ring on the pass target, players a third bigger, a closer camera, no SPRINT button (a full push sprints).
+- **Changed:** third pass, 22 Nov evening: the first ten levels are easier for a player who looks: softer tackles from the other team and a surer aimed shot, easing off level by level. (Easing their keeper as well let random tapping fluke a goal, so that was taken back.)
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (14 checks passed, 0 failed.).
 - **Checked:** test_touch 14 pass; quick robot matches: ordinary won 3 of 4 on levels 1, 3 and 10.
-- **Still open:** The long proof that button-mashing cannot win (test_play, over 25 minutes) has not been run to the end since the change.
+- **Checked:** Robot matches, 20 a level: ordinary wins 95%, 90%, 95% of levels 1-3 (it was 69-75%), clumsy 75% of level 1 (it was 31%), sharp still wins 40% of level 40; random tapping wins 0 of 480; touch test 14 pass; controls test passes; a win at an odd moment is clean.
+- **Still open:** Its full test_play (about 40 minutes) is being run again on this build: the one before failed a single check, random tapping (1 fluke win in 480), which is what the change above answers.
 
 ### 35. Deep Bite (`shark`): VERIFIED
 - **Where:** `games/shark/index.html` · v0.1.2 · Ocean survival · 1 thumb(s)
@@ -291,19 +306,19 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 checks passed, 0 failed.).
 
-### 40. Strike Alley (`bowling`): REVIEWING
+### 40. Strike Alley (`bowling`): VERIFIED
 - **Where:** `games/bowling/index.html` · v0.1.2 · Bowling · 1 thumb(s)
 - **What it is:** Bowling in a neon alley: touch to line up, pull back and let go; a dotted line shows the curl; spares, strike-outs, balls to collect.
 - **First look:** fine; the sign is cut off by the HUD.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use pull back.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): pull back and let go, with the line drawn. Judged plain enough; nothing changed.
 
-### 41. Bonsai (`bonsai`): REVIEWING
+### 41. Bonsai (`bonsai`): VERIFIED
 - **Where:** `games/bonsai/index.html` · v0.1.2 · Calm / craft · 1 thumb(s)
 - **What it is:** Grow a little tree through the seasons into the festival's outline: tap buds to grow, tap branches to prune, flick caterpillars.
 - **First look:** fine; the bottom third of the screen is an empty grey floor.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use flick.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): taps. Judged plain enough; nothing changed.
 
 ### 42. Star Miner (`miner`): VERIFIED
 - **Where:** `games/miner/index.html` · v0.1.2 · Space / action · 1 thumb(s)
@@ -311,11 +326,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
 
-### 43. Ghost Lantern (`lantern`): FIXING
-- **Where:** `games/lantern/index.html` · v0.1.2 · Spooky / action · 1 thumb(s)
+### 43. Ghost Lantern (`lantern`): VERIFIED
+- **Where:** `games/lantern/index.html` · v0.1.3 · Spooky / action · 1 thumb(s)
 - **What it is:** Walk a haunted house with one floating stick: hold ghosts in your lantern's beam to catch them, turn to the frost of one behind you, keep the oil burning.
 - **Problem:** so dark the rooms cannot be read (spooky should still be visible).
+- **Changed:** third pass, 22 Nov evening: the rooms are lit enough to read (ambient light nearly doubled), still dark outside the lantern.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).
+- **Checked:** touch test 7 pass; pictures looked at.
 
 ### 44. Drift Kings (`kart`): VERIFIED
 - **Where:** `games/kart/index.html` · v0.1.2 · Racing · 2 thumb(s)
@@ -337,11 +354,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine (2D).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
 
-### 47. Battle Lines (`war`): FIXING
-- **Where:** `games/war/index.html` · v0.1.2 · War tactics · 1 thumb(s)
+### 47. Battle Lines (`war`): VERIFIED
+- **Where:** `games/war/index.html` · v0.2.0 · War tactics · 1 thumb(s)
 - **What it is:** A general above the field: pick a formation, swap units, sound BATTLE, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines, and men you send in yourself fight twice as hard.
 - **Problem:** dark field, soldiers are specks.
+- **Changed:** third pass, 22 Nov evening: the camera frames the two armies and eases as they move, instead of showing the whole valley: soldiers are about twice the size.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
+- **Checked:** touch test 7 pass; pictures looked at.
 
 ### 48. Grand Hotel (`hotel`): VERIFIED
 - **Where:** `games/hotel/index.html` · v0.1.1 · management · 1 thumb(s)
@@ -349,11 +368,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine (2D); guests are black cut-outs.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
 
-### 49. Ramp Riders (`ramp`): FIXING
-- **Where:** `games/ramp/index.html` · v0.1.1 · Stunt / racing · 2 thumb(s)
+### 49. Ramp Riders (`ramp`): VERIFIED
+- **Where:** `games/ramp/index.html` · v0.1.2 · Stunt / racing · 2 thumb(s)
 - **What it is:** A trials bike side-on: two thumbs lean it back and forward; off the kickers turn it to the slope you will land on, flip it for a boost, beat the time and your own ghost.
 - **Problem:** flat 2D with a tiny bike and no detail; the weakest-looking racer.
+- **Changed:** third pass, 22 Nov evening: the bike is half as big again and sits lower on the screen.
+- **Changed:** third pass, 22 Nov evening: the ground has bands of rock, stones and scrub (it was one flat colour).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).
+- **Checked:** touch test 6 pass; pictures looked at.
+- **Checked:** touch test 6 pass again; test_play 16 pass; picture looked at.
 
 ### 50. Spellshop (`spell`): VERIFIED
 - **Where:** `games/spell/index.html` · v0.1.1 · Magic / puzzle · 1 thumb(s)
@@ -361,32 +384,34 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine (2D).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 
-### 51. Rex (`rex`): FIXING
-- **Where:** `games/rex/index.html` · v0.1.2 · Dinosaur / hunt · 2 thumb(s)
+### 51. Rex (`rex`): VERIFIED
+- **Where:** `games/rex/index.html` · v0.1.3 · Dinosaur / hunt · 2 thumb(s)
 - **What it is:** Be the T-Rex in a 3D valley: one stick to creep or charge, BITE and ROAR; runners, duckbill herds, armoured spikebacks, charging hornfaces and rival rexes, each warning before it strikes.
 - **Problem:** rainy night levels are too dark to see the prey.
+- **Changed:** third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
+- **Checked:** touch test 7 pass; pictures of a rainy level looked at: rex and prey both in sight.
 
-### 52. High Wire (`rope`): REVIEWING
+### 52. High Wire (`rope`): VERIFIED
 - **Where:** `games/rope/index.html` · v0.1.2 · Balance · 1 thumb(s)
 - **What it is:** Walk a high wire in 3D with one floating stick: slide to swing the pole, push up to walk, pull down to crouch; wind, birds, banners and sandbags; last-second saves; lean out for stars.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use pull back.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): one sliding thumb. Judged plain enough; nothing changed.
 
-### 53. Homemaker (`house`): REVIEWING
+### 53. Homemaker (`house`): VERIFIED
 - **Where:** `games/house/index.html` · v0.1.2 · Building / calm · 1 thumb(s)
 - **What it is:** Build houses on a 3D plot, a shed first and whole homes later: pick a piece, tap or drag (walls snap), windows, doors, furniture, one-tap roof; tick the checklist, move in and walk through. Every house is kept.
 - **First look:** fine, plain.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use no gestures; 7 named buttons.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): a tray and taps. Judged plain enough; nothing changed.
 
-### 54. Fruit Fight (`fruit`): FIXING
+### 54. Fruit Fight (`fruit`): VERIFIED
 - **Where:** `games/fruit/index.html` · v0.1.2 · Shooter / defence · 1 thumb(s)
 - **What it is:** First-person slingshot in a 3D meadow: pull back and let go with an arc to aim; oranges are quick, watermelons burst on crowds, bananas trip; blobs, scuttlers, shield-trolls, hoppers and big ones with a glowing eye.
 - **Problem:** monsters are specks far away under a dark storm; nothing to look at near the sling.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use pull back.
+- **Checked:** third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.
 
 ### 55. Tri-Peaks (`peaks`): VERIFIED
 - **Where:** `games/peaks/index.html` · v0.1.2 · Cards / calm · 1 thumb(s)
@@ -402,12 +427,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** good.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).
 
-### 57. Safecracker (`safe`): REVIEWING
+### 57. Safecracker (`safe`): VERIFIED
 - **Where:** `games/safe/index.html` · v0.1.1 · Heist / puzzle · 1 thumb(s)
 - **What it is:** Crack a safe by feel: drag round the dial slowly, feel the click, turn back to the chalk mark and SET; too fast is noisy, wrong numbers raise the alarm, keep still in the guard's torchlight, open it before dawn.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use no gestures; 4 named buttons.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): you turn the dial itself. Judged plain enough; nothing changed.
 
 ### 58. Fire Crew (`fire`): VERIFIED
 - **Where:** `games/fire/index.html` · v0.1.2 · Rescue / action · 1 thumb(s)
@@ -421,12 +446,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).
 
-### 60. Sugar Swap (`sweets`): REVIEWING
+### 60. Sugar Swap (`sweets`): VERIFIED
 - **Where:** `games/sweets/index.html` · v0.1.1 · Match-3 / puzzle · 1 thumb(s)
 - **What it is:** Match-3 like Candy Crush: swipe sweets into lines; striped, wrapped and colour-bomb specials and their combos; goals (collect, jelly, cherries, frosting, score) with a move limit; the Sugar Rush.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use swipe.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): swapping sweets. Judged plain enough; nothing changed.
 
 ### 61. Black Keys (`keys`): VERIFIED
 - **Where:** `games/keys/index.html` · v0.1.1 · Rhythm / music · 2 thumb(s)
@@ -434,11 +459,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).
 
-### 62. Paint Drop (`paint`): FIXING
-- **Where:** `games/paint/index.html` · v0.1.1 · Merge / physics puzzle · 1 thumb(s)
+### 62. Paint Drop (`paint`): VERIFIED
+- **Where:** `games/paint/index.html` · v0.1.2 · Merge / physics puzzle · 1 thumb(s)
 - **What it is:** Drop-and-merge like the watermelon game, with paint: same colours squash into the next colour; wet paint squashes, dry does not; a palette that dries without squashes; the colour chart up to the goal; don't overflow.
 - **Problem:** washed out, the jar is small and low on the screen.
+- **Changed:** third pass, 22 Nov evening: richer walls, and a jar you can see: white glass, a dark rim and outline.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).
+- **Checked:** touch test 4 pass; pictures looked at.
 
 ### 63. Pour (`pour`): VERIFIED
 - **Where:** `games/pour/index.html` · v0.1.1 · Sort puzzle / calm · 1 thumb(s)
@@ -454,12 +481,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).
 - **Checked:** test_touch 6 pass.
 
-### 65. Plumber (`plumber`): REVIEWING
+### 65. Plumber (`plumber`): VERIFIED
 - **Where:** `games/plumber/index.html` · v0.1.1 · Job / puzzle · 1 thumb(s)
 - **What it is:** His idea: a plumber's day of house calls. Pick calls from the phone, drive there, look at parts of the cut-open house to find the real fault, pick the fix and do it by hand (hold a wrench into the green, plunge on the beat, feed a snake, set a dial, fit a part); floods until the main is shut; 21 kinds of job.
 - **First look:** fine (2D); labels in the house are tiny.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use circle.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): taps on the pipes. Judged plain enough; nothing changed.
 
 ### 66. Stunt Kart (`stunt`): VERIFIED
 - **Where:** `games/stunt/index.html` · v0.1.3 · Racing / stunts · 2 thumb(s)
@@ -503,24 +530,31 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** good.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (re-run alone).
 
-### 73. Sharpshooter (`sniper`): FIXING
-- **Where:** `games/sniper/index.html` · v0.1.2 · Shooter / puzzle · 2 thumb(s)
+### 73. Sharpshooter (`sniper`): VERIFIED
+- **Where:** `games/sniper/index.html` · v0.1.3 · Shooter / puzzle · 2 thumb(s)
 - **What it is:** From a rooftop, find the thief in a busy square by the clues on the card, then put him to sleep with a dart: hold FIRE for the scope and your breath, lead him, mind the wind, never hit a passer-by.
 - **Problem:** a grey, lifeless square; people small.
+- **Changed:** third pass, 22 Nov evening: the square has colour: warm two-tone paving, painted buildings with awnings, flowers round the fountain.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).
+- **Checked:** touch test 15 pass; pictures looked at.
 
-### 74. Beat Dash (`dash`): FIXING
-- **Where:** `games/dash/index.html` · v0.1.1 · Rhythm / platformer · 1 thumb(s)
+### 74. Beat Dash (`dash`): VERIFIED
+- **Where:** `games/dash/index.html` · v0.1.2 · Rhythm / platformer · 1 thumb(s)
 - **What it is:** A cube runs to the beat: tap to jump, hold to keep jumping; spikes, blocks, pits, pads, rings and gravity portals sit on the beat; three lives and flags; reach 100%.
 - **Problem:** the cube is tiny on a mostly empty purple screen.
+- **Changed:** third pass, 22 Nov evening: a little bigger and lower; a beating sun, a skyline, a grid under the floor and bars that jump on the beat.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (12 passed, 0 failed).
+- **Checked:** touch test 12 pass; pictures looked at.
 
-### 75. Shadow Crew (`crew`): FIXING
-- **Where:** `games/crew/index.html` · v0.1.2 · Stealth / social · 2 thumb(s)
+### 75. Shadow Crew (`crew`): VERIFIED
+- **Where:** `games/crew/index.html` · v0.1.3 · Stealth / social · 2 thumb(s)
 - **What it is:** You are the hidden traitor on a 3D space station of hand-drawn sticker crewmates: knock them out when no one can see, vanish through vents, sabotage, and talk your way out of meetings. New rules every few levels.
 - **First look:** fine; the see-through buttons sit over the play.
 - **Problem:** Slow on the test machine before and after today (about 30 pictures a second; the others 60).
+- **Changed:** third pass, 22 Nov evening: the fog of what you cannot see is drawn an eighth of the size and stretched, with no canvas blur: on the test machine 42 pictures a second on average, most frames at 60 (it was 31).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed).
+- **Checked:** touch test 22 pass; speed measured twice; picture looked at (the soft edge is still there).
+- **Still open:** Speed on his phone is his to judge.
 
 ### 76. Kart Kingdom (`kingdom`): VERIFIED
 - **Where:** `games/kingdom/index.html` · v0.2.1 · Racing / kart · 2 thumb(s)
@@ -575,12 +609,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 16 pass; a close picture looked at.
 - **Still open:** On the catwalk she starts far away and small.
 
-### 83. Taxi Driver (`taxi`): REVIEWING
+### 83. Taxi Driver (`taxi`): VERIFIED
 - **Where:** `games/taxi/index.html` · v0.1.1 · Driving / city · 1 thumb(s)
 - **What it is:** The cab drives itself: hold to brake, swipe to change lane, swipe in the glowing turn zone to turn. Pick up whoever waves, find the way (GPS or round the jams), stop at their door before the meter runs out; rushers, nervous passengers and tourists each want a different drive.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (23 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use swipe.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): a swipe in the glowing turn zone, with the GPS arrow. Judged plain enough; nothing changed.
 
 ### 84. Roach Run (`roach`): VERIFIED
 - **Where:** `games/roach/index.html` · v0.2.0 · Stealth / action · 2 thumb(s)
@@ -591,25 +625,27 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 27 pass (new: a gentle push walks, a full push sprints, no SPRINT button); test_play 16 pass (its robots still win from the closer camera); picture looked at.
 - **Still open:** A person's leg can fill the view when you run right under it.
 
-### 85. Hoop Shot (`hoopshot`): REVIEWING
+### 85. Hoop Shot (`hoopshot`): VERIFIED
 - **Where:** `games/hoopshot/index.html` · v0.1.1 · Sports / shooting · 1 thumb(s)
 - **What it is:** His idea 13: basketball purely shooting. Pull back from anywhere for power, sideways to aim, let go; the path's dots show early on; misses say too strong, too weak, left or right; swishes, streaks and the crowd. Four courts; every fifth level a challenge (bank shots, a moving spot, around the world); Practice with unlimited balls.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (20 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use pull back.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): pull back and let go, with the arc drawn. Judged plain enough; nothing changed.
 
-### 86. Sheepdog (`sheepdog`): FIXING
-- **Where:** `games/sheepdog/index.html` · v0.1.1 · Herding / puzzle-action · 1 thumb(s)
+### 86. Sheepdog (`sheepdog`): VERIFIED
+- **Where:** `games/sheepdog/index.html` · v0.1.2 · Herding / puzzle-action · 1 thumb(s)
 - **What it is:** Mine: you are the sheepdog. Hold on the field and she runs there, let go and she lies down, tap to bark. Sheep are pushed, not commanded: they flow away from her, keep together and scatter if rushed. Gather strays, drive the flock round trees and over the bridge into the pen before sunset; lambs, a stubborn ram, and a fox at dusk.
 - **Problem:** flat empty green, the dog is tiny.
+- **Changed:** third pass, 22 Nov evening: the camera comes in close and only pulls back as far as the flock is spread: dog and sheep about half as big again.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (19 passed, 0 failed).
+- **Checked:** touch test 19 pass; pictures looked at.
 
-### 87. Sumo (`sumo`): REVIEWING
+### 87. Sumo (`sumo`): VERIFIED
 - **Where:** `games/sumo/index.html` · v0.1.1 · Fighting / sumo · 2 thumb(s)
 - **What it is:** His idea 21: you are a huge sumo wrestler. A floating stick (up = into him) and three big buttons: PUSH (tap a shove, hold a big push), GRIP (hold his belt: drive, pull, turn), DODGE. Lean, stamina and the opening charge matter: pull or sidestep a man who lunges, turn him at the edge. Seven rivals (chargers, anchors, pullers), tournaments every fifth level, technique names in slow motion.
 - **First look:** good look; a stick and three buttons is a lot.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (23 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use circle.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): a stick and two labelled buttons (PUSH, GRIP). Judged plain enough; nothing changed.
 
 ### 88. Memory Lane (`memory`): VERIFIED
 - **Where:** `games/memory/index.html` · v0.1.1 · Memory / puzzle · 1 thumb(s)
@@ -645,22 +681,24 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Changed:** Team-mates get open for a pass (getOpen), one forward in the slot.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (hockey rc=1 fails=1 37 passed, 1 failed).
 - **Checked:** test_touch 38 pass; quick robot matches: ordinary won 5/5, 4/5, 3/5 on levels 1, 3, 10.
-- **Still open:** The long test_play has not been run to the end since the change. Five named buttons: BURST could go the way of SPRINT.
+- **Checked:** A short proof: ordinary wins 100%, 83%, 100% of levels 1-3; no blind string wins (0 of 672); random tapping 0 of 72.
+- **Still open:** Its full test_play is running. Its three buttons change their names with and without the puck (PASS/SHOOT/BURST, SWITCH/POKE): labelled, judged plain enough.
 
-### 93. Tennis (`tennis`): FIXING
-- **Where:** `games/tennis/index.html` · v0.1.1 · Sports / tennis · 2 thumb(s)
+### 93. Tennis (`tennis`): VERIFIED
+- **Where:** `games/tennis/index.html` · v0.2.0 · Sports / tennis · 2 thumb(s)
 - **What it is:** Singles from behind your baseline: a stick to move, a swipe to swing (direction aims, length = depth, speed = pace; lobs, slices, volleys); serves with a timing ring; first to 7 or games to 3; a ball machine for practice.
 - **Problem:** a wall of giant black pines, a murky brown court, a tiny opponent.
+- **Changed:** third pass, 22 Nov evening: the LENGTH of the swipe picks the shot, and its name (DROP, DRIVE, LOB, SLICE) shows by your thumb as you swipe; speed no longer matters (it was hidden, and failed on a slow machine). The pines are half the size (they were a black wall).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (tennis rc=1 fails=1 24 passed, 1 failed).
-- **Still open:** Controls to judge by hand: its rules use swipe.
-- **Still open:** The speed of the swipe decides lob or drive: hidden and fragile (its test failed when the machine was busy). His direction was: swipe direction aims, length is power. To simplify to that.
+- **Checked:** touch test 28 pass (new: the longest swipe is a lob fast or slow; a middling swipe made slowly is still a drive; a short swipe is a drop shot); pictures looked at.
+- **Still open:** The opponent is small at the far end of the court (perspective).
 
-### 94. Metro Map (`metro`): REVIEWING
+### 94. Metro Map (`metro`): VERIFIED
 - **Where:** `games/metro/index.html` · v0.1.1 · Strategy / transport · 1 thumb(s)
 - **What it is:** A city grows on a paper map: drag lines between stations, passengers ride to the shape they want and change lines on their own; limited lines, trains and bridges, a choice every week, and crowds that build slowly.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (31 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use draw.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): drag from station to station. Judged plain enough; nothing changed.
 
 ### 95. Bin Round (`binround`): VERIFIED
 - **Where:** `games/binround/index.html` · v0.1.1 · Calm / job · 1 thumb(s)
@@ -668,29 +706,35 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine; the road is a wide black slab.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (37 passed, 0 failed).
 
-### 96. Beach Watch (`lifeguard`): FIXING
-- **Where:** `games/lifeguard/index.html` · v0.1.1 · Rescue / watch · 1 thumb(s)
+### 96. Beach Watch (`lifeguard`): VERIFIED
+- **Where:** `games/lifeguard/index.html` · v0.1.2 · Rescue / watch · 1 thumb(s)
 - **What it is:** Lifeguard on the tower: read the water, whistle drifters back, swim out to anyone in trouble and bring them in across the rip, flag the rips; miss two and the beach closes.
 - **Problem:** the sea mirrors the clouds so strongly it reads as sky; swimmers are small.
+- **Changed:** third pass, 22 Nov evening: a sea-green wash over the water: it mirrored the clouds so strongly it read as sky.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (25 passed, 0 failed).
+- **Checked:** touch test 25 pass; pictures looked at.
 
 ### 97. Hoops 3v3 (`hoops3`): RETESTING
-- **Where:** `games/hoops3/index.html` · v0.2.0 · Sports / basketball · 2 thumb(s)
+- **Where:** `games/hoops3/index.html` · v0.2.1 · Sports / basketball · 2 thumb(s)
 - **What it is:** Three-a-side basketball played sideways: a stick and PASS / SHOOT / SPRINT, a shot meter with a moving green, layups and dunks, steals that can leave you off balance, a 12-second shot clock, and a three-game tournament.
 - **Problem:** CRITICAL: (his words) positioning: everyone bunches in the paint, nobody spaces out for a pass.
 - **Changed:** Team-mates spread out, get free and cut to the basket when marked; no SPRINT button.
+- **Changed:** third pass, 22 Nov evening: stale SPRINT wording removed from the on-screen tip.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (39 passed, 0 failed).
 - **Checked:** test_touch 39 pass; quick robot matches: ordinary won 8/8, 8/8, 7/8 on levels 1-3.
-- **Still open:** The long test_play has not been run to the end since the change.
+- **Checked:** A short proof: ordinary wins 100%, 100%, 83% of levels 1-3; no blind string wins (0 of 672); random tapping 0 of 72; touch test 39 pass.
+- **Still open:** Its full test_play is running.
 
-### 98. Gridiron (`gridiron`): RETESTING
-- **Where:** `games/gridiron/index.html` · v0.2.0 · Sports / American football · 2 thumb(s)
+### 98. Gridiron (`gridiron`): VERIFIED
+- **Where:** `games/gridiron/index.html` · v0.3.0 · Sports / American football · 2 thumb(s)
 - **What it is:** Five-a-side arcade American football, sideways: pick a play, SNAP, throw to a receiver's button or hand off and run; defend with SWITCH and TACKLE; replays of big plays.
 - **Problem:** dark pitch, players are specks, hard to tell teams apart; receivers' routes to check.
 - **Changed:** Players nearly half as big again, each on a disc of his team's colour; no SPRINT button (a full push sprints).
+- **Changed:** third pass, 22 Nov evening: a receiver who has run his route works away from the nearest defender instead of standing still (the other team's do it from level 8).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (63 passed, 0 failed).
 - **Checked:** test_touch 63 pass; picture looked at.
-- **Still open:** Receivers' routes and getting open not yet judged; the long test_play not re-run.
+- **Checked:** Measured 3.5 s after the snap with nobody throwing: 18 of 18 receivers open (it was 12 of 18), mean 3.0 yards from a defender (it was 2.6); touch test 63 pass; a short proof: no blind string of one, two or three moves wins (0 of 672), random tapping 0 of 72.
+- **Checked:** Full test_play: 15 of 16 pass, including no blind string winning. The sixteenth, 'nothing is lost while a lesson is on', was flaky before today too (its first lesson is one run, which blind tapping stumbles through, and the old check then counted the match that followed): the check now asks what it means, and passes 18 runs out of 18.
 
 ### 99. Rock Climb (`climb`): VERIFIED
 - **Where:** `games/climb/index.html` · v0.1.1 · Climbing / calm · 1 thumb(s)
@@ -718,27 +762,29 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (36 passed, 0 failed).
 
-### 103. Skydive (`skydive`): REVIEWING
+### 103. Skydive (`skydive`): VERIFIED
 - **Where:** `games/skydive/index.html` · v0.1.1 · Sky sport · 2 thumb(s)
 - **What it is:** His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode.
 - **First look:** fine; the diver is tiny.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (43 passed, 0 failed).
-- **Still open:** Controls to judge by hand: its rules use circle, pull back.
+- **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): one thumb and two labelled buttons (TUCK, CHUTE). Judged plain enough; nothing changed.
 
-### 104. Detective (`detective`): FIXING
+### 104. Detective (`detective`): VERIFIED
 - **Where:** `games/detective/index.html` · v0.1.1 · Mystery / deduction · 1 thumb(s)
 - **What it is:** His idea 33: generated cases (thefts, sabotage, fraud, disappearances, locked rooms) in a house, hotel, museum, train or office. Tap objects in the 3D room, turn them over to find hidden marks, question suspects and show them clues (liars crack, secret-keepers own up), link clues in the notebook, then accuse with who, how, when and two proving clues.
 - **Problem:** the 3D rooms are dark brown boxes on black; a lot of reading.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed).
+- **Checked:** third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.
 
 ### 105. Convoy Escort (`convoy`): VERIFIED
-- **Where:** `games/convoy/index.html` · v0.2.0 · Naval / tactics · 2 thumb(s)
+- **Where:** `games/convoy/index.html` · v0.2.1 · Naval / tactics · 2 thumb(s)
 - **What it is:** His idea 34: command an escort ship guarding merchant ships to the harbour. Steer with a heavy wheel and a throttle; hydrophones and sonar pings show where submarines may be (rings that tighten when sure and grow when old); depth charges at shallow, medium or deep, the deck gun for surfaced boats; stay close and they will not fire; crew teams repair, fight fires and rescue. Night runs, rescues, a damaged ship, other escorts later.
 - **Problem:** thirteen buttons on screen (far too many controls) and a dark, glaring sea.
 - **Changed:** Thirteen buttons down to the wheel, PING, DROP, one SPEED button and one DEPTH button (a tap moves to the next setting); GUN only shows when a submarine is on the surface, one CREW button only when there is a job.
+- **Changed:** third pass, 22 Nov evening: a sea-blue wash over the water and a little more light in bad weather: the sea was a glare of mirrored cloud that hid the ships.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (55 passed, 0 failed).
 - **Checked:** test_touch 55 pass (new checks for SPEED, DEPTH, the hidden GUN and the CREW button); picture looked at.
-- **Still open:** The sea is still dark and glaring in bad weather.
+- **Checked:** touch test 55 pass; pictures of levels 1 and 5 looked at.
 
 ### 106. Pottery Wheel (`pottery`): VERIFIED
 - **Where:** `games/pottery/index.html` · v0.1.1 · Craft / calm · 1 thumb(s)
@@ -769,11 +815,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 38 pass (new: letting go of PADDLE in the green ring stands you up); test_play 16 pass.
 - **Still open:** Tricks are still named in the rules as turns at the right place: to judge by hand.
 
-### 110. Santa's Round (`santa`): FIXING
-- **Where:** `games/santa/index.html` · v0.1.1 · Delivery / sneaking · 2 thumb(s)
+### 110. Santa's Round (`santa`): VERIFIED
+- **Where:** `games/santa/index.html` · v0.1.2 · Delivery / sneaking · 2 thumb(s)
 - **What it is:** Christmas Eve in a 3D snowy village: fly the sleigh, hold LAND over a roof's glowing marker, slip down the chimney; inside, tiptoe past sleepers, creaky boards and a curious cat, leave the wished-for presents under the tree, fill the stockings, back up. Every house before dawn.
 - **Problem:** the village is a bare lilac plain with a few boxes; the room is dark blocks.
+- **Changed:** third pass, 22 Nov evening: the village has many more trees of all sizes, snowdrifts, and cottages with lit windows.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (41 passed, 0 failed).
+- **Checked:** touch test 41 pass; pictures looked at.
 
 ### 111. Skimming Stones (`skim`): VERIFIED
 - **Where:** `games/skim/index.html` · v0.1.1 · Calm / lakeside · 1 thumb(s)

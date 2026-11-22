@@ -5417,6 +5417,7 @@ function draw(now, dt) {
   const seen = new Set();
   for (const b of g.boats) { let m = V.boats.get(b.id); if (!m) { m = buildBoat(T, W3.rng(b.id * 17 + g.seed), V.glow); V.boats.set(b.id, m); V.S.add(m); } seen.add(b.id);
     m.position.set(b.x, Math.sin(t * 1.4 + b.id) * 0.35, -b.y); m.rotation.set(Math.sin(t * 1.1 + b.id) * 0.06, -b.h + Math.PI, Math.sin(t * 0.9 + b.id * 2) * 0.12);
+    { const far = clamp(Math.hypot(b.x, b.y) / 50, 1, 2.6); m.scale.setScalar(1.4 * far); }      /* far boats are drawn bigger: they were specks */
     const u = m.userData, blink = b.blink > 0 ? (Math.sin(b.blink * 30) > 0 ? 3 : 0.4) : 1; u.lampM.emissiveIntensity = 3 * blink; u.halo.material.opacity = Math.min(1, 0.7 * blink); u.halo.material.color.setHex(b.mode === 'follow' || b.mode === 'home' ? 0xc8ffd8 : 0xffd890); }
   for (const [id, m] of V.boats) if (!seen.has(id)) { V.S.remove(m); V.boats.delete(id); }
   // the beam, the pool of light, the light on the boats and rocks
@@ -5426,7 +5427,7 @@ function draw(now, dt) {
   V.pool.position.set(bx, 0.4, bz); V.pool.scale.set(spot * 1.25, spot * 1.25, 1); V.pool.material.opacity = W3.S.night ? 0.8 : 0.45;
   V.spotL.position.set(bx, 22, bz);
   // the camera: on the gallery, turning with the beam, looking out (further when the light is far)
-  const C = V.cam, ease = 1 - Math.exp(-dt * 1.6); let da = az - C.a; C.a += da * ease; C.D += (clamp(dist * 1.15, 70, 210) - C.D) * ease;
+  const C = V.cam, ease = 1 - Math.exp(-dt * 1.6); let da = az - C.a; C.a += da * ease; C.D += (clamp(dist * 1.15, 70, 118) - C.D) * ease;      /* 22 Nov 2026: looks down more, so the sea fills the screen (a quarter of it was black sky) */
   const cam = W3.cam; cam.fov = 55; cam.updateProjectionMatrix(); cam.position.set(Math.sin(C.a) * 3.0, CAM_Y, -Math.cos(C.a) * 3.0); cam.lookAt(Math.sin(C.a) * C.D, 0, -Math.cos(C.a) * C.D);
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   W3.setFocus(bx * 0.5, 0, bz * 0.5, 120);

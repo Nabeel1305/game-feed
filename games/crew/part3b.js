@@ -21,10 +21,10 @@ const SV = window.THREE ? new THREE.Vector3() : null;
 function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2 }; SV.set(x, y, z); return W3.screen(SV); }
 // what you can see: a shape cast from you by rays that stop at walls; everything outside it is darkened
 function fogDraw(g) { if (!V3 || V3.none) return; const Y = g.you, n = 150, pts = []; for (let i = 0; i < n; i++) { const a = i / n * TAU, dx = Math.cos(a), dz = Math.sin(a); let r = 0.2; while (r < YOUV) { const x = Y.x + dx * r, z = Y.z + dz * r; if (!g.g[Math.floor(z) * SW + Math.floor(x)]) { r += 0.35; break; } r += 0.15; } pts.push(scr(Y.x + dx * r, 0.3, Y.z + dz * r)); }
-  const s = 0.5, f = ui.fog || (ui.fog = document.createElement('canvas')); if (f.width !== Math.ceil(W * s) || f.height !== Math.ceil(H * s)) { f.width = Math.ceil(W * s); f.height = Math.ceil(H * s); } const x = f.getContext('2d');
+  const s = 0.125, f = ui.fog || (ui.fog = document.createElement('canvas')); if (f.width !== Math.ceil(W * s) || f.height !== Math.ceil(H * s)) { f.width = Math.ceil(W * s); f.height = Math.ceil(H * s); } const x = f.getContext('2d');
   x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, f.width, f.height); x.fillStyle = g.lightsOut > 0 ? 'rgba(4,6,18,.88)' : 'rgba(10,8,30,.6)'; x.fillRect(0, 0, f.width, f.height);
-  x.globalCompositeOperation = 'destination-out'; x.filter = 'blur(6px)'; x.fillStyle = '#000'; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p.x * s, p.y * s) : x.moveTo(p.x * s, p.y * s)); x.closePath(); x.fill(); x.filter = 'none'; x.globalCompositeOperation = 'source-over';
-  ctx.drawImage(f, 0, 0, W, H); }
+  x.globalCompositeOperation = 'destination-out'; /* 22 Nov 2026: no canvas blur here (it halved the frame rate): the fog is drawn an eighth of the size and stretched, which softens its edge for nothing */ x.fillStyle = '#000'; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(p.x * s, p.y * s) : x.moveTo(p.x * s, p.y * s)); x.closePath(); x.fill(); x.globalCompositeOperation = 'source-over';
+  ctx.imageSmoothingEnabled = true; ctx.drawImage(f, 0, 0, W, H); }
 // ---------- the buttons (bottom right) ----------
 function buttons(g) { const r = 44 * k, s = 32 * k, bx = W - r - 18, by = H - r - 40 * k, out = [], kt = canKill(g), vn = g.inVent >= 0 || ventNear(g) >= 0, bd = bodyNear(g), jb = jobNear(g) >= 0;
   out.push({ id: 'knock', x: bx, y: by, r, on: !!kt, cd: g.cd, max: g.cfg.cd, label: 'KNOCK OUT', icon: '✊', col: '#ff3a5a' });

@@ -5426,7 +5426,7 @@ function foeModel(kind) {
     if (kind === 'shaman') { add(new T.ConeGeometry(0.4, 0.9, 10), bm, 0, 0.6, 0); add(new T.CylinderGeometry(0.025, 0.025, 1.6, 5), M(0x5a4030), 0.32, 0.9, 0); const o = add(new T.SphereGeometry(0.1, 10, 8), M(0x80ff80, { emissive: 0x40ff60, emissiveIntensity: 2 }), 0.32, 1.75, 0); const gl = V3.glow(0x80ff90, 1.2, 0.6); gl.position.copy(o.position); g.add(gl); }
     if (kind === 'ogre') { add(new T.CylinderGeometry(0.06, 0.12, 0.9, 6), M(0x5a4030), 0.35, 0.9, -0.1).rotation.x = 0.6; }
     if (kind === 'giant') { add(new T.BoxGeometry(0.7, 0.3, 0.4), M(0x7a7470), 0, 1.05, 0); } }
-  g.scale.setScalar(FSIZE[kind] * 1.35); g.traverse(o => { if (o.isMesh) o.castShadow = !!FOES[kind].boss || kind === 'ogre' || kind === 'ram'; }); return g;
+  g.scale.setScalar(FSIZE[kind] * 1.75);      /* 22 Nov 2026: goblins and towers a third bigger; they were specks */ g.traverse(o => { if (o.isMesh) o.castShadow = !!FOES[kind].boss || kind === 'ogre' || kind === 'ram'; }); return g;
 }
 // this siege's road: worn into the grass; its pads set out; the trees at the forest's edge opened where it comes out
 function setRoadView(g) {
@@ -5496,11 +5496,11 @@ function draw(now, dt) {
   CAM.asp !== innerWidth / innerHeight && fitCam(); place(CAM.d); if (FX.shake > 0) { W3.cam.position.x += (Math.random() - 0.5) * FX.shake * 0.04; W3.cam.position.z += (Math.random() - 0.5) * FX.shake * 0.04; }
   // towers
   g.towers.forEach((tw, i) => { const cur = V.towers[i], key = tw ? tw.kind + tw.lv : '';
-    if (!cur || cur.userData.key !== key) { if (cur) V.S.remove(cur); V.towers[i] = null; if (tw) { const m = towerModel(tw.kind, tw.lv); m.scale.setScalar(1.2); m.userData.base = 1.2; m.userData.key = key; m.position.set(PADS[i][0], 0.27, PADS[i][1]); V.S.add(m); V.towers[i] = m; } }
+    if (!cur || cur.userData.key !== key) { if (cur) V.S.remove(cur); V.towers[i] = null; if (tw) { const m = towerModel(tw.kind, tw.lv); m.scale.setScalar(1.55); m.userData.base = 1.55; m.userData.key = key; m.position.set(PADS[i][0], 0.27, PADS[i][1]); V.S.add(m); V.towers[i] = m; } }
     const m = V.towers[i]; if (!m) return; const u = m.userData; if (u.turn) u.turn.rotation.y += (((tw.aim - u.turn.rotation.y + Math.PI * 3) % TAU) - Math.PI) * Math.min(1, dt * 8);
     if (u.arm) { const sh = g.shots.find(s => s.from === i && s.t < 0.25); u.arm.rotation.x = sh ? -1.2 * (1 - sh.t / 0.25) : u.arm.rotation.x * 0.9 + 0.3 * 0.1; }
     if (u.orb) u.orb.position.y += Math.sin(t * 2 + i) * 0.003; if (u.spin) u.spin.rotation.y += dt * 0.6;
-    const f = ui.flash[i] || 0; m.scale.setScalar(1.2 * (1 + f * 0.25)); if (f) ui.flash[i] = Math.max(0, f - dt); });
+    const f = ui.flash[i] || 0; m.scale.setScalar(1.55 * (1 + f * 0.25)); if (f) ui.flash[i] = Math.max(0, f - dt); });
   // the selected pad: its ring of range; pads glow when you can afford to build
   V.ring.visible = V.disc.visible = false;
   const selT = G && ui.sel >= 0 ? G.towers[ui.sel] : null;

@@ -103,6 +103,7 @@ function draw(now, dt) {
   const sw = g.held ? -g.th : Math.atan2(-p.vz, Math.max(0.1, p.vy + 8)) * -0.4; V.P.rotation.set(sw, 0, -g.lean * 0.3);
   for (const a of V.arms) if (a.userData.s) { a.rotation.x = g.held ? Math.sin(t * 2) * 0.1 - g.om * 0.08 : -0.9; a.position.z = g.held ? 0 : 0.2; }
   // the camera: behind and a little above, following along the route, looking ahead to the next vine
+  if (W3.cam.near !== 2.3) { W3.cam.near = 2.3; W3.cam.updateProjectionMatrix(); }      /* 22 Nov 2026: a vine hanging right in front of the camera is cut away, so it cannot cross the view */
   const nv = g.vines[g.on + 1] || g.vines[g.on], want = new T.Vector3(p.x + 0.6, p.y + 1.5, p.z + 4.1), look = new T.Vector3((p.x + nv.x) / 2, (p.y + nv.y - nv.L * 0.6) / 2 + 0.5, Math.min(p.z - 4, nv.z));
   if (ui.snap || !V.started) { V.camPos.copy(want); V.look.copy(look); V.started = true; } else { V.camPos.lerp(want, Math.min(1, dt * 4)); V.look.lerp(look, Math.min(1, dt * 4)); } ui.snap = false;
   cam.position.copy(V.camPos); cam.fov = innerWidth > innerHeight ? 54 : 64; cam.updateProjectionMatrix(); cam.lookAt(V.look);

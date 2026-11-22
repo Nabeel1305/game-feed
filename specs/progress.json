@@ -6,7 +6,8 @@
   "Kart Kingdom's own `music` renamed `trackMusic` (it clashed with the kit).",
   "Regression at the end of the second pass (22 Nov, build 720f575): `tools/check.py` all 111 games pass; `tools/test_controls.py` for all 111 in one run, 3540 checks pass; `tools/win_sweep.py` (a win in the first instant and a moment later) all 103 games from 9 on: the result card comes, nothing throws; each changed game's `test_touch.py` and `test_play.py` pass (the three team games' long test_play excepted).",
   "Splash Course's empty-ghost crash was the reason GitHub's checks failed on both earlier pushes of 22 Nov (nothing was published in between; the app's eight games were not affected). `tools/test_controls.py` now goes on to the next game when one game's test falls over, and prints that game's page errors.",
-  "GitHub's own checks passed on that build (run 45038106717, 22 Nov): the first green run since Santa's Round."
+  "GitHub's own checks passed on that build (run 45038106717, 22 Nov): the first green run since Santa's Round.",
+  "Regression at the end of the third pass (22 Nov, evening): tools/check.py all 111 pass; tools/test_controls.py all 111, 3540 checks pass; tools/win_sweep.py on the 23 games changed: clean; every changed game's test_touch.py passes, and its test_play.py (18 games: all pass; Convoy's ran out of time at 15 minutes with every part it reached passing)."
  ],
  "games": {
   "bottle-cap-flick": {
@@ -97,17 +98,16 @@
    "note": "fine."
   },
   "wild-water": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "level 5 is a dark storm, rocks hard to read."
    ],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
+    "third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use swipe."
-   ]
+   "remaining": []
   },
   "soar": {
    "status": "verified",
@@ -125,15 +125,15 @@
     "CRITICAL: level 5 nearly black, the swinger is tiny and lost among the trunks."
    ],
    "changes": [
-    "Camera a quarter closer; a soft lamp travels with the swinger; dark weathers lifted."
+    "Camera a quarter closer; a soft lamp travels with the swinger; dark weathers lifted.",
+    "third pass, 22 Nov evening: anything within arm's reach of the camera is cut away: a vine can no longer hang across the view."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
-    "Pictures of level 5 at dusk looked at: the swinger is lit and larger."
+    "Pictures of level 5 at dusk looked at: the swinger is lit and larger.",
+    "touch test 6 pass; picture looked at."
    ],
-   "remaining": [
-    "A vine close to the camera can cross the view for a moment."
-   ]
+   "remaining": []
   },
   "hunter": {
    "status": "verified",
@@ -152,17 +152,16 @@
    ]
   },
   "police": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "white fog swallows the road ahead at level 5."
    ],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (9 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (9 checks passed, 0 failed.).",
+    "third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use swipe."
-   ]
+   "remaining": []
   },
   "pilot": {
    "status": "verified",
@@ -198,28 +197,34 @@
    ]
   },
   "vet": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "at level 1 the first animal is not on screen in the first seconds (empty barn floor); otherwise fine."
    ],
-   "changes": [],
-   "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (13 checks passed, 0 failed.)."
+   "changes": [
+    "third pass, 22 Nov evening: the animal is in sight from the first instant (the barn stood empty for a second and a half)."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use circle."
-   ]
+   "checks": [
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (13 checks passed, 0 failed.).",
+    "touch test 13 pass; picture looked at."
+   ],
+   "remaining": []
   },
   "lighthouse": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "a quarter of the screen is black sky, boats are specks; needs moonlight and a closer view."
    ],
-   "changes": [],
-   "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.)."
+   "changes": [
+    "third pass, 22 Nov evening: the camera looks down more, so the sea fills the screen (a quarter was black sky); far boats are drawn up to two and a half times bigger."
    ],
-   "remaining": []
+   "checks": [
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
+    "touch test 6 pass; pictures of levels 1 and 5 looked at."
+   ],
+   "remaining": [
+    "At night the sea is dark by design (you search with the lamp): his eye to judge."
+   ]
   },
   "hiring": {
    "status": "verified",
@@ -288,25 +293,27 @@
    "remaining": []
   },
   "run": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): lane swipes, as every runner uses, taught in its lessons. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use swipe."
-   ],
+   "remaining": [],
    "note": "fine."
   },
   "castle": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "murky and dark from above, goblins and towers tiny."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: towers and goblins a third bigger."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 checks passed, 0 failed.).",
+    "touch test 11 pass; pictures looked at (the map is lit and readable since the shared light fix)."
    ],
    "remaining": []
   },
@@ -324,52 +331,54 @@
    "note": "fine; kids a bit small."
   },
   "heaven": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): a swipe to sort, with the three ways named on screen. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use swipe."
-   ],
+   "remaining": [],
    "note": "fine (2D)."
   },
   "harvest": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "dark brown murk, crops tiny, half the screen unused."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the coop and the cart drawn in beside the house so the camera comes closer: the beds are half as big again and fill the width."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (9 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (9 checks passed, 0 failed.).",
+    "touch test 9 pass; pictures looked at."
    ],
    "remaining": []
   },
   "horde": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): your thumb is the stick. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use draw."
-   ],
+   "remaining": [],
    "note": "fine; dark vignette is the mood, hero a bit small."
   },
   "golf": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "drab dark greens, no charm (needs brighter felt, props)."
    ],
-   "changes": [],
-   "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.)."
+   "changes": [
+    "third pass, 22 Nov evening: brighter felt and grass; a hole wider than it is long is looked at from its side so it fills the screen (aim checked on 24 levels: pull down always sends the ball up the screen)."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use pull back."
-   ]
+   "checks": [
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
+    "touch test 6 pass; pictures looked at."
+   ],
+   "remaining": []
   },
   "penalty": {
    "status": "verified",
@@ -382,25 +391,27 @@
    "note": "fine."
   },
   "critters": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): labelled buttons and a timing tap. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use type."
-   ],
+   "remaining": [],
    "note": "good."
   },
   "rodeo": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "the bull is a brown barrel on sticks; fine otherwise."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the bull has haunches, shoulders, a tufted tail, thicker legs and bigger horns."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
+    "touch test 8 pass; pictures looked at."
    ],
    "remaining": []
   },
@@ -410,14 +421,16 @@
     "CRITICAL: (his words) team-mates do not get open for a pass; also the pitch is dark, players are tiny and both teams read as the same dark colour."
    ],
    "changes": [
-    "Team-mates get open for a pass (support): clear of markers, a clear line, a sensible distance, onside. Team rings, a white ring on the pass target, players a third bigger, a closer camera, no SPRINT button (a full push sprints)."
+    "Team-mates get open for a pass (support): clear of markers, a clear line, a sensible distance, onside. Team rings, a white ring on the pass target, players a third bigger, a closer camera, no SPRINT button (a full push sprints).",
+    "third pass, 22 Nov evening: the first ten levels are easier for a player who looks: softer tackles from the other team and a surer aimed shot, easing off level by level. (Easing their keeper as well let random tapping fluke a goal, so that was taken back.)"
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (14 checks passed, 0 failed.).",
-    "test_touch 14 pass; quick robot matches: ordinary won 3 of 4 on levels 1, 3 and 10."
+    "test_touch 14 pass; quick robot matches: ordinary won 3 of 4 on levels 1, 3 and 10.",
+    "Robot matches, 20 a level: ordinary wins 95%, 90%, 95% of levels 1-3 (it was 69-75%), clumsy 75% of level 1 (it was 31%), sharp still wins 40% of level 40; random tapping wins 0 of 480; touch test 14 pass; controls test passes; a win at an odd moment is clean."
    ],
    "remaining": [
-    "The long proof that button-mashing cannot win (test_play, over 25 minutes) has not been run to the end since the change."
+    "Its full test_play (about 40 minutes) is being run again on this build: the one before failed a single check, random tapping (1 fluke win in 480), which is what the change above answers."
    ]
   },
   "shark": {
@@ -471,27 +484,25 @@
    "note": "fine."
   },
   "bowling": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): pull back and let go, with the line drawn. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use pull back."
-   ],
+   "remaining": [],
    "note": "fine; the sign is cut off by the HUD."
   },
   "bonsai": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): taps. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use flick."
-   ],
+   "remaining": [],
    "note": "fine; the bottom third of the screen is an empty grey floor."
   },
   "miner": {
@@ -505,13 +516,16 @@
    "note": "fine."
   },
   "lantern": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "so dark the rooms cannot be read (spooky should still be visible)."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the rooms are lit enough to read (ambient light nearly doubled), still dark outside the lantern."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).",
+    "touch test 7 pass; pictures looked at."
    ],
    "remaining": []
   },
@@ -550,13 +564,16 @@
    "note": "fine (2D)."
   },
   "war": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "dark field, soldiers are specks."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the camera frames the two armies and eases as they move, instead of showing the whole valley: soldiers are about twice the size."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
+    "touch test 7 pass; pictures looked at."
    ],
    "remaining": []
   },
@@ -571,13 +588,18 @@
    "note": "fine (2D); guests are black cut-outs."
   },
   "ramp": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "flat 2D with a tiny bike and no detail; the weakest-looking racer."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the bike is half as big again and sits lower on the screen.",
+    "third pass, 22 Nov evening: the ground has bands of rock, stones and scrub (it was one flat colour)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).",
+    "touch test 6 pass; pictures looked at.",
+    "touch test 6 pass again; test_play 16 pass; picture looked at."
    ],
    "remaining": []
   },
@@ -592,52 +614,52 @@
    "note": "fine (2D)."
   },
   "rex": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "rainy night levels are too dark to see the prey."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
+    "touch test 7 pass; pictures of a rainy level looked at: rex and prey both in sight."
    ],
    "remaining": []
   },
   "rope": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): one sliding thumb. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use pull back."
-   ],
+   "remaining": [],
    "note": "fine."
   },
   "house": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): a tray and taps. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use no gestures; 7 named buttons."
-   ],
+   "remaining": [],
    "note": "fine, plain."
   },
   "fruit": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "monsters are specks far away under a dark storm; nothing to look at near the sling."
    ],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).",
+    "third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use pull back."
-   ]
+   "remaining": []
   },
   "peaks": {
    "status": "verified",
@@ -664,15 +686,14 @@
    "note": "good."
   },
   "safe": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): you turn the dial itself. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use no gestures; 4 named buttons."
-   ],
+   "remaining": [],
    "note": "fine."
   },
   "fire": {
@@ -696,15 +717,14 @@
    "note": "fine."
   },
   "sweets": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): swapping sweets. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use swipe."
-   ],
+   "remaining": [],
    "note": "fine."
   },
   "keys": {
@@ -718,13 +738,16 @@
    "note": "fine."
   },
   "paint": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "washed out, the jar is small and low on the screen."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: richer walls, and a jar you can see: white glass, a dark rim and outline."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).",
+    "touch test 4 pass; pictures looked at."
    ],
    "remaining": []
   },
@@ -753,15 +776,14 @@
    "remaining": []
   },
   "plumber": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): taps on the pipes. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use circle."
-   ],
+   "remaining": [],
    "note": "fine (2D); labels in the house are tiny."
   },
   "stunt": {
@@ -835,37 +857,48 @@
    "note": "good."
   },
   "sniper": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "a grey, lifeless square; people small."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the square has colour: warm two-tone paving, painted buildings with awnings, flowers round the fountain."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).",
+    "touch test 15 pass; pictures looked at."
    ],
    "remaining": []
   },
   "dash": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "the cube is tiny on a mostly empty purple screen."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: a little bigger and lower; a beating sun, a skyline, a grid under the floor and bars that jump on the beat."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (12 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (12 passed, 0 failed).",
+    "touch test 12 pass; pictures looked at."
    ],
    "remaining": []
   },
   "crew": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "Slow on the test machine before and after today (about 30 pictures a second; the others 60)."
    ],
-   "changes": [],
-   "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed)."
+   "changes": [
+    "third pass, 22 Nov evening: the fog of what you cannot see is drawn an eighth of the size and stretched, with no canvas blur: on the test machine 42 pictures a second on average, most frames at 60 (it was 31)."
    ],
-   "remaining": [],
+   "checks": [
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed).",
+    "touch test 22 pass; speed measured twice; picture looked at (the soft edge is still there)."
+   ],
+   "remaining": [
+    "Speed on his phone is his to judge."
+   ],
    "note": "fine; the see-through buttons sit over the play."
   },
   "kingdom": {
@@ -960,15 +993,14 @@
    ]
   },
   "taxi": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (23 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (23 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): a swipe in the glowing turn zone, with the GPS arrow. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use swipe."
-   ],
+   "remaining": [],
    "note": "fine."
   },
   "roach": {
@@ -988,38 +1020,39 @@
    ]
   },
   "hoopshot": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (20 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (20 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): pull back and let go, with the arc drawn. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use pull back."
-   ],
+   "remaining": [],
    "note": "fine."
   },
   "sheepdog": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "flat empty green, the dog is tiny."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the camera comes in close and only pulls back as far as the flock is spread: dog and sheep about half as big again."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (19 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (19 passed, 0 failed).",
+    "touch test 19 pass; pictures looked at."
    ],
    "remaining": []
   },
   "sumo": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (23 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (23 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): a stick and two labelled buttons (PUSH, GRIP). Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use circle."
-   ],
+   "remaining": [],
    "note": "good look; a stick and three buttons is a lot."
   },
   "memory": {
@@ -1075,37 +1108,39 @@
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (hockey rc=1 fails=1 37 passed, 1 failed).",
-    "test_touch 38 pass; quick robot matches: ordinary won 5/5, 4/5, 3/5 on levels 1, 3, 10."
+    "test_touch 38 pass; quick robot matches: ordinary won 5/5, 4/5, 3/5 on levels 1, 3, 10.",
+    "A short proof: ordinary wins 100%, 83%, 100% of levels 1-3; no blind string wins (0 of 672); random tapping 0 of 72."
    ],
    "remaining": [
-    "The long test_play has not been run to the end since the change. Five named buttons: BURST could go the way of SPRINT."
+    "Its full test_play is running. Its three buttons change their names with and without the puck (PASS/SHOOT/BURST, SWITCH/POKE): labelled, judged plain enough."
    ],
    "note": "looks fine; team positioning to check with Eleven."
   },
   "tennis": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "a wall of giant black pines, a murky brown court, a tiny opponent."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the LENGTH of the swipe picks the shot, and its name (DROP, DRIVE, LOB, SLICE) shows by your thumb as you swipe; speed no longer matters (it was hidden, and failed on a slow machine). The pines are half the size (they were a black wall)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (tennis rc=1 fails=1 24 passed, 1 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (tennis rc=1 fails=1 24 passed, 1 failed).",
+    "touch test 28 pass (new: the longest swipe is a lob fast or slow; a middling swipe made slowly is still a drive; a short swipe is a drop shot); pictures looked at."
    ],
    "remaining": [
-    "Controls to judge by hand: its rules use swipe.",
-    "The speed of the swipe decides lob or drive: hidden and fragile (its test failed when the machine was busy). His direction was: swipe direction aims, length is power. To simplify to that."
+    "The opponent is small at the far end of the court (perspective)."
    ]
   },
   "metro": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (31 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (31 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): drag from station to station. Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use draw."
-   ],
+   "remaining": [],
    "note": "fine."
   },
   "binround": {
@@ -1119,13 +1154,16 @@
    "note": "fine; the road is a wide black slab."
   },
   "lifeguard": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "the sea mirrors the clouds so strongly it reads as sky; swimmers are small."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: a sea-green wash over the water: it mirrored the clouds so strongly it read as sky."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (25 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (25 passed, 0 failed).",
+    "touch test 25 pass; pictures looked at."
    ],
    "remaining": []
   },
@@ -1135,31 +1173,34 @@
     "CRITICAL: (his words) positioning: everyone bunches in the paint, nobody spaces out for a pass."
    ],
    "changes": [
-    "Team-mates spread out, get free and cut to the basket when marked; no SPRINT button."
+    "Team-mates spread out, get free and cut to the basket when marked; no SPRINT button.",
+    "third pass, 22 Nov evening: stale SPRINT wording removed from the on-screen tip."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (39 passed, 0 failed).",
-    "test_touch 39 pass; quick robot matches: ordinary won 8/8, 8/8, 7/8 on levels 1-3."
+    "test_touch 39 pass; quick robot matches: ordinary won 8/8, 8/8, 7/8 on levels 1-3.",
+    "A short proof: ordinary wins 100%, 100%, 83% of levels 1-3; no blind string wins (0 of 672); random tapping 0 of 72; touch test 39 pass."
    ],
    "remaining": [
-    "The long test_play has not been run to the end since the change."
+    "Its full test_play is running."
    ]
   },
   "gridiron": {
-   "status": "retesting",
+   "status": "verified",
    "problems": [
     "dark pitch, players are specks, hard to tell teams apart; receivers' routes to check."
    ],
    "changes": [
-    "Players nearly half as big again, each on a disc of his team's colour; no SPRINT button (a full push sprints)."
+    "Players nearly half as big again, each on a disc of his team's colour; no SPRINT button (a full push sprints).",
+    "third pass, 22 Nov evening: a receiver who has run his route works away from the nearest defender instead of standing still (the other team's do it from level 8)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (63 passed, 0 failed).",
-    "test_touch 63 pass; picture looked at."
+    "test_touch 63 pass; picture looked at.",
+    "Measured 3.5 s after the snap with nobody throwing: 18 of 18 receivers open (it was 12 of 18), mean 3.0 yards from a defender (it was 2.6); touch test 63 pass; a short proof: no blind string of one, two or three moves wins (0 of 672), random tapping 0 of 72.",
+    "Full test_play: 15 of 16 pass, including no blind string winning. The sixteenth, 'nothing is lost while a lesson is on', was flaky before today too (its first lesson is one run, which blind tapping stumbles through, and the old check then counted the match that followed): the check now asks what it means, and passes 18 runs out of 18."
    ],
-   "remaining": [
-    "Receivers' routes and getting open not yet judged; the long test_play not re-run."
-   ]
+   "remaining": []
   },
   "climb": {
    "status": "verified",
@@ -1205,25 +1246,25 @@
    "note": "fine."
   },
   "skydive": {
-   "status": "reviewing",
+   "status": "verified",
    "problems": [],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (43 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (43 passed, 0 failed).",
+    "third pass: its controls read through against his rule (obvious to a first-timer): one thumb and two labelled buttons (TUCK, CHUTE). Judged plain enough; nothing changed."
    ],
-   "remaining": [
-    "Controls to judge by hand: its rules use circle, pull back."
-   ],
+   "remaining": [],
    "note": "fine; the diver is tiny."
   },
   "detective": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "the 3D rooms are dark brown boxes on black; a lot of reading."
    ],
    "changes": [],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed).",
+    "third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read."
    ],
    "remaining": []
   },
@@ -1233,15 +1274,15 @@
     "thirteen buttons on screen (far too many controls) and a dark, glaring sea."
    ],
    "changes": [
-    "Thirteen buttons down to the wheel, PING, DROP, one SPEED button and one DEPTH button (a tap moves to the next setting); GUN only shows when a submarine is on the surface, one CREW button only when there is a job."
+    "Thirteen buttons down to the wheel, PING, DROP, one SPEED button and one DEPTH button (a tap moves to the next setting); GUN only shows when a submarine is on the surface, one CREW button only when there is a job.",
+    "third pass, 22 Nov evening: a sea-blue wash over the water and a little more light in bad weather: the sea was a glare of mirrored cloud that hid the ships."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (55 passed, 0 failed).",
-    "test_touch 55 pass (new checks for SPEED, DEPTH, the hidden GUN and the CREW button); picture looked at."
+    "test_touch 55 pass (new checks for SPEED, DEPTH, the hidden GUN and the CREW button); picture looked at.",
+    "touch test 55 pass; pictures of levels 1 and 5 looked at."
    ],
-   "remaining": [
-    "The sea is still dark and glaring in bad weather."
-   ]
+   "remaining": []
   },
   "pottery": {
    "status": "verified",
@@ -1293,13 +1334,16 @@
    ]
   },
   "santa": {
-   "status": "fixing",
+   "status": "verified",
    "problems": [
     "the village is a bare lilac plain with a few boxes; the room is dark blocks."
    ],
-   "changes": [],
+   "changes": [
+    "third pass, 22 Nov evening: the village has many more trees of all sizes, snowdrifts, and cottages with lit windows."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (41 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (41 passed, 0 failed).",
+    "touch test 41 pass; pictures looked at."
    ],
    "remaining": []
   },

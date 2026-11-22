@@ -17,8 +17,8 @@ function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], s = S1(), x = 1
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
   for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
   for (const t of TXT) { t.t += dt; t.y -= dt * 20; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; } }
-const PPM = () => Math.min(W, H * 0.62) / 390 * 20;      // pixels per metre
-const toS = (x, y) => ({ x: (x - camX) * PPM() + W * 0.32, y: H * 0.5 - (y - camY) * PPM() });
+const PPM = () => Math.min(W, H * 0.62) / 390 * 29;      // pixels per metre (22 Nov 2026: 20 made the bike a speck on an empty screen)
+const toS = (x, y) => ({ x: (x - camX) * PPM() + W * 0.3, y: H * 0.56 - (y - camY) * PPM() });
 function lay() { const s = S1(); return { s, left: { x: 0, y: H * 0.62, w: W / 2, h: H * 0.38 }, right: { x: W / 2, y: H * 0.62, w: W / 2, h: H * 0.38 } }; }
 function drawBike(x, y, a, s, lean, alpha = 1, col = '#ff3a2a') { const c = ctx, m = PPM(); c.save(); c.globalAlpha = alpha; c.translate(x, y); c.rotate(-a); const r = 0.42 * m, wb = 0.78 * m;
   for (const wx of [-wb, wb]) { c.strokeStyle = '#111'; c.lineWidth = 0.14 * m; c.beginPath(); c.arc(wx, -r, r, 0, TAU); c.stroke(); c.strokeStyle = 'rgba(200,200,200,.7)'; c.lineWidth = 1; for (let i = 0; i < 4; i++) { const q = i * Math.PI / 4 + x * 0.05; c.beginPath(); c.moveTo(wx + Math.cos(q) * r * 0.85, -r + Math.sin(q) * r * 0.85); c.lineTo(wx - Math.cos(q) * r * 0.85, -r - Math.sin(q) * r * 0.85); c.stroke(); } }
@@ -42,6 +42,11 @@ function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, s = S1
   // the ground
   const x0 = camX - W * 0.32 / m - 2, x1 = camX + W * 0.7 / m + 2; ctx.beginPath(); ctx.moveTo(toS(x0, -100).x, H + 10);
   for (let x = Math.max(0, x0); x <= x1; x += DX) { const p = toS(x, groundY(g, x)); ctx.lineTo(p.x, p.y); } ctx.lineTo(toS(x1, 0).x, H + 10); ctx.closePath(); ctx.fillStyle = P.ground; ctx.fill();
+  // 22 Nov 2026 (the audit: "flat, no detail"): bands of rock under the surface, stones in it, scrub on it
+  ctx.save(); ctx.clip(); for (let j = 1; j <= 5; j++) { ctx.strokeStyle = j % 2 ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.09)'; ctx.lineWidth = (5 + j * 2.5) * s; ctx.beginPath(); for (let x = Math.max(0, x0); x <= x1; x += DX * 2) { const p = toS(x, groundY(g, x)); const yy = p.y + j * 26 * s + Math.sin(x * 0.35 + j * 1.7) * 6 * s; if (x === Math.max(0, x0)) ctx.moveTo(p.x, yy); else ctx.lineTo(p.x, yy); } ctx.stroke(); }
+  for (let i = Math.floor(x0 / 1.7); i <= x1 / 1.7; i++) { if (i < 0) continue; const h1 = Math.sin(i * 127.1) * 43758.5453, r1 = h1 - Math.floor(h1), h2 = Math.sin(i * 311.7) * 24634.63, r2 = h2 - Math.floor(h2), xx = i * 1.7 + r1, p = toS(xx, groundY(g, xx)); ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + (16 + r2 * 90) * s, (4 + r1 * 9) * s, (3 + r2 * 5) * s, r1, 0, TAU); ctx.fill(); }
+  ctx.restore();
+  for (let i = Math.floor(x0 / 3.1); i <= x1 / 3.1; i++) { if (i < 0) continue; const h1 = Math.sin(i * 91.7) * 15731.743, r1 = h1 - Math.floor(h1); if (r1 > 0.55) continue; const xx = i * 3.1 + r1 * 2, p = toS(xx, groundY(g, xx)), hh = (7 + r1 * 16) * s; ctx.strokeStyle = 'rgba(40,60,30,.55)'; ctx.lineWidth = 2 * s; ctx.beginPath(); for (const a of [-0.5, -0.15, 0.2, 0.55]) { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.sin(a) * hh, p.y - Math.cos(a) * hh); } ctx.stroke(); }
   ctx.strokeStyle = P.top; ctx.lineWidth = 5; ctx.beginPath(); for (let x = Math.max(0, x0); x <= x1; x += DX) { const p = toS(x, groundY(g, x)); if (x === Math.max(0, x0)) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); } ctx.stroke();
   // flags and the finish
   for (const f of g.track.flags) { if (f < x0 || f > x1 || f === 0) continue; const p = toS(f, groundY(g, f)); ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - 2.2 * m); ctx.stroke(); ctx.fillStyle = f <= b.lastFlag ? '#4ad06a' : '#ffd020'; ctx.beginPath(); ctx.moveTo(p.x, p.y - 2.2 * m); ctx.lineTo(p.x + 0.9 * m, p.y - 1.9 * m); ctx.lineTo(p.x, p.y - 1.6 * m); ctx.fill(); }

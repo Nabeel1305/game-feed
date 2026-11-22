@@ -5601,7 +5601,7 @@ function poseAnimal(G, p, A, t, dt) {
   const u = A.userData, B = u.B, s = p.stress, face = p.face;
   // walking in, walking (or bolting) out
   let x = 0, walk = 0;
-  if (p.phase === 'in') { const q = 1 - easeOut(Math.min(1, p.pt / 1.6)); x = -face * q * 4.5; walk = q > 0.01 ? 1 : 0; }
+  if (p.phase === 'in') { const q = 1 - easeOut(Math.min(1, p.pt / 1.6)); x = -face * q * 2.4;      /* 22 Nov 2026: she is in sight from the first instant (the barn stood empty for a second and a half) */ walk = q > 0.01 ? 1 : 0; }
   if (p.phase === 'out') { const q = p.bolted ? p.pt * p.pt * 3 : Math.max(0, p.pt - 0.6) * 2.4; x = face * q * 1.8; walk = q > 0.01 ? (p.bolted ? 2 : 1) : 0; }
   A.position.set(x, 0, 0); A.scale.set(face, 1, 1);
   const tele = p.tele, shiver = tele ? Math.sin(t * 70) * 0.004 : 0, fidget = s > 0.5 ? Math.sin(t * 3.1) * (s - 0.5) * 0.06 : 0;

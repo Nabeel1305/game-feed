@@ -33,7 +33,7 @@ const UPGRADES = [
 ];
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Beginner'], [40, 'Putter'], [130, 'Club player'], [320, 'Ace'], [700, 'Champion'], [1500, 'Hole-in-one legend']];
-const THEMES = [{ name: 'The garden', felt: 0x2e8a3a, rail: 0x9a6a3a }, { name: 'The beach', felt: 0x2a9a8a, rail: 0xe8d8b0 }, { name: 'The castle', felt: 0x6a2a8a, rail: 0x8a8a8a }, { name: 'Candy land', felt: 0xe86aa0, rail: 0xf4f0e0 }];
+const THEMES = [{ name: 'The garden', felt: 0x3fb24c, rail: 0x9a6a3a }, { name: 'The beach', felt: 0x34b8a4, rail: 0xe8d8b0 }, { name: 'The castle', felt: 0x8a44b0, rail: 0x8a8a8a }, { name: 'Candy land', felt: 0xe86aa0, rail: 0xf4f0e0 }];
 const themeOf = N => Math.floor((N - 1) / 5) % 4;
 const WEATHERS = ['morning', 'noon', 'golden', 'sunset', 'overcast', 'noon', 'golden', 'dusk'];
 function weatherOf(N) { if (N <= 3) return ['morning', 'noon', 'golden'][N - 1]; const R = rng(N * 7741 + 5); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }

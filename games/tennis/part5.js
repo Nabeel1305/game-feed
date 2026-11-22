@@ -93,7 +93,7 @@ $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (two thumbs): a floating stick on the left half moves you; on the right half a swipe swings (a tap tosses the serve).
-// The swipe: its direction aims, its length is how deep, its speed the pace. In practice, the drill bar at the top changes drill.
+// The swipe: its direction aims, its length is the shot (short: a drop shot; longer: a drive, deeper and harder the longer it is; longest: a lob); down is a slice. In practice, the drill bar at the top changes drill.
 const SWL = () => H * 0.28;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const x = e.clientX, y = e.clientY;
   if (G.cfg.practice && ui.drillBar && y < ui.drillBar.y + ui.drillBar.h + 6 && y > ui.drillBar.y - 6) { setDrill(G, G.drill + (x < W / 2 ? -1 : 1)); sfx.click(); return; }
@@ -104,7 +104,9 @@ cv.addEventListener('pointermove', e => { const x = e.clientX, y = e.clientY; co
 function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); }
   const sw = ui.swipe; if (sw && sw.id === e.pointerId) { ui.swipe = null; if (!G || G.over || e.type === 'pointercancel') return; const dx = e.clientX - sw.x0, dy = e.clientY - sw.y0, L = Math.hypot(dx, dy), dur = Math.max(0.04, (performance.now() - sw.t0) / 1000);
     if (L < 14 * k) { if (G.phase === 'serve' && G.server === 0 && !G.toss) toss(G); return; }
-    const len = L / SWL(); swing(G, { ax: dx / L, ay: dy / L, len, speed: len / dur * 0.6 }); } }
+    const len = L / SWL(), kind = shotOf(dx, dy);      // 22 Nov 2026: the LENGTH of the swipe picks the shot (it was its speed: hidden, and it failed on a slow machine); the name shows by your thumb as you swipe
+    swing(G, { ax: dx / L, ay: dy / L, len, speed: kind === 'DRIVE' ? 2.6 + len * 2.2 : kind === 'SLICE' ? 3 : 1.5 }); } }
+function shotOf(dx, dy) { const L = Math.hypot(dx, dy), len = L / SWL(); if (L < 14 * k) return ''; if (dy / L > 0.2) return 'SLICE'; return len < 0.33 ? 'DROP' : len < 0.95 ? 'DRIVE' : 'LOB'; }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // your rackets: the racket's colour, opened by the stars you win
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;

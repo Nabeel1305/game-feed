@@ -13,15 +13,15 @@ for m in re.finditer(r'^- (\d+) [^:\n]+: ((?:.+\n)(?:  .+\n)*)', aud, re.M): see
 FIXED = {
  'mocktail': 'REBUILT. First person: you look down at the glass. Real-looking drinks: colour bands, a shining surface, bubbles, ice, a bottle that pours. Easy controls: hold a bottle to pour, tap everything else, hold STIR and SHAKE. The next thing to touch glows.',
  'hunter': 'NEW CONTROLS. Left thumb: a stick (gentle push creeps, full push runs and it hears you). Right thumb: drag the crosshair (green on the chest), tap THROW. Lion: tap its side, then tap when it leaps. A closer view and shorter grass.',
- 'eleven': 'Team-mates now run into space to give you a pass. Coloured rings under both teams, a white ring on who your pass goes to, bigger players, closer camera. No SPRINT button: push the stick all the way.',
+ 'eleven': 'Team-mates now run into space to give you a pass. Coloured rings under both teams, a white ring on who your pass goes to, bigger players, closer camera. No SPRINT button: push the stick all the way. The first levels are easier to score in.',
  'hoops3': 'Team-mates spread out and get free for a pass, and cut to the basket when marked. No SPRINT button: push the stick all the way.',
  'hockey': 'Team-mates get open for a pass, one of them in front of the net.',
  'cake': 'The icing is smooth now, not square blocks.', 'roller': 'Paint goes on smooth, not in square pixels.',
  'pilot': 'Night and storm landings: the runway lights now shine through the dark and you can read the land.',
- 'vine': 'A closer camera and a soft light on the swinger: you can see yourself at dusk and at night.',
+ 'vine': 'A closer camera and a soft light on the swinger: you can see yourself at dusk and at night. A vine can no longer hang across the view.',
  'judge': 'No typing needed: tap + Prison, + Fine and so on, then − and + to set the amount. (Typing still works.)',
- 'convoy': 'Thirteen buttons down to a few: the wheel, PING, DROP, one SPEED button, one DEPTH button. GUN and CREW only show when they are needed.',
- 'gridiron': 'Bigger players on team-colour discs. No SPRINT button: push the stick all the way.',
+ 'convoy': 'Thirteen buttons down to a few: the wheel, PING, DROP, one SPEED button, one DEPTH button. GUN and CREW only show when they are needed. The sea is blue now, not a glare.',
+ 'gridiron': 'Bigger players on team-colour discs. No SPRINT button: push the stick all the way. Receivers now work to get open after their route.',
  'sprint': 'The camera at the start is behind your shoulder looking down your lane; after the line it comes round to face you.',
  'drone': 'NEW CONTROLS, one thumb: hold it down to fly forwards, slide to turn and climb, lift to brake. (It was two sticks.)',
  'roach': 'A closer camera. No SPRINT button: push the stick all the way.',
@@ -33,15 +33,27 @@ FIXED = {
  'dress': 'The model has a face now, and her head is no longer hidden behind the card.',
  'cook': 'The camera looks down at the counter: bigger food, no dark wall.',
  'splash': 'A hidden crash fixed (it only showed in testing, never in normal play).',
+ 'lighthouse': 'The sea fills the screen (less black sky) and far boats are bigger.',
+ 'castle': 'Towers and goblins a third bigger.', 'harvest': 'The beds are half as big again and fill the screen.',
+ 'lantern': 'The rooms can be read now; still dark outside your lantern.',
+ 'war': 'The camera frames the two armies instead of the whole valley: soldiers twice the size.',
+ 'rex': 'Trees no longer hide the rex; the ferns are smaller.',
+ 'sniper': 'The square has colour: warm paving, painted buildings, awnings, flowers.',
+ 'sheepdog': 'A closer camera: the dog and the sheep are bigger.',
+ 'tennis': 'NEW: the LENGTH of your swipe picks the shot, and its name shows by your thumb (DROP, DRIVE, LOB). Speed no longer matters. Smaller pines.',
+ 'vet': 'The animal is in sight from the first instant.', 'golf': 'Brighter greens; wide holes are turned to fill the screen.',
+ 'rodeo': 'A proper bull: haunches, shoulders, tufted tail, bigger horns.', 'ramp': 'The bike is half as big again.',
+ 'paint': 'Richer colours and a jar you can see.', 'dash': 'A beating sun, a skyline and bars that jump on the beat; the cube is a little bigger.',
+ 'lifeguard': 'The sea looks like sea now (it mirrored the sky).', 'santa': 'A fuller village: more trees, snowdrifts, cottages with lit windows.',
+ 'crew': 'Faster: the shadow you cannot see into is drawn a cheaper way.',
  'blocks': 'You can see the squares of the board now.', 'peaks': 'Bigger cards.', 'kingdom': 'A hidden fault fixed. It keeps its own race music.',
 }
 NOBAND = {'drumline', 'keys', 'dash', 'kingdom'}
+PROG = json.load(open(os.path.join(R, 'specs', 'progress.json')))['games']
 rows = []
 for g in games:
     s = seen.get(g['number'], ''); crit = s.startswith('C '); flaw = s.startswith('F '); note = s[2:] if (crit or flaw) else s
-    fixed = FIXED.get(g['id'], ''); todo = ''
-    if g['id'] in ('mocktail', 'hunter', 'eleven', 'hoops3', 'hockey', 'cake', 'roller', 'blocks', 'peaks'): todo = ''
-    elif crit or flaw: todo = note
+    fixed = FIXED.get(g['id'], ''); todo = ' '.join(PROG.get(g['id'], {}).get('remaining', []))      # what is still open comes from the record (PROGRESS.md), not from the first list of faults
     rows.append({'n': g['number'], 'id': g['id'], 'name': g['name'], 'genre': g['feed'].get('genre', ''), 'thumbs': g['feed'].get('thumbs', 1), 'fixed': fixed, 'todo': todo, 'crit': bool(crit and not fixed), 'band': g['id'] not in NOBAND})
 out = R + '/out/review'; shutil.rmtree(out, ignore_errors=True); os.makedirs(out + '/games')
 for g in games: os.makedirs(f'{out}/games/{g["id"]}'); shutil.copy(f'{R}/games/{g["id"]}/index.html', f'{out}/games/{g["id"]}/index.html')
@@ -74,7 +86,7 @@ footer .cnt{flex:1;font-size:13px;color:var(--dim)}footer button{border:0;border
 .hide{display:none}
 </style></head><body>
 <header><h1>Game Review</h1><div class="sub">__N__ games · tap PLAY, then write what is wrong. Your notes stay on this phone as you type.</div>
-<div class="bar"><button class="chip on" data-f="all">All</button><button class="chip" data-f="fixed">Changed most</button><button class="chip" data-f="todo">Still on my list</button><button class="chip" data-f="untested">Not rated yet</button><button class="chip" data-f="noted">With your notes</button></div></header>
+<div class="bar"><button class="chip on" data-f="all">All</button><button class="chip" data-f="fixed">Changed most</button><button class="chip" data-f="todo">Still open</button><button class="chip" data-f="untested">Not rated yet</button><button class="chip" data-f="noted">With your notes</button></div></header>
 <main id="list"></main>
 <footer><div class="cnt" id="cnt"></div><button id="copy">COPY MY NOTES</button></footer>
 <div id="player"><div id="pbar"><button id="pback">‹ Games</button><div class="pn" id="pname"></div><button id="pnotes">✎ Notes</button></div><iframe id="frame" title="game" allow="autoplay; fullscreen"></iframe></div>
@@ -91,8 +103,8 @@ function notesHtml(g) { const r = get(g.id + '.r'); return `<div class="rate" da
 <label class="f">FLAWS <small>(fixing this would make it much better)</small></label><textarea data-k="${g.id}.f" placeholder="e.g. the character is too small">${esc(get(g.id + '.f'))}</textarea>`; }
 function show(g) { const noted = get(g.id + '.c') || get(g.id + '.f'), rated = get(g.id + '.r'); return filter === 'all' || (filter === 'fixed' && g.fixed) || (filter === 'todo' && g.todo) || (filter === 'untested' && !rated) || (filter === 'noted' && noted); }
 function render() { const L = document.getElementById('list'); L.innerHTML = GAMES.filter(show).map(g => `<section class="g${g.crit ? ' crit' : ''}" id="g-${g.id}"><div class="top"><div class="num">#${g.n}</div><div class="nm">${esc(g.name)}<div class="gen">${esc(g.genre)} · ${g.thumbs === 2 ? 'two thumbs' : 'one thumb'}</div></div><button class="play" data-play="${g.id}">PLAY</button></div>
-${g.fixed ? `<span class="tag t-fix">CHANGED</span>` : ''}<span class="tag t-all">NEW LIGHT${g.band ? ' + MUSIC' : ''}</span>${g.todo ? `<span class="tag t-todo">ON MY LIST</span>` : ''}
-${g.fixed ? `<p class="w"><b>What I changed:</b> ${esc(g.fixed)}</p>` : ''}${g.todo ? `<p class="w"><b>What I still see wrong:</b> ${esc(g.todo)}</p>` : ''}${notesHtml(g)}</section>`).join('') || '<p class="sub">Nothing here.</p>'; count(); }
+${g.fixed ? `<span class="tag t-fix">CHANGED</span>` : ''}<span class="tag t-all">NEW LIGHT${g.band ? ' + MUSIC' : ''}</span>${g.todo ? `<span class="tag t-todo">STILL OPEN</span>` : ''}
+${g.fixed ? `<p class="w"><b>What I changed:</b> ${esc(g.fixed)}</p>` : ''}${g.todo ? `<p class="w"><b>Still open, or yours to judge:</b> ${esc(g.todo)}</p>` : ''}${notesHtml(g)}</section>`).join('') || '<p class="sub">Nothing here.</p>'; count(); }
 function count() { let r = 0, n = 0; for (const g of GAMES) { if (get(g.id + '.r')) r++; if (get(g.id + '.c') || get(g.id + '.f')) n++; } document.getElementById('cnt').textContent = `${r} of ${GAMES.length} rated · ${n} with notes`; }
 document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.k; if (k) { set(k, e.target.value); count(); } });
 document.addEventListener('click', e => { const t = e.target;

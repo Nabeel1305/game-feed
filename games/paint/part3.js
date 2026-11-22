@@ -65,9 +65,10 @@ function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, L = la
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
 function paintBack(P, L, g) { const oc = draw.oc || (draw.oc = document.createElement('canvas')); oc.width = cv.width; oc.height = cv.height; const o = oc.getContext('2d'); o.setTransform(DPR, 0, 0, DPR, 0, 0);
   const bg = o.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, P.wall[0]); bg.addColorStop(1, P.wall[1]); o.fillStyle = bg; o.fillRect(0, 0, W, H);
-  const R0 = rng(31); for (let i = 0; i < 18; i++) { o.fillStyle = TIERS[(R0() * 10) | 0].c + '22'; o.beginPath(); o.arc(R0() * W, R0() * H * 0.8, 6 + R0() * 26, 0, TAU); o.fill(); }
+  const R0 = rng(31); for (let i = 0; i < 18; i++) { o.fillStyle = TIERS[(R0() * 10) | 0].c + '40'; o.beginPath(); o.arc(R0() * W, R0() * H * 0.8, 6 + R0() * 26, 0, TAU); o.fill(); }
   o.fillStyle = '#b88a5a'; o.fillRect(0, L.floor + 6, W, 16 * L.s); o.fillStyle = '#8a6040'; o.fillRect(0, L.floor + 6 + 16 * L.s, W, H); o.fillStyle = 'rgba(0,0,0,.15)'; o.fillRect(0, L.floor + 6, W, 3);
-  if (!g) return; const jx0 = L.sx(0), jx1 = L.sx(g.jw), top = L.sy(L.jh); o.fillStyle = 'rgba(220,240,255,.28)'; o.beginPath(); o.roundRect(jx0 - 3, top, jx1 - jx0 + 6, L.floor - top + 6, [4, 4, 18, 18]); o.fill(); o.strokeStyle = 'rgba(150,170,200,.45)'; o.lineWidth = 2; o.stroke();
+  if (!g) return; const jx0 = L.sx(0), jx1 = L.sx(g.jw), top = L.sy(L.jh); o.fillStyle = 'rgba(255,255,255,.55)'; o.beginPath(); o.roundRect(jx0 - 3, top, jx1 - jx0 + 6, L.floor - top + 6, [4, 4, 18, 18]); o.fill(); o.strokeStyle = 'rgba(60,80,120,.8)'; o.lineWidth = 4; o.stroke();      /* 22 Nov 2026: a jar you can see (it was a faint outline on a pale wall) */
+  o.fillStyle = 'rgba(255,255,255,.5)'; o.fillRect(jx0 + 6, top + 10, 5, (L.floor - top) * 0.7); o.fillStyle = 'rgba(60,80,120,.8)'; o.beginPath(); o.roundRect(jx0 - 9, top - 7, jx1 - jx0 + 18, 9, 4); o.fill();
   o.fillStyle = 'rgba(0,0,0,.12)'; o.beginPath(); o.ellipse((jx0 + jx1) / 2, L.floor + 8, (jx1 - jx0) / 2 + 8, 6, 0, 0, TAU); o.fill(); }
 // ---------- the side and the top: the colour chart, the palette, the paint, what is next ----------
 function hud(G, L, now) { const s = L.s, c = G.cfg;

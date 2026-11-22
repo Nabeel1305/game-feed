@@ -90,7 +90,12 @@ function onEvent(G, e) { const p = e.x != null ? scr(e.x, 2, e.z) : { x: W / 2, 
   } }
 // ---------- every frame ----------
 function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight; cam.fov = asp < 0.8 ? 64 : 48; cam.aspect = asp; cam.updateProjectionMatrix(); const sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.05 : 0;
-  cam.position.set(sh, asp < 0.8 ? 70 : 56, asp < 0.8 ? 66 : 52); cam.lookAt(0, 0, asp < 0.8 ? 4 : -2); cam.updateMatrixWorld(); }
+  // 22 Nov 2026 (the audit: soldiers were specks on a dark field with 40% of the screen empty): the camera frames the armies, not the whole valley, and eases as they move
+  const C = placeCam.C || (placeCam.C = { x: 0, z: 4, d: 96, key: null }); let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9, n = 0; for (const u of g.units) if (!u.gone && !u.rout) { x0 = Math.min(x0, u.x); x1 = Math.max(x1, u.x); z0 = Math.min(z0, u.z); z1 = Math.max(z1, u.z); n++; }
+  if (!n) { x0 = -10; x1 = 10; z0 = -10; z1 = 10; } const hw = Math.max(13, (x1 - x0) / 2 + 7), hd = Math.max(15, (z1 - z0) / 2 + 9), tf = Math.tan(cam.fov * Math.PI / 360), full = asp < 0.8 ? 96 : 76;
+  const want = Math.min(full, Math.max(hw / (tf * asp), hd * 0.73 / (tf * 0.6))), ease = C.key !== g ? 1 : 1 - Math.exp(-(dt || 0.016) * 1.4); C.key = g;
+  C.x += (clamp((x0 + x1) / 2, -14, 14) - C.x) * ease; C.z += ((z0 + z1) / 2 + 2 - C.z) * ease; C.d += (want - C.d) * ease;
+  const ky = asp < 0.8 ? 0.728 : 0.733, kz = asp < 0.8 ? 0.686 : 0.68; cam.position.set(C.x + sh, ky * C.d, C.z + kz * C.d); cam.lookAt(C.x, 0, C.z); cam.updateMatrixWorld(); }
 let IG = null; function idleG() { if (!IG || IG.over) { IG = newGame(Math.max(2, store.get('level', 1) | 0), { seed: (Math.random() * 1e6) | 0 }); IG.mem = {}; } honest(IG, { react: 0.3, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
 function draw(now, dt) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#1a1a14'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D battlefield.', W / 2, H / 2); return; }

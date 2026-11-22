@@ -21,6 +21,7 @@ function buildWorld() {
   V3 = { T, S: W3.scene, t: 0, for: null, items: [], fx: [] }; const V = V3, M = (c, o = {}) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7 }, o)); V.M = M;
   V.boxG = new T.BoxGeometry(1, 1, 1); V.cylG = new T.CylinderGeometry(1, 1, 1, 12);
   V.sea = W3.water({ size: 9000, color: 0x2a4a52, y: 0 });
+  { const T2 = THREE, tint = new T2.Mesh(new T2.PlaneGeometry(9000, 9000), new T2.MeshBasicMaterial({ color: 0x1f4f66, transparent: true, opacity: 0.5, depthWrite: false })); tint.rotation.x = -Math.PI / 2; tint.position.y = 0.05; tint.renderOrder = 1; W3.scene.add(tint); V.tint = tint; }      /* 22 Nov 2026: a sea-blue wash; the water was a glare of mirrored cloud that hid the ships */
   V.me = ship(V, 'escort', mySkin().col); V.S.add(V.me);
   V.ringG = new T.RingGeometry(0.94, 1, 48).rotateX(-Math.PI / 2); V.wakeG = new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   V.course = new T.Line(new T.BufferGeometry().setFromPoints(Array.from({ length: 24 }, () => new T.Vector3())), new T.LineDashedMaterial({ color: 0xffffff, dashSize: 8, gapSize: 6, transparent: true, opacity: 0.7 })); V.S.add(V.course);
@@ -34,7 +35,7 @@ function ship(V, kind, col) { const T = V.T, M = V.M, g = new T.Group(), b = (m,
   else { const hull = M(0x2a2e30, { roughness: 0.4 }); b(hull, 66, 6, 7, 0, 0, 0); b(hull, 9, 8, 4, 6, 6, 0); }
   return g; }
 function buildPlace(V, G) { const T = V.T; for (const o of V.items) V.S.remove(o); V.items = []; const add = o => { V.S.add(o); V.items.push(o); return o; };
-  W3.setSky(PLACES[G.cfg.place].sky, { wind: [Math.cos(G.dir), Math.sin(G.dir)] });
+  W3.setSky(PLACES[G.cfg.place].sky, { wind: [Math.cos(G.dir), Math.sin(G.dir)] }); if (W3.S.night || W3.S.rain || W3.S.storm || /dusk|storm|night|overcast/.test(PLACES[G.cfg.place].sky)) { W3.S.exposure *= 1.2; W3.R.toneMappingExposure = W3.S.exposure; if (W3.S.hemiI != null) W3.S.hemiI *= 1.3; }      /* 22 Nov 2026: bad weather at sea was too dark to read */
   V.ms = G.M.map(m => add(ship(V, 'merchant', [0x3a2a24, 0x2a3a4a, 0x4a3a2a, 0x2a2a2a, 0x5a2a2a, 0x2a4a3a][m.i % 6])));
   V.al = G.allies.map(() => add(ship(V, 'ally', 0x8a9298)));
   V.subs = G.subs.map(() => { const g = add(ship(V, 'sub')); const peri = new T.Mesh(V.cylG, V.M(0x2a2e30)); peri.scale.set(0.4, 7, 0.4); peri.position.y = 3.5; g.userData.peri = peri; add(peri); return g; });

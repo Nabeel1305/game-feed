@@ -5358,7 +5358,7 @@ function buildWorld() {
   V.spot = new T.SpotLight(0xffd8a0, 60, 11, 0.55, 0.45, 1.4); V.spot.castShadow = true; V.spot.shadow.mapSize.set(512, 512); S.add(V.spot, V.spot.target);
   V.glow = new T.PointLight(0xffb060, 14, 4.5, 1.5); S.add(V.glow);
   V.cone = new T.Mesh(new T.ConeGeometry(1, 1, 24, 1, true), new T.MeshBasicMaterial({ color: 0xffd8a0, transparent: true, opacity: 0.06, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide })); V.cone.geometry.translate(0, -0.5, 0); V.cone.geometry.rotateZ(Math.PI / 2); S.add(V.cone);
-  V.moon = new T.DirectionalLight(0x7a90d0, 0.7); V.moon.position.set(-10, 20, 5); S.add(V.moon); V.amb = new T.AmbientLight(0x3a3458, 1.4); S.add(V.amb);
+  V.moon = new T.DirectionalLight(0x7a90d0, 0.7); V.moon.position.set(-10, 20, 5); S.add(V.moon); V.amb = new T.AmbientLight(0x4a4470, 2.6); S.add(V.amb);
   W3.setQuality(stepN); return V;
 }
 // the floor plan for this game: floors, walls, furniture, jars, the black over rooms not yet seen
@@ -5425,7 +5425,7 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0a0812'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D house.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now;
-  if (!V.sky) { V.sky = 1; W3.setSky('night', {}); W3.scene.background = new THREE.Color(0x04030a); W3.scene.fog.near = 30; W3.scene.fog.far = 90; W3.S.hemiI = 0.12; W3.sun.intensity = 0.0; W3.S.exposure = 1.0; W3.scene.environmentIntensity = 0.08; }
+  if (!V.sky) { V.sky = 1; W3.setSky('night', {}); W3.scene.background = new THREE.Color(0x04030a); W3.scene.fog.near = 30; W3.scene.fog.far = 90; W3.S.hemiI = 0.34; W3.sun.intensity = 0.0; W3.S.exposure = 1.3; W3.scene.environmentIntensity = 0.08; }
   if (V.key !== g) { V.key = g; buildHouse(V, g); ui.snap = true; }
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, 0, g.me.z, 12); W3.render(dt);
   if (G) overlay(G, t);

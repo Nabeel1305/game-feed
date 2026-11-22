@@ -43,6 +43,23 @@ genius, and that's what you forget." What that changed, for every game from now 
 - **Canvas `filter` on every draw call is slow** (Cake Boss icing): draw plain on an offscreen canvas, then one filtered blit.
 - **`tools/test_controls.py` takes one id or none** (extra ids are ignored), and it rebuilds `out/app`: never two at once, and
   not beside `tools/check.py`. A failure at the end of the full run under load is run again alone before it is believed.
+- **A known problem is fixed, not listed** (his words, 22 Nov, evening: "how can you not fix a known problem. Fix it"). The
+  second pass ended with 22 games marked as having a known fault. Never hand him that: a fault written down is the next thing
+  to do, in the same sitting. Two things made it quick: look again first (several were already cured by the shared light fix
+  and nobody had looked), and most "tiny, empty, dark" complaints are the camera: frame what the player acts on (Battle Lines
+  frames the armies, Sheepdog the flock, Harvest the beds, Golf turns a wide hole), then light, then colour.
+- **What picks the action must be on the screen** (Tennis): the speed of a swipe chose lob or drive, which nobody could see and
+  a slow machine got wrong. Now the length picks it and the shot's name is written by the thumb while it moves.
+- **Canvas blur every frame halves the frame rate** (Shadow Crew's fog, like Cake Boss's icing): draw small and stretch.
+  `imageSmoothingQuality = 'high'` on a stretched full-screen image is slower still: leave the default.
+- **A team-mate who has finished his job stands still to be marked** (Gridiron receivers at the end of a route): give him
+  something to do after it (work away from the nearest defender).
+- **The team games' long proofs do finish** (Eleven about 40 minutes, the others under ten): they "never finished" on 22 Nov only
+  because of the `//` comment bug. Run them after any change to how team-mates or opponents play. Eleven's found that easing
+  the other keeper let random tapping fluke a goal (1 match in 480): ease what helps the player who looks (a surer aimed
+  shot, softer tackles), not what helps any shot go in. Gridiron's "nothing is lost while a lesson is on" was flaky from the
+  start: its first lesson is a single run, which blind tapping stumbles through; the check now asks what it means (never lost
+  with a lesson still up), six times over.
 - **Look at GitHub after every push** (`gh run list --limit 3`). Both pushes of 22 Nov failed there and I did not look: Splash
   Course's result card never came in the full controls run. The cause was real: a run ended in its first instant (only a robot
   can) saved an empty ghost trace, and drawing an empty ghost threw on every frame, so the game froze. "It passes alone" was the

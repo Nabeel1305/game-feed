@@ -16,7 +16,7 @@ const NAMES = { '-3': 'ALBATROSS!', '-2': 'EAGLE!', '-1': 'BIRDIE!', '0': 'PAR',
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 36, far: 1200, near: 0.1 })) { V3 = { none: true }; return V3; }
   const S = W3.scene, R0 = W3.rng(7);
-  const grassM = new T.MeshStandardMaterial({ color: 0x6aa04a, roughness: 1, map: W3.grainTex(256, 4, 200, 45, 8) }); grassM.map.repeat.set(20, 20);
+  const grassM = new T.MeshStandardMaterial({ color: 0x8cc864, roughness: 1, map: W3.grainTex(256, 4, 200, 45, 8) }); grassM.map.repeat.set(20, 20);
   const grass = new T.Mesh(new T.PlaneGeometry(200, 200), grassM); grass.rotation.x = -Math.PI / 2; grass.position.y = -0.02; grass.receiveShadow = true; S.add(grass);
   const trees = []; for (let i = 0; i < 60; i++) { const a = R0() * TAU, r = 14 + R0() * 30; trees.push({ x: Math.sin(a) * r, z: Math.cos(a) * r - 4, y: 0, s: 0.35 + R0() * 0.35, hue: R0(), shade: R0() }); } W3.pines(trees, { layers: 3, shadow: true });
   const bushM = new T.MeshStandardMaterial({ color: 0x3a7a2a, roughness: 1, flatShading: true }); for (let i = 0; i < 30; i++) { const b = new T.Mesh(new T.IcosahedronGeometry(0.5 + R0() * 0.6, 1), bushM); const a = R0() * TAU, r = 9 + R0() * 6; b.position.set(Math.sin(a) * r, 0.2, Math.cos(a) * r); b.castShadow = true; S.add(b); }
@@ -53,14 +53,15 @@ function buildHole(g) {
 }
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
 function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2 + x * 20, y: H / 2 + z * 20, front: true }; SV.set(x, y, z); return W3.screen(SV); }
-const CAM = { tilt: 1.0, d: 20, look: [0, 0, 0], key: '' };
+const CAM = { tilt: 1.0, d: 20, look: [0, 0, 0], key: '', rot: 0 };      // rot (22 Nov 2026): a hole wider than it is long is looked at from its side on a phone, so it fills the screen instead of a strip of it
 function fitCam(h, force) {
   const cam = W3.cam, asp = innerWidth / innerHeight, key = asp + ':' + h.cup.join() + h.key; if (CAM.key === key && !force) return; CAM.key = key; cam.fov = 36; cam.aspect = asp; cam.updateProjectionMatrix();
   const xs = h.poly.map(p => p[0]), zs = h.poly.map(p => p[1]); CAM.look = [(Math.min(...xs) + Math.max(...xs)) / 2, 0, (Math.min(...zs) + Math.max(...zs)) / 2 + 0.3];
+  { const wx = Math.max(...xs) - Math.min(...xs), wz = Math.max(...zs) - Math.min(...zs); CAM.rot = asp < 0.8 && wx > wz * 1.12 ? (h.tee[0] >= CAM.look[0] ? 1 : -1) * Math.PI / 2 : 0; if (CAM.rot) CAM.look[2] -= 0.3; }
   let lo = 4, hi = 120; for (let it = 0; it < 28; it++) { const d = (lo + hi) / 2; place(d); cam.updateMatrixWorld(); let ok = true; for (const p of h.poly) { SV.set(p[0], 0, p[1]).project(cam); if (Math.abs(SV.x) > 0.9 || SV.y > 0.62 || SV.y < -0.7) { ok = false; break; } } if (ok) hi = d; else lo = d; }
   CAM.d = hi; place(hi);
 }
-function place(d) { const cam = W3.cam, L = CAM.look; cam.position.set(L[0], L[1] + Math.sin(CAM.tilt) * d, L[2] + Math.cos(CAM.tilt) * d); cam.lookAt(L[0], L[1], L[2]); }
+function place(d) { const cam = W3.cam, L = CAM.look, cd = Math.cos(CAM.tilt) * d; cam.position.set(L[0] + Math.sin(CAM.rot) * cd, L[1] + Math.sin(CAM.tilt) * d, L[2] + Math.cos(CAM.rot) * cd); cam.lookAt(L[0], L[1], L[2]); }
 function onEvent(G, e) {
   const cx = W / 2, cy = H * 0.36, b = G.ball, bs = b ? scr(b.x, 0.5, b.z) : { x: cx, y: cy };
   switch (e.k) {
@@ -108,7 +109,7 @@ function draw(now, dt) {
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,248,210,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
 }
 // the aim: from the pull, the way the ball will go (dotted, longer with power), and a power ring round the ball
-function aimDir(a) { const dx = a.x - a.x0, dy = a.y - a.y0, len = Math.hypot(dx, dy); return { ang: Math.atan2(-dx, -dy), pow: clamp(len / (150 * k), 0, 1), len }; }
+function aimDir(a) { const dx = a.x - a.x0, dy = a.y - a.y0, len = Math.hypot(dx, dy); return { ang: Math.atan2(-dx, -dy) + CAM.rot, pow: clamp(len / (150 * k), 0, 1), len }; }
 function aimLine(G) {
   const a = ui.aim, b = G.ball; if (!a || !b || G.moving) return; const { ang, pow, len } = aimDir(a); if (len < 10 * k) return;
   const L = G.cfg.aim * (0.3 + pow), steps = 14; ctx.fillStyle = pow > 0.8 ? '#ff8a6a' : '#ffffff';

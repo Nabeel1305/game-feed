@@ -17,7 +17,7 @@ const TIERS = [
   { n: 'Red', c: '#ff4a4a', r: 0.42 }, { n: 'Orange', c: '#ff9a2a', r: 0.55 }, { n: 'Yellow', c: '#ffd83a', r: 0.71 }, { n: 'Lime', c: '#b8e83a', r: 0.87 },
   { n: 'Green', c: '#3ac85a', r: 1.04 }, { n: 'Teal', c: '#2ac8b8', r: 1.22 }, { n: 'Sky', c: '#4ab8ff', r: 1.42 }, { n: 'Blue', c: '#3a6aff', r: 1.64 },
   { n: 'Violet', c: '#9a5aff', r: 1.88 }, { n: 'Pink', c: '#ff6ac8', r: 2.14 }, { n: 'Rainbow', c: '#ffffff', r: 2.44 } ];
-const PLACES = [{ name: 'The Studio', wall: ['#fff3e0', '#ffe0c0'] }, { name: 'The Gallery', wall: ['#e8f0ff', '#d0dcff'] }, { name: 'The Workshop', wall: ['#f0ffe8', '#d8f0c8'] }, { name: 'The Attic', wall: ['#ffe8f4', '#f0d0e8'] }];
+const PLACES = [{ name: 'The Studio', wall: ['#ffd9a8', '#ffb07a'] }, { name: 'The Gallery', wall: ['#bcd4ff', '#8fb0f2'] }, { name: 'The Workshop', wall: ['#cdeeb8', '#9dd484'] }, { name: 'The Attic', wall: ['#f9c6e2', '#e09acb'] }];
 const placeOf = N => Math.floor((N - 1) / 6) % 4;
 const UPGRADES = [
   { id: 'paint', name: 'More paint', desc: 'Four more drops on every level.', max: 2, cost: l => 40 + l * 50 },
