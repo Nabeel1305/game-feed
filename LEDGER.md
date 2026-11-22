@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**108 games** so far. Next number: **109**.
+**109 games** so far. Next number: **110**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -116,6 +116,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 106 | **Pottery Wheel** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/CKQSrVfQeUR3YjaxGHgR6S) | `games/pottery/index.html` |
 | 107 | **Joust** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/7YEdDKBqpVbzBNgsC4ygxX) | `games/joust/index.html` |
 | 108 | **Splash Course** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QYpVghGPM1iKKzFaMdMQYw) | `games/splash/index.html` |
+| 109 | **Surf** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/NyEELwRWLiPUnb9XnCDeRp) | `games/surf/index.html` |
 
 ## What each game is
 
@@ -227,9 +228,9 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 106. **Pottery Wheel**: Mine, the calm one for set 19: a customer's order (a bowl, cup, vase, jug, bottle, dish, tall vase or moon jar, and a glaze). Centre the clay with steady pressure, pull the walls up with steady drags (too fast tears), shape the spinning pot to the dotted outline, trim the rim, glaze and fire it; thin or leaning walls slump; rare kiln surprises.
 107. **Joust**: Jousting tournament in 3D lists: the horse gallops by itself; drag right to aim a lance whose tip sways in a learnable figure of eight, slide left to lean, hold BRACE just before the crash. Shield hit 1, braced centre (lance breaks) 2, unhorse them to win outright. Training targets, then six rivals with habits through tournament rounds.
 108. **Splash Course**: Obstacle course above sparkling pools in 3D: giant bouncing balls, the sweeper, the punch wall, the treadmill and the spinning cross. Left stick moves, hold-and-let-go JUMP (a ring shows the landing), DUCK. A splash puts you back at that obstacle in two seconds; medals for time; your best run races you as a ghost.
+109. **Surf**: Surfing in 3D: hold PADDLE and swipe up as the wave lifts you, then steer up and down the face ahead of the curl. Carves, snaps, cutbacks, airs with spins and barrel rides score; the same move again scores less. Three waves a session, beat the target; fast sections and barrels as you go; free surf.
 
 ## Up next (designed, not built yet)
 
-109. **Surf**: his idea 29: catch waves, carve, ride the barrel, tricks off the lip; balance and wipeouts. Spec: `specs/his-list-2026-11-21.md`.
 110. **Santa's Round**: his idea 31: fly the sleigh, land on roofs, sneak in, leave the right presents, do not wake anyone. Spec: `specs/his-list-2026-11-21.md`.
 111. **(my idea for set 20)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.

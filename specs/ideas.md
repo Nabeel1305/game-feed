@@ -185,3 +185,4 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 19 | 106 | Pottery Wheel (mine) | centre, pull, shape and trim a pot to a customer's outline; glaze and fire it | 1 | 1 |
 | 20 | 107 | Joust | charge down the lists, aim a swaying lance, brace at the crash, unhorse six rivals with habits | 4 | 2 |
 | 20 | 108 | Splash Course | an obstacle course above water: bouncing balls, sweeper, punch wall, treadmill, spinning cross; ghost of your best | 4 | 2 |
+| 20 | 109 | Surf | catch waves, carve the face ahead of the curl, snaps, cutbacks, airs and barrels | 3 | 2 |

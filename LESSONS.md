@@ -1344,6 +1344,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Par per obstacle, measured**: `parOf` was calibrated against a sharp robot's time per obstacle (tools in the session:
   per-obstacle split from the `cp` events); the qualifying time is par x 1.9 at level 1 down to 1.15.
 
+### 109. Surf (`games/surf/`): his idea 29, catching and riding waves (sideways, two thumbs, 3D)
+- **The face is a 2D world**: x along the shore, s from the base to the lip, heading and speed. Down the face gains speed,
+  up spends it, drag pulls towards a cruising speed, and the wave's push is strongest in the pocket near the curl
+  (`(2.5 + 2.8 near) * vp / 6.2`): you can outrun the curl only close to it. Tuning order that worked: first the cruising
+  speeds (shoulder ~1.2 x peel, pocket ~1.4 x), then the robot.
+- **Count a move the moment it is done**, not when the turn ends: a snap is a downward turn of 1 rad that started at the lip.
+  Waiting for the turn to end missed snaps whenever the next stick target carried the turn on.
+- **A big reversal turns round through up the face** (a cutback), not the short way into the flats, which bogged the board.
+  Only when the target is behind you: applying it to ordinary turns sent the robot the long way round.
+- **Blind pumping is real surfing**: up-down at a beat earns carves and snaps. What stops it winning: each repeat of a move
+  scores half, a wipeout keeps a quarter of that wave, and the target needs a mix.
+- **The barrel grows out of the curl** as it enters a barrel section (`tl = xb - x0`, up to 12 m), so nobody is under a lip
+  that appeared from nowhere; crouching stalls you (more drag) so the barrel can come over you.
+- **The wave is drawn 1.6 times taller than it rides** (VIS): a 1.6 m wave looked like a strip from the camera's distance.
+- **Three.js looking along +z puts +x on the left**: the wave is drawn mirrored (X = -x) so it peels to the right.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
