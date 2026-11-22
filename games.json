@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 108,
+  "next_number": 109,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3651,20 +3651,43 @@
         "P26"
       ],
       "summary": "Jousting tournament in 3D lists: the horse gallops by itself; drag right to aim a lance whose tip sways in a learnable figure of eight, slide left to lean, hold BRACE just before the crash. Shield hit 1, braced centre (lance breaks) 2, unhorse them to win outright. Training targets, then six rivals with habits through tournament rounds."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 108,
       "id": "splash",
       "name": "Splash Course",
-      "set": 20,
-      "summary": "his idea 32: an obstacle course above water: giant balls, sweeper, punching wall, conveyor, rotating cross; funny falls.",
-      "spec": "specs/his-list-2026-11-21.md",
-      "from": "his idea",
-      "intensity": 4,
-      "thumbs": 2
-    },
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-22",
+      "path": "games/splash/index.html",
+      "artifact": "https://claude.ai/artifact/QYpVghGPM1iKKzFaMdMQYw",
+      "artifact_slug": "beb383ff-19e7-4e7f-a527-e6ed5ee86598",
+      "apk_repo": null,
+      "storage_prefix": "spl.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Bounce the giant balls, dodge the punches, beat your ghost to the finish.",
+        "genre": "Obstacle course",
+        "intensity": 4,
+        "thumbs": 2,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Luckiest Guy",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P3",
+        "P4",
+        "P13",
+        "P17",
+        "P23"
+      ],
+      "summary": "Obstacle course above sparkling pools in 3D: giant bouncing balls, the sweeper, the punch wall, the treadmill and the spinning cross. Left stick moves, hold-and-let-go JUMP (a ring shows the landing), DUCK. A splash puts you back at that obstacle in two seconds; medals for time; your best run races you as a ghost."
+    }
+  ],
+  "planned": [
     {
       "number": 109,
       "id": "surf",

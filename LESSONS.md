@@ -1328,6 +1328,22 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Screen mapping**: aim +x is the screen's right because the camera looks down +z (world -x is screen right); test it by
   projecting two tips, close enough to the rival that the difference is more than a pixel.
 
+### 108. Splash Course (`games/splash/`): his idea 32, an obstacle course above water (sideways, two thumbs, 3D)
+- **One player model for five obstacles**: every surface answers "how high is the ground here" (`support`) and "how does it
+  carry you" (`carryV`: a swaying ball, the belt backwards, the cross round its centre). You move relative to what you stand
+  on; a jump takes its carry with you; landing takes it away again. New obstacles only need those two answers.
+- **A fixed pattern can be walked straight through**: the punch wall's gloves are timed so a walker at full speed is always
+  caught by one of them, whenever he sets off (each glove's phase shifts by less than the "out" window); the honest robot
+  waits in the gaps. Test: start the walk at 24 different moments.
+- **Blind luck on the balls**: straight jumps landed on the next ball, and a full jump could skip one. The balls alternate
+  left and right (a straight jump lands on an edge and slides off), and the longest jump is shorter than two ball spacings.
+- **Never let a planned jump end on a moving hazard's path**: the robot checks the whole flight, not just the landing.
+- **A trip must put you far enough back to jump again** (1.1 m), or the runner trips on the same hurdle for ever.
+- **The end card appears by real time, not frame time**: a heavy 3D page drawing at one frame a second in the test browser
+  took 12 s to show the card (frame time is capped at 0.05 s); `endT` now adds the real time (capped at 0.3 s).
+- **Par per obstacle, measured**: `parOf` was calibrated against a sharp robot's time per obstacle (tools in the session:
+  per-obstacle split from the `cp` events); the qualifying time is par x 1.9 at level 1 down to 1.15.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does
