@@ -1375,6 +1375,24 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
 - **Blind play cannot finish a house**: leaving is refused until exactly the wished presents are under the tree and every
   stocking is full (77,504 blind games won none).
 
+### 111. Skimming Stones (`games/skim/`): my idea for set 20, the calm one (upright, one thumb, 3D)
+- **A fixed first kiss is a free win for a rhythm**: every throw first touched the water 0.5 s after letting go, so "throw,
+  wait, tap" on a beat was always perfect and blind cycling passed the first lesson. The throw's upward speed now grows with
+  its power (0.5 + 2.5 x power), so the first kiss comes later for a harder throw; the dots show it.
+- **The first goals must be out of reach of no taps**: a hard throw with no good taps goes 20-40 m in 3-4 skips, so the
+  first goals are 9 skips and 48 m; a miss keeps only 45% of the speed (less for a round stone).
+- **Lessons count a run, not a total**: "two good taps" was passed by blind tapping over 90 s; "three good taps in a row on
+  one stone" (a miss or a wobble starts the count again) is not.
+- **The kiss time is interpolated, and the robot taps a little early and once more late**: frame steps let the real kiss fall
+  between frames; the exact moment (`tk`) decides the quality, and a tap just after a kiss with no tap still counts as good.
+- **Upright 3D needs a high camera**: from eye height the whole lake squashed into a strip at the horizon; the camera stands
+  4 m up looking 18 m out, follows the stone from 3-7 m up, and a portrait view is narrow (about 15 degrees each side at fov
+  58), so rings, pads and ducks are kept within a few metres of the middle.
+- **The sun in front for warmth, but not straight ahead**: azimuth 0 looks along +z (straight out over the lake); at 12 the
+  glare washed the sky white, at 170 it was behind you and the sky went dark. 50 keeps the warm side-light.
+- **Robots look before they throw**: the honest robot checks its path for lily pads and ducks (`pathHit`), aims around them or
+  waits for a duck to paddle past, as the dots let a person do.
+
 ### Settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; every game from #82 on)
 - tools/juice-kit.js keeps SET { mus, sfx, vib, vk }: sound effects go through BUS as before, music through its own MUSB
   (anything played inside music(() => ...)), both silenced by the master mute (the feed's Sound switch); vibe() does

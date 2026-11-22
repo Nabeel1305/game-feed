@@ -1,6 +1,6 @@
 {
   "about": "Official registry of every game in the feed. Numbers are permanent: never renumber or reuse one. 'planned' holds games that are designed but not built yet (their spec is in specs/). The feed app and LEDGER.md are generated from this file. A game is on the phone app only when its 'in_app' is true, and that is set only when Nabeel says to put it on the app; until then it is just a page for him to play-test. 'core': true marks the core games (the first six): they are inside the phone app itself and always on the phone. Every other game on the app is played over the internet, and he can save one from the Games list to keep it on the phone.",
-  "next_number": 111,
+  "next_number": 112,
   "feed_app": {
     "name": "Game Feed",
     "version": "0.6.1",
@@ -3753,17 +3753,41 @@
         "P20"
       ],
       "summary": "Christmas Eve in a 3D snowy village: fly the sleigh, hold LAND over a roof's glowing marker, slip down the chimney; inside, tiptoe past sleepers, creaky boards and a curious cat, leave the wished-for presents under the tree, fill the stockings, back up. Every house before dawn."
-    }
-  ],
-  "planned": [
+    },
     {
       "number": 111,
-      "id": "mine20",
-      "name": "(my idea for set 20)",
-      "set": 20,
-      "summary": "One of mine, to balance the set (picked when the set is built).",
-      "spec": "specs/ideas.md",
-      "from": "mine"
+      "id": "skim",
+      "name": "Skimming Stones",
+      "status": "testing",
+      "version": "0.1.0",
+      "added": "2026-11-22",
+      "path": "games/skim/index.html",
+      "artifact": "https://claude.ai/artifact/7zZyEJgJmUfjxZtGyAgY37",
+      "artifact_slug": "38a08b85-b818-4458-8443-2fb6f625d7be",
+      "apk_repo": null,
+      "storage_prefix": "skm.",
+      "feed": {
+        "mini": true,
+        "full": true,
+        "hook": "Skip a flat stone across a golden lake, tapping each time it kisses the water.",
+        "genre": "Calm / lakeside",
+        "intensity": 1,
+        "thumbs": 1,
+        "start": [
+          "#playBtn"
+        ],
+        "font": "Amatic SC",
+        "live": "window.__sim && window.__sim.playing()"
+      },
+      "principles": [
+        "P1",
+        "P3",
+        "P5",
+        "P16",
+        "P20"
+      ],
+      "summary": "A calm evening by a lake: drag back and throw a stone, then tap each time it kisses the water to keep it skipping. Lakes ask for skips, a distance past a buoy, floating rings or the old jetty; wind, lily pads and ducks come later."
     }
-  ]
+  ],
+  "planned": []
 }

@@ -2,7 +2,7 @@
 
 _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 
-**110 games** so far. Next number: **111**.
+**111 games** so far. Next number: **112**.
 
 **Game Feed** (the scrolling app with all the games, version 0.6.1): [open the feed](https://claude.ai/artifact/JfSmFDaJ9zshLfayLebibP) · [Android app](https://github.com/Nabeel1305/game-feed/releases/latest/download/GameFeed.apk) · 8 games in it.
 
@@ -118,6 +118,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 108 | **Splash Course** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/QYpVghGPM1iKKzFaMdMQYw) | `games/splash/index.html` |
 | 109 | **Surf** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/NyEELwRWLiPUnb9XnCDeRp) | `games/surf/index.html` |
 | 110 | **Santa's Round** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/NKLGt6chz6GnG6W3EWL4vk) | `games/santa/index.html` |
+| 111 | **Skimming Stones** | testing | not yet (he has not said so) | 0.1.0 | [play](https://claude.ai/artifact/7zZyEJgJmUfjxZtGyAgY37) | `games/skim/index.html` |
 
 ## What each game is
 
@@ -231,7 +232,4 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 108. **Splash Course**: Obstacle course above sparkling pools in 3D: giant bouncing balls, the sweeper, the punch wall, the treadmill and the spinning cross. Left stick moves, hold-and-let-go JUMP (a ring shows the landing), DUCK. A splash puts you back at that obstacle in two seconds; medals for time; your best run races you as a ghost.
 109. **Surf**: Surfing in 3D: hold PADDLE and swipe up as the wave lifts you, then steer up and down the face ahead of the curl. Carves, snaps, cutbacks, airs with spins and barrel rides score; the same move again scores less. Three waves a session, beat the target; fast sections and barrels as you go; free surf.
 110. **Santa's Round**: Christmas Eve in a 3D snowy village: fly the sleigh, hold LAND over a roof's glowing marker, slip down the chimney; inside, tiptoe past sleepers, creaky boards and a curious cat, leave the wished-for presents under the tree, fill the stockings, back up. Every house before dawn.
-
-## Up next (designed, not built yet)
-
-111. **(my idea for set 20)**: One of mine, to balance the set (picked when the set is built). Spec: `specs/ideas.md`.
+111. **Skimming Stones**: A calm evening by a lake: drag back and throw a stone, then tap each time it kisses the water to keep it skipping. Lakes ask for skips, a distance past a buoy, floating rings or the old jetty; wind, lily pads and ducks come later.

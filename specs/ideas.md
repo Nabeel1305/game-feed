@@ -187,3 +187,4 @@ two at most go in a set; every set has a calm one; the five sports are spread ou
 | 20 | 108 | Splash Course | an obstacle course above water: bouncing balls, sweeper, punch wall, treadmill, spinning cross; ghost of your best | 4 | 2 |
 | 20 | 109 | Surf | catch waves, carve the face ahead of the curl, snaps, cutbacks, airs and barrels | 3 | 2 |
 | 20 | 110 | Santa's Round | fly the sleigh, land on roofs, tiptoe past sleepers and the cat, leave the right presents before dawn | 2 | 2 |
+| 20 | 111 | Skimming Stones | (mine) throw a stone, tap as it kisses the water; skips, buoys, rings, the jetty, wind, lily pads, ducks | 1 | 1 |
