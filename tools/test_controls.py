@@ -137,7 +137,8 @@ def ladder(browser, base, g, errs):
     # resume
     pg.click('#pResume')
     ok(not shown(pg, '#ovPause'), T('Resume closes the menu'))
-    pg.wait_for_timeout(350)
+    t0 = time.time(); pg.wait_for_timeout(350)      # a busy runner can take longer than 350 ms to draw the next frame of a heavy 3D game (GitHub, 22 Nov 2026: Sandworm, once in 3540 checks): give it up to 4 s, a game that never carries on still fails
+    while pg.evaluate(c['tick']) == b and time.time() - t0 < 4: pg.wait_for_timeout(150)
     ok(pg.evaluate(c['tick']) != b, T('Resume carries the game on'))
 
     # restart this match

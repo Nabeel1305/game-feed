@@ -8,7 +8,8 @@
   "Splash Course's empty-ghost crash was the reason GitHub's checks failed on both earlier pushes of 22 Nov (nothing was published in between; the app's eight games were not affected). `tools/test_controls.py` now goes on to the next game when one game's test falls over, and prints that game's page errors.",
   "GitHub's own checks passed on that build (run 45038106717, 22 Nov): the first green run since Santa's Round.",
   "Regression at the end of the third pass (22 Nov, evening): tools/check.py all 111 pass; tools/test_controls.py all 111, 3540 checks pass; tools/win_sweep.py on the 23 games changed: clean; every changed game's test_touch.py passes, and its test_play.py (18 games: all pass; Convoy's ran out of time at 15 minutes with every part it reached passing).",
-  "The team games' long proofs, all run to the end on the final builds (22-23 Nov): Eleven 16 of 16, Hoops 16 of 16, Ice Hockey 16 of 16 (after its team-mate change was withdrawn), Gridiron 15 of 16 plus its corrected lesson check passing 18 runs of 18. GitHub's checks passed on the third-pass build (a8716b4)."
+  "The team games' long proofs, all run to the end on the final builds (22-23 Nov): Eleven 16 of 16, Hoops 16 of 16, Ice Hockey 16 of 16 (after its team-mate change was withdrawn), Gridiron 15 of 16 plus its corrected lesson check passing 18 runs of 18. GitHub's checks passed on the third-pass build (a8716b4).",
+  "GitHub failed the closing push (43b2d19) on one check of 3540: 'Sandworm: Resume carries the game on' (the test allowed 350 ms for the next frame; Sandworm was not changed and passes here every time). The check now waits up to 4 s."
  ],
  "games": {
   "bottle-cap-flick": {

@@ -65,6 +65,10 @@ genius, and that's what you forget." What that changed, for every game from now 
   480 (a random pass now found a man, a random shot followed). Three tunings moved the number about without curing it; the
   game already had forwards looking for space, so its own rules went back in. Check what a game already does before
   replacing it, and say plainly when a change is withdrawn.
+- **A fixed short wait is not a test of the game** (GitHub, 23 Nov: "Sandworm: Resume carries the game on", 1 of 3540, on a
+  push that had not touched it): the check gave the game 350 ms to draw its next frame after Resume, and a busy runner took
+  longer. It now waits up to 4 s for the clock to move; a game that never carries on still fails. When a check fails on GitHub
+  and passes here, read what the check times before believing either.
 - **Look at GitHub after every push** (`gh run list --limit 3`). Both pushes of 22 Nov failed there and I did not look: Splash
   Course's result card never came in the full controls run. The cause was real: a run ended in its first instant (only a robot
   can) saved an empty ghost trace, and drawing an empty ghost threw on every frame, so the game froze. "It passes alone" was the
