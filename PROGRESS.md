@@ -2,13 +2,13 @@
 
 Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by hand.
 
-**Count:** 100 verified, 8 kept, 3 retesting (of 111).
+**Count:** 103 verified, 8 kept (of 111).
 
 **Statuses:** kept = the first eight, on the app, which he said are good (loaded and controls-tested only); verified = no known critical or major problem, changes retested; retesting = changed, a check still to finish; fixing = a problem is known and not yet fixed; reviewing = looked at by robot play and screenshots, no hands-on pass yet.
 
 ## Where to carry on
 
-**Checkpoint, 22 Nov 2026, end of the second pass.** Everything listed as changed is built, tested and on the Game Review page. To carry on: (1) read this file, `specs/audit-2026-11-22.md` ("Still to do") and the top of `LESSONS.md`; (2) the tools for looking are not in the repo (they lived in `/tmp/audit`): a sheet of pictures per game (the game's robot plays level 1's first seconds, then level 5 at 3, 10 and 20 s, with `window.__fullGL = true`), honest-robot win rates through `bots.js`, and a "win at an odd moment" sweep (start, call `__sim.winNow()` at 0 to 9 s, the result card must come with no page error: this is what found Splash Course's crash); rebuild them when needed; (3) next games, worst first: Sumo (three buttons), Tennis (the swipe's speed secretly picks the shot), Gridiron (receivers), Dress Designer (model), Short Order (camera), Shadow Crew (slow), then the "reviewing" entries below whose "Still open" names a gesture; (4) the long `test_play.py` for Eleven, Ice Hockey and Hoops (over 25 minutes each) has not been run to the end since their team-mates changed; (5) after any change to `tools/juice-kit.js` or `tools/world3d.js`, rebuild all 103 games, load them all, and re-run every `test_touch.py`, then `tools/test_controls.py` with no arguments, alone; (6) nothing here goes on the app: `in_app` is his word only.
+**Checkpoint, 23 Nov 2026, end of the third pass.** Every game from 9 to 111 is marked verified: nothing known is left unfixed. What is listed under a game as still open is either his to judge (sound by ear, feel under the thumb, vibration, speed on his phone) or a small note. To carry on: (1) wait for his notes from the Game Review page and fix those first; (2) his movement prompt (`specs/movement-prompt-2026-11-22.md`) has only been applied to Mocktail, Hunter and the team games; (3) twins to decide with him: Potter's Wheel / Pottery Wheel, and the three kart racers; (4) the tools for looking live in `/tmp/audit` and are not in the repo: a two-picture sheet per game (level 1's first seconds, level 5 after 9 s of robot play, with `window.__fullGL = true`), honest-robot rates through each game's `bots.js`, and a short spam proof; `tools/win_sweep.py` is in the repo; (5) after any change to how a team plays, run that game's full `test_play.py` to the end (Eleven about 40 minutes, the others under 25); (6) after any change to `tools/juice-kit.js` or `tools/world3d.js`, rebuild all 103 games and re-run every `test_touch.py`, then `tools/test_controls.py` with no arguments, alone; (7) after every push, `gh run list --limit 3`; (8) nothing goes on the app without his word.
 
 ## What no check here can tell (true of every game)
 
@@ -26,6 +26,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - Splash Course's empty-ghost crash was the reason GitHub's checks failed on both earlier pushes of 22 Nov (nothing was published in between; the app's eight games were not affected). `tools/test_controls.py` now goes on to the next game when one game's test falls over, and prints that game's page errors.
 - GitHub's own checks passed on that build (run 45038106717, 22 Nov): the first green run since Santa's Round.
 - Regression at the end of the third pass (22 Nov, evening): tools/check.py all 111 pass; tools/test_controls.py all 111, 3540 checks pass; tools/win_sweep.py on the 23 games changed: clean; every changed game's test_touch.py passes, and its test_play.py (18 games: all pass; Convoy's ran out of time at 15 minutes with every part it reached passing).
+- The team games' long proofs, all run to the end on the final builds (22-23 Nov): Eleven 16 of 16, Hoops 16 of 16, Ice Hockey 16 of 16 (after its team-mate change was withdrawn), Gridiron 15 of 16 plus its corrected lesson check passing 18 runs of 18. GitHub's checks passed on the third-pass build (a8716b4).
 
 ## Game by game
 
@@ -265,7 +266,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
 - **Checked:** touch test 8 pass; pictures looked at.
 
-### 34. Eleven (`eleven`): RETESTING
+### 34. Eleven (`eleven`): VERIFIED
 - **Where:** `games/eleven/index.html` · v0.3.1 · Football · 2 thumb(s)
 - **What it is:** A full eleven-a-side football match played sideways: run with the left thumb, PASS, SHOOT and LOB; beat a team and the next one is better.
 - **Problem:** CRITICAL: (his words) team-mates do not get open for a pass; also the pitch is dark, players are tiny and both teams read as the same dark colour.
@@ -274,7 +275,8 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (14 checks passed, 0 failed.).
 - **Checked:** test_touch 14 pass; quick robot matches: ordinary won 3 of 4 on levels 1, 3 and 10.
 - **Checked:** Robot matches, 20 a level: ordinary wins 95%, 90%, 95% of levels 1-3 (it was 69-75%), clumsy 75% of level 1 (it was 31%), sharp still wins 40% of level 40; random tapping wins 0 of 480; touch test 14 pass; controls test passes; a win at an odd moment is clean.
-- **Still open:** Its full test_play (about 40 minutes) is being run again on this build: the one before failed a single check, random tapping (1 fluke win in 480), which is what the change above answers.
+- **Checked:** Full test_play on this build (36 minutes): 16 of 16 pass, including no blind string of up to four moves winning and random tapping winning nothing.
+- **Still open:** Levels 5 to 9 are uneven in the robot's hands (38% to 75% over 16 matches each): his to judge whether the middle levels feel fair.
 
 ### 35. Deep Bite (`shark`): VERIFIED
 - **Where:** `games/shark/index.html` · v0.1.2 · Ocean survival · 1 thumb(s)
@@ -674,15 +676,16 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (28 passed, 0 failed).
 
-### 92. Ice Hockey (`hockey`): RETESTING
-- **Where:** `games/hockey/index.html` · v0.2.0 · Sports / hockey · 2 thumb(s)
+### 92. Ice Hockey (`hockey`): VERIFIED
+- **Where:** `games/hockey/index.html` · v0.2.1 · Sports / hockey · 2 thumb(s)
 - **What it is:** Three-on-three ice hockey, played sideways: skate with the stick, pass, tap or hold to shoot, one-timers; on defence switch and poke. Two-minute matches or first to three.
 - **First look:** looks fine; team positioning to check with Eleven.
 - **Changed:** Team-mates get open for a pass (getOpen), one forward in the slot.
+- **Changed:** third pass, 22 Nov evening: my change to how team-mates get open was TAKEN BACK. Its long proof showed blind tapping could then win a match now and then (1 to 5 in 480, by a pass and a lucky shot); the game already had its forwards looking for space, and with its own rules back random tapping wins 0 of 480 again. The new light and music stay.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (hockey rc=1 fails=1 37 passed, 1 failed).
 - **Checked:** test_touch 38 pass; quick robot matches: ordinary won 5/5, 4/5, 3/5 on levels 1, 3, 10.
-- **Checked:** A short proof: ordinary wins 100%, 83%, 100% of levels 1-3; no blind string wins (0 of 672); random tapping 0 of 72.
-- **Still open:** Its full test_play is running. Its three buttons change their names with and without the puck (PASS/SHOOT/BURST, SWITCH/POKE): labelled, judged plain enough.
+- **Checked:** Its own rules restored and measured on the same 480 matches: random tapping wins 0; a clumsy player gets through level 1's lessons in under 110 s five times out of five; touch test 38 pass; controls test passes; a win at an odd moment is clean.
+- **Checked:** Full test_play on the restored build (18 minutes): 16 of 16 pass.
 
 ### 93. Tennis (`tennis`): VERIFIED
 - **Where:** `games/tennis/index.html` · v0.2.0 · Sports / tennis · 2 thumb(s)
@@ -714,7 +717,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (25 passed, 0 failed).
 - **Checked:** touch test 25 pass; pictures looked at.
 
-### 97. Hoops 3v3 (`hoops3`): RETESTING
+### 97. Hoops 3v3 (`hoops3`): VERIFIED
 - **Where:** `games/hoops3/index.html` · v0.2.1 · Sports / basketball · 2 thumb(s)
 - **What it is:** Three-a-side basketball played sideways: a stick and PASS / SHOOT / SPRINT, a shot meter with a moving green, layups and dunks, steals that can leave you off balance, a 12-second shot clock, and a three-game tournament.
 - **Problem:** CRITICAL: (his words) positioning: everyone bunches in the paint, nobody spaces out for a pass.
@@ -723,7 +726,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (39 passed, 0 failed).
 - **Checked:** test_touch 39 pass; quick robot matches: ordinary won 8/8, 8/8, 7/8 on levels 1-3.
 - **Checked:** A short proof: ordinary wins 100%, 100%, 83% of levels 1-3; no blind string wins (0 of 672); random tapping 0 of 72; touch test 39 pass.
-- **Still open:** Its full test_play is running.
+- **Checked:** Full test_play (24 minutes): 16 of 16 pass, including no blind string of up to four moves winning.
 
 ### 98. Gridiron (`gridiron`): VERIFIED
 - **Where:** `games/gridiron/index.html` · v0.3.0 · Sports / American football · 2 thumb(s)

@@ -60,6 +60,11 @@ genius, and that's what you forget." What that changed, for every game from now 
   shot, softer tackles), not what helps any shot go in. Gridiron's "nothing is lost while a lesson is on" was flaky from the
   start: its first lesson is a single run, which blind tapping stumbles through; the check now asks what it means (never lost
   with a lesson still up), six times over.
+- **A change to how a team plays is not finished until its long proof has run** (Ice Hockey, 22 Nov): my "get open" for its
+  team-mates looked right and its quick checks passed, but the full test_play showed blind tapping winning 1 to 5 matches in
+  480 (a random pass now found a man, a random shot followed). Three tunings moved the number about without curing it; the
+  game already had forwards looking for space, so its own rules went back in. Check what a game already does before
+  replacing it, and say plainly when a change is withdrawn.
 - **Look at GitHub after every push** (`gh run list --limit 3`). Both pushes of 22 Nov failed there and I did not look: Splash
   Course's result card never came in the full controls run. The cause was real: a run ended in its first instant (only a robot
   can) saved an empty ghost trace, and drawing an empty ghost threw on every frame, so the game froze. "It passes alone" was the

@@ -15,7 +15,7 @@ FIXED = {
  'hunter': 'NEW CONTROLS. Left thumb: a stick (gentle push creeps, full push runs and it hears you). Right thumb: drag the crosshair (green on the chest), tap THROW. Lion: tap its side, then tap when it leaps. A closer view and shorter grass.',
  'eleven': 'Team-mates now run into space to give you a pass. Coloured rings under both teams, a white ring on who your pass goes to, bigger players, closer camera. No SPRINT button: push the stick all the way. The first levels are easier to score in.',
  'hoops3': 'Team-mates spread out and get free for a pass, and cut to the basket when marked. No SPRINT button: push the stick all the way.',
- 'hockey': 'Team-mates get open for a pass, one of them in front of the net.',
+ 'hockey': 'New light and music. (My change to its team-mates was taken back: testing showed it let button-mashing win now and then.)',
  'cake': 'The icing is smooth now, not square blocks.', 'roller': 'Paint goes on smooth, not in square pixels.',
  'pilot': 'Night and storm landings: the runway lights now shine through the dark and you can read the land.',
  'vine': 'A closer camera and a soft light on the swinger: you can see yourself at dusk and at night. A vine can no longer hang across the view.',

@@ -3126,7 +3126,7 @@
       "id": "hockey",
       "name": "Ice Hockey",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "added": "2026-11-21",
       "path": "games/hockey/index.html",
       "artifact": "https://claude.ai/artifact/EzMRbcsDsjgxH4pd9X6roQ",

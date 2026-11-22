@@ -99,7 +99,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 89 | **Spy** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/UnrV6PKUb59o1q6VQWGePJ) | `games/spy/index.html` |
 | 90 | **Mocktail Bar** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/NrWYydXp9zpa7CVj3kNZ79) | `games/mocktail/index.html` |
 | 91 | **Timber** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/U1EJ7pKgjz82uEsUNSfrUC) | `games/timber/index.html` |
-| 92 | **Ice Hockey** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/EzMRbcsDsjgxH4pd9X6roQ) | `games/hockey/index.html` |
+| 92 | **Ice Hockey** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/EzMRbcsDsjgxH4pd9X6roQ) | `games/hockey/index.html` |
 | 93 | **Tennis** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/9xhgx9JuVzZ2T8tj3V2Tpz) | `games/tennis/index.html` |
 | 94 | **Metro Map** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/Qm5Mpwqk3dH9Jc1KAUGrEu) | `games/metro/index.html` |
 | 95 | **Bin Round** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/RcubQUAveDCoMU9tSRpmkL) | `games/binround/index.html` |
