@@ -1774,7 +1774,7 @@
       "id": "rope",
       "name": "High Wire",
       "status": "testing",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "added": "2026-11-19",
       "path": "games/rope/index.html",
       "artifact": "https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7",
@@ -1801,7 +1801,7 @@
         "P3",
         "P10"
       ],
-      "summary": "Walk a high wire in 3D with one floating stick: slide to swing the pole, push up to walk, pull down to crouch; wind, birds, banners and sandbags; last-second saves; lean out for stars."
+      "summary": "Walk a high wire in 3D with one floating stick: slide to swing the pole, push up to walk, pull down to crouch; wind, birds, banners and sandbags; last-second saves; lean out for stars. (23 Nov 2026, from his review of Vine: the walker is a person with joints, both hands on the pole.)"
     },
     {
       "number": 53,
@@ -3423,7 +3423,7 @@
       "id": "balloon",
       "name": "Balloon Drift",
       "status": "testing",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "added": "2026-11-21",
       "path": "games/balloon/index.html",
       "artifact": "https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX",
@@ -3449,7 +3449,7 @@
         "P13",
         "P20"
       ],
-      "summary": "Mine: calm one-thumb hot air ballooning, upright: hold to burn, let go to sink, steer by climbing into the wind that goes your way; drop markers on the X, land near the field; wires, turning winds, warm air.",
+      "summary": "Mine: calm one-thumb hot air ballooning, upright: hold to burn, let go to sink, steer by climbing into the wind that goes your way; drop markers on the X, land near the field; wires, turning winds, warm air. (23 Nov 2026, from his review of Reel 'Em In: the target's rings are wider, stronger, dark-edged and drawn without haze.)",
       "from": "mine"
     },
     {

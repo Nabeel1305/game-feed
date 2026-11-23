@@ -11,14 +11,15 @@ function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Mat
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.3) TXT.shift(); if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
 const ui = { drag: null };
 const WY = 0;      // the wire's height (the world is built round it)
+// the walker (23 Nov 2026, from his review of Vine: "do better on the animation... hands and the person holding the vines": this was the same pill on two
+// sticks, its arms fixed in the air beside the pole): a person with joints (part25_human.js), in a red top, a hat on, both hands closed on the pole
 function walker(T) { const g = new T.Group(), body = new T.Group(); g.add(body);
-  const suit = new T.MeshStandardMaterial({ color: 0xd8302a, roughness: 0.6 }), skin = new T.MeshStandardMaterial({ color: 0xe8b890, roughness: 0.7 }), dark = new T.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.6 });
-  const legs = []; for (const s of [-1, 1]) { const l = new T.Group(); l.position.set(s * 0.08, 0.9, 0); body.add(l); const m = new T.Mesh(new T.CylinderGeometry(0.06, 0.05, 0.9, 8), dark); m.position.y = -0.45; l.add(m); legs.push(l); }
-  const torso = new T.Mesh(new T.CylinderGeometry(0.16, 0.13, 0.62, 10), suit); torso.position.y = 1.22; body.add(torso);
-  const head = new T.Mesh(new T.SphereGeometry(0.12, 14, 10), skin); head.position.y = 1.66; body.add(head); const hat = new T.Mesh(new T.CylinderGeometry(0.08, 0.1, 0.1, 10), dark); hat.position.y = 1.78; body.add(hat);
+  const H = humMake(T, { top: 0xd8302a, shorts: 0x1a1a22, skin: 0xe8b890, hair: 0x1a1a22, band: 0xf2d24a }); H.g.rotation.y = Math.PI; H.g.position.y = 0.97; body.add(H.g);      // the rig faces -z; the walker walks towards +z
+  const dark = new T.MeshStandardMaterial({ color: 0x1a1a22, roughness: 0.6 }), hat = new T.Mesh(new T.CylinderGeometry(0.085, 0.105, 0.11, 12), dark); hat.position.y = 0.13; H.head.add(hat); const brim = new T.Mesh(new T.CylinderGeometry(0.15, 0.15, 0.015, 14), dark); brim.position.y = 0.08; H.head.add(brim);
+  for (const L of H.legs) { const tr = new T.Mesh(new T.CylinderGeometry(0.06, 0.045, 0.36, 8), dark); tr.position.y = -0.2; L.knee.add(tr); }
   const pole = new T.Group(); pole.position.set(0, 1.25, 0.25); body.add(pole); const pm = new T.Mesh(new T.CylinderGeometry(0.018, 0.018, 7, 6), new T.MeshStandardMaterial({ color: 0xc8a060, roughness: 0.5 })); pm.rotation.z = Math.PI / 2; pole.add(pm);
-  for (const s of [-1, 1]) { const w = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), dark); w.position.x = s * 3.5; pole.add(w); const arm = new T.Mesh(new T.CylinderGeometry(0.04, 0.035, 0.45, 6), suit); arm.position.set(s * 0.18, 1.3, 0.13); arm.rotation.set(1.1, 0, s * 0.4); body.add(arm); }
-  g.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.userData = { body, legs, pole }; return g; }
+  for (const s of [-1, 1]) { const w = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), dark); w.position.x = s * 3.5; pole.add(w); }
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.userData = { body, legs: [], pole, H }; return g; }
 function buildWorld(G) {
   if (V3 && V3.place === G.place && V3.len === G.len) return V3; const T = THREE;
   if (!V3) { if (!W3 || !W3.init({ canvas: $('gl'), fov: 62, far: 5000, near: 0.05 })) { V3 = { none: true }; return V3; } V3 = { T, S: W3.scene, items: [] }; V3.me = walker(T); V3.S.add(V3.me); }
@@ -77,8 +78,13 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const g = G || idleG(), V = buildWorld(g); if (V.none) { ctx.fillStyle = '#0e1824'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D wire.', W / 2, H / 2); return; }
   setWeather(g); const m = g.me, t = now, falling = g.wait > 0 && Math.abs(m.th) > g.cfg.fall * 0.95;
-  const u = V.me.userData; V.me.position.set(0, WY - (falling ? (1.6 - g.wait) * 4 : 0), m.s); V.me.rotation.z = -m.th * (falling ? 2 : 1); u.body.position.y = m.crouch ? -0.35 : 0; u.pole.rotation.z = -g.in.u * 0.35;
-  u.legs.forEach((l, i) => l.rotation.x = m.walking ? Math.sin(t * 7 + i * Math.PI) * 0.35 : 0);
+  const u = V.me.userData; V.me.position.set(0, WY - (falling ? (1.6 - g.wait) * 4 : 0), m.s); V.me.rotation.z = -m.th * (falling ? 2 : 1); u.body.position.y += ((m.crouch ? -0.3 : 0) - u.body.position.y) * Math.min(1, dt * 10); u.pole.rotation.z = -g.in.u * 0.35;
+  { const H = u.H, tilt = u.pole.rotation.z, ph = t * 7, wk = m.walking ? 1 : 0, cr = m.crouch ? 1 : 0;
+    if (falling) { for (let i = 0; i < 2; i++) { const w = t * 14 + i * 2.6; humReach(H, i, (i ? 1 : -1) * 0.4, 0.55 + Math.sin(w) * 0.3, -0.1 + Math.cos(w) * 0.3); } humGrip(H, 0, dt); humLegs(H, [0.6 + Math.sin(t * 12) * 0.5, 0.9, 0.15], [-0.3 - Math.sin(t * 12) * 0.5, 0.8, 0.15]); u.pole.visible = g.wait > 1.2; }
+    else { u.pole.visible = true;      // both hands on the pole, a shoulder's width apart; they go up and down with it as it tips; one foot in front of the other on the wire
+      for (let i = 0; i < 2; i++) { const xb = (i ? -1 : 1) * 0.3; humReach(H, i, -xb, 1.25 - 0.97 + Math.sin(tilt) * xb - cr * 0.02, -0.25, [i ? 1 : -1, -0.6, 0.3]); } humGrip(H, 1, dt);
+      const sL = Math.sin(ph) * 0.38 * wk, sR = -sL; humLegs(H, [sL + cr * 0.75, Math.max(0, -Math.cos(ph)) * 0.7 * wk + cr * 1.3 + 0.06, 0.0], [sR + cr * 0.75, Math.max(0, Math.cos(ph)) * 0.7 * wk + cr * 1.3 + 0.06, 0.0]);
+      H.g.position.y = 0.97 - cr * 0.02 + Math.abs(Math.sin(ph)) * 0.015 * wk; H.g.rotation.x = cr * 0.25; H.neck.rotation.x = -0.1 - cr * 0.2; H.head.userData.band.visible = false; } }
   // things move: bags swing, birds fly off, stars spin, flags stream before a gust
   for (const [q, o] of V.thing) { if (q.k === 'bag') o.rotation.z = Math.asin(clamp((q.x || 0) / 4.6, -1, 1)), o.position.x = 0; if (q.k === 'bird') { if (q.done) { o.position.y += dt * 3; o.position.x += dt * 2; } else o.position.y = WY; } if (q.k === 'star') { o.visible = !q.done; o.rotation.y += dt * 2; } }
   const wdir = g.gustWarn ? g.gustWarn.dir : Math.sign(g.gust); for (const f of V.flags) { f.rotation.y = wdir ? -wdir * Math.PI / 2 + Math.sin(t * 20 + f.position.z) * 0.3 : Math.sin(t * 2 + f.position.z) * 0.3; }

@@ -49,9 +49,11 @@ function buildPlace(V, G) { const T = V.T, P = G.cfg.place, R = rng(G.seed + 5),
   if (P !== 2) add(W3.pines(trees, { shadow: false }));
   for (let i = 0; i < 24; i++) { const x = cx + (R() - 0.5) * 1400, z = cz + (R() - 0.5) * 1400; if (F.T.some(t => Math.hypot(t.x - x, t.z - z) < 60)) continue; const h = add(new T.Mesh(V.boxG, V.M(0xf0e8d8))); h.scale.set(10, 6, 7); h.position.set(x, groundAt(G, x, z) + 3, z); h.rotation.y = R() * 3; const r = add(new T.Mesh(new T.ConeGeometry(7, 4, 4), V.M(0xb04a3a))); r.position.set(x, groundAt(G, x, z) + 8, z); r.rotation.y = h.rotation.y + Math.PI / 4; }
   // the crosses and their rings
-  const xm = new T.MeshBasicMaterial({ color: 0xffffff }), rm = new T.MeshBasicMaterial({ color: 0xff4a3a, transparent: true, opacity: 0.6, side: T.DoubleSide, depthWrite: false });
+  // (23 Nov 2026, from his review of Reel 'Em In: "make the circle distinct from the water color so its easy to see": the target here was a thin pale ring
+  // that the haze washed out.) The X and its rings are drawn without haze, the rings wider, each with a dark edge.
+  const xm = new T.MeshBasicMaterial({ color: 0xffffff, fog: false }), rm = new T.MeshBasicMaterial({ color: 0xff3a2a, transparent: true, opacity: 0.6, side: T.DoubleSide, depthWrite: false, fog: false }), em = new T.MeshBasicMaterial({ color: 0x2a0a06, transparent: true, opacity: 0.45, side: T.DoubleSide, depthWrite: false, fog: false });
   V.targets = F.T.map((t, i) => { const g = new T.Group(), y = groundAt(G, t.x, t.z) + 0.4; for (const a of [Math.PI / 4, -Math.PI / 4]) { const bar = new T.Mesh(new T.PlaneGeometry(26, 4).rotateX(-Math.PI / 2), xm); bar.rotation.y = a; g.add(bar); }
-    for (const r of [10, 30, 60]) { const ring = new T.Mesh(new T.RingGeometry(r - 0.8, r + 0.8, 48).rotateX(-Math.PI / 2), rm); g.add(ring); } g.position.set(t.x, y, t.z); return add(g); });
+    for (const r of [10, 30, 60]) { const ring = new T.Mesh(new T.RingGeometry(r - 1.3, r + 1.3, 64).rotateX(-Math.PI / 2), rm); g.add(ring); } for (const r of [10, 30, 60]) { const edge = new T.Mesh(new T.RingGeometry(r + 1.3, r + 2.1, 64).rotateX(-Math.PI / 2), em); edge.position.y = -0.05; g.add(edge); } g.position.set(t.x, y, t.z); return add(g); });
   { const f = F.field, y = groundAt(G, f.x, f.z) + 0.3, g = new T.Group(); const sq = new T.Mesh(new T.PlaneGeometry(f.half * 2, f.half * 2).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x5ad06a, transparent: true, opacity: 0.55, depthWrite: false })); g.add(sq);
     const edge = new T.LineLoop(new T.BufferGeometry().setFromPoints([[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([a, b]) => new T.Vector3(a * f.half, 0.3, b * f.half))), new T.LineBasicMaterial({ color: 0xffffff })); g.add(edge);
     const pole = new T.Mesh(V.cylG, V.M(0xdddddd)); pole.scale.set(0.3, 10, 0.3); pole.position.set(f.half - 6, 5, f.half - 6); g.add(pole); V.sock = new T.Mesh(new T.ConeGeometry(1.2, 6, 10, 1, true).rotateZ(Math.PI / 2), V.M(0xff7a1a, { side: T.DoubleSide })); V.sock.position.set(f.half - 6, 9.5, f.half - 6); g.add(V.sock);
@@ -66,7 +68,7 @@ function buildPlace(V, G) { const T = V.T, P = G.cfg.place, R = rng(G.seed + 5),
 function sync(V, G, dt) { V.t += dt; const T = V.T, b = G.b;
   if (V.for !== G.F) { V.for = G.F; W3.setSky(PLACES[G.cfg.place].sky); buildPlace(V, G); const s = mySkin(); if (V.skin !== s.id) { V.S.remove(V.me.g); V.me = makeBalloon(V, s); V.S.add(V.me.g); V.skin = s.id; } V.markers.forEach(m => V.S.remove(m)); V.markers = []; ui.snap = true; }
   V.me.g.position.set(b.x, b.y, b.z); V.me.g.rotation.y += dt * 0.05; V.me.flame.visible = b.burn; V.me.flame.scale.y = 0.8 + Math.random() * 0.5; V.me.glow.intensity = b.burn ? 60 : 0;
-  V.targets.forEach((g, i) => { g.visible = true; const t = G.F.T[i]; g.children.forEach((c, j) => { if (j >= 2) c.material.opacity = i === G.ti ? 0.75 : 0.25; }); });
+  V.targets.forEach((g, i) => { g.visible = true; const t = G.F.T[i]; g.children.forEach((c, j) => { if (j >= 2 && j < 5) c.material.opacity = i === G.ti ? 0.92 : 0.3; }); });
   V.field.visible = G.cfg.land || G.lesson == null;
   { const w = windAt(G, 2); V.sock.rotation.y = -Math.atan2(w.z, w.x); }
   for (const d of V.decor) { d.g.position.x += 0.3 * dt * 10; d.g.position.y = d.h + Math.sin(V.t * 0.2 + d.h) * 6; }

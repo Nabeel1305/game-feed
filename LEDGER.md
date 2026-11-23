@@ -59,7 +59,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 49 | **Ramp Riders** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/4c5jxbbj1PNPSZCDFaQQxm) | `games/ramp/index.html` |
 | 50 | **Spellshop** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/YHmHT3EMvkRMWDZYKEw7kp) | `games/spell/index.html` |
 | 51 | **Rex** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ) | `games/rex/index.html` |
-| 52 | **High Wire** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7) | `games/rope/index.html` |
+| 52 | **High Wire** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7) | `games/rope/index.html` |
 | 53 | **Homemaker** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK) | `games/house/index.html` |
 | 54 | **Fruit Fight** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/AaN4KXLpYKSDUmjRGaYycM) | `games/fruit/index.html` |
 | 55 | **Tri-Peaks** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/LMRVK8AJrKdaFVGBM48Pkz) | `games/peaks/index.html` |
@@ -108,7 +108,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 98 | **Gridiron** | testing | not yet (he has not said so) | 0.3.1 | [play](https://claude.ai/artifact/HvQWqkpk5GnA3h1CkKC5dV) | `games/gridiron/index.html` |
 | 99 | **Rock Climb** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/JLU7eXVLjB4YVHbcXNtA2a) | `games/climb/index.html` |
 | 100 | **Dentist** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/VNy4QXi8pVMuLkLQ6Wdn1B) | `games/dentist/index.html` |
-| 101 | **Balloon Drift** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX) | `games/balloon/index.html` |
+| 101 | **Balloon Drift** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX) | `games/balloon/index.html` |
 | 102 | **Sandworm Rider** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/PbXWEHsATZqDX9T7CuvtmZ) | `games/sandworm/index.html` |
 | 103 | **Skydive** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/MNp1BHLVL7mAUuG2g3LBQS) | `games/skydive/index.html` |
 | 104 | **Detective** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/DoNRuvKurjoX26yW9XdhHv) | `games/detective/index.html` |
@@ -173,7 +173,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 49. **Ramp Riders**: A trials bike side-on: two thumbs lean it back and forward; off the kickers turn it to the slope you will land on, flip it for a boost, beat the time and your own ghost.
 50. **Spellshop**: The town magician: read the customer's story for clues, pick the jars (each always means one thing), pour, stir in or out, trace the rune, seal; funny mistakes come back to be fixed, bad ones complain.
 51. **Rex**: Be the T-Rex in a 3D valley: one stick to creep or charge, BITE and ROAR; runners, duckbill herds, armoured spikebacks, charging hornfaces and rival rexes, each warning before it strikes.
-52. **High Wire**: Walk a high wire in 3D with one floating stick: slide to swing the pole, push up to walk, pull down to crouch; wind, birds, banners and sandbags; last-second saves; lean out for stars.
+52. **High Wire**: Walk a high wire in 3D with one floating stick: slide to swing the pole, push up to walk, pull down to crouch; wind, birds, banners and sandbags; last-second saves; lean out for stars. (23 Nov 2026, from his review of Vine: the walker is a person with joints, both hands on the pole.)
 53. **Homemaker**: Build houses on a 3D plot, a shed first and whole homes later: pick a piece, tap or drag (walls snap), windows, doors, furniture, one-tap roof; tick the checklist, move in and walk through. Every house is kept.
 54. **Fruit Fight**: First-person slingshot in a 3D meadow: pull back and let go with an arc to aim; oranges are quick, watermelons burst on crowds, bananas trip; blobs, scuttlers, shield-trolls, hoppers and big ones with a glowing eye.
 55. **Tri-Peaks**: Calm cards: clear three peaks by playing one higher or lower onto the pile; streaks earn jokers, locks need the key card, the stock is short.
@@ -222,7 +222,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 98. **Gridiron**: Five-a-side arcade American football, sideways: pick a play, SNAP, throw to a receiver's button or hand off and run; defend with SWITCH and TACKLE; replays of big plays.
 99. **Rock Climb**: Calm one-thumb climbing, upright: drag a hand (later a foot) onto a hold that lights up; manage your grip, rest on ledges, read slopers and side-pulls, jump to far holds; the rope catches you at your last bolt.
 100. **Dentist**: Calm one-thumb dentist, upright: a 3D clinic and a 2D close-up of the mouth; brush, scrape and polish, find cavities with the mirror and X-ray, drill-rinse-fill-smooth-set, chips, crowns, braces, extractions; keep them comfortable; before-and-after smiles.
-101. **Balloon Drift**: Mine: calm one-thumb hot air ballooning, upright: hold to burn, let go to sink, steer by climbing into the wind that goes your way; drop markers on the X, land near the field; wires, turning winds, warm air.
+101. **Balloon Drift**: Mine: calm one-thumb hot air ballooning, upright: hold to burn, let go to sink, steer by climbing into the wind that goes your way; drop markers on the X, land near the field; wires, turning winds, warm air. (23 Nov 2026, from his review of Reel 'Em In: the target's rings are wider, stronger, dark-edged and drawn without haze.)
 102. **Sandworm Rider**: His idea 25: stand on the head of a giant worm swimming through the dunes. Left thumb steers (heavy, late turns), hold SURGE to speed up, hold BRACE for knocks and landings; keep your balance, breach over dune crests, pass every pair of waystones before sunset. Canyons, cracked sand, storms, ruins, three worms, shortcuts, a challenge per level, free roam.
 103. **Skydive**: His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode.
 104. **Detective**: His idea 33: generated cases (thefts, sabotage, fraud, disappearances, locked rooms) in a house, hotel, museum, train or office. Tap objects in the 3D room, turn them over to find hidden marks, question suspects and show them clues (liars crack, secret-keepers own up), link clues in the notebook, then accuse with who, how, when and two proving clues.

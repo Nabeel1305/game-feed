@@ -394,6 +394,7 @@ genius, and that's what you forget." What that changed, for every game from now 
 
 ### 20-23. Potter's Wheel, Drone Pilot, Whaling, Wolf Pack (set 3)
 - **Drone Pilot 0.2.1 (23 Nov 2026):** hoops are groups (`frame, core, glow, halo, lamps`), from his review of Soar's rings.
+- **High Wire and Balloon Drift (23 Nov 2026):** High Wire's walker is `part25_human.js` (a copy of Vine's), turned to face +z inside the old `body` group; hands reach the pole's two grips, which rise and fall as it tips. Balloon Drift's target materials have `fog: false`, wider rings and a dark edge.
 - **A day is won by successes, never by attempts:** Potter's Wheel, Whaling and Wolf Pack each first counted pots made / whales met / hunts tried, so a blind FIRE that cracked, a throw that missed, a kick that lost the hunt still "won" a one-try level (blind strings won 60-100%). Count fired pots, caught whales, hunts won. (Lighthouse had the same hole: doing nothing.)
 - **`winNow` must do nothing while its own win is under way** (`G.gap > 0`): the controls test calls it every 200 ms, and resetting the count each time stopped the level from ever ending.
 - **Behind a chasing camera that looks along +z, the screen's right is the world's -x.** Drone, Whaling and Wolf Pack first turned left when the thumb went right. Mirror the sideways axes in the input (not the rules, so the robots stay right), and test on the screen itself: after a right turn, what was ahead must move left (`drone/test_touch.py`). Games that look along -z (Police, Soar, Pilot) are right as they are.
