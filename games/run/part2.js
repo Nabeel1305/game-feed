@@ -15,7 +15,7 @@ const RULES = [
   '<b>Swipe left or right</b> to change lane. <b>Tap</b> for nitro (the flames show how many you have).',
   '<b>A police car pulls alongside and flashes</b> before it rams: swipe away from it.',
   '<b>Roadblocks</b> leave one gap: get in that lane early. Spikes take a hit. Grab the cash bags and nitro cans.',
-  '<b>On foot:</b> swipe round crates, up over fences, down under pipes. Stumble and the cops gain.',
+  '<b>On foot:</b> swipe round crates, up over fences, down under pipes. <b>At a corner, swipe the way the arrow points.</b> Stumble and the cops gain.',
   'Reach the safehouse. The cash buys upgrades in the garage, and they stay with you.',
 ];
 const WEATHERS = ['night', 'rain', 'dusk', 'storm', 'night', 'overcast', 'mist', 'night', 'golden'];
@@ -43,7 +43,7 @@ function makeCfg(N, help) {
     cops: N <= 1 ? 1 : Math.min(3, 1 + Math.round(x(0, 2, 25))), ram: x(1.4, 0.9, 30) * slow, rest: x(6, 3.5, 30),   // cop speed (share of yours), how many, ram warning (s)
     blocks: N <= 2 ? 0 : x(1 / 700, 1 / 340, 30), blockSee: x(160, 125, 30) + 25 * upLv('scanner'), spikes: N < 4 ? 0 : x(1 / 1100, 1 / 450, 30),
     heli: N < 6 ? 0 : x(0.2, 1, 30), cash: 1 / 70, cans: 1 / 380,
-    foot: x(240, 420, 30), run: 8.8 * (1 + 0.03 * upLv('feet')), copRun: x(8.5, 8.75, 30), footGap: x(9.5, 9, 30) * (help ? 1.3 : 1), obst: x(0.05, 0.11, 30) * (1 - 0.3 * e) };
+    foot: x(240, 420, 30), run: 8.8 * (1 + 0.03 * upLv('feet')), copRun: x(8.5, 8.75, 30), footGap: x(9.5, 9, 30) * (help ? 1.3 : 1), obst: x(0.05, 0.11, 30) * (1 - 0.3 * e), turnGap: Math.round(x(9, 6, 30)) };      // turnGap: 6 m modules of alley between corners
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -67,7 +67,10 @@ function makeRoad(G) {
 function swipe(G, dir) {      // 'l' 'r' 'u' 'd'
   if (G.over) return;
   if (G.ph === 'drive') { const me = G.me; if (dir === 'l') me.lane = Math.max(0, me.lane - 1); else if (dir === 'r') me.lane = Math.min(3, me.lane + 1); else if (dir === 'u') return nitro(G); G.ev.push({ k: 'lane' }); return; }
-  if (G.ph === 'foot') { const F = G.foot; if (dir === 'l') F.lane = Math.max(0, F.lane - 1); else if (dir === 'r') F.lane = Math.min(2, F.lane + 1); else if (dir === 'u' && F.air <= 0 && F.low <= 0) { F.air = 0.75; G.ev.push({ k: 'jump' }); } else if (dir === 'd' && F.air <= 0 && F.low <= 0) { F.low = 0.8; G.ev.push({ k: 'slide' }); } }
+  if (G.ph === 'foot') { const F = G.foot;
+    if (dir === 'l' || dir === 'r') { const nt = F.turns.find(q => !q.past);      // near a corner a sideways swipe is the turn (the first one counts); anywhere else it changes lane
+      if (nt && nt.s - F.s <= FOOT_WIN) { if (nt.got === null) { const ok = (dir === 'r' ? 1 : -1) === nt.dir; nt.got = ok ? 'ok' : 'wrong'; G.ev.push({ k: ok ? 'turnset' : 'turnwrong', dir }); } return; } }
+    if (dir === 'l') F.lane = Math.max(0, F.lane - 1); else if (dir === 'r') F.lane = Math.min(2, F.lane + 1); else if (dir === 'u' && F.air <= 0 && F.low <= 0) { F.air = 0.75; G.ev.push({ k: 'jump' }); } else if (dir === 'd' && F.air <= 0 && F.low <= 0) { F.low = 0.8; G.ev.push({ k: 'slide' }); } }
 }
 function nitro(G) { if (G.over || G.ph !== 'drive' || G.boost > 0) return; if (G.nitro <= 0) { G.ev.push({ k: 'empty' }); return; } G.nitro--; G.boost = G.cfg.boostT; G.ev.push({ k: 'nitro', left: G.nitro }); lessonSee(G, 'nitro'); }
 const tap = G => nitro(G);
@@ -124,11 +127,31 @@ function hit(G, what) {
   G.hp--; if (G.hp <= 0) finish(G, false, 'wrecked');
 }
 // ---------- on foot ----------
+// 23 Nov 2026 (his second Police Chase review: "the person when running should also be able to turn corners, and I can turn corners"; this
+// alley was the same straight one): the alleys have corners. F.turns: { s (how far along the run), dir (-1 left, +1 right), px, py (the
+// corner's place: x east, y north), h0 (the heading into it), got (null | 'ok' | 'wrong'), past }. The run only ever heads north, east or
+// west, so it never crosses itself. Corridors are whole 6 m modules between 5.2 m corner squares (the view builds its walls from them).
+const FOOT_R = 2.2, FOOT_WIN = 13, FOOT_BACK = 12;      // the arc you round a corner on; how far before a corner a swipe is the turn; alley behind the start
+function footPath(R, len, o) {
+  const turns = []; let s = o.first, h = 0, px = 0, py = 0, prev = 0;
+  while (s < len - 30) { const hq = Math.round(h / (Math.PI / 2)), dir = hq === 0 ? (R() < 0.5 ? -1 : 1) : -hq;
+    px += Math.sin(h) * (s - prev); py += Math.cos(h) * (s - prev); turns.push({ s, dir, tee: false, px, py, h0: h, got: null, past: false });
+    h += dir * Math.PI / 2; prev = s; s += 5.2 + 6 * (o.gapMin + ((R() * o.gapVar) | 0)); }
+  return turns;
+}
+function footAt(F, s) {      // where the run is, s metres along: { x, y, h }; each corner is rounded on a short arc
+  const T = F.turns; let i = 0; while (i < T.length && T[i].s + FOOT_R <= s) i++; const t = T[i];
+  if (t && s > t.s - FOOT_R) { const th = (s - (t.s - FOOT_R)) / (2 * FOOT_R) * Math.PI / 2, fx = Math.sin(t.h0), fy = Math.cos(t.h0), rx = fy * t.dir, ry = -fx * t.dir, ox = t.px - fx * FOOT_R + rx * FOOT_R, oy = t.py - fy * FOOT_R + ry * FOOT_R;
+    return { x: ox + (-rx * Math.cos(th) + fx * Math.sin(th)) * FOOT_R, y: oy + (-ry * Math.cos(th) + fy * Math.sin(th)) * FOOT_R, h: t.h0 + t.dir * th }; }
+  const p = T[i - 1], h = p ? p.h0 + p.dir * Math.PI / 2 : 0, d = s - (p ? p.s : 0); return { x: (p ? p.px : 0) + Math.sin(h) * d, y: (p ? p.py : 0) + Math.cos(h) * d, h };
+}
 function startFoot(G) {
-  const c = G.cfg, R = G.rnd, obs = [], L = lessonNow(G), len = c.foot * (L ? 0.7 : 1);
-  for (let s = 18; s < len + 60; s += 1 / c.obst * (0.6 + 0.8 * R())) { const r = R(), type = r < 0.5 ? 'crate' : r < 0.78 ? 'fence' : 'pipe'; obs.push({ s, lane: type === 'crate' ? (R() * 3) | 0 : -1, type, two: type === 'crate' && R() < 0.4 ? ((R() * 3) | 0) : -1 }); }
-  const coins = []; for (let s = 30; s < len; s += 25 + R() * 30) { const lane = (R() * 3) | 0; for (let k = 0; k < 4; k++) coins.push({ s: s + k * 3, lane }); }
-  G.ph = 'foot'; G.ph_t = 0; G.foot = { s: 0, lane: 1, x: 0, gap: c.footGap, air: 0, low: 0, stumble: 0, obs, coins, len }; G.ev.push({ k: 'foot' });
+  const c = G.cfg, R = G.rnd, obs = [], L = lessonNow(G), id = L && L.foot ? L.id : null, len = c.foot * (L ? 0.7 : 1);
+  // a lesson teaches one thing at a time: the corners with nothing in the way, then the crates, fences and pipes down a straight alley
+  const turns = id === 'run' ? [] : footPath(R, len, id === 'corner' ? { first: 32.6, gapMin: 6, gapVar: 2 } : { first: 44.6 + 6 * ((R() * 3) | 0), gapMin: c.turnGap, gapVar: 5 }), clear = s => !turns.some(t => s > t.s - 17 && s < t.s + 9);
+  if (id !== 'corner') for (let s = 18; s < len + 60; s += 1 / c.obst * (0.6 + 0.8 * R())) { const r = R(), type = r < 0.5 ? 'crate' : r < 0.78 ? 'fence' : 'pipe', o = { s, lane: type === 'crate' ? (R() * 3) | 0 : -1, type, two: type === 'crate' && R() < 0.4 ? ((R() * 3) | 0) : -1 }; if (clear(s)) obs.push(o); }
+  const coins = []; for (let s = 30; s < len; s += 25 + R() * 30) { const lane = (R() * 3) | 0; for (let k = 0; k < 4; k++) if (clear(s + k * 3)) coins.push({ s: s + k * 3, lane }); }
+  G.ph = 'foot'; G.ph_t = 0; G.foot = { s: 0, lane: 1, x: 0, gap: c.footGap, air: 0, low: 0, stumble: 0, obs, coins, turns, len }; G.ev.push({ k: 'foot' });
 }
 function footStep(G, dt) {
   const c = G.cfg, F = G.foot, L = lessonNow(G);
@@ -137,6 +160,10 @@ function footStep(G, dt) {
   const lane = Math.round((F.x + 1.3) / 1.3);
   for (const o of F.obs) if (!o.done && o.s <= F.s) { o.done = true; const blocked = o.type === 'crate' ? (lane === o.lane || lane === o.two) : o.type === 'fence' ? F.air <= 0.08 : F.low <= 0.05;
     if (blocked) { F.stumble = 1.15; G.stumbles++; G.combo = 0; G.ev.push({ k: 'stumble', type: o.type }); lessonMiss(G, o.type); } else { G.ev.push({ k: 'cleared', type: o.type }); lessonSee(G, 'cleared'); G.combo++; } }
+  // the corner: swiped the way it turns, you are round it; the wrong way or not at all, you meet the wall first
+  for (const t of F.turns) { if (t.past) continue; if (F.s < t.s - 1.2) break; t.past = true;
+    if (t.got === 'ok') { G.ev.push({ k: 'cornered', dir: t.dir }); lessonSee(G, 'corner'); G.combo++; }
+    else { F.stumble = 1.15; G.stumbles++; G.combo = 0; G.ev.push({ k: 'wall', why: t.got === 'wrong' ? 'wrong' : 'late', dir: t.dir }); lessonMiss(G, 'corner'); } }
   for (const q of F.coins) if (!q.done && Math.abs(q.s - F.s) < 1 && (q.lane === lane || (c.magnet && Math.abs(q.lane - lane) <= 1))) { q.done = true; G.cash += 5 * G.heat; G.ev.push({ k: 'coin' }); }
   if (F.gap <= 0) { if (L) { F.gap = 10; lessonMiss(G, 'caught'); } else { finish(G, false, 'caught'); return; } }
   if (F.s >= F.len) { if (L) { lessonSee(G, 'home'); if (G.lesson) { startFoot(G); } } else { G.ph = 'home'; G.ph_t = 0; G.ev.push({ k: 'home' }); } }
@@ -153,6 +180,7 @@ const LESSONS = {
       { id: 'nitro', title: 'TAP FOR NITRO', how: 'Tap anywhere for a burst of nitro: it leaves the cops behind. Try it.', need: 1, ok: w => w === 'nitro' }],
   2: [{ id: 'dodge', title: 'THE RAM', how: 'A police car pulls alongside and FLASHES: swipe AWAY from it before it rams. Dodge two.', need: 2, ok: w => w === 'dodge', cops: 1, len: 99999 }],
   3: [{ id: 'block', title: 'ROADBLOCKS', how: 'A roadblock leaves ONE gap: the arrow shows it. Get in that lane early. Two of them.', need: 2, ok: w => w === 'through', blocks: true, len: 99999 },
+      { id: 'corner', title: 'CORNERS', how: 'When the alley turns, swipe LEFT or RIGHT: the way the yellow arrow points. Take two corners.', need: 2, ok: w => w === 'corner', foot: true },
       { id: 'run', title: 'ON FOOT', how: 'Swipe left and right round crates, UP over fences, DOWN under pipes. Clear six.', need: 6, ok: w => w === 'cleared', foot: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; lessonSet(G); G.ev.push({ k: 'lessonnext', first: true }); }
@@ -191,7 +219,9 @@ function honest(G, o, mem) {
     if (best !== me.lane) swipe(G, best < me.lane ? 'l' : 'r');
     const Lh = lessonNow(G); if (G.nitro > 0 && (Lh && Lh.id === 'nitro' || !(Lh && Lh.id === 'dodge') && G.cops.some(cp => me.s - cp.s < 25) && Math.random() < 0.3)) nitro(G);
     return; }
-  if (G.ph === 'foot') { const F = G.foot, o2 = F.obs.find(q => !q.done && q.s > F.s), d = o2 ? o2.s - F.s : 99; if (!o2 || d > 9 * (0.6 + react)) return;
+  if (G.ph === 'foot') { const F = G.foot, o2 = F.obs.find(q => !q.done && q.s > F.s), d = o2 ? o2.s - F.s : 99, nt = F.turns.find(q => !q.past);
+    if (nt && nt.got === null && nt.s - F.s <= FOOT_WIN - 1 - react * 8) { const way = Math.random() < acc + (1 - acc) * 0.5 ? nt.dir : -nt.dir; swipe(G, way > 0 ? 'r' : 'l'); }      // reads the arrow a reaction late; now and then goes wrong
+    if (!o2 || d > 9 * (0.6 + react)) return;
     if (o2.type === 'fence') { if (d < 4.5 && !slip()) swipe(G, 'u'); }
     else if (o2.type === 'pipe') { if (d < 4.5 && !slip()) swipe(G, 'd'); }
     else { const lane = Math.round((F.x + 1.3) / 1.3); if (lane === o2.lane || lane === o2.two) { const free = [0, 1, 2].filter(l => l !== o2.lane && l !== o2.two).sort((a, b) => Math.abs(a - lane) - Math.abs(b - lane))[0]; if (!slip()) swipe(G, free < lane ? 'l' : 'r'); } } }

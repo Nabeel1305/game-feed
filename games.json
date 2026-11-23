@@ -482,7 +482,7 @@
       "id": "police",
       "name": "Police Chase",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "added": "2026-11-17",
       "path": "games/police/index.html",
       "artifact": "https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy",
@@ -492,7 +492,7 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "Chase the car under the red arrow through a city of corners: stick, gas and brake. Spin him out, run him down, cuff him.",
+        "hook": "Chase the car under the red arrow through a city of corners, run him down through the alleys, press ARREST and out-tap him.",
         "genre": "Chase",
         "intensity": 4,
         "thumbs": 2,
@@ -509,7 +509,7 @@
         "P14",
         "P30"
       ],
-      "summary": "A three-part police chase in 3D through a night city of streets and corners. Pursuit: a floating stick steers your patrol car, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse); the getaway car is orange, with a red SUSPECT arrow over it and a red ring under it, and an arrow at the screen edge when he is out of sight; he turns at junctions, you brake for the corner, and a ram to his back corner spins him out. On foot: you see your officer from behind chasing him down a brick alley, swiping round crates, over fences and under pipes, and tap to tackle. Arrest: when he twists one way, swipe the other way to hold him until the cuffs are on. Lights, siren, rain on the tarmac; weather changes by case."
+      "summary": "A three-part police chase in 3D through a night city of streets and corners. Pursuit: a floating stick steers your patrol car, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse); the getaway car is orange, with a red SUSPECT arrow over it and a red ring under it; he turns at junctions, you brake for the corner, and a ram to his back corner spins him out. On foot: you see your officer from behind, chasing him through brick alleys with corners: swipe round crates, over fences, under pipes, and at a corner swipe the way he turned (from case 6 some are T-junctions). Close in and press the ARREST button. Arrest: a tug of war, your officer kneeling on him: tap faster than he fights to fill the bar to CUFFED; let it empty and he is up and running. Lights, siren, rain on the tarmac; weather changes by case."
     },
     {
       "number": 15,
@@ -823,7 +823,7 @@
       "id": "run",
       "name": "On the Run",
       "status": "testing",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "added": "2026-11-17",
       "path": "games/run/index.html",
       "artifact": "https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1",
@@ -850,7 +850,7 @@
         "P14",
         "P18"
       ],
-      "summary": "Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse; a garage of upgrades and a rank that stay."
+      "summary": "Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse, round their corners (swipe the way the yellow arrow points), with the officer on your heels; a garage of upgrades and a rank that stay."
     },
     {
       "number": 25,

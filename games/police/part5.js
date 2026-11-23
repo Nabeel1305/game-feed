@@ -84,12 +84,15 @@ window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contai
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (second version, 23 Nov 2026, his review: "a joystick with a button for brake, acceleration and reverse"). Driving: the left
 // thumb is a stick that steers (it appears where the thumb lands); the right thumb holds GAS or BRAKE, two big pedals at the bottom
-// right (slide from one to the other without lifting). On foot and in the arrest: swipes (left, right, up, down) and a quick tap.
+// right (slide from one to the other without lifting). On foot: swipes (left, right, up, down; at a corner, the way he turned) and the
+// ARREST button. In the struggle: taps, anywhere, as fast as you can.
 const touches = new Map();
 function pedalAt(x, y) { const Pd = pedals(); for (const key of ['gas', 'brake']) { const b = Pd[key]; if (x >= b.x - 10 * k && x <= b.x + b.w + 10 * k && y >= b.y - 30 * k && y <= b.y + b.h + 30 * k) return key; } return null; }
 function driveInput() { let sx = 0, gas = false, brake = false; for (const t of touches.values()) { if (t.role === 'stick') sx = clamp((t.x - t.x0) / (46 * k), -1, 1); else if (t.role === 'gas') gas = true; else if (t.role === 'brake') brake = true; } if (Math.abs(sx) < 0.08) sx = 0; drive(G, sx, gas && !brake, brake); ui.stick = [...touches.values()].find(t => t.role === 'stick') || null; }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return;
   const t = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), done: false, role: null }; touches.set(e.pointerId, t);
+  if (G.ph === 'cuff') { t.role = 'mash'; tap(G); }      // the struggle: every finger that lands is a tap
+  else if (G.ph === 'foot') { const b = arrestBtn(), m = 14 * k; if (e.clientX >= b.x - m && e.clientX <= b.x + b.w + m && e.clientY >= b.y - m && e.clientY <= b.y + b.h + m) { t.role = 'arrest'; tap(G); } }
   if (G.ph === 'drive') { t.role = pedalAt(e.clientX, e.clientY) || (e.clientX < W * 0.5 ? ([...touches.values()].some(q => q !== t && q.role === 'stick') ? null : 'stick') : (e.clientX > W * 0.75 ? 'gas' : 'brake')); driveInput(); }
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if (!t || !G || G.over || paused) return; t.x = e.clientX; t.y = e.clientY;
@@ -97,7 +100,7 @@ cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if
   if (Math.max(Math.abs(dx), Math.abs(dy)) > 28 * k) { t.done = true; swipe(G, Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'l' : 'r') : (dy < 0 ? 'u' : 'd')); } });
 function endTouch(e) { const t = touches.get(e.pointerId); if (!t) return; touches.delete(e.pointerId); if (!G || G.over || paused) return;
   if (G.ph === 'drive' || t.role) { if (G.ph === 'drive') driveInput(); return; }
-  if (!t.done && performance.now() - t.t0 < 350) tap(G); }
+  if (!t.done && performance.now() - t.t0 < 350 && G.ph === 'foot' && G.foot.gap <= G.cfg.tackle * (G.lesson ? 1.3 : 1)) tap(G); }      // a quick tap anywhere arrests too, once the button is lit (never a dive by accident)
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections
@@ -132,7 +135,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  drive(sx, gas, brake) { drive(G, sx, gas, brake); }, pedals() { return pedals(); }, onRoad, P, RW, swipe(d) { swipe(G, d); }, tap() { tap(G); }, startFoot(gap) { startFoot(G, gap); }, startCuff() { startCuff(G); }, ui, get V3() { return V3; }, W3,
+  drive(sx, gas, brake) { drive(G, sx, gas, brake); }, pedals() { return pedals(); }, onRoad, P, RW, swipe(d) { swipe(G, d); }, tap() { tap(G); }, startFoot(gap) { startFoot(G, gap); }, startCuff() { startCuff(G); }, arrestBtn() { return arrestBtn(); }, footAt(s) { return footAt(G.foot, s); }, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

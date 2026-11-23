@@ -133,7 +133,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  swipe(d) { swipe(G, d); }, tap() { tap(G); }, startFoot() { startFoot(G); }, renderShop, ui, get V3() { return V3; }, W3,
+  swipe(d) { swipe(G, d); }, tap() { tap(G); }, startFoot() { startFoot(G); }, footAt(s) { return footAt(G.foot, s); }, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

@@ -19,6 +19,8 @@ const sfx = {
   step() { if (!gate('stepc', 120)) return; tone(200, 0.05, 0.05, 'sine', 0, 120); },
   thump() { tone(100, 0.25, 0.25, 'sine', 0, 55); noise(0.18, 600, 0.15, 'lowpass'); },
   tackle() { tone(80, 0.4, 0.3, 'sine', 0, 45); noise(0.35, 700, 0.25, 'lowpass'); tone(220, 0.2, 0.08, 'sawtooth', 0.05, 150, 700); },
+  turn() { noise(0.16, 1500, 0.07, 'bandpass', 1.2); tone(260, 0.12, 0.04, 'sine', 0, 430); },
+  pull(m = 0.5) { if (!gate('pull', 45)) return; tone(note(330, Math.round(clamp(m, 0, 1) * 12)), 0.07, 0.08, 'triangle'); tone(2400, 0.02, 0.03, 'square', 0, null, 6000); },
   grunt() { tone(150 * vary(0.1), 0.18, 0.06, 'sawtooth', 0, 110, 600); },
   hold(n = 1) { tone(note(330, n * 2), 0.18, 0.1, 'triangle'); noise(0.1, 900, 0.08, 'lowpass'); },
   free() { noise(0.3, 1200, 0.15, 'bandpass', 1); tone(330, 0.3, 0.08, 'triangle', 0, 220); },

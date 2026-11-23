@@ -33,6 +33,7 @@ const sfx = {
   jump() { noise(0.15, 1500, 0.06, 'bandpass', 1); tone(300, 0.15, 0.05, 'sine', 0, 450); },
   slide() { noise(0.4, 1800, 0.1, 'bandpass', 1.5); },
   step() { if (!gate('stepc', 120)) return; tone(200, 0.05, 0.05, 'sine', 0, 120); },
+  turn() { noise(0.16, 1500, 0.07, 'bandpass', 1.2); tone(260, 0.12, 0.04, 'sine', 0, 430); },
   thump() { tone(100, 0.25, 0.25, 'sine', 0, 55); noise(0.18, 600, 0.15, 'lowpass'); },
   tackle() { tone(80, 0.4, 0.3, 'sine', 0, 45); noise(0.35, 700, 0.25, 'lowpass'); tone(220, 0.2, 0.08, 'sawtooth', 0.05, 150, 700); },
   grunt() { tone(150 * vary(0.1), 0.18, 0.06, 'sawtooth', 0, 110, 600); },

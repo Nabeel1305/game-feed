@@ -49,9 +49,12 @@ function buildWorld() {
   const COLS = [0x8a8f96, 0x2b3d5c, 0xb8b4a8, 0x324a2e, 0x6a5a3a, 0x3a3a3e], traffic = []; for (let i = 0; i < 26; i++) { const c = carModel(COLS[i % 6]); c.visible = false; S.add(c); traffic.push(c); }
   // the alley (on foot): brick walls close either side, crates, fences, pipes; and the man you are chasing
   const brick = document.createElement('canvas'); brick.width = brick.height = 128; { const g = brick.getContext('2d'); g.fillStyle = '#4a4440'; g.fillRect(0, 0, 128, 128); for (let y = 0; y < 128; y += 10) for (let x = (y / 10 % 2) * 12; x < 128; x += 24) { g.fillStyle = `hsl(${10 + R0() * 12},${30 + R0() * 20}%,${26 + R0() * 14}%)`; g.fillRect(x + 1, y + 1, 22, 8); } }
-  const bt = new T.CanvasTexture(brick); bt.colorSpace = T.SRGBColorSpace; bt.wrapS = bt.wrapT = T.RepeatWrapping; bt.repeat.set(80, 3);
-  const alley = new T.Group(); for (const sd of [-1, 1]) { const w = new T.Mesh(new T.BoxGeometry(0.4, 9, 1000), new T.MeshStandardMaterial({ map: bt, roughness: 0.9 })); w.position.set(sd * 2.6, 4.5, -450); w.receiveShadow = true; alley.add(w); }
-  const tar2 = tar.clone(); tar2.repeat.set(2, 240); tar2.needsUpdate = true; const aFloor = new T.Mesh(new T.PlaneGeometry(5.2, 1000), new T.MeshStandardMaterial({ color: 0x5a5650, roughness: 0.6, map: tar2 })); aFloor.rotation.x = -Math.PI / 2; aFloor.position.z = -450; alley.add(aFloor);
+  const bt = new T.CanvasTexture(brick); bt.colorSpace = T.SRGBColorSpace; bt.wrapS = bt.wrapT = T.RepeatWrapping; bt.repeat.set(0.48, 3);
+  // (third version: alleys with corners) walls and floor are 6 m modules laid along the run (layAlley), so a corner is just where they turn
+  const alley = new T.Group(), wallI = new T.InstancedMesh(new T.BoxGeometry(0.4, 9, 6), new T.MeshStandardMaterial({ map: bt, roughness: 0.9 }), 560); wallI.frustumCulled = false; wallI.receiveShadow = true; alley.add(wallI);
+  const tar2 = tar.clone(); tar2.repeat.set(2, 1.44); tar2.needsUpdate = true; const floorI = new T.InstancedMesh(new T.PlaneGeometry(5.2, 6).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: 0x5a5650, roughness: 0.6, map: tar2 }), 300); floorI.frustumCulled = false; floorI.receiveShadow = true; alley.add(floorI);
+  const arw = document.createElement('canvas'); arw.width = 256; arw.height = 128; { const g = arw.getContext('2d'); g.fillStyle = '#16181c'; g.fillRect(0, 0, 256, 128); g.strokeStyle = '#ffd23a'; g.lineWidth = 8; g.strokeRect(6, 6, 244, 116); g.fillStyle = '#ffd23a'; for (const x of [40, 104, 168]) { g.beginPath(); g.moveTo(x, 26); g.lineTo(x + 30, 26); g.lineTo(x + 62, 64); g.lineTo(x + 30, 102); g.lineTo(x, 102); g.lineTo(x + 32, 64); g.closePath(); g.fill(); } }
+  const arwT = new T.CanvasTexture(arw); arwT.colorSpace = T.SRGBColorSpace; const arrowI = new T.InstancedMesh(new T.PlaneGeometry(3.4, 1.7), new T.MeshBasicMaterial({ map: arwT, side: T.DoubleSide }), 48); arrowI.frustumCulled = false; alley.add(arrowI);
   const crateM = new T.MeshStandardMaterial({ color: 0x8a6a42, roughness: 0.9, map: W3.grainTex(128, 9, 170, 60, 4) }), metal = new T.MeshStandardMaterial({ color: 0x6a6e74, metalness: 0.7, roughness: 0.4 });
   const obsPool = []; for (let i = 0; i < 24; i++) { const g = new T.Group(); g.visible = false; alley.add(g); obsPool.push(g); }
   alley.visible = false; S.add(alley);
@@ -65,23 +68,46 @@ function buildWorld() {
     if (o.bag) { const b2 = new T.Mesh(new T.BoxGeometry(0.34, 0.26, 0.2), M2(o.bag)); b2.position.set(0.05, 1.2, 0.24); b2.rotation.z = 0.3; b2.castShadow = true; body.add(b2); g.userData.bag = b2; }
     if (o.stripe) { const st = new T.Mesh(new T.BoxGeometry(0.4, 0.06, 0.34), M2(o.stripe, 0.4)); st.position.set(0, 1.32, 0); body.add(st); }
     const J = { arm: [], fore: [], thigh: [], shin: [] };
-    for (const sd of [-1, 1]) { const a = new T.Group(); a.position.set(sd * 0.27, 1.5, 0); cap(a, 0.06, 0.24, tp, 0, -0.16, 0); const f = new T.Group(); f.position.set(0, -0.32, 0); cap(f, 0.052, 0.22, o.sleeve ? tp : sk, 0, -0.14, 0); const hand = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), sk); hand.position.set(0, -0.3, 0); f.add(hand); a.add(f); body.add(a);
+    for (const sd of [-1, 1]) { const a = new T.Group(); a.position.set(sd * 0.27, 1.5, 0); cap(a, 0.06, 0.24, tp, 0, -0.16, 0); const f = new T.Group(); f.position.set(0, -0.32, 0); cap(f, 0.052, 0.22, o.sleeve ? tp : sk, 0, -0.14, 0); const hand = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), sk); hand.position.set(0, -0.3, 0); f.add(hand); if (o.cuffs) { const rg = new T.Mesh(new T.TorusGeometry(0.062, 0.016, 8, 16), new T.MeshStandardMaterial({ color: 0xdfe4ea, metalness: 0.9, roughness: 0.25, emissive: 0x30363c })); rg.rotation.x = Math.PI / 2; rg.position.set(0, -0.23, 0); rg.visible = false; f.add(rg); (g.userData.rings = g.userData.rings || []).push(rg); } a.add(f); body.add(a);
       const th = new T.Group(); th.position.set(sd * 0.11, 0.92, 0); cap(th, 0.085, 0.3, lg, 0, -0.2, 0); const sn = new T.Group(); sn.position.set(0, -0.42, 0); cap(sn, 0.068, 0.3, lg, 0, -0.2, 0); const shoe = new T.Mesh(new T.BoxGeometry(0.11, 0.09, 0.27), sh); shoe.position.set(0, -0.42, -0.06); shoe.castShadow = true; sn.add(shoe); th.add(sn); body.add(th);
       J.arm.push(a); J.fore.push(f); J.thigh.push(th); J.shin.push(sn); }
-    g.userData.J = J; g.userData.body = body; return g; };
+    g.userData.J = J; g.userData.body = body; g.rotation.order = 'YXZ'; return g; };
   // a run you can read: thighs swing, knees fold as the leg comes through, arms pump the other way with bent elbows, the body leans and bounces
   const runPose = (m, ph, amt = 1) => { const J = m.userData.J, b = m.userData.body; for (let i = 0; i < 2; i++) { const p = ph + i * Math.PI, sw = Math.sin(p); J.thigh[i].rotation.x = (sw * 0.95 + 0.12) * amt; J.shin[i].rotation.x = -(0.25 + 1.25 * Math.max(0, Math.cos(p + 0.5))) * amt; J.arm[i].rotation.x = -sw * 0.95 * amt; J.arm[i].rotation.z = (i ? -1 : 1) * 0.08; J.fore[i].rotation.x = (1.25 + sw * 0.25) * amt; }
     b.rotation.x = -0.24 * amt; b.position.y = Math.abs(Math.sin(ph)) * 0.09 * amt; b.rotation.y = Math.sin(ph) * 0.12 * amt; if (m.userData.bag) m.userData.bag.rotation.x = Math.sin(ph * 2) * 0.25; };
-  const runner = person(0xe8552a, 0x3a4a6a, { hood: true, sleeve: true, bag: 0x2a2a2a }); S.add(runner);      // the man you chase: an orange hoodie, like his car
+  const runner = person(0xe8552a, 0x3a4a6a, { hood: true, sleeve: true, bag: 0x2a2a2a, cuffs: true }); S.add(runner);      // the man you chase: an orange hoodie, like his car
   const cop = person(0x1c2a44, 0x10141c, { cap: 0x1c2a44, shoe: 0x101010, stripe: 0xd8e04a, sleeve: true }); S.add(cop);      // you
   const gloves = new T.Group(); { const gm = new T.MeshStandardMaterial({ color: 0x15171a, roughness: 0.7 }), sl = new T.MeshStandardMaterial({ color: 0x1c2a44, roughness: 0.8 }); for (const s of [-1, 1]) { const h = new T.Mesh(new T.SphereGeometry(0.07, 10, 8), gm); h.position.set(s * 0.22, 0, 0); const a = new T.Mesh(new T.CapsuleGeometry(0.06, 0.4, 4, 8), sl); a.rotation.x = Math.PI / 2; a.position.set(s * 0.25, -0.02, 0.26); gloves.add(h, a); } gloves.visible = false; S.add(gloves); }
   // the alley has colour: doors and shutters along both walls, and its own soft light so it is never a black tunnel
-  const doors = new T.InstancedMesh(new T.BoxGeometry(0.12, 2.3, 1.3), new T.MeshStandardMaterial({ roughness: 0.6 }), 80); doors.frustumCulled = false; { const DC = [0x2f7a8a, 0xb8482e, 0xd8b23a, 0x3f7a4a, 0x6a4a8a, 0xc8c2b4], c3 = new T.Color(); for (let i = 0; i < 80; i++) { const sd = i % 2 ? 1 : -1; D.position.set(sd * 2.38, i % 3 === 0 ? 1.9 : 1.15, -(8 + (i >> 1) * 11 + (sd > 0 ? 5 : 0))); D.rotation.set(0, 0, 0); D.scale.set(1, i % 3 === 0 ? 0.55 : 1, i % 3 === 0 ? 1.5 : 1); D.updateMatrix(); doors.setMatrixAt(i, D.matrix); doors.setColorAt(i, c3.set(DC[(i * 7) % 6])); } } alley.add(doors);
+  const doors = new T.InstancedMesh(new T.BoxGeometry(0.12, 2.3, 1.3), new T.MeshStandardMaterial({ roughness: 0.6 }), 300); doors.frustumCulled = false; if (0) { const DC = [0x2f7a8a, 0xb8482e, 0xd8b23a, 0x3f7a4a, 0x6a4a8a, 0xc8c2b4], c3 = new T.Color(); for (let i = 0; i < 80; i++) { const sd = i % 2 ? 1 : -1; D.position.set(sd * 2.38, i % 3 === 0 ? 1.9 : 1.15, -(8 + (i >> 1) * 11 + (sd > 0 ? 5 : 0))); D.rotation.set(0, 0, 0); D.scale.set(1, i % 3 === 0 ? 0.55 : 1, i % 3 === 0 ? 1.5 : 1); D.updateMatrix(); doors.setMatrixAt(i, D.matrix); doors.setColorAt(i, c3.set(DC[(i * 7) % 6])); } } alley.add(doors); doors.setColorAt(0, new T.Color(1, 1, 1));
   const alleyFill = new T.HemisphereLight(0xdfe8ff, 0x5a5048, 0); S.add(alleyFill);
   // spray kicked up on a wet road
-  V3 = { T, S, road, slabs, dash, D, blds, poleI, headI, lamps, ring, cop, runPose, alleyFill, cell: null, camH: 0, me, crook, traffic, redL, blueL, head, alley, alleyLamps, obsPool, crateM, metal, runner, gloves, camPos: new T.Vector3(), look: new T.Vector3(), sky: null, bk: -1, lk: -1 };
+  V3 = { T, S, road, slabs, dash, D, blds, poleI, headI, lamps, ring, cop, runPose, alleyFill, wallI, floorI, arrowI, doors, alleyF: null, cell: null, camH: 0, me, crook, traffic, redL, blueL, head, alley, alleyLamps, obsPool, crateM, metal, runner, gloves, camPos: new T.Vector3(), look: new T.Vector3(), sky: null, bk: -1, lk: -1 };
   W3.setQuality(stepN); return V3;
 }
+// the alley for this run: corridors of 6 m modules between the corners, a wall across the end of each, the way round left open;
+// at a T the wrong way is a short dead end. Laid once for each run on foot (F), from its turns.
+const NOFOOT = { s: 0, x: 0, gap: 9, air: 0, low: 0, dive: 0, stumble: 0, crookX: 0, obs: [], turns: [], len: 300 };
+function layAlley(V, F) {
+  if (V.alleyF === F) return; V.alleyF = F; const D = V.D, T = V.T, DC = [0x2f7a8a, 0xb8482e, 0xd8b23a, 0x3f7a4a, 0x6a4a8a, 0xc8c2b4], col = new T.Color(); let nw = 0, nf = 0, nd = 0, na = 0;
+  const at = (px, py, h, lat, fwd) => [px + Math.cos(h) * lat + Math.sin(h) * fwd, -(py - Math.sin(h) * lat + Math.cos(h) * fwd)];
+  const put = (I, n, x, y, z, ry, sx = 1, sy = 1, sz = 1) => { if (n >= I.count0) return; D.position.set(x, y, z); D.rotation.set(0, ry, 0); D.scale.set(sx, sy, sz); D.updateMatrix(); I.setMatrixAt(n, D.matrix); };
+  for (const I of [V.wallI, V.floorI, V.arrowI, V.doors]) I.count0 = I.count0 || I.count;
+  const wall = (px, py, h, lat, fwd, len, across) => { const [x, z] = at(px, py, h, lat, fwd); put(V.wallI, nw++, x, 4.5, z, -h + (across ? Math.PI / 2 : 0), 1, 1, len / 6); };
+  const floor = (px, py, h, fwd, len) => { const [x, z] = at(px, py, h, 0, fwd); put(V.floorI, nf++, x, 0, z, -h, 1, 1, len / 6); };
+  const corridor = (px, py, h, a, b) => { for (let f = a; f < b - 0.01; f += 6) { floor(px, py, h, f + 3, 6); for (const sd of [-1, 1]) { wall(px, py, h, sd * 2.6, f + 3, 6);
+      const q = Math.abs(Math.round(px * 3 + py * 7 + f * 1.3 + sd * 5)); if (q % 2 === 0 && nd < V.doors.count0) { const hi = q % 3 === 0, [x, z] = at(px, py, h, sd * 2.38, f + 3); put(V.doors, nd, x, hi ? 1.9 : 1.15, z, -h, 1, hi ? 0.55 : 1, hi ? 1.5 : 1); V.doors.setColorAt(nd, col.set(DC[q % 6])); nd++; } } } };
+  let px = 0, py = 0, h = 0, from = -FOOT_BACK, prev = 0; wall(0, 0, 0, 0, -FOOT_BACK - 0.2, 5.6, true);
+  for (const t of F.turns) { const d = t.s - prev; corridor(px, py, h, from, d - 2.6); px = t.px; py = t.py;
+    floor(px, py, h, 0, 5.2); wall(px, py, h, 0, 2.8, 5.6, true);      // the corner square, the wall across its far side
+    if (!t.tee) { wall(px, py, h, -t.dir * 2.6, 0, 5.2); const [x, z] = at(px, py, h, 0, 2.58); put(V.arrowI, na++, x, 2.3, z, -h, t.dir, 1, 1); }      // an L: the other side is wall, and an arrow says which way
+    else { const hs = h - t.dir * Math.PI / 2; floor(px, py, hs, 5.6, 6); for (const sd of [-1, 1]) wall(px, py, hs, sd * 2.6, 5.6, 6); wall(px, py, hs, 0, 8.8, 5.6, true); }      // a T: the wrong way is a dead end
+    h += t.dir * Math.PI / 2; from = 2.6; prev = t.s; }
+  corridor(px, py, h, from, from + (F.turns.length ? 66 : Math.ceil((F.len + 420 + FOOT_BACK) / 6) * 6)); { const end = from + (F.turns.length ? 66 : Math.ceil((F.len + 420 + FOOT_BACK) / 6) * 6); wall(px, py, h, 0, end + 0.2, 5.6, true); }
+  V.wallI.count = Math.min(nw, V.wallI.count0); V.floorI.count = Math.min(nf, V.floorI.count0); V.arrowI.count = Math.min(na, V.arrowI.count0); V.doors.count = nd;
+  for (const I of [V.wallI, V.floorI, V.arrowI, V.doors]) I.instanceMatrix.needsUpdate = true; if (V.doors.instanceColor) V.doors.instanceColor.needsUpdate = true;
+}
+function arrestBtn() { const w = 214 * k, h = 74 * k; return { x: W / 2 - w / 2, y: H - h - 30 * k, w, h }; }
 function setWeather(G) {
   const V = buildWorld(); if (V.none || V.sky === G.weather) return; V.sky = G.weather;
   W3.setSky(G.weather, { azim: 200, wind: [0.5, 0.2] }); const dark = W3.S.night || G.weather === 'dusk' || G.weather === 'storm' || G.weather === 'rain';
@@ -104,14 +130,17 @@ function onEvent(G, e) {
     case 'dodge': break;
     case 'cleared': sfx.step(); break;
     case 'stumble': sfx.thump(); FX.shake = 9; FX.red = 0.35; say({ crate: 'INTO THE CRATES!', fence: 'HIT THE FENCE!', pipe: 'HEAD ON THE PIPE!' }[e.type], cx, cy, '#ffb4a8', 24); tip('stumble_' + e.type, { crate: 'Swipe left or right round crates', fence: 'Swipe UP to jump a fence', pipe: 'Swipe DOWN to slide under a pipe' }[e.type], 2.6); break;
-    case 'shove': sfx.thump(); say('HE SHOVED YOU OFF', cx, cy, '#ffd0c4', 22); tip('shove', 'Right behind him: tap to tackle', 2.4); break;
-    case 'dive': sfx.thump(); say('TOO FAR!', cx, cy, '#ffd0c4', 26); break;
+    case 'shove': sfx.thump(); say('HE SHOVED YOU OFF', cx, cy, '#ffd0c4', 22); tip('shove', 'Right behind him: press ARREST', 2.4); break;
+    case 'dive': sfx.thump(); say('TOO FAR!', cx, cy, '#ffd0c4', 26); tip('dive', 'Wait for the ARREST button to light up', 2.6); break;
+    case 'turnset': sfx.turn(); break;
+    case 'cornered': vibe(HAP.light); break;
+    case 'crookturn': if (G.ph === 'foot') say(e.dir < 0 ? '◀ HE WENT LEFT' : 'HE WENT RIGHT ▶', cx, cy + 34 * k, '#ffd36a', 20); break;
+    case 'wall': sfx.thump(); FX.shake = 10; FX.red = 0.35; vibe(HAP.thud); say(e.why === 'late' ? 'MISSED THE TURN!' : `WRONG WAY! HE WENT ${e.dir < 0 ? 'LEFT' : 'RIGHT'}`, cx, cy, '#ffb4a8', 24); tip('wall', 'At a corner, swipe the way he turned', 2.8); break;
+    case 'surge': sfx.grunt(); FX.shake = 7; vibe(HAP.thud); break;
+    case 'pull': sfx.pull(e.m); ui.pulse = 1; vibe(HAP.tick); break;
     case 'tackle': sfx.tackle(); FX.shake = 14; FX.stop = 0.1; vibe(HAP.heavy); say('GOT HIM!', cx, cy, '#ffe08a', 32); break;
     case 'cuffstart': ui.snap = true; break;
-    case 'twist': sfx.grunt(); break;
-    case 'heave': FX.shake = 6; break;
-    case 'held': sfx.hold(e.n); vibe(HAP.light); say('HOLD!', cx, cy, '#9be3b5', 26); break;
-    case 'free': sfx.free(); FX.red = 0.5; say('HE BROKE FREE!', cx, cy, '#ffb4a8', 30); tip('free', 'Watch his shoulders: swipe the OTHER way', 3); break;
+    case 'free': sfx.free(); FX.red = 0.5; say('HE BROKE FREE!', cx, cy, '#ffb4a8', 30); tip('free', 'Tap faster than he fights: keep the bar away from the red end', 3); break;
     case 'cuffed': sfx.cuffs(); FX.flash = 0.7; say('CUFFED!', cx, cy, '#ffe08a', 34); vibe(HAP.best); break;
     case 'horn': sfx.horn(); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
@@ -131,7 +160,7 @@ function draw(now, dt) {
   const T = V.T, cam = W3.cam, g = G || idleG(), t = now; setWeather(g);
   const onFoot = g.ph === 'foot' || g.ph === 'cuff', me = g.me, D = V.D;
   V.alley.visible = onFoot; for (const m of [V.road, V.slabs, V.dash, V.blds, V.poleI, V.headI, V.me, V.crook, V.ring]) m.visible = !onFoot; V.traffic.forEach(c => c.visible = false);
-  V.runner.visible = onFoot; V.cop.visible = g.ph === 'foot'; V.gloves.visible = g.ph === 'cuff'; V.alleyFill.intensity = onFoot ? (V.dark ? 1.5 : 0.7) : 0;
+  V.runner.visible = onFoot; V.cop.visible = onFoot; V.gloves.visible = false; if (!onFoot) ui.turn = 0; V.alleyFill.intensity = onFoot ? (V.dark ? 1.5 : 0.7) : 0;
   const flash = Math.sin(t * 14) > 0; ui.mark = null;
   if (!onFoot) {
     // the city is laid out round the block you are in, and laid out again when you move to the next one
@@ -157,28 +186,39 @@ function draw(now, dt) {
     cam.position.copy(V.camPos); cam.fov = (port ? 66 : 56) + Math.max(0, me.v - 22) * 0.3; if (cam.near !== 3) cam.near = 3; cam.updateProjectionMatrix(); cam.lookAt(V.look);
     W3.setFocus(me.x, 0, -me.s, 22); if (g.ph === 'drive') ui.mark = { p: toScreen(ck.x, 2.6, -ck.s), d: Math.hypot(ck.x - me.x, ck.s - me.s) };
   } else {
-    const F = g.foot, s = F ? F.s : 0, ph = t * 12.5;
-    V.alleyLamps.forEach((l, q) => { l.intensity = 45; l.position.set((q % 2 ? 1.8 : -1.8), 3.5, -(Math.floor(s / 25) * 25 + q * 25 + 10)); });
+    const F = g.foot || NOFOOT, s = F.s, ph = t * 12.5; layAlley(V, F);
+    const at = (s2, lat = 0) => { const p = footAt(F, s2); return { x: p.x + Math.cos(p.h) * lat, z: -(p.y - Math.sin(p.h) * lat), h: p.h }; };
+    V.alleyLamps.forEach((l, q) => { const p = at(Math.floor(s / 20) * 20 + q * 20 + 6, q % 2 ? 1.8 : -1.8); l.intensity = 55; l.distance = 24; l.position.set(p.x, 3.5, p.z); });
     // obstacles ahead
-    let n = 0; if (F && g.ph === 'foot') for (const o of F.obs) { if (o.s < s - 3 || o.s > s + 70 || n >= V.obsPool.length) continue; const gO = V.obsPool[n++]; gO.visible = true; if (gO.userData.type !== o.type + o.lane + o.two) { gO.clear(); gO.userData.type = o.type + o.lane + o.two;
+    let n = 0; if (g.ph === 'foot') for (const o of F.obs) { if (o.s < s - 3 || o.s > s + 70 || n >= V.obsPool.length) continue; const gO = V.obsPool[n++]; gO.visible = true; if (gO.userData.type !== o.type + o.lane + o.two) { gO.clear(); gO.userData.type = o.type + o.lane + o.two;
         if (o.type === 'crate') for (const ln of [o.lane, o.two]) { if (ln < 0) continue; const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 1.0), V.crateM); b.position.set(ALLEY[ln], 0.5, 0); b.castShadow = true; gO.add(b); const b2 = b.clone(); b2.scale.setScalar(0.7); b2.position.y = 1.35; b2.rotation.y = 0.4; gO.add(b2); }
         if (o.type === 'fence') { for (let x = -2.4; x <= 2.4; x += 0.3) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 0.04), V.crateM); p.position.set(x, 0.5, 0); gO.add(p); } const r = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.1, 0.06), V.crateM); r.position.set(0, 0.75, 0); gO.add(r); }
         if (o.type === 'pipe') { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 5, 12), V.metal); p.rotation.z = Math.PI / 2; p.position.set(0, 1.25, 0); p.castShadow = true; gO.add(p); } }
-      gO.position.set(0, 0, -o.s); }
+      const p = at(o.s); gO.position.set(p.x, 0, p.z); gO.rotation.y = -p.h; }
     for (let q = n; q < V.obsPool.length; q++) V.obsPool[q].visible = false;
-    // the man ahead, and you: both running properly; or him on the ground under you
-    const R2 = V.runner, C2 = V.cop, JR = R2.userData.J;
-    if (g.ph === 'foot') { R2.rotation.set(0, 0, 0); R2.position.set(F.crookX, 0, -(s + F.gap + 0.6)); V.runPose(R2, ph + 1.3);
-      const jump = F.air > 0 ? Math.sin(F.air / 0.75 * Math.PI) * 1.0 : 0, low = F.low > 0, dive = F.dive > 0, cb = C2.userData.body; C2.position.set(F.x, jump, -s); V.runPose(C2, ph, F.stumble > 0 ? 0.5 : 1);
-      C2.rotation.set(low ? 1.15 : dive ? -1.0 : 0, 0, F.stumble > 0 ? Math.sin(t * 30) * 0.15 : 0); if (low) C2.position.y = 0.25; if (dive) C2.position.y = 0.3; if (jump > 0.1) { const CJ = C2.userData.J; CJ.thigh[0].rotation.x = 1.3; CJ.shin[0].rotation.x = -1.5; CJ.thigh[1].rotation.x = 0.6; CJ.shin[1].rotation.x = -1.2; cb.rotation.x = -0.1; }
-      ui.mark = { p: toScreen(F.crookX, 2.25, -(s + F.gap + 0.6)), d: F.gap, foot: true }; }
-    else { const C = g.cuff, tw = C && C.heave && !C.heave.done ? { l: -1, r: 1, u: 0, d: 0 }[C.heave.dir] * Math.min(1, (C.heave.t + 0.6) * 2) : 0, lift = C && C.heave && !C.heave.done && (C.heave.dir === 'u') ? 0.15 : 0;
-      V.runPose(R2, 0, 0); R2.position.set(0, 0.22 + lift, -(s + 0.5)); R2.rotation.set(-Math.PI / 2, 0, tw * 0.45); for (let i = 0; i < 2; i++) { JR.arm[i].rotation.x = -0.5; JR.arm[i].rotation.z = (i ? 1 : -1) * 0.9; JR.fore[i].rotation.x = 0.2; } }
-    // the camera: behind and above your own officer on foot (it was first person); for the arrest, looking down at him, gloves on his back
-    const want = g.ph === 'cuff' ? new T.Vector3(0.3, 1.85, -s + 0.9) : new T.Vector3((F ? F.x : 0) * 0.55, 3.3, -s + 5.4), look = g.ph === 'cuff' ? new T.Vector3(0, 0, -(s + 1.4)) : new T.Vector3((F ? F.x : 0) * 0.5, 1.0, -(s + 8));
+    // the man ahead, and you: both running properly, round the corners; or him face down with you kneeling on him
+    const R2 = V.runner, C2 = V.cop, JR = R2.userData.J, CJ = C2.userData.J, rb = R2.userData.body, cb = C2.userData.body, rings = R2.userData.rings; let want, look;
+    if (g.ph === 'foot') { const pr = at(s + F.gap + 0.6, F.crookX), pc = at(s, F.x); if (R2.userData.bag) R2.userData.bag.visible = true; rings.forEach(r => r.visible = false);
+      R2.rotation.set(0, -pr.h, 0); R2.position.set(pr.x, 0, pr.z); V.runPose(R2, ph + 1.3); for (let i = 0; i < 2; i++) { JR.fore[i].rotation.z = 0; JR.thigh[i].rotation.z = 0; CJ.thigh[i].rotation.z = 0; }
+      const jump = F.air > 0 ? Math.sin(F.air / 0.75 * Math.PI) * 1.0 : 0, low = F.low > 0, dive = F.dive > 0; C2.position.set(pc.x, jump, pc.z); V.runPose(C2, ph, F.stumble > 0 ? 0.5 : 1);
+      C2.rotation.set(low ? 1.15 : dive ? -1.0 : 0, -pc.h, F.stumble > 0 ? Math.sin(t * 30) * 0.15 : 0); if (low) C2.position.y = 0.25; if (dive) C2.position.y = 0.3; if (jump > 0.1) { CJ.thigh[0].rotation.x = 1.3; CJ.shin[0].rotation.x = -1.5; CJ.thigh[1].rotation.x = 0.6; CJ.shin[1].rotation.x = -1.2; cb.rotation.x = -0.1; }
+      // the red marker: on him; once he is round the next corner, on the way he went
+      const nt = F.turns.find(q => !q.past), round = nt && s + F.gap > nt.s + 2.4, pm = round ? at(nt.s + FOOT_R + 2.5) : pr; ui.mark = { p: toScreen(pm.x, 2.25, pm.z), d: F.gap, foot: true };
+      ui.turn = nt && nt.got === null && nt.s - s <= FOOT_WIN && (!nt.tee || nt.seen) ? nt.dir : 0;
+      const cp = at(s - 5.4, F.x * 0.55), lp = at(s + 3, F.x * 0.5); want = new T.Vector3(cp.x, 3.3, cp.z); look = new T.Vector3(lp.x, 1.85, lp.z); }      // looks just past you, never at a point hidden round the corner
+    else { const C = g.cuff, won = g.over === 'won', thr = won ? 0 : (0.3 + (C.surge > 0 ? 0.7 : 0)) * (1 - C.m * 0.4), pu = ui.pulse || 0, sA = s + 1.2, pA = at(sA), pK = at(sA + 0.5), wob = Math.sin(t * 15) * thr;
+      // him: face down, wrists crossed behind his back, kicking and rolling as hard as he is fighting; the bag is on the ground beside him
+      V.runPose(R2, 0, 0); R2.position.set(pA.x, 0.2, pA.z); R2.rotation.set(-Math.PI / 2, -pA.h, 0); rb.rotation.y = wob * 0.3; rb.position.y = 0; if (R2.userData.bag) R2.userData.bag.visible = false;
+      for (let i = 0; i < 2; i++) { const sd = i ? 1 : -1; JR.arm[i].rotation.set(-0.55, 0, sd * 0.12); JR.fore[i].rotation.set(0, 0, -sd * 1.25); JR.thigh[i].rotation.set(0, 0, sd * 0.12); JR.shin[i].rotation.x = -Math.max(0, Math.sin(t * 11 + i * Math.PI)) * 1.1 * thr; }
+      rings[0].visible = won || C.m > 0.5; rings[1].visible = won;
+      // you: kneeling astride him, both hands on his wrists, leaning in on every tap
+      V.runPose(C2, 0, 0); C2.position.set(pK.x, 0, pK.z); C2.rotation.set(0, -pA.h, wob * 0.05); cb.position.y = -0.45 - pu * 0.04; cb.rotation.x = -0.5 - pu * 0.1; cb.rotation.y = 0;
+      for (let i = 0; i < 2; i++) { const sd = i ? 1 : -1; CJ.thigh[i].rotation.set(0.3, 0, sd * 0.4); CJ.shin[i].rotation.x = -1.95; CJ.arm[i].rotation.set(0.75, 0, -sd * 0.3); CJ.fore[i].rotation.x = 0.25 + pu * 0.2; }
+      const side = F.x > 0.3 ? -1 : 1, cp = at(sA + 3.9, side * 1.6); want = new T.Vector3(cp.x, 1.9, cp.z); const lp = at(sA + 0.8); look = new T.Vector3(lp.x, 0.6, lp.z); const ll = at(sA + 2.2, side * 1.2); V.alleyLamps[0].position.set(ll.x, 3.6, ll.z); V.alleyLamps[0].intensity = 26; }
+    ui.pulse = Math.max(0, (ui.pulse || 0) - dt * 7);
+    // the camera: behind and above your own officer on foot, following the alley round its corners; for the arrest, in front of the two of you
     if (ui.snap) { V.camPos.copy(want); V.look.copy(look); } else { V.camPos.lerp(want, Math.min(1, dt * 10)); V.look.lerp(look, Math.min(1, dt * 8)); } ui.snap = false;
     cam.position.copy(V.camPos); cam.fov = innerWidth > innerHeight ? 56 : 66; if (cam.near !== 0.3) cam.near = 0.3; cam.updateProjectionMatrix(); cam.lookAt(V.look);
-    if (g.ph === 'cuff') { V.gloves.position.set(0, 0.42, -(s + 1.0)); V.gloves.scale.setScalar(0.8); V.gloves.rotation.set(-0.9, 0, (R2.rotation.z) * 0.6); }
     W3.setFocus(V.camPos.x, 0, V.camPos.z - 5, 10);
   }
   if (FX.shake > 0) { cam.rotation.x += (Math.random() - 0.5) * FX.shake * 0.002; cam.rotation.y += (Math.random() - 0.5) * FX.shake * 0.002; }
@@ -203,8 +243,8 @@ function hud(G) {
     for (let i = 0; i < c.lives; i++) { ctx.fillStyle = i < G.lives ? '#5aa2ff' : 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(W - x - 8 * k - i * 18 * k, y + 8 * k, 6 * k, 0, TAU); ctx.fill(); }
     if (G.ph === 'drive') { const ds = Math.hypot(G.crook.x - G.me.x, G.crook.s - G.me.s), u = clamp(1 - ds / c.escape, 0, 1); ctx.fillStyle = 'rgba(0,0,0,.35)'; rrect(x, y + 22 * k, W - 2 * x, 6 * k, 3); ctx.fill(); ctx.fillStyle = u < 0.3 ? '#ff6b5a' : '#ffd36a'; rrect(x, y + 22 * k, Math.max(6, (W - 2 * x) * u), 6 * k, 3); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.fillText(`${Math.max(0, Math.round(ds))} m to him · PIT ${G.pitN} of ${c.pits}`, x, y + 40 * k); }
-    if (G.ph === 'foot') { const F = G.foot; ctx.fillStyle = F.gap < c.tackle ? '#9be3b5' : '#fff'; ctx.fillText(F.gap < c.tackle ? 'TAP TO TACKLE!' : `${F.gap.toFixed(1)} m behind him`, x, y + 28 * k); }
-    if (G.ph === 'cuff') { ctx.fillText(`Held ${G.cuff.held} of ${c.holds}`, x, y + 28 * k); } }
+    if (G.ph === 'foot') { const F = G.foot; ctx.fillStyle = F.gap < c.tackle ? '#9be3b5' : '#fff'; ctx.fillText(F.gap < c.tackle ? 'PRESS ARREST!' : `${F.gap.toFixed(1)} m behind him`, x, y + 28 * k); }
+    }
   if (G.t < 3.2 && !G.lesson) { ctx.globalAlpha = Math.min(1, (3.2 - G.t) / 0.6); ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.5)';
     const s = `CASE ${G.N} · ${weatherName(G.weather)} · ${c.pits} PIT${c.pits > 1 ? 'S' : ''} TO STOP HIM`; ctx.strokeText(s, W / 2, H * 0.2); ctx.fillText(s, W / 2, H * 0.2); ctx.globalAlpha = 1; }
   // the one to chase: a red marker nothing can hide, on him when he is in sight, at the edge of the screen (with how far) when he is not
@@ -222,8 +262,22 @@ function hud(G) {
     for (const [key, lab, sub, col] of [['gas', 'GAS', '', '#3fbf6a'], ['brake', 'BRAKE', 'hold: reverse', '#e0483a']]) { const b = Pd[key], on = key === 'gas' ? I.gas : I.brake; ctx.globalAlpha = on ? 1 : 0.72; ctx.fillStyle = on ? col : 'rgba(16,20,28,.72)'; rrect(b.x, b.y, b.w, b.h, 16 * k); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 3; rrect(b.x, b.y, b.w, b.h, 16 * k); ctx.stroke();
       ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(19 * k)}px ${BC}`; ctx.fillText(lab, b.x + b.w / 2, b.y + b.h / 2 - (sub ? 7 * k : 0)); if (sub) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText(sub, b.x + b.w / 2, b.y + b.h / 2 + 13 * k); } }
     ctx.restore(); }
-  // the arrest: his twist shown by an arrow (the way he goes) on the first cases
-  if (G.ph === 'cuff' && G.cuff.heave && !G.cuff.heave.done && (G.N <= 4 || G.lesson)) { const d = G.cuff.heave.dir, ax = { l: -1, r: 1, u: 0, d: 0 }[d], ay = { l: 0, r: 0, u: -1, d: 1 }[d]; ctx.save(); ctx.translate(W / 2 + ax * 90 * k, H * 0.5 + ay * 90 * k); ctx.rotate(Math.atan2(ay, ax)); ctx.globalAlpha = 0.75; ctx.fillStyle = '#ff8a6a'; ctx.beginPath(); ctx.moveTo(26 * k, 0); ctx.lineTo(-14 * k, -18 * k); ctx.lineTo(-14 * k, 18 * k); ctx.closePath(); ctx.fill(); ctx.restore(); }
+  // on foot: which way to swipe at the corner (the first cases and the lessons), and the ARREST button, lit when you are close enough
+  if (G.ph === 'foot' && !G.over) { const F = G.foot, L = G.lesson && G.lesson.steps[G.lesson.i], near = F.gap <= c.tackle * (L ? 1.3 : 1), b = arrestBtn(), pulse = 0.5 + 0.5 * Math.sin(performance.now() / 110); ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (ui.turn && (G.N <= 4 || G.lesson)) { const d = ui.turn, x = W / 2 + d * W * 0.27, y = H * 0.46, sl = (performance.now() / 500) % 1; ctx.globalAlpha = 0.92; ctx.fillStyle = '#ffd23a'; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4;
+      for (let i = 0; i < 3; i++) { const xx = x + d * (i * 20 + sl * 14) * k; ctx.beginPath(); ctx.moveTo(xx + d * 16 * k, y); ctx.lineTo(xx - d * 4 * k, y - 22 * k); ctx.lineTo(xx - d * 4 * k, y + 22 * k); ctx.closePath(); ctx.stroke(); ctx.fill(); }
+      ctx.font = `700 ${Math.round(17 * k)}px ${BC}`; ctx.strokeText('SWIPE', x + d * 22 * k, y + 42 * k); ctx.fillStyle = '#fff'; ctx.fillText('SWIPE', x + d * 22 * k, y + 42 * k); ctx.globalAlpha = 1; }
+    if (!L || L.id === 'tackle') { ctx.globalAlpha = near ? 1 : 0.6; ctx.fillStyle = near ? `rgba(46,${170 + Math.round(40 * pulse)},96,.96)` : 'rgba(16,20,28,.72)'; rrect(b.x, b.y, b.w, b.h, 18 * k); ctx.fill(); ctx.strokeStyle = near ? '#fff' : '#3fbf6a'; ctx.lineWidth = near ? 4 : 3; rrect(b.x, b.y, b.w, b.h, 18 * k); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round((near ? 26 : 21) * k)}px ${BC}`; ctx.fillText(near ? 'ARREST!' : 'ARREST', b.x + b.w / 2, b.y + b.h / 2 - (near ? 0 : 9 * k)); if (!near) { ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(`get closer: ${Math.max(0, F.gap - c.tackle).toFixed(0)} m to go`, b.x + b.w / 2, b.y + b.h / 2 + 15 * k); } }
+    ctx.restore(); }
+  // the struggle: a tug of war. The bar: his end red (he breaks free), yours green (cuffed); it shakes red when he surges
+  if (G.ph === 'cuff' && !G.over) { const C = G.cuff, bx = 34 * k, bw = W - 68 * k, by = G.lesson ? Math.max(H * 0.2, 178 * k) : H * 0.2, bh = 26 * k, sg = C.surge > 0, jit = sg ? (Math.random() - 0.5) * 5 * k : 0, b = arrestBtn(), pu = ui.pulse || 0; ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.translate(jit, 0);
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; rrect(bx - 5 * k, by - 5 * k, bw + 10 * k, bh + 10 * k, 12 * k); ctx.fill(); const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0); gr.addColorStop(0, '#e0483a'); gr.addColorStop(0.45, '#ffd23a'); gr.addColorStop(1, '#3fbf6a'); ctx.fillStyle = 'rgba(255,255,255,.14)'; rrect(bx, by, bw, bh, 8 * k); ctx.fill();
+    ctx.fillStyle = gr; rrect(bx, by, Math.max(10 * k, bw * clamp(C.m, 0, 1)), bh, 8 * k); ctx.fill(); if (sg) { ctx.strokeStyle = '#ff3a2a'; ctx.lineWidth = 4; rrect(bx - 5 * k, by - 5 * k, bw + 10 * k, bh + 10 * k, 12 * k); ctx.stroke(); }
+    ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#ffb4a8'; ctx.textAlign = 'left'; ctx.fillText('HE BREAKS FREE', bx, by + bh + 16 * k); ctx.fillStyle = '#9be3b5'; ctx.textAlign = 'right'; ctx.fillText('CUFFED', bx + bw, by + bh + 16 * k);
+    ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(20 * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; const msg = sg ? 'HE’S FIGHTING! TAP FASTER!' : 'TAP FASTER THAN HE FIGHTS'; ctx.strokeText(msg, W / 2, by - 24 * k); ctx.fillStyle = sg ? '#ff8a7a' : '#fff'; ctx.fillText(msg, W / 2, by - 24 * k);
+    ctx.translate(-jit, 0); const g2 = 1 + pu * 0.06; ctx.translate(b.x + b.w / 2, b.y + b.h / 2); ctx.scale(g2, g2); ctx.fillStyle = sg ? '#e0483a' : '#f08a24'; rrect(-b.w / 2, -b.h / 2, b.w, b.h, 18 * k); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; rrect(-b.w / 2, -b.h / 2, b.w, b.h, 18 * k); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(24 * k)}px ${BC}`; ctx.fillText('TAP! TAP! TAP!', 0, 0);
+    ctx.restore(); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) {

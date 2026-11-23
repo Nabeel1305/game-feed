@@ -4,19 +4,21 @@
 //          stick that steers. Right thumb: GAS and BRAKE (held at a standstill, BRAKE reverses). He turns at junctions; brake for the
 //          corner or you will not make it. Ram his SIDE or BACK CORNER (a PIT): he spins. Enough spins and he crashes and runs.
 //          A wall scrape costs speed; a hard hit on a wall or a car costs a life; fall too far behind and he is gone.
-//   FOOT:  after him down an alley, running by yourself. Swipe left or right to change lane round crates and bins, up to jump a
-//          fence, down to slide under a pipe. Close in and tap to tackle him: too far and you dive at air.
-//   CUFF:  he fights to break free. When his shoulders twist one way, swipe the other way to hold him. Hold him enough times
-//          and the cuffs are on.
+//   FOOT:  (third version, 23 Nov 2026, his second review: specs/police-v3-2026-11-23.md) after him through alleys WITH CORNERS,
+//          running by yourself. Swipe left or right to change lane round crates and bins, up to jump a fence, down to slide under a
+//          pipe. At a corner, swipe the way he turned (the genre's own control, Temple Run's): miss it and you hit the wall. Close in
+//          and press ARREST (a button that lights when you are near enough): too far and you dive at air.
+//   CUFF:  he fights to break free: a tug of war. Every tap pulls the bar towards CUFFED; he drags it back, and harder when he
+//          surges. Tap faster than he fights. Let the bar empty and he is up and running again.
 // World: metres; x east, s north. A heading h is clockwise from north: forward is (sin h, cos h). Streets run along every
 // multiple of P in x and in s, RW either side of the line; everything else is a block of buildings.
 
 const RULES = [
   '<b>Chase the car under the RED ARROW.</b> Left thumb: the stick steers. Right thumb: <b>GAS</b> and <b>BRAKE</b> (hold BRAKE when stopped to reverse).',
   '<b>Brake for corners.</b> Ram his <b>side or back corner</b> to spin him (a PIT). Straight into his bumper does nothing. Miss the traffic.',
-  '<b>On foot:</b> swipe left or right round crates, up over fences, down under pipes. You run by yourself.',
-  '<b>Tap to tackle</b> when you are right behind him. Too far and you dive at air.',
-  '<b>Cuff him:</b> when he twists one way, swipe the other way to hold him down.',
+  '<b>On foot:</b> swipe left or right round crates, up over fences, down under pipes. <b>At a corner, swipe the way he turned.</b>',
+  '<b>Press ARREST</b> when you are right behind him (the button lights up). Too far and you dive at air.',
+  '<b>Cuff him: tap fast.</b> Tap faster than he fights and the bar fills to CUFFED. Let it empty and he runs.',
   'Three lives: a crash or letting him break free costs one. Fall too far behind and he gets away.',
 ];
 const WEATHERS = ['night', 'rain', 'dusk', 'storm', 'night', 'overcast', 'mist', 'night', 'golden'];
@@ -36,7 +38,8 @@ function makeCfg(N, help) {
     footLen: x(230, 380, 30), footGap: 12, run: 8.2, crookRun: x(6.5, 7.4, 30),
     obst: x(0.05, 0.11, 30) * (1 - 0.3 * e),                        // obstacles per metre of alley
     tackle: (x(2.8, 2.0, 25) + 0.5 * e) * (help ? 1.2 : 1),          // how close you must be to tackle (m)
-    holds: Math.min(5, 2 + Math.round(x(1, 3, 25))), tell: (x(0.6, 0.3, 25) + 0.15 * e) * (help ? 1.2 : 1), hold: x(0.7, 0.45, 25) + 0.15 * e };
+    turnGap: Math.round(x(9, 6, 30)), tee: N >= 6 ? x(0.15, 0.5, 30) : 0,      // corridor between corners (6 m modules); how often a corner is a T (follow him: the other way is a dead end)
+    pull: 0.055, resist: x(0.11, 0.2, 30) * (1 - 0.25 * e) * (help ? 0.85 : 1), surgeX: 1.7, surgeGap: x(2.6, 1.6, 30) };      // the struggle: what a tap gains; what he drags back a second; how much harder in a surge; how often he surges
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -51,13 +54,18 @@ function newGame(N, o = {}) {
 function drive(G, sx, gas, brake) { const I = G.in; I.sx = clamp(sx, -1, 1); I.gas = !!gas; I.brake = !!brake; }      // the stick (left -1 .. right +1) and the two pedals
 function swipe(G, dir) {      // 'l' 'r' 'u' 'd'
   if (G.over) return;
-  if (G.ph === 'foot') { const F = G.foot; if (dir === 'l') F.lane = Math.max(0, F.lane - 1); else if (dir === 'r') F.lane = Math.min(2, F.lane + 1); else if (dir === 'u' && F.air <= 0 && F.low <= 0) { F.air = 0.75; G.ev.push({ k: 'jump' }); } else if (dir === 'd' && F.air <= 0 && F.low <= 0) { F.low = 0.8; G.ev.push({ k: 'slide' }); } G.ev.push({ k: 'dodge', dir }); return; }
-  if (G.ph === 'cuff') { const C = G.cuff; if (!C.heave || C.heave.done) { C.calm = (C.calm || 0) + 1; if (C.calm >= 2) breakFree(G, 'flail'); return; }
-    const need = { l: 'r', r: 'l', u: 'd', d: 'u' }[C.heave.dir]; if (dir === need) { C.heave.done = true; C.held++; G.ev.push({ k: 'held', n: C.held }); lessonSee(G, 'held'); C.calm = 0; if (C.held >= G.cfg.holds) cuffed(G); } else breakFree(G, 'wrong'); }
+  if (G.ph !== 'foot') return; const F = G.foot;
+  if (dir === 'l' || dir === 'r') { const nt = F.turns.find(q => !q.past);      // near a corner a sideways swipe is the turn (the first one counts); anywhere else it changes lane
+    if (nt && nt.s - F.s <= FOOT_WIN) { if (nt.got === null) { const ok = (dir === 'r' ? 1 : -1) === nt.dir; nt.got = ok ? 'ok' : 'wrong'; G.ev.push({ k: ok ? 'turnset' : 'turnwrong', dir }); } return; }
+    F.lane = clamp(F.lane + (dir === 'l' ? -1 : 1), 0, 2); }
+  else if (dir === 'u' && F.air <= 0 && F.low <= 0) { F.air = 0.75; G.ev.push({ k: 'jump' }); } else if (dir === 'd' && F.air <= 0 && F.low <= 0) { F.low = 0.8; G.ev.push({ k: 'slide' }); }
+  G.ev.push({ k: 'dodge', dir });
 }
-function tap(G) {
-  if (G.over || G.ph !== 'foot') return; const F = G.foot; if (F.dive > 0) return; const L = lessonNow(G); if (L && L.id !== 'tackle') return;
-  if (F.gap <= G.cfg.tackle * (lessonNow(G) ? 1.3 : 1)) { G.ev.push({ k: 'tackle' }); if (L) lessonSee(G, 'tackle'); else startCuff(G); }
+function tap(G) {      // on foot: the ARREST button. In the struggle: every tap, anywhere
+  if (G.over) return;
+  if (G.ph === 'cuff') { const C = G.cuff; C.m += G.cfg.pull * (lessonNow(G) ? 1.3 : 1); C.taps++; G.ev.push({ k: 'pull', m: C.m }); if (C.m >= 1) { C.m = 1; cuffed(G); } return; }
+  if (G.ph !== 'foot') return; const F = G.foot; if (F.dive > 0) return; const L = lessonNow(G); if (L && L.id !== 'tackle') return;
+  if (F.gap <= G.cfg.tackle * (L ? 1.3 : 1)) { G.ev.push({ k: 'tackle' }); if (L) lessonSee(G, 'tackle'); else startCuff(G); }
   else { F.dive = 0.9; F.gap += 3; G.ev.push({ k: 'dive' }); lessonMiss(G, 'dive'); }
 }
 // ---------- every frame ----------
@@ -115,37 +123,63 @@ function crash(G, what) {
   if (lessonNow(G)) { lessonMiss(G, 'crash'); return; } G.lives--; if (G.lives <= 0) finish(G, false, 'wrecked');
 }
 // ---------- on foot ----------
+// The alleys have corners. F.turns: { s (how far along the run), dir (-1 left, +1 right), tee (both ways look open: follow him),
+// px, py (the corner's place: x east, y north), h0 (the heading into it), got (null | 'ok' | 'wrong'), past }. The run only ever
+// heads north, east or west, so it never crosses itself. Corridors are whole 6 m modules between 5.2 m corner squares (the view
+// builds its walls from them).
+const FOOT_R = 2.2, FOOT_WIN = 13, FOOT_BACK = 12;      // the arc you round a corner on; how far before a corner a swipe is the turn; alley behind the start
+function footPath(R, len, o) {
+  const turns = []; let s = o.first, h = 0, px = 0, py = 0, prev = 0;
+  while (s < len + 420) { const hq = Math.round(h / (Math.PI / 2)), dir = hq === 0 ? (R() < 0.5 ? -1 : 1) : -hq;
+    px += Math.sin(h) * (s - prev); py += Math.cos(h) * (s - prev); turns.push({ s, dir, tee: R() < o.tee, px, py, h0: h, got: null, past: false });
+    h += dir * Math.PI / 2; prev = s; s += 5.2 + 6 * (o.gapMin + ((R() * o.gapVar) | 0)); }
+  return turns;
+}
+function footAt(F, s) {      // where the run is, s metres along: { x, y, h }; each corner is rounded on a short arc
+  const T = F.turns; let i = 0; while (i < T.length && T[i].s + FOOT_R <= s) i++; const t = T[i];
+  if (t && s > t.s - FOOT_R) { const th = (s - (t.s - FOOT_R)) / (2 * FOOT_R) * Math.PI / 2, fx = Math.sin(t.h0), fy = Math.cos(t.h0), rx = fy * t.dir, ry = -fx * t.dir, ox = t.px - fx * FOOT_R + rx * FOOT_R, oy = t.py - fy * FOOT_R + ry * FOOT_R;
+    return { x: ox + (-rx * Math.cos(th) + fx * Math.sin(th)) * FOOT_R, y: oy + (-ry * Math.cos(th) + fy * Math.sin(th)) * FOOT_R, h: t.h0 + t.dir * th }; }
+  const p = T[i - 1], h = p ? p.h0 + p.dir * Math.PI / 2 : 0, d = s - (p ? p.s : 0); return { x: (p ? p.px : 0) + Math.sin(h) * d, y: (p ? p.py : 0) + Math.cos(h) * d, h };
+}
 function startFoot(G, gap) {
-  const c = G.cfg, R = G.rnd, obs = [], len = c.footLen * (lessonNow(G) ? 2 : 1);
-  for (let s = 18; s < len + 400; s += 1 / c.obst * (0.6 + 0.8 * R())) { const r = R(), type = r < 0.5 ? 'crate' : r < 0.78 ? 'fence' : 'pipe'; obs.push({ s, lane: type === 'crate' ? (R() * 3) | 0 : -1, type, two: type === 'crate' && R() < 0.4 ? ((R() * 3) | 0) : -1 }); }
-  G.ph = 'foot'; G.ph_t = 0; G.foot = { s: 0, lane: 1, x: 0, gap: gap || c.footGap, air: 0, low: 0, dive: 0, stumble: 0, obs, len, crookLane: 1, crookX: 0 }; G.ev.push({ k: 'foot' });
+  const c = G.cfg, R = G.rnd, obs = [], L = lessonNow(G), id = L && L.ph === 'foot' ? L.id : null, len = c.footLen * (L ? 2 : 1);
+  // a lesson teaches one thing at a time: corners with nothing in the way, then dodging down a straight alley, then the arrest
+  const turns = id === 'dodge' || id === 'tackle' ? [] : footPath(R, len, id === 'corner' ? { first: 32.6, gapMin: 6, gapVar: 2, tee: 0 } : { first: 44.6 + 6 * ((R() * 3) | 0), gapMin: c.turnGap, gapVar: 5, tee: c.tee });
+  if (id !== 'corner' && id !== 'tackle') for (let s = 18; s < len + 400; s += 1 / c.obst * (0.6 + 0.8 * R())) { const r = R(), type = r < 0.5 ? 'crate' : r < 0.78 ? 'fence' : 'pipe', o = { s, lane: type === 'crate' ? (R() * 3) | 0 : -1, type, two: type === 'crate' && R() < 0.4 ? ((R() * 3) | 0) : -1 };
+    if (!turns.some(t => s > t.s - 17 && s < t.s + 9)) obs.push(o); }      // nothing to dodge in a corner
+  G.ph = 'foot'; G.ph_t = 0; G.foot = { s: 0, lane: 1, x: 0, gap: gap || c.footGap, air: 0, low: 0, dive: 0, stumble: 0, obs, turns, len, crookLane: 1, crookX: 0 }; G.ev.push({ k: 'foot' });
 }
 function footStep(G, dt) {
   const c = G.cfg, F = G.foot, R = G.rnd, L = lessonNow(G);
   F.air = Math.max(0, F.air - dt); F.low = Math.max(0, F.low - dt); F.dive = Math.max(0, F.dive - dt); F.stumble = Math.max(0, F.stumble - dt);
   const v = F.stumble > 0 || F.dive > 0 ? 3 : c.run * (L ? 0.85 : 1), cv = c.crookRun * (L ? 0.8 : 1);
-  F.s += v * dt; F.gap += (cv - v) * dt; if (L && L.id === 'dodge') F.gap = Math.max(F.gap, 8); F.x += clamp(ALLEY[F.lane] - F.x, -7 * dt, 7 * dt);
+  F.s += v * dt; F.gap += (cv - v) * dt; if (L && L.id !== 'tackle') F.gap = Math.max(F.gap, 8); F.x += clamp(ALLEY[F.lane] - F.x, -7 * dt, 7 * dt);
   // he weaves too, and keeps to free lanes
   F.crookT = (F.crookT || 1) - dt; if (F.crookT <= 0) { F.crookT = 0.8 + R() * 1.4; F.crookLane = (R() * 3) | 0; } F.crookX += clamp(ALLEY[F.crookLane] - F.crookX, -5 * dt, 5 * dt);
   for (const o of F.obs) if (!o.done && o.s <= F.s) { o.done = true;
     const lane = Math.round((F.x + 1.3) / 1.3), blocked = o.type === 'crate' ? (lane === o.lane || lane === o.two) : o.type === 'fence' ? F.air <= 0.08 : F.low <= 0.05;
     if (blocked) { F.stumble = 0.8; G.stumbles++; G.ev.push({ k: 'stumble', type: o.type }); lessonMiss(G, o.type); } else { G.ev.push({ k: 'cleared', type: o.type }); lessonSee(G, 'cleared'); } }
-  if (F.gap < 0.6) { F.gap = 3.5; G.ev.push({ k: 'shove' }); }      // right on him without a tackle: he shoves you off
+  // the corner: swiped the way he went, you are round it; swiped the wrong way or not at all, you meet the wall first
+  for (const t of F.turns) { if (!t.seen && F.s + F.gap >= t.s) { t.seen = true; G.ev.push({ k: 'crookturn', dir: t.dir }); } if (t.past) continue; if (F.s < t.s - 1.2) break; t.past = true;
+    if (t.got === 'ok') { G.ev.push({ k: 'cornered', dir: t.dir }); lessonSee(G, 'corner'); }
+    else { F.stumble = t.tee && t.got === 'wrong' ? 1.3 : 0.9; G.stumbles++; G.ev.push({ k: 'wall', why: t.got === 'wrong' ? (t.tee ? 'deadend' : 'wrong') : 'late', dir: t.dir }); lessonMiss(G, 'corner'); } }
+  if (F.gap < 0.6) { F.gap = 3.5; G.ev.push({ k: 'shove' }); }      // right on him without the arrest: he shoves you off
   if (F.gap > 34) { if (L) { F.gap = 12; lessonMiss(G, 'far'); } else finish(G, false, 'away'); }
+  if (L && F.s > F.len + 300) { startFoot(G, 12); return; }      // a very long lesson: a fresh alley
   if (F.s > F.len && !L) { if (F.gap > 6) finish(G, false, 'away'); else { F.gap = Math.min(F.gap, 2); } }
 }
-// ---------- the cuffs ----------
-function startCuff(G) { G.ph = 'cuff'; G.ph_t = 0; G.cuff = { held: 0, heave: null, next: 1.0, calm: 0 }; G.ev.push({ k: 'cuffstart' }); }
+// ---------- the cuffs: a tug of war ----------
+function startCuff(G) { G.ph = 'cuff'; G.ph_t = 0; G.cuff = { m: 0.35, surge: 0, next: 1.2 + G.rnd() * 0.8, taps: 0 }; G.ev.push({ k: 'cuffstart' }); }
 function cuffStep(G, dt) {
-  const c = G.cfg, C = G.cuff, R = G.rnd;
-  if (!C.heave || C.heave.done) { C.next -= dt; if (C.next <= 0) { const dirs = G.N <= 5 ? ['l', 'r'] : ['l', 'r', 'u', 'd']; C.heave = { dir: dirs[(R() * dirs.length) | 0], t: -c.tell * (lessonNow(G) ? 1.4 : 1), done: false }; C.next = 0.7 + R() * 0.9; G.ev.push({ k: 'twist', dir: C.heave.dir }); } }
-  else { C.heave.t += dt; if (C.heave.t >= 0 && !C.heave.go) { C.heave.go = true; G.ev.push({ k: 'heave', dir: C.heave.dir }); } if (C.heave.t > c.hold * (lessonNow(G) ? 1.6 : 1)) breakFree(G, 'late'); }
+  const c = G.cfg, C = G.cuff, L = lessonNow(G); if (G.ph_t < 0.6) return;      // a breath to find the button
+  C.surge = Math.max(0, C.surge - dt); C.next -= dt; if (C.next <= 0) { C.surge = 0.8; C.next = c.surgeGap * (0.7 + 0.6 * G.rnd()); G.ev.push({ k: 'surge' }); }
+  C.m -= c.resist * (C.surge > 0 ? c.surgeX : 1) * (L ? 0.55 : 1) * dt; if (C.m <= 0) breakFree(G, 'slow');
 }
 function breakFree(G, why) {
-  G.ev.push({ k: 'free', why }); if (lessonNow(G)) { lessonMiss(G, why); G.cuff.heave = null; G.cuff.next = 1.2; return; }
+  G.ev.push({ k: 'free', why }); if (lessonNow(G)) { lessonMiss(G, why); G.cuff.m = 0.35; G.cuff.surge = 0; G.cuff.next = 1.5; return; }
   G.lives--; if (G.lives <= 0) { finish(G, false, 'free'); return; } startFoot(G, 7);
 }
-function cuffed(G) { G.ev.push({ k: 'cuffed' }); if (!G.lesson) finish(G, true); }
+function cuffed(G) { G.ev.push({ k: 'cuffed' }); if (G.lesson) lessonSee(G, 'cuffed'); else finish(G, true); }
 function finish(G, win, why) {
   const c = G.cfg; G.over = win ? 'won' : 'lost';
   G.res = { win, why, stars: win ? (G.lives === c.lives ? 3 : G.lives === c.lives - 1 ? 2 : 1) : 0, crashes: G.crashes, pits: G.pitN, stumbles: G.stumbles, time: G.t, combo: G.passed };
@@ -155,13 +189,14 @@ function finish(G, win, why) {
 const LESSONS = {
   1: [{ id: 'steer', ph: 'drive', title: 'FOLLOW THE RED ARROW', how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow him round 2 corners.', need: 2, ok: w => w === 'corner' },
       { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', how: 'Catch him up and drive into his SIDE or back corner. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],
-  2: [{ id: 'dodge', ph: 'foot', title: 'DODGE, JUMP, SLIDE', how: 'Swipe left or right round crates, UP over fences, DOWN under pipes.', need: 4, ok: w => w === 'cleared' },
-      { id: 'tackle', ph: 'foot', title: 'TACKLE HIM', how: 'Wait until you are right behind him, then tap.', need: 1, ok: w => w === 'tackle' }],
-  3: [{ id: 'hold', ph: 'cuff', title: 'HOLD HIM DOWN', how: 'When he twists one way, swipe the OTHER way to hold him.', need: 3, ok: w => w === 'held' }],
+  2: [{ id: 'corner', ph: 'foot', title: 'FOLLOW HIM ROUND THE CORNER', how: 'When the alley turns, swipe LEFT or RIGHT: the way he went.', need: 2, ok: w => w === 'corner' },
+      { id: 'dodge', ph: 'foot', title: 'DODGE, JUMP, SLIDE', how: 'Swipe left or right round crates, UP over fences, DOWN under pipes.', need: 4, ok: w => w === 'cleared' },
+      { id: 'tackle', ph: 'foot', title: 'ARREST HIM', how: 'Run until you are right behind him. The ARREST button lights up: press it.', need: 1, ok: w => w === 'tackle' }],
+  3: [{ id: 'hold', ph: 'cuff', title: 'TAP FASTER THAN HE FIGHTS', how: 'Tap anywhere, fast: every tap pulls the bar towards CUFFED. When he fights back, tap faster.', need: 1, ok: w => w === 'cuffed' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonPhase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
-function lessonPhase(G) { const st = lessonNow(G); if (!st) return; if (st.id === "pit") G.traffic.length = 0; if (st.ph === 'foot' && G.ph !== 'foot') startFoot(G, st.id === 'tackle' ? 7 : 12); if (st.id === 'tackle') G.foot.gap = 7; if (st.ph === 'cuff') startCuff(G); }
+function lessonPhase(G) { const st = lessonNow(G); if (!st) return; if (st.id === "pit") G.traffic.length = 0; if (st.ph === 'foot') startFoot(G, st.id === 'tackle' ? 7 : 12); if (st.ph === 'cuff') startCuff(G); }
 function lessonSee(G, what) {
   const D = G.lesson; if (!D) return; const st = D.steps[D.i]; if (!st.ok(what)) return;
   D.n++; if (D.n < st.need) { G.ev.push({ k: 'lessonok', n: D.n, need: st.need }); return; }
@@ -172,7 +207,7 @@ function lessonSee(G, what) {
 function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev.push({ k: 'lessonmiss', why, how: D.steps[D.i].how }); }
 
 // ---------- for the robots ----------
-// BLIND: the stick left, right, centred; GAS (brake off), BRAKE (gas off); on foot and in the arrest: swipes and a tap.
+// BLIND: the stick left, right, centred; GAS (brake off), BRAKE (gas off); on foot: swipes and the ARREST button; in the struggle: taps.
 const BLIND = { L: G => { G.in.sx = -1; }, R: G => { G.in.sx = 1; }, N: G => { G.in.sx = 0; }, G: G => { G.in.gas = true; G.in.brake = false; }, B: G => { G.in.brake = true; G.in.gas = false; },
   l: G => swipe(G, 'l'), r: G => swipe(G, 'r'), u: G => swipe(G, 'u'), d: G => swipe(G, 'd'), t: G => tap(G) };
 function honest(G, o, mem) {
@@ -193,11 +228,12 @@ function honest(G, o, mem) {
     if (mem.back && t < mem.back) { drive(G, -clamp(err * 2, -1, 1), false, true); return; }
     mem.sx = (mem.sx || 0) + (clamp(err * 2.4 + dodge, -1, 1) - (mem.sx || 0)) * Math.min(1, (1 / 60) / (0.08 + react * 0.5)); const br = later('br', brake) && sp > 6;
     drive(G, mem.sx, !br, br); return; }
-  if (G.ph === 'foot') { const F = G.foot, next = F.obs.find(q => !q.done && q.s > F.s), look = 7.6 * (react + 0.25);
+  if (G.ph === 'foot') { const F = G.foot, next = F.obs.find(q => !q.done && q.s > F.s), look = 7.6 * (react + 0.25), nt = F.turns.find(q => !q.past);
+    if (nt && nt.got === null && later('tn', nt.s - F.s <= FOOT_WIN - 1)) { const d = Math.random() < acc + (1 - acc) * 0.5 ? nt.dir : -nt.dir; swipe(G, d > 0 ? 'r' : 'l'); mem.tn = null; }      // sees the way he went, a reaction late; now and then goes wrong
     if (next && next.s - F.s < look + 2 && next.s - F.s > look - 1.5 && mem.obs !== next) { mem.obs = next; const right = Math.random() < acc;
       if (next.type === 'fence') swipe(G, right ? 'u' : 'd'); else if (next.type === 'pipe') swipe(G, right ? 'd' : 'u');
       else { const lane = Math.round((F.x + 1.3) / 1.3); if (lane === next.lane || lane === next.two) { const free = [0, 1, 2].filter(l => l !== next.lane && l !== next.two).sort((a, b) => Math.abs(a - lane) - Math.abs(b - lane))[0]; const d = right ? free : lane; if (d < lane) swipe(G, 'l'); else if (d > lane) swipe(G, 'r'); if (Math.abs(d - lane) > 1) swipe(G, d < lane ? 'l' : 'r'); } } }
     if (later('tk', F.gap < G.cfg.tackle * 0.9)) { tap(G); mem.tk = null; } return; }
-  if (G.ph === 'cuff') { const C = G.cuff; if (C.heave && !C.heave.done && later('cf', true)) { const need = { l: 'r', r: 'l', u: 'd', d: 'u' }[C.heave.dir]; swipe(G, Math.random() < acc ? need : C.heave.dir); mem.cf = null; } if (!C.heave || C.heave.done) mem.cf = null; }
+  if (G.ph === 'cuff') { if (t >= (mem.cfT || 0)) { mem.cfT = t + 0.1 + react * 0.2; if (Math.random() < 0.5 + acc * 0.5) tap(G); } }      // taps as fast as his hands go: about 7 a second sharp, 5 clumsy
 }
-function winNow(G) { if (!G || G.over) return; G.lesson = null; if (G.ph !== 'cuff') startCuff(G); const C = G.cuff; C.held = G.cfg.holds - 1; C.heave = { dir: 'l', t: 0.01, done: false, go: true }; swipe(G, 'r'); }
+function winNow(G) { if (!G || G.over) return; G.lesson = null; if (G.ph !== 'cuff') startCuff(G); G.ph_t = 1; G.cuff.m = 1; cuffed(G); }

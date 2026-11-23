@@ -67,9 +67,13 @@ function buildWorld() {
   heli.visible = false; S.add(heli); const heliL = new T.SpotLight(0xfff6e0, 0, 60, 0.18, 0.4, 1); S.add(heliL, heliL.target);
   // the alley (on foot): brick walls close either side, crates, fences, pipes; and the man you are chasing
   const brick = document.createElement('canvas'); brick.width = brick.height = 128; { const g = brick.getContext('2d'); g.fillStyle = '#4a4440'; g.fillRect(0, 0, 128, 128); for (let y = 0; y < 128; y += 10) for (let x = (y / 10 % 2) * 12; x < 128; x += 24) { g.fillStyle = `hsl(${10 + R0() * 12},${30 + R0() * 20}%,${26 + R0() * 14}%)`; g.fillRect(x + 1, y + 1, 22, 8); } }
-  const bt = new T.CanvasTexture(brick); bt.colorSpace = T.SRGBColorSpace; bt.wrapS = bt.wrapT = T.RepeatWrapping; bt.repeat.set(80, 3);
-  const alley = new T.Group(); for (const sd of [-1, 1]) { const w = new T.Mesh(new T.BoxGeometry(0.4, 9, 1000), new T.MeshStandardMaterial({ map: bt, roughness: 0.9 })); w.position.set(sd * 2.6, 4.5, -450); w.receiveShadow = true; alley.add(w); }
-  const aFloor = new T.Mesh(new T.PlaneGeometry(5.2, 1000), new T.MeshStandardMaterial({ color: 0x34322f, roughness: 0.6, map: tar })); aFloor.rotation.x = -Math.PI / 2; aFloor.position.z = -450; alley.add(aFloor);
+  const bt = new T.CanvasTexture(brick); bt.colorSpace = T.SRGBColorSpace; bt.wrapS = bt.wrapT = T.RepeatWrapping; bt.repeat.set(0.48, 3);
+  // 23 Nov 2026 (alleys with corners): walls and floor are 6 m modules laid along the run (layAlley), so a corner is just where they turn
+  const alley = new T.Group(), wallI = new T.InstancedMesh(new T.BoxGeometry(0.4, 9, 6), new T.MeshStandardMaterial({ map: bt, roughness: 0.9 }), 400); wallI.frustumCulled = false; wallI.receiveShadow = true; alley.add(wallI);
+  const tar2 = tar.clone(); tar2.repeat.set(2, 1.44); tar2.needsUpdate = true; const floorI = new T.InstancedMesh(new T.PlaneGeometry(5.2, 6).rotateX(-Math.PI / 2), new T.MeshStandardMaterial({ color: 0x5a5650, roughness: 0.6, map: tar2 }), 220); floorI.frustumCulled = false; floorI.receiveShadow = true; alley.add(floorI);
+  const arw = document.createElement('canvas'); arw.width = 256; arw.height = 128; { const g = arw.getContext('2d'); g.fillStyle = '#16181c'; g.fillRect(0, 0, 256, 128); g.strokeStyle = '#ffd23a'; g.lineWidth = 8; g.strokeRect(6, 6, 244, 116); g.fillStyle = '#ffd23a'; for (const x of [40, 104, 168]) { g.beginPath(); g.moveTo(x, 26); g.lineTo(x + 30, 26); g.lineTo(x + 62, 64); g.lineTo(x + 30, 102); g.lineTo(x, 102); g.lineTo(x + 32, 64); g.closePath(); g.fill(); } }
+  const arwT = new T.CanvasTexture(arw); arwT.colorSpace = T.SRGBColorSpace; const arrowI = new T.InstancedMesh(new T.PlaneGeometry(3.4, 1.7), new T.MeshBasicMaterial({ map: arwT, side: T.DoubleSide }), 32); arrowI.frustumCulled = false; alley.add(arrowI);
+  const doorsI = new T.InstancedMesh(new T.BoxGeometry(0.12, 2.3, 1.3), new T.MeshStandardMaterial({ roughness: 0.6 }), 220); doorsI.frustumCulled = false; doorsI.setColorAt(0, new T.Color(1, 1, 1)); alley.add(doorsI);
   const crateM = new T.MeshStandardMaterial({ color: 0x8a6a42, roughness: 0.9, map: W3.grainTex(128, 9, 170, 60, 4) }), metal = new T.MeshStandardMaterial({ color: 0x6a6e74, metalness: 0.7, roughness: 0.4 });
   const obsPool = []; for (let i = 0; i < 24; i++) { const g = new T.Group(); g.visible = false; alley.add(g); obsPool.push(g); }
   alley.visible = false; S.add(alley);
@@ -90,15 +94,34 @@ function buildWorld() {
     for (const sd of [-1, 1]) { const a = new T.Group(); a.position.set(sd * 0.27, 1.5, 0); cap(a, 0.06, 0.24, tp, 0, -0.16, 0); const f = new T.Group(); f.position.set(0, -0.32, 0); cap(f, 0.052, 0.22, o.sleeve ? tp : sk, 0, -0.14, 0); const hand = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), sk); hand.position.set(0, -0.3, 0); f.add(hand); a.add(f); body.add(a);
       const th = new T.Group(); th.position.set(sd * 0.11, 0.92, 0); cap(th, 0.085, 0.3, lg, 0, -0.2, 0); const sn = new T.Group(); sn.position.set(0, -0.42, 0); cap(sn, 0.068, 0.3, lg, 0, -0.2, 0); const shoe = new T.Mesh(new T.BoxGeometry(0.11, 0.09, 0.27), sh); shoe.position.set(0, -0.42, -0.06); shoe.castShadow = true; sn.add(shoe); th.add(sn); body.add(th);
       J.arm.push(a); J.fore.push(f); J.thigh.push(th); J.shin.push(sn); }
-    g.userData.J = J; g.userData.body = body; return g; };
+    g.userData.J = J; g.userData.body = body; g.rotation.order = 'YXZ'; return g; };
   // a run you can read: thighs swing, knees fold as the leg comes through, arms pump the other way with bent elbows, the body leans and bounces
   const runPose = (m, ph, amt = 1) => { const J = m.userData.J, b = m.userData.body; for (let i = 0; i < 2; i++) { const p = ph + i * Math.PI, sw = Math.sin(p); J.thigh[i].rotation.x = (sw * 0.95 + 0.12) * amt; J.shin[i].rotation.x = -(0.25 + 1.25 * Math.max(0, Math.cos(p + 0.5))) * amt; J.arm[i].rotation.x = -sw * 0.95 * amt; J.arm[i].rotation.z = (i ? -1 : 1) * 0.08; J.fore[i].rotation.x = (1.25 + sw * 0.25) * amt; }
     b.rotation.x = -0.24 * amt; b.position.y = Math.abs(Math.sin(ph)) * 0.09 * amt; b.rotation.y = Math.sin(ph) * 0.12 * amt; if (m.userData.bag) m.userData.bag.rotation.x = Math.sin(ph * 2) * 0.25; };
   const you = person(0xc8322a, 0x26303a, { sleeve: true, bag: 0x3f6a3a }); you.visible = false; S.add(you); const footCop = person(0x1c2a44, 0x10141c, { cap: 0x1c2a44, shoe: 0x101010, stripe: 0xd8e04a, sleeve: true }); footCop.visible = false; S.add(footCop);
   const alleyFill = new T.HemisphereLight(0xdfe8ff, 0x5a5048, 0); S.add(alleyFill);
-  V3 = { T, S, you, footCop, runPose, alleyFill, road, walks, dash, D, blds, poleI, headI, lamps, me, flame, cops, traffic, redL, blueL, head, thingPool, mkThing, heli, heliL, alley, alleyLamps, obsPool, crateM, metal, coinI, door, camPos: new T.Vector3(), look: new T.Vector3(), sky: null, bk: -1, lk: -1 };
+  V3 = { T, S, you, footCop, runPose, alleyFill, wallI, floorI, arrowI, doors: doorsI, alleyF: null, road, walks, dash, D, blds, poleI, headI, lamps, me, flame, cops, traffic, redL, blueL, head, thingPool, mkThing, heli, heliL, alley, alleyLamps, obsPool, crateM, metal, coinI, door, camPos: new T.Vector3(), look: new T.Vector3(), sky: null, bk: -1, lk: -1 };
   W3.scene.traverse(o => { if (o.isInstancedMesh) o.frustumCulled = false; });      /* 23 Nov 2026: copies that are re-placed as you go must never be culled by where they first were (Police Chase's vanishing skyscrapers; tools/stale_bounds.py) */
   W3.setQuality(stepN); return V3;
+}
+// the alley for this run on foot: corridors of 6 m modules between the corners, a wall across the far side of each corner with a yellow
+// arrow board on it, the way round left open; the last corridor ends at the safehouse door. Laid once for each run (F), from its turns.
+const NOFOOT = { s: 0, x: 0, gap: 9, air: 0, low: 0, stumble: 0, obs: [], coins: [], turns: [], len: 300 };
+function layAlley(V, F) {
+  if (V.alleyF === F) return; V.alleyF = F; const D = V.D, T = V.T, DC = [0x2f7a8a, 0xb8482e, 0xd8b23a, 0x3f7a4a, 0x6a4a8a, 0xc8c2b4], col = new T.Color(); let nw = 0, nf = 0, nd = 0, na = 0;
+  const at = (px, py, h, lat, fwd) => [px + Math.cos(h) * lat + Math.sin(h) * fwd, -(py - Math.sin(h) * lat + Math.cos(h) * fwd)];
+  const put = (I, n, x, y, z, ry, sx = 1, sy = 1, sz = 1) => { if (n >= I.count0) return; D.position.set(x, y, z); D.rotation.set(0, ry, 0); D.scale.set(sx, sy, sz); D.updateMatrix(); I.setMatrixAt(n, D.matrix); };
+  for (const I of [V.wallI, V.floorI, V.arrowI, V.doors]) I.count0 = I.count0 || I.count;
+  const wall = (px, py, h, lat, fwd, len, across) => { const [x, z] = at(px, py, h, lat, fwd); put(V.wallI, nw++, x, 4.5, z, -h + (across ? Math.PI / 2 : 0), 1, 1, len / 6); };
+  const floor = (px, py, h, fwd, len) => { const [x, z] = at(px, py, h, 0, fwd); put(V.floorI, nf++, x, 0, z, -h, 1, 1, len / 6); };
+  const corridor = (px, py, h, a, b) => { for (let f = a; f < b - 0.01; f += 6) { floor(px, py, h, f + 3, 6); for (const sd of [-1, 1]) { wall(px, py, h, sd * 2.6, f + 3, 6);
+      const q = Math.abs(Math.round(px * 3 + py * 7 + f * 1.3 + sd * 5)); if (q % 2 === 0 && nd < V.doors.count0) { const hi = q % 3 === 0, [x, z] = at(px, py, h, sd * 2.38, f + 3); put(V.doors, nd, x, hi ? 1.9 : 1.15, z, -h, 1, hi ? 0.55 : 1, hi ? 1.5 : 1); V.doors.setColorAt(nd, col.set(DC[q % 6])); nd++; } } } };
+  let px = 0, py = 0, h = 0, from = -FOOT_BACK, prev = 0; wall(0, 0, 0, 0, -FOOT_BACK - 0.2, 5.6, true);
+  for (const t of F.turns) { corridor(px, py, h, from, t.s - prev - 2.6); px = t.px; py = t.py; floor(px, py, h, 0, 5.2); wall(px, py, h, 0, 2.8, 5.6, true); wall(px, py, h, -t.dir * 2.6, 0, 5.2);
+    const [x, z] = at(px, py, h, 0, 2.58); put(V.arrowI, na++, x, 2.3, z, -h, t.dir, 1, 1); h += t.dir * Math.PI / 2; from = 2.6; prev = t.s; }
+  corridor(px, py, h, from, from + Math.ceil((F.len - prev + 8 - from) / 6) * 6);      // on to the safehouse door, which closes the alley
+  V.wallI.count = Math.min(nw, V.wallI.count0); V.floorI.count = Math.min(nf, V.floorI.count0); V.arrowI.count = Math.min(na, V.arrowI.count0); V.doors.count = nd;
+  for (const I of [V.wallI, V.floorI, V.arrowI, V.doors]) I.instanceMatrix.needsUpdate = true; if (V.doors.instanceColor) V.doors.instanceColor.needsUpdate = true;
 }
 function setWeather(G) {
   const V = buildWorld(); if (V.none || V.sky === G.weather) return; V.sky = G.weather;
@@ -131,6 +154,9 @@ function onEvent(G, e) {
     case 'foot': ui.snap = true; break;
     case 'jump': sfx.jump(); break; case 'slide': sfx.slide(); break;
     case 'cleared': sfx.step(); break;
+    case 'turnset': sfx.turn(); break;
+    case 'cornered': vibe(HAP.light); break;
+    case 'wall': sfx.thump(); FX.shake = 10; FX.red = 0.35; vibe(HAP.thud); say(e.why === 'late' ? 'MISSED THE TURN!' : `WRONG WAY! IT TURNS ${e.dir < 0 ? 'LEFT' : 'RIGHT'}`, cx, cy, '#ffb4a8', 24); tip('wall', 'At a corner, swipe the way the yellow arrow points', 2.8); break;
     case 'stumble': sfx.thump(); FX.shake = 9; FX.red = 0.35; say({ crate: 'INTO THE CRATES!', fence: 'HIT THE FENCE!', pipe: 'HEAD ON THE PIPE!' }[e.type], cx, cy, '#ffb4a8', 24); tip('stumble_' + e.type, { crate: 'Swipe left or right round crates', fence: 'Swipe UP to jump a fence', pipe: 'Swipe DOWN to slide under a pipe' }[e.type], 2.6); break;
     case 'home': sfx.safe(); FX.flash = 0.7; vibe(HAP.best); say('SAFEHOUSE!', cx, cy, '#9be3b5', 34); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); ui.snap = true; break;
@@ -147,7 +173,7 @@ function draw(now, dt) {
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D city.', W / 2, H / 2); return; }
   const T = V.T, cam = W3.cam, g = G || idleG(), t = now; setWeather(g);
   const onFoot = g.ph === 'foot' || g.ph === 'home', me = g.me, D = V.D;
-  V.alley.visible = onFoot; V.alleyFill.intensity = onFoot ? 1.2 : 0; if (!onFoot) V.you.visible = V.footCop.visible = false; for (const m of [V.road, ...V.walks, V.dash, V.blds, V.poleI, V.headI, V.me]) m.visible = !onFoot; V.traffic.forEach(c => c.visible = false); V.cops.forEach(c => c.visible = false); V.thingPool.forEach(c => c.visible = false); V.heli.visible = false; V.heliL.intensity = 0;
+  V.alley.visible = onFoot; V.alleyFill.intensity = onFoot ? 1.2 : 0; if (!onFoot) V.you.visible = V.footCop.visible = false; if (!onFoot) ui.turn = 0; for (const m of [V.road, ...V.walks, V.dash, V.blds, V.poleI, V.headI, V.me]) m.visible = !onFoot; V.traffic.forEach(c => c.visible = false); V.cops.forEach(c => c.visible = false); V.thingPool.forEach(c => c.visible = false); V.heli.visible = false; V.heliL.intensity = 0;
   const flash = Math.sin(t * 14) > 0;
   if (!onFoot) {
     const base = Math.floor(me.s / 100) * 100; V.road.position.z = -(base + 450); V.walks.forEach(w => w.position.z = -(base + 450));
@@ -175,22 +201,26 @@ function draw(now, dt) {
     cam.position.copy(V.camPos); cam.fov = (innerWidth > innerHeight ? 58 : 70) + (me.v - 25) * 0.3 + (g.boost > 0 ? 6 : 0); cam.updateProjectionMatrix(); cam.lookAt(V.look); cam.rotateZ(-vx * 0.006);
     W3.setFocus(me.x, 0, -me.s - 4, 16);
   } else {
-    const F = g.foot, s = F ? F.s : 0, ph = t * 11;
+    const F = g.foot || NOFOOT, s = F.s, ph = t * 11; layAlley(V, F);
+    const at = (s2, lat = 0) => { const p = footAt(F, s2); return { x: p.x + Math.cos(p.h) * lat, z: -(p.y - Math.sin(p.h) * lat), h: p.h }; };
     V.alley.position.z = 0;
-    V.alleyLamps.forEach((l, q) => { l.intensity = 45; l.position.set((q % 2 ? 1.8 : -1.8), 3.5, -(Math.floor(s / 25) * 25 + q * 25 + 10)); });
-    let n = 0; if (F) for (const o of F.obs) { if (o.s < s - 3 || o.s > s + 70 || n >= V.obsPool.length) continue; const gO = V.obsPool[n++]; gO.visible = true; if (gO.userData.type !== o.type + o.lane + o.two) { gO.clear(); gO.userData.type = o.type + o.lane + o.two;
+    V.alleyLamps.forEach((l, q) => { const p = at(Math.floor(s / 20) * 20 + q * 20 + 6, q % 2 ? 1.8 : -1.8); l.intensity = 55; l.distance = 24; l.position.set(p.x, 3.5, p.z); });
+    let n = 0; for (const o of F.obs) { if (o.s < s - 3 || o.s > s + 70 || n >= V.obsPool.length) continue; const gO = V.obsPool[n++]; gO.visible = true; if (gO.userData.type !== o.type + o.lane + o.two) { gO.clear(); gO.userData.type = o.type + o.lane + o.two;
         if (o.type === 'crate') for (const ln of [o.lane, o.two]) { if (ln < 0) continue; const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 1.0), V.crateM); b.position.set(ALLEY[ln], 0.5, 0); b.castShadow = true; gO.add(b); const b2 = b.clone(); b2.scale.setScalar(0.7); b2.position.y = 1.35; b2.rotation.y = 0.4; gO.add(b2); }
         if (o.type === 'fence') { for (let x = -2.4; x <= 2.4; x += 0.3) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 0.04), V.crateM); p.position.set(x, 0.5, 0); gO.add(p); } const r = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.1, 0.06), V.crateM); r.position.set(0, 0.75, 0); gO.add(r); }
         if (o.type === 'pipe') { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 5, 12), V.metal); p.rotation.z = Math.PI / 2; p.position.set(0, 1.25, 0); p.castShadow = true; gO.add(p); } }
-      gO.position.set(0, 0, -o.s); }
+      const p = at(o.s); gO.position.set(p.x, 0, p.z); gO.rotation.y = -p.h; }
     for (let q = n; q < V.obsPool.length; q++) V.obsPool[q].visible = false;
-    let ci = 0; if (F) for (const c2 of F.coins) { if (c2.done || c2.s < s - 2 || c2.s > s + 60 || ci >= 60) continue; D.position.set(ALLEY[c2.lane], 0.9, -c2.s); D.rotation.set(Math.PI / 2, 0, t * 3 + c2.s); D.scale.setScalar(1); D.updateMatrix(); V.coinI.setMatrixAt(ci++, D.matrix); } V.coinI.count = ci; V.coinI.instanceMatrix.needsUpdate = true;
-    V.door.position.set(0, 0, -(F ? F.len + 2 : 9999));
-    const running = g.ph === 'foot' && F; V.you.visible = V.footCop.visible = !!running;
-    if (running) { const Y = V.you, jump = F.air > 0 ? Math.sin(F.air / 0.75 * Math.PI) * 1.0 : 0, low = F.low > 0, st = (F.stumble || 0) > 0, rp = t * 12.5; Y.position.set(F.x, low ? 0.25 : jump, -s); V.runPose(Y, rp, st ? 0.5 : 1); Y.rotation.set(low ? 1.15 : 0, 0, st ? Math.sin(t * 30) * 0.15 : 0);
+    let ci = 0; for (const c2 of F.coins) { if (c2.done || c2.s < s - 2 || c2.s > s + 60 || ci >= 60) continue; const p = at(c2.s, ALLEY[c2.lane]); D.position.set(p.x, 0.9, p.z); D.rotation.set(Math.PI / 2, 0, t * 3 + c2.s); D.scale.setScalar(1); D.updateMatrix(); V.coinI.setMatrixAt(ci++, D.matrix); } V.coinI.count = ci; V.coinI.instanceMatrix.needsUpdate = true;
+    { const p = at(g.foot ? F.len + 2 : 9999); V.door.position.set(p.x, 0, p.z); V.door.rotation.y = -p.h; }
+    const running = g.ph === 'foot' && g.foot; V.you.visible = V.footCop.visible = !!running;
+    if (running) { const Y = V.you, jump = F.air > 0 ? Math.sin(F.air / 0.75 * Math.PI) * 1.0 : 0, low = F.low > 0, st = (F.stumble || 0) > 0, rp = t * 12.5, py = at(s, F.x), pc = at(s - Math.max(1.2, F.gap), F.x * 0.6); Y.position.set(py.x, low ? 0.25 : jump, py.z); V.runPose(Y, rp, st ? 0.5 : 1); Y.rotation.set(low ? 1.15 : 0, -py.h, st ? Math.sin(t * 30) * 0.15 : 0);
       if (jump > 0.1) { const J = Y.userData.J; J.thigh[0].rotation.x = 1.3; J.shin[0].rotation.x = -1.5; J.thigh[1].rotation.x = 0.6; J.shin[1].rotation.x = -1.2; }
-      V.footCop.position.set(F.x * 0.6, 0, -(s - Math.max(1.2, F.gap))); V.footCop.rotation.set(0, 0, 0); V.runPose(V.footCop, rp + 2); }
-    const want = running ? new T.Vector3(F.x * 0.55, 3.3, -s + 5.4) : new T.Vector3(F ? F.x : 0, 1.7, -s), look = running ? new T.Vector3(F.x * 0.5, 1.0, -(s + 8)) : new T.Vector3((F ? F.x : 0) * 0.5, 1.4, -(s + 14));
+      V.footCop.position.set(pc.x, 0, pc.z); V.footCop.rotation.set(0, -pc.h, 0); V.runPose(V.footCop, rp + 2);
+      const nt = F.turns.find(q => !q.past); ui.turn = nt && nt.got === null && nt.s - s <= FOOT_WIN ? nt.dir : 0; } else ui.turn = 0;
+    // the camera follows the alley round its corners, and looks just past you: never at a point hidden round the corner
+    const cp = at(s - 5.4, F.x * 0.55), lp = at(s + 3, F.x * 0.5), hp = at(s, F.x), ap = at(s + 14, F.x * 0.5);
+    const want = running ? new T.Vector3(cp.x, 3.3, cp.z) : new T.Vector3(hp.x, 1.7, hp.z), look = running ? new T.Vector3(lp.x, 1.85, lp.z) : new T.Vector3(ap.x, 1.4, ap.z);
     if (ui.snap) { V.camPos.copy(want); V.look.copy(look); } else { V.camPos.lerp(want, Math.min(1, dt * 12)); V.look.lerp(look, Math.min(1, dt * 8)); } ui.snap = false;
     cam.position.copy(V.camPos); cam.fov = innerWidth > innerHeight ? 56 : 66; cam.updateProjectionMatrix(); cam.lookAt(V.look);
     W3.setFocus(V.camPos.x, 0, V.camPos.z - 5, 10);
@@ -223,6 +253,10 @@ function hud(G, t) {
     ctx.textAlign = 'left'; ctx.font = `800 ${Math.round(20 * k)}px ${BC}`; ctx.fillStyle = '#9bff9b'; ctx.strokeText(`$${G.cash}`, x, y + 38 * k); ctx.fillText(`$${G.cash}`, x, y + 38 * k);
     if (G.ph === 'drive') { ctx.textAlign = 'right'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; for (let i = 0; i < c.hp; i++) { ctx.fillStyle = i < G.hp ? '#ff6a5a' : 'rgba(255,255,255,.22)'; ctx.fillText('■', W - x - i * 14 * k, y + 34 * k); }
       for (let i = 0; i < Math.max(G.nitro, 0); i++) { ctx.fillStyle = '#8fd8ff'; ctx.fillText('🔥', W - x - i * 18 * k, y + 54 * k); } }
+    // which way to swipe at the corner (the first cases and the lessons; the arrow board on the wall is always there)
+    if (G.ph === 'foot' && ui.turn && (G.N <= 4 || G.lesson)) { const d = ui.turn, x = W / 2 + d * W * 0.27, y = H * 0.46, sl = (performance.now() / 500) % 1; ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 0.92; ctx.fillStyle = '#ffd23a'; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 4;
+      for (let i = 0; i < 3; i++) { const xx = x + d * (i * 20 + sl * 14) * k; ctx.beginPath(); ctx.moveTo(xx + d * 16 * k, y); ctx.lineTo(xx - d * 4 * k, y - 22 * k); ctx.lineTo(xx - d * 4 * k, y + 22 * k); ctx.closePath(); ctx.stroke(); ctx.fill(); }
+      ctx.font = `700 ${Math.round(17 * k)}px ${BC}`; ctx.strokeText('SWIPE', x + d * 22 * k, y + 42 * k); ctx.fillStyle = '#fff'; ctx.fillText('SWIPE', x + d * 22 * k, y + 42 * k); ctx.restore(); }
     if (G.ph === 'foot' && G.foot) { const gp = G.foot.gap, u = clamp(gp / 25, 0, 1); ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = gp < 6 ? '#ff6b5a' : '#fff'; const s = `COPS ${gp.toFixed(0)} m BEHIND`; ctx.strokeText(s, W / 2, H - 40 * k); ctx.fillText(s, W / 2, H - 40 * k);
       ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(W * 0.2, H - 28 * k, W * 0.6, 6 * k, 3); ctx.fill(); ctx.fillStyle = gp < 6 ? '#ff6b5a' : '#5aa2ff'; rrect(W * 0.2, H - 28 * k, W * 0.6 * u, 6 * k, 3); ctx.fill(); } }
   if (G.ph !== 'drive') return;
