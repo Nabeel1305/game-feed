@@ -2,7 +2,8 @@
 """Hunter with real touches and real drawing (controls rebuilt 22 Nov 2026): the left thumb is a stick: a gentle push creeps, a
 full push runs (and the animal hears it), letting go freezes; the right thumb drags the crosshair while the left creeps; a tap
 on THROW throws where the crosshair is; with a lion growling, a tap on its side faces it (a tap on the other side corrects a
-wrong turn) and a tap as it leaps braces. No swipes. No JavaScript errors. Run: python3 games/hunter/test_touch.py"""
+wrong turn) and a tap as it leaps braces; a deer runs when you creep too close; a boar charges, the stick pushed sideways at the
+last moment dodges it, and standing still gets you run down. No swipes. No JavaScript errors. Run: python3 games/hunter/test_touch.py"""
 import os, sys
 from playwright.sync_api import sync_playwright
 here = os.path.dirname(os.path.abspath(__file__)); fails = []; oks = 0
@@ -35,6 +36,21 @@ with sync_playwright() as p:
     touch('touchStart', [(1, 300, 600)]); touch('touchEnd', []); ok(E("__sim.G.me.face") == 1, 'a tap on the right corrects it: facing the growl')
     E("__sim.G.lion.st = 'leap'; __sim.G.lion.t = 0;"); touch('touchStart', [(1, 200, 600)]); touch('touchEnd', [])
     ok(E("__sim.G.lionsKilled") == 1, 'a tap as it leaps braces the spear: lion held off')
+    # his review, 23 Nov 2026: "the animal just waits for me to kill it it should run away or even attack if I run or come too close"
+    def place(d, kind=None): E("(() => { const G = __sim.G, a = G.a; G.lion = null; G.spears.forEach(s => s.done = true); G.over = null; G.lives = 3; a.st = 'graze'; a.t = 0; a.next = 99; a.alert = 0; a.winded = 0; a.locked = false; a.hp = 1; G.me.x = 0; G.me.z = 0; a.x = 0; a.z = %s; a.face = 1.57; %s __sim.ui.snap = true; })()" % (d, ("a.kind = Object.assign({}, a.kind, %s);" % kind) if kind else ''))
+    place(6, "{ id: 'deer', temper: 0, shy: 7.5 }"); pg.wait_for_timeout(120); touch('touchStart', [(1, 90, 650)]); touch('touchMove', [(1, 90, 630)]); pg.wait_for_timeout(1500); touch('touchEnd', [])
+    r = E("[__sim.G.a.st, __sim.G.escapes]"); ok(r[0] == 'flee' or r[1] >= 1, 'creeping inside the distance a deer allows: it runs away', str(r))
+    place(13, "{ id: 'boar', temper: 1, shy: 6.5, body: 0.8, speed: 8 }"); E("__sim.G.cfg.threat = 0.8; __sim.throwAt(__sim.G.a.x + 3, __sim.G.a.z)"); pg.wait_for_timeout(900)
+    r = E("__sim.G.a.st"); ok(r in ('threat', 'charge'), 'a spear that misses a boar: it turns on you', str(r)); n0 = E("__sim.G.spears.length"); L2 = E("__sim.layout().fire")
+    touch('touchStart', [(2, L2['x'], L2['y'])]); touch('touchEnd', []); ok(E("__sim.G.spears.length") == n0, 'no throwing at a charge: THROW does nothing', '')
+    for i in range(80):
+        pg.wait_for_timeout(30)
+        if E("__sim.G.a.locked && __sim.G.a.st === 'charge'"): break
+    pg.screenshot(path='/tmp/hu_dive.png'); touch('touchStart', [(1, 90, 650)]); touch('touchMove', [(1, 30, 650)]); pg.wait_for_timeout(1200); r = E("[__sim.G.a.st, __sim.G.lives, __sim.G.maulings]")
+    ok(r[0] in ('pass', 'graze') and r[1] == 3 and r[2] == 0, 'the stick pushed hard to one side after DIVE ASIDE shows: it runs past, no harm done', str(r)); touch('touchEnd', [])
+    pg.wait_for_timeout(1500); r = E("[__sim.G.a.st, __sim.G.a.winded > 0, Math.hypot(__sim.G.a.x - __sim.G.me.x, __sim.G.a.z - __sim.G.me.z)]"); ok(r[0] == 'graze' and r[1] and r[2] < 9, 'and it stands winded close by', str(r)); pg.screenshot(path='/tmp/hu_winded.png')
+    place(13, "{ id: 'boar', temper: 1, shy: 6.5, body: 0.8, speed: 8 }"); E("__sim.G.cfg.threat = 0.6; __sim.throwAt(__sim.G.a.x + 3, __sim.G.a.z)"); pg.wait_for_timeout(3600)
+    r = E("[__sim.G.lives, __sim.G.maulings]"); ok(r == [2, 1], 'standing still in front of a charge: it runs you down, one chance gone', str(r))
     pg.wait_for_timeout(500); pg.screenshot(path='/tmp/hu_touch.png'); ok(not errs, 'no JavaScript errors', str(errs[:3]))
     b.close()
 print(f'\n{oks} checks passed, {len(fails)} failed.')

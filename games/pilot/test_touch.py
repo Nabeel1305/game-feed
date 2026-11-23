@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pilot with real touches and real drawing: the right thumb is the column (pulled down the screen it raises the nose; left and
+"""Pilot with real touches and real drawing: four buttons that never move (UP, DOWN, LEFT, RIGHT; no joystick; left and
 right it banks); the left thumb slides the throttle; both at once. No JavaScript errors. Run: python3 games/pilot/test_touch.py"""
 import os, sys
 from playwright.sync_api import sync_playwright
@@ -15,13 +15,23 @@ with sync_playwright() as p:
     pg.evaluate("localStorage.setItem('av.taught', '3'); __sim.go(4); __sim.G.lesson = null;"); pg.wait_for_timeout(300)
     cdp = ctx.new_cdp_session(pg)
     def touch(kind, pts): cdp.send('Input.dispatchTouchEvent', {'type': kind, 'touchPoints': [{'x': x, 'y': y, 'id': i} for i, x, y in pts]})
-    t0 = pg.evaluate("__sim.G.thr")
-    touch('touchStart', [(1, 60, 600), (2, 280, 500)])
-    for j in range(1, 5): touch('touchMove', [(1, 60, 600 - 30 * j), (2, 280 + 12 * j, 500 + 15 * j)])
-    r = pg.evaluate("[__sim.G.thr, __sim.G.st.x, __sim.G.st.y]")
-    ok(r[0] > t0 + 0.2, 'left thumb slid up: more power', f'{t0} {r[0]}'); ok(r[1] > 0.6, 'right thumb moved right: bank right', str(r)); ok(r[2] > 0.8, 'right thumb pulled down: nose up', str(r))
-    th0 = pg.evaluate("__sim.G.ac.th"); pg.wait_for_timeout(1500); th1 = pg.evaluate("__sim.G.ac.th"); ok(th1 > th0, 'holding it back really raises the nose', f'{th0} {th1}')
-    touch('touchEnd', []); r = pg.evaluate("[__sim.G.st.x, __sim.G.st.y]"); ok(r == [0, 0], 'let go: the column centres', str(r))
+    E = pg.evaluate; P = E("__sim.pad()"); up = (P['x'], P['y'] - P['d']); dn = (P['x'], P['y'] + P['d']); lf = (P['x'] - P['d'], P['y']); rt = (P['x'] + P['d'], P['y'])
+    # his words, 23 Nov 2026, 13:47: four buttons in one place; "if you press this one, it goes up... this one, it goes down... left... right"; no joystick
+    t0 = E("__sim.G.thr"); touch('touchStart', [(1, 40, 600)])
+    for j in range(1, 5): touch('touchMove', [(1, 40, 600 - 30 * j)])
+    ok(E("__sim.G.thr") > t0 + 0.2, 'left thumb slid up the POWER lever: more power', str(t0)); touch('touchEnd', [])
+    touch('touchStart', [(2, up[0], up[1])]); r = E("[__sim.G.st.x, __sim.G.st.y]"); ok(r[0] == 0 and r[1] > 0.3, 'pressing UP: nose up, at once, no drag needed', str(r))
+    th0 = E("__sim.G.ac.th"); pg.wait_for_timeout(1200); ok(E("__sim.G.ac.th") > th0 + 0.02, 'holding UP really raises the nose', str(th0)); touch('touchEnd', []); ok(E("[__sim.G.st.x, __sim.G.st.y]") == [0, 0], 'let go: nothing pressed')
+    E("__sim.approach(6000, 0)"); pg.wait_for_timeout(300); y0 = E("__sim.G.ac.y"); touch('touchStart', [(2, dn[0], dn[1])]); pg.wait_for_timeout(3000); r = E("[__sim.G.ac.y, __sim.G.ac.vy, __sim.G.st.y]")
+    ok(r[2] < -0.3 and r[1] < -6 and r[0] < y0 - 15, 'pressing DOWN: the plane goes down (his review: "I literally cannot descend")', f'{y0} {r}'); pg.screenshot(path='/tmp/pl_down.png'); touch('touchEnd', [])
+    touch('touchStart', [(2, lf[0], lf[1])]); pg.wait_for_timeout(700); r = E("[__sim.G.st.x, __sim.G.ac.phi]"); ok(r[0] < -0.3 and r[1] < -0.05, 'pressing LEFT banks left', str(r))
+    touch('touchMove', [(2, rt[0], rt[1])]); pg.wait_for_timeout(1200); r = E("[__sim.G.st.x, __sim.G.ac.phi]"); ok(r[0] > 0.3 and r[1] > 0.05, 'the thumb slid across to RIGHT: banks right', str(r)); touch('touchEnd', [])
+    touch('touchStart', [(2, 300, 300)]); touch('touchMove', [(2, 300, 380)]); r = E("[__sim.G.st.x, __sim.G.st.y, __sim.ui.stick]"); ok(r == [0, 0, None], 'a touch anywhere else does nothing: no joystick follows the thumb', str(r)); touch('touchEnd', [])
+    touch('touchStart', [(1, 40, 600), (2, up[0], up[1])]); touch('touchMove', [(1, 40, 560), (2, up[0], up[1])]); r = E("[__sim.G.st.y, __sim.G.thr]"); ok(r[0] > 0.3, 'both thumbs at once: power and UP', str(r)); touch('touchEnd', [])
+    # flight 1: the autopilot helps with the height, and DOWN still takes the plane down
+    E("localStorage.removeItem('av.taught'); __sim.go(1)"); pg.wait_for_timeout(700); ok(E("!!(__sim.G.lesson && __sim.LESSONS[1][0].autoPitch)"), 'flight 1 is the lesson with the autopilot', '')
+    ya = E("__sim.G.ac.y"); pg.wait_for_timeout(2500); yb = E("__sim.G.ac.y"); touch('touchStart', [(2, dn[0], dn[1])]); pg.wait_for_timeout(2500); yc = E("__sim.G.ac.y"); touch('touchEnd', [])
+    ok((yb - yc) > (ya - yb) + 6, 'on flight 1 DOWN still takes it down faster than the autopilot alone', f'{ya} {yb} {yc}'); pg.screenshot(path='/tmp/pl_auto.png')
     pg.wait_for_timeout(400); pg.screenshot(path='/tmp/pl_touch.png'); ok(not errs, 'no JavaScript errors', str(errs[:3]))
     b.close()
 print(f'\n{oks} checks passed, {len(fails)} failed.')

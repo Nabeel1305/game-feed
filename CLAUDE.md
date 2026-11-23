@@ -35,6 +35,17 @@ on the review page. Like, actually make the artifact, put the game normally how 
 artifact (`artifact_slug` in `games.json`) has it, in the same sitting, and his link in the reply is that page. The review page gets its copy as well, but it
 is where he writes notes, not where a fix is delivered. `python3 tools/pages.py` lists the games whose own page is behind; `--done <ids>` records a
 publish; run it before saying anything is finished. (About twelve publishes a minute go through; more are refused.)
+**Fixed reviews are marked, and his boxes emptied** (his words, 23 Nov 2026, 13:11: "check all the reviews that I gave on the game review and fix every
+single one... think what other game could this apply to? And try and fix it too... the ones that you do fix, you can delete the review I made, and you
+can say first review fixed. Just make it clear that I made a complaint and you fixed it on that game"): he no longer has to press SUBMIT for me to act on
+what is in the store when he says to. For each review fixed, add what he said (his exact words) and what was done to `specs/reviews-fixed.json`
+(`kind: "yours"`, or `"also"` on another game the same fault was fixed in); the page then shows YOUR FIRST REVIEW: FIXED on that game. Then empty his
+note in the store (`db_write` a `set` of `{ rating: '', critical: '', flaw: '', at: <now, in ms> }` to `reviews/<id>` with its `ifVersion`), so that what
+he writes next is his next review. Never empty a note that has not been fixed.
+**What looks like a button is a button** (his words, 23 Nov 2026, 13:47, after I wrote UP and DOWN round a stick that followed his thumb: "You literally
+made Pilot worse... You need to pay very close attention... anytime I try to click the side button that'll take it up, it just takes me to the
+joystick... You don't need the joystick"): a word or an arrow drawn at a fixed place is a button and is pressed; a stick, if there is one, stays in one
+place. After changing a control, press what the picture shows.
 The page is built by `python3 tools/review_page.py` and proved by `python3 tools/test_review_page.py` (what he types reaches the
 store, comes back on a phone that has forgotten everything, survives no signal). `python3 tools/small_screen.py` opens every
 card of every game on a 360 x 640 phone and reports buttons that cannot be reached.

@@ -82,13 +82,19 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (made for flying an airliner): right half is the column (a stick wherever the thumb goes down: pull it back, down the screen,
-// to raise the nose); left half is the throttle (slide up for power).
+// input. (23 Nov 2026, 13:47, his words after I had drawn UP, DOWN and two arrows round a stick that went wherever the thumb landed: "anytime I try
+// to click the side button that'll take it up, it just takes me to the joystick... you have to make the joystick in a single location... If you
+// press this one, it goes up in altitude. If you press this one, it goes down... left... right. That was fine. You don't need the joystick.")
+// Four buttons that never move, in a cross under the right thumb: ▲ UP, ▼ DOWN, ◀ LEFT, ▶ RIGHT. Press and hold; a thumb that slides from one
+// to the next is followed. The left edge is the POWER lever (slide up for more).
 const touch = { id: null, thr: null };
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (e.clientX < W * 0.4) { touch.thr = { id: e.pointerId, y0: e.clientY, t0: G.thr }; } else if (touch.id == null) { touch.id = e.pointerId; ui.stick = { x0: e.clientX, y0: e.clientY }; } try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+function padAt() { return { x: W - 112 * k, y: H - 168 * k, d: 62 * k, s: 56 * k }; }      // centre, how far out each button is, each button's size
+function padSet(x, y) { const P = padAt(), vx = (x - P.x) / P.d, vy = (P.y - y) / P.d, dz = v => Math.abs(v) < 0.42 ? 0 : Math.sign(v); G.st.x = dz(vx) * 0.6; G.st.y = dz(vy) * 0.45; ui.pad = { x: dz(vx), y: dz(vy) }; }      // a button is a steady nudge, not the stick thrown to its stop (measured: a thumb tapping full deflection lands hard)
+const onPad = (x, y) => { const P = padAt(); return Math.hypot(x - P.x, y - P.y) < P.d + P.s * 0.95; };
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (e.clientX < 84 * k && !onPad(e.clientX, e.clientY)) { touch.thr = { id: e.pointerId, y0: e.clientY, t0: G.thr }; } else if (touch.id == null && onPad(e.clientX, e.clientY)) { touch.id = e.pointerId; padSet(e.clientX, e.clientY); } try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { if (!G) return; if (touch.thr && e.pointerId === touch.thr.id) { G.thr = clamp(touch.thr.t0 - (e.clientY - touch.thr.y0) / (H * 0.35), 0, 1); return; }
-  if (e.pointerId !== touch.id || !ui.stick) return; const R = 60 * k; G.st.x = clamp((e.clientX - ui.stick.x0) / R, -1, 1); G.st.y = clamp((e.clientY - ui.stick.y0) / R, -1, 1); });
-function endTouch(e) { if (touch.thr && e.pointerId === touch.thr.id) { touch.thr = null; return; } if (e.pointerId !== touch.id) return; touch.id = null; ui.stick = null; if (G) { G.st.x = 0; G.st.y = 0; } }
+  if (e.pointerId !== touch.id) return; padSet(e.clientX, e.clientY); });
+function endTouch(e) { if (touch.thr && e.pointerId === touch.thr.id) { touch.thr = null; return; } if (e.pointerId !== touch.id) return; touch.id = null; ui.pad = null; if (G) { G.st.x = 0; G.st.y = 0; } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections
@@ -123,7 +129,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  stick(x, y) { G.st.x = x; G.st.y = y; }, thr(v) { G.thr = v; }, approach(d, x) { approach(G, d, x); }, ui, get V3() { return V3; }, W3,
+  stick(x, y) { G.st.x = x; G.st.y = y; }, pad() { return padAt(); }, thr(v) { G.thr = v; }, approach(d, x) { approach(G, d, x); }, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

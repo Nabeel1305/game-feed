@@ -46,19 +46,19 @@ FIXED = {
  'paint': 'Richer colours and a jar you can see.', 'dash': 'A beating sun, a skyline and bars that jump on the beat; the cube is a little bigger.',
  'lifeguard': 'The sea looks like sea now (it mirrored the sky).', 'santa': 'A fuller village: more trees, snowdrifts, cottages with lit windows.',
  'crew': 'Faster: the shadow you cannot see into is drawn a cheaper way.',
- 'police': 'YOUR REVIEW, DONE: a red arrow and ring mark the suspect (and an arrow at the screen edge when he is out of sight); a stick to steer with GAS and BRAKE pedals (hold BRAKE when stopped to reverse); a city of streets and corners; on foot you see your own officer from behind and both runners have knees and elbows; the buildings no longer vanish. YOUR SECOND REVIEW, DONE: the alleys have corners (swipe the way he turned); an ARREST button that lights when you are close; the arrest is a tapping fight (tap faster than he resists or he gets away); the arrest picture is rebuilt, your officer kneeling on him. From your Taxi Driver review: when his car is stopped you now see him get out and run, and your officer get out after him.',
- 'taxi': 'YOUR REVIEW OF 23 NOV, DONE: a passenger now goes right across town (7 to 10 blocks; it was one), a shift is about 4 to 5 minutes, and you see them walk to the door, get in, sit in the back, get out and walk away. You drive it with a stick, GAS and BRAKE.',
- 'run': 'YOUR POLICE CHASE REVIEW, APPLIED HERE: a stick to steer with GAS and BRAKE pedals (hold BRAKE when stopped to reverse) and a NITRO button; a city of streets and corners with green arrows showing the way to the drop; the buildings no longer vanish; on foot you see yourself from behind, with the officer on your heels, through alleys with corners (swipe the way the yellow arrow points). From your Taxi Driver review: at DITCH THE CAR you now see yourself get out and run.',
- 'bus': 'FROM YOUR TAXI DRIVER REVIEW: the people getting off are now seen stepping down from the door and walking away (they were only a number).',
  'blocks': 'You can see the squares of the board now.', 'peaks': 'Bigger cards.', 'kingdom': 'A hidden fault fixed. It keeps its own race music.',
 }
 NOBAND = {'drumline', 'keys', 'dash', 'kingdom'}
 PROG = json.load(open(os.path.join(R, 'specs', 'progress.json')))['games']
+# (23 Nov 2026, 13:11, his words: "the ones that you do fix, you can delete the review I made, and you can say first review fixed. Just make it clear
+# that I made a complaint and you fixed it on that game.") specs/reviews-fixed.json: what he said and what was done, a green box on the game's card;
+# his boxes on that card are emptied (in the store too) so that the next thing he writes there is his next review.
+DONE = {k: v for k, v in json.load(open(os.path.join(R, 'specs', 'reviews-fixed.json'))).items() if not k.startswith('_')}
 rows = []
 for g in games:
     s = seen.get(g['number'], ''); crit = s.startswith('C '); flaw = s.startswith('F '); note = s[2:] if (crit or flaw) else s
-    fixed = FIXED.get(g['id'], ''); todo = ' '.join(PROG.get(g['id'], {}).get('remaining', []))      # what is still open comes from the record (PROGRESS.md), not from the first list of faults
-    rows.append({'n': g['number'], 'id': g['id'], 'name': g['name'], 'genre': g['feed'].get('genre', ''), 'thumbs': g['feed'].get('thumbs', 1), 'fixed': fixed, 'todo': todo, 'crit': bool(crit and not fixed), 'band': g['id'] not in NOBAND})
+    fixed = '' if any(d['kind'] == 'yours' for d in DONE.get(g['id'], [])) else FIXED.get(g['id'], ''); todo = ' '.join(PROG.get(g['id'], {}).get('remaining', []))      # what is still open comes from the record (PROGRESS.md), not from the first list of faults
+    rows.append({'n': g['number'], 'id': g['id'], 'name': g['name'], 'genre': g['feed'].get('genre', ''), 'thumbs': g['feed'].get('thumbs', 1), 'fixed': fixed, 'todo': todo, 'crit': bool(crit and not fixed and g['id'] not in DONE), 'band': g['id'] not in NOBAND, 'done': DONE.get(g['id'], [])})
 out = R + '/out/review'; shutil.rmtree(out, ignore_errors=True); os.makedirs(out + '/games')
 for g in games: os.makedirs(f'{out}/games/{g["id"]}'); shutil.copy(f'{R}/games/{g["id"]}/index.html', f'{out}/games/{g["id"]}/index.html')
 page = r'''<!DOCTYPE html>
@@ -75,7 +75,8 @@ main{padding:12px 12px 120px;max-width:720px;margin:0 auto}
 .g{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}.g.crit{border-color:#6a3a34}
 .top{display:flex;align-items:center;gap:10px}.num{color:var(--dim);font-size:13px;min-width:34px}.nm{font-weight:800;font-size:18px;flex:1}.gen{color:var(--dim);font-size:12px}
 .play{flex:none;border:0;border-radius:12px;background:var(--acc);color:#1d1204;font:inherit;font-weight:800;padding:12px 18px;font-size:16px}
-.tag{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:2px 7px;margin:8px 6px 0 0;letter-spacing:.3px}.t-fix{background:#1e4a34;color:var(--ok)}.t-all{background:#26304a;color:#a8c0ff}.t-todo{background:#4a2a26;color:#ffb0a0}
+.tag{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:2px 7px;margin:8px 6px 0 0;letter-spacing:.3px}.t-fix{background:#1e4a34;color:var(--ok)}.t-all{background:#26304a;color:#a8c0ff}.t-todo{background:#4a2a26;color:#ffb0a0}.t-done{background:#7be0a0;color:#08240f}
+.done{margin-top:10px;border:1px solid #2f6a48;background:#15301f;border-radius:12px;padding:10px 12px}.done .h{font-weight:800;color:var(--ok);font-size:14px;letter-spacing:.2px}.done .h small{font-weight:400;color:#9fcfb2}.done .said{margin-top:6px;font-size:13px;color:#b9c7bf;font-style:italic}.done .did{margin-top:6px;font-size:14px;color:#eaf6ee}.done .did b{color:var(--ok)}.again{margin-top:12px;font-size:13px;color:var(--dim)}
 p.w{margin:6px 0 0;font-size:14px;color:#d8dcea}p.w b{color:var(--ink)}
 .rate{display:flex;gap:8px;margin-top:12px}.rate button{flex:1;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:9px 4px;font:inherit;font-size:14px}.rate button.on{background:#2c3a5a;border-color:#6a86d8;font-weight:700}
 label{display:block;font-size:12px;font-weight:800;margin:12px 0 4px;letter-spacing:.3px}label.c{color:var(--bad)}label.f{color:var(--acc)}label small{font-weight:400;color:var(--dim)}
@@ -93,7 +94,7 @@ footer .cnt{flex:1;font-size:12px;color:var(--dim);min-width:0}footer .cnt b{dis
 </style></head><body>
 <header><h1>Game Review</h1><div class="sub">__N__ games · tap PLAY, then rate it and write what is wrong. Everything saves by itself as you go; SAVE makes sure. Take as many days as you like.</div>
 <div class="key"><b>👍 Good</b> = leave it as it is · <b>😐 Okay</b> = not for me, but leave it · <b>👎 Bad</b> = it needs work (say what, if you know)</div>
-<div class="bar"><button class="chip on" data-f="all">All</button><button class="chip" data-f="fixed">Changed most</button><button class="chip" data-f="todo">Still open</button><button class="chip" data-f="untested">Not rated yet</button><button class="chip" data-f="noted">With your notes</button></div></header>
+<div class="bar"><button class="chip on" data-f="all">All</button><button class="chip" data-f="done">Your reviews: fixed</button><button class="chip" data-f="fixed">Changed most</button><button class="chip" data-f="todo">Still open</button><button class="chip" data-f="untested">Not rated yet</button><button class="chip" data-f="noted">With your notes</button></div></header>
 <main id="list"></main>
 <footer><div class="cnt"><b id="svAll">Checking…</b><span id="cnt"></span></div><button id="save">SAVE</button><button id="submit">SUBMIT REVIEW</button></footer>
 <div id="player"><div id="pbar"><button id="pback">‹ Games</button><div class="pn" id="pname"></div><button id="pnotes">✎ Notes</button></div><iframe id="frame" title="game" allow="autoplay; fullscreen"></iframe></div>
@@ -105,13 +106,15 @@ const mem = {}; const get = k => { try { const v = localStorage.getItem('rev.' +
 const set = (k, v) => { mem[k] = v; try { localStorage.setItem('rev.' + k, v); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let filter = 'all', cur = null;
+const ORD = ['', 'FIRST', 'SECOND', 'THIRD', 'FOURTH', 'FIFTH'];
+function doneHtml(g) { if (!g.done || !g.done.length) return ''; let n = 0; return g.done.map(d => { const mine = d.kind === 'yours'; if (mine) n++; return `<div class="done"><div class="h">✔ ${mine ? `YOUR ${ORD[n] || n + 'TH'} REVIEW: FIXED` : 'FIXED HERE TOO'} <small>(${esc(d.when)})</small></div><div class="said">You said: “${esc(d.said.trim())}”</div><div class="did"><b>What I did:</b> ${esc(d.did)}</div></div>`; }).join('') + (n ? `<div class="again">Your old note is cleared from the boxes below. Play it again and write your next review there if anything is still wrong.</div>` : ''); }
 function notesHtml(g) { const r = get(g.id + '.r'); return `<div class="rate" data-id="${g.id}">${[['good', '👍 Good'], ['ok', '😐 Okay'], ['bad', '👎 Bad']].map(([k, t]) => `<button data-r="${k}" class="${r === k ? 'on' : ''}">${t}</button>`).join('')}</div>
 <label class="c">CRITICAL FLAWS <small>(makes it almost unplayable)</small></label><textarea data-k="${g.id}.c" placeholder="e.g. I can't tell what to do">${esc(get(g.id + '.c'))}</textarea>
 <label class="f">FLAWS <small>(fixing this would make it much better)</small></label><textarea data-k="${g.id}.f" placeholder="e.g. the character is too small">${esc(get(g.id + '.f'))}</textarea><div class="sv" data-sv="${g.id}"></div>`; }
-function show(g) { const noted = get(g.id + '.c') || get(g.id + '.f'), rated = get(g.id + '.r'); return filter === 'all' || (filter === 'fixed' && g.fixed) || (filter === 'todo' && g.todo) || (filter === 'untested' && !rated) || (filter === 'noted' && noted); }
+function show(g) { const noted = get(g.id + '.c') || get(g.id + '.f'), rated = get(g.id + '.r'); return filter === 'all' || (filter === 'done' && g.done && g.done.length) || (filter === 'fixed' && g.fixed) || (filter === 'todo' && g.todo) || (filter === 'untested' && !rated) || (filter === 'noted' && noted); }
 function render() { const L = document.getElementById('list'); L.innerHTML = GAMES.filter(show).map(g => `<section class="g${g.crit ? ' crit' : ''}" id="g-${g.id}"><div class="top"><div class="num">#${g.n}</div><div class="nm">${esc(g.name)}<div class="gen">${esc(g.genre)} · ${g.thumbs === 2 ? 'two thumbs' : 'one thumb'}</div></div><button class="play" data-play="${g.id}">PLAY</button></div>
-${g.fixed ? `<span class="tag t-fix">CHANGED</span>` : ''}<span class="tag t-all">NEW LIGHT${g.band ? ' + MUSIC' : ''}</span>${g.todo ? `<span class="tag t-todo">STILL OPEN</span>` : ''}
-${g.fixed ? `<p class="w"><b>What I changed:</b> ${esc(g.fixed)}</p>` : ''}${g.todo ? `<p class="w"><b>Still open, or yours to judge:</b> ${esc(g.todo)}</p>` : ''}${notesHtml(g)}</section>`).join('') || '<p class="sub">Nothing here.</p>'; count(); }
+${g.done && g.done.length ? `<span class="tag t-done">${g.done.some(d => d.kind === 'yours') ? 'YOUR REVIEW: FIXED' : 'FIXED FROM YOUR REVIEW'}</span>` : ''}${g.fixed ? `<span class="tag t-fix">CHANGED</span>` : ''}<span class="tag t-all">NEW LIGHT${g.band ? ' + MUSIC' : ''}</span>${g.todo ? `<span class="tag t-todo">STILL OPEN</span>` : ''}
+${doneHtml(g)}${g.fixed ? `<p class="w"><b>What I changed:</b> ${esc(g.fixed)}</p>` : ''}${g.todo ? `<p class="w"><b>Still open, or yours to judge:</b> ${esc(g.todo)}</p>` : ''}${notesHtml(g)}</section>`).join('') || '<p class="sub">Nothing here.</p>'; count(); }
 function count() { let r = 0, n = 0; for (const g of GAMES) { if (get(g.id + '.r')) r++; if (get(g.id + '.c') || get(g.id + '.f')) n++; } document.getElementById('cnt').textContent = `${r} of ${GAMES.length} rated · ${n} with notes`; return [r, n]; }
 document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.k; if (k) { set(k, e.target.value); count(); touch(k.slice(0, k.lastIndexOf('.'))); } });
 document.addEventListener('click', e => { const t = e.target;
@@ -121,7 +124,7 @@ document.addEventListener('click', e => { const t = e.target;
 function play(id) { cur = GAMES.find(g => g.id === id); document.getElementById('pname').textContent = `#${cur.n} ${cur.name}`; document.getElementById('frame').src = 'games/' + id + '/index.html'; document.getElementById('player').classList.add('on'); }
 function closeSheet() { const s = document.getElementById('sheet'); s.classList.remove('on'); s.innerHTML = ''; }
 document.getElementById('pback').onclick = () => { closeSheet(); document.getElementById('player').classList.remove('on'); document.getElementById('frame').src = 'about:blank'; render(); if (cur) { const el = document.getElementById('g-' + cur.id); if (el) el.scrollIntoView({ block: 'center' }); } };
-document.getElementById('pnotes').onclick = () => { const s = document.getElementById('sheet'); if (s.classList.contains('on')) { closeSheet(); return; } s.innerHTML = `<b>#${cur.n} ${esc(cur.name)}</b>` + notesHtml(cur) + '<div style="height:10px"></div><button class="play" id="sdone" style="width:100%">Back to the game</button>'; s.classList.add('on'); document.getElementById('sdone').onclick = closeSheet; status(); };
+document.getElementById('pnotes').onclick = () => { const s = document.getElementById('sheet'); if (s.classList.contains('on')) { closeSheet(); return; } s.innerHTML = `<b>#${cur.n} ${esc(cur.name)}</b>` + doneHtml(cur) + notesHtml(cur) + '<div style="height:10px"></div><button class="play" id="sdone" style="width:100%">Back to the game</button>'; s.classList.add('on'); document.getElementById('sdone').onclick = closeSheet; status(); };
 function allNotes() { const L = ['GAME REVIEW NOTES']; for (const g of GAMES) { const r = get(g.id + '.r'), c = get(g.id + '.c').trim(), f = get(g.id + '.f').trim(); if (!r && !c && !f) continue; L.push('', `#${g.n} ${g.name}${r ? ' [' + r.toUpperCase() + ']' : ''}`); if (c) L.push('CRITICAL: ' + c); if (f) L.push('FLAWS: ' + f); } if (L.length === 1) L.push('', '(no notes yet)'); return L.join('\n'); }
 document.getElementById('copy').onclick = () => { const txt = document.getElementById('outText').value, b = document.getElementById('copy');
   try { navigator.clipboard.writeText(txt).then(() => { b.textContent = 'COPIED ✓'; setTimeout(() => b.textContent = 'COPY', 2500); }, () => { document.getElementById('outText').select(); }); } catch (e) { document.getElementById('outText').select(); } };

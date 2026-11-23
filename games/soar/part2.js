@@ -6,7 +6,7 @@
 
 const RULES = [
   '<b>Fly with one thumb.</b> Put it down anywhere and move it the way you want to go: left or right to turn, up to climb, down to dive.',
-  '<b>Follow the golden rings.</b> Fly through the middle of each one. The next ring glows brightest.',
+  '<b>Follow the rings of light.</b> A trail of sparks leads to the next one, the brightest. Fly through its middle.',
   '<b>Dive to speed up, climb to slow down.</b> Let go and you level out.',
   '<b>Rings in a row make a chain</b>, and each one rings a higher note.',
   'Nothing can hurt you. Skim the sea or a hillside and you bounce off, but the chain breaks.',
@@ -30,9 +30,12 @@ function makeCfg(N, help) {
   const rings = Math.round(x(14, 30, 30)) + (boss ? 6 : 0);
   return { N, f, e, boss, help: !!help, rings,
     goal: Math.ceil(rings * (x(0.62, 0.8, 30) - 0.1 * e - (help ? 0.08 : 0))),     // rings needed to finish
-    r: (x(7.5, 3.6, 30) + 2 * e) * (help ? 1.2 : 1),                              // ring radius (m)
-    gap: x(70, 52, 30),                                                             // metres between rings
-    turn: x(0.32, 0.95, 30),                                                       // how hard the trail bends between rings (rad)
+    r: (x(9, 3.3, 30) + 2 * e) * (help ? 1.2 : 1),                                // ring radius (m)
+    gap: x(56, 52, 30),                                                             // metres between rings
+    turn: x(0.22, 0.95, 30),                                                       // how hard the trail bends between rings (rad)
+    // (23 Nov 2026, his review: "Make the game easier let me see the rings and be able to slowly go into them".) You used to fly at 22 m/s on every
+    // flight; the first flights are now half that, the rings bigger and closer together, the trail straighter; the speed comes back over the flights.
+    cruise: (x(12.5, 25, 30) - 1.5 * e) * (help ? 0.9 : 1),                         // the speed you settle to (m/s)
     climb: x(8, 26, 30),                                                           // how much it rises or falls between rings (m)
     gust: x(0, 0.9, 25) * (1 - e),                                                 // wind that pushes you off line
     low: N >= 4 };                                                                  // the trail dips into valleys and between islands
@@ -40,7 +43,7 @@ function makeCfg(N, help) {
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null,
-    weather: weatherOf(N), land: landOf(1000 + (N * 37) % 9), f: { x: 0, y: 60, z: 0, yaw: 0, pitch: 0, bank: 0, v: 22, yr: 0, pr: 0 }, stick: { x: 0, y: 0 },
+    weather: weatherOf(N), land: landOf(1000 + (N * 37) % 9), f: { x: 0, y: 60, z: 0, yaw: 0, pitch: 0, bank: 0, v: cfg.cruise, yr: 0, pr: 0 }, stick: { x: 0, y: 0 },
     rings: [], next: 0, got: 0, chain: 0, bestChain: 0, skims: 0, gust: { x: 0, y: 0, t: 0 } };
   G.f.y = Math.max(60, G.land(0, 0) + 40);
   makeTrail(G, 0, G.cfg.rings);
@@ -73,7 +76,7 @@ function step(G, dt) {
   f.bank += (bankT - f.bank) * Math.min(1, dt * 3); f.pitch += (pitchT - f.pitch) * Math.min(1, dt * 2.2);
   f.yr = Math.sin(f.bank) * 1.15 * (22 / Math.max(14, f.v)) ; f.yaw += f.yr * dt;
   // speed: diving gains, climbing loses, always drifting back to a cruise
-  f.v += (-Math.sin(f.pitch) * 9.8 * 0.75 - (f.v - 22) * 0.18) * dt; f.v = clamp(f.v, 13, 38);
+  f.v += (-Math.sin(f.pitch) * 9.8 * 0.75 * (c.cruise / 22) - (f.v - c.cruise) * 0.18) * dt; f.v = clamp(f.v, c.cruise * 0.6, c.cruise * 1.75);
   // wind gusts (later levels): their own clock, never the player's
   const gu = G.gust; gu.t -= dt; if (gu.t <= 0) { gu.t = 1.5 + G.rnd() * 3; gu.tx = (G.rnd() * 2 - 1) * c.gust * 4; gu.ty = (G.rnd() * 2 - 1) * c.gust * 2; } gu.x += ((gu.tx || 0) - gu.x) * dt; gu.y += ((gu.ty || 0) - gu.y) * dt;
   const d = fwdOf(f), px = f.x, py = f.y, pz = f.z;

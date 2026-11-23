@@ -1,5 +1,5 @@
 {
- "checkpoint": "**Checkpoint, 23 Nov 2026, 08:45 (his review goes on).** His rule of 07:48: a fix is delivered on the game's OWN page (`tools/pages.py` lists any that is behind; all 103 were republished). DONE from his notes: Police Chase twice (second version: marker, stick and pedals, city with corners, runners; third version: corners on foot, ARREST button, tapping fight, arrest picture) and the same faults in On the Run (vanishing buildings, third-person run, corners on foot) and Eleven (rings). ANSWERED (09:49, sharply: do it, do not ask): On the Run's driving now has the stick, pedals, NITRO button and a city with corners (0.2.0). DONE too, the same fault: Taxi Driver (83) drove itself and was steered by swipes: you drive it now (0.2.0). Bus Driver (two pedals, a set route) and the three kart racers (they steer freely; no brake or reverse) were looked at and left. DONE from his words of 11:25 on Taxi Driver (round the corner; nobody seen getting in or out): fares of 7 to 10 blocks, shifts of 4 to 5 minutes, the passenger animated in and out (0.3.0); the same fault fixed in Police Chase 0.3.1, On the Run 0.2.1 (the driver gets out and runs) and Bus Driver 0.1.2 (people getting off are seen). SEEN in the page's store, not submitted when this was written: Reel 'Em In (make the fish clear, let it break the water where to cast, a ring that stands out from the water) and Soar (prettier rings, a cape flying instead of a person is fine, beautiful surroundings, easier: see the rings and go into them slowly); Wild Water is Good. Read the store first next time (db_list, collection `reviews`; `meta/submitted`).",
+ "checkpoint": "**Checkpoint, 23 Nov 2026, 08:45 (his review goes on).** His rule of 07:48: a fix is delivered on the game's OWN page (`tools/pages.py` lists any that is behind; all 103 were republished). DONE from his notes: Police Chase twice (second version: marker, stick and pedals, city with corners, runners; third version: corners on foot, ARREST button, tapping fight, arrest picture) and the same faults in On the Run (vanishing buildings, third-person run, corners on foot) and Eleven (rings). ANSWERED (09:49, sharply: do it, do not ask): On the Run's driving now has the stick, pedals, NITRO button and a city with corners (0.2.0). DONE too, the same fault: Taxi Driver (83) drove itself and was steered by swipes: you drive it now (0.2.0). Bus Driver (two pedals, a set route) and the three kart racers (they steer freely; no brake or reverse) were looked at and left. DONE from his words of 11:25 on Taxi Driver (round the corner; nobody seen getting in or out): fares of 7 to 10 blocks, shifts of 4 to 5 minutes, the passenger animated in and out (0.3.0); the same fault fixed in Police Chase 0.3.1, On the Run 0.2.1 (the driver gets out and runs) and Bus Driver 0.1.2 (people getting off are seen). DONE (13:11, his word: fix every review on the page, think which other games each fits, and mark the fixed ones): Pilot (four fixed buttons after my first try, a stick with labels, made it worse: his words of 13:47), Hunter (animals with joints that run or charge; the throw), Vine (a person with joints), Reel 'Em In (fish that leap where to cast, orange rings, the fish on the line), Soar (a cape, rings of light, the surroundings, half the speed); the same fault fixed in Drone Pilot (hoops). Looked at and NOT yet done, the same kind of fault: Rodeo's bull and Wolf's animals (one-piece legs), Tightrope's walker (a pill on sticks), the pale target rings of Skim and Balloon Drift. The page shows YOUR REVIEW: FIXED on each (specs/reviews-fixed.json) and his boxes there are emptied. SEEN in the page's store, not submitted when this was written: Reel 'Em In (make the fish clear, let it break the water where to cast, a ring that stands out from the water) and Soar (prettier rings, a cape flying instead of a person is fine, beautiful surroundings, easier: see the rings and go into them slowly); Wild Water is Good. Read the store first next time (db_list, collection `reviews`; `meta/submitted`).",
  "shared": [
   "tools/world3d.js: a fill light from behind the player's eye; brighter night, dusk, rain and storm; thinner fog. Affects all 82 3D games. Regression: every game loads; robot play of all 103 showed no errors; pictures of 20 dark-level games looked at before and after.",
   "tools/juice-kit.js: the band (music) for 100 games; a Settings card added where missing. Its room echo was first a convolution reverb: two touch tests (Tennis, Ice Hockey) then failed on timing, so it is now two cheap feedback echoes; both pass again. Regression: every game's own touch test re-run (104 have one; all pass, three needed a second run under load: Powder, Drift Kings, Kart Kingdom), tools/test_controls.py for all 111, tools/check.py.",
@@ -87,16 +87,20 @@
   },
   "reel": {
    "status": "verified",
-   "problems": [],
+   "problems": [
+    "His review (23 Nov): \"Make the fish clear currently its just a circle make the fish come out of the water in the place I'm supposed to put my fishing stick... make the circle distinct from the water color\". True: the only sign of a fish was a pale ripple on pale water; in a fight the fish was not drawn at all."
+   ],
    "changes": [
-    "A tap strikes when the float goes under. The flick up still works."
+    "A tap strikes when the float goes under. The flick up still works.",
+    "23 Nov, 0.2.0: every rise is a fish of that kind leaping (larger than life, and larger the further off); an orange ring with a dark edge at each place, an arrow over it (and FISH HERE on the first levels); the aim ring is white with dark edges and turns green with ON THE FISH: LET GO; the hooked fish swims at the surface with a ring round it; the float no longer hangs across the lake before the first cast."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (10 checks passed, 0 failed.).",
-    "test_touch 11 pass (new: a tap on the bite hooks the fish); test_play 15 pass."
+    "test_touch 11 pass (new: a tap on the bite hooks the fish); test_play 15 pass.",
+    "23 Nov, 0.2.0: check_game all green, test_touch 11; pictures looked at: morning, dusk and golden hour before a cast, aiming on a ring, a leap, three moments of a fight. NOT judged by me: whether the rings are easy for HIS eyes; the motion."
    ],
    "remaining": [
-    "Casting is still a pull-back-and-let-go (a slingshot with its landing mark drawn): to judge by hand."
+    "Casting is still a pull-back-and-let-go: to judge by hand."
    ],
    "note": "fine."
   },
@@ -114,44 +118,57 @@
   },
   "soar": {
    "status": "verified",
-   "problems": [],
-   "changes": [],
-   "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.)."
+   "problems": [
+    "His review (23 Nov): \"The rings are ugly... you can just make a cape flying and flappy through the air. Make ghe surroundings really beautiful... Make the game easier let me see the rings and be able to slowly go into them\". True: plain yellow tubes, a small dark figure seen feet first, dull green hills, 22 m/s on every flight."
    ],
-   "remaining": [],
+   "changes": [
+    "23 Nov, 0.2.0 (specs/soar-v2-2026-11-23.md): the cape; rings of light (core, glow, halo, film, twelve gems; each the next colour; a bloom when flown through); a trail of sparks to the next ring; shallows and foam round the islands, flower meadows, three kinds of tree, balloons, boats, heaped clouds, a rainbow; cruise speed 11 m/s on flight 1 rising to 24, rings 11 m across the first flight, 56 m apart, a straighter trail."
+   ],
+   "checks": [
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
+    "23 Nov, 0.2.0: check_game all green (test_play 16; robots: ordinary 1 1.0, 20 1.0, 40 0.7; sloppy 1 1.0; sharp 80 0.3; speed 52 a second with the new trees); pictures of flights 1, 2, 5 and 8 looked at. NOT judged by me: whether it is beautiful to him; the feel of the slower flight; the speed on his phone."
+   ],
+   "remaining": [
+    "Whether the surroundings are beautiful enough: his to say."
+   ],
    "note": "fine, pretty."
   },
   "vine": {
    "status": "verified",
    "problems": [
-    "CRITICAL: level 5 nearly black, the swinger is tiny and lost among the trunks."
+    "CRITICAL: level 5 nearly black, the swinger is tiny and lost among the trunks.",
+    "His review (23 Nov): \"do better on the animation... hands and the person holding the vines and swinging\". True: a pill with two straight arms beside the vine and two stumps; the same pose in the air as on the vine."
    ],
    "changes": [
     "Camera a quarter closer; a soft lamp travels with the swinger; dark weathers lifted.",
-    "third pass, 22 Nov evening: anything within arm's reach of the camera is cut away: a vine can no longer hang across the view."
+    "third pass, 22 Nov evening: anything within arm's reach of the camera is cut away: a vine can no longer hang across the view.",
+    "23 Nov, 0.2.0: part25_human.js, a person with joints; hands closed on the vine end (arms solved to reach it), legs that kick and tuck with the swing, a reach for the next vine in the air, wheeling arms after a grab at nothing, a jolt on a catch, a tail of vine below the hands."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
     "Pictures of level 5 at dusk looked at: the swinger is lit and larger.",
-    "touch test 6 pass; picture looked at."
+    "touch test 6 pass; picture looked at.",
+    "23 Nov, 0.2.0: check_game all green (speed 47 a second), test_touch 6; pictures looked at: back, bottom and front of a swing, four moments in the air, a grab at air, a fall. NOT judged by me: the motion between the pictures."
    ],
    "remaining": []
   },
   "hunter": {
    "status": "verified",
    "problems": [
-    "CRITICAL: tall grass fills the screen, the animal is a speck in grey fog."
+    "CRITICAL: tall grass fills the screen, the animal is a speck in grey fog.",
+    "His review (23 Nov): \"horrible animation with the animal and the spear throw. Plus the animal just waits for me to kill it it should run away or even attack if I run or come too close or throw a spear\". True: the animal was a capsule on four sticks; you could creep to 5 m of a grazing animal; the spear came down from above the screen."
    ],
    "changes": [
-    "His controls: a stick (gentle = creep, full = run, which the animal hears), a crosshair dragged by the right thumb (amber on the animal, green on the chest), a THROW button; taps for the lion. A longer lens, shorter grass."
+    "His controls: a stick (gentle = creep, full = run, which the animal hears), a crosshair dragged by the right thumb (amber on the animal, green on the chest), a THROW button; taps for the lion. A longer lens, shorter grass.",
+    "23 Nov, 0.3.0 (specs/hunter-v3-2026-11-23.md): part25_quad.js, an animal with joints, for the deer, horse, boar, bison, mammoth and lion; a ring each animal will not let you inside (`shy`); deer and horses run; boar, bison and mammoth may turn on you (`temper`): threat, charge, DIVE ASIDE, winded; the arm, the throw, the spear's flight from the hand with a streak, spears that stay in the animal; the metres say GOOD RANGE or TOO CLOSE."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (14 checks passed, 0 failed.).",
-    "test_touch 14 pass; test_play 15 pass; robots win levels 1-3 and 10; pictures looked at."
+    "test_touch 14 pass; test_play 15 pass; robots win levels 1-3 and 10; pictures looked at.",
+    "23 Nov, 0.3.0: check_game all green (test_play 15: ordinary 1 1.0, 3 1.0, 10 1.0, 40 0; sloppy 1 0.8; sharp 40 1.0, 80 1.0; blind 0 of 77,504; test_touch 20; controls 33; speed 58), tutorial, odd-moment win, small screen; pictures looked at: grazing, looking, a miss and a bolt, a hit and the fall, a boar's threat, charge, DIVE ASIDE and being run down, the winded boar. NOT judged by me: the motion between the pictures, the sounds, whether the dive feels fair."
    ],
    "remaining": [
-    "Running is new: whether creep/run feels right needs his thumb."
+    "Whether the charge and the dive feel fair in the hand: his to say."
    ]
   },
   "police": {
@@ -180,18 +197,20 @@
   "pilot": {
    "status": "verified",
    "problems": [
-    "CRITICAL: night levels are black, plane tiny, no runway to see."
+    "CRITICAL: night levels are black, plane tiny, no runway to see.",
+    "His review (23 Nov, the page): \"I literally cannot desend\". True: the column was a cockpit's (thumb DOWN the screen made the plane climb: measured, 227 m to 266 m in 6 s) and on flight 1 the autopilot ignored up and down. Then, 13:47, of my first fix (a floating stick with UP and DOWN written round it): \"anytime I try to click the side button that'll take it up, it just takes me to the joystick... You don't need the joystick\"."
    ],
    "changes": [
-    "Night, dusk and storm approaches: the runway's lights shine through dark and haze, and the night is lifted so the land can be read."
+    "Night, dusk and storm approaches: the runway's lights shine through dark and haze, and the night is lifted so the land can be read.",
+    "23 Nov, 0.2.1: four buttons that never move (UP, DOWN, LEFT, RIGHT), press and hold, a thumb that slides between them is followed; a touch anywhere else does nothing; a button is a steady nudge (0.6 of the bank, 0.45 of the pitch); UP and DOWN work even while flight 1's autopilot helps; the centre-line scale moved up from under the buttons."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
-    "Picture of a level-5 night approach looked at: the runway shows as a bar of light ahead."
+    "Picture of a level-5 night approach looked at: the runway shows as a bar of light ahead.",
+    "23 Nov, 0.2.1: test_touch 12 (each button with a real touch: UP lifts the nose, DOWN loses height, LEFT and RIGHT bank, a touch elsewhere does nothing, flight 1 DOWN works), test_play 16, controls 33, tutorial, small screen; a robot that can only press the buttons in 0.16 s steps lands flights 1, 2, 3, 5 and 10 every time (12 each), sloppy flight 2 0.92, sharp flight 40 0.25; pictures at 390 x 844 and 360 x 640 looked at. NOT judged by me: how it handles in the hand."
    ],
    "remaining": [
-    "Controls to judge by hand: its rules use pull back.",
-    "Its rules use a pull back (the flare): to judge by hand."
+    "Whether a button is too strong or too weak in the hand: his to say."
    ]
   },
   "cook": {
@@ -263,14 +282,17 @@
   "drone": {
    "status": "verified",
    "problems": [
-    "two sticks (against his rule), the drone is tiny, the land is a flat green sheet."
+    "two sticks (against his rule), the drone is tiny, the land is a flat green sheet.",
+    "From his review of Soar (\"The rings are ugly\"): the hoops here were the same thing, one plain tube each."
    ],
    "changes": [
-    "ONE THUMB instead of two sticks: hold a thumb down to fly forwards, slide to turn and climb (a hard turn slows it), lift to brake to a hover. Sideways drift from turns and wind is trimmed out for you, because one thumb cannot slide sideways."
+    "ONE THUMB instead of two sticks: hold a thumb down to fly forwards, slide to turn and climb (a hard turn slows it), lift to brake to a hover. Sideways drift from turns and wind is trimmed out for you, because one thumb cannot slide sideways.",
+    "23 Nov, 0.2.1: each hoop is a gate of light: dark frame, neon core, glow, halo, sixteen lamps that chase round the next one; each hoop the next colour."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
-    "A one-thumb robot (only turn, climb, hold or lift) won 40 of 42 runs on levels 1, 5, 10, 14, 18, 20 and 25; a thumb held still and never moved loses levels 1, 3, 6 and 10; test_touch 7 pass; test_play 15 pass; picture looked at."
+    "A one-thumb robot (only turn, climb, hold or lift) won 40 of 42 runs on levels 1, 5, 10, 14, 18, 20 and 25; a thumb held still and never moved loses levels 1, 3, 6 and 10; test_touch 7 pass; test_play 15 pass; picture looked at.",
+    "23 Nov, 0.2.1: test_touch 7; a picture looked at."
    ],
    "remaining": [
     "Whether one thumb feels like flying needs his thumb."

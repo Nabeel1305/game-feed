@@ -5245,6 +5245,51 @@ function honest(G, o, mem) {
   if (will) { if (mem.seen == null) mem.seen = G.t; if (G.t - mem.seen >= react * 0.5) { grab(G); mem.seen = null; } } else mem.seen = null;
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; attach(G, G.vines.length - 1, 0, 0); G.time = Math.max(G.time, 5); }
+// ===================== A PERSON WITH JOINTS (Vine first, 23 Nov 2026; copied to the games that need it) =====================
+// His review of Vine: "do better on the animation... hands and the person holding the vines and swinging". The swinger was a pill
+// with two straight sticks for arms and two stumps for legs. humMake(T, look) builds a person: head, neck, a chest wider than the
+// waist, shoulders, upper arms, forearms, hands with fingers that close; hips, thighs, shins, feet. The arms reach for a point
+// (humReach: shoulder and elbow worked out so the hand is there); the legs are set by angles (humLegs). The person faces -z;
+// the origin is the middle of the body, 1.0 below the hands when hanging at full stretch.
+function humMake(T, look = {}) {
+  const g = new T.Group(), mat = (c, r = 0.7) => { const m = new T.MeshStandardMaterial({ color: c, roughness: r }); m.emissive = new T.Color(c); m.emissiveIntensity = 0.1; return m; };
+  const M = { skin: mat(look.skin || 0xa8754f, 0.55), top: mat(look.top || 0x2f6a44, 0.8), shorts: mat(look.shorts || 0x6b4d2e, 0.85), hair: mat(look.hair || 0x17110c, 0.8), band: mat(look.band || 0xd6452e, 0.7) };
+  const sph = new T.SphereGeometry(1, 16, 12);
+  const ell = (rx, ry, rz, x, y, z, m, par = g) => { const q = new T.Mesh(sph, m); q.scale.set(rx, ry, rz); q.position.set(x, y, z); q.castShadow = true; par.add(q); return q; };
+  const seg = (rt, rb, len, m, par) => { const ge = new T.CylinderGeometry(rt, rb, len, 10); ge.translate(0, -len / 2, 0); const q = new T.Mesh(ge, m); q.castShadow = true; par.add(q); return q; };      // hangs down from its joint
+  const SH = 0.46, HIP = -0.11, UA = 0.28, FA = 0.25, TH = 0.42, SN = 0.4;
+  // trunk: chest, waist, hips; neck and head
+  ell(0.185, 0.17, 0.115, 0, SH - 0.14, 0, M.top); ell(0.15, 0.15, 0.1, 0, SH - 0.33, 0.005, M.top); ell(0.165, 0.12, 0.115, 0, HIP + 0.04, 0, M.shorts);
+  const neck = new T.Group(); neck.position.set(0, SH + 0.03, 0); g.add(neck); seg(0.05, 0.055, 0.1, M.skin, neck).position.y = 0.09;
+  const head = new T.Group(); head.position.y = 0.17; neck.add(head); ell(0.1, 0.118, 0.108, 0, 0, 0, M.skin, head); ell(0.105, 0.1, 0.112, 0, 0.035, 0.012, M.hair, head); ell(0.02, 0.03, 0.012, -0.1, 0, 0, M.skin, head); ell(0.02, 0.03, 0.012, 0.1, 0, 0, M.skin, head); ell(0.018, 0.025, 0.02, 0, -0.01, -0.105, M.skin, head);
+  { const b = new T.Mesh(new T.TorusGeometry(0.104, 0.014, 6, 20), M.band); b.rotation.x = Math.PI / 2 - 0.15; b.position.y = 0.035; head.add(b); const tailG = new T.Group(); tailG.position.set(0, 0.03, 0.105); head.add(tailG); seg(0.012, 0.004, 0.2, M.band, tailG); seg(0.012, 0.004, 0.17, M.band, tailG).rotation.z = 0.35; head.userData.band = tailG; }
+  // arms: shoulder -> upper arm -> elbow -> forearm -> hand (a palm and four fingers on one knuckle joint, and a thumb)
+  const arms = [-1, 1].map(sx => { const sh = new T.Group(); sh.position.set(sx * 0.2, SH, 0); g.add(sh); ell(0.062, 0.062, 0.062, 0, 0, 0, M.skin, sh); seg(0.05, 0.04, UA, M.skin, sh);
+    const el = new T.Group(); el.position.y = -UA; sh.add(el); ell(0.041, 0.041, 0.041, 0, 0, 0, M.skin, el); seg(0.04, 0.03, FA, M.skin, el);
+    const hand = new T.Group(); hand.position.y = -FA; el.add(hand); ell(0.033, 0.045, 0.02, 0, -0.035, 0, M.skin, hand);
+    const fing = new T.Group(); fing.position.set(0, -0.075, 0); hand.add(fing); for (let f = 0; f < 4; f++) { const q = seg(0.0095, 0.008, 0.065, M.skin, fing); q.position.set(-0.024 + f * 0.016, 0, 0); }
+    const thumb = new T.Group(); thumb.position.set(sx * -0.03, -0.03, -0.005); hand.add(thumb); seg(0.011, 0.009, 0.05, M.skin, thumb); return { sx, sh, el, hand, fing, thumb }; });
+  // legs: hip -> thigh -> knee -> shin -> foot
+  const legs = [-1, 1].map(sx => { const hip = new T.Group(); hip.position.set(sx * 0.088, HIP, 0); g.add(hip); seg(0.082, 0.058, TH, M.skin, hip); ell(0.09, 0.13, 0.092, 0, -0.08, 0, M.shorts, hip);
+    const knee = new T.Group(); knee.position.y = -TH; hip.add(knee); ell(0.058, 0.058, 0.058, 0, 0, 0, M.skin, knee); seg(0.055, 0.036, SN, M.skin, knee); ell(0.05, 0.075, 0.05, 0, -0.14, 0.014, M.skin, knee);
+    const foot = new T.Group(); foot.position.y = -SN; knee.add(foot); ell(0.04, 0.028, 0.095, 0, -0.012, -0.05, M.skin, foot); return { sx, hip, knee, foot }; });
+  return { g, M, neck, head, arms, legs, UA, FA, SH, grip: 0 };
+}
+// put a hand at a point (in the person's own space): the elbow bends away from `hint` (default: out to the side and a little back)
+function humReach(H, i, tx, ty, tz, hint) {
+  const T = THREE, A = H.arms[i], S = A.sh.position, L1 = H.UA, L2 = H.FA + 0.05; let dx = tx - S.x, dy = ty - S.y, dz = tz - S.z, d = Math.hypot(dx, dy, dz) || 1e-4; const dm = Math.min(d, (L1 + L2) * 0.995); dx *= dm / d; dy *= dm / d; dz *= dm / d; d = dm;
+  const ca = clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d), -1, 1), al = Math.acos(ca), n = new T.Vector3(dx, dy, dz).divideScalar(d), h = hint ? new T.Vector3(hint[0], hint[1], hint[2]) : new T.Vector3(A.sx * 0.9, -0.2, 0.45);
+  const b = h.sub(n.clone().multiplyScalar(h.dot(n))); if (b.lengthSq() < 1e-6) b.set(A.sx, 0, 0); b.normalize();
+  const E = n.clone().multiplyScalar(L1 * Math.cos(al)).addScaledVector(b, L1 * Math.sin(al)), down = new T.Vector3(0, -1, 0);
+  A.sh.quaternion.setFromUnitVectors(down, E.clone().normalize());
+  const f = new T.Vector3(dx, dy, dz).sub(E).normalize().applyQuaternion(A.sh.quaternion.clone().invert()); A.el.quaternion.setFromUnitVectors(down, f);
+}
+// arms hanging or swung by angles instead: fwd (+ forward, towards -z), out (+ away from the body), elbow bend
+function humArm(H, i, fwd, out, bend) { const A = H.arms[i]; A.sh.rotation.set(fwd, 0, A.sx * out); A.el.rotation.set(bend, 0, 0); }
+// legs by angles: each [hip forward (+ towards -z), knee bend (+ heel back), hip out]
+function humLegs(H, L, R) { [L, R].forEach((q, i) => { const g = H.legs[i]; g.hip.rotation.set(q[0], 0, g.sx * (q[2] || 0)); g.knee.rotation.set(-Math.max(0, q[1]), 0, 0); g.foot.rotation.x = q[3] == null ? 0.25 : q[3]; }); }
+// hands: 0 open .. 1 closed round something
+function humGrip(H, v, dt = 1) { H.grip += (v - H.grip) * Math.min(1, dt * 18); for (const A of H.arms) { A.fing.rotation.x = 0.15 + H.grip * 2.1; A.thumb.rotation.set(0.3 + H.grip * 0.9, 0, A.sx * (0.9 - H.grip * 0.5)); } }
 // ===================== THE VIEW: Vine in 3D (three.js through tools/world3d.js) =====================
 // A rainforest gorge: giant trunks, a roof of leaves, light falling through mist, a river far below; vines hanging from the
 // branches; you, seen from just behind, hanging by your hands.
@@ -5261,20 +5306,14 @@ function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 70, far: 3000, near: 0.1 })) { V3 = { none: true }; return V3; }
   const S = W3.scene, R0 = W3.rng(23);
   const river = W3.water({ size: 4000, color: 0x2a3a1c, distort: 0.6, ripple: 1.6, speed: 0.6 });
-  // the swinger: a body in a sleeveless top and shorts, arms up to the vine
-  const P = new T.Group(), skin = new T.MeshStandardMaterial({ color: 0x9b6a48, roughness: 0.55 }), top = new T.MeshStandardMaterial({ color: 0x2f5a3a, roughness: 0.8 }), shorts = new T.MeshStandardMaterial({ color: 0x6b4d2e, roughness: 0.85 }), hairM = new T.MeshStandardMaterial({ color: 0x15100c, roughness: 0.8 });
-  const cap = (r, l, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new T.Mesh(new T.CapsuleGeometry(r, l, 6, 12), m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.castShadow = true; P.add(o); return o; };
-  cap(0.17, 0.36, top, 0, 0, 0); cap(0.16, 0.12, shorts, 0, -0.32, 0);
-  const head = new T.Mesh(new T.SphereGeometry(0.115, 20, 14), skin); head.position.set(0, 0.42, 0.02); P.add(head);
-  const hair = new T.Mesh(new T.SphereGeometry(0.122, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.6), hairM); hair.position.set(0, 0.44, 0.03); hair.rotation.x = 0.3; P.add(hair);
-  const arms = []; for (const s of [-1, 1]) { arms.push(cap(0.055, 0.6, skin, s * 0.12, 0.62, 0, 0, 0, s * 0.18)); const legU = cap(0.08, 0.36, skin, s * 0.1, -0.62, 0); legU.userData.s = s; arms.push(legU); }
-  const handPos = new T.Vector3(0, ARM, 0);
+  // the swinger: a person with joints (part25_human.js): hands that close on the vine, arms that reach, legs that kick and tuck
+  const HM = humMake(T), P = HM.g, arms = [];
   S.add(P);
   // the forest is built per run (it follows the route); materials and shapes once
   const bark = W3.grainTex(256, 41, 140, 70, 3); bark.repeat.set(2, 6);
   const leafC = document.createElement('canvas'); leafC.width = leafC.height = 128; { const g = leafC.getContext('2d'); for (let i = 0; i < 60; i++) { const x = 64 + (R0() - 0.5) * 100, y = 64 + (R0() - 0.5) * 100, a = R0() * 6.3; g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = `hsl(${95 + R0() * 40},${45 + R0() * 25}%,${18 + R0() * 22}%)`; g.beginPath(); g.ellipse(0, 0, 18, 7, 0, 0, 6.3); g.fill(); g.restore(); } }
   const leafTex = new T.CanvasTexture(leafC); leafTex.colorSpace = T.SRGBColorSpace;
-  V3 = { T, S, river, P, arms, bark, leafTex, mats: { bark: new T.MeshStandardMaterial({ color: 0x8a7a66, map: bark, roughness: 0.95 }), leaf: new T.MeshStandardMaterial({ map: leafTex, alphaTest: 0.4, side: T.DoubleSide, roughness: 0.75, transparent: false }), vine: new T.MeshStandardMaterial({ color: 0x4f5a2a, roughness: 0.9 }) },
+  V3 = { T, S, river, P, H: HM, arms, bark, leafTex, mats: { bark: new T.MeshStandardMaterial({ color: 0x8a7a66, map: bark, roughness: 0.95 }), leaf: new T.MeshStandardMaterial({ map: leafTex, alphaTest: 0.4, side: T.DoubleSide, roughness: 0.75, transparent: false }), vine: new T.MeshStandardMaterial({ color: 0x4f5a2a, roughness: 0.9 }) },
     run: null, camPos: new T.Vector3(), look: new T.Vector3(), sky: null };
   W3.setQuality(stepN); return V3;
 }
@@ -5320,9 +5359,9 @@ function setWeather(G) {
 function onEvent(G, e) {
   const cx = W / 2, cy = H * 0.3;
   switch (e.k) {
-    case 'letgo': sfx.whoosh(); vibe(HAP.tick); break;
-    case 'catch': sfx.catch(e.streak, e.fine); FX.shake = 4; vibe(HAP.light); if (e.fine) say('PERFECT CATCH', cx, cy, '#ffe9a8', 24); else if (e.streak >= 3 && e.streak % 3 === 0) say(`${e.streak} IN A ROW`, cx, cy, '#ffe9a8', 22); break;
-    case 'air': sfx.air(); say('NOTHING THERE', cx, cy + 40, '#ffd0c4', 20); tip('air', 'Wait until your hand reaches the vine', 2.6); break;
+    case 'letgo': sfx.whoosh(); vibe(HAP.tick); ui.relT = 0; break;
+    case 'catch': ui.catchT = 0.45; sfx.catch(e.streak, e.fine); FX.shake = 4; vibe(HAP.light); if (e.fine) say('PERFECT CATCH', cx, cy, '#ffe9a8', 24); else if (e.streak >= 3 && e.streak % 3 === 0) say(`${e.streak} IN A ROW`, cx, cy, '#ffe9a8', 22); break;
+    case 'air': ui.airT = 0.5; sfx.air(); say('NOTHING THERE', cx, cy + 40, '#ffd0c4', 20); tip('air', 'Wait until your hand reaches the vine', 2.6); break;
     case 'busy': break;
     case 'fall': sfx.fall(); FX.red = 0.5; FX.shake = 8; say('SPLASH!', cx, cy, '#ffb4a8', 30); tip('fall', 'Let go as you swing forward and up', 3); break;
     case 'vines': if (V3 && !V3.none) buildRun(G); break;
@@ -5334,7 +5373,7 @@ function onEvent(G, e) {
     case 'lost': sfx.lose(); say(e.why === 'time' ? 'THE LIGHT IS GONE' : 'TOO MANY FALLS', cx, H * 0.5, '#ffd0c4', 26); break;
   }
 }
-const ui = { snap: false };
+const ui = { snap: false, relT: 9, catchT: 0, airT: 0 };
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D jungle.', W / 2, H / 2); return; }
@@ -5345,10 +5384,26 @@ function draw(now, dt) {
   for (const m of V.run.vines) { const v = g.vines[m.userData.i]; if (!v) { m.visible = false; continue; } m.visible = true; m.position.set(v.x, v.y, v.z);
     if (g.held && m.userData.i === g.on) { const hx = p.x, hy = p.y + ARM, hz = p.z, dir = new T.Vector3(hx - v.x, hy - v.y, hz - v.z), L = dir.length(); m.scale.set(1, L, 1); m.quaternion.setFromUnitVectors(new T.Vector3(0, -1, 0), dir.normalize()); }
     else { m.scale.set(1, v.L, 1); m.rotation.set(Math.sin(t * 0.7 + m.userData.i) * 0.05, 0, Math.sin(t * 0.5 + m.userData.i * 2) * 0.04); } }
-  // the swinger: hanging from the hands, leaning with the swing; legs tuck in the air
-  V.P.position.set(p.x, p.y, p.z);
-  const sw = g.held ? -g.th : Math.atan2(-p.vz, Math.max(0.1, p.vy + 8)) * -0.4; V.P.rotation.set(sw, 0, -g.lean * 0.3);
-  for (const a of V.arms) if (a.userData.s) { a.rotation.x = g.held ? Math.sin(t * 2) * 0.1 - g.om * 0.08 : -0.9; a.position.z = g.held ? 0 : 0.2; }
+  // the swinger (23 Nov 2026, his review: "do better on the animation... hands and the person holding the vines and swinging"):
+  // held: both hands closed on the end of the vine, one above the other, the body hanging from them and trailing the swing, the legs
+  // kicking forward on the way up and tucking on the way back. In the air: the arms come down and forward and reach for the next
+  // vine with open hands, the legs stride. A grab at nothing: the hands snatch and the arms wheel. A catch: the legs swing through.
+  { const H = V.H, e3 = (a, b, u) => a + (b - a) * u; ui.relT += dt; ui.catchT = Math.max(0, ui.catchT - dt); ui.airT = Math.max(0, ui.airT - dt); V.P.position.set(p.x, p.y, p.z);
+    if (g.held) { const jolt = ui.catchT / 0.45, phi = clamp(0.8 * g.th - clamp(g.om * 0.13, -0.3, 0.3) + jolt * 0.35, -1.2, 1.2); V.P.rotation.set(phi, 0, -g.lean * 0.3);
+      const hy = ARM * Math.cos(phi), hz = -ARM * Math.sin(phi), sag = jolt * 0.08;      // where the end of the vine is, seen from the body
+      humReach(H, 1, 0.02, hy - sag, hz); humReach(H, 0, -0.02, hy - 0.13 - sag, hz - 0.01); humGrip(H, 1, dt);
+      const kick = clamp(0.25 + g.om * 0.42 + g.th * 0.25 + jolt * 0.7, -0.45, 1.25), tuck = clamp(0.55 - g.om * 0.55, 0.15, 1.5);
+      humLegs(H, [kick + 0.1, tuck * 0.8, 0.05], [kick - 0.12, tuck, 0.05]); H.neck.rotation.x = clamp(-phi * 0.7 - 0.1, -0.7, 0.5); H.head.userData.band.rotation.x = clamp(0.5 + g.om * 0.5, -0.4, 1.4); }
+    else { const fallF = clamp((-p.vy - 6) / 8, 0, 1), phi = Math.atan2(-p.vz, Math.max(0.1, p.vy + 8)) * -0.45 - fallF * 0.3; V.P.rotation.set(phi, 0, -g.lean * 0.45); V.P.updateMatrixWorld(true);
+      const nv = g.vines[g.on + 1], u = clamp(ui.relT / 0.22, 0, 1), miss = ui.airT > 0 || g.grabT > 0;
+      for (let i = 0; i < 2; i++) { const sx = i ? 1 : -1; let tx = sx * 0.17, ty = 0.78, tz = -0.42;
+        if (nv && !miss) { const q = V.P.worldToLocal(new T.Vector3(nv.x, clamp(p.y + ARM, nv.y - nv.L, nv.y), nv.z)), sh = new T.Vector3(sx * 0.2, H.SH, 0), d = q.sub(sh), l = d.length() || 1; d.multiplyScalar(Math.min(l, 0.56) / l); tx = sh.x + d.x - sx * 0.02; ty = Math.max(sh.y + d.y, H.SH + 0.36) + (i ? 0.03 : -0.06); tz = Math.max(sh.z + d.z, -0.36); }      // (kept high enough to be seen from behind)
+        if (miss || fallF > 0.5) { const w = t * 15 + i * 2.4; tx = sx * 0.34; ty = 0.62 + Math.sin(w) * 0.26; tz = -0.18 + Math.cos(w) * 0.26; }
+        humReach(H, i, e3(sx * 0.02, tx, u), e3(ARM - i * 0.0 - (i ? 0 : 0.13), ty, u), e3(0, tz, u)); }
+      humGrip(H, ui.airT > 0.3 ? 1 : 0, dt); const st = Math.sin(t * 6.5) * (0.3 + 0.5 * fallF);
+      humLegs(H, [0.75 + st, 1.0 - st * 0.4, 0.06], [-0.45 - st, 0.75 + st * 0.4, 0.06]); H.neck.rotation.x = clamp(-phi * 0.8 - 0.25, -0.8, 0.4); H.head.userData.band.rotation.x = 1.1 + Math.sin(t * 9) * 0.2; }
+    if (!V.tail) { V.tail = new T.Mesh(new T.CylinderGeometry(0.03, 0.012, 0.6, 6), V.mats.vine); V.tail.geometry.translate(0, -0.3, 0); V.S.add(V.tail); }
+    V.tail.visible = g.held; if (g.held) { V.tail.position.set(p.x, p.y + ARM - 0.12, p.z); V.tail.rotation.set(V.P.rotation.x * 0.6 + Math.sin(t * 3) * 0.06, 0, 0); } }
   // the camera: behind and a little above, following along the route, looking ahead to the next vine
   if (W3.cam.near !== 2.3) { W3.cam.near = 2.3; W3.cam.updateProjectionMatrix(); }      /* 22 Nov 2026: a vine hanging right in front of the camera is cut away, so it cannot cross the view */
   const nv = g.vines[g.on + 1] || g.vines[g.on], want = new T.Vector3(p.x + 0.6, p.y + 1.5, p.z + 4.1), look = new T.Vector3((p.x + nv.x) / 2, (p.y + nv.y - nv.L * 0.6) / 2 + 0.5, Math.min(p.z - 4, nv.z));

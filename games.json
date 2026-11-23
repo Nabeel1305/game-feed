@@ -312,7 +312,7 @@
       "id": "reel",
       "name": "Reel",
       "status": "testing",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "added": "2026-11-17",
       "path": "games/reel/index.html",
       "artifact": "https://claude.ai/artifact/BkQTAAhhChhKDsPtkT2JyX",
@@ -322,7 +322,7 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "Wait for the float to go under. Then hold on.",
+        "hook": "Cast where the fish jump. Wait for the float to go under. Then hold on.",
         "genre": "Fishing",
         "intensity": 2,
         "thumbs": 1,
@@ -339,7 +339,7 @@
         "P17",
         "P30"
       ],
-      "summary": "A fishing game in 3D, seen from the end of a wooden jetty on a mountain lake, with the weather and light changing by level (dawn, rain, mist, storm, sunset, night with a glowing float). Pull your thumb down and let go to cast to where fish are rising; leave the little nibbles and flick up to strike when the float is pulled right under (too soon scares them, too late loses the bait). Then fight it home: hold to reel, let go when it thrashes and runs or the line snaps, and drag against its way to turn it from the reeds and lily pads. Land the fish asked for before the light goes; three lines. The first three levels teach every move. Six kinds of fish plus rare golden carp and a named giant every tenth level; your biggest of each kind is kept."
+      "summary": "A fishing game in 3D, seen from the end of a wooden jetty on a mountain lake, with the weather and light changing by level (dawn, rain, mist, storm, sunset, night with a glowing float). Pull your thumb down and let go to cast to where fish are rising; leave the little nibbles and flick up to strike when the float is pulled right under (too soon scares them, too late loses the bait). Then fight it home: hold to reel, let go when it thrashes and runs or the line snaps, and drag against its way to turn it from the reeds and lily pads. Land the fish asked for before the light goes; three lines. The first three levels teach every move. Six kinds of fish plus rare golden carp and a named giant every tenth level; your biggest of each kind is kept. 0.2.0 (23 Nov 2026, his review): fish leap out of the water where to cast; each place is an orange ring with a dark edge and an arrow over it; the aim ring turns green on the fish; the fish on the line is seen at the surface."
     },
     {
       "number": 10,
@@ -380,7 +380,7 @@
       "id": "soar",
       "name": "Soar",
       "status": "testing",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "added": "2026-11-17",
       "path": "games/soar/index.html",
       "artifact": "https://claude.ai/artifact/Weu2fZSYbgxPVNK4xFahTC",
@@ -390,7 +390,7 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "Fly over the sea and the mountains, through the golden rings.",
+        "hook": "A flying cape over a sea of islands. Follow the rings of light.",
         "genre": "Flying",
         "intensity": 1,
         "thumbs": 1,
@@ -407,14 +407,14 @@
         "P19",
         "P30"
       ],
-      "summary": "The calm one: a 3D flight over a sea of islands, seen from just over your shoulder, arms forward and a scarf streaming, under a real sky that changes by flight (golden hour, dawn, mist, sunset, night with stars). One thumb steers like a little stick wherever you put it down: right to lean and turn, up to climb, down to dive. Follow a trail of golden rings; each ring is a bell note that climbs the scale while the chain lasts. Nothing hurts you: touch the sea or a hillside and you skim off it. Fly through enough rings to finish the flight; all of them for three stars."
+      "summary": "The calm one: a 3D flight over a sea of islands, seen from just over your shoulder, arms forward and a scarf streaming, under a real sky that changes by flight (golden hour, dawn, mist, sunset, night with stars). One thumb steers like a little stick wherever you put it down: right to lean and turn, up to climb, down to dive. Follow a trail of golden rings; each ring is a bell note that climbs the scale while the chain lasts. Nothing hurts you: touch the sea or a hillside and you skim off it. Fly through enough rings to finish the flight; all of them for three stars. 0.2.0 (23 Nov 2026, his review): you are a crimson cape with a gold hem; the rings are hoops of light with gems, each the next colour, with a trail of sparks to the next; turquoise shallows, flower meadows, blossom trees, palms, balloons, boats, a rainbow; the first flights are flown at half the speed through bigger, closer rings."
     },
     {
       "number": 12,
       "id": "vine",
       "name": "Vine",
       "status": "testing",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "added": "2026-11-17",
       "path": "games/vine/index.html",
       "artifact": "https://claude.ai/artifact/XhM3zzwfyV75DiLSYwqXUr",
@@ -441,14 +441,14 @@
         "P14",
         "P18"
       ],
-      "summary": "Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move."
+      "summary": "Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move. 0.2.0 (23 Nov 2026, his review): the swinger is a person with joints: both hands close on the vine, the legs kick and tuck with the swing, the arms reach for the next vine in the air and wheel when a grab finds nothing."
     },
     {
       "number": 13,
       "id": "hunter",
       "name": "Hunter",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "added": "2026-11-17",
       "path": "games/hunter/index.html",
       "artifact": "https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS",
@@ -458,7 +458,7 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "Creep through the tall grass, put the crosshair on its chest, and throw.",
+        "hook": "Creep close, but not too close. Throw for the chest. If it charges, dive.",
         "genre": "Hunt",
         "intensity": 5,
         "thumbs": 2,
@@ -475,7 +475,7 @@
         "P17",
         "P30"
       ],
-      "summary": "The intense one: an ice-age hunt in 3D, first person, crouched in tall grass on a steppe under snowy mountains, weather by hunt. Left thumb held creeps forward; lift it to freeze when the animal flicks its ears and looks up, or it sees you and bolts. Right thumb pulls back and lets go to throw a flint spear where the mark on the ground is: the chest brings it down, a haunch only wounds it, and far throws fall short. Sometimes a cave lion growls from one side: swipe toward it and tap the instant it leaps to brace your spear. Deer, horses, boar, bison, and a woolly mammoth every tenth hunt. A heartbeat that quickens as you close in."
+      "summary": "The intense one: an ice-age hunt in 3D, first person, crouched in tall grass on a steppe under snowy mountains, weather by hunt. Left thumb held creeps forward; lift it to freeze when the animal flicks its ears and looks up, or it sees you and bolts. Right thumb pulls back and lets go to throw a flint spear where the mark on the ground is: the chest brings it down, a haunch only wounds it, and far throws fall short. Sometimes a cave lion growls from one side: swipe toward it and tap the instant it leaps to brace your spear. Deer, horses, boar, bison, and a woolly mammoth every tenth hunt. A heartbeat that quickens as you close in. 0.3.0 (23 Nov 2026, his review): animals with joints (legs with knees, neck, head, ears, tail) that graze, look, gallop and fall; every animal has a distance it will not let you inside: a deer or horse runs, a boar, bison or mammoth may charge (wait for DIVE ASIDE, push the stick sideways, then it stands winded); the throw is an arm that whips forward and a spear that leaves the hand with a streak and sticks in the animal or the ground."
     },
     {
       "number": 14,
@@ -516,7 +516,7 @@
       "id": "pilot",
       "name": "Pilot",
       "status": "testing",
-      "version": "0.1.3",
+      "version": "0.2.1",
       "added": "2026-11-17",
       "path": "games/pilot/index.html",
       "artifact": "https://claude.ai/artifact/673SzKv3kg9inkqwy1KHXc",
@@ -526,7 +526,7 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "Bring her down gently. Flare at the last moment.",
+        "hook": "Four buttons: up, down, left, right. Bring her down gently.",
         "genre": "Flight",
         "intensity": 3,
         "thumbs": 2,
@@ -543,7 +543,7 @@
         "P13",
         "P30"
       ],
-      "summary": "Land an airliner in 3D at a countryside airport, seen from just behind the plane, in weather that changes by flight (fog, rain, storm, sunset, night with the runway lights). Right thumb is the control column: left and right to bank, pull back to raise the nose; left thumb is the throttle. Follow the glide-path lights (two white, two red), keep on the centre line in a crosswind, hold the speed, then flare just before the wheels touch for a soft landing. The first three flights teach it a piece at a time."
+      "summary": "Land an airliner in 3D at a countryside airport, seen from just behind the plane, in weather that changes by flight (fog, rain, storm, sunset, night with the runway lights). Right thumb is the control column: left and right to bank, pull back to raise the nose; left thumb is the throttle. Follow the glide-path lights (two white, two red), keep on the centre line in a crosswind, hold the speed, then flare just before the wheels touch for a soft landing. The first three flights teach it a piece at a time. 0.2.1 (23 Nov 2026, his review and his words at 13:47): four buttons that never move under the right thumb, UP, DOWN, LEFT, RIGHT (press and hold; no joystick; it was a cockpit column pulled DOWN the screen to climb); UP and DOWN work on every flight, the first included; the POWER lever is on the left edge."
     },
     {
       "number": 16,
@@ -720,7 +720,7 @@
       "id": "drone",
       "name": "Drone Pilot",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "added": "2026-11-17",
       "path": "games/drone/index.html",
       "artifact": "https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9",
@@ -747,7 +747,7 @@
         "P14",
         "P18"
       ],
-      "summary": "Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it."
+      "summary": "Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it. 0.2.1 (23 Nov 2026, from his review of Soar's rings): each hoop is a gate of light (neon core, glow, halo, chasing lamps), each the next colour."
     },
     {
       "number": 22,

@@ -1,0 +1,38 @@
+{
+ "_about": "What Nabeel said about a game and what was done about it, shown on the Game Review page (tools/review_page.py) as a green box on that game's card. His words are kept exactly as he wrote or said them. kind: 'yours' = his own review of this game; 'also' = the same fault found here from his review of another game.",
+ "police": [
+  {"kind": "yours", "when": "23 Nov, written on this page", "said": "In this game you're are supposed to be chasing a criminal but the game doesn't make it clear who the criminal is. Theirs should be a clear sign that this is the car. This is the only car you should be chasing. And once the criminal gets out to run the running graphics are just awful. Plus the skyscrapers randomly dissappear if you play the game for long enough Plus the car controls should be a joystick with a button for break acceleration anf reverse and a city shouldn't be just a straight line but turn and corners", "did": "A red arrow and ring mark the suspect's car. A stick to steer, with GAS and BRAKE (hold BRAKE when stopped to reverse). A city of streets and corners. Runners with knees and elbows. The buildings no longer vanish."},
+  {"kind": "yours", "when": "23 Nov, said in the chat", "said": "make it clear how do you arrest them... there should be a button for arrest this person, and maybe you make it fun. You have to tap quicker than they're resisting... when you arrest someone, the graphics are kind of messed up... the person when running should also be able to turn corners, and I can turn corners", "did": "An ARREST button. A tapping fight with a bar: tap faster than he resists. The arrest picture rebuilt. The alleys have corners: swipe the way the yellow arrow points."},
+  {"kind": "also", "when": "from your Taxi Driver review", "said": "you don't animate the person entering the car, nor do you animate them leaving the car", "did": "When his car is stopped you see him get out and run, and your officer get out after him."}
+ ],
+ "taxi": [
+  {"kind": "yours", "when": "23 Nov, said in the chat", "said": "you're literally taking them just around the corner... let the people drive for at least for some time. I'm talking like 3 to 5 minutes at least... you don't animate the person entering the car, nor do you animate them leaving the car", "did": "A passenger goes right across town (7 to 10 blocks; it was one). A shift is about 4 to 5 minutes. You see them walk to the door, get in, sit in the back, get out and walk away."},
+  {"kind": "also", "when": "from your Police Chase review", "said": "the car controls should be a joystick with a button for break acceleration anf reverse", "did": "You drive the taxi yourself: a stick, GAS and BRAKE. It used to drive itself."}
+ ],
+ "pilot": [
+  {"kind": "yours", "when": "23 Nov, written on this page", "said": "I literally cannot desend", "did": "The controls were upside-down (thumb down made the plane climb) and on the first flight up and down did nothing. Fixed, see the next box."},
+  {"kind": "yours", "when": "23 Nov, said in the chat", "said": "anytime I try to click the side button that'll take it up, it just takes me to the joystick... you have to make the joystick in a single location... If you press this one, it goes up in altitude. If you press this one, it goes down in altitude... left... right. That was fine. You don't need the joystick. But... when I tried to bring it down in altitude, it doesn't bring it down.", "did": "Four buttons that never move: UP, DOWN, LEFT, RIGHT. Press and hold. No joystick. DOWN takes the plane down and UP takes it up, on every flight including the first."}
+ ],
+ "hunter": [
+  {"kind": "yours", "when": "23 Nov, written on this page", "said": "Once again horrible animation with the animal and the spear throw. Plus the animal  just waits for me to kill it it should run away or even attack if I run or come too close or throw a spear. The animation must better fot animal and spear", "did": "New animals with real legs, necks, heads, ears and tails: they graze, look up, gallop off and fall. Come too close or run and a deer or horse bolts. A boar, bison or mammoth may charge: wait for DIVE ASIDE, push the stick sideways, then it stands winded for an easy throw. The throw: the arm whips forward, the spear leaves the hand with a streak and sticks in the animal or the ground."}
+ ],
+ "vine": [
+  {"kind": "yours", "when": "23 Nov, written on this page", "said": "You have to do better on the animation animation hands and the person holding the vines and swinging overall the animation needs to better ", "did": "A new swinger with elbows, knees, hands and fingers. Both hands close on the vine. The legs kick forward and tuck back with the swing. In the air the arms reach for the next vine and the legs stride. A grab at nothing sends the arms wheeling."}
+ ],
+ "reel": [
+  {"kind": "yours", "when": "23 Nov, written on this page", "said": "Make the fish clear currently its just a circle make the fish come out of the water in the place I'm supposed to put my fishing stick even is just briefly.  If you have bad eyes you won't even see the circle you are supposed to put make the circle distinct from the water color so its easy to see.", "did": "Fish leap out of the water where you should cast. Each place is a bright orange ring with a dark edge and an arrow over it. The aim ring turns green and says ON THE FISH when it is on one. While you fight a fish you see it at the surface, with a ring round it."}
+ ],
+ "soar": [
+  {"kind": "yours", "when": "23 Nov, written on this page", "said": "The rings are ugly.  Make them nore pretty It doesn't even need to be a person flying you can just make a cape flying and flappy through the air. Make ghe surroundings really beautiful here its very important. Take your time renderings the surroundings. Make the game easier let me see the rings and be able to slowly go into them", "did": "Rings of light with gems, each the next colour of the rainbow, and a trail of sparks leading to the next one. A crimson cape with a gold hem instead of a person. The surroundings: turquoise shallows and foam round the islands, flower meadows, blossom trees, palms, hot-air balloons, sailing boats, heaped clouds, a rainbow. Easier: you fly at half the speed on the first flights, the rings are bigger and closer, the trail is straighter."}
+ ],
+ "run": [
+  {"kind": "also", "when": "from your Police Chase review", "said": "the car controls should be a joystick with a button for break acceleration anf reverse and a city shouldn't be just a straight line but turn and corners", "did": "A stick, GAS, BRAKE and a NITRO button. A city of streets and corners with green arrows to the drop. Alleys with corners on foot."},
+  {"kind": "also", "when": "from your Taxi Driver review", "said": "you don't animate the person entering the car, nor do you animate them leaving the car", "did": "At DITCH THE CAR you see yourself get out and run."}
+ ],
+ "bus": [
+  {"kind": "also", "when": "from your Taxi Driver review", "said": "you don't animate the person entering the car, nor do you animate them leaving the car", "did": "The people getting off are seen stepping down from the door and walking away. They were only a number."}
+ ],
+ "drone": [
+  {"kind": "also", "when": "from your Soar review", "said": "The rings are ugly.  Make them nore pretty", "did": "The hoops were one plain tube each. Each is now a gate of light: a neon core, a glow, a halo, and lamps that chase round it; each hoop is the next colour."}
+ ]
+}

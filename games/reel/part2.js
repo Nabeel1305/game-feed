@@ -5,7 +5,7 @@
 // No drawing here, so the robots can play thousands of trips fast.
 
 const RULES = [
-  '<b>Cast to the rings.</b> Pull your thumb down and let go: the float flies the other way. Fish are where the water rings.',
+  '<b>Cast to the orange rings.</b> Fish jump there. Pull your thumb down and let go: the float flies the other way; the aim ring turns green when it is on the fish.',
   '<b>Wait for it.</b> Little dips are fish nibbling. Strike only when the float is <b>pulled right under</b>: <b>tap</b>.',
   '<b>Too soon scares them off.</b> Strike at a nibble and the fish bolts; keep doing it and the whole lake goes quiet.',
   '<b>Hold to reel.</b> Keep the line tight or the hook falls out.',
@@ -90,7 +90,7 @@ function step(G, dt) {
   for (let i = G.respawn.length - 1; i >= 0; i--) { G.respawn[i] -= dt; if (G.respawn[i] <= 0) { G.respawn.splice(i, 1); if (G.spots.length < c.spots) addSpot(G); } }
   for (const s of G.spots.slice()) {
     s.age += dt; s.rise -= dt;
-    if (s.rise <= 0) { s.rise = (G.noise > 1.5 ? 4 : 1.2) + G.rnd() * 2.6; G.ev.push({ k: 'rise', x: s.x + (G.rnd() - 0.5) * s.r * 0.8, z: s.z + (G.rnd() - 0.5) * s.r * 0.8, big: s.fish.size > 0.6 || s.fish.sp.giant }); }
+    if (s.rise <= 0) { s.rise = (G.noise > 1.5 ? 4 : 1.2) + G.rnd() * 2.6; G.ev.push({ k: 'rise', x: s.x + (G.rnd() - 0.5) * s.r * 0.5, z: s.z + (G.rnd() - 0.5) * s.r * 0.5, big: s.fish.size > 0.6 || s.fish.sp.giant, sp: s.fish.sp }); }
     if (s.age > s.life && !(G.B && G.B.s === s) && !(G.F && G.F.s === s) && !c.boss) dropSpot(G, s, 'moved', 0.5);
   }
   const fl = G.fl;

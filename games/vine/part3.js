@@ -14,20 +14,14 @@ function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 70, far: 3000, near: 0.1 })) { V3 = { none: true }; return V3; }
   const S = W3.scene, R0 = W3.rng(23);
   const river = W3.water({ size: 4000, color: 0x2a3a1c, distort: 0.6, ripple: 1.6, speed: 0.6 });
-  // the swinger: a body in a sleeveless top and shorts, arms up to the vine
-  const P = new T.Group(), skin = new T.MeshStandardMaterial({ color: 0x9b6a48, roughness: 0.55 }), top = new T.MeshStandardMaterial({ color: 0x2f5a3a, roughness: 0.8 }), shorts = new T.MeshStandardMaterial({ color: 0x6b4d2e, roughness: 0.85 }), hairM = new T.MeshStandardMaterial({ color: 0x15100c, roughness: 0.8 });
-  const cap = (r, l, m, x, y, z, rx = 0, ry = 0, rz = 0) => { const o = new T.Mesh(new T.CapsuleGeometry(r, l, 6, 12), m); o.position.set(x, y, z); o.rotation.set(rx, ry, rz); o.castShadow = true; P.add(o); return o; };
-  cap(0.17, 0.36, top, 0, 0, 0); cap(0.16, 0.12, shorts, 0, -0.32, 0);
-  const head = new T.Mesh(new T.SphereGeometry(0.115, 20, 14), skin); head.position.set(0, 0.42, 0.02); P.add(head);
-  const hair = new T.Mesh(new T.SphereGeometry(0.122, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.6), hairM); hair.position.set(0, 0.44, 0.03); hair.rotation.x = 0.3; P.add(hair);
-  const arms = []; for (const s of [-1, 1]) { arms.push(cap(0.055, 0.6, skin, s * 0.12, 0.62, 0, 0, 0, s * 0.18)); const legU = cap(0.08, 0.36, skin, s * 0.1, -0.62, 0); legU.userData.s = s; arms.push(legU); }
-  const handPos = new T.Vector3(0, ARM, 0);
+  // the swinger: a person with joints (part25_human.js): hands that close on the vine, arms that reach, legs that kick and tuck
+  const HM = humMake(T), P = HM.g, arms = [];
   S.add(P);
   // the forest is built per run (it follows the route); materials and shapes once
   const bark = W3.grainTex(256, 41, 140, 70, 3); bark.repeat.set(2, 6);
   const leafC = document.createElement('canvas'); leafC.width = leafC.height = 128; { const g = leafC.getContext('2d'); for (let i = 0; i < 60; i++) { const x = 64 + (R0() - 0.5) * 100, y = 64 + (R0() - 0.5) * 100, a = R0() * 6.3; g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = `hsl(${95 + R0() * 40},${45 + R0() * 25}%,${18 + R0() * 22}%)`; g.beginPath(); g.ellipse(0, 0, 18, 7, 0, 0, 6.3); g.fill(); g.restore(); } }
   const leafTex = new T.CanvasTexture(leafC); leafTex.colorSpace = T.SRGBColorSpace;
-  V3 = { T, S, river, P, arms, bark, leafTex, mats: { bark: new T.MeshStandardMaterial({ color: 0x8a7a66, map: bark, roughness: 0.95 }), leaf: new T.MeshStandardMaterial({ map: leafTex, alphaTest: 0.4, side: T.DoubleSide, roughness: 0.75, transparent: false }), vine: new T.MeshStandardMaterial({ color: 0x4f5a2a, roughness: 0.9 }) },
+  V3 = { T, S, river, P, H: HM, arms, bark, leafTex, mats: { bark: new T.MeshStandardMaterial({ color: 0x8a7a66, map: bark, roughness: 0.95 }), leaf: new T.MeshStandardMaterial({ map: leafTex, alphaTest: 0.4, side: T.DoubleSide, roughness: 0.75, transparent: false }), vine: new T.MeshStandardMaterial({ color: 0x4f5a2a, roughness: 0.9 }) },
     run: null, camPos: new T.Vector3(), look: new T.Vector3(), sky: null };
   W3.setQuality(stepN); return V3;
 }
@@ -73,9 +67,9 @@ function setWeather(G) {
 function onEvent(G, e) {
   const cx = W / 2, cy = H * 0.3;
   switch (e.k) {
-    case 'letgo': sfx.whoosh(); vibe(HAP.tick); break;
-    case 'catch': sfx.catch(e.streak, e.fine); FX.shake = 4; vibe(HAP.light); if (e.fine) say('PERFECT CATCH', cx, cy, '#ffe9a8', 24); else if (e.streak >= 3 && e.streak % 3 === 0) say(`${e.streak} IN A ROW`, cx, cy, '#ffe9a8', 22); break;
-    case 'air': sfx.air(); say('NOTHING THERE', cx, cy + 40, '#ffd0c4', 20); tip('air', 'Wait until your hand reaches the vine', 2.6); break;
+    case 'letgo': sfx.whoosh(); vibe(HAP.tick); ui.relT = 0; break;
+    case 'catch': ui.catchT = 0.45; sfx.catch(e.streak, e.fine); FX.shake = 4; vibe(HAP.light); if (e.fine) say('PERFECT CATCH', cx, cy, '#ffe9a8', 24); else if (e.streak >= 3 && e.streak % 3 === 0) say(`${e.streak} IN A ROW`, cx, cy, '#ffe9a8', 22); break;
+    case 'air': ui.airT = 0.5; sfx.air(); say('NOTHING THERE', cx, cy + 40, '#ffd0c4', 20); tip('air', 'Wait until your hand reaches the vine', 2.6); break;
     case 'busy': break;
     case 'fall': sfx.fall(); FX.red = 0.5; FX.shake = 8; say('SPLASH!', cx, cy, '#ffb4a8', 30); tip('fall', 'Let go as you swing forward and up', 3); break;
     case 'vines': if (V3 && !V3.none) buildRun(G); break;
@@ -87,7 +81,7 @@ function onEvent(G, e) {
     case 'lost': sfx.lose(); say(e.why === 'time' ? 'THE LIGHT IS GONE' : 'TOO MANY FALLS', cx, H * 0.5, '#ffd0c4', 26); break;
   }
 }
-const ui = { snap: false };
+const ui = { snap: false, relT: 9, catchT: 0, airT: 0 };
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D jungle.', W / 2, H / 2); return; }
@@ -98,10 +92,26 @@ function draw(now, dt) {
   for (const m of V.run.vines) { const v = g.vines[m.userData.i]; if (!v) { m.visible = false; continue; } m.visible = true; m.position.set(v.x, v.y, v.z);
     if (g.held && m.userData.i === g.on) { const hx = p.x, hy = p.y + ARM, hz = p.z, dir = new T.Vector3(hx - v.x, hy - v.y, hz - v.z), L = dir.length(); m.scale.set(1, L, 1); m.quaternion.setFromUnitVectors(new T.Vector3(0, -1, 0), dir.normalize()); }
     else { m.scale.set(1, v.L, 1); m.rotation.set(Math.sin(t * 0.7 + m.userData.i) * 0.05, 0, Math.sin(t * 0.5 + m.userData.i * 2) * 0.04); } }
-  // the swinger: hanging from the hands, leaning with the swing; legs tuck in the air
-  V.P.position.set(p.x, p.y, p.z);
-  const sw = g.held ? -g.th : Math.atan2(-p.vz, Math.max(0.1, p.vy + 8)) * -0.4; V.P.rotation.set(sw, 0, -g.lean * 0.3);
-  for (const a of V.arms) if (a.userData.s) { a.rotation.x = g.held ? Math.sin(t * 2) * 0.1 - g.om * 0.08 : -0.9; a.position.z = g.held ? 0 : 0.2; }
+  // the swinger (23 Nov 2026, his review: "do better on the animation... hands and the person holding the vines and swinging"):
+  // held: both hands closed on the end of the vine, one above the other, the body hanging from them and trailing the swing, the legs
+  // kicking forward on the way up and tucking on the way back. In the air: the arms come down and forward and reach for the next
+  // vine with open hands, the legs stride. A grab at nothing: the hands snatch and the arms wheel. A catch: the legs swing through.
+  { const H = V.H, e3 = (a, b, u) => a + (b - a) * u; ui.relT += dt; ui.catchT = Math.max(0, ui.catchT - dt); ui.airT = Math.max(0, ui.airT - dt); V.P.position.set(p.x, p.y, p.z);
+    if (g.held) { const jolt = ui.catchT / 0.45, phi = clamp(0.8 * g.th - clamp(g.om * 0.13, -0.3, 0.3) + jolt * 0.35, -1.2, 1.2); V.P.rotation.set(phi, 0, -g.lean * 0.3);
+      const hy = ARM * Math.cos(phi), hz = -ARM * Math.sin(phi), sag = jolt * 0.08;      // where the end of the vine is, seen from the body
+      humReach(H, 1, 0.02, hy - sag, hz); humReach(H, 0, -0.02, hy - 0.13 - sag, hz - 0.01); humGrip(H, 1, dt);
+      const kick = clamp(0.25 + g.om * 0.42 + g.th * 0.25 + jolt * 0.7, -0.45, 1.25), tuck = clamp(0.55 - g.om * 0.55, 0.15, 1.5);
+      humLegs(H, [kick + 0.1, tuck * 0.8, 0.05], [kick - 0.12, tuck, 0.05]); H.neck.rotation.x = clamp(-phi * 0.7 - 0.1, -0.7, 0.5); H.head.userData.band.rotation.x = clamp(0.5 + g.om * 0.5, -0.4, 1.4); }
+    else { const fallF = clamp((-p.vy - 6) / 8, 0, 1), phi = Math.atan2(-p.vz, Math.max(0.1, p.vy + 8)) * -0.45 - fallF * 0.3; V.P.rotation.set(phi, 0, -g.lean * 0.45); V.P.updateMatrixWorld(true);
+      const nv = g.vines[g.on + 1], u = clamp(ui.relT / 0.22, 0, 1), miss = ui.airT > 0 || g.grabT > 0;
+      for (let i = 0; i < 2; i++) { const sx = i ? 1 : -1; let tx = sx * 0.17, ty = 0.78, tz = -0.42;
+        if (nv && !miss) { const q = V.P.worldToLocal(new T.Vector3(nv.x, clamp(p.y + ARM, nv.y - nv.L, nv.y), nv.z)), sh = new T.Vector3(sx * 0.2, H.SH, 0), d = q.sub(sh), l = d.length() || 1; d.multiplyScalar(Math.min(l, 0.56) / l); tx = sh.x + d.x - sx * 0.02; ty = Math.max(sh.y + d.y, H.SH + 0.36) + (i ? 0.03 : -0.06); tz = Math.max(sh.z + d.z, -0.36); }      // (kept high enough to be seen from behind)
+        if (miss || fallF > 0.5) { const w = t * 15 + i * 2.4; tx = sx * 0.34; ty = 0.62 + Math.sin(w) * 0.26; tz = -0.18 + Math.cos(w) * 0.26; }
+        humReach(H, i, e3(sx * 0.02, tx, u), e3(ARM - i * 0.0 - (i ? 0 : 0.13), ty, u), e3(0, tz, u)); }
+      humGrip(H, ui.airT > 0.3 ? 1 : 0, dt); const st = Math.sin(t * 6.5) * (0.3 + 0.5 * fallF);
+      humLegs(H, [0.75 + st, 1.0 - st * 0.4, 0.06], [-0.45 - st, 0.75 + st * 0.4, 0.06]); H.neck.rotation.x = clamp(-phi * 0.8 - 0.25, -0.8, 0.4); H.head.userData.band.rotation.x = 1.1 + Math.sin(t * 9) * 0.2; }
+    if (!V.tail) { V.tail = new T.Mesh(new T.CylinderGeometry(0.03, 0.012, 0.6, 6), V.mats.vine); V.tail.geometry.translate(0, -0.3, 0); V.S.add(V.tail); }
+    V.tail.visible = g.held; if (g.held) { V.tail.position.set(p.x, p.y + ARM - 0.12, p.z); V.tail.rotation.set(V.P.rotation.x * 0.6 + Math.sin(t * 3) * 0.06, 0, 0); } }
   // the camera: behind and a little above, following along the route, looking ahead to the next vine
   if (W3.cam.near !== 2.3) { W3.cam.near = 2.3; W3.cam.updateProjectionMatrix(); }      /* 22 Nov 2026: a vine hanging right in front of the camera is cut away, so it cannot cross the view */
   const nv = g.vines[g.on + 1] || g.vines[g.on], want = new T.Vector3(p.x + 0.6, p.y + 1.5, p.z + 4.1), look = new T.Vector3((p.x + nv.x) / 2, (p.y + nv.y - nv.L * 0.6) / 2 + 0.5, Math.min(p.z - 4, nv.z));

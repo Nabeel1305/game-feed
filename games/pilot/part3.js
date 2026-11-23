@@ -89,16 +89,16 @@ function setWeather(G) {
   W3.S.onBolt = () => { if (!HEADLESS && sfx.thunder) setTimeout(() => sfx.thunder(), 300 + Math.random() * 900); };
 }
 function puff(x, z, n) { if (!V3 || V3.none) return; let k2 = 0; for (const p of V3.puffs) { if (p.t < p.life) continue; Object.assign(p, { t: 0, life: 1 + Math.random(), x: x + (Math.random() - 0.5) * 2, y: 0.6, z: z + Math.random() * 3 }); if (++k2 >= n) break; } }
-const ui = { snap: false, stick: null, thr: null };
+const ui = { snap: false, stick: null, thr: null, pad: null };
 function onEvent(G, e) {
   const cx = W / 2, cy = H * 0.3;
   switch (e.k) {
-    case 'warn': sfx.warn(); say({ slow: 'SPEED! TOO SLOW', fast: 'TOO FAST', low: 'TOO LOW', bank: 'BANK ANGLE' }[e.w], cx, cy, '#ffb48a', 22); tip('w_' + e.w, { slow: 'Left thumb up: more power', fast: 'Left thumb down: less power', low: 'Pull back a little to come up to the glide path', bank: 'Level the wings near the ground' }[e.w], 2.8); break;
+    case 'warn': sfx.warn(); say({ slow: 'SPEED! TOO SLOW', fast: 'TOO FAST', low: 'TOO LOW', high: 'TOO HIGH', bank: 'BANK ANGLE' }[e.w], cx, cy, '#ffb48a', 22); tip('w_' + e.w, { slow: 'Left thumb up: more power', fast: 'Left thumb down: less power', low: 'Press ▲ UP a little to come up to the glide path', high: 'Press ▼ DOWN to come down to the glide path', bank: 'Level the wings near the ground' }[e.w], 2.8); break;
     case 'online': if (G.lesson) sfx.ding(); break;
     case 'touch': { const a = G.ac; puff(a.x - 2.6, a.d, 14); puff(a.x + 2.6, a.d, 14); FX.shake = e.q === 'butter' ? 3 : e.q === 'smooth' ? 6 : 12; sfx.touch(e.q); vibe(e.q === 'butter' ? HAP.light : HAP.thud);
       say({ butter: 'BUTTER!', smooth: 'SMOOTH LANDING', firm: 'FIRM LANDING', hard: 'HARD, BUT DOWN' }[e.q], cx, cy, e.q === 'butter' ? '#ffe08a' : '#9be3b5', 30); say(`${e.sink.toFixed(1)} m/s down`, cx, cy + 40 * k, '#fff', 18); break; }
     case 'crash': sfx.crash(); FX.shake = 20; FX.red = 0.9; FX.stop = 0.1; say({ short: 'SHORT OF THE RUNWAY', side: 'OFF THE SIDE', hard: 'TOO HARD!', wing: 'A WING HIT', drift: 'SIDEWAYS: THE GEAR GAVE', long: 'OUT OF RUNWAY', lost: 'LOST THE AIRPORT' }[e.why] || 'CRASH', cx, cy, '#ffb4a8', 28);
-      tip('c_' + e.why, { short: 'Stay on the glide path: two white, two red', side: 'Line up with the centre line early', hard: 'Pull back just before the wheels touch (the flare)', wing: 'Level the wings before touchdown', drift: 'In a crosswind, point into the wind, then straighten at the end', long: 'Touch down in the first part of the runway', lost: 'Follow the runway lights' }[e.why] || '', 3.2); break;
+      tip('c_' + e.why, { short: 'Stay on the glide path: two white, two red', side: 'Line up with the centre line early', hard: 'Press ▲ UP just before the wheels touch (the flare)', wing: 'Level the wings before touchdown', drift: 'In a crosswind, point into the wind, then straighten at the end', long: 'Touch down in the first part of the runway', lost: 'Follow the runway lights' }[e.why] || '', 3.2); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); ui.snap = true; break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
     case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; break;
@@ -141,7 +141,7 @@ function hud(G) {
   const c = G.cfg, a = G.ac, x = 14, y = 44 * k;
   if (G.lesson) lessonPanel(G);
   if (G.t < 3.2 && !G.lesson) { ctx.globalAlpha = Math.min(1, (3.2 - G.t) / 0.6); ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.5)';
-    const s = `FLIGHT ${G.N} · ${weatherName(G.weather)}${c.wind > 1 ? ` · CROSSWIND ${Math.round(c.wind * 1.94)} KT` : ''}`; ctx.strokeText(s, W / 2, H * 0.2); ctx.fillText(s, W / 2, H * 0.2); ctx.globalAlpha = 1; }
+    const s = `FLIGHT ${G.N} · ${weatherName(G.weather)}${c.wind > 1 ? ` · CROSSWIND ${Math.round(c.wind * 1.94)} KT` : ''}`; ctx.strokeText(s, W / 2, H * 0.3); ctx.fillText(s, W / 2, H * 0.3); ctx.globalAlpha = 1; }
   // the instruments, simply: speed (with its green band), height, sink rate, distance, and where you are against the glide path
   const by = G.lesson ? H * 0.32 : y + 4 * k, box = (bx, label, val, col) => { ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(bx, by, 84 * k, 40 * k, 8); ctx.fill(); ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText(label, bx + 42 * k, by + 11 * k); ctx.fillStyle = col; ctx.font = `700 ${Math.round(17 * k)}px ${BC}`; ctx.fillText(val, bx + 42 * k, by + 28 * k); };
   const kt = Math.round(a.v * 1.94), ok = a.v > 66 && a.v < 82; box(x, 'SPEED', `${kt} kt`, ok ? '#9be3b5' : a.v < 60 ? '#ff6b5a' : '#ffd36a');
@@ -150,12 +150,17 @@ function hud(G) {
   // the glide-path and centre-line marks (a diamond on each scale), and distance
   if (a.d > -50 && G.ph === 'air') { const gs = clamp((a.y - (a.d + AIM) * Math.tan(GS)) / Math.max(8, a.d * 0.012), -1, 1), lc = clamp(a.x / Math.max(15, a.d * 0.02), -1, 1);
     const sx = W - 20 * k, sy = H * 0.5, sh = 90 * k; ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx, sy - sh); ctx.lineTo(sx, sy + sh); ctx.stroke(); ctx.fillStyle = '#ff7adf'; ctx.beginPath(); const dy = sy - gs * sh; ctx.moveTo(sx, dy - 8 * k); ctx.lineTo(sx + 7 * k, dy); ctx.lineTo(sx, dy + 8 * k); ctx.lineTo(sx - 7 * k, dy); ctx.fill();
-    const lx = W / 2, ly = H - 120 * k, lw = 100 * k; ctx.beginPath(); ctx.moveTo(lx - lw, ly); ctx.lineTo(lx + lw, ly); ctx.stroke(); ctx.fillStyle = '#ff7adf'; const dx2 = lx - lc * lw; ctx.beginPath(); ctx.moveTo(dx2 - 8 * k, ly); ctx.lineTo(dx2, ly - 7 * k); ctx.lineTo(dx2 + 8 * k, ly); ctx.lineTo(dx2, ly + 7 * k); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText(a.d > 0 ? `${(a.d / 1852).toFixed(1)} nm to the runway` : 'OVER THE RUNWAY', lx, ly + 22 * k); }
+    const lx = W / 2, ly = (G.lesson ? H * 0.32 : y + 4 * k) + 62 * k, lw = 100 * k;      // (under the instruments: it used to lie across where the buttons are now) ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(lx - lw, ly); ctx.lineTo(lx + lw, ly); ctx.moveTo(lx, ly - 6 * k); ctx.lineTo(lx, ly + 6 * k); ctx.stroke(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); ctx.fillStyle = '#ff7adf'; const dx2 = lx - lc * lw; ctx.beginPath(); ctx.moveTo(dx2 - 8 * k, ly); ctx.lineTo(dx2, ly - 7 * k); ctx.lineTo(dx2 + 8 * k, ly); ctx.lineTo(dx2, ly + 7 * k); ctx.closePath(); ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = 3; ctx.stroke(); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.55)'; const dl = a.d > 0 ? `${(a.d / 1852).toFixed(1)} nm to the runway` : 'OVER THE RUNWAY'; ctx.strokeText(dl, lx, ly + 22 * k); ctx.fillText(dl, lx, ly + 22 * k); }
   // the throttle lever (left) and the column (where your thumb is)
   const tx = 26 * k, ty = H * 0.62, th = 120 * k; ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(tx - 9 * k, ty - th, 18 * k, th * 2, 9); ctx.fill(); ctx.fillStyle = '#ffd36a'; const ky = ty + th - G.thr * th * 2; rrect(tx - 14 * k, ky - 7 * k, 28 * k, 14 * k, 5); ctx.fill();
   ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('POWER', tx, ty + th + 14 * k);
-  if (ui.stick) { const s = ui.stick; ctx.globalAlpha = 0.35; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s.x0, s.y0, 50 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x0 + G.st.x * 50 * k, s.y0 + G.st.y * 50 * k, 13 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+  // the four buttons: UP, DOWN, LEFT, RIGHT, always in the same place; the one being pressed lights
+  if (G.ph === 'air') { const P = padAt(), pr = ui.pad || { x: 0, y: 0 }, L = lessonNow(G), auto = !!(L && L.autoPitch && !(L.flareYou && a.y < 14));
+    const btn = (dx, dy, arrow, word, on) => { const bx = P.x + dx * P.d, by = P.y - dy * P.d, h = P.s / 2; ctx.fillStyle = on ? 'rgba(255,211,106,.95)' : 'rgba(10,18,28,.55)'; rrect(bx - h, by - h, P.s, P.s, 12 * k); ctx.fill(); ctx.strokeStyle = on ? '#fff' : 'rgba(255,255,255,.8)'; ctx.lineWidth = 2.5; rrect(bx - h, by - h, P.s, P.s, 12 * k); ctx.stroke();
+      ctx.fillStyle = on ? '#1a1206' : '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 ${Math.round(20 * k)}px ${BC}`; ctx.fillText(arrow, bx, by - 7 * k); ctx.font = `700 ${Math.round(10.5 * k)}px ${BC}`; ctx.fillText(word, bx, by + 14 * k); };
+    btn(0, 1, '▲', 'UP', pr.y > 0); btn(0, -1, '▼', 'DOWN', pr.y < 0); btn(-1, 0, '◀', 'LEFT', pr.x < 0); btn(1, 0, '▶', 'RIGHT', pr.x > 0); ctx.textBaseline = 'alphabetic';
+    if (auto) { ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.fillStyle = '#9be3b5'; const ty = P.y - P.d - P.s / 2 - 10 * k; ctx.strokeText('AUTOPILOT IS HELPING WITH THE HEIGHT', P.x - 30 * k, ty); ctx.fillText('AUTOPILOT IS HELPING WITH THE HEIGHT', P.x - 30 * k, ty); } }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) {

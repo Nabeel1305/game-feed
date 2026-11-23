@@ -37,7 +37,7 @@ function saveResult(G) {      // a win saves the next level at once (leaving bef
 }
 function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
-  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'THE MAMMOTH FALLS' : 'THE HUNT IS WON') : r.why === 'maul' ? 'MAULED' : 'THEY ALL GOT AWAY'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'THE MAMMOTH FALLS' : 'THE HUNT IS WON') : r.why === 'maul' ? 'MAULED' : r.why === 'gored' ? 'RUN DOWN' : 'THEY ALL GOT AWAY'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
   $('eSub').innerHTML = r.win ? `Longest throw <b>${r.best} m</b>${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}${r.lions ? ` · lions held off: <b>${r.lions}</b>` : ''}` + (r.stars < 3 ? '<br>No chances lost for three stars.' : '')
     : `<b>${r.kills}</b> of ${r.goal} brought down.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');

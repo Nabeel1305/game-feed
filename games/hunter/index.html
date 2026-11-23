@@ -5122,20 +5122,27 @@ const W3 = (() => {
 const RULES = [
   '<b>Left thumb: the stick.</b> Push it gently to creep, all the way to run (it hears running). Up is towards the animal, sideways steps round it. Let go to freeze.',
   '<b>Freeze when it looks.</b> Its ears flick and its head comes up first. Move while it watches and it sees you; see enough and it bolts.',
+  '<b>Not too close.</b> Every animal has a distance it will not let you inside (the metres turn red): go in and it runs, or turns on you.',
   '<b>Right thumb: drag to move the crosshair, tap THROW.</b> It turns green on the chest. Closer is steadier.',
   '<b>Hit the chest</b> to bring it down. A haunch only wounds it, a miss scares it off.',
+  '<b>A boar, a bison or the mammoth may charge.</b> Keep still until DIVE ASIDE shows, then push the stick hard to one side. It runs past and stands winded: throw then.',
   '<b>A growl? A cave lion.</b> Tap the side it growls from to face it, then tap again the instant it leaps to brace your spear.',
   'Bring down the animals asked for. Three escapes or maulings and the hunt is over.',
 ];
 const WEATHERS = ['golden', 'morning', 'overcast', 'mist', 'dawn', 'sunset', 'storm', 'noon', 'rain', 'dusk'];
 function weatherOf(N) { if (N <= 2) return ['golden', 'morning'][N - 1]; const R = rng(N * 3001 + 7); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
 const KINDS = [
-  { id: 'deer', name: 'Red Deer', from: 1, body: 1.0, vital: 0.27, speed: 9, look: 1, hp: 1 },
-  { id: 'horse', name: 'Wild Horse', from: 3, body: 1.15, vital: 0.28, speed: 11, look: 1.1, hp: 1 },
-  { id: 'boar', name: 'Wild Boar', from: 5, body: 0.8, vital: 0.17, speed: 8, look: 0.9, hp: 1, charges: true },
-  { id: 'bison', name: 'Steppe Bison', from: 8, body: 1.5, vital: 0.32, speed: 8, look: 0.8, hp: 2 },
+  { id: 'deer', name: 'Red Deer', from: 1, body: 1.0, vital: 0.27, speed: 9, look: 1, hp: 1, shy: 7.5, temper: 0 },
+  { id: 'horse', name: 'Wild Horse', from: 3, body: 1.15, vital: 0.28, speed: 11, look: 1.1, hp: 1, shy: 8.5, temper: 0 },
+  { id: 'boar', name: 'Wild Boar', from: 4, body: 0.8, vital: 0.17, speed: 8, look: 0.9, hp: 1, shy: 6.5, temper: 0.75 },
+  { id: 'bison', name: 'Steppe Bison', from: 8, body: 1.5, vital: 0.32, speed: 8, look: 0.8, hp: 2, shy: 7, temper: 0.6 },
 ];
-const MAMMOTH = { id: 'mammoth', name: 'Woolly Mammoth', body: 2.6, vital: 0.5, speed: 6, look: 0.7, hp: 3 };
+const MAMMOTH = { id: 'mammoth', name: 'Woolly Mammoth', body: 2.6, vital: 0.5, speed: 6.5, look: 0.7, hp: 3, shy: 9, temper: 0.85 };
+// (23 Nov 2026, his review: "the animal just waits for me to kill it it should run away or even attack if I run or come too close or
+// throw a spear".) Every animal has a distance it will not let you inside (`shy`): move inside it and it notices at once, sit well
+// inside it and it smells you. A deer or a horse runs. A boar, a bison or the mammoth may turn on you instead (`temper`): it paws
+// the ground (`threat`), then charges. Wait until it has committed to its line, then dive aside with the stick (too early and it
+// follows you). A dodged animal runs past and stands winded a few metres off, head down: your best throw of the hunt.
 
 function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
@@ -5149,7 +5156,10 @@ function makeCfg(N, help) {
     lookT: [x(1.1, 1.5, 25), x(2.0, 3.0, 25)],                     // seconds it looks for
     lion: N >= 3 ? Math.min(0.6, 0.18 + f * 0.012) : 0,            // chance a cave lion comes during a stalk
     leap: (x(0.45, 0.22, 25) + 0.1 * e) * (help ? 1.2 : 1),         // how long the moment to brace lasts
-    growl: x(2.2, 1.3, 25) };                                       // seconds from the growl to the leap
+    growl: x(2.2, 1.3, 25),
+    shy: x(1.0, 1.25, 30) * (1 - 0.1 * e),                        // how wide the ring it will not let you inside is
+    threat: (x(1.1, 0.6, 30) + 0.25 * e) * (help ? 1.25 : 1),       // seconds it paws the ground before it charges
+    commit: x(8, 5, 30) + 2 * e + (help ? 1.5 : 0) };               // metres out at which a charging animal stops following you: the dive must come after this                                       // seconds from the growl to the leap
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -5168,6 +5178,7 @@ function newAnimal(G) {
 const distA = G => Math.hypot(G.a.x - G.me.x, G.a.z - G.me.z);
 // ---------- the thumbs ----------
 function creep(G, on) { setMove(G, on ? 0.5 : 0, 0); }
+const angry = a => a.st === 'threat' || a.st === 'charge' || a.st === 'pass';
 // the left thumb's stick (22 Nov 2026, his note: "if you go slowly, you creep; if you go faster, you run"): fwd is towards the
 // animal (negative backs away), side steps round it. A gentle push creeps; a full push runs: three times as fast, but it hears
 // running even with its head down, and sees it at once when it looks.
@@ -5175,7 +5186,7 @@ function setMove(G, fwd, side) { if (G.over) return; const me = G.me, m = Math.h
 // a throw at a point on the ground (x, z); the spear flies there in an arc
 function swayOf(G, d) { const A = (0.04 + 0.011 * Math.min(d, 16)) * (1 + Math.min(1, G.cfg.f / 40) * 0.3) * (lessonNow(G) ? 0.6 : 1); return { x: A * Math.sin(G.t * 2.1), z: A * Math.sin(G.t * 1.6 + 1.3) }; }
 function throwAt(G, x, z) {
-  if (G.over || G.spears.some(s => !s.done) || G.lion && G.lion.st !== 'gone') return false;
+  if (G.over || G.spears.some(s => !s.done) || G.lion && G.lion.st !== 'gone' || angry(G.a)) return false;      // no time to throw at a charge (a blind thumb on THROW would win by it): the answer to a charge is the dive
   const me = G.me, R = G.rnd, d = Math.hypot(x - me.x, z - me.z); if (d < 2) return false;
   // no luck: the spear goes where the mark is when you let go. The mark sways (your arm), more the further you throw, but never so
   // much that a spear aimed at the middle of the animal finds its heart; and beyond 16 m a throw falls short.
@@ -5201,40 +5212,61 @@ function step(G, dt) {
     if (Ln.st === 'stalk' && Ln.t >= Ln.leapAt) { Ln.st = 'leap'; Ln.t = 0; G.ev.push({ k: 'leap' }); }
     else if (Ln.st === 'leap' && Ln.t >= c.leap * (L ? 1.8 : 1)) maul(G, 'late');
     return; }
-  if (!Ln && a.st !== 'flee' && a.st !== 'dead' && c.lion && !L && R() < c.lion * dt / 25) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: c.growl * (0.8 + 0.4 * R()) }; me.creep = false; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
+  if (!Ln && a.st !== 'flee' && a.st !== 'dead' && !angry(a) && c.lion && !L && R() < c.lion * dt / 25) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: c.growl * (0.8 + 0.4 * R()) }; me.creep = false; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
   if (L && L.lion && !Ln) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: 2.6 }; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
   if (Ln && Ln.st === 'gone') { Ln.t += dt; if (Ln.t > 1.2) G.lion = null; }
   // creeping
-  if (me.creep && a.st !== 'flee' && a.st !== 'dead') { const sp = me.run ? 3.2 : 1.15, d = distA(G), ux = (a.x - me.x) / d, uz = (a.z - me.z) / d, mf = me.mf == null ? 1 : me.mf, ms = me.ms || 0;
-    if (d > 5 || mf < 0) { me.x += ux * mf * sp * dt; me.z += uz * mf * sp * dt; } me.x += uz * ms * sp * 0.8 * dt; me.z -= ux * ms * sp * 0.8 * dt; me.moved = me.run ? 0.5 : 0.25; me.crept = true;
-    if (me.run) { a.alert += dt * 0.2 * (1 + 14 / Math.max(5, d)); G.ev.push({ k: 'heard' }); if (a.alert >= 1) { if (L) { a.alert = 0.4; lessonMiss(G, 'heard'); } else return bolt(G, 'heard'); } } }
+  if (me.creep && a.st !== 'flee' && a.st !== 'dead') { const sp = me.run ? 3.2 : 1.15, d = Math.max(0.5, distA(G)), lk = a.st === 'charge' && a.locked, ux = lk ? -Math.sin(a.face) : (a.x - me.x) / d, uz = lk ? -Math.cos(a.face) : (a.z - me.z) / d, mf = me.mf == null ? 1 : me.mf, ms = me.ms || 0, chg = a.st === 'charge' || a.st === 'threat';      // (once it has committed, sideways is across ITS line, so a dive goes straight out of its way and not round it)
+    const ss = chg ? (me.run ? 5.2 : 1.6) : sp * 0.8;      // a dive aside from a charge is quicker than a step round a grazing animal
+    if ((d > 5 || mf < 0) && !chg) { me.x += ux * mf * sp * dt; me.z += uz * mf * sp * dt; } me.x += uz * ms * ss * dt; me.z -= ux * ms * ss * dt; me.moved = me.run ? 0.5 : 0.25; me.crept = true;
+    if (me.run && !angry(a)) { a.alert += dt * 0.45 * (1 + 14 / Math.max(5, d)); G.ev.push({ k: 'heard' }); if (a.alert >= 1) { if (L) { a.alert = 0.4; lessonMiss(G, 'heard'); } else return provoke(G, 'heard'); } } }
   else me.moved = Math.max(0, me.moved - dt);
   // the animal: grazes (wandering a little), flicks its ears (the tell), looks; sees movement while it looks
   a.t += dt;
-  if (a.st === 'graze') { a.step += dt; a.x += Math.sin(a.face) * 0.25 * dt; a.z += Math.cos(a.face) * 0.25 * dt; if (a.step > 3) { a.step = 0; a.face += (R() - 0.5) * 1.6; }
+  if (a.st === 'graze') { const wv = a.winded > 0 ? 0 : 0.25; a.step += dt; a.x += Math.sin(a.face) * wv * dt; a.z += Math.cos(a.face) * wv * dt; if (a.step > 3) { a.step = 0; a.face += (R() - 0.5) * 1.6; }
     if (a.t >= a.next) { a.st = 'tell'; a.t = 0; a.sudden = !L && R() < c.sudden; G.ev.push({ k: 'tell' }); a.creptBefore = me.crept; me.crept = false; } }
   else if (a.st === 'tell') { if (a.t >= (a.sudden ? 0 : c.tell)) { a.st = 'look'; a.t = 0; a.lookFor = c.lookT[0] + R() * (c.lookT[1] - c.lookT[0]); G.ev.push({ k: 'look' }); } }
   else if (a.st === 'look') {
     const d = distA(G), seen = me.moved > 0 ? c.notice * a.kind.look * (1 + 12 / Math.max(4, d)) * 0.5 * (me.run ? 2.5 : 1) : 0;
     a.alert += seen * dt; if (seen) G.ev.push({ k: 'seen' });
-    if (a.alert >= 1) { if (L) { a.alert = 0.4; lessonMiss(G, 'seen'); } else return bolt(G, 'seen'); }
+    if (a.alert >= 1) { if (L) { a.alert = 0.4; lessonMiss(G, 'seen'); } else return provoke(G, 'seen'); }
     if (a.t >= a.lookFor) { a.st = 'graze'; a.t = 0; a.next = c.graze[0] + R() * (c.graze[1] - c.graze[0]); G.ev.push({ k: 'graze' }); if (a.alert < 0.25 && a.creptBefore) lessonSee(G, 'froze'); } }
   else if (a.st === 'flee') { a.x += a.vx * dt; a.z += a.vz * dt; if (a.t > 2.2) { if (G.over) return; newAnimal(G); } }
   else if (a.st === 'dead') { if (a.t > 2.6) { if (!G.lesson && G.kills.length >= c.goal) { finish(G, true); return; } newAnimal(G); } }
+  // charging: it paws the ground, comes straight at you, and stops following you once it is close (it has committed)
+  else if (a.st === 'threat') { a.face = Math.atan2(me.x - a.x, me.z - a.z); if (a.t >= c.threat) { a.st = 'charge'; a.t = 0; a.locked = false; G.ev.push({ k: 'charge' }); } }
+  else if (a.st === 'charge') { const d = distA(G), v = a.kind.speed * 0.95;
+    if (!a.locked) { a.face = Math.atan2(me.x - a.x, me.z - a.z); if (d <= c.commit) { a.locked = true; G.ev.push({ k: 'commit' }); } }
+    const fx = Math.sin(a.face), fz = Math.cos(a.face); a.x += fx * v * dt; a.z += fz * v * dt;
+    const along = (me.x - a.x) * fx + (me.z - a.z) * fz, lat = Math.abs((me.x - a.x) * fz - (me.z - a.z) * fx);
+    if (along <= 0.6) { if (lat < 0.5 * a.kind.body + 0.4) return gored(G); a.st = 'pass'; a.t = 0; a.vx = fx * v; a.vz = fz * v; G.ev.push({ k: 'dodged' }); } }
+  else if (a.st === 'pass') { const u = Math.max(0, 1 - a.t / 1.6); a.x += a.vx * u * dt; a.z += a.vz * u * dt; if (a.t >= 1.6) { a.st = 'graze'; a.t = 0; a.next = 4.5; a.alert = 0.3; a.step = 0; a.locked = false; a.winded = 4.5; G.ev.push({ k: 'winded' }); } }
+  // too close: inside the ring it will not let you into, moving is noticed at once, and well inside it you are smelt even keeping still
+  if (a.winded > 0) a.winded -= dt;      // winded after a charge it has no thought for you: this is the throw
+  else if (a.st === 'graze' || a.st === 'tell' || a.st === 'look') { const d = distA(G), shy = a.kind.shy * c.shy;
+    if (d < shy) { const close = 1 - d / shy, rate = me.moved > 0 ? 0.9 + 2.4 * close : d < shy * 0.72 ? 0.3 + 1.2 * close : 0;
+      if (rate) { a.alert += (rate + 0.12) * dt; G.ev.push({ k: 'wary' }); if (a.alert >= 1) { if (L) { a.alert = 0.4; lessonMiss(G, 'close'); } else return provoke(G, 'close'); } } } }
   if (a.st !== 'look') a.alert = Math.max(0, a.alert - dt * 0.12);
   // spears in flight
   for (const s of G.spears) if (!s.done) { s.t += dt; if (s.t >= s.T) { s.done = true; land(G, s); } }
 }
 function land(G, s) {
   const a = G.a, k2 = a.kind; if (a.st === 'dead') return;
+  if (angry(a)) { G.ev.push({ k: 'missed', x: s.tx, z: s.tz, still: true }); return; }      // a spear already in the air when it turned on you
   const vx = a.x + Math.sin(a.face) * k2.body * 0.5, vz = a.z + Math.cos(a.face) * k2.body * 0.5;      // the chest is well forward of the middle: a spear at the middle only wounds
   const dv = Math.hypot(s.tx - vx, s.tz - vz), db = Math.hypot(s.tx - a.x, s.tz - a.z);
-  if (dv < k2.vital * (1 - Math.min(0.3, G.cfg.f / 150)) * (lessonNow(G) ? 1.3 : 1)) { a.hp--; G.ev.push({ k: 'hit', vital: true, x: s.tx, z: s.tz });
+  if (dv < k2.vital * (1 - Math.min(0.3, G.cfg.f / 150)) * (lessonNow(G) ? 1.3 : 1)) { a.hp--; s.hit = 'vital'; G.ev.push({ k: 'hit', vital: true, x: s.tx, z: s.tz });
     if (a.hp <= 0) { a.st = 'dead'; a.t = 0; G.kills.push({ id: k2.id, name: k2.name, d: Math.round(Math.hypot(s.tx - s.x0, s.tz - s.z0)) }); G.ev.push({ k: 'kill', kind: k2.id, n: G.kills.length }); lessonSee(G, 'kill'); return; }
-    a.alert = 1; return bolt(G, 'hurt', true); }
-  if (db < k2.body * 0.75) { G.wounded++; G.ev.push({ k: 'hit', vital: false, x: s.tx, z: s.tz }); return bolt(G, 'wounded'); }
-  G.ev.push({ k: 'missed', x: s.tx, z: s.tz }); bolt(G, 'missed');
+    a.alert = 1; return provoke(G, 'hurt', true); }
+  if (db < k2.body * 0.75) { G.wounded++; s.hit = 'body'; a.lame = true; G.ev.push({ k: 'hit', vital: false, x: s.tx, z: s.tz }); return provoke(G, 'wounded'); }
+  G.ev.push({ k: 'missed', x: s.tx, z: s.tz }); provoke(G, 'missed');
 }
+// what it does when it has had enough of you: a deer or a horse runs; a boar, a bison or the mammoth may turn on you
+function provoke(G, why, stillHurt) { const a = G.a, k2 = a.kind;
+  if (!lessonNow(G) && k2.temper && a.st !== 'flee' && a.st !== 'dead' && !angry(a) && G.rnd() < k2.temper * (why === 'hurt' || why === 'wounded' ? 1.3 : 1)) {
+    a.st = 'threat'; a.t = 0; a.alert = 1; a.face = Math.atan2(G.me.x - a.x, G.me.z - a.z); G.ev.push({ k: 'threat', why }); return; }
+  return bolt(G, why, stillHurt); }
+function gored(G) { const a = G.a; G.maulings++; G.escapes++; a.st = 'flee'; a.t = 0; a.vx = Math.sin(a.face) * a.kind.speed; a.vz = Math.cos(a.face) * a.kind.speed; G.ev.push({ k: 'gored' }); G.lives--; if (G.lives <= 0) finish(G, false, 'gored'); }
 function bolt(G, why, stillHurt) {
   const a = G.a, L = lessonNow(G); if (a.st === 'flee') return;
   if (L && !stillHurt) { a.alert = 0.3; a.st = 'graze'; a.t = 0; a.next = 2; lessonMiss(G, why); G.ev.push({ k: 'calm' }); return; }
@@ -5252,7 +5284,7 @@ function finish(G, win, why) {
 const LESSONS = {
   1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
       { id: 'throw', title: 'THROW AT THE CHEST', how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
-  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', how: 'Creep in, freezing each time it looks, then throw. The closer you are, the steadier the spear.', need: 2, ok: w => w === 'kill' }],
+  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
   3: [{ id: 'lion', title: 'A LION!', how: 'Tap the side the growl comes from to face it. Then wait, and tap the moment it leaps to brace your spear.', need: 2, ok: w => w === 'lion', lion: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); if (lessonNow(G).near) newAnimal(G); }
@@ -5278,19 +5310,108 @@ const BLIND = {
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, a = G.a, Ln = G.lion, t = G.t;
   const seen = (key, cond) => { if (!cond) { mem[key] = null; return false; } if (mem[key] == null) mem[key] = t; return t - mem[key] >= react; };
-  if (Ln && Ln.st !== 'gone') { G.me.creep = false; if (seen('growl', true) && G.me.face !== Ln.side) turn(G, Math.random() < acc ? Ln.side : -Ln.side);
+  if (Ln && Ln.st !== 'gone') { creep(G, false); if (seen('growl', true) && G.me.face !== Ln.side) turn(G, Math.random() < acc ? Ln.side : -Ln.side);
     if (seen('leap', Ln.st === 'leap')) { brace(G); mem.leap = null; } return; }
   mem.growl = mem.leap = null;
-  if (a.st === 'flee' || a.st === 'dead' || G.spears.some(s => !s.done)) { G.me.creep = false; return; }
-  const warn = a.st === 'tell' || a.st === 'look';
-  if (warn) { if (seen('tell', true)) G.me.creep = false; else if (Math.random() > acc * 1.03) G.me.creep = true; }
-  else { mem.tell = null; G.me.creep = true; }
-  const d = distA(G), range = 9 + 5 * acc;
+  // a charge: keeps still until it has committed, then dives (late by react)
+  if (a.st === 'threat' || a.st === 'charge') { if (a.locked && seen('lock', true)) { if (!mem.side) mem.side = Math.random() < 0.5 ? -1 : 1; setMove(G, 0, mem.side); } else creep(G, false); return; }
+  mem.side = null; mem.lock = null;
+  if (a.st === 'flee' || a.st === 'dead' || a.st === 'pass' || G.spears.some(s => !s.done)) { creep(G, false); return; }
+  const warn = a.st === 'tell' || a.st === 'look', d = distA(G), range = 9 + 5 * acc;
+  if (warn) { if (seen('tell', true)) creep(G, false); else if (Math.random() > acc * 1.03) creep(G, d > range); }
+  else { mem.tell = null; creep(G, d > range); }      // in range it keeps still (an animal winded after a charge is close: moving would set it off again)
   if (d < range && !warn && seen('aim', true)) { const k2 = a.kind, vx = a.x + Math.sin(a.face) * k2.body * 0.5, vz = a.z + Math.cos(a.face) * k2.body * 0.5, e = (1 - acc) * 1.4;
     throwAt(G, vx + Math.sin(a.face) * 0.25 * (0.25 + d / 26) + (Math.random() - 0.5) * e, vz + Math.cos(a.face) * 0.25 * (0.25 + d / 26) + (Math.random() - 0.5) * e); mem.aim = null; }
 }
 function winNow(G) { if (!G || G.over || G.a.st === 'dead') return; G.lesson = null; G.lion = null; while (G.kills.length < G.cfg.goal - 1) G.kills.push({ id: 'deer', name: 'Red Deer', d: 10 }); const a = G.a; a.hp = 1; a.st = 'graze'; a.next = 99;
   G.spears.push({ x0: G.me.x, z0: G.me.z, tx: a.x + Math.sin(a.face) * a.kind.body * 0.5, tz: a.z + Math.cos(a.face) * a.kind.body * 0.5, T: 0.05, t: 0, done: false }); }
+// ===================== A FOUR-LEGGED ANIMAL WITH JOINTS (Hunter first, 23 Nov 2026; copied to the games that need it) =====================
+// His review of Hunter: "horrible animation with the animal". The animal was a capsule on four sticks that swung from the hip.
+// quadMake(T, id, tex) builds a body of rounded masses (chest, barrel, rump), a neck and a head on their own joints, ears that
+// flick, a tail, and four legs each with a shoulder or hip, a knee or hock and a hoof. quadPose(R, P, dt) sets it from a few
+// numbers: the gait and its phase, where the neck and head should be, how far it has fallen. Local axes: +z is forward, +y up.
+const QUAD = {
+  deer:    { sz: 1.15, col: 0xa9703f, col2: 0x6f4526, len: 0.82, leg: 0.78, r: 0.045, chest: [0.21, 0.25, 0.3], barrel: [0.2, 0.22, 0.36], rump: [0.21, 0.24, 0.28], neck: [0.5, 0.075, 0.1, 0.95], head: [0.3, 0.085], ear: 0.13, tail: [0.14, 0.03, 0.5], stride: 3.0 },
+  horse:   { sz: 1.3,  col: 0xa58a5e, col2: 0x4a3a28, len: 0.95, leg: 0.8, r: 0.055, chest: [0.25, 0.3, 0.32], barrel: [0.25, 0.27, 0.4], rump: [0.26, 0.29, 0.32], neck: [0.5, 0.12, 0.2, 0.62], head: [0.42, 0.105], ear: 0.1, tail: [0.75, 0.05, 0.3], stride: 3.4 },
+  boar:    { sz: 1.15, col: 0x6a5240, col2: 0x2e231b, len: 0.8, leg: 0.46, r: 0.055, chest: [0.28, 0.36, 0.34], barrel: [0.24, 0.26, 0.34], rump: [0.22, 0.25, 0.28], neck: [0.12, 0.2, 0.24, 0.0], head: [0.46, 0.17], ear: 0.09, tail: [0.2, 0.015, 0.4], stride: 1.9 },
+  bison:   { sz: 1.3,  col: 0x6a4a2e, col2: 0x33231a, len: 0.95, leg: 0.6, r: 0.065, chest: [0.33, 0.42, 0.36], barrel: [0.3, 0.32, 0.42], rump: [0.26, 0.29, 0.3], neck: [0.26, 0.2, 0.26, -0.15], head: [0.4, 0.17], ear: 0.07, tail: [0.45, 0.025, 0.35], stride: 2.6 },
+  mammoth: { sz: 2.1,  col: 0x7a5234, col2: 0x3d2a1c, len: 0.95, leg: 0.85, r: 0.11, chest: [0.42, 0.5, 0.42], barrel: [0.42, 0.44, 0.48], rump: [0.36, 0.38, 0.36], neck: [0.2, 0.26, 0.32, 0.5], head: [0.36, 0.3], ear: 0.16, tail: [0.4, 0.03, 0.3], stride: 2.2 },
+  lion:    { sz: 1.1,  col: 0xc49a5c, col2: 0x7a5a30, len: 1.0, leg: 0.55, r: 0.05, chest: [0.19, 0.23, 0.3], barrel: [0.18, 0.19, 0.36], rump: [0.18, 0.2, 0.27], neck: [0.2, 0.12, 0.15, 0.3], head: [0.22, 0.13], ear: 0.06, tail: [0.75, 0.025, 0.9], stride: 2.6 },
+  bull:    { sz: 1.25, col: 0x4a3326, col2: 0x231812, len: 0.95, leg: 0.62, r: 0.065, chest: [0.32, 0.38, 0.36], barrel: [0.3, 0.32, 0.44], rump: [0.29, 0.31, 0.32], neck: [0.24, 0.19, 0.25, 0.05], head: [0.4, 0.16], ear: 0.09, tail: [0.6, 0.02, 0.3], stride: 2.6 },
+  sheep:   { sz: 0.7,  col: 0xe8e2d2, col2: 0x2b2622, len: 0.7, leg: 0.5, r: 0.04, chest: [0.26, 0.28, 0.3], barrel: [0.27, 0.28, 0.36], rump: [0.26, 0.27, 0.28], neck: [0.2, 0.09, 0.12, 0.6], head: [0.26, 0.09], ear: 0.09, tail: [0.12, 0.04, 0.5], stride: 1.6 },
+  wolf:    { sz: 0.8,  col: 0x8a8a8a, col2: 0x4a4a4e, len: 0.8, leg: 0.62, r: 0.04, chest: [0.17, 0.21, 0.28], barrel: [0.15, 0.17, 0.34], rump: [0.16, 0.19, 0.24], neck: [0.26, 0.09, 0.12, 0.5], head: [0.3, 0.1], ear: 0.1, tail: [0.5, 0.05, 0.9], stride: 2.4 },
+};
+function quadMake(T, id, tex, o = {}) {
+  const S = Object.assign({}, QUAD[id] || QUAD.deer, o), g = new T.Group(), body = new T.Group(); g.add(body); body.position.y = S.leg;
+  const mat = (c, r = 0.92) => { const m = new T.MeshStandardMaterial({ color: c, roughness: r, map: tex || null }); m.emissive = new T.Color(c); m.emissiveIntensity = 0.12; return m; };      // never a black shape in rain or dusk
+  const M = { fur: mat(S.col), dark: mat(S.col2), pale: mat(0xefe6d0, 0.6), hoof: mat(0x1b1612, 0.6), eye: new T.MeshStandardMaterial({ color: 0x0c0a08, roughness: 0.2 }) };
+  const sph = new T.SphereGeometry(1, 18, 14);
+  const ell = (rx, ry, rz, x, y, z, m, par = body) => { const q = new T.Mesh(sph, m); q.scale.set(rx, ry, rz); q.position.set(x, y, z); q.castShadow = true; par.add(q); return q; };
+  const cyl = (rt, rb, len, m, par, seg = 10) => { const ge = new T.CylinderGeometry(rt, rb, len, seg); ge.translate(0, -len / 2, 0); const q = new T.Mesh(ge, m); q.castShadow = true; par.add(q); return q; };      // hangs down from its joint
+  const hz = S.len / 2, cy = S.chest[1] * 0.75;
+  // the body: three masses that overlap
+  ell(S.chest[0], S.chest[1], S.chest[2], 0, cy, hz * 0.72, M.fur); ell(Math.max(S.chest[0], S.rump[0]) * 0.97, (S.chest[1] + S.rump[1]) * 0.475, S.len * 0.6, 0, cy - 0.01, 0, M.fur); ell(S.rump[0], S.rump[1], S.rump[2], 0, cy + 0.01, -hz * 0.72, M.fur);
+  // legs: [front left, front right, hind left, hind right]
+  const legs = [];
+  for (let i = 0; i < 4; i++) { const front = i < 2, sx = i % 2 ? 1 : -1, wd = (front ? S.chest[0] : S.rump[0]) * 0.62, U = front ? S.leg * 0.5 : S.leg / 1.86, Lw = front ? S.leg * 0.5 : S.leg / 1.86;
+    const hip = new T.Group(); hip.position.set(sx * wd, 0.02, front ? hz - 0.02 : -hz + 0.02); body.add(hip);
+    ell(S.r * 1.75, U * 0.5, S.r * (front ? 2.0 : 2.8), 0, -U * 0.12, front ? 0 : -0.02, M.fur, hip); cyl(S.r * 1.5, S.r * 1.05, U, M.fur, hip);
+    const knee = new T.Group(); knee.position.y = -U; hip.add(knee); ell(S.r * 1.15, S.r * 1.15, S.r * 1.15, 0, 0, 0, front ? M.fur : M.fur, knee); cyl(S.r * 0.95, S.r * 0.7, Lw - 0.05, id === 'sheep' ? M.dark : M.dark, knee);
+    const hoof = cyl(S.r * 1.05, S.r * 1.25, 0.07, M.hoof, knee, 8); hoof.position.y = -(Lw - 0.06);
+    legs.push({ hip, knee, front, U, Lw }); }
+  // neck and head: the neck swings up and down from the chest; the head levels itself, then nods and turns
+  const nk = S.neck, neck = new T.Group(); neck.position.set(0, cy + S.chest[1] * 0.45, hz + S.chest[2] * 0.45); body.add(neck); cyl(nk[2], nk[1], nk[0] + 0.06, M.fur, neck).position.y = 0.05;
+  const lvl = new T.Group(); lvl.position.y = -nk[0]; neck.add(lvl); const head = new T.Group(); lvl.add(head);
+  const hd = S.head, skull = ell(hd[1], hd[1] * 1.05, hd[1] * 1.25, 0, 0.01, 0.02, M.fur, head), muz = new T.Group(); head.add(muz); muz.position.set(0, -hd[1] * 0.15, hd[1] * 0.7);
+  { const ge = new T.CylinderGeometry(hd[1] * 0.5, hd[1] * 0.82, hd[0] * 0.75, 10); ge.rotateX(Math.PI / 2); ge.translate(0, 0, hd[0] * 0.3); const q = new T.Mesh(ge, M.fur); q.castShadow = true; muz.add(q); ell(hd[1] * 0.52, hd[1] * 0.45, hd[1] * 0.35, 0, 0, hd[0] * 0.68, id === 'deer' || id === 'horse' || id === 'sheep' ? M.dark : M.fur, muz); ell(hd[1] * 0.3, hd[1] * 0.2, hd[1] * 0.14, 0, hd[1] * 0.1, hd[0] * 0.76, M.hoof, muz); }
+  for (const sx of [-1, 1]) { const e = new T.Mesh(sph, M.eye); e.scale.setScalar(hd[1] * 0.17); e.position.set(sx * hd[1] * 0.82, hd[1] * 0.3, hd[1] * 0.6); head.add(e); }
+  const ears = []; for (const sx of [-1, 1]) { const eg = new T.Group(); eg.position.set(sx * hd[1] * 0.75, hd[1] * 0.75, -hd[1] * 0.25); head.add(eg); const ge = new T.ConeGeometry(S.ear * 0.38, S.ear, 8); ge.translate(0, S.ear / 2, 0); ge.scale(1, 1, 0.45); const q = new T.Mesh(ge, M.fur); q.castShadow = true; eg.add(q); eg.rotation.z = -sx * 0.75; eg.userData.sx = sx; ears.push(eg); }
+  // tail
+  const tl = S.tail, tail = new T.Group(); tail.position.set(0, cy + S.rump[1] * 0.55, -hz - S.rump[2] * 0.72); body.add(tail); cyl(tl[1] * 1.2, tl[1] * 0.6, tl[0], id === 'horse' ? M.dark : M.fur, tail);
+  // what makes each kind itself
+  if (id === 'deer') { ell(0.1, 0.1, 0.05, 0, cy + 0.02, -hz - 0.22, M.pale); ell(0.14, 0.1, 0.25, 0, cy - 0.15, 0.05, M.pale).material = M.pale;
+    for (const sx of [-1, 1]) { const b = new T.Group(); b.position.set(sx * 0.04, hd[1] * 0.85, -0.02); b.rotation.set(-0.35, 0, -sx * 0.45); head.add(b); const up = (len, r, par, rx, rz, y) => { const q = new T.Group(); q.position.y = y; q.rotation.set(rx, 0, rz); par.add(q); const ge = new T.CylinderGeometry(r * 0.6, r, len, 6); ge.translate(0, len / 2, 0); const mm = new T.Mesh(ge, M.pale); mm.castShadow = true; q.add(mm); return q; };
+      const b1 = up(0.3, 0.018, b, 0, 0, 0), b2 = up(0.26, 0.014, b1, 0.5, -sx * 0.25, 0.3); up(0.2, 0.011, b2, 0.5, sx * 0.2, 0.26); up(0.16, 0.011, b1, 1.1, sx * 0.3, 0.08); up(0.17, 0.011, b1, 0.9, -sx * 0.2, 0.24); up(0.13, 0.009, b2, -0.6, 0, 0.14); } }
+  if (id === 'horse') { for (let i = 0; i < 6; i++) ell(0.035, 0.075, 0.1, 0, -0.03 - i * nk[0] / 6, -nk[1] - 0.02 - i * 0.008, M.dark, neck); ell(0.05, 0.05, 0.09, 0, hd[1] * 0.85, 0.05, M.dark, head); }
+  if (id === 'boar') { for (let i = 0; i < 7; i++) ell(0.03, 0.075 - i * 0.004, 0.09, 0, cy + S.chest[1] * 0.92 - i * 0.012, hz + 0.08 - i * 0.13, M.dark);
+    for (const sx of [-1, 1]) { const q = new T.Mesh(new T.ConeGeometry(0.02, 0.12, 6), M.pale); q.position.set(sx * hd[1] * 0.42, -hd[1] * 0.1, hd[0] * 0.5); q.rotation.set(-0.3, 0, -sx * 0.5); muz.add(q); } ell(0.03, 0.03, 0.03, 0, -tl[0], 0, M.dark, tail); }
+  if (id === 'bison' || id === 'bull') { ell(S.chest[0] * 0.92, S.chest[1] * 0.75, S.chest[2] * 0.95, 0, cy + S.chest[1] * 0.55, hz - 0.12, id === 'bison' ? M.dark : M.fur);
+    if (id === 'bison') { ell(S.chest[0] * 1.04, S.chest[1] * 0.9, S.chest[2] * 0.9, 0, cy - 0.06, hz + 0.02, M.dark); ell(hd[1] * 0.6, hd[1] * 0.9, hd[1] * 0.5, 0, -hd[1] * 0.95, hd[1] * 0.3, M.dark, head); ell(hd[1] * 1.05, hd[1] * 0.75, hd[1] * 0.9, 0, hd[1] * 0.45, -0.02, M.dark, head); }
+    for (const sx of [-1, 1]) { const q = new T.Mesh(new T.TorusGeometry(hd[1] * 0.75, 0.022, 6, 12, 1.5), M.pale); q.position.set(sx * hd[1] * 0.75, hd[1] * 0.55, 0); q.rotation.set(0, sx > 0 ? 0 : Math.PI, sx > 0 ? -0.2 : 0.2); q.castShadow = true; head.add(q); } ell(0.04, 0.07, 0.04, 0, -tl[0], 0, M.dark, tail); }
+  let trunk = null;
+  if (id === 'mammoth') { ell(S.chest[0] * 0.9, S.chest[1] * 0.7, S.chest[2] * 0.9, 0, cy + S.chest[1] * 0.6, hz - 0.1, M.fur); ell(hd[1] * 1.05, hd[1] * 1.15, hd[1] * 1.0, 0, hd[1] * 0.55, -0.02, M.fur, head); ell(S.barrel[0] * 1.04, S.barrel[1] * 0.75, S.barrel[2] * 1.5, 0, cy - S.barrel[1] * 0.45, 0, M.dark);
+    trunk = []; let par = muz, r = hd[1] * 0.42; for (let i = 0; i < 6; i++) { const q = new T.Group(); q.position.set(0, i ? -0.2 : -0.02, i ? 0 : hd[0] * 0.55); par.add(q); cyl(r, r * 0.86, 0.22, M.fur, q); r *= 0.86; trunk.push(q); par = q; }
+    for (const sx of [-1, 1]) { const q = new T.Mesh(new T.TorusGeometry(0.42, 0.04, 8, 18, 2.3), M.pale); q.position.set(sx * hd[1] * 0.55, -0.42, hd[0] * 0.75); q.rotation.set(0.25, sx > 0 ? -1.25 : -1.9, Math.PI + 0.35); q.castShadow = true; head.add(q); } }
+  if (id === 'lion') { ell(hd[1] * 1.35, hd[1] * 1.45, hd[1] * 0.9, 0, -0.02, -hd[1] * 0.7, M.dark, head); ell(0.19, 0.2, 0.21, 0, -0.06, 0.0, M.dark, neck); ell(0.045, 0.07, 0.045, 0, -tl[0], 0, M.dark, tail); }
+  if (id === 'sheep') { ell(S.barrel[0] * 1.12, S.barrel[1] * 1.1, S.len * 0.72, 0, cy + 0.02, 0, M.fur); skull.material = M.dark; }
+  g.scale.setScalar(S.sz);
+  return { g, body, legs, neck, lvl, head, ears, tail, trunk, S, M, cur: { neck: nk[3], nod: 0, yaw: 0, roll: 0, drop: 0, fold: 0, pitch: 0 }, ph: 0 };
+}
+// P: { gait 0 stand, 1 walk, 2 gallop; ph (radians); amt 0..1; neck (angle above the horizontal, radians; null = at rest); nod (nose down +);
+//      yaw (head turned, + to its left); ear (0..1 flicking); tail (0 hanging .. 1 up); pitch (body nose-up +); fall (0..1 lying on its side); t (seconds, for the small motions) }
+function quadPose(R, P, dt = 1 / 60) {
+  const S = R.S, c = R.cur, k = Math.min(1, dt * 9), t = P.t || 0, ga = P.gait | 0, amt = P.amt == null ? 1 : P.amt, fall = P.fall || 0;
+  c.neck += ((P.neck == null ? S.neck[3] : P.neck) - c.neck) * k; c.nod += ((P.nod || 0) - c.nod) * k; c.yaw += ((P.yaw || 0) - c.yaw) * Math.min(1, dt * 7); c.pitch += ((P.pitch || 0) - c.pitch) * k;
+  // legs
+  const OFF = ga === 2 ? [0.55, 0.67, 0.0, 0.1] : [0.25, 0.75, 0.0, 0.5], A = (ga === 2 ? 0.85 : ga === 1 ? 0.36 : 0) * amt, F = (ga === 2 ? 1.25 : ga === 1 ? 0.55 : 0) * amt;
+  R.legs.forEach((L, i) => { const ph = P.ph + OFF[i] * Math.PI * 2; let s = A * Math.sin(ph), f = F * Math.max(0, Math.cos(ph)); if (P.lame === i) { s *= 0.3; f = 0.9; }
+    if (fall) { s = s * (1 - fall) + (L.front ? 0.35 : -0.25) * fall; f = f * (1 - fall) + 1.25 * fall; }
+    if (P.paw && i === 0) { const q = Math.max(0, Math.sin(t * 9)); s = 0.5 * q; f = 1.1 * q; }
+    if (L.front) { L.hip.rotation.x = -s + f * 0.25; L.knee.rotation.x = f * 1.35; } else { L.hip.rotation.x = -0.38 - s; L.knee.rotation.x = Math.max(0.1, 0.75 + 0.4 * s + f * 0.9); }
+    L.hip.rotation.z = fall ? (i % 2 ? -1 : 1) * 0.12 * fall : 0; });
+  // body: bounce and rock with the gait; lie down on its side when it falls
+  const bounce = ga === 2 ? Math.abs(Math.sin(P.ph)) * 0.09 * amt : ga === 1 ? Math.abs(Math.sin(P.ph * 2)) * 0.012 * amt : 0, rock = ga === 2 ? Math.sin(P.ph + 0.6) * 0.1 * amt : 0;
+  const side = P.side || 1, lie = Math.min(1, fall * 1.15), fy = S.barrel[0] * 0.9;
+  R.body.position.y = S.leg * (1 - lie) + fy * lie + bounce - (P.crouch || 0) * S.leg * 0.25 + (fall > 0 && fall < 1 ? Math.sin(fall * Math.PI) * 0.06 : 0);
+  R.body.rotation.set(-(c.pitch + rock) * (1 - lie), 0, side * lie * 1.5); R.body.position.x = side * lie * -S.leg * 0.35;
+  // neck: an angle above the horizontal; the head levels itself, then turns and nods
+  const al = c.neck + (ga === 2 ? Math.sin(P.ph + 2.2) * 0.07 * amt : 0) + (P.chew ? Math.sin(t * 7) * 0.035 : 0);
+  R.neck.rotation.x = -(Math.PI / 2 + al); R.lvl.rotation.set(Math.PI / 2 + al, c.yaw, 0); R.head.rotation.set(c.nod + (P.chew ? Math.sin(t * 11) * 0.04 : 0), 0, fall ? side * -0.5 * lie : 0);
+  // ears and tail
+  const ef = P.ear || 0; R.ears.forEach(e => { const sx = e.userData.sx; e.rotation.z = -sx * (0.75 - 0.35 * ef) + Math.sin(t * 27 + sx) * 0.3 * ef; e.rotation.x = -0.25 + (P.back ? -0.7 : 0) + Math.sin(t * 19 + sx * 2) * 0.25 * ef + (Math.sin(t * 0.9 + sx * 2.1) > 0.96 ? 0.5 : 0); });
+  const tu = P.tail || 0; R.tail.rotation.x = S.tail[2] - tu * 1.9 + (ga === 2 ? Math.sin(P.ph * 2) * 0.12 : 0); R.tail.rotation.z = Math.sin(t * (2 + tu * 8)) * (0.25 + 0.2 * tu) * (fall ? 0 : 1);
+  if (R.trunk) R.trunk.forEach((q, i) => { q.rotation.x = (i === 0 ? -0.35 : 0.06 + (P.trunkUp || 0) * -0.42) + Math.sin(t * 1.3 + i * 0.7) * 0.05; q.rotation.z = Math.sin(t * 0.9 + i * 0.9) * 0.07; });
+}
 // ===================== THE VIEW: Hunter in 3D (three.js through tools/world3d.js) =====================
 // The ice-age steppe at the foot of snowy mountains; you crouch in grass taller than your eyes; the animal grazes ahead; your
 // spear in your right hand. Game (x, z) is three.js (x, y, -z).
@@ -5334,37 +5455,19 @@ function buildWorld() {
   // your arm and spear (seen low on the right), the spear in flight, the aim mark
   const skin = new T.MeshStandardMaterial({ color: 0x8e5f3e, roughness: 0.6 }), wood = new T.MeshStandardMaterial({ color: 0x7a5a36, roughness: 0.8 }), flint = new T.MeshStandardMaterial({ color: 0x3a3a40, roughness: 0.35, metalness: 0.2 }), fur = new T.MeshStandardMaterial({ color: 0x5b4330, roughness: 1 });
   const mkSpear = () => { const g = new T.Group(); const sh = new T.Mesh(new T.CylinderGeometry(0.018, 0.022, 2.2, 8), wood); sh.rotation.x = Math.PI / 2; const tip = new T.Mesh(new T.ConeGeometry(0.04, 0.22, 4), flint); tip.rotation.x = -Math.PI / 2; tip.position.z = -1.2; const lash = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.09, 6), fur); lash.rotation.x = Math.PI / 2; lash.position.z = -1.06; g.add(sh, tip, lash); g.traverse(o => o.castShadow = true); return g; };
-  const hand = new T.Group(); { const arm = new T.Mesh(new T.CapsuleGeometry(0.05, 0.38, 4, 10), skin); arm.rotation.x = Math.PI / 2 - 0.3; arm.position.set(0, -0.06, 0.18); const wrap = new T.Mesh(new T.CylinderGeometry(0.062, 0.062, 0.12, 10), fur); wrap.rotation.x = Math.PI / 2 - 0.3; wrap.position.set(0, -0.03, 0.3); const fist = new T.Mesh(new T.SphereGeometry(0.06, 10, 8), skin); hand.add(arm, wrap, fist); const sp = mkSpear(); sp.position.z = -0.35; hand.add(sp); hand.userData.sp = sp; }
+  // your arm, seen low on the right: a forearm with a fur cuff, a fist with fingers closed round the shaft (23 Nov 2026, his review: "horrible animation with... the spear throw")
+  const hand = new T.Group(); { const arm = new T.Group(); hand.add(arm); const fa = new T.Mesh(new T.CylinderGeometry(0.036, 0.052, 0.46, 12), skin); fa.rotation.x = Math.PI / 2 - 0.42; fa.position.set(0.03, -0.1, 0.22); const cuff = new T.Mesh(new T.CylinderGeometry(0.06, 0.066, 0.2, 12), fur); cuff.rotation.x = Math.PI / 2 - 0.42; cuff.position.set(0.045, -0.165, 0.37);
+    const palm = new T.Mesh(new T.SphereGeometry(0.048, 12, 10), skin); palm.scale.set(0.95, 1.1, 1.3); palm.position.set(0.012, -0.012, 0.01); arm.add(fa, cuff, palm);
+    for (let f = 0; f < 4; f++) { const fg = new T.Mesh(new T.CapsuleGeometry(0.0125, 0.045, 3, 8), skin); fg.rotation.z = 1.25; fg.position.set(-0.012, 0.03, -0.045 + f * 0.03); arm.add(fg); } const th2 = new T.Mesh(new T.CapsuleGeometry(0.014, 0.04, 3, 8), skin); th2.rotation.set(0.9, 0, -0.5); th2.position.set(0.03, 0.03, -0.035); arm.add(th2);
+    arm.traverse(o => o.castShadow = false); const sp = mkSpear(); sp.position.z = -0.3; hand.add(sp); hand.userData.sp = sp; }
   S.add(hand);
   const flying = mkSpear(); flying.visible = false; S.add(flying);
   const aim = new T.Mesh(new T.RingGeometry(0.3, 0.42, 32), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, depthWrite: false })); aim.rotation.x = -Math.PI / 2; aim.visible = false; aim.renderOrder = 3; S.add(aim);
-  V3 = { T, S, N3, grass, hand, flying, mkSpear, aim, beasts: {}, lion: null, look: new T.Vector3(0, 0, -20), yaw: 0, sky: null, stuck: [] };
+  V3 = { T, S, N3, grass, hand, flying, mkSpear, aim, beasts: {}, lion: null, look: new T.Vector3(0, 0, -20), yaw: 0, sky: null, stuck: [], inBody: [], aFace: null, aRef: null };
   W3.setQuality(stepN); return V3;
 }
-// an animal from simple shapes: body, neck, head, four legs that walk, a tail; antlers, a mane, tusks or fur by kind
-function beast(id) {
-  const T = THREE, V = V3; if (V.beasts[id]) return V.beasts[id];
-  const col = { deer: 0x8a5634, horse: 0x7a6142, boar: 0x3e3127, bison: 0x4a3524, mammoth: 0x5b3f2a, lion: 0xb08a55 }[id], m = new T.MeshStandardMaterial({ color: col, roughness: 0.9, map: W3.grainTex(128, id.length * 7, 190, 50, 3) }), dark = new T.MeshStandardMaterial({ color: 0x1e1712, roughness: 0.8 }), pale = new T.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.5 });
-  const sz = { deer: 1, horse: 1.15, boar: 0.62, bison: 1.35, mammoth: 2.6, lion: 0.95 }[id], g = new T.Group(), body = new T.Group(); g.add(body);
-  const cap = (r, l, mat, x, y, z, rx = 0, rz = 0, par = body) => { const o = new T.Mesh(new T.CapsuleGeometry(r, l, 6, 12), mat); o.position.set(x, y, z); o.rotation.set(rx, 0, rz); o.castShadow = true; par.add(o); return o; };
-  const legH = id === 'boar' ? 0.38 : id === 'mammoth' ? 0.9 : id === 'bison' ? 0.6 : 0.75;
-  cap(0.28 * (id === 'bison' ? 1.3 : id === 'mammoth' ? 1.35 : id === 'boar' ? 1.1 : 1), 0.85, m, 0, legH + 0.32, 0, Math.PI / 2);
-  if (id === 'bison') cap(0.33, 0.25, m, 0, legH + 0.62, 0.32, 0.4);
-  const neck = new T.Group(); neck.position.set(0, legH + 0.45, 0.55); body.add(neck); const head = new T.Group(); neck.add(head);
-  if (id !== 'boar' && id !== 'mammoth') cap(0.11, 0.42, m, 0, 0.22, 0.12, -0.55, 0, neck);
-  head.position.set(0, id === 'boar' || id === 'mammoth' ? 0.0 : 0.45, id === 'boar' ? 0.15 : 0.32);
-  cap(id === 'mammoth' ? 0.32 : 0.1, id === 'mammoth' ? 0.2 : 0.28, m, 0, 0, 0.1, Math.PI / 2 - 0.3, 0, head);
-  for (const s of [-1, 1]) { const e = new T.Mesh(new T.SphereGeometry(0.022, 8, 6), dark); e.position.set(s * 0.085 * (id === 'mammoth' ? 2.5 : 1), 0.06, 0.12); head.add(e);
-    if (id !== 'mammoth') { const ear = new T.Mesh(new T.ConeGeometry(0.04, 0.12, 6), m); ear.position.set(s * 0.08, 0.14, 0); ear.rotation.z = -s * 0.5; head.add(ear); ear.userData.ear = s; } }
-  if (id === 'deer') for (const s of [-1, 1]) { const a = cap(0.012, 0.45, pale, s * 0.08, 0.36, 0.0, -0.3, -s * 0.5, head); for (let t = 0; t < 3; t++) cap(0.009, 0.16, pale, s * (0.12 + t * 0.04), 0.4 + t * 0.12, 0.02, -0.6, -s * 1.1, head); }
-  if (id === 'horse') cap(0.04, 0.42, dark, 0, 0.32, 0.0, -0.5, 0, neck);
-  if (id === 'boar' || id === 'mammoth') for (const s of [-1, 1]) { const tk = new T.Mesh(new T.TorusGeometry(id === 'mammoth' ? 0.55 : 0.08, id === 'mammoth' ? 0.05 : 0.012, 6, 14, 2.2), pale); tk.position.set(s * (id === 'mammoth' ? 0.22 : 0.05), -0.12, id === 'mammoth' ? 0.55 : 0.22); tk.rotation.set(0, s * 0.3 + Math.PI / 2, 0.4); head.add(tk); }
-  if (id === 'mammoth') { const trunk = cap(0.09, 0.9, m, 0, -0.55, 0.25, 0.2, 0, head); }
-  const legs = []; for (const [lx, lz] of [[-0.14, 0.38], [0.14, 0.38], [-0.14, -0.38], [0.14, -0.38]]) { const p = new T.Group(); p.position.set(lx * (id === 'mammoth' ? 1.6 : 1), legH, lz); body.add(p); cap(0.045 * (id === 'mammoth' ? 2.6 : id === 'bison' ? 1.5 : 1), legH * 0.85, id === 'deer' || id === 'horse' ? m : m, 0, -legH * 0.5, 0, 0, 0, p); legs.push(p); }
-  cap(0.03, 0.25, id === 'horse' ? dark : m, 0, legH + 0.3, -0.62, -0.6);
-  g.scale.setScalar(sz); g.userData = { body, neck, head, legs, legH };
-  V.beasts[id] = g; V.S.add(g); return g;
-}
+// an animal with joints (part25_quad.js): one of each kind is built and kept
+function beast(id) { const V = V3; if (V.beasts[id]) return V.beasts[id]; const R = quadMake(THREE, id, W3.grainTex(128, id.length * 7, 205, 40, 3)); R.g.visible = false; V.S.add(R.g); V.beasts[id] = R; return R; }
 function setWeather(G) {
   const V = buildWorld(); if (V.none || V.sky === G.weather) return; V.sky = G.weather;
   W3.setSky(G.weather, { azim: { dawn: 120, sunset: 200, golden: 210, dusk: 195 }[G.weather] || 160, wind: [0.8, 0.3] });
@@ -5373,17 +5476,24 @@ function setWeather(G) {
 function onEvent(G, e) {
   const cx = W / 2, cy = H * 0.3;
   switch (e.k) {
-    case 'animal': break;
+    case 'animal': if (V3 && V3.inBody) { for (const q of V3.inBody) q.parent && q.parent.remove(q); V3.inBody.length = 0; } break;
     case 'tell': sfx.tell(); break;
     case 'look': break;
     case 'heard': if (gate('heardfx', 500)) sfx.snort(); break;
     case 'seen': if (!gate('seenfx', 400)) break; FX.red = Math.max(FX.red, 0.25); sfx.snort(); break;
-    case 'throw': sfx.throw(); vibe(HAP.light); break;
-    case 'hit': if (e.vital) { FX.stop = 0.08; FX.shake = 6; sfx.thud(true); vibe(HAP.thud); } else { sfx.thud(false); say('ONLY WOUNDED', cx, cy, '#ffd0c4', 24); } break;
+    case 'throw': sfx.throw(); vibe(HAP.light); ui.thr = 0; ui.rl = 0; break;
+    case 'hit': ui.hurtT = 0.35; if (e.vital) { FX.stop = 0.08; FX.shake = 6; sfx.thud(true); vibe(HAP.thud); } else { sfx.thud(false); say('ONLY WOUNDED', cx, cy - 40 * k, '#ffd0c4', 24); } break;
     case 'kill': say(G.kills.length >= G.cfg.goal ? 'THE HUNT IS WON' : 'DOWN!', cx, cy, '#ffe08a', 32); sfx.kill(e.n); FX.flash = 0.6; vibe(HAP.best); break;
-    case 'missed': sfx.miss(); say('MISSED', cx, cy, '#ffd0c4', 24); tip('miss', 'Get closer: the spear is steadier', 2.8); break;
+    case 'missed': sfx.miss(); say('MISSED', cx, cy - 40 * k, '#ffd0c4', 24); if (!e.still) tip('miss', 'Get closer: the spear is steadier', 2.8); break;
     case 'staggers': say('IT STAGGERS: AGAIN!', cx, cy, '#ffe08a', 24); break;
-    case 'bolt': sfx.bolt(); say(e.why === 'seen' ? 'IT SAW YOU!' : e.why === 'heard' ? 'IT HEARD YOU RUN!' : 'IT GOT AWAY', cx, cy, '#ffb4a8', 28); FX.red = 0.4; tip('bolt_' + e.why, e.why === 'seen' ? 'Let go of the stick the moment its ears flick' : e.why === 'heard' ? 'Running is loud: creep (a gentle push) when you are close' : 'Aim at the chest, just behind the front legs', 3); break;
+    case 'wary': if (gate('waryfx', 900)) { sfx.snort(); FX.red = Math.max(FX.red, 0.2); say('TOO CLOSE!', cx, cy, '#ffb4a8', 22); } break;
+    case 'threat': sfx.snort(); sfx.growl(0); FX.shake = 5; vibe(HAP.heavy); say('IT TURNS ON YOU!', cx, H * 0.21, '#ffb48a', 30); tip('charge', 'A charge: keep still, then push the stick hard to one side at the last moment', 3.4); break;
+    case 'charge': sfx.bolt(); sfx.roar(); FX.shake = 8; break;
+    case 'commit': sfx.tell(); vibe(HAP.light); break;
+    case 'dodged': sfx.turn(); sfx.miss(); FX.shake = 10; say('DODGED!', cx, cy, '#9be3b5', 30); vibe(HAP.thud); break;
+    case 'winded': sfx.snort(); say('IT IS WINDED: THROW!', cx, cy, '#ffe08a', 26); break;
+    case 'gored': FX.red = 1; FX.shake = 18; sfx.maul(); vibe(HAP.heavy); say('IT RAN YOU DOWN!', cx, cy, '#ffb4a8', 30); tip('gored', 'Wait until it is close, then push the stick hard to one side', 3.2); break;
+    case 'bolt': sfx.bolt(); say(e.why === 'seen' ? 'IT SAW YOU!' : e.why === 'heard' ? 'IT HEARD YOU RUN!' : e.why === 'close' ? 'TOO CLOSE: IT RAN!' : 'IT GOT AWAY', cx, cy, '#ffb4a8', 28); FX.red = 0.4; tip('bolt_' + e.why, e.why === 'seen' ? 'Let go of the stick the moment its ears flick' : e.why === 'heard' ? 'Running is loud: creep (a gentle push) when you are close' : e.why === 'close' ? 'It will not let you that close: throw from further back' : 'Aim at the chest, just behind the front legs', 3); break;
     case 'calm': break;
     case 'growl': sfx.growl(e.side); FX.shake = 4; vibe(HAP.heavy); say(e.side < 0 ? '◀ GROWL' : 'GROWL ▶', e.side < 0 ? W * 0.25 : W * 0.75, H * 0.45, '#ffb48a', 30); tip('lion', 'Tap the side of the growl to face it, then tap when it leaps', 3); break;
     case 'turn': sfx.turn(); break;
@@ -5398,19 +5508,33 @@ function onEvent(G, e) {
     case 'lost': sfx.lose(); break;
   }
 }
-const ui = { snap: false, aim: null, drag: null, stick: null, ch: null, aiming: null, fireT: 0 };
+const ui = { snap: false, aim: null, drag: null, stick: null, ch: null, aiming: null, fireT: 0, thr: null, rl: 0, hurtT: 0 };
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D steppe.', W / 2, H / 2); return; }
   const T = V.T, cam = W3.cam, g = G || idleG(), me = g.me, a = g.a, t = now; setWeather(g);
   if (W3.S.windU) W3.S.windU.value = t;
-  // the animal
-  for (const id in V.beasts) V.beasts[id].visible = false;
-  const B = beast(a.kind.id), U = B.userData; B.visible = true; B.position.copy(g2w(a.x, a.z, HGT(a.x, a.z))); B.rotation.set(0, Math.PI - a.face, 0);
-  const running = a.st === 'flee', walk = a.st === 'graze' ? 0.25 : running ? 1 : 0, ph = t * (running ? 14 : 3);
-  U.legs.forEach((l, i) => l.rotation.x = Math.sin(ph + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * 0.5 * walk);
-  const headDown = a.st === 'graze' ? 0.9 : a.st === 'tell' ? 0.35 + Math.sin(t * 30) * 0.08 : 0; U.neck.rotation.x += (headDown - U.neck.rotation.x) * Math.min(1, dt * 6);
-  U.body.rotation.z = a.st === 'dead' ? Math.min(1.45, (U.body.rotation.z || 0) + dt * 3) : 0; U.body.position.y = a.st === 'dead' ? -0.2 : running ? Math.abs(Math.sin(ph)) * 0.08 : 0;
+  // the animal: a jointed body, posed from what it is doing; its heading turns quickly, not in one frame
+  for (const id in V.beasts) V.beasts[id].g.visible = false;
+  const B = beast(a.kind.id), QS = B.S; B.g.visible = true;
+  if (V.aRef !== a || V.aFace == null || ui.snap) { V.aRef = a; V.aFace = a.face; B.fallT = 0; }
+  { let df = a.face - V.aFace; while (df > Math.PI) df -= 2 * Math.PI; while (df < -Math.PI) df += 2 * Math.PI; V.aFace += df * Math.min(1, dt * (a.st === 'graze' ? 2.5 : 9)); }
+  B.g.position.copy(g2w(a.x, a.z, HGT(a.x, a.z))); B.g.rotation.set(0, Math.PI - V.aFace, 0);
+  { const st = a.st, sp = st === 'graze' ? (a.winded > 0 ? 0 : 0.25) : st === 'flee' ? a.kind.speed : st === 'charge' ? a.kind.speed * 0.95 : st === 'pass' ? a.kind.speed * Math.max(0, 1 - a.t / 1.6) : 0, fast = sp > 2;
+    B.ph += dt * 2 * Math.PI * sp / ((fast ? QS.stride : 0.75) * QS.sz); ui.hurtT = Math.max(0, ui.hurtT - dt);
+    let yaw = Math.atan2(me.x - a.x, -(me.z - a.z)) - (Math.PI - V.aFace); while (yaw > Math.PI) yaw -= 2 * Math.PI; while (yaw < -Math.PI) yaw += 2 * Math.PI; yaw = clamp(yaw, -1.3, 1.3);
+    const rest = QS.neck[3], peek = Math.sin(a.t * 0.8 + a.next) > 0.82, P = { t, ph: B.ph, gait: 0 };
+    if (st === 'graze' && a.winded > 0) Object.assign(P, { neck: Math.min(rest, 0.0) - 0.25 + Math.sin(t * 5) * 0.06, nod: 0.35, crouch: 0.15 + Math.sin(t * 5) * 0.05, tail: 0.2 });      // blowing, head low
+    else if (st === 'graze') Object.assign(P, { gait: 1, amt: 0.7, neck: peek ? rest * 0.5 : Math.min(-0.75, rest - 1.75), nod: peek ? 0.1 : 0.5, chew: 1, ear: peek ? 0.4 : 0 });
+    else if (st === 'tell') Object.assign(P, { neck: rest + 0.12, ear: 1, tail: 0.4 });
+    else if (st === 'look') Object.assign(P, { neck: rest + 0.2, yaw, ear: 0.25, tail: 0.5, trunkUp: 1 });
+    else if (st === 'flee') Object.assign(P, { gait: 2, neck: Math.min(rest, 0.4), tail: 1, back: 1, lame: a.lame ? 2 : null, amt: a.lame ? 0.8 : 1 });
+    else if (st === 'threat') Object.assign(P, { neck: Math.min(rest, 0.1), nod: 0.45, paw: 1, back: 1, tail: 1, trunkUp: 1 });
+    else if (st === 'charge') Object.assign(P, { gait: 2, neck: Math.min(rest, -0.05), nod: 0.5, back: 1, tail: 1, trunkUp: 1 });
+    else if (st === 'pass') Object.assign(P, { gait: sp > 2 ? 2 : 1, amt: Math.max(0.3, 1 - a.t / 1.6), neck: rest * 0.6, tail: 0.6 });
+    else if (st === 'dead') { B.fallT = (B.fallT || 0) + dt; const u = clamp((B.fallT - 0.18) / 0.55, 0, 1); Object.assign(P, { fall: u * u * (3 - 2 * u), neck: 0.1 - u * 0.5, nod: 0.3, pitch: B.fallT < 0.25 ? -0.25 : 0, side: a.x > me.x ? 1 : -1 }); }
+    if (ui.hurtT > 0 && st !== 'dead') P.pitch = 0.3 * Math.sin(ui.hurtT / 0.35 * Math.PI);
+    quadPose(B, P, dt); }
   // camera: crouched at my place, facing the animal, or the lion when I have turned
   const toA = Math.atan2(a.x - me.x, a.z - me.z), Ln = g.lion; let yaw = toA; if (Ln && Ln.st !== 'gone' && me.face) yaw = toA + me.face * Math.PI / 2;
   if (ui.snap) V.yaw = yaw; else { let dy = yaw - V.yaw; while (dy > Math.PI) dy -= 2 * Math.PI; while (dy < -Math.PI) dy += 2 * Math.PI; V.yaw += dy * Math.min(1, dt * 7); } ui.snap = false;
@@ -5418,24 +5542,39 @@ function draw(now, dt) {
   cam.position.copy(eye); cam.fov = innerWidth > innerHeight ? 40 : 48; cam.updateProjectionMatrix();      // (a longer lens since 22 Nov 2026: the animal was a speck)
   cam.lookAt(eye.clone().add(new T.Vector3(Math.sin(V.yaw) * 10, -0.35, -Math.cos(V.yaw) * 10))); cam.rotateZ(Math.sin(t * 3.5) * 0.004 * (me.creep ? 3 : 1));
   if (FX.shake > 0) { cam.rotation.x += (Math.random() - 0.5) * FX.shake * 0.002; cam.rotation.y += (Math.random() - 0.5) * FX.shake * 0.002; }
-  // my arm and spear, low on the right; drawn back while aiming, gone while a spear flies
+  // my arm and spear, low on the right: drawn back beside the head while aiming; the throw whips it forward and through; then a new spear comes up from the bundle
   const fw = new T.Vector3(Math.sin(V.yaw), 0, -Math.cos(V.yaw)), rt = new T.Vector3(Math.cos(V.yaw), 0, Math.sin(V.yaw)), pull = ui.aiming != null ? 0.55 : ui.fireT > 0 ? 1 : 0, flyingNow = g.spears.some(s => !s.done);
-  V.hand.position.copy(eye).addScaledVector(rt, 0.28).addScaledVector(fw, 0.42 - pull * 0.25).add(new T.Vector3(0, -0.32 + pull * 0.18, 0)); V.hand.rotation.set(0, -V.yaw, 0); V.hand.rotateX(0.12 + pull * 0.25);
-  V.hand.userData.sp.visible = !flyingNow; if (Ln && Ln.st !== 'gone') { V.hand.rotateX(-0.1); V.hand.position.addScaledVector(rt, -0.12); }
-  // the spear in flight
-  const s = g.spears[g.spears.length - 1]; V.flying.visible = !!(s && !s.done);
-  if (s && !s.done) { const u = s.t / s.T, x = s.x0 + (s.tx - s.x0) * u, z = s.z0 + (s.tz - s.z0) * u, h = HGT(x, z) + 1.2 * (1 - u) + Math.sin(u * Math.PI) * (0.6 + s.T * 2.2) + 0.5 * u;
-    const p = g2w(x, z, h), u2 = Math.min(1, u + 0.02), p2 = g2w(s.x0 + (s.tx - s.x0) * u2, s.z0 + (s.tz - s.z0) * u2, HGT(x, z) + 1.2 * (1 - u2) + Math.sin(u2 * Math.PI) * (0.6 + s.T * 2.2) + 0.5 * u2);
-    V.flying.position.copy(p); V.flying.lookAt(p.clone().add(p.clone().sub(p2))); }
-  if (s && s.done && !s.stuck) { s.stuck = true; const st = V.mkSpear(); st.position.copy(g2w(s.tx, s.tz, HGT(s.tx, s.tz) + 0.6)); st.rotation.set(-1.0, Math.random() * 6, 0); V.S.add(st); V.stuck.push(st); if (V.stuck.length > 6) V.S.remove(V.stuck.shift()); }
+  let hx = 0.28, hy = -0.32 + pull * 0.2, hz = 0.42 - pull * 0.25, hrx = 0.12 + pull * 0.25, hry = 0, showSp = true;
+  if (ui.thr != null) { const th = ui.thr; ui.thr += dt;
+    if (th < 0.13) { const u = th / 0.13; hz = 0.17 + u * 0.8; hy = -0.12 - u * 0.16; hrx = 0.37 - u * 1.0; hx = 0.28 - u * 0.1; showSp = false; }
+    else if (flyingNow || th < 0.5) { const u = Math.min(1, (th - 0.13) / 0.32); hz = 0.97 - u * 0.45; hy = -0.28 - u * 0.55; hrx = -0.63 - u * 0.3; hx = 0.18 + u * 0.1; hry = 0.3 * u; showSp = false; }
+    else { ui.rl += dt; const u = Math.min(1, ui.rl / 0.38), e2 = u * u * (3 - 2 * u); hy = -0.95 + e2 * 0.63; hz = 0.3 + e2 * 0.12; hrx = 0.9 - e2 * 0.78; if (u >= 1) { ui.thr = null; ui.rl = 0; } } }
+  const s = g.spears[g.spears.length - 1]; if (s && !s.done && !s.p0) s.p0 = V.hand.position.clone().addScaledVector(fw, 0.5).add(new T.Vector3(0, 0.12, 0));      // it leaves from where the hand is
+  V.hand.position.copy(eye).addScaledVector(rt, hx).addScaledVector(fw, hz).add(new T.Vector3(0, hy, 0)); V.hand.rotation.set(0, -V.yaw + hry, 0); V.hand.rotateX(hrx);
+  V.hand.userData.sp.visible = showSp; if (Ln && Ln.st !== 'gone') { V.hand.rotateX(-0.1); V.hand.position.addScaledVector(rt, -0.12); }
+  // the spear in flight: from the hand, in a low arc, nose along its path; at an animal it goes for the chest, and follows one that is charging
+  V.flying.visible = !!(s && !s.done); V.flying.scale.setScalar(1.5); if (!V.flying.visible) ui.trail = null;
+  if (s && !s.done) { const u = s.t / s.T, onA = Math.hypot(s.tx - a.x, s.tz - a.z) < a.kind.body * 0.9, chg = false;
+    const end = chg ? g2w(a.x, a.z, HGT(a.x, a.z) + 0.7 * a.kind.body) : g2w(s.tx, s.tz, HGT(s.tx, s.tz) + (onA ? 0.72 * a.kind.body : 0.05)), p0 = s.p0 || eye, dist = p0.distanceTo(end);
+    const at = q => p0.clone().lerp(end, q).add(new T.Vector3(0, Math.sin(q * Math.PI) * (0.3 + dist * 0.06), 0)), p = at(u), p2 = at(Math.min(1, u + 0.03)); ui.trail = { at, u };
+    V.flying.position.copy(p); if (u < 0.97) V.flying.lookAt(p.clone().add(p.clone().sub(p2))); V.flying.rotateZ(u * 5); s.end = end; s.dir = p2.clone().sub(p).normalize(); }
+  // landed: in the animal it stays in it (and goes where the animal goes); in the ground it stands quivering
+  if (s && s.done && !s.stuck) { s.stuck = true; const st = V.mkSpear();
+    if (s.hit) { const side = ((me.x - a.x) * Math.cos(a.face) - (me.z - a.z) * Math.sin(a.face)) > 0 ? -1 : 1, hzq = QS.len / 2, wd = (s.hit === 'vital' ? QS.chest[0] : QS.rump[0]), cyq = QS.chest[1] * 0.75;
+      let lyaw = Math.atan2(me.x - a.x, -(me.z - a.z)) - (Math.PI - V.aFace); st.rotation.set(0, lyaw, 0); st.rotateX(-0.3); const dirL = new T.Vector3(0, 0, 1).applyEuler(st.rotation);
+      st.position.set(Math.sin(lyaw) * wd * 0.55, cyq + 0.06, (s.hit === 'vital' ? hzq * 0.62 : -hzq * 0.6) + Math.cos(lyaw) * wd * 0.2).addScaledVector(dirL, 1.02); st.scale.setScalar(1 / QS.sz); B.body.add(st); V.inBody.push(st); }
+    else { st.position.copy(g2w(s.tx, s.tz, HGT(s.tx, s.tz) + 0.62)); const d0 = s.dir || fw; st.lookAt(st.position.clone().sub(d0)); st.rotateX(0.5); st.userData.q = 0.7; st.userData.rx = st.rotation.x; V.S.add(st); V.stuck.push(st); if (V.stuck.length > 6) V.S.remove(V.stuck.shift()); } }
+  for (const st of V.stuck) if (st.userData.q > 0) { st.userData.q -= dt; st.rotation.x = st.userData.rx + Math.sin(t * 46) * 0.07 * Math.max(0, st.userData.q) / 0.7; }
   V.aim.visible = false; ui.fireT = Math.max(0, ui.fireT - dt);      // (the old mark on the ground is gone: the crosshair shows the aim)
   // the lion: crouched in the grass to the side, coming; then the leap
-  if (!V.lion) V.lion = beast('lion');
-  if (Ln && Ln.st !== 'gone') { const L2 = V.lion; L2.visible = true; const ang = toA + Ln.side * Math.PI / 2, d = Ln.st === 'stalk' ? Math.max(3.5, 14 - Ln.t / Ln.leapAt * 10) : Math.max(0.6, 3.5 - Ln.t / g.cfg.leap * 3);
-    const lx = me.x + Math.sin(ang) * d, lz = me.z + Math.cos(ang) * d; L2.position.copy(g2w(lx, lz, HGT(lx, lz) + (Ln.st === 'leap' ? Math.sin(Math.min(1, Ln.t / g.cfg.leap) * Math.PI) * 1.2 : 0))); L2.rotation.y = Math.PI - (ang + Math.PI);
-    L2.userData.neck.rotation.x = Ln.st === 'stalk' ? 0.2 : -0.3; L2.userData.legs.forEach((l, i) => l.rotation.x = Ln.st === 'leap' ? (i < 2 ? -0.9 : 0.8) : Math.sin(t * 5 + i) * 0.2); }
+  if (!V.lion) V.lion = beast('lion'); V.lion.g.visible = false;
+  if (Ln && Ln.st !== 'gone') { const L2 = V.lion; L2.g.visible = true; const ang = toA + Ln.side * Math.PI / 2, lp = Ln.st === 'leap' ? Math.min(1, Ln.t / g.cfg.leap) : 0, d = Ln.st === 'stalk' ? Math.max(3.5, 14 - Ln.t / Ln.leapAt * 10) : Math.max(0.6, 3.5 - lp * 3);
+    const lx = me.x + Math.sin(ang) * d, lz = me.z + Math.cos(ang) * d; L2.g.position.copy(g2w(lx, lz, HGT(lx, lz) + Math.sin(lp * Math.PI) * 1.2)); L2.g.rotation.y = Math.PI - (ang + Math.PI); L2.ph += dt * (Ln.st === 'stalk' ? 5 : 0);
+    quadPose(L2, Ln.st === 'stalk' ? { t, ph: L2.ph, gait: 1, amt: 0.8, crouch: 0.9, neck: 0.05, nod: 0.1, back: 1, tail: 0.2 } : { t, ph: 3.5, gait: 2, amt: 1, pitch: 0.45 - lp * 0.5, neck: 0.5, nod: 0.3, tail: 0.6 }, dt); }
   W3.setFocus(eye.x + fw.x * 6, eye.y, eye.z + fw.z * 6, 14);
   W3.render(dt);
+  // the throw's streak: the path the spear has just flown, drawn over the picture so that a spear going straight away from you is still seen
+  if (ui.trail) { const { at, u } = ui.trail, n = 9; ctx.lineCap = 'round'; let prev = null; for (let i = 0; i <= n; i++) { const q = Math.max(0, u - 0.4) + (u - Math.max(0, u - 0.4)) * i / n, sp = W3.screen(at(q)); if (prev && sp.front && prev.front) { ctx.strokeStyle = `rgba(255,244,214,${0.08 + 0.5 * i / n})`; ctx.lineWidth = (1 + 3.5 * i / n) * k; ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(sp.x, sp.y); ctx.stroke(); } prev = sp; } }
   if (G) hud(G);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const t2 of TXT) { const al = t2.t < 0.9 ? 1 : 1 - (t2.t - 0.9) / 0.4; ctx.globalAlpha = Math.max(0, al); ctx.font = `700 ${Math.round(t2.size * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(t2.txt, t2.x, t2.y - t2.t * 26 * k); ctx.fillStyle = t2.col; ctx.fillText(t2.txt, t2.x, t2.y - t2.t * 26 * k); }
@@ -5461,7 +5600,8 @@ function hud(G) {
     ctx.strokeStyle = a.alert > 0.6 ? '#ff6b5a' : '#fff'; ctx.lineWidth = 2; ctx.stroke();
     if (open > 0.3) { ctx.fillStyle = a.alert > 0.6 ? '#ff6b5a' : '#ffd36a'; ctx.beginPath(); ctx.arc(ex, ey, r * 0.45 * open, 0, TAU); ctx.fill(); }
     ctx.fillStyle = 'rgba(255,90,70,.9)'; ctx.fillRect(ex - r * 1.5, ey + r + 5, r * 3 * clamp(a.alert, 0, 1), 3 * k);
-    ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(`${Math.round(distA(G))} m`, ex, ey + r + 20 * k); } }
+    { const dm = distA(G), shy = a.kind.shy * c.shy, win = a.winded > 0, col = angry(a) ? '#fff' : win ? '#7dff9a' : dm < shy ? '#ff6b5a' : dm <= 15 ? '#7dff9a' : '#fff', lab = angry(a) ? `${Math.round(dm)} m` : win ? `${Math.round(dm)} m · WINDED: THROW` : dm < shy ? `${Math.round(dm)} m · TOO CLOSE` : dm <= 15 ? `${Math.round(dm)} m · GOOD RANGE` : `${Math.round(dm)} m`;      // the metres say when you are near enough, and when too near
+      ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(lab, ex, ey + r + 20 * k); ctx.fillStyle = col; ctx.fillText(lab, ex, ey + r + 20 * k); } } }
   controlsHud(G);
 }
 // ---------- the controls on screen: the stick (creep / run), the crosshair, THROW; and big prompts for a lion ----------
@@ -5473,18 +5613,24 @@ function aimPoint() { if (!G || !V3 || V3.none) return G ? { x: G.a.x, z: G.a.z,
   if (Math.abs(den) > 1e-4) { const t = pa.clone().sub(o).dot(n) / den; if (t > 0) P = o.clone().addScaledVector(d, t); }
   if (!P || P.y < gy - 0.05) { const t = (gy - o.y) / (d.y || -1e-4); if (t > 0) P = o.clone().addScaledVector(d, t); else return { x: a.x, z: a.z, sx, sy }; }
   const top = gy + 1.55 * a.kind.body, over = Math.max(0, P.y - top) * 4; return { x: P.x + n.x * over, z: -(P.z + n.z * over), sx, sy }; }
-function controlsHud(G) { if (G.over) return; const L = layout(), Ln = G.lion && G.lion.st !== 'gone' ? G.lion : null, a = G.a, me = G.me; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+function controlsHud(G) { if (G.over) return; const L = layout(), Ln = G.lion && G.lion.st !== 'gone' ? G.lion : null, a = G.a, me = G.me; ctx.textAlign = 'center';
+  // a charge: what to do, in big letters, and when
+  if (a.st === 'threat' || a.st === 'charge') { const now2 = performance.now(), pulse = 0.6 + 0.4 * Math.sin(now2 / 80), lock = a.locked, y0 = H * (G.lesson ? 0.36 : 0.275);
+    ctx.font = `700 ${Math.round((lock ? 26 : 19) * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.fillStyle = lock ? `rgba(255,${Math.round(120 + 100 * pulse)},90,1)` : '#ffe08a';
+    const msg = lock ? '◀ DIVE ASIDE! ▶' : a.st === 'threat' ? 'IT IS GOING TO CHARGE' : 'WAIT FOR IT…'; ctx.strokeText(msg, W / 2, y0); ctx.fillText(msg, W / 2, y0);
+    if (lock) { ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('PUSH THE STICK HARD TO ONE SIDE', W / 2, y0 + 26 * k); ctx.fillText('PUSH THE STICK HARD TO ONE SIDE', W / 2, y0 + 26 * k);
+      ctx.strokeStyle = `rgba(255,150,90,${pulse})`; ctx.lineWidth = 5 * k; const s2 = ui.stick, bx = s2 ? s2.x0 : 86 * k, by = s2 ? s2.y0 : H - 100 * k; ctx.beginPath(); ctx.arc(bx, by, 64 * k, 0, TAU); ctx.stroke(); } } ctx.textBaseline = 'middle';
   if (Ln) { const turned = me.face === Ln.side, pulse = 0.6 + 0.4 * Math.sin(performance.now() / 90);
     for (const sd of [-1, 1]) { const x0 = sd < 0 ? 0 : W / 2, hot = Ln.st === 'stalk' && !me.face && sd === Ln.side; ctx.fillStyle = hot ? `rgba(255,120,60,${0.25 + 0.2 * pulse})` : 'rgba(0,0,0,.18)'; ctx.fillRect(x0, H * 0.62, W / 2, H * 0.38); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(34 * k)}px ${BC}`; ctx.fillText(sd < 0 ? '◀' : '▶', x0 + W / 4, H * 0.76); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillText(sd < 0 ? 'TAP: FACE LEFT' : 'TAP: FACE RIGHT', x0 + W / 4, H * 0.84); }
     const msg = Ln.st === 'leap' ? 'NOW! TAP!' : turned ? 'WAIT FOR THE LEAP… THEN TAP' : me.face ? 'WRONG WAY! TAP THE OTHER SIDE' : (Ln.side < 0 ? '◀ A LION ON YOUR LEFT: TAP LEFT' : 'A LION ON YOUR RIGHT: TAP RIGHT ▶'); ctx.font = `700 ${Math.round((Ln.st === 'leap' ? 30 : 17) * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(msg, W / 2, H * 0.56); ctx.fillStyle = Ln.st === 'leap' ? '#ffe08a' : '#fff'; ctx.fillText(msg, W / 2, H * 0.56); return; }
   // the crosshair: a circle, four marks and a dot; amber on the animal, green on its chest. It sways as your arm does.
-  if (a.st !== 'dead' && a.st !== 'flee' && !G.spears.some(s => !s.done)) { const A = aimPoint(); if (A) { const d = Math.hypot(A.x - me.x, A.z - me.z) || 1, sw = swayOf(G, d), short = Math.max(0, d - 16) * 0.65, lx = A.x + sw.x - (A.x - me.x) / d * short, lz = A.z + sw.z - (A.z - me.z) / d * short, k2 = a.kind;
+  if (a.st !== 'dead' && a.st !== 'flee' && !angry(a) && !G.spears.some(s => !s.done)) { const A = aimPoint(); if (A) { const d = Math.hypot(A.x - me.x, A.z - me.z) || 1, sw = swayOf(G, d), short = Math.max(0, d - 16) * 0.65, lx = A.x + sw.x - (A.x - me.x) / d * short, lz = A.z + sw.z - (A.z - me.z) / d * short, k2 = a.kind;
       const vx = a.x + Math.sin(a.face) * k2.body * 0.5, vz = a.z + Math.cos(a.face) * k2.body * 0.5, onChest = Math.hypot(lx - vx, lz - vz) < k2.vital * (1 - Math.min(0.3, G.cfg.f / 150)) * (lessonNow(G) ? 1.3 : 1), onBody = Math.hypot(lx - a.x, lz - a.z) < k2.body * 0.75;
       let ox = 0, oy = 0; if (V3 && !V3.none) { const gy = HGT(a.x, a.z) + 0.75 * k2.body, p0 = W3.screen(g2w(A.x, A.z, gy)), p1 = W3.screen(g2w(lx, lz, gy)); ox = p1.x - p0.x; oy = (p1.y - p0.y) + Math.sin(G.t * 1.6 + 1.3) * 3 * k; }
       const cx = A.sx + ox, cy = A.sy + oy, col = short > 0 ? '#ff8a6a' : onChest ? '#7dff9a' : onBody ? '#ffd36a' : '#ffffff', r0 = 20 * k; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.45)'; for (let pass = 0; pass < 2; pass++) { ctx.beginPath(); ctx.arc(cx, cy, r0, 0, TAU); for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { ctx.moveTo(cx + ux * r0 * 0.55, cy + uy * r0 * 0.55); ctx.lineTo(cx + ux * r0 * 1.5, cy + uy * r0 * 1.5); } ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = col; }
       ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, 2.5 * k, 0, TAU); ctx.fill(); const lab = short > 0 ? 'TOO FAR' : onChest ? 'CHEST: THROW!' : onBody ? 'ON IT (AIM FOR THE CHEST)' : ''; if (lab) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(lab, cx, cy + r0 * 1.5 + 12 * k); ctx.fillStyle = col; ctx.fillText(lab, cx, cy + r0 * 1.5 + 12 * k); } } }
   // THROW
-  { const B = L.fire, on = ui.fireT > 0, can = !G.spears.some(s => !s.done) && a.st !== 'dead' && a.st !== 'flee'; ctx.globalAlpha = can ? 0.95 : 0.4; ctx.fillStyle = on ? '#ffd36a' : '#c8502a'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.93 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffe8c8'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(19 * k)}px ${BC}`; ctx.fillText('THROW', B.x, B.y - 2 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('tap', B.x, B.y + 16 * k); ctx.globalAlpha = 1;
+  { const B = L.fire, on = ui.fireT > 0, can = !G.spears.some(s => !s.done) && a.st !== 'dead' && a.st !== 'flee' && !angry(a); ctx.globalAlpha = can ? 0.95 : 0.4; ctx.fillStyle = on ? '#ffd36a' : '#c8502a'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.93 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffe8c8'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(19 * k)}px ${BC}`; ctx.fillText('THROW', B.x, B.y - 2 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('tap', B.x, B.y + 16 * k); ctx.globalAlpha = 1;
     if (ui.aiming == null && G.N <= 3) { ctx.globalAlpha = 0.8; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.fillText('DRAG HERE TO AIM', W * 0.75, H - 190 * k); ctx.globalAlpha = 1; } }
   // the stick: an inner ring (creep) and an outer one (run)
   { const s2 = ui.stick, R = 56 * k, bx = s2 ? s2.x0 : 86 * k, by = s2 ? s2.y0 : H - 100 * k; ctx.globalAlpha = s2 ? 0.9 : 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, R, 0, TAU); ctx.stroke(); ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(bx, by, R * 0.78, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
@@ -5578,7 +5724,7 @@ function saveResult(G) {      // a win saves the next level at once (leaving bef
 }
 function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
-  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'THE MAMMOTH FALLS' : 'THE HUNT IS WON') : r.why === 'maul' ? 'MAULED' : 'THEY ALL GOT AWAY'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'THE MAMMOTH FALLS' : 'THE HUNT IS WON') : r.why === 'maul' ? 'MAULED' : r.why === 'gored' ? 'RUN DOWN' : 'THEY ALL GOT AWAY'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
   $('eSub').innerHTML = r.win ? `Longest throw <b>${r.best} m</b>${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}${r.lions ? ` · lions held off: <b>${r.lions}</b>` : ''}` + (r.stars < 3 ? '<br>No chances lost for three stars.' : '')
     : `<b>${r.kills}</b> of ${r.goal} brought down.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');

@@ -21,6 +21,8 @@ with sync_playwright() as p:
                 if not has: bad.append('no winNow'); ctx.close(); break
                 pg.evaluate("window.__sim.winNow()"); pg.wait_for_timeout(4500)
                 shown = pg.evaluate("(() => { const e = document.querySelector('#ovEnd'); return !!e && !e.classList.contains('hidden'); })()"); over = pg.evaluate("!!(window.__sim.G && window.__sim.G.over)")
+                if over and not shown and not errs:      # (23 Nov 2026: Reel's win landed at 4.4 s and its card a second later; a game that has just ended is given time to show its card)
+                    pg.wait_for_timeout(3000); shown = pg.evaluate("(() => { const e = document.querySelector('#ovEnd'); return !!e && !e.classList.contains('hidden'); })()")
                 if errs: bad.append(f'{wait_ms}ms: {errs[0]}')
                 elif over and not shown: bad.append(f'{wait_ms}ms: over but no card')
             except Exception as e: bad.append(f'{wait_ms}ms: EXC {str(e)[:100]}')

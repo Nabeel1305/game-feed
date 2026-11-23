@@ -1,18 +1,20 @@
 // ===================== RULES: Pilot (game 15) =====================
 // Land an airliner. You fly the final approach, seen from just behind and above the plane. Right thumb is the control column:
-// move it left or right to bank and turn, PULL IT BACK (down) to raise the nose, push it forward (up) to lower it. Left thumb is
+// four buttons that never move: ▲ UP, ▼ DOWN, ◀ LEFT, ▶ RIGHT (his review, 23 Nov 2026: "I literally cannot descend": it was a real
+// cockpit's column, pulled DOWN the screen to climb, and on flight 1 up and down did nothing; then, 13:47, after a stick with UP and
+// DOWN written round it that moved to wherever the thumb landed: buttons, in one place, no joystick). `G.st.y` is + for nose up. Left thumb is
 // the throttle: slide it up for more power, down for less. Follow the glide path (the four lights beside the runway: two white,
-// two red is right), keep on the centre line, keep the speed in the green, and just before the wheels touch, pull back gently to
+// two red is right), keep on the centre line, keep the speed in the green, and just before the wheels touch, thumb up gently to
 // flare so you touch down softly. Crosswind pushes you sideways; turbulence bumps you.
 // World: metres. d = distance to the runway threshold along the approach (falls to 0 at the threshold, below 0 over the runway);
 // x = to the right of the centre line; y = height of the wheels; psi = heading off the runway's direction (+ right).
 
 const RULES = [
-  '<b>Right thumb: the control column.</b> Left and right to bank and turn. <b>Pull back (down)</b> to raise the nose, push forward (up) to lower it.',
+  '<b>Four buttons under your right thumb.</b> ▲ UP climbs, ▼ DOWN descends, ◀ LEFT and ▶ RIGHT turn. Press and hold.',
   '<b>Left thumb: the throttle.</b> Slide up for more power, down for less. Keep the speed in the green.',
-  '<b>Follow the glide path:</b> the four lights beside the runway show two white and two red when you are right. All white: too high. All red: too low.',
+  '<b>Follow the glide path:</b> the four lights beside the runway show two white and two red when you are right. All white: too high, press ▼ DOWN. All red: too low, press ▲ UP.',
   '<b>Keep on the centre line.</b> In a crosswind, point a little into the wind.',
-  '<b>Flare:</b> just before the wheels touch, pull back gently and bring the power off. A soft touchdown, wings level, on the runway.',
+  '<b>Flare:</b> just before the wheels touch, press ▲ UP to lift the nose, and bring the power off. A soft touchdown, wings level, on the runway.',
   'Touch down too hard, short, off the side, or not at all, and it is a crash.',
 ];
 const WEATHERS = ['morning', 'golden', 'overcast', 'rain', 'mist', 'sunset', 'night', 'storm', 'noon', 'dusk'];
@@ -53,7 +55,7 @@ function step(G, dt) {
   const gu = G.gust; gu.t -= dt; if (gu.t <= 0) { gu.t = 0.4 + R() * 1.2; gu.b = (R() * 2 - 1) * c.turb * 0.12; gu.g = (R() * 2 - 1) * c.turb * 0.025; }
   // the column: bank and pitch follow it; the nose trims itself to hold the flight path you leave it on
   a.phi += (G.st.x * 0.5 - a.phi) * Math.min(1, dt * 2.4) + gu.b * dt * 3;
-  const thWant = autoP && !(L.flareYou && a.y < 14) ? autoPitch(G) : a.trim != null ? a.trim + G.st.y * 0.16 : a.th;
+  const thWant = autoP && !(L.flareYou && a.y < 14) ? autoPitch(G) + G.st.y * 0.16 : a.trim != null ? a.trim + G.st.y * 0.16 : a.th;      // (UP and DOWN always do something, even while the autopilot of flight 1 is helping)
   if (!autoP || (L.flareYou && a.y < 14)) { if (a.trim == null) a.trim = a.th; if (Math.abs(G.st.y) < 0.05) a.trim = a.th; }
   a.th += (thWant - a.th) * Math.min(1, dt * 1.6) + gu.g * dt * 3;
   if (autoT) G.thr = autoThr(G);
@@ -65,7 +67,7 @@ function step(G, dt) {
   a.d -= a.v * Math.cos(gamma) * Math.cos(a.psi) * dt; a.x += vx * dt; a.y += a.vy * dt; a.vx = vx;
   // warnings (once each, they say what is wrong)
   const gsErr = a.y - (a.d + AIM) * Math.tan(GS);
-  warnOnce(G, 'slow', a.v < 60); warnOnce(G, 'fast', a.v > 90); warnOnce(G, 'low', a.d > 400 && gsErr < -25); warnOnce(G, 'bank', Math.abs(a.phi) > 0.45 && a.y < 60);
+  warnOnce(G, 'slow', a.v < 60); warnOnce(G, 'fast', a.v > 90); warnOnce(G, 'low', a.d > 400 && gsErr < -25); warnOnce(G, 'high', a.d > 400 && gsErr > 30 && !autoP); warnOnce(G, 'bank', Math.abs(a.phi) > 0.45 && a.y < 60);
   if (a.d > 600 && Math.abs(a.x) < 25 && Math.abs(gsErr) < 15) { G.onLine = (G.onLine || 0) + dt; if (G.onLine > 3) { G.onLine = 0; G.ev.push({ k: 'online' }); lessonSee(G, 'online'); } } else G.onLine = 0;
   // the ground
   if (a.y <= 0) touchdown(G);
@@ -92,9 +94,9 @@ function autoPitch(G) { const a = G.ac, want = (a.d + AIM) * Math.tan(GS), err =
 function autoThr(G) { const a = G.ac; return a.y < 8 ? 0.1 : clamp(0.58 + (VREF + 4 - a.v) * 0.05, 0, 1); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'line', title: 'KEEP ON THE CENTRE LINE', how: 'Right thumb left or right to bank and turn. Line up with the runway and stay on it. (The plane holds its own height and speed for now.)', need: 3, ok: w => w === 'online', autoPitch: 1, autoThr: 1, d: 6000 },
-      { id: 'flare', title: 'FLARE, THEN TOUCH DOWN', how: 'Just before the wheels touch, PULL BACK gently (thumb down) to raise the nose. A soft touchdown.', need: 1, ok: w => w === 'flare', autoPitch: 1, flareYou: 1, autoThr: 1, d: 1500 }],
-  2: [{ id: 'glide', title: 'FOLLOW THE GLIDE PATH', how: 'Watch the four lights by the runway: two white, two red is right. Push forward to go down, pull back to come up. Then flare and land.', need: 1, ok: w => w === 'landed', autoThr: 1, d: 2600 }],
+  1: [{ id: 'line', title: 'KEEP ON THE CENTRE LINE', how: 'Press ◀ LEFT or ▶ RIGHT to turn. Line up with the runway and stay on it. The autopilot helps with the height for now (▲ UP and ▼ DOWN still work).', need: 3, ok: w => w === 'online', autoPitch: 1, autoThr: 1, d: 6000 },
+      { id: 'flare', title: 'FLARE, THEN TOUCH DOWN', how: 'Just before the wheels touch, press ▲ UP to lift the nose. A soft touchdown.', need: 1, ok: w => w === 'flare', autoPitch: 1, flareYou: 1, autoThr: 1, d: 1500 }],
+  2: [{ id: 'glide', title: 'FOLLOW THE GLIDE PATH', how: 'Watch the four lights by the runway: two white, two red is right. Press ▼ DOWN to go down, ▲ UP to come up. Then flare (▲ UP at the last moment) and land.', need: 1, ok: w => w === 'landed', autoThr: 1, d: 2600 }],
   3: [{ id: 'power', title: 'THE THROTTLE', how: 'Left thumb up for more power, down for less: keep the speed in the green. Land it, flaring at the end.', need: 1, ok: w => w === 'landed', d: 2600 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); approach(G, lessonNow(G).d, G.N === 1 ? 250 : 0); }

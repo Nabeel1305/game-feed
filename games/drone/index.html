@@ -5293,7 +5293,15 @@ function syncCourse(G) {
   const V = V3, T = V.T, key = G.seed + ':' + G.hoops.length + ':' + (G.hoops[0] ? G.hoops[0].z0 || G.hoops[0].z : 0) + ':' + G.trees.length + (G.lesson ? 'L' + G.lesson.i : '');
   if (V.treeKey === key) return; V.treeKey = key;
   V.hoops.forEach(m => V.S.remove(m)); V.treeMesh.forEach(m => V.S.remove(m)); V.walls.forEach(m => V.S.remove(m));
-  V.hoops = G.hoops.map(h => { const m = new T.Mesh(new T.TorusGeometry(h.r, 0.13, 10, 48), new T.MeshStandardMaterial({ color: 0x1a3a40, emissive: 0x40f0ff, emissiveIntensity: 0.6, roughness: 0.3 })); m.castShadow = true; V.S.add(m); return m; });
+  // (23 Nov 2026, from his review of Soar: "The rings are ugly. Make them more pretty": these were the same thing, one plain tube.) Each hoop is a
+  // racing gate of light: a dark frame, a bright neon core, a soft glow and a halo round it, and sixteen lamps that chase round the frame; each
+  // hoop along the course is the next colour.
+  if (!V.haloTex) { const c = document.createElement('canvas'); c.width = c.height = 256; const g2 = c.getContext('2d'), gr = g2.createRadialGradient(128, 128, 60, 128, 128, 128); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.44, 'rgba(255,255,255,0)'); gr.addColorStop(0.61, 'rgba(255,255,255,.5)'); gr.addColorStop(0.72, 'rgba(255,255,255,.14)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 256, 256); V.haloTex = new T.CanvasTexture(c); }
+  const addM = o2 => new T.MeshBasicMaterial(Object.assign({ transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide }, o2)), HCOL = [0x40f0ff, 0xff4fd8, 0x9dff4a, 0xffb02e, 0x8a7bff];
+  V.hoops = G.hoops.map((h, i) => { const g3 = new T.Group(), col = HCOL[i % HCOL.length], frame = new T.Mesh(new T.TorusGeometry(h.r, 0.13, 10, 56), new T.MeshStandardMaterial({ color: 0x10181c, roughness: 0.35, metalness: 0.6 })); frame.castShadow = true;
+    const core = new T.Mesh(new T.TorusGeometry(h.r - 0.02, 0.05, 8, 64), new T.MeshBasicMaterial({ color: col, transparent: true })), glow = new T.Mesh(new T.TorusGeometry(h.r, 0.26, 8, 64), addM({ color: col, opacity: 0.35 })), halo = new T.Mesh(new T.PlaneGeometry(h.r * 3.3, h.r * 3.3), addM({ map: V.haloTex, color: col, opacity: 0.5 })), lamps = new T.Group();
+    for (let q = 0; q < 16; q++) { const lm = new T.Mesh(new T.SphereGeometry(0.085, 8, 6), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true })); lm.position.set(Math.cos(q / 16 * 6.283) * (h.r + 0.13), Math.sin(q / 16 * 6.283) * (h.r + 0.13), 0); lamps.add(lm); }
+    g3.add(frame, halo, glow, core, lamps); g3.userData = { core, glow, halo, lamps, col }; V.S.add(g3); return g3; });
   const pines = G.trees.filter((t, i) => i % 2 === 0), broad = G.trees.filter((t, i) => i % 2 === 1);
   V.treeMesh = [];
   if (pines.length) V.treeMesh.push(W3.pines(pines.map(t => ({ x: t.x, z: t.z, y: groundH(t.x, t.z), s: t.h / 9.5, hue: (t.x * 7 % 1 + 1) % 1, shade: (t.z * 3 % 1 + 1) % 1 })), { layers: 5, shadow: true }));
@@ -5324,7 +5332,9 @@ function draw(now, dt) {
   const T = V.T, g = G || idleG(), t = now; setWeather(g); syncCourse(g);
   const d = g.d;
   // hoops
-  V.hoops.forEach((m, i) => { const h = g.hoops[i]; if (!h) return; m.position.set(h.x, h.y, h.z); m.rotation.y = h.yaw; const nxt = i === g.next; m.visible = !h.done; m.material.emissiveIntensity = nxt ? 1.6 + Math.sin(t * 6) * 0.6 : i < g.next + 3 ? 0.35 : 0.12; m.material.emissive.setHex(nxt ? 0x40f0ff : 0xffffff); });
+  V.hoops.forEach((m, i) => { const h = g.hoops[i]; if (!h) return; m.position.set(h.x, h.y, h.z); m.rotation.y = h.yaw; const nxt = i === g.next, U = m.userData, br = nxt ? 1 : i < g.next + 3 ? 0.5 : 0.22; m.visible = !h.done;
+    U.core.material.opacity = Math.min(1, br * 1.4); U.glow.material.opacity = (nxt ? 0.4 + Math.sin(t * 6) * 0.12 : 0.16) * (br > 0.3 ? 1 : 0.6); U.halo.material.opacity = nxt ? 0.5 + Math.sin(t * 6) * 0.15 : 0.12; m.scale.setScalar(nxt ? 1 + Math.sin(t * 6) * 0.012 : 1);
+    U.lamps.children.forEach((lm, q) => { const on = nxt ? ((q - Math.floor(t * 14)) % 16 + 16) % 16 < 5 : q % 4 === 0; lm.material.opacity = on ? 1 : 0.18; lm.material.color.setHex(on ? 0xffffff : U.col); }); });
   // the drone
   const D = V.drone; D.position.set(d.x, d.y, d.z); D.rotation.set(0, 0, 0); D.rotateY(d.yaw); D.rotateX(d.tilt); D.rotateZ(d.bank); D.visible = !(g.respawn > 0.4 && Math.sin(t * 30) > 0);
   V.prop += dt * 80; D.userData.props.forEach((p, i) => p.rotation.y = V.prop * (i % 2 ? 1 : -1));
