@@ -5777,6 +5777,11 @@ $('tShake').onclick = () => { store.set('shake', !optShake()); renderSet(); sfx.
 $('setBack').onclick = () => { sfx.click(); show(setFrom); };
 window.gameFeedSettings = () => openSet(G && !G.over ? 'ovPause' : 'ovHome');
 applyStep(); showHome(); requestAnimationFrame(frame);
+// 23 Nov 2026 (small-phone sweep): played sideways on a phone 360 wide, a card taller than the screen had its last buttons off the
+// edge (Eleven's NEXT LEVEL could only be reached by scrolling a card nobody knows scrolls). A card that does not fit is shrunk to fit.
+function fitCards() { fitCards.q = 0; document.querySelectorAll('.ov:not(.hidden) .card').forEach(c => { c.style.zoom = ''; const h = c.scrollHeight, room = document.getElementById('stage').clientHeight - 6; if (h > room) c.style.zoom = String(Math.max(0.6, room / h)); }); }
+window.__fitCards = fitCards;
+{ const later = () => { if (!fitCards.q) { fitCards.q = 1; requestAnimationFrame(fitCards); } }; document.querySelectorAll('.ov').forEach(o => new MutationObserver(later).observe(o, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true })); addEventListener('resize', () => setTimeout(later, 60)); setTimeout(later, 0); }
 })();
 </script>
 </body>

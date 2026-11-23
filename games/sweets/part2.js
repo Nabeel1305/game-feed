@@ -225,7 +225,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // how far along the goal is, 0 to 1 (for the bar, the end card and "so close")
 function progress(G) { const g = G.cfg.goal; if (g === 'score') return Math.min(1, G.score / G.target); if (g === 'jelly') return G.jelly0 ? 1 - jellyLeft(G) / G.jelly0 : 1; if (g === 'frost') return G.frost0 ? 1 - frostLeft(G) / G.frost0 : 1;
-  if (g === 'collect') { const a = G.collect.reduce((s, x) => s + Math.min(x.got, x.n), 0), b = G.collect.reduce((s, x) => s + x.n, 0); return a / b; } if (g === 'cherry') return G.cherOut / G.cherT; return 0; }
+  if (g === 'collect') { if (!G.collect || !G.collect.length) return 0; const a = G.collect.reduce((s, x) => s + Math.min(x.got, x.n), 0), b = G.collect.reduce((s, x) => s + x.n, 0); return a / b; } if (g === 'cherry') return G.cherOut / G.cherT; return 0; }
 // ---------- LESSONS ----------
 const LESSONS = {
   1: [{ id: 'match', title: 'MAKE A LINE', how: 'Swipe a sweet into its neighbour to swap them. Three of a colour in a line pop! Pop three lines.', need: 3 }],
@@ -267,4 +267,4 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   const ms = findMoves(G); if (!ms.length) return; let best = ms[0], bv = -1;
   if (Rr() > acc) best = ms[(Rr() * ms.length) | 0]; else for (const [i, j] of ms) { const v = moveValue(G, i, j) + Rr() * (1 - acc) * 6; if (v > bv) { bv = v; best = [i, j]; } }
   swap(G, best[0], best[1]); }
-function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.movesAtGoal = G.moves; finish(G, true); }
+function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; if (!G.collect) G.collect = [];      /* (a lesson board has no collect list: the test's shortcut must not leave the level half set up) */ G.movesAtGoal = G.moves; finish(G, true); }

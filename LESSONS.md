@@ -69,6 +69,14 @@ genius, and that's what you forget." What that changed, for every game from now 
   push that had not touched it): the check gave the game 350 ms to draw its next frame after Resume, and a busy runner took
   longer. It now waits up to 4 s for the clock to move; a game that never carries on still fails. When a check fails on GitHub
   and passes here, read what the check times before believing either.
+- **Sideways games on a narrow phone** (23 Nov, `tools/small_screen.py`): on a phone 360 wide the eleven sideways games' cards
+  were taller than the screen, so the last buttons were off the edge (Eleven's NEXT LEVEL could only be reached by scrolling a
+  card nobody knows scrolls). Every test until then ran at 390 wide. A card that does not fit is now shrunk to fit
+  (`fitCards`). New code goes INSIDE the game's closure in part5.js (before the last `})();`): appended after it, it lands
+  after `</html>` and never runs.
+- **His notes must outlive the phone** (23 Nov): browser storage on a published page can come back empty, so the Game Review
+  page writes every note to the page's `db` store as he types (and keeps a list of what has not got there yet). Proved live:
+  his notes appeared in the store seconds after the page was republished.
 - **Look at GitHub after every push** (`gh run list --limit 3`). Both pushes of 22 Nov failed there and I did not look: Splash
   Course's result card never came in the full controls run. The cause was real: a run ended in its first instant (only a robot
   can) saved an empty ghost trace, and drawing an empty ghost threw on every frame, so the game froze. "It passes alone" was the

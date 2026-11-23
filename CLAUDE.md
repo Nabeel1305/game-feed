@@ -15,6 +15,20 @@ and made better: looks, controls a first-timer understands at once, music, movem
 `specs/movement-prompt-2026-11-22.md`). The list of what is wrong with each game, what has been fixed and what is still to do is
 `specs/audit-2026-11-22.md`; the lessons are at the top of `LESSONS.md` ("The audit of 22 Nov 2026"). He tests from the
 **Game Review** page (`review` in `games.json`): every game with its link and boxes for his notes.
+**His review (his words, 23 Nov 2026).** He reviews over days on the Game Review page; everything he writes is kept in the
+page's own store and I read it there (the Artifact tool's `db_list`, slug in `review` in `games.json`, collection `reviews`: one
+document a game, `{ rating, critical, flaw, at }`; `meta/submitted` is written when he presses SUBMIT REVIEW). **Good** = no
+changes. **Okay** = "I didn't enjoy it, but maybe somebody else will": no changes. **Bad** with no comment = "I don't know what to
+change, but the game needs something to make it more interesting": find it myself. He writes **flaws** and **critical flaws**.
+Act on a game's notes when he has submitted (or pasted them in the chat), not while he may still be typing them.
+**One criticism, every game it fits** (his words: "when I give a criticism, you should check all the other games that this
+criticism may apply to so that I don't have to be making the same criticism for different games... You need to be very careful
+with this one though, so that you don't apply random criticism just on any game"): for each point he makes, name the games that
+share the SAME fault, show why with evidence (a picture, a measurement, the same code), fix those, and tell him which games got
+it and which were looked at and left alone. Never stretch a point to a game it does not fit.
+The page is built by `python3 tools/review_page.py` and proved by `python3 tools/test_review_page.py` (what he types reaches the
+store, comes back on a phone that has forgotten everything, survives no signal). `python3 tools/small_screen.py` opens every
+card of every game on a 360 x 640 phone and reports buttons that cannot be reached.
 **The record of that work is `PROGRESS.md`** (his QA prompt, 22 Nov 2026, 15:00, saved as `specs/qa-prompt-2026-11-22.md`: one entry
 per game, kept up as the work goes, honest about what was seen, what was only measured and what nobody has checked): it is written
 by `python3 tools/progress.py` from `specs/progress.json`; start from its "Where to carry on". After every push, look at GitHub
