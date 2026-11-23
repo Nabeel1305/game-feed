@@ -5132,8 +5132,18 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
+  // see-through, never cut away (23 Nov 2026, his words on Vine: "They shouldn't disappear... render it like invisible, but it should still be kind of
+  // seeable"): a material passed to seeThrough() is drawn as a fine screen (three pixels in four left out) where it stands between the camera and
+  // the player, so the player is always seen and nothing vanishes. Each frame the game says where the camera and the player are: setSee(a, b, r).
+  const SEE = { seeA: { value: V(0, 0, 0) }, seeB: { value: V(0, 0, 0) }, seeR: { value: 0 } };
+  function seeThrough(mat) { if (!mat || mat.userData.see) return mat; mat.userData.see = true; const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); Object.assign(sh.uniforms, SEE);
+      sh.vertexShader = 'varying vec3 vSeeW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvec4 seeW = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nseeW = instanceMatrix * seeW;\n#endif\nvSeeW = (modelMatrix * seeW).xyz;');
+      sh.fragmentShader = 'varying vec3 vSeeW; uniform vec3 seeA; uniform vec3 seeB; uniform float seeR;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (seeR > 0.0) { vec3 ab = seeB - seeA; float u = clamp(dot(vSeeW - seeA, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); float dd = length(vSeeW - (seeA + ab * u)); float f = (1.0 - smoothstep(seeR * 0.55, seeR, dd)) * step(0.01, u) * step(u, 0.93); if (f > 0.0) { vec2 q = mod(floor(gl_FragCoord.xy), 2.0); float bay = (mix(mix(0.0, 3.0, q.y), mix(2.0, 1.0, q.y), q.x) + 0.5) / 4.0; if (bay < f * 0.76) discard; } }'); };
+    mat.customProgramCacheKey = () => 'see' + (prev ? prev.toString().length : 0); mat.needsUpdate = true; return mat; }
+  function setSee(a, b, r) { SEE.seeA.value.copy(a); SEE.seeB.value.copy(b); SEE.seeR.value = r || 0; }
   function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
-  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
+  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, seeThrough, setSee, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();
 
@@ -5271,7 +5281,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
     const sup = support(G, P.x, P.z, P.y, 0.4);
     if (!sup || sup.h < P.y - 0.5) { const c2 = carryV(G, s, P.x, P.z); P.vx += c2.x; P.vz += c2.z; P.vy = 0; P.state = 'air'; P.from = s; P.on = null; if (s.kind === 'ball') { P.slid = true; G.ev.push({ k: 'slide' }); } }
     else { P.y = sup.h; if (sup.s.kind !== s.kind || sup.s.o !== s.o || sup.s.b !== s.b || sup.s.pl !== s.pl) { P.on = sup.s; onNew(G, sup.s); } else P.on = sup.s; } }
-  else { const y0 = P.y; P.vy -= GRAV * dt; const m = Math.hypot(G.stick.x, G.stick.z); if (m > 0.1 && !P.knocked) { P.vx += G.stick.x * 3 * dt; P.vz += G.stick.z * 3 * dt; }
+  else { const y0 = P.y; P.vy -= GRAV * dt;       // 23 Nov 2026: no steering in the air (it was a push of 3 m/s a second from nothing): the jump is aimed when you leave the ground
     P.x += P.vx * dt; P.z += P.vz * dt; P.y += P.vy * dt;
     if (P.vy <= 0) { const sup = support(G, P.x, P.z, y0, 0.05); if (sup && P.y <= sup.h) land(G, sup); }
     if (P.state === 'air' && P.y < TOP - 1.4) splash(G); }
@@ -5538,7 +5548,7 @@ function onEvent(G, e) { const P = G.p;
     case 'sweepdone': say('GATE OPENING!', W / 2, H * 0.3, '#ffd23a', 28); break;
     case 'gate': sfx.fanfare(); break;
     case 'cp': { const o = G.C.obs[e.i]; FX.cheer = 0.8; sfx.chime(); if (o) ui.banner = { txt: KNAME[o.kind].toUpperCase(), sub: TIPS[o.kind], t: 0, secs: 2.2, small: true }; } break;
-    case 'respawn': ui.snap = true; break;
+    case 'respawn': ui.snap = true; ui.backAt = performance.now(); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A PRACTICE RUN', W / 2, H * 0.36, '#ffd36a', 24); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.42, '#8fe0ab', 24); sfx.coin(e.n); break;
     case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.2 }; break;
@@ -5553,6 +5563,7 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0aa8c8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D course.', W / 2, H / 2); if (G) hud(G, now); return; }
   const g = G || idleG(); sync(V, g, dt || 1 / 60); W3.render(dt || 1 / 60);
+  if (G && G.p) { const fa = G.p.state === 'fall' ? clamp(1 - (G.p.fallT - 0.1) / 0.45, 0, 1) : clamp(1 - (performance.now() - (ui.backAt || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(8,16,24,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the splash is seen, then the view goes dark and opens at the last checkpoint
   if (G && !(G.over && !$('ovEnd').classList.contains('hidden'))) hud(G, now);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

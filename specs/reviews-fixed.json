@@ -62,6 +62,12 @@
    "when": "23 Nov, written on this page",
    "said": "You have to do better on the animation animation hands and the person holding the vines and swinging overall the animation needs to better ",
    "did": "A new swinger with elbows, knees, hands and fingers. Both hands close on the vine. The legs kick forward and tuck back with the swing. In the air the arms reach for the next vine and the legs stride. A grab at nothing sends the arms wheeling."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, said in the chat",
+   "said": "On Vine, the vines are disappearing. Where are they going? They shouldn't disappear... I don't want any impossible physics in any of these games... And the graphics are still bad.",
+   "did": "The vines were being cut away by the camera when close; now they never vanish (near the camera they fade a little and stay seen). The swing is now real: a rope that keeps its length, gravity, you pump with your legs to swing higher, no steering in the air, you catch where your hand meets the vine. The vine you let go swings back on its own. A new jungle: bark and leaves, ferns, mossy rocks, a waterfall, the tree house round a giant trunk."
   }
  ],
  "reel": [
@@ -108,6 +114,12 @@
    "when": "from your Soar review",
    "said": "The rings are ugly.  Make them nore pretty",
    "did": "The hoops were one plain tube each. Each is now a gate of light: a neon core, a glow, a halo, and lamps that chase round it; each hoop is the next colour."
+  },
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "A crash jumped the drone at once to the restart spot. Now you see it bounce off, tumble and fall, then it is put back."
   }
  ],
  "rope": [
@@ -116,6 +128,12 @@
    "when": "from your Vine review",
    "said": "You have to do better on the animation animation hands and the person holding the vines and swinging",
    "did": "The walker was the same pill on two sticks, with arms fixed in the air. He is now a person with elbows, knees and hands, both hands closed on the pole, placing one foot in front of the other; he flails when he falls."
+  },
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "The walker fell at a steady speed. Now he falls faster and faster; the view goes dark before you are back on the wire."
   }
  ],
  "balloon": [
@@ -124,6 +142,70 @@
    "when": "from your Reel 'Em In review",
    "said": "make the circle distinct from the water color so its easy to see",
    "did": "The target's rings were thin and washed out by the haze. They are wider, a stronger red, with a dark edge, and drawn without haze."
+  }
+ ],
+ "rex": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "A tree between the camera and the rex was cut away. Now it turns see-through and stays seen."
+  }
+ ],
+ "kingdom": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "A kart in the air could still be steered, and one that went over the edge stopped dead in the air and sank slowly. Now it keeps its line in the air (a glider still steers) and falls faster and faster; the view goes dark before you are put back."
+  }
+ ],
+ "stunt": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "A kart in the air could still be steered. Now it keeps the line it took off on; the glider still steers."
+  }
+ ],
+ "surf": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "In the air your speed changed with the angle of the board. Now you keep the speed you took off with."
+  }
+ ],
+ "splash": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "You could steer in mid-jump. Now the jump goes where you aimed it when you left; after a splash the view goes dark before the checkpoint."
+  }
+ ],
+ "sandworm": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "When you fell, the worm froze where it was, even in the air. Now it runs on without you and you fly off on a real arc."
+  }
+ ],
+ "climb": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "A fall was a steady slide down. Now it is a real fall until the rope catches you, then the bounce."
+  }
+ ],
+ "skydive": [
+  {
+   "kind": "also",
+   "when": "from what you said about Vine (no impossible physics)",
+   "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
+   "did": "You fell 3 to 4 times faster than gravity out of the door. Now it is gravity and air: you speed up, then level off."
   }
  ]
 }

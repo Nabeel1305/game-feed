@@ -303,7 +303,7 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   k.boost = Math.max(0, k.boost - dt); k.shield = Math.max(0, k.shield - dt); k.spin = Math.max(0, k.spin - dt); k.mud = Math.max(0, k.mud - dt); k.ice = Math.max(0, k.ice - dt);
   if (k.star > 0) { k.star -= dt; if (k.star <= 0 && me) G.ev.push({ k: 'starend' }); } if (k.rocket > 0) { k.rocket -= dt; if (k.rocket <= 0 && me) G.ev.push({ k: 'rocketend' }); }
   // fallen off: the rescue bee brings you back onto the road a moment later
-  if (k.fall > 0) { k.fall -= dt; k.y -= 14 * dt; if (k.fall <= 0) rescue(G, k); return; }
+  if (k.fall > 0) { k.fall -= dt; k.vy -= GRAV * dt; k.y += k.vy * dt; k.v *= 1 - 0.15 * dt; k.x += Math.cos(k.h + k.slip) * k.v * dt; k.z += Math.sin(k.h + k.slip) * k.v * dt; if (k.fall <= 0) rescue(G, k); return; }      // 23 Nov 2026: a kart that goes over keeps flying on and falls faster and faster (it used to stop dead in the air and sink at a steady speed); the view goes dark before the bee brings it back
   const loc = locate(T, k.x, k.z, k.i), off = !k.air && Math.abs(loc.lat) > TW / 2;
   const stat = me ? (G.driver.spd + G.kart.spd) * 0.006 : 0;
   const top = (me ? c.vmax * (1 + stat) : VMAX * c.skill * k.skill * (k.rubber || 1)) * c.speedK * (1 + 0.012 * k.coin) * (k.boost > 0 ? 1.34 : 1) * (k.star > 0 ? 1.25 : 1) * (k.rocket > 0 ? 1.5 : 1) * (k.nitroT > 0 ? 1.1 : 1)
@@ -318,7 +318,8 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   const sp = Math.min(1, k.v / 12), hnd = me ? 1 + (G.driver.hnd + G.kart.hnd) * 0.03 : 1; let yaw;
   if (k.rocket > 0) { const p = S[(k.i + 10) % n]; let dh = Math.atan2(p.z - k.z, p.x - k.x) - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); yaw = clamp(dh * 4, -2.5, 2.5); }
   else if (k.drift) { const u = clamp(st * k.drift, -1, 1); yaw = k.drift * (0.78 + 0.6 * u) * sp * hnd; }
-  else { const want = st * 1.75 * sp * hnd * (k.air ? (k.glide ? 0.8 : 0.35) : 1), lim = GRIP * grip * (k.ice > 0 ? 0.45 : 1) / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
+  else { const want = st * 1.75 * sp * hnd * (k.air ? (k.glide ? 0.8 : 0) : 1), lim = GRIP * grip * (k.ice > 0 ? 0.45 : 1) / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
+  if (k.air && !k.glide && !(k.rocket > 0)) yaw = 0;      // off the ground a kart keeps the line it took off on
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   const slip = k.drift ? -k.drift * 0.32 : k.ice > 0 ? -st * 0.25 : 0; k.slip += (slip - k.slip) * Math.min(1, dt * (k.ice > 0 ? 2 : 6)); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;

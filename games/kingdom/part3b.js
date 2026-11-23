@@ -181,6 +181,7 @@ function draw(now, dt) {
   placeCam(g, dt); sync(V, g, t, dt); W3.setFocus(g.me.x, g.me.y || 0, g.me.z, 34); W3.render(dt);
   // speed lines on a boost
   if (FX.speed > 0.05) { ctx.save(); ctx.globalAlpha = FX.speed * 0.45; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; for (let i = 0; i < 26; i++) { const a = (i / 26) * TAU + (Math.floor(t * 20) % 7) * 0.13, r0 = Math.max(W, H) * (0.42 + Math.random() * 0.15), r1 = r0 + 60 + Math.random() * 120; ctx.beginPath(); ctx.moveTo(W / 2 + Math.cos(a) * r0, H * 0.45 + Math.sin(a) * r0); ctx.lineTo(W / 2 + Math.cos(a) * r1, H * 0.45 + Math.sin(a) * r1); ctx.stroke(); } ctx.restore(); }
+  if (G && G.me) { const k = G.me, fa = k.fall > 0 ? clamp(1 - (k.fall - 0.2) / 0.7, 0, 1) : clamp(1 - (G.t - (k.resT ?? -9)) / 0.5, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(8,10,16,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the fall is seen, then the view goes dark, and opens again back on the road
   if (G && !(G.over && !$('ovEnd').classList.contains('hidden'))) hud(G, t);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

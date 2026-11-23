@@ -134,8 +134,9 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const loc = locate(T, k.x, k.z, k.i), off = !k.air && Math.abs(loc.lat) > TW / 2;
   const top = (k.me ? c.vmax : VMAX * c.skill * k.skill * (k.rubber || 1)) * (1 + 0.012 * k.coin) * (k.boost > 0 ? 1.32 : 1) * (k.star > 0 ? 1.28 : 1) * (off && k.boost <= 0 && k.star <= 0 ? 0.5 : 1) * (k.spin > 0 ? 0.25 : 1) * (go ? 1 : 0.6);
   if (!k.air) k.v += (top - k.v) * Math.min(1, dt * (k.v < top ? 0.9 : 2.5));
-  // steering: a grip limit (wide at full speed), much less in the air (a glider steers better)
-  const sp = Math.min(1, k.v / 12), want = st * 1.75 * sp * (k.air ? (k.glide ? 0.9 : 0.3) : 1), lim = GRIP / Math.max(6, k.v); let yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.5 * dt;
+  // steering: a grip limit (wide at full speed); in the air a kart cannot turn (nothing to push on), only a glider steers (23 Nov 2026)
+  const sp = Math.min(1, k.v / 12), want = st * 1.75 * sp * (k.air ? (k.glide ? 0.9 : 0) : 1), lim = GRIP / Math.max(6, k.v); let yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.5 * dt;
+  if (k.air && !k.glide && !(k.rocket > 0)) yaw = 0;      // off the ground a kart keeps the line it took off on
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   k.x += Math.cos(k.h) * k.v * dt; k.z += Math.sin(k.h) * k.v * dt;
   // the air

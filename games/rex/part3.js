@@ -51,7 +51,7 @@ function buildWorld() {
   W3.water({ geometry: new T.CircleGeometry(SPOTS.water.r + 3, 48), color: 0x1a4a4a, distort: 0.6, ripple: 2, speed: 0.4, y: hgt(SPOTS.water.x, SPOTS.water.z) + 1.6 }).position.set(SPOTS.water.x, hgt(SPOTS.water.x, SPOTS.water.z) + 1.6, SPOTS.water.z);
   const R0 = W3.rng(11), trees = [];
   for (let i = 0; i < 420; i++) { const x = (R0() - 0.5) * 340, z = -100 + R0() * 340; if (Math.hypot(x - SPOTS.water.x, z - SPOTS.water.z) < 30 || Math.hypot(x, z) < 25 || Math.hypot(x - SPOTS.nest.x, z - SPOTS.nest.z) < 22 || (Math.abs(x) < 60 && R0() < 0.6)) continue; trees.push({ x, z, y: hgt(x, z), s: 1.2 + R0() * 1.4, hue: R0(), shade: R0() * 0.5, lean: (R0() - 0.5) * 0.1 }); }
-  W3.pines(trees, { layers: 4, shadow: true });
+  const pineM = W3.pines(trees, { layers: 4, shadow: true }); if (W3.seeThrough) W3.seeThrough(pineM.material);      /* a tree between the camera and the rex turns to a fine see-through screen; it is never cut away (23 Nov 2026) */
   // tree ferns and fern brakes, rocks
   const fernG = new T.ConeGeometry(1.4, 1.6, 6, 1, true); fernG.translate(0, 0.6, 0); const fernM = new T.MeshStandardMaterial({ color: 0x6aa83a, roughness: 0.9, side: T.DoubleSide, flatShading: true }), NF = 360, ferns = new T.InstancedMesh(fernG, fernM, NF), d = new T.Object3D();
   for (let i = 0; i < NF; i++) { const a = R0() * TAU, r = i < 160 ? Math.sqrt(R0()) * SPOTS.ferns.r : 20 + R0() * 120, x = (i < 160 ? SPOTS.ferns.x : 0) + Math.cos(a) * r, z = (i < 160 ? SPOTS.ferns.z : 60) + Math.sin(a) * r; d.position.set(x, hgt(x, z), z); d.rotation.set(Math.PI, R0() * TAU, 0); d.position.y += 0.75; d.scale.setScalar(0.45 + R0() * 0.5);      /* 22 Nov 2026: ferns half the size; in the fern brake they filled the screen and hid the rex */ d.updateMatrix(); ferns.setMatrixAt(i, d.matrix); }
@@ -116,7 +116,7 @@ function draw(now, dt) {
   // the camera: high behind you
   const C = V.cam, back = m.run ? 19 : 17, cx = m.x - Math.sin(m.h) * back, cz = m.z - Math.cos(m.h) * back, cy = Math.max(hgt(cx, cz) + 3, hgt(m.x, m.z) + 10), e = 1 - Math.exp(-dt * 3.5);
   C.x += (cx - C.x) * e; C.y += (cy - C.y) * e; C.z += (cz - C.z) * e;
-  const cam = W3.cam, stomp = m.run ? Math.abs(Math.sin(V.me.userData.ph)) * 0.12 : 0; cam.position.set(C.x, C.y + stomp, C.z); { const nr = clamp(Math.hypot(C.x - m.x, C.z - m.z) * 0.72, 0.3, 7); if (Math.abs(cam.near - nr) > 0.05) { cam.near = nr; cam.updateProjectionMatrix(); } }      /* 22 Nov 2026: a tree between the camera and the rex is cut away, so you always see him */
+  const cam = W3.cam, stomp = m.run ? Math.abs(Math.sin(V.me.userData.ph)) * 0.12 : 0; cam.position.set(C.x, C.y + stomp, C.z); if (cam.near !== 0.3) { cam.near = 0.3; cam.updateProjectionMatrix(); } if (W3.setSee) W3.setSee(cam.position, new THREE.Vector3(m.x, hgt(m.x, m.z) + 2.2, m.z), 5.5);      /* 23 Nov 2026: trees between the camera and the rex are see-through, never cut away (his words on Vine: they shouldn't disappear) */
   cam.lookAt(m.x + Math.sin(m.h) * 10, hgt(m.x, m.z) + 3.5, m.z + Math.cos(m.h) * 10);
   if (FX.shake > 0) { cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.003; cam.position.y += (Math.random() - 0.5) * FX.shake * 0.02; }
   W3.setFocus(m.x, 0, m.z + 10, 50); W3.render(dt);

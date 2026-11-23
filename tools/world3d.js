@@ -204,7 +204,17 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
+  // see-through, never cut away (23 Nov 2026, his words on Vine: "They shouldn't disappear... render it like invisible, but it should still be kind of
+  // seeable"): a material passed to seeThrough() is drawn as a fine screen (three pixels in four left out) where it stands between the camera and
+  // the player, so the player is always seen and nothing vanishes. Each frame the game says where the camera and the player are: setSee(a, b, r).
+  const SEE = { seeA: { value: V(0, 0, 0) }, seeB: { value: V(0, 0, 0) }, seeR: { value: 0 } };
+  function seeThrough(mat) { if (!mat || mat.userData.see) return mat; mat.userData.see = true; const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); Object.assign(sh.uniforms, SEE);
+      sh.vertexShader = 'varying vec3 vSeeW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvec4 seeW = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nseeW = instanceMatrix * seeW;\n#endif\nvSeeW = (modelMatrix * seeW).xyz;');
+      sh.fragmentShader = 'varying vec3 vSeeW; uniform vec3 seeA; uniform vec3 seeB; uniform float seeR;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (seeR > 0.0) { vec3 ab = seeB - seeA; float u = clamp(dot(vSeeW - seeA, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); float dd = length(vSeeW - (seeA + ab * u)); float f = (1.0 - smoothstep(seeR * 0.55, seeR, dd)) * step(0.01, u) * step(u, 0.93); if (f > 0.0) { vec2 q = mod(floor(gl_FragCoord.xy), 2.0); float bay = (mix(mix(0.0, 3.0, q.y), mix(2.0, 1.0, q.y), q.x) + 0.5) / 4.0; if (bay < f * 0.76) discard; } }'); };
+    mat.customProgramCacheKey = () => 'see' + (prev ? prev.toString().length : 0); mat.needsUpdate = true; return mat; }
+  function setSee(a, b, r) { SEE.seeA.value.copy(a); SEE.seeB.value.copy(b); SEE.seeR.value = r || 0; }
   function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
-  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
+  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, seeThrough, setSee, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();

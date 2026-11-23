@@ -1,3 +1,4 @@
+const DRB = { at: -1e9 };      // when the drone was last put back after a crash (for the fade)
 // ===================== THE VIEW: Drone Pilot in 3D (three.js through tools/world3d.js) =====================
 // A park on rolling hills: grass, paths, pines and broad trees, a few buildings and billboards, the level's weather and light.
 // The course is a line of glowing hoops; the next one pulses bright, the rest wait dim. The drone (four spinning props, white
@@ -62,6 +63,7 @@ function onEvent(G, e) {
   const cx = W / 2, cy = H * 0.3;
   switch (e.k) {
     case 'hoop': sfx.hoop(e.streak); vibe(HAP.tick); say(e.clean ? 'CLEAN!' : `${e.n} / ${e.of}`, cx, cy, e.clean ? '#9be3ff' : '#fff', e.clean ? 26 : 22); if (!G.lesson) say(`+${G.cfg.bonus.toFixed(1)} s`, cx, cy + 28 * k, '#9be3b5', 16); break;
+    case 'back': DRB.at = performance.now(); break;
     case 'crash': sfx.crash(); FX.red = 0.6; FX.shake = 12; vibe(HAP.thud); say({ rim: 'CLIPPED THE RIM!', tree: 'INTO A TREE!', wall: 'INTO A WALL!', ground: 'HIT THE GROUND!' }[e.why] || 'CRASH!', cx, cy, '#ffb4a8', 24); tip('crash', 'Ease off early: the drone drifts. Pull the right thumb down to brake', 3); break;
     case 'course': break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
@@ -85,14 +87,15 @@ function draw(now, dt) {
     U.lamps.children.forEach((lm, q) => { const on = nxt ? ((q - Math.floor(t * 14)) % 16 + 16) % 16 < 5 : q % 4 === 0; lm.material.opacity = on ? 1 : 0.18; lm.material.color.setHex(on ? 0xffffff : U.col); }); });
   // the drone
   const D = V.drone; D.position.set(d.x, d.y, d.z); D.rotation.set(0, 0, 0); D.rotateY(d.yaw); D.rotateX(d.tilt); D.rotateZ(d.bank); D.visible = !(g.respawn > 0.4 && Math.sin(t * 30) > 0);
-  V.prop += dt * 80; D.userData.props.forEach((p, i) => p.rotation.y = V.prop * (i % 2 ? 1 : -1));
+  V.prop += dt * (g.down > 0 ? 6 : 80); D.userData.props.forEach((p, i) => p.rotation.y = V.prop * (i % 2 ? 1 : -1));
   // the camera: behind and above, leaning with the turn
   const C = V.cam, back = 2.7, up = 1.0, cx = d.x - Math.sin(d.yaw) * back, cz = d.z - Math.cos(d.yaw) * back, cy = Math.max(groundH(cx, cz) + 0.6, d.y + up), e = 1 - Math.exp(-dt * 5);
   C.x += (cx - C.x) * e; C.y += (cy - C.y) * e; C.z += (cz - C.z) * e;
-  const cam = W3.cam; cam.position.set(C.x, C.y, C.z); cam.lookAt(d.x + Math.sin(d.yaw) * 4, d.y + 0.3, d.z + Math.cos(d.yaw) * 4); cam.rotateZ(d.bank * 0.4);
+  const cam = W3.cam; cam.position.set(C.x, C.y, C.z); cam.lookAt(d.x + Math.sin(d.yaw) * 4, d.y + 0.3, d.z + Math.cos(d.yaw) * 4); cam.rotateZ((g.down > 0 ? 0 : d.bank) * 0.4);
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   W3.setFocus(d.x, d.y, d.z + 10, 40);
   W3.render(dt);
+  if (G) { const fa = G.down > 0 ? clamp(1 - (G.down - 0.1) / 0.4, 0, 1) : clamp(1 - (performance.now() - (DRB.at || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(8,12,18,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the crash is seen, then the view goes dark and opens with the drone back before the hoop
   if (G) hud(G, t);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const t2 of TXT) { const al = t2.t < 0.9 ? 1 : 1 - (t2.t - 0.9) / 0.4; ctx.globalAlpha = Math.max(0, al); ctx.font = `700 ${Math.round(t2.size * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(t2.txt, t2.x, t2.y - t2.t * 26); ctx.fillStyle = t2.col; ctx.fillText(t2.txt, t2.x, t2.y - t2.t * 26); }

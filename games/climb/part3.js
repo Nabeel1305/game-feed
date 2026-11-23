@@ -95,7 +95,7 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, R = G.route;
     if (sk && isHand(l)) p = { x: p.x + (Math.random() - 0.5) * sk, y: p.y - sk * 0.5 + (Math.random() - 0.5) * sk };
     tgt[l] = p; }
   let bx = G.body.x, by = G.body.y;
-  if (G.phase === 'fall') { const b = R.bolts.filter(q => q.clip).sort((a, c) => c.y - a.y)[0], cy = b ? b.y - 1.4 : Math.max(0.6, G.body.y - 1.5), u = 1 - G.fallT / 1.8; by = u < 0.25 ? lerp(G.body.y, cy, u / 0.25) : cy + Math.sin((u - 0.25) * 18) * 0.15 * (1 - u); bx = b ? b.x : bx; }
+  if (G.phase === 'fall') { const b = R.bolts.filter(q => q.clip).sort((a, c) => c.y - a.y)[0], cy = b ? b.y - 1.4 : Math.max(0.6, G.body.y - 1.5), tt = 1.8 - G.fallT, tf = Math.sqrt(2 * Math.max(0, G.body.y - cy) / 9.8); by = tt < tf ? G.body.y - 4.9 * tt * tt : cy - 0.35 * Math.sin((tt - tf) * 9) * Math.exp(-(tt - tf) * 3); bx = b ? b.x : bx; }      // 23 Nov 2026: a real fall (faster and faster) until the rope comes tight at the last clip, then the stretch and bounce
   if (G.dyno) { const p = dynoP(G); by -= Math.min(1, p) * 0.25; }
   if (!ui.lp || ui.snap) ui.lp = { body: { x: bx, y: by }, ...Object.fromEntries(LIMBS.map(l => [l, Object.assign({}, tgt[l])])) };
   const kq = Math.min(1, dt * (G.phase === 'fall' ? 14 : 9));
@@ -139,7 +139,7 @@ function onEvent(G, e) { const hs = G.route.holds, at = i => { const h = hs[i]; 
     case 'slip': sfx.slip(); FX.red = 0.4; ui.banner = { txt: 'SLIPPING!', sub: 'Get both hands on big holds, or feet on better ones', t: 0, secs: 1.4, small: true }; break;
     case 'saved': sfx.saved(); say('HELD ON!', W / 2, H * 0.4, '#9be3b5', 22); break;
     case 'fall': sfx.fall(); FX.shake = 10; ui.snap = false; if (!G.lesson) ui.banner = { txt: 'FALL!', sub: G.falls < G.cfg.lives ? `The rope caught you. ${G.cfg.lives - G.falls} ${G.cfg.lives - G.falls === 1 ? 'fall' : 'falls'} left. Your grip is back.` : 'That was your last one', t: 0, secs: 2.2, small: true }; break;
-    case 'back': sfx.click(); ui.lp = null; break;
+    case 'back': sfx.click(); ui.lp = null; ui.backAt = performance.now(); break;
     case 'look': sfx.click(); break;
     case 'top': sfx.win(); FX.flash = 0.5; vibe(HAP.best); ui.banner = { txt: 'TOP!', sub: `${G.route.H} metres`, t: 0, secs: 2 }; { const p = scrOf(G, G.body.x, G.body.y + 1) || { x: W / 2, y: H * 0.3 }; burst(p.x, p.y, '#ffcf3a', 30, 220); } break;
     case 'gold': break;
@@ -156,6 +156,7 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#10141f'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D rock.', W / 2, H / 2); if (G) hud(G, now); return; }
   const g = G || idleG(); sync(V, g, dt || 1 / 60); W3.render(dt || 1 / 60);
+  if (G) { const fa = G.phase === 'fall' ? clamp(1 - (G.fallT - 0.1) / 0.45, 0, 1) : clamp(1 - (performance.now() - (ui.backAt || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(10,12,16,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the fall and the catch are seen, then the view goes dark and opens with you back on your last holds
   if (FX.red > 0) { ctx.fillStyle = `rgba(200,40,30,${FX.red * 0.18})`; ctx.fillRect(0, 0, W, H); }
   if (G && !(G.over && !$('ovEnd').classList.contains('hidden'))) hud(G, now);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;

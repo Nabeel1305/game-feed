@@ -142,7 +142,8 @@
    "changes": [
     "Camera a quarter closer; a soft lamp travels with the swinger; dark weathers lifted.",
     "third pass, 22 Nov evening: anything within arm's reach of the camera is cut away: a vine can no longer hang across the view.",
-    "23 Nov, 0.2.0: part25_human.js, a person with joints; hands closed on the vine end (arms solved to reach it), legs that kick and tuck with the swing, a reach for the next vine in the air, wheeling arms after a grab at nothing, a jolt on a catch, a tail of vine below the hands."
+    "23 Nov, 0.2.0: part25_human.js, a person with joints; hands closed on the vine end (arms solved to reach it), legs that kick and tuck with the swing, a reach for the next vine in the air, wheeling arms after a grab at nothing, a jolt on a catch, a tail of vine below the hands.",
+    "23 Nov, 0.3.0 (his words: the vines are disappearing... no impossible physics... the graphics are still bad): the 22 Nov cut-away near the camera removed (it was what made vines vanish); vines near the camera fade, never below 20%. Real rope physics: fixed rope length, gravity, energy kept, pumping, steering only on the vine, none in the air, a catch where the hand meets the rope; every vine its own pendulum; a fall seen, then dark, then back on the vine. New jungle (bark, leaves, ferns, rocks and foam, waterfall, tree house round a giant trunk, limbs to each vine)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
@@ -287,7 +288,8 @@
    ],
    "changes": [
     "ONE THUMB instead of two sticks: hold a thumb down to fly forwards, slide to turn and climb (a hard turn slows it), lift to brake to a hover. Sideways drift from turns and wind is trimmed out for you, because one thumb cannot slide sideways.",
-    "23 Nov, 0.2.1: each hoop is a gate of light: dark frame, neon core, glow, halo, sixteen lamps that chase round the next one; each hoop the next colour."
+    "23 Nov, 0.2.1: each hoop is a gate of light: dark frame, neon core, glow, halo, sixteen lamps that chase round the next one; each hoop the next colour.",
+    "23 Nov, 0.2.2 (from Vine: no impossible physics): a crash is seen (bounces off, tumbles, falls) before the drone is put back; it jumped there at once."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
@@ -672,7 +674,8 @@
     "rainy night levels are too dark to see the prey."
    ],
    "changes": [
-    "third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen)."
+    "third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen).",
+    "23 Nov, 0.1.4 (from Vine: nothing vanishes): the moving cut-away near the camera (up to 7 m) removed; a tree between the camera and the rex is a see-through screen (W3.seeThrough)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
@@ -684,7 +687,8 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "23 Nov (from his review of Vine): the walker is a person with joints (part25_human.js): both hands closed on the pole, one foot in front of the other, knees that bend in a crouch, a flail when he falls."
+    "23 Nov (from his review of Vine): the walker is a person with joints (part25_human.js): both hands closed on the pole, one foot in front of the other, knees that bend in a crouch, a flail when he falls.",
+    "23 Nov, 0.1.4 (from Vine: no impossible physics): the walker falls faster and faster (a steady 4 m/s before); dark, then back on the wire."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).",
@@ -845,7 +849,9 @@
   "stunt": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "23 Nov, 0.1.4 (from Vine: no impossible physics): no steering a kart in the air; the glider still steers."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (10 checks passed, 0 failed.)."
    ],
@@ -961,7 +967,8 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "Name clash with the kit fixed; keeps its own race music."
+    "Name clash with the kit fixed; keeps its own race music.",
+    "23 Nov, 0.2.2 (from Vine: no impossible physics): no steering a kart in the air (glider and rocket still turn); over the edge a kart flies on and falls faster and faster (it stopped dead and sank at 14 m/s); dark before the bee puts it back."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (kingdom rc=1 fails=1 18 checks passed, 1 failed.).",
@@ -1271,7 +1278,9 @@
   "climb": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "23 Nov, 0.1.2 (from Vine: no impossible physics): a fall is a real fall until the rope comes tight, then the stretch and bounce (it was a steady slide); dark, then back on your holds."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (30 passed, 0 failed)."
    ],
@@ -1306,7 +1315,9 @@
   "sandworm": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "23 Nov, 0.1.3 (from Vine: no impossible physics): the worm no longer freezes (even in the air) when you fall; it runs on, and you fly off on a real arc carrying its speed; dark, then the waystone."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (36 passed, 0 failed)."
    ],
@@ -1316,7 +1327,9 @@
   "skydive": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "23 Nov, 0.1.3 (from Vine: no impossible physics): freefall is gravity and air drag (9.8 m/s/s at the door, levelling off); it was 3-4 times gravity at the door."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (43 passed, 0 failed).",
     "third pass: its controls read through against his rule (obvious to a first-timer): one thumb and two labelled buttons (TUCK, CHUTE). Judged plain enough; nothing changed."
@@ -1376,7 +1389,8 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "A crash fixed: a run that ended in its first instant saved an empty ghost, and drawing that ghost stopped the game dead with no result card. No player could finish that fast, but GitHub's robot did, and that failure had blocked GitHub's checks since 11:21."
+    "A crash fixed: a run that ended in its first instant saved an empty ghost, and drawing that ghost stopped the game dead with no result card. No player could finish that fast, but GitHub's robot did, and that failure had blocked GitHub's checks since 11:21.",
+    "23 Nov, 0.1.4 (from Vine: no impossible physics): no push from the stick in mid-jump; after a splash, dark, then the checkpoint."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (44 passed, 0 failed).",
@@ -1391,7 +1405,8 @@
     "the surfer is a speck and the wave is grey-white rather than glassy blue-green."
    ],
    "changes": [
-    "Hold PADDLE and let go when the ring turns green: you stand up. A tap in the air spins. The swipes still work."
+    "Hold PADDLE and let go when the ring turns green: you stand up. A tap in the air spins. The swipes still work.",
+    "23 Nov, 0.1.4 (from Vine: no impossible physics): in the air you keep the speed you took off with (it changed with the board's angle)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (36 passed, 0 failed).",

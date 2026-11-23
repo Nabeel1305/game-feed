@@ -35,7 +35,7 @@ with sync_playwright() as p:
         ok(fw > 10, f'{tag}: dragging forward flies you forward', str(fw))
         L = E("__sim.layout()"); A, B = L['a'], L['b']
         v0 = E("-__sim.G.p.vy"); touch('touchStart', [at(2, B['x'], B['y'])]); pg.wait_for_timeout(2500); v1 = E("-__sim.G.p.vy"); ok(E("__sim.G.tuck") is True and v1 > v0 + 8, f'{tag}: holding TUCK falls faster', str([v0, v1]))
-        touch('touchEnd', [at(2, B['x'], B['y'])]); pg.wait_for_timeout(2500); ok(E("__sim.G.tuck") is False and E("-__sim.G.p.vy") < v1 - 6, f'{tag}: letting go spreads you out and slows the fall', str(E("-__sim.G.p.vy")))
+        touch('touchEnd', [at(2, B['x'], B['y'])]); pg.wait_for_timeout(2500); v2 = E("-__sim.G.p.vy"); ok(E("__sim.G.tuck") is False and v2 - v1 < (v1 - v0) * 0.5, f'{tag}: letting go spreads you out: the fall stops speeding up (or slows, once you are fast)', str([v0, v1, v2]))      # 23 Nov 2026: real air drag, not a snap to a set speed
         touch('touchStart', [at(3, A['x'], A['y'])]); touch('touchEnd', [at(3, A['x'], A['y'])]); pg.wait_for_timeout(100); ok(E("__sim.G.p.phase") in ('opening', 'canopy'), f'{tag}: a tap on CHUTE opens the canopy')
         pg.wait_for_timeout(2200); ok(E("__sim.G.p.phase") == 'canopy' and E("-__sim.G.p.vy") < 12, f'{tag}: and the fall slows hard', str(E("[__sim.G.p.phase, -__sim.G.p.vy]")))
         y0 = E("__sim.G.p.yaw"); r = drag(60, 0, 900); ok(r[0] - y0 > 0.3, f'{tag}: under the canopy, dragging right turns right', str([y0, r[0]]))

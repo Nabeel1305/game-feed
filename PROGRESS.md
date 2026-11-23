@@ -102,13 +102,14 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether the surroundings are beautiful enough: his to say.
 
 ### 12. Vine (`vine`): VERIFIED
-- **Where:** `games/vine/index.html` · v0.2.0 · Jungle · 1 thumb(s)
+- **Where:** `games/vine/index.html` · v0.3.0 · Jungle · 1 thumb(s)
 - **What it is:** Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move. 0.2.0 (23 Nov 2026, his review): the swinger is a person with joints: both hands close on the vine, the legs kick and tuck with the swing, the arms reach for the next vine in the air and wheel when a grab finds nothing.
 - **Problem:** CRITICAL: level 5 nearly black, the swinger is tiny and lost among the trunks.
 - **Problem:** His review (23 Nov): "do better on the animation... hands and the person holding the vines and swinging". True: a pill with two straight arms beside the vine and two stumps; the same pose in the air as on the vine.
 - **Changed:** Camera a quarter closer; a soft lamp travels with the swinger; dark weathers lifted.
 - **Changed:** third pass, 22 Nov evening: anything within arm's reach of the camera is cut away: a vine can no longer hang across the view.
 - **Changed:** 23 Nov, 0.2.0: part25_human.js, a person with joints; hands closed on the vine end (arms solved to reach it), legs that kick and tuck with the swing, a reach for the next vine in the air, wheeling arms after a grab at nothing, a jolt on a catch, a tail of vine below the hands.
+- **Changed:** 23 Nov, 0.3.0 (his words: the vines are disappearing... no impossible physics... the graphics are still bad): the 22 Nov cut-away near the camera removed (it was what made vines vanish); vines near the camera fade, never below 20%. Real rope physics: fixed rope length, gravity, energy kept, pumping, steering only on the vine, none in the air, a catch where the hand meets the rope; every vine its own pendulum; a fall seen, then dark, then back on the vine. New jungle (bark, leaves, ferns, rocks and foam, waterfall, tree house round a giant trunk, limbs to each vine).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
 - **Checked:** Pictures of level 5 at dusk looked at: the swinger is lit and larger.
 - **Checked:** touch test 6 pass; picture looked at.
@@ -193,12 +194,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).
 
 ### 21. Drone Pilot (`drone`): VERIFIED
-- **Where:** `games/drone/index.html` · v0.2.1 · Flying · 1 thumb(s)
+- **Where:** `games/drone/index.html` · v0.2.2 · Flying · 1 thumb(s)
 - **What it is:** Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it. 0.2.1 (23 Nov 2026, from his review of Soar's rings): each hoop is a gate of light (neon core, glow, halo, chasing lamps), each the next colour.
 - **Problem:** two sticks (against his rule), the drone is tiny, the land is a flat green sheet.
 - **Problem:** From his review of Soar ("The rings are ugly"): the hoops here were the same thing, one plain tube each.
 - **Changed:** ONE THUMB instead of two sticks: hold a thumb down to fly forwards, slide to turn and climb (a hard turn slows it), lift to brake to a hover. Sideways drift from turns and wind is trimmed out for you, because one thumb cannot slide sideways.
 - **Changed:** 23 Nov, 0.2.1: each hoop is a gate of light: dark frame, neon core, glow, halo, sixteen lamps that chase round the next one; each hoop the next colour.
+- **Changed:** 23 Nov, 0.2.2 (from Vine: no impossible physics): a crash is seen (bounces off, tumbles, falls) before the drone is put back; it jumped there at once.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
 - **Checked:** A one-thumb robot (only turn, climb, hold or lift) won 40 of 42 runs on levels 1, 5, 10, 14, 18, 20 and 25; a thumb held still and never moved loses levels 1, 3, 6 and 10; test_touch 7 pass; test_play 15 pass; picture looked at.
 - **Checked:** 23 Nov, 0.2.1: test_touch 7; a picture looked at.
@@ -429,18 +431,20 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 
 ### 51. Rex (`rex`): VERIFIED
-- **Where:** `games/rex/index.html` · v0.1.3 · Dinosaur / hunt · 2 thumb(s)
+- **Where:** `games/rex/index.html` · v0.1.4 · Dinosaur / hunt · 2 thumb(s)
 - **What it is:** Be the T-Rex in a 3D valley: one stick to creep or charge, BITE and ROAR; runners, duckbill herds, armoured spikebacks, charging hornfaces and rival rexes, each warning before it strikes.
 - **Problem:** rainy night levels are too dark to see the prey.
 - **Changed:** third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen).
+- **Changed:** 23 Nov, 0.1.4 (from Vine: nothing vanishes): the moving cut-away near the camera (up to 7 m) removed; a tree between the camera and the rex is a see-through screen (W3.seeThrough).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 - **Checked:** touch test 7 pass; pictures of a rainy level looked at: rex and prey both in sight.
 
 ### 52. High Wire (`rope`): VERIFIED
-- **Where:** `games/rope/index.html` · v0.1.3 · Balance · 1 thumb(s)
+- **Where:** `games/rope/index.html` · v0.1.4 · Balance · 1 thumb(s)
 - **What it is:** Walk a high wire in 3D with one floating stick: slide to swing the pole, push up to walk, pull down to crouch; wind, birds, banners and sandbags; last-second saves; lean out for stars. (23 Nov 2026, from his review of Vine: the walker is a person with joints, both hands on the pole.)
 - **First look:** fine.
 - **Changed:** 23 Nov (from his review of Vine): the walker is a person with joints (part25_human.js): both hands closed on the pole, one foot in front of the other, knees that bend in a crouch, a flail when he falls.
+- **Changed:** 23 Nov, 0.1.4 (from Vine: no impossible physics): the walker falls faster and faster (a steady 4 m/s before); dark, then back on the wire.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): one sliding thumb. Judged plain enough; nothing changed.
 - **Checked:** 23 Nov: test_touch 5; a picture looked at (standing on the wire, hands to the pole). NOT judged by me: the walk in motion.
@@ -535,9 +539,10 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): taps on the pipes. Judged plain enough; nothing changed.
 
 ### 66. Stunt Kart (`stunt`): VERIFIED
-- **Where:** `games/stunt/index.html` · v0.1.3 · Racing / stunts · 2 thumb(s)
+- **Where:** `games/stunt/index.html` · v0.1.4 · Racing / stunts · 2 thumb(s)
 - **What it is:** His idea, Mario Kart with cool things: kart racing in 3D with ramps (tap in the air for flips, spins and rolls; land between them for a boost, mid-trick is a wipeout), a gold glider jump through air coins, boost pads, coins, items and a STAR you fill with tricks.
 - **First look:** good (one of three kart games: 44, 66, 76).
+- **Changed:** 23 Nov, 0.1.4 (from Vine: no impossible physics): no steering a kart in the air; the glider still steers.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (10 checks passed, 0 failed.).
 
 ### 67. Knife Spin (`knife`): VERIFIED
@@ -603,10 +608,11 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Speed on his phone is his to judge.
 
 ### 76. Kart Kingdom (`kingdom`): VERIFIED
-- **Where:** `games/kingdom/index.html` · v0.2.1 · Racing / kart · 2 thumb(s)
+- **Where:** `games/kingdom/index.html` · v0.2.2 · Racing / kart · 2 thumb(s)
 - **What it is:** His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, KartRider-style buttons (steer arrows, DRIFT, ITEM, NITRO), drifts with coloured sparks that fill the nitro, bananas thrown far ahead or behind, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies.
 - **First look:** good.
 - **Changed:** Name clash with the kit fixed; keeps its own race music.
+- **Changed:** 23 Nov, 0.2.2 (from Vine: no impossible physics): no steering a kart in the air (glider and rocket still turn); over the edge a kart flies on and falls faster and faster (it stopped dead and sank at 14 m/s); dark before the bee puts it back.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (kingdom rc=1 fails=1 18 checks passed, 1 failed.).
 - **Checked:** Loads; touch test 19 pass (second run).
 
@@ -792,9 +798,10 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** Full test_play: 15 of 16 pass, including no blind string winning. The sixteenth, 'nothing is lost while a lesson is on', was flaky before today too (its first lesson is one run, which blind tapping stumbles through, and the old check then counted the match that followed): the check now asks what it means, and passes 18 runs out of 18.
 
 ### 99. Rock Climb (`climb`): VERIFIED
-- **Where:** `games/climb/index.html` · v0.1.1 · Climbing / calm · 1 thumb(s)
+- **Where:** `games/climb/index.html` · v0.1.2 · Climbing / calm · 1 thumb(s)
 - **What it is:** Calm one-thumb climbing, upright: drag a hand (later a foot) onto a hold that lights up; manage your grip, rest on ledges, read slopers and side-pulls, jump to far holds; the rope catches you at your last bolt.
 - **First look:** good.
+- **Changed:** 23 Nov, 0.1.2 (from Vine: no impossible physics): a fall is a real fall until the rope comes tight, then the stretch and bounce (it was a steady slide); dark, then back on your holds.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (30 passed, 0 failed).
 
 ### 100. Dentist (`dentist`): VERIFIED
@@ -814,15 +821,17 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 23 Nov: test_touch 25; a picture looked at: the ring is darker than it was, still softened by the picture's depth blur.
 
 ### 102. Sandworm Rider (`sandworm`): VERIFIED
-- **Where:** `games/sandworm/index.html` · v0.1.2 · Riding / desert · 2 thumb(s)
+- **Where:** `games/sandworm/index.html` · v0.1.3 · Riding / desert · 2 thumb(s)
 - **What it is:** His idea 25: stand on the head of a giant worm swimming through the dunes. Left thumb steers (heavy, late turns), hold SURGE to speed up, hold BRACE for knocks and landings; keep your balance, breach over dune crests, pass every pair of waystones before sunset. Canyons, cracked sand, storms, ruins, three worms, shortcuts, a challenge per level, free roam.
 - **First look:** fine.
+- **Changed:** 23 Nov, 0.1.3 (from Vine: no impossible physics): the worm no longer freezes (even in the air) when you fall; it runs on, and you fly off on a real arc carrying its speed; dark, then the waystone.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (36 passed, 0 failed).
 
 ### 103. Skydive (`skydive`): VERIFIED
-- **Where:** `games/skydive/index.html` · v0.1.2 · Sky sport · 2 thumb(s)
+- **Where:** `games/skydive/index.html` · v0.1.3 · Sky sport · 2 thumb(s)
 - **What it is:** His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode.
 - **First look:** fine; the diver is tiny.
+- **Changed:** 23 Nov, 0.1.3 (from Vine: no impossible physics): freefall is gravity and air drag (9.8 m/s/s at the door, levelling off); it was 3-4 times gravity at the door.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (43 passed, 0 failed).
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): one thumb and two labelled buttons (TUCK, CHUTE). Judged plain enough; nothing changed.
 
@@ -856,18 +865,20 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (42 passed, 0 failed).
 
 ### 108. Splash Course (`splash`): VERIFIED
-- **Where:** `games/splash/index.html` · v0.1.3 · Obstacle course · 2 thumb(s)
+- **Where:** `games/splash/index.html` · v0.1.4 · Obstacle course · 2 thumb(s)
 - **What it is:** Obstacle course above sparkling pools in 3D: giant bouncing balls, the sweeper, the punch wall, the treadmill and the spinning cross. Left stick moves, hold-and-let-go JUMP (a ring shows the landing), DUCK. A splash puts you back at that obstacle in two seconds; medals for time; your best run races you as a ghost.
 - **First look:** good.
 - **Changed:** A crash fixed: a run that ended in its first instant saved an empty ghost, and drawing that ghost stopped the game dead with no result card. No player could finish that fast, but GitHub's robot did, and that failure had blocked GitHub's checks since 11:21.
+- **Changed:** 23 Nov, 0.1.4 (from Vine: no impossible physics): no push from the stick in mid-jump; after a splash, dark, then the checkpoint.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (44 passed, 0 failed).
 - **Checked:** Winning at twelve different moments from 0 to 9 s: the card comes every time, no errors; controls test passes.
 
 ### 109. Surf (`surf`): VERIFIED
-- **Where:** `games/surf/index.html` · v0.1.3 · Surfing · 2 thumb(s)
+- **Where:** `games/surf/index.html` · v0.1.4 · Surfing · 2 thumb(s)
 - **What it is:** Surfing in 3D: hold PADDLE and swipe up as the wave lifts you, then steer up and down the face ahead of the curl. Carves, snaps, cutbacks, airs with spins and barrel rides score; the same move again scores less. Three waves a session, beat the target; fast sections and barrels as you go; free surf.
 - **Problem:** the surfer is a speck and the wave is grey-white rather than glassy blue-green.
 - **Changed:** Hold PADDLE and let go when the ring turns green: you stand up. A tap in the air spins. The swipes still work.
+- **Changed:** 23 Nov, 0.1.4 (from Vine: no impossible physics): in the air you keep the speed you took off with (it changed with the board's angle).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (36 passed, 0 failed).
 - **Checked:** test_touch 38 pass (new: letting go of PADDLE in the green ring stands you up); test_play 16 pass.
 - **Still open:** Tricks are still named in the rules as turns at the right place: to judge by hand.

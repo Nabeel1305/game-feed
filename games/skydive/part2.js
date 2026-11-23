@@ -76,7 +76,7 @@ function step(G, dt) {
     p.yaw += G.stick.x * 1.3 * dt;
     const fwd = G.tuck ? 6 + 30 * Math.max(0, G.stick.y) : 4 + 18 * c.suit * Math.max(0, G.stick.y) - 3 * Math.max(0, -G.stick.y), sink = G.tuck ? 64 : 44 - 6 * Math.max(0, -G.stick.y);
     const tx = Math.cos(p.yaw) * fwd + w.x, tz = Math.sin(p.yaw) * fwd + w.z, kk = Math.min(1, dt * 0.9);
-    p.vx += (tx - p.vx) * kk; p.vz += (tz - p.vz) * kk; p.vy += (-sink - p.vy) * Math.min(1, dt * 0.7);
+    p.vx += (tx - p.vx) * kk; p.vz += (tz - p.vz) * kk; p.vy += (-9.8 - 9.8 / (sink * sink) * p.vy * Math.abs(p.vy)) * dt;      /* 23 Nov 2026: gravity and air drag (falls at 9.8 m/s/s at the door, levels off at the falling speed; it was 3 to 4 times gravity at the door) */
     if (h < AAD && !G.lesson) { p.aad = true; G.ev.push({ k: 'aad' }); p.phase = 'opening'; p.open = 0; p.openAt = h; }
     if (h < DEPLOY[1] + 60 && h > DEPLOY[1] && !G.deployCue) { G.deployCue = true; G.ev.push({ k: 'deploycue' }); }
   } else if (p.phase === 'opening') {      // the canopy snaps open: a big slowdown over a second

@@ -5130,8 +5130,18 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
+  // see-through, never cut away (23 Nov 2026, his words on Vine: "They shouldn't disappear... render it like invisible, but it should still be kind of
+  // seeable"): a material passed to seeThrough() is drawn as a fine screen (three pixels in four left out) where it stands between the camera and
+  // the player, so the player is always seen and nothing vanishes. Each frame the game says where the camera and the player are: setSee(a, b, r).
+  const SEE = { seeA: { value: V(0, 0, 0) }, seeB: { value: V(0, 0, 0) }, seeR: { value: 0 } };
+  function seeThrough(mat) { if (!mat || mat.userData.see) return mat; mat.userData.see = true; const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); Object.assign(sh.uniforms, SEE);
+      sh.vertexShader = 'varying vec3 vSeeW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvec4 seeW = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nseeW = instanceMatrix * seeW;\n#endif\nvSeeW = (modelMatrix * seeW).xyz;');
+      sh.fragmentShader = 'varying vec3 vSeeW; uniform vec3 seeA; uniform vec3 seeB; uniform float seeR;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (seeR > 0.0) { vec3 ab = seeB - seeA; float u = clamp(dot(vSeeW - seeA, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); float dd = length(vSeeW - (seeA + ab * u)); float f = (1.0 - smoothstep(seeR * 0.55, seeR, dd)) * step(0.01, u) * step(u, 0.93); if (f > 0.0) { vec2 q = mod(floor(gl_FragCoord.xy), 2.0); float bay = (mix(mix(0.0, 3.0, q.y), mix(2.0, 1.0, q.y), q.x) + 0.5) / 4.0; if (bay < f * 0.76) discard; } }'); };
+    mat.customProgramCacheKey = () => 'see' + (prev ? prev.toString().length : 0); mat.needsUpdate = true; return mat; }
+  function setSee(a, b, r) { SEE.seeA.value.copy(a); SEE.seeB.value.copy(b); SEE.seeR.value = r || 0; }
   function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
-  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
+  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, seeThrough, setSee, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();
 
@@ -5229,7 +5239,12 @@ function braceOn(G, on) { if (G.over) return false; const was = G.brace; G.brace
 function step(G, dt) {
   if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt); const c = G.cfg, w = G.w, Wm = G.W;
   if (G.blindT != null) { G.blindT -= dt; if (G.blindT <= 0) { G.blindT = null; surgeOn(G, false); braceOn(G, false); } }
-  if (G.phase === 'fall') { G.fallT -= dt; if (G.fallT <= 0) { if (G.falls >= c.lives && !c.free && !G.lesson) return finish(G, false, 'falls'); w.x = G.cp.x; w.z = G.cp.z; w.h = G.cp.h; G.wp = G.cp.wp; w.v = Wm.cruise; w.om = 0; w.y = sandH(G, w.x, w.z) - 1.5; w.vy = 0; w.air = false; G.bal = 1; G.trail = []; G.phase = 'ride'; G.ev.push({ k: 'back' }); } return; }
+  if (G.phase === 'fall') { G.fallT -= dt;
+    // 23 Nov 2026: the worm does not stop dead when you fall (it used to hang frozen, even in the air): it runs on without you and comes down
+    w.om *= Math.exp(-dt * 2); w.h += w.om * dt; w.v += (Wm.cruise - w.v) * dt * 0.5; w.x += Math.cos(w.h) * w.v * dt; w.z += Math.sin(w.h) * w.v * dt;
+    { const s = sandH(G, w.x, w.z), sw = s - 1.5; if (w.air) { w.vy -= 22 * dt; w.y += w.vy * dt; if (w.y <= sw) { w.y = sw; w.air = false; w.vy = 0; } } else w.y = sw; G.lastS = s; }
+    G.trail.unshift({ x: w.x, z: w.z, y: w.y }); if (G.trail.length > 420) G.trail.pop();
+    if (G.fallT <= 0) { if (G.falls >= c.lives && !c.free && !G.lesson) return finish(G, false, 'falls'); w.x = G.cp.x; w.z = G.cp.z; w.h = G.cp.h; G.wp = G.cp.wp; w.v = Wm.cruise; w.om = 0; w.y = sandH(G, w.x, w.z) - 1.5; w.vy = 0; w.air = false; G.bal = 1; G.trail = []; G.phase = 'ride'; G.ev.push({ k: 'back' }); } return; }
   if (G.phase === 'end') { G.endT -= dt; if (G.endT <= 0) finish(G, true); return; }
   if (!c.free && !G.lesson && G.t > G.sunset) return finish(G, false, 'sunset');
   // steering: the stick asks for a turn; the worm's heavy head turns towards it, slower when fast and slower again when bracing
@@ -5279,7 +5294,7 @@ function step(G, dt) {
   const P = G.route.pts[G.wp]; if (P && Math.hypot(P.x - w.x, P.z - w.z) < gateR(G)) { G.ev.push({ k: 'way', i: G.wp, n: G.route.pts.length - 1 }); saveCp(G); lessonSee(G, 'way'); G.wp++; if (G.wp >= G.route.pts.length && !c.free && !G.lesson) { G.phase = 'end'; G.endT = 1.2; G.ev.push({ k: 'arrive' }); } else if (G.wp >= G.route.pts.length && (c.free || G.lesson)) { extend(G); } }
 }
 function knock(G, v, why) { if (G.phase !== 'ride') return; const k2 = v * G.cfg.knock * (G.brace ? 0.25 : 1); G.bal -= G.lesson ? Math.min(k2, 0.2) : k2; G.knocks++; G.ev.push({ k: 'knock', why, v: k2, braced: G.brace }); lessonSee(G, 'knock', G.brace); }
-function fall(G) { G.phase = 'fall'; G.fallT = 1.6; G.ev.push({ k: 'fall' }); if (!G.lesson) G.falls++; G.surge = false; }
+function fall(G) { const w = G.w; G.fallAt = { x: w.x, y: w.y, z: w.z, h: w.h, v: w.v, vy: w.air ? w.vy : 0 }; G.phase = 'fall'; G.fallT = 1.6; G.ev.push({ k: 'fall' }); if (!G.lesson) G.falls++; G.surge = false; }
 function extend(G) { const R = G.rnd, L = G.route, last = L.pts[L.pts.length - 1], prev = L.pts[L.pts.length - 2]; let a = Math.atan2(last.z - prev.z, last.x - prev.x);
   for (let i = 0; i < 3; i++) { a += (R() - 0.5) * 1.0; const p0 = L.pts[L.pts.length - 1], len = 260, p = { x: p0.x + Math.cos(a) * len, z: p0.z + Math.sin(a) * len }; L.pts.push(p); L.legs.push({ narrow: false, storm: false }); for (let j = 1; j <= 8; j++) L.line.push({ x: p0.x + (p.x - p0.x) * j / 8, z: p0.z + (p.z - p0.z) * j / 8, leg: L.pts.length - 2 }); } }
 function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'; const T = G.t, par = G.par;
@@ -5446,7 +5461,8 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, w = G.w, X = tv(V), rad = RA
   const pitch = w.air ? clamp(w.vy / 25, -0.6, 0.6) : clamp(w.vy / 40, -0.3, 0.3); V.head.position.set(w.x, w.y + rad * 0.15, w.z); V.head.rotation.set(0, -w.h, pitch, 'YZX'); V.head.scale.setScalar(rad * 1.25);
   // the rider: on top of the head, leaning into the turn; crouched when bracing; wobbling when balance is going; thrown off on a fall
   const Rd = V.rider, top = rad * 1.25 * 0.96;
-  if (G.phase === 'fall') { const u = 1 - G.fallT / 1.6; Rd.g.position.set(w.x - Math.sin(w.h) * u * 14, w.y + top + 4 * Math.sin(u * Math.PI) - u * 8, w.z + Math.cos(w.h) * u * 14); Rd.g.rotation.set(u * 4, -w.h, u * 3); }
+  if (G.phase === 'fall') { const f = G.fallAt || w, tt = 1.6 - G.fallT, u = tt / 1.6, fwd = f.v * 0.8 * (1 - Math.exp(-tt * 1.2)) / 1.2, side = 7 * tt;      // thrown off: you carry the worm's speed forward and fly out to the side on a real arc, and stop on the sand
+    const x = f.x + Math.cos(f.h) * fwd - Math.sin(f.h) * side, z = f.z + Math.sin(f.h) * fwd + Math.cos(f.h) * side, y = Math.max(sandH(G, x, z) + 0.3, f.y + top + (f.vy || 0) * tt * 0.6 + 5 * tt - 11 * tt * tt); Rd.g.position.set(x, y, z); Rd.g.rotation.set(Math.min(u, 0.6) * 4, -f.h, Math.min(u, 0.6) * 3); }
   else { const wob = G.bal < 0.35 ? Math.sin(V.t * 18) * (0.35 - G.bal) * 0.9 : 0; Rd.g.position.set(w.x - Math.cos(w.h) * rad * 0.2, w.y + rad * 0.15 + top, w.z - Math.sin(w.h) * rad * 0.2); Rd.g.rotation.set(G.lean * 0.45 + wob, -w.h, (G.brace ? -0.35 : 0) + (w.air ? -0.2 : 0), 'YXZ'); Rd.g.scale.set(2.4, G.brace ? 1.8 : 2.4, 2.4); }
   // flying sand: off the sides at speed, a fountain on a breach, a burst on landing
   if (G.phase === 'ride' && !w.air && w.v > 12 && !HEADLESS) emit(V, w.x + Math.cos(w.h) * rad, sandH(G, w.x, w.z), w.z + Math.sin(w.h) * rad, Math.round(w.v / 9), 6, 4 + w.v * 0.2);
@@ -5483,7 +5499,7 @@ function onEvent(G, e) { const rp = () => riderAt(G);
     case 'wobble': if (gate('wob', 1400)) { const p = rp(); say('HOLD ON!', p.x, p.y - 60 * k, '#ff7a5a', 26); sfx.warn(); tip('wobble', 'Your balance is going: ease the turn, or hold BRACE.', 3); } break;
     case 'brace': sfx.brace(); break;
     case 'fall': sfx.fall(); ui.banner = { txt: 'YOU FELL!', sub: G.cfg.free ? 'Back on the worm in a moment' : `Back to the last waystone · ${Math.max(0, G.cfg.lives - G.falls)} ${G.cfg.lives - G.falls === 1 ? 'fall' : 'falls'} left`, t: 0, secs: 1.6 }; FX.red = 0.6; break;
-    case 'back': sfx.back(); ui.snap = true; break;
+    case 'back': sfx.back(); ui.snap = true; ui.backAt = performance.now(); break;
     case 'dive': { sfx.dive(); const p = rp(); say('DIVE!', p.x, p.y - 30 * k, '#fff', 20); } break;
     case 'way': { sfx.way(e.i); vibe(HAP.light); const p = rp(); say(G.cfg.free || G.lesson ? 'WAYSTONE!' : `WAYSTONE ${e.i} OF ${e.n}`, W / 2, H * 0.3, '#ffd36a', 26); burst(W / 2, H * 0.3, '#ffd36a', 14, 120); } break;
     case 'arrive': sfx.arrive(); ui.banner = { txt: 'ARRIVED!', sub: '', t: 0, secs: 1.4 }; break;
@@ -5504,6 +5520,7 @@ function draw(now, dt) {
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#d8a870'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D desert.', W / 2, H / 2); if (G) hud(G, now); return; }
   const g = G || idleG(); sync(V, g, dt || 1 / 60); W3.render(dt || 1 / 60);
   if (FX.red > 0) { ctx.fillStyle = `rgba(200,40,30,${FX.red * 0.18})`; ctx.fillRect(0, 0, W, H); }
+  if (G) { const fa = G.phase === 'fall' ? clamp(1 - (G.fallT - 0.1) / 0.45, 0, 1) : clamp(1 - (performance.now() - (ui.backAt || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(20,12,6,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the view goes dark before you are put back at the waystone, and opens again there
   if (G && !(G.over && !$('ovEnd').classList.contains('hidden'))) hud(G, now);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

@@ -111,7 +111,8 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, w = G.w, X = tv(V), rad = RA
   const pitch = w.air ? clamp(w.vy / 25, -0.6, 0.6) : clamp(w.vy / 40, -0.3, 0.3); V.head.position.set(w.x, w.y + rad * 0.15, w.z); V.head.rotation.set(0, -w.h, pitch, 'YZX'); V.head.scale.setScalar(rad * 1.25);
   // the rider: on top of the head, leaning into the turn; crouched when bracing; wobbling when balance is going; thrown off on a fall
   const Rd = V.rider, top = rad * 1.25 * 0.96;
-  if (G.phase === 'fall') { const u = 1 - G.fallT / 1.6; Rd.g.position.set(w.x - Math.sin(w.h) * u * 14, w.y + top + 4 * Math.sin(u * Math.PI) - u * 8, w.z + Math.cos(w.h) * u * 14); Rd.g.rotation.set(u * 4, -w.h, u * 3); }
+  if (G.phase === 'fall') { const f = G.fallAt || w, tt = 1.6 - G.fallT, u = tt / 1.6, fwd = f.v * 0.8 * (1 - Math.exp(-tt * 1.2)) / 1.2, side = 7 * tt;      // thrown off: you carry the worm's speed forward and fly out to the side on a real arc, and stop on the sand
+    const x = f.x + Math.cos(f.h) * fwd - Math.sin(f.h) * side, z = f.z + Math.sin(f.h) * fwd + Math.cos(f.h) * side, y = Math.max(sandH(G, x, z) + 0.3, f.y + top + (f.vy || 0) * tt * 0.6 + 5 * tt - 11 * tt * tt); Rd.g.position.set(x, y, z); Rd.g.rotation.set(Math.min(u, 0.6) * 4, -f.h, Math.min(u, 0.6) * 3); }
   else { const wob = G.bal < 0.35 ? Math.sin(V.t * 18) * (0.35 - G.bal) * 0.9 : 0; Rd.g.position.set(w.x - Math.cos(w.h) * rad * 0.2, w.y + rad * 0.15 + top, w.z - Math.sin(w.h) * rad * 0.2); Rd.g.rotation.set(G.lean * 0.45 + wob, -w.h, (G.brace ? -0.35 : 0) + (w.air ? -0.2 : 0), 'YXZ'); Rd.g.scale.set(2.4, G.brace ? 1.8 : 2.4, 2.4); }
   // flying sand: off the sides at speed, a fountain on a breach, a burst on landing
   if (G.phase === 'ride' && !w.air && w.v > 12 && !HEADLESS) emit(V, w.x + Math.cos(w.h) * rad, sandH(G, w.x, w.z), w.z + Math.sin(w.h) * rad, Math.round(w.v / 9), 6, 4 + w.v * 0.2);
@@ -148,7 +149,7 @@ function onEvent(G, e) { const rp = () => riderAt(G);
     case 'wobble': if (gate('wob', 1400)) { const p = rp(); say('HOLD ON!', p.x, p.y - 60 * k, '#ff7a5a', 26); sfx.warn(); tip('wobble', 'Your balance is going: ease the turn, or hold BRACE.', 3); } break;
     case 'brace': sfx.brace(); break;
     case 'fall': sfx.fall(); ui.banner = { txt: 'YOU FELL!', sub: G.cfg.free ? 'Back on the worm in a moment' : `Back to the last waystone · ${Math.max(0, G.cfg.lives - G.falls)} ${G.cfg.lives - G.falls === 1 ? 'fall' : 'falls'} left`, t: 0, secs: 1.6 }; FX.red = 0.6; break;
-    case 'back': sfx.back(); ui.snap = true; break;
+    case 'back': sfx.back(); ui.snap = true; ui.backAt = performance.now(); break;
     case 'dive': { sfx.dive(); const p = rp(); say('DIVE!', p.x, p.y - 30 * k, '#fff', 20); } break;
     case 'way': { sfx.way(e.i); vibe(HAP.light); const p = rp(); say(G.cfg.free || G.lesson ? 'WAYSTONE!' : `WAYSTONE ${e.i} OF ${e.n}`, W / 2, H * 0.3, '#ffd36a', 26); burst(W / 2, H * 0.3, '#ffd36a', 14, 120); } break;
     case 'arrive': sfx.arrive(); ui.banner = { txt: 'ARRIVED!', sub: '', t: 0, secs: 1.4 }; break;
@@ -169,6 +170,7 @@ function draw(now, dt) {
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#d8a870'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D desert.', W / 2, H / 2); if (G) hud(G, now); return; }
   const g = G || idleG(); sync(V, g, dt || 1 / 60); W3.render(dt || 1 / 60);
   if (FX.red > 0) { ctx.fillStyle = `rgba(200,40,30,${FX.red * 0.18})`; ctx.fillRect(0, 0, W, H); }
+  if (G) { const fa = G.phase === 'fall' ? clamp(1 - (G.fallT - 0.1) / 0.45, 0, 1) : clamp(1 - (performance.now() - (ui.backAt || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(20,12,6,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the view goes dark before you are put back at the waystone, and opens again there
   if (G && !(G.over && !$('ovEnd').classList.contains('hidden'))) hud(G, now);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

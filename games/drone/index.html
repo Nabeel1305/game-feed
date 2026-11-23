@@ -5102,8 +5102,18 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
+  // see-through, never cut away (23 Nov 2026, his words on Vine: "They shouldn't disappear... render it like invisible, but it should still be kind of
+  // seeable"): a material passed to seeThrough() is drawn as a fine screen (three pixels in four left out) where it stands between the camera and
+  // the player, so the player is always seen and nothing vanishes. Each frame the game says where the camera and the player are: setSee(a, b, r).
+  const SEE = { seeA: { value: V(0, 0, 0) }, seeB: { value: V(0, 0, 0) }, seeR: { value: 0 } };
+  function seeThrough(mat) { if (!mat || mat.userData.see) return mat; mat.userData.see = true; const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); Object.assign(sh.uniforms, SEE);
+      sh.vertexShader = 'varying vec3 vSeeW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvec4 seeW = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nseeW = instanceMatrix * seeW;\n#endif\nvSeeW = (modelMatrix * seeW).xyz;');
+      sh.fragmentShader = 'varying vec3 vSeeW; uniform vec3 seeA; uniform vec3 seeB; uniform float seeR;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (seeR > 0.0) { vec3 ab = seeB - seeA; float u = clamp(dot(vSeeW - seeA, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); float dd = length(vSeeW - (seeA + ab * u)); float f = (1.0 - smoothstep(seeR * 0.55, seeR, dd)) * step(0.01, u) * step(u, 0.93); if (f > 0.0) { vec2 q = mod(floor(gl_FragCoord.xy), 2.0); float bay = (mix(mix(0.0, 3.0, q.y), mix(2.0, 1.0, q.y), q.x) + 0.5) / 4.0; if (bay < f * 0.76) discard; } }'); };
+    mat.customProgramCacheKey = () => 'see' + (prev ? prev.toString().length : 0); mat.needsUpdate = true; return mat; }
+  function setSee(a, b, r) { SEE.seeA.value.copy(a); SEE.seeB.value.copy(b); SEE.seeR.value = r || 0; }
   function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
-  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
+  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, seeThrough, setSee, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();
 
@@ -5172,6 +5182,8 @@ function hoopPos(G, h) { return { x: h.x0 + (h.mv ? Math.sin(G.t * 0.8 + h.ph) *
 function step(G, dt) {
   if (G.over) return; G.t += dt; const c = G.cfg, d = G.d, I = G.in, L = lessonNow(G);
   for (const h of G.hoops) h.x = hoopPos(G, h).x;
+  if (G.down > 0) { G.down -= dt; d.vx *= 1 - 1.5 * dt; d.vz *= 1 - 1.5 * dt; d.vy -= 9.8 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt; const gy = groundH(d.x, d.z) + 0.15; if (d.y < gy) { d.y = gy; d.vy = Math.abs(d.vy) * 0.2; d.vx *= 0.5; d.vz *= 0.5; } d.tilt += d.spin * dt; d.bank += d.spin * 0.7 * dt;      // 23 Nov 2026: a crash is seen: the drone bounces off, tumbles and falls (it used to jump at once to the restart spot)
+    if (G.down <= 0) { Object.assign(d, G.backTo); G.respawn = 0.6; G.ev.push({ k: 'back' }); } return; }
   if (G.respawn > 0) { G.respawn -= dt; return; }
   if (!L) { G.clock -= dt; if (G.clock <= 0) { G.clock = 0; finish(G, false, 'time'); return; } }
   // the sticks: angle mode (the drone holds level when you let go), with momentum
@@ -5204,7 +5216,8 @@ function crash(G, why) {
   if (G.lesson) lessonMiss(G, why); else { G.crashes++; G.lives--; if (G.lives <= 0) { finish(G, false, 'crashes'); return; } }
   // back to just before the hoop it was heading for, facing it
   const h = G.hoops[G.next], p = G.hoops[G.next - 1] || { x: 0, y: 3, z: 0 }; const tx = h ? h.x : 0, tz = h ? h.z : 10;
-  d.x = p.x + (tx - p.x) * 0.25; d.z = p.z + (tz - p.z) * 0.25; d.y = h ? h.y : 3; d.vx = d.vy = d.vz = 0; d.yaw = Math.atan2(tx - d.x, tz - d.z); d.tilt = d.bank = 0; G.respawn = 1.0;
+  const bx = p.x + (tx - p.x) * 0.25, bz = p.z + (tz - p.z) * 0.25; G.backTo = { x: bx, z: bz, y: h ? h.y : 3, vx: 0, vy: 0, vz: 0, yaw: Math.atan2(tx - bx, tz - bz), tilt: 0, bank: 0 };
+  d.vx *= -0.35; d.vz *= -0.35; d.vy = Math.min(d.vy, 0) * 0.5; d.spin = (G.rnd() < 0.5 ? -1 : 1) * (5 + G.rnd() * 4); G.down = 1.1;      // it bounces back off what it hit and falls; the view goes dark, then it is put back
 }
 function finish(G, win, why) {
   G.over = win ? 'won' : 'lost';
@@ -5226,7 +5239,7 @@ function lessonSee(G, what) {
   if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); resetRun(G); }
   else { G.ev.push({ k: 'lessonnext' }); resetRun(G); }
 }
-function resetRun(G) { Object.assign(G, { next: 0, lives: G.cfg.lives, crashes: 0, clock: G.cfg.start, streak: 0, bestStreak: 0, clean: 0 }); Object.assign(G.d, { x: 0, y: 2.5 + Math.max(0, groundH(0, 0)), z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, tilt: 0, bank: 0 }); makeCourse(G); G.respawn = 0.8; G.ev.push({ k: 'course' }); }
+function resetRun(G) { Object.assign(G, { down: 0, next: 0, lives: G.cfg.lives, crashes: 0, clock: G.cfg.start, streak: 0, bestStreak: 0, clean: 0 }); Object.assign(G.d, { x: 0, y: 2.5 + Math.max(0, groundH(0, 0)), z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, tilt: 0, bank: 0 }); makeCourse(G); G.respawn = 0.8; G.ev.push({ k: 'course' }); }
 function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev.push({ k: 'lessonmiss', why, how: D.steps[D.i].how }); }
 
 // ---------- for the robots ----------
@@ -5238,7 +5251,7 @@ const BLIND = {
 // a pilot who looks: aims for a point just in front of the next hoop, then through its middle; eases off before it
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, d = G.d, h = G.hoops[G.next];
-  if (!h || G.respawn > 0) { sticks(G, 0, 0, 0, 0); return; }
+  if (!h || G.respawn > 0 || G.down > 0) { sticks(G, 0, 0, 0, 0); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.05 + react * 0.25;
   const nx = Math.sin(h.yaw), nz = Math.cos(h.yaw), along = (d.x - h.x) * nx + (d.z - h.z) * nz, lead = clamp(-along * 0.45, 0, 9);
   const n = (1 - acc), j = () => (Math.random() - 0.5) * 2 * n;
@@ -5249,7 +5262,8 @@ function honest(G, o, mem) {
   const pitch = Math.abs(err) > 0.8 ? 0.1 : clamp((wantV - vf) * 0.35 + 0.5, -1, 1);
   sticks(G, clamp((ay - d.y) * 0.9 - d.vy * 0.25, -1, 1), clamp(err * 2.2, -1, 1), pitch, clamp(lat * 0.35 - vs * 0.25, -1, 1));
 }
-function winNow(G) { if (!G || G.over) return; G.lesson = null; G.next = G.hoops.length - 1; G.lives = G.cfg.lives; G.clock = Math.max(G.clock, 10); const h = G.hoops[G.next]; Object.assign(G.d, { x: h.x - Math.sin(h.yaw) * 1.2, y: h.y, z: h.z - Math.cos(h.yaw) * 1.2, vx: Math.sin(h.yaw) * 6, vy: 0, vz: Math.cos(h.yaw) * 6, yaw: h.yaw }); G.respawn = 0; sticks(G, 0, 0, 0.6, 0); }
+function winNow(G) { if (!G || G.over) return; G.down = 0; G.lesson = null; G.next = G.hoops.length - 1; G.lives = G.cfg.lives; G.clock = Math.max(G.clock, 10); const h = G.hoops[G.next]; Object.assign(G.d, { x: h.x - Math.sin(h.yaw) * 1.2, y: h.y, z: h.z - Math.cos(h.yaw) * 1.2, vx: Math.sin(h.yaw) * 6, vy: 0, vz: Math.cos(h.yaw) * 6, yaw: h.yaw }); G.respawn = 0; sticks(G, 0, 0, 0.6, 0); }
+const DRB = { at: -1e9 };      // when the drone was last put back after a crash (for the fade)
 // ===================== THE VIEW: Drone Pilot in 3D (three.js through tools/world3d.js) =====================
 // A park on rolling hills: grass, paths, pines and broad trees, a few buildings and billboards, the level's weather and light.
 // The course is a line of glowing hoops; the next one pulses bright, the rest wait dim. The drone (four spinning props, white
@@ -5314,6 +5328,7 @@ function onEvent(G, e) {
   const cx = W / 2, cy = H * 0.3;
   switch (e.k) {
     case 'hoop': sfx.hoop(e.streak); vibe(HAP.tick); say(e.clean ? 'CLEAN!' : `${e.n} / ${e.of}`, cx, cy, e.clean ? '#9be3ff' : '#fff', e.clean ? 26 : 22); if (!G.lesson) say(`+${G.cfg.bonus.toFixed(1)} s`, cx, cy + 28 * k, '#9be3b5', 16); break;
+    case 'back': DRB.at = performance.now(); break;
     case 'crash': sfx.crash(); FX.red = 0.6; FX.shake = 12; vibe(HAP.thud); say({ rim: 'CLIPPED THE RIM!', tree: 'INTO A TREE!', wall: 'INTO A WALL!', ground: 'HIT THE GROUND!' }[e.why] || 'CRASH!', cx, cy, '#ffb4a8', 24); tip('crash', 'Ease off early: the drone drifts. Pull the right thumb down to brake', 3); break;
     case 'course': break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
@@ -5337,14 +5352,15 @@ function draw(now, dt) {
     U.lamps.children.forEach((lm, q) => { const on = nxt ? ((q - Math.floor(t * 14)) % 16 + 16) % 16 < 5 : q % 4 === 0; lm.material.opacity = on ? 1 : 0.18; lm.material.color.setHex(on ? 0xffffff : U.col); }); });
   // the drone
   const D = V.drone; D.position.set(d.x, d.y, d.z); D.rotation.set(0, 0, 0); D.rotateY(d.yaw); D.rotateX(d.tilt); D.rotateZ(d.bank); D.visible = !(g.respawn > 0.4 && Math.sin(t * 30) > 0);
-  V.prop += dt * 80; D.userData.props.forEach((p, i) => p.rotation.y = V.prop * (i % 2 ? 1 : -1));
+  V.prop += dt * (g.down > 0 ? 6 : 80); D.userData.props.forEach((p, i) => p.rotation.y = V.prop * (i % 2 ? 1 : -1));
   // the camera: behind and above, leaning with the turn
   const C = V.cam, back = 2.7, up = 1.0, cx = d.x - Math.sin(d.yaw) * back, cz = d.z - Math.cos(d.yaw) * back, cy = Math.max(groundH(cx, cz) + 0.6, d.y + up), e = 1 - Math.exp(-dt * 5);
   C.x += (cx - C.x) * e; C.y += (cy - C.y) * e; C.z += (cz - C.z) * e;
-  const cam = W3.cam; cam.position.set(C.x, C.y, C.z); cam.lookAt(d.x + Math.sin(d.yaw) * 4, d.y + 0.3, d.z + Math.cos(d.yaw) * 4); cam.rotateZ(d.bank * 0.4);
+  const cam = W3.cam; cam.position.set(C.x, C.y, C.z); cam.lookAt(d.x + Math.sin(d.yaw) * 4, d.y + 0.3, d.z + Math.cos(d.yaw) * 4); cam.rotateZ((g.down > 0 ? 0 : d.bank) * 0.4);
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   W3.setFocus(d.x, d.y, d.z + 10, 40);
   W3.render(dt);
+  if (G) { const fa = G.down > 0 ? clamp(1 - (G.down - 0.1) / 0.4, 0, 1) : clamp(1 - (performance.now() - (DRB.at || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(8,12,18,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the crash is seen, then the view goes dark and opens with the drone back before the hoop
   if (G) hud(G, t);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const t2 of TXT) { const al = t2.t < 0.9 ? 1 : 1 - (t2.t - 0.9) / 0.4; ctx.globalAlpha = Math.max(0, al); ctx.font = `700 ${Math.round(t2.size * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(t2.txt, t2.x, t2.y - t2.t * 26); ctx.fillStyle = t2.col; ctx.fillText(t2.txt, t2.x, t2.y - t2.t * 26); }

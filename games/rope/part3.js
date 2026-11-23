@@ -66,7 +66,7 @@ function onEvent(G, e) { const cx = W / 2, cy = H * 0.34;
     case 'danger': sfx.creak(); break;
     case 'saved': sfx.phew(); say('SAVED!', cx, cy, '#9be3b5', 26); FX.flash = 0.2; break;
     case 'fall': sfx.fall(); FX.red = 0.8; FX.shake = 16; vibe(HAP.best); say('FALLING!', cx, cy, '#ff8a7a', 30); break;
-    case 'back': say(G.lives < G.cfg.lives ? `${G.lives} ${G.lives === 1 ? 'TRY' : 'TRIES'} LEFT` : 'AGAIN', cx, cy, '#fff', 22); break;
+    case 'back': ui.backAt = performance.now(); say(G.lives < G.cfg.lives ? `${G.lives} ${G.lives === 1 ? 'TRY' : 'TRIES'} LEFT` : 'AGAIN', cx, cy, '#fff', 22); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 26); sfx.cp(); break;
     case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; break;
@@ -78,7 +78,7 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const g = G || idleG(), V = buildWorld(g); if (V.none) { ctx.fillStyle = '#0e1824'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D wire.', W / 2, H / 2); return; }
   setWeather(g); const m = g.me, t = now, falling = g.wait > 0 && Math.abs(m.th) > g.cfg.fall * 0.95;
-  const u = V.me.userData; V.me.position.set(0, WY - (falling ? (1.6 - g.wait) * 4 : 0), m.s); V.me.rotation.z = -m.th * (falling ? 2 : 1); u.body.position.y += ((m.crouch ? -0.3 : 0) - u.body.position.y) * Math.min(1, dt * 10); u.pole.rotation.z = -g.in.u * 0.35;
+  const u = V.me.userData; V.me.position.set(0, WY - (falling ? 4.9 * (1.6 - g.wait) ** 2 : 0), m.s);      /* 23 Nov 2026: he falls faster and faster (it was a steady 4 m a second) */ V.me.rotation.z = -m.th * (falling ? 2 : 1); u.body.position.y += ((m.crouch ? -0.3 : 0) - u.body.position.y) * Math.min(1, dt * 10); u.pole.rotation.z = -g.in.u * 0.35;
   { const H = u.H, tilt = u.pole.rotation.z, ph = t * 7, wk = m.walking ? 1 : 0, cr = m.crouch ? 1 : 0;
     if (falling) { for (let i = 0; i < 2; i++) { const w = t * 14 + i * 2.6; humReach(H, i, (i ? 1 : -1) * 0.4, 0.55 + Math.sin(w) * 0.3, -0.1 + Math.cos(w) * 0.3); } humGrip(H, 0, dt); humLegs(H, [0.6 + Math.sin(t * 12) * 0.5, 0.9, 0.15], [-0.3 - Math.sin(t * 12) * 0.5, 0.8, 0.15]); u.pole.visible = g.wait > 1.2; }
     else { u.pole.visible = true;      // both hands on the pole, a shoulder's width apart; they go up and down with it as it tips; one foot in front of the other on the wire
@@ -93,6 +93,7 @@ function draw(now, dt) {
   const cam = W3.cam; cam.position.set(0.35, WY + C.y + (g.shake || 0) * (Math.random() - 0.5) * 0.08, C.z); cam.lookAt(0, WY + 0.2, m.s + 12); cam.rotation.z += -m.th * 0.18;
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   W3.setFocus(0, 0, m.s + 10, 30); W3.render(dt);
+  if (G) { const fa = falling ? clamp(1 - (g.wait - 0.1) / 0.45, 0, 1) : clamp(1 - (performance.now() - (ui.backAt || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(8,10,16,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the fall is seen, then the view goes dark and opens with you back on the wire
   if (G) hud(G, t);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const t2 of TXT) { const al = t2.t < 0.9 ? 1 : 1 - (t2.t - 0.9) / 0.4; ctx.globalAlpha = Math.max(0, al); ctx.font = `${Math.round(t2.size * k)}px ${TF}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.strokeText(t2.txt, t2.x, t2.y - t2.t * 22); ctx.fillStyle = t2.col; ctx.fillText(t2.txt, t2.x, t2.y - t2.t * 22); }

@@ -92,7 +92,12 @@ function braceOn(G, on) { if (G.over) return false; const was = G.brace; G.brace
 function step(G, dt) {
   if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt); const c = G.cfg, w = G.w, Wm = G.W;
   if (G.blindT != null) { G.blindT -= dt; if (G.blindT <= 0) { G.blindT = null; surgeOn(G, false); braceOn(G, false); } }
-  if (G.phase === 'fall') { G.fallT -= dt; if (G.fallT <= 0) { if (G.falls >= c.lives && !c.free && !G.lesson) return finish(G, false, 'falls'); w.x = G.cp.x; w.z = G.cp.z; w.h = G.cp.h; G.wp = G.cp.wp; w.v = Wm.cruise; w.om = 0; w.y = sandH(G, w.x, w.z) - 1.5; w.vy = 0; w.air = false; G.bal = 1; G.trail = []; G.phase = 'ride'; G.ev.push({ k: 'back' }); } return; }
+  if (G.phase === 'fall') { G.fallT -= dt;
+    // 23 Nov 2026: the worm does not stop dead when you fall (it used to hang frozen, even in the air): it runs on without you and comes down
+    w.om *= Math.exp(-dt * 2); w.h += w.om * dt; w.v += (Wm.cruise - w.v) * dt * 0.5; w.x += Math.cos(w.h) * w.v * dt; w.z += Math.sin(w.h) * w.v * dt;
+    { const s = sandH(G, w.x, w.z), sw = s - 1.5; if (w.air) { w.vy -= 22 * dt; w.y += w.vy * dt; if (w.y <= sw) { w.y = sw; w.air = false; w.vy = 0; } } else w.y = sw; G.lastS = s; }
+    G.trail.unshift({ x: w.x, z: w.z, y: w.y }); if (G.trail.length > 420) G.trail.pop();
+    if (G.fallT <= 0) { if (G.falls >= c.lives && !c.free && !G.lesson) return finish(G, false, 'falls'); w.x = G.cp.x; w.z = G.cp.z; w.h = G.cp.h; G.wp = G.cp.wp; w.v = Wm.cruise; w.om = 0; w.y = sandH(G, w.x, w.z) - 1.5; w.vy = 0; w.air = false; G.bal = 1; G.trail = []; G.phase = 'ride'; G.ev.push({ k: 'back' }); } return; }
   if (G.phase === 'end') { G.endT -= dt; if (G.endT <= 0) finish(G, true); return; }
   if (!c.free && !G.lesson && G.t > G.sunset) return finish(G, false, 'sunset');
   // steering: the stick asks for a turn; the worm's heavy head turns towards it, slower when fast and slower again when bracing
@@ -142,7 +147,7 @@ function step(G, dt) {
   const P = G.route.pts[G.wp]; if (P && Math.hypot(P.x - w.x, P.z - w.z) < gateR(G)) { G.ev.push({ k: 'way', i: G.wp, n: G.route.pts.length - 1 }); saveCp(G); lessonSee(G, 'way'); G.wp++; if (G.wp >= G.route.pts.length && !c.free && !G.lesson) { G.phase = 'end'; G.endT = 1.2; G.ev.push({ k: 'arrive' }); } else if (G.wp >= G.route.pts.length && (c.free || G.lesson)) { extend(G); } }
 }
 function knock(G, v, why) { if (G.phase !== 'ride') return; const k2 = v * G.cfg.knock * (G.brace ? 0.25 : 1); G.bal -= G.lesson ? Math.min(k2, 0.2) : k2; G.knocks++; G.ev.push({ k: 'knock', why, v: k2, braced: G.brace }); lessonSee(G, 'knock', G.brace); }
-function fall(G) { G.phase = 'fall'; G.fallT = 1.6; G.ev.push({ k: 'fall' }); if (!G.lesson) G.falls++; G.surge = false; }
+function fall(G) { const w = G.w; G.fallAt = { x: w.x, y: w.y, z: w.z, h: w.h, v: w.v, vy: w.air ? w.vy : 0 }; G.phase = 'fall'; G.fallT = 1.6; G.ev.push({ k: 'fall' }); if (!G.lesson) G.falls++; G.surge = false; }
 function extend(G) { const R = G.rnd, L = G.route, last = L.pts[L.pts.length - 1], prev = L.pts[L.pts.length - 2]; let a = Math.atan2(last.z - prev.z, last.x - prev.x);
   for (let i = 0; i < 3; i++) { a += (R() - 0.5) * 1.0; const p0 = L.pts[L.pts.length - 1], len = 260, p = { x: p0.x + Math.cos(a) * len, z: p0.z + Math.sin(a) * len }; L.pts.push(p); L.legs.push({ narrow: false, storm: false }); for (let j = 1; j <= 8; j++) L.line.push({ x: p0.x + (p.x - p0.x) * j / 8, z: p0.z + (p.z - p0.z) * j / 8, leg: L.pts.length - 2 }); } }
 function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'; const T = G.t, par = G.par;

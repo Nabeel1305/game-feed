@@ -63,6 +63,8 @@ function hoopPos(G, h) { return { x: h.x0 + (h.mv ? Math.sin(G.t * 0.8 + h.ph) *
 function step(G, dt) {
   if (G.over) return; G.t += dt; const c = G.cfg, d = G.d, I = G.in, L = lessonNow(G);
   for (const h of G.hoops) h.x = hoopPos(G, h).x;
+  if (G.down > 0) { G.down -= dt; d.vx *= 1 - 1.5 * dt; d.vz *= 1 - 1.5 * dt; d.vy -= 9.8 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt; const gy = groundH(d.x, d.z) + 0.15; if (d.y < gy) { d.y = gy; d.vy = Math.abs(d.vy) * 0.2; d.vx *= 0.5; d.vz *= 0.5; } d.tilt += d.spin * dt; d.bank += d.spin * 0.7 * dt;      // 23 Nov 2026: a crash is seen: the drone bounces off, tumbles and falls (it used to jump at once to the restart spot)
+    if (G.down <= 0) { Object.assign(d, G.backTo); G.respawn = 0.6; G.ev.push({ k: 'back' }); } return; }
   if (G.respawn > 0) { G.respawn -= dt; return; }
   if (!L) { G.clock -= dt; if (G.clock <= 0) { G.clock = 0; finish(G, false, 'time'); return; } }
   // the sticks: angle mode (the drone holds level when you let go), with momentum
@@ -95,7 +97,8 @@ function crash(G, why) {
   if (G.lesson) lessonMiss(G, why); else { G.crashes++; G.lives--; if (G.lives <= 0) { finish(G, false, 'crashes'); return; } }
   // back to just before the hoop it was heading for, facing it
   const h = G.hoops[G.next], p = G.hoops[G.next - 1] || { x: 0, y: 3, z: 0 }; const tx = h ? h.x : 0, tz = h ? h.z : 10;
-  d.x = p.x + (tx - p.x) * 0.25; d.z = p.z + (tz - p.z) * 0.25; d.y = h ? h.y : 3; d.vx = d.vy = d.vz = 0; d.yaw = Math.atan2(tx - d.x, tz - d.z); d.tilt = d.bank = 0; G.respawn = 1.0;
+  const bx = p.x + (tx - p.x) * 0.25, bz = p.z + (tz - p.z) * 0.25; G.backTo = { x: bx, z: bz, y: h ? h.y : 3, vx: 0, vy: 0, vz: 0, yaw: Math.atan2(tx - bx, tz - bz), tilt: 0, bank: 0 };
+  d.vx *= -0.35; d.vz *= -0.35; d.vy = Math.min(d.vy, 0) * 0.5; d.spin = (G.rnd() < 0.5 ? -1 : 1) * (5 + G.rnd() * 4); G.down = 1.1;      // it bounces back off what it hit and falls; the view goes dark, then it is put back
 }
 function finish(G, win, why) {
   G.over = win ? 'won' : 'lost';
@@ -117,7 +120,7 @@ function lessonSee(G, what) {
   if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); resetRun(G); }
   else { G.ev.push({ k: 'lessonnext' }); resetRun(G); }
 }
-function resetRun(G) { Object.assign(G, { next: 0, lives: G.cfg.lives, crashes: 0, clock: G.cfg.start, streak: 0, bestStreak: 0, clean: 0 }); Object.assign(G.d, { x: 0, y: 2.5 + Math.max(0, groundH(0, 0)), z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, tilt: 0, bank: 0 }); makeCourse(G); G.respawn = 0.8; G.ev.push({ k: 'course' }); }
+function resetRun(G) { Object.assign(G, { down: 0, next: 0, lives: G.cfg.lives, crashes: 0, clock: G.cfg.start, streak: 0, bestStreak: 0, clean: 0 }); Object.assign(G.d, { x: 0, y: 2.5 + Math.max(0, groundH(0, 0)), z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, tilt: 0, bank: 0 }); makeCourse(G); G.respawn = 0.8; G.ev.push({ k: 'course' }); }
 function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev.push({ k: 'lessonmiss', why, how: D.steps[D.i].how }); }
 
 // ---------- for the robots ----------
@@ -129,7 +132,7 @@ const BLIND = {
 // a pilot who looks: aims for a point just in front of the next hoop, then through its middle; eases off before it
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, d = G.d, h = G.hoops[G.next];
-  if (!h || G.respawn > 0) { sticks(G, 0, 0, 0, 0); return; }
+  if (!h || G.respawn > 0 || G.down > 0) { sticks(G, 0, 0, 0, 0); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.05 + react * 0.25;
   const nx = Math.sin(h.yaw), nz = Math.cos(h.yaw), along = (d.x - h.x) * nx + (d.z - h.z) * nz, lead = clamp(-along * 0.45, 0, 9);
   const n = (1 - acc), j = () => (Math.random() - 0.5) * 2 * n;
@@ -140,4 +143,4 @@ function honest(G, o, mem) {
   const pitch = Math.abs(err) > 0.8 ? 0.1 : clamp((wantV - vf) * 0.35 + 0.5, -1, 1);
   sticks(G, clamp((ay - d.y) * 0.9 - d.vy * 0.25, -1, 1), clamp(err * 2.2, -1, 1), pitch, clamp(lat * 0.35 - vs * 0.25, -1, 1));
 }
-function winNow(G) { if (!G || G.over) return; G.lesson = null; G.next = G.hoops.length - 1; G.lives = G.cfg.lives; G.clock = Math.max(G.clock, 10); const h = G.hoops[G.next]; Object.assign(G.d, { x: h.x - Math.sin(h.yaw) * 1.2, y: h.y, z: h.z - Math.cos(h.yaw) * 1.2, vx: Math.sin(h.yaw) * 6, vy: 0, vz: Math.cos(h.yaw) * 6, yaw: h.yaw }); G.respawn = 0; sticks(G, 0, 0, 0.6, 0); }
+function winNow(G) { if (!G || G.over) return; G.down = 0; G.lesson = null; G.next = G.hoops.length - 1; G.lives = G.cfg.lives; G.clock = Math.max(G.clock, 10); const h = G.hoops[G.next]; Object.assign(G.d, { x: h.x - Math.sin(h.yaw) * 1.2, y: h.y, z: h.z - Math.cos(h.yaw) * 1.2, vx: Math.sin(h.yaw) * 6, vy: 0, vz: Math.cos(h.yaw) * 6, yaw: h.yaw }); G.respawn = 0; sticks(G, 0, 0, 0.6, 0); }

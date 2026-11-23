@@ -121,7 +121,7 @@ function onEvent(G, e) { const P = G.p;
     case 'sweepdone': say('GATE OPENING!', W / 2, H * 0.3, '#ffd23a', 28); break;
     case 'gate': sfx.fanfare(); break;
     case 'cp': { const o = G.C.obs[e.i]; FX.cheer = 0.8; sfx.chime(); if (o) ui.banner = { txt: KNAME[o.kind].toUpperCase(), sub: TIPS[o.kind], t: 0, secs: 2.2, small: true }; } break;
-    case 'respawn': ui.snap = true; break;
+    case 'respawn': ui.snap = true; ui.backAt = performance.now(); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A PRACTICE RUN', W / 2, H * 0.36, '#ffd36a', 24); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.42, '#8fe0ab', 24); sfx.coin(e.n); break;
     case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.2 }; break;
@@ -136,6 +136,7 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0aa8c8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D course.', W / 2, H / 2); if (G) hud(G, now); return; }
   const g = G || idleG(); sync(V, g, dt || 1 / 60); W3.render(dt || 1 / 60);
+  if (G && G.p) { const fa = G.p.state === 'fall' ? clamp(1 - (G.p.fallT - 0.1) / 0.45, 0, 1) : clamp(1 - (performance.now() - (ui.backAt || -1e9)) / 450, 0, 1); if (fa > 0.01) { ctx.fillStyle = `rgba(8,16,24,${fa})`; ctx.fillRect(0, 0, W, H); } }      // the splash is seen, then the view goes dark and opens at the last checkpoint
   if (G && !(G.over && !$('ovEnd').classList.contains('hidden'))) hud(G, now);
   for (const p of PARTS) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

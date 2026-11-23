@@ -132,7 +132,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
     const sup = support(G, P.x, P.z, P.y, 0.4);
     if (!sup || sup.h < P.y - 0.5) { const c2 = carryV(G, s, P.x, P.z); P.vx += c2.x; P.vz += c2.z; P.vy = 0; P.state = 'air'; P.from = s; P.on = null; if (s.kind === 'ball') { P.slid = true; G.ev.push({ k: 'slide' }); } }
     else { P.y = sup.h; if (sup.s.kind !== s.kind || sup.s.o !== s.o || sup.s.b !== s.b || sup.s.pl !== s.pl) { P.on = sup.s; onNew(G, sup.s); } else P.on = sup.s; } }
-  else { const y0 = P.y; P.vy -= GRAV * dt; const m = Math.hypot(G.stick.x, G.stick.z); if (m > 0.1 && !P.knocked) { P.vx += G.stick.x * 3 * dt; P.vz += G.stick.z * 3 * dt; }
+  else { const y0 = P.y; P.vy -= GRAV * dt;       // 23 Nov 2026: no steering in the air (it was a push of 3 m/s a second from nothing): the jump is aimed when you leave the ground
     P.x += P.vx * dt; P.z += P.vz * dt; P.y += P.vy * dt;
     if (P.vy <= 0) { const sup = support(G, P.x, P.z, y0, 0.05); if (sup && P.y <= sup.h) land(G, sup); }
     if (P.state === 'air' && P.y < TOP - 1.4) splash(G); }

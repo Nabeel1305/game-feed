@@ -64,7 +64,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
   if (G.xb < w.L - 16) G.xb += cfg.vp * sec.k * dt;      // the wave peters out at its end: the curl stops
   G.comboT -= dt; if (G.comboT <= 0) G.combo = 0;
   const Lf = 1.4 * w.H;
-  if (P.air) { P.vy -= 9.8 * dt; P.h += P.vy * dt; P.x += P.v * Math.cos(P.th) * dt; const want = Math.atan2(G.stick.y, Math.max(0.2, G.stick.x)); if (Math.hypot(G.stick.x, G.stick.y) > 0.3) P.th += clamp(want - P.th, -3 * dt, 3 * dt);
+  if (P.air) { P.vy -= 9.8 * dt; P.h += P.vy * dt; P.x += (P.ax ?? P.v * Math.cos(P.th)) * dt;      /* in the air you keep the speed you took off with; the stick only turns the board (23 Nov 2026) */ const want = Math.atan2(G.stick.y, Math.max(0.2, G.stick.x)); if (Math.hypot(G.stick.x, G.stick.y) > 0.3) P.th += clamp(want - P.th, -3 * dt, 3 * dt);
     if (P.spinTo != null) { const d = P.spinTo - P.rot, st = Math.sign(d) * Math.min(Math.abs(d), 10 * dt); P.rot += st; if (Math.abs(P.spinTo - P.rot) < 1e-3) { P.rot = P.spinTo; P.spinTo = null; P.spins++; } }
     if (P.h <= 0) { P.air = false; P.h = 0; P.s = 0.97; P.landT = G.t; const r = ((P.rot % TAU) + TAU) % TAU, off = Math.min(r, TAU - r), down = P.th < -0.1;
       if (off < 0.6 + 0.15 * upLv('wax') && down && P.spinTo == null) { const half = Math.round(P.spins); move(G, 'air', 1 + 0.75 * Math.floor(half / 2), half >= 2 ? `AIR ${half * 180}` : 'AIR'); P.rot = 0; P.spins = 0; vibeEv(G, 'land'); }
@@ -85,7 +85,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
     const jerk = Math.abs(w2 / dt) * P.v; P.bal = clamp(P.bal + (Math.max(0, jerk - 22) * 0.012 * (G.crouch ? 0.45 : 1) * (1 - 0.15 * upLv('fins')) + (P.x - G.xb < 2 ? 0.25 : 0) - 0.45) * dt, 0, 1.2);
     if (P.bal >= 1) return wipe(G, 'lost balance: turn less sharply, or crouch');
     // the lip: fly off it with speed going up; otherwise ride the top
-    if (P.s >= 1) { if (Math.sin(P.th) > 0.8 && P.v > 8.5) { P.air = true; P.vy = P.v * Math.sin(P.th) * 0.7; P.h = 0.01; P.rot = 0; P.spins = 0; P.spinTo = null; P.s = 1; G.ev.push({ k: 'launch' }); }
+    if (P.s >= 1) { if (Math.sin(P.th) > 0.8 && P.v > 8.5) { P.air = true; P.vy = P.v * Math.sin(P.th) * 0.7; P.ax = P.v * Math.cos(P.th); P.h = 0.01; P.rot = 0; P.spins = 0; P.spinTo = null; P.s = 1; G.ev.push({ k: 'launch' }); }
       else P.s = 1; }
     if (P.s > 0.86) P.lipT = G.t;
     // moves: a snap (a hard turn down at the lip), a carve (a long linked turn), a cutback (back towards the curl and out again)
