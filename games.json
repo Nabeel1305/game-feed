@@ -2829,7 +2829,7 @@
       "id": "taxi",
       "name": "Taxi Driver",
       "status": "testing",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "added": "2026-11-20",
       "path": "games/taxi/index.html",
       "artifact": "https://claude.ai/artifact/UM1but5VAXNifXVKai5S7y",
@@ -2842,7 +2842,7 @@
         "hook": "Pick them up, find the way, beat the meter.",
         "genre": "Driving / city",
         "intensity": 3,
-        "thumbs": 1,
+        "thumbs": 2,
         "start": [
           "#playBtn"
         ],
@@ -2855,7 +2855,7 @@
         "P12",
         "P13"
       ],
-      "summary": "The cab drives itself: hold to brake, swipe to change lane, swipe in the glowing turn zone to turn. Pick up whoever waves, find the way (GPS or round the jams), stop at their door before the meter runs out; rushers, nervous passengers and tourists each want a different drive."
+      "summary": "You drive the cab: a floating stick steers, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse). Pick up whoever waves by pulling over and stopping in their ring, find the way (GPS or round the jams), stop at their door before the meter runs out; rushers, nervous passengers and tourists each want a different drive."
     },
     {
       "number": 84,

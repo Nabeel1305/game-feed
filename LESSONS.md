@@ -1052,6 +1052,7 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   test_play once.
 
 ### 83. Taxi Driver (`games/taxi/`): a grid city, one thumb (built on Bus Driver's shell)
+- **Taxi Driver 0.2.0 (23 Nov 2026; `specs/taxi-v2-2026-11-23.md`): you drive it.** A game built on roads (`i, j, h, s, lx`) was given a free car without rewriting everything else: the taxi has `x, y, th`, and `locate(G)` works the road values out from them every frame, so fares, GPS, lights and cars carried on as they were. What had to change with it: crashes are tested in the world (any car, either way), cars behind brake for the taxi, the oncoming cars became real, a red light is checked on coming into the junction, the turn you made is read on leaving it, rings moved clear of the corners, and the robot learned to take the inside lane for a corner. `__sim.place(i, j, h, s, lx, v)` puts the taxi on a road for tests.
 - **The city is a grid of one-way edges** (`i,j,h`: from a node, heading N E S W; you drive on the right). The taxi is an
   edge, a distance along it and a lane; at the node it takes the turn it was given (a closed road falls back to the GPS way,
   then straight, then right). `wp()` turns that into the world; after a junction the taxi's drawn place and yaw ease from

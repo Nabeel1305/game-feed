@@ -1,5 +1,5 @@
 {
- "checkpoint": "**Checkpoint, 23 Nov 2026, 08:45 (his review goes on).** His rule of 07:48: a fix is delivered on the game's OWN page (`tools/pages.py` lists any that is behind; all 103 were republished). DONE from his notes: Police Chase twice (second version: marker, stick and pedals, city with corners, runners; third version: corners on foot, ARREST button, tapping fight, arrest picture) and the same faults in On the Run (vanishing buildings, third-person run, corners on foot) and Eleven (rings). ANSWERED (09:49, sharply: do it, do not ask): On the Run's driving now has the stick, pedals, NITRO button and a city with corners (0.2.0). NEXT, the same fault: Taxi Driver (83) drives itself and is steered by swipes; Bus Driver (two pedals, a set route) and the three kart racers (they steer freely; no brake or reverse) were looked at and left. SEEN in the page's store, not submitted when this was written: Reel 'Em In (make the fish clear, let it break the water where to cast, a ring that stands out from the water) and Soar (prettier rings, a cape flying instead of a person is fine, beautiful surroundings, easier: see the rings and go into them slowly); Wild Water is Good. Read the store first next time (db_list, collection `reviews`; `meta/submitted`).",
+ "checkpoint": "**Checkpoint, 23 Nov 2026, 08:45 (his review goes on).** His rule of 07:48: a fix is delivered on the game's OWN page (`tools/pages.py` lists any that is behind; all 103 were republished). DONE from his notes: Police Chase twice (second version: marker, stick and pedals, city with corners, runners; third version: corners on foot, ARREST button, tapping fight, arrest picture) and the same faults in On the Run (vanishing buildings, third-person run, corners on foot) and Eleven (rings). ANSWERED (09:49, sharply: do it, do not ask): On the Run's driving now has the stick, pedals, NITRO button and a city with corners (0.2.0). DONE too, the same fault: Taxi Driver (83) drove itself and was steered by swipes: you drive it now (0.2.0). Bus Driver (two pedals, a set route) and the three kart racers (they steer freely; no brake or reverse) were looked at and left. SEEN in the page's store, not submitted when this was written: Reel 'Em In (make the fish clear, let it break the water where to cast, a ring that stands out from the water) and Soar (prettier rings, a cape flying instead of a person is fine, beautiful surroundings, easier: see the rings and go into them slowly); Wild Water is Good. Read the store first next time (db_list, collection `reviews`; `meta/submitted`).",
  "shared": [
   "tools/world3d.js: a fill light from behind the player's eye; brighter night, dusk, rain and storm; thinner fog. Affects all 82 3D games. Regression: every game loads; robot play of all 103 showed no errors; pictures of 20 dark-level games looked at before and after.",
   "tools/juice-kit.js: the band (music) for 100 games; a Settings card added where missing. Its room echo was first a convolution reverb: two touch tests (Tennis, Ice Hockey) then failed on timing, so it is now two cheap feedback echoes; both pass again. Regression: every game's own touch test re-run (104 have one; all pass, three needed a second run under load: Powder, Drift Kings, Kart Kingdom), tools/test_controls.py for all 111, tools/check.py.",
@@ -1021,11 +1021,16 @@
   },
   "taxi": {
    "status": "verified",
-   "problems": [],
-   "changes": [],
+   "problems": [
+    "From his Police Chase review and his words of 23 Nov 09:49 (apply it to the other games that need it): the taxi drove itself and was steered by swipes; no steering, no reverse."
+   ],
+   "changes": [
+    "23 Nov, second version 0.2.0 (specs/taxi-v2-2026-11-23.md): you drive it: a floating stick steers, GAS and BRAKE pedals (BRAKE held at a standstill reverses after a moment); you steer round the corners yourself with the GPS arrow to follow; the oncoming cars are real; a hard hit on a kerb is a crash; rings moved clear of the corners; the meter allows a little more."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (23 passed, 0 failed).",
-    "third pass: its controls read through against his rule (obvious to a first-timer): a swipe in the glowing turn zone, with the GPS arrow. Judged plain enough; nothing changed."
+    "third pass: its controls read through against his rule (obvious to a first-timer): a swipe in the glowing turn zone, with the GPS arrow. Judged plain enough; nothing changed.",
+    "23 Nov, 0.2.0: test_play 15 of 15 (224 s), test_touch 34, controls 33, tutorial, small screen, odd-moment win, stale_bounds, speed 56 a second; pictures looked at: the start, a ring, a pick-up, a corner, a drop-off, road works, a jam, a light, reversing, the three lessons, a 360 x 640 phone. NOT judged by me: the feel of the taxi, the motion, the sound."
    ],
    "remaining": [],
    "note": "fine."

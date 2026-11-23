@@ -19,7 +19,6 @@ function mySkin() { if (typeof HEADLESS !== 'undefined' && HEADLESS) return SKIN
 const DX = h => DIRS[h][0], DZ = h => -DIRS[h][1];
 const yawOf = h => Math.atan2(DX(h), DZ(h));
 function wp(i, j, h, s, lx) { const r = (h + 1) % 4; return { x: i * BL + DX(h) * s + DX(r) * lx, z: -j * BL + DZ(h) * s + DZ(r) * lx }; }
-const HW = 7.6;      // half the road's width
 function canvasTex(w, h, fn) { const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
 function buildWorld() {
   if (V3) return V3; const T = window.THREE; if (!T || !W3 || !W3.init({ canvas: $('gl'), fov: 58, far: 2500, near: 0.2 })) { V3 = { none: true }; return V3; }
@@ -128,20 +127,20 @@ function buildCity(V, g) { const T = V.T, S = V.S;
 // ---------- each frame ----------
 function sync(V, g, dt) { const t = g.taxi, T = V.T; V.t += dt;
   // the taxi: at its place on the road; after a junction it swings round (the offset fades)
-  const p = wp(t.i, t.j, t.h, t.s, t.lx), yaw = yawOf(t.h);
-  if (V.lastE !== `${t.i},${t.j},${t.h}`) { if (V.lastP && V.lastE && !ui.snap) { ui.off = [V.lastP.x - p.x, V.lastP.z - p.z]; if (Math.hypot(...ui.off) > 14) ui.off = [0, 0]; } V.lastE = `${t.i},${t.j},${t.h}`; }
+  const p = { x: t.x, z: -t.y }, yaw = Math.PI - t.th;      // (second version) the taxi is wherever you have driven it
+  if (V.lastE !== `${t.i},${t.j},${t.h}`) { ui.off = [0, 0]; V.lastE = `${t.i},${t.j},${t.h}`; }
   const dec = Math.exp(-dt * 5); ui.off[0] *= dec; ui.off[1] *= dec; const px = p.x + ui.off[0], pz = p.z + ui.off[1]; V.lastP = p;
-  if (ui.yaw == null || ui.snap) ui.yaw = yaw; let dy = yaw - ui.yaw; while (dy > Math.PI) dy -= TAU; while (dy < -Math.PI) dy += TAU; ui.yaw += dy * Math.min(1, dt * 6);
-  const X = V.taxi; X.g.position.set(px, 0, pz); X.g.rotation.y = ui.yaw; X.body.rotation.z += (clamp(-dy * 0.15, -0.06, 0.06) - X.body.rotation.z) * Math.min(1, dt * 6); X.body.rotation.x += ((t.brH && t.v > 0.5 ? 0.03 : 0) - X.body.rotation.x) * Math.min(1, dt * 8);
+  if (ui.yaw == null || ui.snap) ui.yaw = yaw; let dy = yaw - ui.yaw; while (dy > Math.PI) dy -= TAU; while (dy < -Math.PI) dy += TAU; ui.yaw += dy * Math.min(1, dt * 3.4);
+  const X = V.taxi; X.g.position.set(px, 0, pz); X.g.rotation.y = yaw; X.body.rotation.z += (clamp((t.w || 0) * Math.min(1, Math.abs(t.v) / 12) * 0.05, -0.06, 0.06) - X.body.rotation.z) * Math.min(1, dt * 6); X.body.rotation.x += ((t.brH && t.v > 0.5 ? 0.03 : 0) - X.body.rotation.x) * Math.min(1, dt * 8);
   for (const w of X.wheels) w.rotation.x += t.v * dt / 0.34; V.brakeL.material.emissiveIntensity = V.brakeR.material.emissiveIntensity = t.brH ? 3 : 0.5; V.signM.emissiveIntensity = g.fare ? 0.05 : 0.6 + 0.2 * Math.sin(V.t * 3);
-  V.head.position.set(px, 1.2, pz); V.head.target.position.set(px + Math.sin(ui.yaw) * 30, 0, pz + Math.cos(ui.yaw) * 30);
+  V.head.position.set(px, 1.2, pz); V.head.target.position.set(px + Math.sin(yaw) * 30, 0, pz + Math.cos(yaw) * 30);
   // the lights
   if (V.lamps && V.heads.length && V.lamps.instanceColor) { const c = V.cpool || (V.cpool = { r: new T.Color(0xff2a1a), a: new T.Color(0xffa010), g: new T.Color(0x30ff70), off: new T.Color(0x202020) });
     V.heads.forEach((q, n) => { const col = lightAt(g, q.i, q.j, q.h % 2, g.t); ['r', 'a', 'g'].forEach((L, j) => V.lamps.setColorAt(n * 3 + j, L === col ? c[L] : c.off)); }); V.lamps.instanceColor.needsUpdate = true; }
   // the cars
   let ci = 0; for (const car of g.cars) { const c = V.cars[ci++]; if (!c) break; c.g.visible = true; const q = wp(car.i, car.j, car.h, car.s, car.lx); c.g.position.set(q.x, 0, q.z); c.g.rotation.y = yawOf(car.h); c.bl.material.emissiveIntensity = car.v < 1 ? 2.5 : 0.4; }
   for (; ci < V.cars.length; ci++) V.cars[ci].g.visible = false;
-  for (const o of V.onc) { o.s -= (9 + (o.lane ? 2 : 0)) * dt; if (o.s < -6) o.s += BL + 12; const q = wp(t.i, t.j, t.h, o.s, -LANES[o.lane]); o.c.g.position.set(q.x, 0, q.z); o.c.g.rotation.y = yaw + Math.PI; o.c.g.visible = !g.yard && o.s > HW && o.s < BL - HW && !g.works.has(twoWay(t.i, t.j, t.h)); }
+  for (const o of V.onc) { o.s -= (9 + (o.lane ? 2 : 0)) * dt; if (o.s < -6) o.s += BL + 12; const q = wp(t.i, t.j, t.h, o.s, -LANES[o.lane]); o.c.g.position.set(q.x, 0, q.z); o.c.g.rotation.y = yaw + Math.PI; o.c.g.visible = false; }      /* the oncoming cars are real ones now (g.cars) */
   // the goal: a person waving (or the door), the ring, the beam
   const G2 = g.goal; V.beam.visible = V.ring.visible = !!G2; V.hailer.g.visible = !!G2 && G2.kind === 'pick'; V.rider.g.visible = false;
   if (G2) { const gp = wp(G2.e.i, G2.e.j, G2.e.h, G2.s, LANES[1]), kerb = wp(G2.e.i, G2.e.j, G2.e.h, G2.s, HW + 1.2), col = G2.kind === 'pick' ? 0x40ff80 : 0xffc61a;
@@ -150,10 +149,10 @@ function sync(V, g, dt) { const t = g.taxi, T = V.T; V.t += dt;
   if (V.spray) V.spray.scale.y = 1 + 0.08 * Math.sin(V.t * 7);
   // the turn zone and the arrows
   const d2n = BL - t.s, [ni, nj] = ahead(t.i, t.j, t.h), zoneOn = d2n > 1, inZ = inZone(g);
-  V.zoneG.visible = zoneOn && !g.over; if (zoneOn) { const zp = wp(t.i, t.j, t.h, BL - HW - ZONE / 2 + 2, 3.7); V.zoneG.position.set(zp.x, 0.03, zp.z); V.zoneG.rotation.y = yaw + Math.PI; V.zone.material.opacity = inZ ? 0.4 + 0.2 * Math.sin(V.t * 10) : 0.14; V.zone.material.map.offset.y = (V.zone.material.map.offset.y - dt * 1.5) % 1; }
+  V.zoneG.visible = false; if (false) { const zp = wp(t.i, t.j, t.h, BL - HW - ZONE / 2 + 2, 3.7); V.zoneG.position.set(zp.x, 0.03, zp.z); V.zoneG.rotation.y = yaw + Math.PI; V.zone.material.opacity = inZ ? 0.4 + 0.2 * Math.sin(V.t * 10) : 0.14; V.zone.material.map.offset.y = (V.zone.material.map.offset.y - dt * 1.5) % 1; }
   const r = G2 ? gps(g, G2) : null; V.arrow.visible = !!r && !r.on && d2n < 90 && !g.over;
-  if (V.arrow.visible) { const c = wp(ni, nj, t.h, -HW, 3.7), q = r.turn; V.arrow.position.set(c.x, 6.2 + Math.sin(V.t * 3) * 0.25, c.z); V.arrow.rotation.order = 'YXZ'; V.arrow.rotation.set(0, yaw + Math.PI, q === 'L' ? Math.PI / 2 : q === 'R' ? -Math.PI / 2 : 0); V.arrow.scale.setScalar(0.85); V.arrow.material.color.setHex(G2.kind === 'pick' ? 0x40ff80 : 0xffc61a); }
-  V.qArrow.visible = !!t.turn && t.turn !== 'S' && !g.over; if (V.qArrow.visible) { const c = wp(t.i, t.j, t.h, BL - HW - 4, t.lx), ay = t.turn === 'L' ? yaw + Math.PI / 2 : yaw - Math.PI / 2; V.qArrow.position.set(c.x, 0.08, c.z); V.qArrow.rotation.order = 'YXZ'; V.qArrow.rotation.set(Math.PI / 2, ay, 0); }
+  if (V.arrow.visible) { const c = wp(ni, nj, t.h, -HW, 3.7), q = r.turn; V.arrow.position.set(c.x, 6.2 + Math.sin(V.t * 3) * 0.25, c.z); V.arrow.rotation.order = 'YXZ'; V.arrow.rotation.set(0, yawOf(t.h) + Math.PI, q === 'L' ? Math.PI / 2 : q === 'R' ? -Math.PI / 2 : 0); V.arrow.scale.setScalar(0.85); V.arrow.material.color.setHex(G2.kind === 'pick' ? 0x40ff80 : 0xffc61a); }
+  V.qArrow.visible = false; if (false) { const c = wp(t.i, t.j, t.h, BL - HW - 4, t.lx), ay = t.turn === 'L' ? yaw + Math.PI / 2 : yaw - Math.PI / 2; V.qArrow.position.set(c.x, 0.08, c.z); V.qArrow.rotation.order = 'YXZ'; V.qArrow.rotation.set(Math.PI / 2, ay, 0); }
   // the camera: behind and above
   const fw = [Math.sin(ui.yaw), Math.cos(ui.yaw)], asp = innerWidth / innerHeight, portrait = asp < 0.8, back = portrait ? 9.5 : 8, up = portrait ? 5.2 : 4.4, la = 12 + t.v * 0.9;
   const cp = [px - fw[0] * back, up, pz - fw[1] * back], cl = [px + fw[0] * la, 1.0, pz + fw[1] * la];
@@ -178,15 +177,15 @@ function onEvent(G, e) { const cx = W / 2;
     case 'pick': sfx.door(); vibe(HAP.light); break;
     case 'in': sfx.meter(); say(`${TYPES[e.type].icon} ${TYPES[e.type].name.toUpperCase()}: ${e.allow} s`, cx, H * 0.32, '#fff', 20); if (e.type === 'calm') tip('calm', 'A nervous passenger: no crashes, no red lights, no fast corners, no hard braking. Gentle!', 3.6); if (e.type === 'rush') tip('rush', 'A rusher: quick, and they tip double.', 3); if (e.type === 'sight') tip('sight', 'A tourist: drive past the fountain (📷 on the map) for a tip.', 3.4); break;
     case 'out': sfx.till(); sfx.coin(2); say(`+${e.pay} 🪙` + (e.tip ? `  TIP +${e.tip}` : ''), cx, H * 0.34, e.late ? '#ffb070' : '#80ff90', 26); if (e.late) say('LATE: HALF FARE', cx, H * 0.41, '#ffb070', 18); burst(cx, H * 0.34, '#ffd040', 20); break;
-    case 'missed': sfx.no(); say(e.kind === 'pick' ? 'MISSED THEM: GO ROUND THE BLOCK' : 'MISSED THE DOOR: GO ROUND', cx, H * 0.38, '#ffb070', 18); tip('missed', 'Move to the kerb lane (right) and HOLD to stop in the ring.', 3); break;
+    case 'missed': sfx.no(); say(e.kind === 'pick' ? 'MISSED THEM: GO ROUND THE BLOCK' : 'MISSED THE DOOR: GO ROUND', cx, H * 0.38, '#ffb070', 18); tip('missed', 'Pull over to the kerb (on the right) and BRAKE to stop in the ring.', 3); break;
     case 'red': sfx.alarm(); FX.red = 1; vibe(HAP.heavy); ui.banner = { txt: 'RED LIGHT! -5', t: 0, secs: 1.3, col: '#ff5a4a' }; break;
-    case 'skid': sfx.skid(); FX.shake = 8; say('TOO FAST FOR THE CORNER!', cx, H * 0.4, '#ffb070', 18); tip('skid', 'Hold to slow down before you turn.', 2.6); break;
+    case 'skid': sfx.skid(); FX.shake = 8; say('TOO FAST FOR THE CORNER!', cx, H * 0.4, '#ffb070', 18); tip('skid', 'BRAKE before the corner, then turn.', 2.6); break;
     case 'scared': sfx.gasp(); say(`😰 ${['', 'CAREFUL!', 'PLEASE!', 'LAST WARNING!'][Math.min(3, e.n)] || 'AAAH!'}`, cx, H * 0.46, '#ffd0a0', 20); break;
     case 'letout': ui.banner = { txt: 'LET ME OUT!', t: 0, secs: 1.5, col: '#ff5a4a' }; break;
     case 'sight': sfx.combo(3); say('📷 THE FOUNTAIN!', cx, H * 0.36, '#7ad8ff', 22); break;
     case 'walk': ui.banner = { txt: "I'LL WALK!", t: 0, secs: 1.5, col: '#ff5a4a' }; break;
     case 'gone': ui.banner = { txt: 'THEY TOOK ANOTHER CAB', t: 0, secs: 1.5, col: '#ff5a4a' }; break;
-    case 'crash': sfx.crash(); FX.shake = 20; FX.red = 1; vibe(HAP.heavy); ui.banner = { txt: `CRASH! ${e.n}/${G.cfg.crashes}`, t: 0, secs: 1.4, col: '#ff5a4a' }; break;
+    case 'crash': sfx.crash(); FX.shake = 20; FX.red = 1; vibe(HAP.heavy); ui.banner = { txt: `CRASH! ${e.n}/${G.cfg.crashes}`, t: 0, secs: 1.4, col: '#ff5a4a' }; tip(e.wall ? 'hitwall' : 'hitcar', e.wall ? 'BRAKE before the corner: the kerb is hard' : 'Steer round slow cars, or BRAKE behind them', 2.8); break;
     case 'won': sfx.win(); break;
     case 'lost': sfx.lose(); break;
     case 'lessonnext': hint = null; break;
@@ -219,7 +218,7 @@ function minimap(G, x, y, w) { const t = G.taxi, c = w / (NX - 1 + 0.6), o = c *
   { const [fx, fy] = P(G.sight.i + 0.5, G.sight.j + 0.5); ctx.font = `${Math.round(c * 0.7)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('⛲', fx, fy + 1); }
   const g = G.goal; if (g) { const r = gps(G, g); if (r && r.path && r.path.length) { ctx.strokeStyle = g.kind === 'pick' ? '#40ff80' : '#ffc61a'; ctx.lineWidth = Math.max(2, c * 0.14); ctx.beginPath(); const [ax, ay] = P(t.i + DIRS[t.h][0] * t.s / BL, t.j + DIRS[t.h][1] * t.s / BL); ctx.moveTo(ax, ay); for (const [i, j] of r.path) ctx.lineTo(...P(i, j)); const [gx, gy] = P(g.e.i + DIRS[g.e.h][0] * g.s / BL, g.e.j + DIRS[g.e.h][1] * g.s / BL); ctx.lineTo(gx, gy); ctx.stroke(); }
     const [gx, gy] = P(g.e.i + DIRS[g.e.h][0] * g.s / BL, g.e.j + DIRS[g.e.h][1] * g.s / BL); ctx.fillStyle = g.kind === 'pick' ? '#40ff80' : '#ffc61a'; ctx.beginPath(); ctx.arc(gx, gy, c * 0.28 + Math.sin(G.t * 6) * 1.5, 0, TAU); ctx.fill(); }
-  const [tx, ty] = P(t.i + DIRS[t.h][0] * t.s / BL, t.j + DIRS[t.h][1] * t.s / BL); ctx.save(); ctx.translate(tx, ty); ctx.rotate(t.h * Math.PI / 2); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0, -c * 0.32); ctx.lineTo(c * 0.22, c * 0.22); ctx.lineTo(-c * 0.22, c * 0.22); ctx.closePath(); ctx.fill(); ctx.restore(); }
+  const [tx, ty] = P(t.i + DIRS[t.h][0] * t.s / BL, t.j + DIRS[t.h][1] * t.s / BL); ctx.save(); ctx.translate(tx, ty); ctx.rotate(t.th); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0, -c * 0.32); ctx.lineTo(c * 0.22, c * 0.22); ctx.lineTo(-c * 0.22, c * 0.22); ctx.closePath(); ctx.fill(); ctx.restore(); }
 function hud(G, now) { ctx.textBaseline = 'middle'; const t = G.taxi, c = G.cfg;
   if (G.lesson) lessonPanel(G);
   else { // the top: the meter (or who is waiting), coins, the fares
@@ -234,7 +233,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const t = G.taxi, c = G.cfg;
   const g = G.goal; if (g && !G.over) { const r = gps(G, g), d2n = BL - t.s, y = (G.lesson ? 196 : 158) * k, inZ = inZone(G);
     if (r) { const on = r.on, q = on ? 'S' : r.turn, x = W / 2; ctx.fillStyle = inZ && !on ? 'rgba(255,198,26,.92)' : 'rgba(14,18,28,.7)'; rrect(x - 104 * k, y - 26 * k, 208 * k, 52 * k, 14 * k); ctx.fill();
       arrowIcon(x - 60 * k, y, 18 * k, q, inZ && !on ? '#1a1a1a' : g.kind === 'pick' ? '#40ff80' : '#ffc61a'); ctx.textAlign = 'left'; ctx.fillStyle = inZ && !on ? '#1a1a1a' : '#fff';
-      if (on) { ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(`${g.kind === 'pick' ? 'PICK UP' : 'DROP OFF'} ${Math.max(0, Math.round(g.s - t.s))} m`, x - 34 * k, y - 6 * k); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(t.lane ? 'HOLD: STOP IN THE RING' : 'SWIPE RIGHT TO THE KERB', x - 34 * k, y + 13 * k); }
+      if (on) { ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(`${g.kind === 'pick' ? 'PICK UP' : 'DROP OFF'} ${Math.max(0, Math.round(g.s - t.s))} m`, x - 34 * k, y - 6 * k); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(t.lane ? 'BRAKE: STOP IN THE RING' : 'STEER RIGHT TO THE KERB', x - 34 * k, y + 13 * k); }
       else { ctx.font = `400 ${Math.round(16 * k)}px ${TF}`; ctx.fillText(inZ ? (t.turn ? (t.turn === r.turn ? 'GOOD!' : 'WRONG WAY?') : q === 'S' ? 'STRAIGHT ON' : `SWIPE ${q === 'L' ? 'LEFT' : 'RIGHT'}!`) : q === 'S' ? 'STRAIGHT ON' : `${q === 'L' ? 'LEFT' : 'RIGHT'} IN ${Math.round(d2n)} m`, x - 34 * k, y - 6 * k);
         ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(inZ ? 'TURN ZONE' : `${Math.max(1, Math.round(r.dist / BL))} blocks to go`, x - 34 * k, y + 13 * k); } } }
   // the banner
@@ -242,8 +241,15 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const t = G.taxi, c = G.cfg;
   // the light ahead
   { const [ni, nj] = ahead(t.i, t.j, t.h), L = G.light[ni] && G.light[ni][nj]; if (L && L.on && BL - t.s < 60) { const col = lightAt(G, ni, nj, t.h % 2, G.t), x = W - 30 * k, y = (G.lesson ? 330 : 230) * k; ctx.fillStyle = 'rgba(10,12,16,.85)'; rrect(x - 14 * k, y - 34 * k, 28 * k, 68 * k, 7 * k); ctx.fill(); ['r', 'a', 'g'].forEach((q, j) => { ctx.fillStyle = q === col ? ['#ff3a2a', '#ffb020', '#30ff70'][j] : 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(x, y - 21 * k + j * 21 * k, 8 * k, 0, TAU); ctx.fill(); }); } }
   // speed and the brake
-  ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,12,20,.6)'; const kmh = Math.round(t.v * 3.6); ctx.strokeText(kmh, W / 2, H - 70 * k); ctx.fillStyle = t.brH ? '#ff7a6a' : '#fff'; ctx.fillText(kmh, W / 2, H - 70 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(t.brH ? 'BRAKING' : 'km/h', W / 2, H - 50 * k);
-  if (G.N <= 2 && !G.over && G.t < 8 && !G.lesson) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.fillText('HOLD TO BRAKE · SWIPE TO STEER', W / 2, H - 100 * k); ctx.globalAlpha = 1; } }
+  ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,12,20,.6)'; const kmh = Math.round(Math.abs(t.v) * 3.6), sxm = (124 * k + W - 172 * k - 24) / 2; ctx.strokeText(kmh, sxm, H - 70 * k); ctx.fillStyle = t.brH ? '#ff7a6a' : '#fff'; ctx.fillText(kmh, sxm, H - 70 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(t.v < -0.3 ? 'REVERSE' : 'km/h', sxm, H - 50 * k);
+  // the controls: a stick under the left thumb, GAS and BRAKE under the right
+  if (!G.over && G.in) { const Pd = pedals(), I = G.in, st = ui.stick, sx0 = st ? st.x0 : 78 * k, sy0 = st ? st.y0 : H - 96 * k, R1 = 46 * k; ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.globalAlpha = st ? 0.9 : 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sx0, sy0, R1, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(sx0 + I.sx * R1, sy0, 20 * k, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText('◀  STEER  ▶', sx0, sy0 + R1 + 14 * k);
+    for (const [key, lab, sub, col] of [['gas', 'GAS', '', '#3fbf6a'], ['brake', 'BRAKE', 'hold: reverse', '#e0483a']]) { const b = Pd[key], on = key === 'gas' ? I.gas : I.brake; ctx.globalAlpha = on ? 1 : 0.72; ctx.fillStyle = on ? col : 'rgba(16,20,28,.72)'; rrect(b.x, b.y, b.w, b.h, 16 * k); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 3; rrect(b.x, b.y, b.w, b.h, 16 * k); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(19 * k)}px ${BC}`; ctx.fillText(lab, b.x + b.w / 2, b.y + b.h / 2 - (sub ? 7 * k : 0)); if (sub) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText(sub, b.x + b.w / 2, b.y + b.h / 2 + 13 * k); } }
+    ctx.restore(); } }
+function pedals() { const w = 86 * k, h = 118 * k; return { gas: { x: W - w - 12, y: H - h - 22 * k, w, h }, brake: { x: W - 2 * w - 24, y: H - h * 0.8 - 22 * k, w, h: h * 0.8 } }; }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 12, w = W - 24, y = 44 * k; ctx.save(); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 50 * k + lines.length * 17 * k;
   ctx.fillStyle = 'rgba(20,24,36,.88)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,198,26,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();

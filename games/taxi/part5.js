@@ -45,7 +45,7 @@ function showEnd() {
   $('eSub').innerHTML = (r.win ? `All <b>${r.fares}</b> fares delivered · ${r.km} km` : why + `<br>Fares delivered <b>${r.done}/${r.fares}</b>`)
     + (fares ? `<br>${fares}` : '') + (r.crashes || r.reds || r.skids ? `<br>${r.crashes ? `💥 ${r.crashes} crash${r.crashes > 1 ? 'es' : ''} ` : ''}${r.reds ? `🚦 ${r.reds} red light${r.reds > 1 ? 's' : ''} ` : ''}${r.skids ? `〰 ${r.skids} fast corner${r.skids > 1 ? 's' : ''}` : ''}` : '')
     + `<br><b>+${r.coins} 🪙</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '')
-    + (r.newSkins ? `<br><b class="nb">NEW TAXI: ${r.newSkins.toUpperCase()}</b>` : '') + (r.win && r.stars < 3 ? '<br>Three stars: every fare with a tip, and no crash, red light or fast corner.' : '') + (!r.win ? '<br>Follow the GPS arrow, swipe in the turn zone, and pass slow cars in the other lane.' : '')
+    + (r.newSkins ? `<br><b class="nb">NEW TAXI: ${r.newSkins.toUpperCase()}</b>` : '') + (r.win && r.stars < 3 ? '<br>Three stars: every fare with a tip, and no crash, red light or fast corner.' : '') + (!r.win ? '<br>Follow the GPS arrow, brake before the corners, and steer round slow cars.' : '')
     + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: more time on the meter.</span>' : '');
   renderShop();
   $('eMain').textContent = r.win ? 'NEXT SHIFT' : 'DRIVE AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
@@ -82,7 +82,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; gest = null; if (G && G.taxi) brake(G, false); $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; gest = null; touches.clear(); ui.stick = null; if (G && G.in) drive(G, 0, false, false); $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -90,15 +90,22 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (one thumb): hold anywhere to brake; a swipe (left, right, up) changes lane or, in the turn zone, turns. The brake
-// comes on the moment the thumb lands (so a hold answers at once) and lets go as soon as the thumb moves into a swipe.
-let gest = null;
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); gest = { id: e.pointerId, x: e.clientX, y: e.clientY, done: false }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} brake(G, true); });
-cv.addEventListener('pointermove', e => { if (!gest || gest.id !== e.pointerId || gest.done || !G) return; const dx = e.clientX - gest.x, dy = e.clientY - gest.y, m = 26 * Math.max(0.8, k);
-  if (Math.hypot(dx, dy) < m) return; gest.done = true; brake(G, false); if (Math.abs(dx) > Math.abs(dy)) swipe(G, dx < 0 ? 'L' : 'R'); else if (dy < 0) swipe(G, 'U'); });
-const ptrUp = e => { if (!gest || gest.id !== e.pointerId) return; gest = null; if (G) brake(G, false); }; cv.addEventListener('pointerup', ptrUp); cv.addEventListener('pointercancel', ptrUp);
-addEventListener('keydown', e => { if (e.repeat || !G || G.over || paused) return; if (e.code === 'ArrowLeft' || e.code === 'KeyA') swipe(G, 'L'); else if (e.code === 'ArrowRight' || e.code === 'KeyD') swipe(G, 'R'); else if (e.code === 'ArrowUp' || e.code === 'KeyW') swipe(G, 'U'); else if (e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyS') { brake(G, true); e.preventDefault(); } });
-addEventListener('keyup', e => { if (!G) return; if (e.code === 'ArrowDown' || e.code === 'Space' || e.code === 'KeyS') brake(G, false); });
+// input: driving is two thumbs, each with its own job, and both stay down (his words for Police Chase's car, applied here: "a joystick with a button
+// for brake, acceleration and reverse"). The left thumb is a stick that steers (it appears where the thumb lands); the right thumb holds GAS or
+// BRAKE, two big pedals at the bottom right (slide from one to the other without lifting).
+const touches = new Map(); let gest = null;
+function pedalAt(x, y) { const Pd = pedals(); for (const key of ['gas', 'brake']) { const b = Pd[key]; if (x >= b.x - 10 * k && x <= b.x + b.w + 10 * k && y >= b.y - 30 * k && y <= b.y + b.h + 30 * k) return key; } return null; }
+function driveInput() { let sx = 0, gas = false, brk = false; for (const t of touches.values()) { if (t.role === 'stick') sx = clamp((t.x - t.x0) / (46 * k), -1, 1); else if (t.role === 'gas') gas = true; else if (t.role === 'brake') brk = true; } if (Math.abs(sx) < 0.08) sx = 0; if (G && G.in) drive(G, sx, gas && !brk, brk); ui.stick = [...touches.values()].find(t => t.role === 'stick') || null; }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault();
+  const t = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, role: null }; touches.set(e.pointerId, t);
+  t.role = pedalAt(e.clientX, e.clientY) || (e.clientX < W * 0.5 ? ([...touches.values()].some(q => q !== t && q.role === 'stick') ? null : 'stick') : (e.clientX > W * 0.75 ? 'gas' : 'brake')); driveInput();
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if (!t || !G || G.over || paused) return; t.x = e.clientX; t.y = e.clientY; if (t.role === 'gas' || t.role === 'brake') t.role = pedalAt(t.x, t.y) || t.role; if (t.role) driveInput(); });
+const ptrUp = e => { if (!touches.has(e.pointerId)) return; touches.delete(e.pointerId); if (G && !G.over && !paused) driveInput(); }; cv.addEventListener('pointerup', ptrUp); cv.addEventListener('pointercancel', ptrUp);
+const keys = {}; const keyDrive = () => { if (G && G.in && !G.over && !paused) drive(G, (keys.r ? 1 : 0) - (keys.l ? 1 : 0), !!keys.g && !keys.b, !!keys.b); };
+const keyOf = c => c === 'ArrowLeft' || c === 'KeyA' ? 'l' : c === 'ArrowRight' || c === 'KeyD' ? 'r' : c === 'ArrowUp' || c === 'KeyW' ? 'g' : c === 'ArrowDown' || c === 'Space' || c === 'KeyS' ? 'b' : null;
+addEventListener('keydown', e => { const q = keyOf(e.code); if (!q || e.repeat) return; keys[q] = true; keyDrive(); if (q === 'b') e.preventDefault(); });
+addEventListener('keyup', e => { const q = keyOf(e.code); if (!q) return; keys[q] = false; keyDrive(); });
 // your taxis: paint opened by the stars you win
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'yellow');
@@ -148,7 +155,8 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  swipe(d) { swipe(G, d); }, brake(on) { brake(G, on); }, gps(goal) { return gps(G, goal || G.goal); }, inZone() { return inZone(G); }, wp, ahead, showAqua, mySkin, SKINS, store, scr, renderShop, ui, get V3() { return V3; }, W3, lightAt, BL, ZONE, LANES,
+  place(i, j, h, s2, lx, v) { const t = G.taxi, d = DIRS[h]; t.x = i * BL + d[0] * s2 + d[1] * lx; t.y = j * BL + d[1] * s2 - d[0] * lx; t.th = h * Math.PI / 2; t.v = v || 0; t.w = 0; t.imm = 0; t.skT = 0; t.stopT = 0; t.entry = null; locate(G); const bi = Math.round(t.x / BL), bj = Math.round(t.y / BL); t.box = Math.abs(t.x - bi * BL) <= HW && Math.abs(t.y - bj * BL) <= HW ? { i: bi, j: bj } : null; drive(G, 0, false, false); },
+  drive(sx, gas, brk) { drive(G, sx, gas, brk); }, pedals() { return pedals(); }, onRoad(x, y, m) { return onRoadT(G, x, y, m); }, HW, brake(on) { brake(G, on); }, gps(goal) { return gps(G, goal || G.goal); }, inZone() { return false; }, wp, ahead, showAqua, mySkin, SKINS, store, scr, renderShop, ui, get V3() { return V3; }, W3, lightAt, BL, ZONE, LANES,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
