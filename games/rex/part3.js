@@ -9,9 +9,12 @@ function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, si
 function tip(key, txt, secs = 2.8) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 1.8);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.3) TXT.shift(); if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
-const ui = { drag: null, snap: false };
+const ui = { drag: null, look: null, snap: false, camYaw: null, camPitch: 0.5 };
+// the stick never moves (23 Nov 2026, his words: "make the joystick in one place, not everywhere I tap"): bottom left, drawn all the time
+function stickBase() { const r = 56 * k; return { x: r + 30 * k, y: H - r - 70 * k, r, zone: r * 1.75 }; }
 // a dinosaur from smooth shapes
 function dino(T, kind, col) {
+  if (kind === 'rex' && typeof trexModel === 'function') return trexModel(T, col);      // the T-Rex has his own body (part25_trex.js)
   const g = new T.Group(), skin = new T.MeshStandardMaterial({ color: col, roughness: 0.85, map: W3.grainTex(128, 9, 200, 50, 4) }), belly = new T.MeshStandardMaterial({ color: new T.Color(col).lerp(new T.Color(0xe8d8b0), 0.45), roughness: 0.9 });
   const dark = new T.MeshStandardMaterial({ color: 0x1a1410, roughness: 0.6 }), bone = new T.MeshStandardMaterial({ color: 0xe8e0c8, roughness: 0.5 });
   const blob = (sx, sy, sz, m, x, y, z, par) => { const s = new T.Mesh(new T.SphereGeometry(1, 18, 12), m); s.scale.set(sx, sy, sz); s.position.set(x, y, z); s.castShadow = true; par.add(s); return s; };
@@ -42,7 +45,12 @@ function gait(m, sp, dt, o = {}) { const u = m.userData; u.ph += sp * dt * 1.3; 
   u.legs.forEach((lg, i) => lg.rotation.x = Math.sin(u.ph + (u.legs.length === 2 ? i * Math.PI : [0, Math.PI, Math.PI, 0][i])) * sw);
   u.body.position.y = Math.abs(Math.sin(u.ph)) * Math.min(0.25, sp * 0.02); u.body.rotation.x = -(o.rear || 0) * 0.5 + (o.lower || 0) * 0.15;
   if (u.tail) u.tail.rotation.y = Math.sin(u.ph * 0.5) * 0.12 + (o.swing || 0); if (u.tail) u.tail.rotation.x = -(o.lift || 0) * 0.8;
-  if (u.neck) u.neck.rotation.x = (o.lower || 0) * 0.6 - (o.rear || 0) * 0.3; if (u.jaw) u.jaw.rotation.x = (o.open || 0) * 0.7; }
+  if (u.neck) u.neck.rotation.x = (o.lower || 0) * 0.6 - (o.rear || 0) * 0.3; if (u.jaw) u.jaw.rotation.x = (o.open || 0) * 0.7;
+  if (u.trex) {      // the T-Rex: knees and ankles fold as each foot comes forward, the tail's end swings after its base, the body rocks over the planted foot
+    u.legs.forEach((lg, i) => { const p = u.ph + i * Math.PI, lift = Math.max(0, -Math.cos(p)) * Math.min(1, sp * 0.12); lg.userData.knee.rotation.x = lift * 0.8; lg.userData.ankle.rotation.x = -lift * 1.15; });
+    u.roof.visible = u.tongue.visible = (o.open || 0) > 0.04;      // the inside of the mouth only when it opens
+    u.body.rotation.z = Math.sin(u.ph) * Math.min(0.05, sp * 0.006); if (u.tail2) u.tail2.rotation.y = Math.sin(u.ph * 0.5 - 0.9) * 0.18 + (o.swing || 0) * 0.6;
+    if (sp < 0.3) { const br = Math.sin(performance.now() / 900) * 0.012; u.body.position.y += br; } } }
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 58, far: 3000, near: 0.2 })) { V3 = { none: true }; return V3; }
   const S = W3.scene;
@@ -64,7 +72,7 @@ function buildWorld() {
   const mouth = new T.Mesh(new T.CircleGeometry(4.5, 24, 0, Math.PI), new T.MeshBasicMaterial({ color: 0x050403 })); mouth.position.set(SPOTS.cave.x, hgt(SPOTS.cave.x, SPOTS.cave.z) + 0.2, SPOTS.cave.z + 4.2); mouth.rotation.y = Math.PI; S.add(mouth);
   // eggs in the nest
   const eggM = new T.MeshStandardMaterial({ color: 0xe8e0d0, roughness: 0.6 }); for (let i = 0; i < 6; i++) { const e = new T.Mesh(new T.SphereGeometry(0.35, 12, 8), eggM); e.scale.y = 1.3; const a = i / 6 * TAU; e.position.set(SPOTS.nest.x + Math.cos(a) * 1.2, hgt(SPOTS.nest.x, SPOTS.nest.z) + 0.4, SPOTS.nest.z + Math.sin(a) * 1.2); S.add(e); }
-  const me = dino(T, 'rex', 0x7a8a4a); S.add(me);
+  const me = dino(T, 'rex', 0x6e7440); S.add(me);
   const ring = new T.Mesh(new T.RingGeometry(2.2, 2.6, 40), new T.MeshBasicMaterial({ color: 0xffb030, transparent: true, opacity: 0.7, side: T.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; S.add(ring);
   const NP = 90, pG = new T.BufferGeometry(); pG.setAttribute('position', new T.BufferAttribute(new Float32Array(NP * 3), 3)); const dust = new T.Points(pG, new T.PointsMaterial({ color: 0xc8b090, size: 0.35, transparent: true, opacity: 0.8, depthWrite: false })); dust.frustumCulled = false; S.add(dust);
   V3 = { T, S, me, ring, dust, P: Array.from({ length: NP }, () => ({ t: 9, life: 1, x: 0, y: -99, z: 0, vx: 0, vy: 0, vz: 0 })), models: new Map(), cam: { x: 0, y: 8, z: -32 } };
@@ -113,14 +121,17 @@ function draw(now, dt) {
   const left = g.lesson ? g.dinos.filter(d => !d.dead).map(d => d.k) : goalLeft(g).map(q => q.k); let tg = null, bd = 1e9; for (const d of g.dinos) if (!d.dead && left.includes(d.k)) { const dd = dist(d, m); if (dd < bd) { bd = dd; tg = d; } }
   V.ring.visible = !!tg; if (tg) { V.ring.position.set(tg.x, hgt(tg.x, tg.z) + 0.15, tg.z); V.ring.material.opacity = 0.45 + Math.sin(t * 5) * 0.25; V.ring.scale.setScalar(KINDS[tg.k].size * 1.1 + 0.4); }
   const pa = V.dust.geometry.attributes.position; V.P.forEach((q, i) => { if (q.t < q.life) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; q.vy -= 5 * dt; } pa.setXYZ(i, q.x, q.t < q.life ? q.y : -99, q.z); }); pa.needsUpdate = true;
-  // the camera: high behind you. While your thumb is on the stick the view holds its heading, so left on the stick stays left on the
-  // screen (23 Nov 2026); let go and it swings round behind you again.
-  if (V.camYaw == null || ui.snap) V.camYaw = m.h; ui.snap = false;
-  if (ui.drag && G && g === G) V.camYaw = g.in.ref; else V.camYaw += wrapA(m.h - V.camYaw) * Math.min(1, dt * (m.v > 1 ? 1.3 : 0.6));
-  const C = V.cam, back = m.run ? 19 : 17, cx = m.x - Math.sin(V.camYaw) * back, cz = m.z - Math.cos(V.camYaw) * back, cy = Math.max(hgt(cx, cz) + 3, hgt(m.x, m.z) + 10), e = 1 - Math.exp(-dt * 3.5);
-  C.x += (cx - C.x) * e; C.y += (cy - C.y) * e; C.z += (cz - C.z) * e;
-  const cam = W3.cam, stomp = m.run ? Math.abs(Math.sin(V.me.userData.ph)) * 0.12 : 0; cam.position.set(C.x, C.y + stomp, C.z); if (cam.near !== 0.3) { cam.near = 0.3; cam.updateProjectionMatrix(); } if (W3.setSee) W3.setSee(cam.position, new THREE.Vector3(m.x, hgt(m.x, m.z) + 2.2, m.z), 5.5);      /* 23 Nov 2026: trees between the camera and the rex are see-through, never cut away (his words on Vine: they shouldn't disappear) */
-  const lx = m.x + Math.sin(V.camYaw) * 10, lz = m.z + Math.cos(V.camYaw) * 10; cam.lookAt(lx, hgt(m.x, m.z) + 3.5, lz); V.viewYaw = Math.atan2(lx - C.x, lz - C.z);
+  // the camera (23 Nov 2026, his words: "make it that I can be able to see around the area just by clicking the screen and moving around"):
+  // it turns only when you drag the screen (left and right turns the view, up and down tilts it); it never swings round by itself, so the
+  // stick's left is always the screen's left. Camera and aim are both set from one followed point along one heading: the view never drifts.
+  if (ui.camYaw == null || ui.snap) { ui.camYaw = m.h; ui.camPitch = 0.5; V.F = { x: m.x, z: m.z }; } ui.snap = false;
+  if (!(G && g === G)) ui.camYaw += wrapA(m.h - ui.camYaw) * Math.min(1, dt * 1.2);      // the demo behind the menu follows him round
+  if (!V.F) V.F = { x: m.x, z: m.z }; { const ef = 1 - Math.exp(-dt * 8); V.F.x += (m.x - V.F.x) * ef; V.F.z += (m.z - V.F.z) * ef; }
+  V.back = (V.back || 17) + ((m.run ? 19 : 17) - (V.back || 17)) * Math.min(1, dt * 2);
+  const C = V.cam, cyw = ui.camYaw, cp = ui.camPitch, fy = hgt(V.F.x, V.F.z), cx = V.F.x - Math.sin(cyw) * V.back * Math.cos(cp), cz = V.F.z - Math.cos(cyw) * V.back * Math.cos(cp);
+  C.x = cx; C.z = cz; C.y = Math.max(hgt(cx, cz) + 2.5, fy + 2 + V.back * Math.sin(cp));
+  const cam = W3.cam, stomp = m.run ? Math.abs(Math.sin(V.me.userData.ph)) * 0.12 : 0; cam.position.set(C.x, C.y + stomp, C.z); if (cam.near !== 0.3) { cam.near = 0.3; cam.updateProjectionMatrix(); } if (W3.setSee) W3.setSee(cam.position, new THREE.Vector3(m.x, hgt(m.x, m.z) + 2.2, m.z), 5.5);
+  cam.lookAt(V.F.x + Math.sin(cyw) * 6, fy + 3.2, V.F.z + Math.cos(cyw) * 6); V.viewYaw = cyw; if (ui.drag && G && g === G) G.in.ref = cyw;
   if (FX.shake > 0) { cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.003; cam.position.y += (Math.random() - 0.5) * FX.shake * 0.02; }
   W3.setFocus(m.x, 0, m.z + 10, 50); W3.render(dt);
   if (G) hud(G, t, tg);
@@ -150,8 +161,11 @@ function hud(G, t, tg) { const c = G.cfg, m = G.me;
   // the buttons and the stick
   const B = btnRects(); ctx.globalAlpha = m.bcd > 0 ? 0.55 : 0.92; ctx.fillStyle = 'rgba(160,40,20,.75)'; ctx.beginPath(); ctx.arc(B.bite.x + B.bite.w / 2, B.bite.y + B.bite.h / 2, B.bite.w / 2, 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffd0a0'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(18 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('BITE', B.bite.x + B.bite.w / 2, B.bite.y + B.bite.h / 2);
   ctx.globalAlpha = m.roarCD > 0 ? 0.5 : 0.92; ctx.fillStyle = 'rgba(120,90,30,.8)'; const rc = { x: B.roar.x + B.roar.w / 2, y: B.roar.y + B.roar.h / 2, r: B.roar.w / 2 }; ctx.beginPath(); ctx.arc(rc.x, rc.y, rc.r, 0, TAU); ctx.fill(); if (m.roarCD > 0) { ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(rc.x, rc.y, rc.r - 3, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - m.roarCD / c.roarCD)); ctx.stroke(); } ctx.fillStyle = '#fff'; ctx.font = `${Math.round(12 * k)}px ${TF}`; ctx.fillText('ROAR', rc.x, rc.y);
-  ctx.globalAlpha = 1; if (ui.drag) { const d2 = ui.drag, R = 46 * k, dx = clamp(d2.x - d2.x0, -R, R), dy = clamp(d2.y - d2.y0, -R, R); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(d2.x0, d2.y0, R, 0, TAU); ctx.stroke(); ctx.fillStyle = m.run ? '#ffb030' : 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(d2.x0 + dx, d2.y0 + dy, 20 * k, 0, TAU); ctx.fill(); }
-  else if (!G.lesson && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('LEFT THUMB: WALK · PUSH FAR: CHARGE', W / 2, H * 0.6); } }
+  ctx.globalAlpha = 1; { const sb = stickBase(), on = !!ui.drag, kx = sb.x + clamp(G.in.sx, -1, 1) * sb.r * (on ? 1 : 0), ky = sb.y - clamp(G.in.sy, -1, 1) * sb.r * (on ? 1 : 0);
+    ctx.fillStyle = on ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(sb.x, sb.y, sb.r, 0, TAU); ctx.fill(); ctx.strokeStyle = on ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; for (let a = 0; a < 4; a++) { const ax = sb.x + Math.sin(a * Math.PI / 2) * sb.r * 0.78, ay = sb.y - Math.cos(a * Math.PI / 2) * sb.r * 0.78; ctx.beginPath(); ctx.arc(ax, ay, 3.5 * k, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = m.run ? '#ffb030' : on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(kx, ky, 24 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 2; ctx.stroke(); }
+  if (!ui.drag && !G.lesson && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('STICK: WALK · PUSH FAR: CHARGE', W / 2, H * 0.6); ctx.fillText('DRAG ANYWHERE ELSE TO LOOK ROUND', W / 2, H * 0.6 + 17 * k); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28, y = 42 * k; ctx.save();
   ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 54 * k + lines.length * 17 * k;

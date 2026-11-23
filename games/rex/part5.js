@@ -23,7 +23,7 @@ function showHome() {
 function startGame() {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; ui.drag = null; ui.snap = true; hint = null;
+  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; ui.drag = null; ui.look = null; ui.snap = true; hint = null;
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -75,7 +75,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; ui.drag = ui.look = null; if (G) stick(G, 0, 0); $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -88,9 +88,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 const inC = (r, x, y) => Math.hypot(x - (r.x + r.w / 2), y - (r.y + r.h / 2)) < r.w / 2 + 8;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const B = btnRects(), x = e.clientX, y = e.clientY;
   if (inC(B.bite, x, y)) { bite(G); return; } if (inC(B.roar, x, y)) { if (!roar(G)) sfx.click(); return; }
-  if (ui.drag || x > W * 0.62) return; ui.drag = { id: e.pointerId, x0: x, y0: y, x, y }; G.in.ref = V3 && V3.viewYaw != null ? V3.viewYaw : G.me.h; if (V3 && !V3.none) V3.camYaw = G.in.ref; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const R = 46 * k; stick(G, clamp((d.x - d.x0) / R, -1, 1), clamp((d.y0 - d.y) / R, -1, 1)); });
-function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) stick(G, 0, 0); }
+  const sb = stickBase();
+  if (!ui.drag && Math.hypot(x - sb.x, y - sb.y) < sb.zone) { ui.drag = { id: e.pointerId, x, y }; G.in.ref = ui.camYaw != null ? ui.camYaw : G.me.h; stickAt(x, y); }      // on the stick: walk
+  else if (!ui.look) ui.look = { id: e.pointerId, x, y };      // anywhere else: look round
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+function stickAt(x, y) { const sb = stickBase(); stick(G, clamp((x - sb.x) / sb.r, -1, 1), clamp((sb.y - y) / sb.r, -1, 1), ui.camYaw != null ? ui.camYaw : G.me.h); }
+cv.addEventListener('pointermove', e => { if (!G) return; const d = ui.drag, L = ui.look;
+  if (d && e.pointerId === d.id) { d.x = e.clientX; d.y = e.clientY; stickAt(d.x, d.y); }
+  else if (L && e.pointerId === L.id) { const dx = e.clientX - L.x, dy = e.clientY - L.y; L.x = e.clientX; L.y = e.clientY; if (ui.camYaw == null) ui.camYaw = G.me.h; ui.camYaw += dx * 0.0075; ui.camPitch = clamp(ui.camPitch + dy * 0.004, 0.12, 0.95); } });      // drag right: the view turns right; drag down: look down from higher
+function endTouch(e) { if (ui.look && e.pointerId === ui.look.id) ui.look = null; const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) stick(G, 0, 0); }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections
@@ -125,7 +131,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  stick(x, y) { stick(G, x, y); }, bite() { return bite(G); }, roar() { return roar(G); }, btnRects, wScreen, renderShop, ui, get V3() { return V3; }, W3,
+  stick(x, y) { stick(G, x, y); }, bite() { return bite(G); }, roar() { return roar(G); }, btnRects, stickBase, wScreen, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

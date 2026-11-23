@@ -676,7 +676,8 @@
    "changes": [
     "third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen).",
     "23 Nov, 0.1.4 (from Vine: nothing vanishes): the moving cut-away near the camera (up to 7 m) removed; a tree between the camera and the rex is a see-through screen (W3.seeThrough).",
-    "23 Nov, 0.1.5 (his words: \"the movements are not accurate at all... I go left it goes somewhere else\"): the stick says the way to go as seen on the screen (it turned him like a tank); the view holds its heading while the thumb is down; harder far on to match (prey hear you sooner and run faster, shorter warnings, a shorter hunger clock)."
+    "23 Nov, 0.1.5 (his words: \"the movements are not accurate at all... I go left it goes somewhere else\"): the stick says the way to go as seen on the screen (it turned him like a tank); the view holds its heading while the thumb is down; harder far on to match (prey hear you sooner and run faster, shorter warnings, a shorter hunger clock).",
+    "23 Nov, 0.2.0 (his words at 17:08: \"make the joystick in one place... see around the area just by clicking the screen and moving around... you still haven't fixed the joystick problem... make him look like an actual T-Rex\"): measured with real touch events: the view drifted up to 30 degrees while walking (camera trailed, aim led). The stick is fixed bottom left; the view turns only by dragging elsewhere (yaw and tilt), set from one followed point so it cannot drift. New T-Rex model (part25_trex.js, specs/rex-v2-2026-11-23.md)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",

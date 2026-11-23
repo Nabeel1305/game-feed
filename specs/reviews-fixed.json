@@ -156,6 +156,12 @@
    "when": "23 Nov, said in the chat",
    "said": "With Rex the movments are not accurate at all. The joystick is not working i go left is goes somewhere else",
    "did": "The stick used to turn him like a tank: left spun him on the spot and the camera swung round with him. Now he goes the way you push, as you see it on the screen: left is left, down turns him round to walk towards you. While your thumb is on the stick the view holds still, so left stays left; let go and it swings back behind him."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, said in the chat (17:08)",
+   "said": "you still haven't fixed Rex. Number one, how about you make the joystick in one place, not everywhere I tap... make it that I can be able to see around the area just by clicking the screen and moving around... you still haven't fixed the joystick problem... That T-Rex looks like shit... Make him look like an actual T-Rex.",
+   "did": "Found it with real finger touches: the view drifted while you walked, so your push and his path didn't match. Now the stick stays in one place (bottom left), the view never turns by itself, and you drag anywhere else to look round (both thumbs together works). A new T-Rex: a deep skull with teeth and brows, a thick S-neck, heavy body, huge thighs, bird-like feet, tiny two-fingered arms, a long tail, pebbly scales, dark back and pale belly."
   }
  ],
  "kingdom": [

@@ -58,7 +58,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 48 | **Grand Hotel** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/5F7Hwjcmx4qek6qvs3rzfA) | `games/hotel/index.html` |
 | 49 | **Ramp Riders** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/4c5jxbbj1PNPSZCDFaQQxm) | `games/ramp/index.html` |
 | 50 | **Spellshop** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/YHmHT3EMvkRMWDZYKEw7kp) | `games/spell/index.html` |
-| 51 | **Rex** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ) | `games/rex/index.html` |
+| 51 | **Rex** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ) | `games/rex/index.html` |
 | 52 | **High Wire** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7) | `games/rope/index.html` |
 | 53 | **Homemaker** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK) | `games/house/index.html` |
 | 54 | **Fruit Fight** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/AaN4KXLpYKSDUmjRGaYycM) | `games/fruit/index.html` |

@@ -26,6 +26,13 @@ criticism may apply to so that I don't have to be making the same criticism for 
 with this one though, so that you don't apply random criticism just on any game"): for each point he makes, name the games that
 share the SAME fault, show why with evidence (a picture, a measurement, the same code), fix those, and tell him which games got
 it and which were looked at and left alone. Never stretch a point to a game it does not fit.
+**Every game is its own; no one size fits all** (his words, 23 Nov 2026, 17:31, PERMANENT: "every game needs to be particular. Each game
+is unique. Not every game is a one shoe size fits all, so I need you to remember that permanently... Some games are more similar."). A
+control copied from one game to another must be right for the new game: a stick that appears wherever you touch suits Bottle Cap Flick
+(a cap at the board's edge must be dragged from anywhere) but in a game with other things to tap it swallows those taps. Where a game
+has a stick and other controls, the stick has its own fixed place (bigger rather than smaller), and the rest of the screen keeps its own
+jobs. And an attack is a fight you see and answer (Hunter's lion: "show me, boom, lion attacking you, swipe to dodge... then tap to hit,
+tap to hit"), never something that happens and goes away.
 **Do it, do not ask** (his words, 23 Nov 2026, 09:49, after I had asked whether On the Run's driving should get Police Chase's stick and pedals
 instead of giving it them: "when I tell you to fix one thing on one app, you shouldn't just keep to that app. You should think, is there any other
 apps that need?... Why don't you apply those to on the run?"): where another game has the same fault, fix it in the same sitting and tell him
