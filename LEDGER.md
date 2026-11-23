@@ -16,25 +16,25 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 6 | **Hippodrome** | testing | yes: core game, always on the phone | 0.3.0 | [play](https://claude.ai/artifact/3up3ZiYvdmgpyyLe8E9YcM) | `games/hippodrome/index.html` |
 | 7 | **Bandit** | testing | yes: played over the internet, can be saved | 0.2.2 | [play](https://claude.ai/artifact/4HD7GnZtuVf1ahdLsjefSG) | `games/bandit/index.html` |
 | 8 | **Plunder** | approved | yes: played over the internet, can be saved | 0.4.0 | [play](https://claude.ai/artifact/1Lwh2BrJQL1DhKb4keBooa) | `games/plunder/index.html` |
-| 9 | **Reel** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/BkQTAAhhChhKDsPtkT2JyX) | `games/reel/index.html` |
+| 9 | **Reel** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/BkQTAAhhChhKDsPtkT2JyX) | `games/reel/index.html` |
 | 10 | **Wild Water** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/Gj5M8daF6XDMtHkNv1gmW4) | `games/wild-water/index.html` |
 | 11 | **Soar** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/Weu2fZSYbgxPVNK4xFahTC) | `games/soar/index.html` |
-| 12 | **Vine** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/XhM3zzwfyV75DiLSYwqXUr) | `games/vine/index.html` |
+| 12 | **Vine** | testing | not yet (he has not said so) | 0.3.1 | [play](https://claude.ai/artifact/XhM3zzwfyV75DiLSYwqXUr) | `games/vine/index.html` |
 | 13 | **Hunter** | testing | not yet (he has not said so) | 0.4.0 | [play](https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS) | `games/hunter/index.html` |
-| 14 | **Police Chase** | testing | not yet (he has not said so) | 0.3.1 | [play](https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy) | `games/police/index.html` |
+| 14 | **Police Chase** | testing | not yet (he has not said so) | 0.3.2 | [play](https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy) | `games/police/index.html` |
 | 15 | **Pilot** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/673SzKv3kg9inkqwy1KHXc) | `games/pilot/index.html` |
 | 16 | **Short Order** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV) | `games/cook/index.html` |
-| 17 | **Country Vet** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/CECaaPJZ5BQ2tkjLCSPYgG) | `games/vet/index.html` |
+| 17 | **Country Vet** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/CECaaPJZ5BQ2tkjLCSPYgG) | `games/vet/index.html` |
 | 18 | **Lighthouse** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/AeoxCPmBDorzB9RTscyEZx) | `games/lighthouse/index.html` |
 | 19 | **Hiring** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/YM4XMqenX8UECK8UibNm4Z) | `games/hiring/index.html` |
-| 20 | **Potter's Wheel** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/4J1d7zq7DnyABhmwHZGTnT) | `games/potter/index.html` |
-| 21 | **Drone Pilot** | testing | not yet (he has not said so) | 0.2.2 | [play](https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9) | `games/drone/index.html` |
+| 20 | **Potter's Wheel** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/4J1d7zq7DnyABhmwHZGTnT) | `games/potter/index.html` |
+| 21 | **Drone Pilot** | testing | not yet (he has not said so) | 0.2.3 | [play](https://claude.ai/artifact/Tcfb1DNqbHb7BBxeH2w8E9) | `games/drone/index.html` |
 | 22 | **Whaling** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/4TeG6qyGR33vdfGMxr2WD1) | `games/whaling/index.html` |
-| 23 | **Wolf Pack** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/HiE7AudF2QT229nzfRKvzR) | `games/wolf/index.html` |
+| 23 | **Wolf Pack** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/HiE7AudF2QT229nzfRKvzR) | `games/wolf/index.html` |
 | 24 | **On the Run** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1) | `games/run/index.html` |
-| 25 | **Castle Siege** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/E8f3Rn1gvEYJF1XXhMo9YQ) | `games/castle/index.html` |
+| 25 | **Castle Siege** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/E8f3Rn1gvEYJF1XXhMo9YQ) | `games/castle/index.html` |
 | 26 | **Tag** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/GGtwM2ML7gysoGR62LuQsf) | `games/tag/index.html` |
-| 27 | **Heaven or Hell** | testing | not yet (he has not said so) | 0.1.1 | [play](https://claude.ai/artifact/2TE4VTw2C7bskSt1ioR3rU) | `games/heaven/index.html` |
+| 27 | **Heaven or Hell** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/2TE4VTw2C7bskSt1ioR3rU) | `games/heaven/index.html` |
 | 28 | **Harvest Valley** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/5WA6HWrcvqJUi3qFxDUEBr) | `games/harvest/index.html` |
 | 29 | **Horde** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/K8oHpP4m8x2ewCbCm6VJDP) | `games/horde/index.html` |
 | 30 | **Mini Golf** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/8Hp1ZUv44KnZAHAx8PKa7L) | `games/golf/index.html` |

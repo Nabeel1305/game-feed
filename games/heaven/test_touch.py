@@ -29,7 +29,7 @@ with sync_playwright() as p:
     pg.evaluate("(() => { const G = __sim.G; G.soul.deeds.push({ kind: 'animal', text: 'Fed a stray', w: 1, hidden: true }); G.soul.looked = false; G.looks = 2; })()")
     bk = pg.evaluate("(() => { const B = __sim.bookRect(); return [B.x + B.w / 2, B.y + B.h / 2]; })()")
     touch('touchStart', [(1, bk[0], bk[1])]); touch('touchEnd', []); pg.wait_for_timeout(100)
-    ok(pg.evaluate("__sim.G.soul.looked") is True and pg.evaluate("__sim.G.looks") == 1, 'a tap on the Book: the sealed deeds are read, one look used')
+    ok(pg.evaluate("__sim.G.soul.looked") is True, "a tap on the Book: the sealed deeds are read (no limit on looks now)")
     pg.wait_for_timeout(300); pg.screenshot(path='/tmp/hh_touch.png'); ok(not errs, 'no JavaScript errors', str(errs[:3]))
     b.close()
 print(f'\n{oks} checks passed, {len(fails)} failed.')

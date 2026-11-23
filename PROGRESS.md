@@ -73,7 +73,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** Loads with no errors; pause, resume, restart, levels and a win pass in tools/test_controls.py (22 Nov). Not changed and not re-judged: he said these are good.
 
 ### 9. Reel (`reel`): VERIFIED
-- **Where:** `games/reel/index.html` · v0.2.0 · Fishing · 1 thumb(s)
+- **Where:** `games/reel/index.html` · v0.2.1 · Fishing · 1 thumb(s)
 - **What it is:** A fishing game in 3D, seen from the end of a wooden jetty on a mountain lake, with the weather and light changing by level (dawn, rain, mist, storm, sunset, night with a glowing float). Pull your thumb down and let go to cast to where fish are rising; leave the little nibbles and flick up to strike when the float is pulled right under (too soon scares them, too late loses the bait). Then fight it home: hold to reel, let go when it thrashes and runs or the line snaps, and drag against its way to turn it from the reeds and lily pads. Land the fish asked for before the light goes; three lines. The first three levels teach every move. Six kinds of fish plus rare golden carp and a named giant every tenth level; your biggest of each kind is kept. 0.2.0 (23 Nov 2026, his review): fish leap out of the water where to cast; each place is an orange ring with a dark edge and an arrow over it; the aim ring turns green on the fish; the fish on the line is seen at the surface.
 - **First look:** fine.
 - **Problem:** His review (23 Nov): "Make the fish clear currently its just a circle make the fish come out of the water in the place I'm supposed to put my fishing stick... make the circle distinct from the water color". True: the only sign of a fish was a pale ripple on pale water; in a fight the fish was not drawn at all.
@@ -102,7 +102,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether the surroundings are beautiful enough: his to say.
 
 ### 12. Vine (`vine`): VERIFIED
-- **Where:** `games/vine/index.html` · v0.3.0 · Jungle · 1 thumb(s)
+- **Where:** `games/vine/index.html` · v0.3.1 · Jungle · 1 thumb(s)
 - **What it is:** Swing through a 3D rainforest gorge on vines, a river far below, light falling through mist, weather by canopy. Your thumb is your grip: keep it down to hold the vine and swing, lift it to let go as you swing forward and up (each vine needs its own moment), lean in the air by moving the thumb, and put it down to catch the next vine when your hand reaches it. Grab at air and the hand needs a moment; fall and you are back on the last vine, one of three lives. Reach the tree house before the light goes. The first three canopies teach every move. 0.2.0 (23 Nov 2026, his review): the swinger is a person with joints: both hands close on the vine, the legs kick and tuck with the swing, the arms reach for the next vine in the air and wheel when a grab finds nothing.
 - **Problem:** CRITICAL: level 5 nearly black, the swinger is tiny and lost among the trunks.
 - **Problem:** His review (23 Nov): "do better on the animation... hands and the person holding the vines and swinging". True: a pill with two straight arms beside the vine and two stumps; the same pose in the air as on the vine.
@@ -130,7 +130,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether the charge and the dive feel fair in the hand: his to say.
 
 ### 14. Police Chase (`police`): VERIFIED
-- **Where:** `games/police/index.html` · v0.3.1 · Chase · 2 thumb(s)
+- **Where:** `games/police/index.html` · v0.3.2 · Chase · 2 thumb(s)
 - **What it is:** A three-part police chase in 3D through a night city of streets and corners. Pursuit: a floating stick steers your patrol car, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse); the getaway car is orange, with a red SUSPECT arrow over it and a red ring under it; he turns at junctions, you brake for the corner, and a ram to his back corner spins him out. On foot: you see your officer from behind, chasing him through brick alleys with corners: swipe round crates, over fences, under pipes, and at a corner swipe the way he turned (from case 6 some are T-junctions). Close in and press the ARREST button. Arrest: a tug of war, your officer kneeling on him: tap faster than he fights to fill the bar to CUFFED; let it empty and he is up and running. Lights, siren, rain on the tarmac; weather changes by case. 0.3.1: when his car is stopped he is seen getting out and running, and your officer getting out after him, before the alley.
 - **Problem:** white fog swallows the road ahead at level 5.
 - **Problem:** HIS REVIEW (23 Nov, critical): not clear which car is the criminal; the running graphics on foot are awful; the skyscrapers vanish if you play long enough; the controls should be a joystick with brake, accelerate and reverse; the city should have turns and corners, not a straight line.
@@ -167,7 +167,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Dragging food to the pan and a swipe to chop are the genre's own gestures: to judge by hand.
 
 ### 17. Country Vet (`vet`): VERIFIED
-- **Where:** `games/vet/index.html` · v0.1.3 · Animals · 1 thumb(s)
+- **Where:** `games/vet/index.html` · v0.1.4 · Animals · 1 thumb(s)
 - **What it is:** Be the vet in an old 3D barn, the farmyard's weather and light through the open door. Dogs, cows, sheep, horses, pigs and goats come in with a thorn, an overgrown hoof, a cut, a fever, caked mud or a sore ear. Read the owner's card, look at her to see where, pick the right tool and use it the way it is really used: pull a thorn out slowly, rasp a hoof to the line, spray and wrap a cut, hold the needle in and lift off when she shivers, brush with the hair, drop into a still ear. Rough handling frightens her: stroke her slowly to calm her. The first three levels teach every tool.
 - **Problem:** at level 1 the first animal is not on screen in the first seconds (empty barn floor); otherwise fine.
 - **Changed:** third pass, 22 Nov evening: the animal is in sight from the first instant (the barn stood empty for a second and a half).
@@ -190,13 +190,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 checks passed, 0 failed.).
 
 ### 20. Potter's Wheel (`potter`): VERIFIED
-- **Where:** `games/potter/index.html` · v0.1.2 · Craft · 1 thumb(s)
+- **Where:** `games/potter/index.html` · v0.1.3 · Craft · 1 thumb(s)
 - **What it is:** Throw pots on a wheel in a 3D workshop, the yard's weather and light in the window and your fired pots on the shelves. A lump of wet clay spins; the order's outline is dotted on both sides. Touch the side of the clay and move slowly: it follows your fingertip in or out. Too quick and it wobbles and can collapse. Tap FIRE when the match passes the mark. Later the clay dries. The first three levels teach it.
 - **First look:** fine; giant pines behind look odd. (Twin of #106 Pottery Wheel.)
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).
 
 ### 21. Drone Pilot (`drone`): VERIFIED
-- **Where:** `games/drone/index.html` · v0.2.2 · Flying · 1 thumb(s)
+- **Where:** `games/drone/index.html` · v0.2.3 · Flying · 1 thumb(s)
 - **What it is:** Fly a racing drone through a course of glowing hoops in a 3D park (hills, trees, buildings, weather and wind by level), seen from just behind. Two sticks, like a real controller: left thumb climbs and turns, right thumb flies forwards and slides. The drone drifts and the wind pushes it; each hoop gives back seconds; clip a rim or a tree and it crashes. The first three levels teach it. 0.2.1 (23 Nov 2026, from his review of Soar's rings): each hoop is a gate of light (neon core, glow, halo, chasing lamps), each the next colour.
 - **Problem:** two sticks (against his rule), the drone is tiny, the land is a flat green sheet.
 - **Problem:** From his review of Soar ("The rings are ugly"): the hoops here were the same thing, one plain tube each.
@@ -218,7 +218,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether moving the ring feels right needs his thumb.
 
 ### 23. Wolf Pack (`wolf`): VERIFIED
-- **Where:** `games/wolf/index.html` · v0.1.3 · Hunt · 1 thumb(s)
+- **Where:** `games/wolf/index.html` · v0.1.4 · Hunt · 1 thumb(s)
 - **What it is:** Run as the lead wolf of a small pack across open 3D snow between dark pines (golden dusk, grey morning, falling snow, night). One elk in the fleeing herd is marked. Slide your thumb to steer, push it up for a burst (it tires you), tap FLANK to send a packmate up one side so she swerves towards you, and flick towards her to strike when you are close and beside her; from straight behind she kicks. Reach her before the trees. The first three levels teach it.
 - **Problem:** animals are dark silhouettes; otherwise reads well.
 - **Changed:** A BITE button that glows red when you are close enough; it aims at her for you. The flick still works.
@@ -245,7 +245,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Its driving is still lane swipes down a straight avenue (the fault he named in Police Chase): not changed without his word, because its roadblocks, spikes and ramming police are built round lanes. Asked him.
 
 ### 25. Castle Siege (`castle`): VERIFIED
-- **Where:** `games/castle/index.html` · v0.1.3 · Strategy · 1 thumb(s)
+- **Where:** `games/castle/index.html` · v0.1.4 · Strategy · 1 thumb(s)
 - **What it is:** Tower defence in a 3D valley, all taps: build archers, catapults, mages and frost by the road, upgrade them, drop meteors; eight roads, ten kinds of foe and a boss every tenth siege; royal upgrades and rank that stay.
 - **Problem:** murky and dark from above, goblins and towers tiny.
 - **Changed:** third pass, 22 Nov evening: towers and goblins a third bigger.
@@ -261,7 +261,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 8 pass (new: the DASH button dashes while the other thumb runs); test_play 15 pass.
 
 ### 27. Heaven or Hell (`heaven`): VERIFIED
-- **Where:** `games/heaven/index.html` · v0.1.1 · Puzzle · 1 thumb(s)
+- **Where:** `games/heaven/index.html` · v0.1.2 · Puzzle · 1 thumb(s)
 - **What it is:** Keep the gate: weigh each soul's best and worst deed, unseal hidden deeds in the Book of Life, mind the day's rule and the liars, and drag them up, down or to Purgatory; blessings and rank that stay.
 - **First look:** fine (2D).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).

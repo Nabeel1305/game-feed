@@ -83,8 +83,12 @@ window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contai
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (made for the wheel): your fingertip on the side of the spinning clay; the FIRE button below
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const fr = fireRect(); if (e.clientX > fr.x && e.clientX < fr.x + fr.w && e.clientY > fr.y && e.clientY < fr.y + fr.h) { fire(G); return; }
-  const p = potAt(e.clientX, e.clientY); ui.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, side: e.clientX < potScreen(clamp(p.u, 0, 1), 0).x ? -1 : 1 }; if (p.u > -0.15 && p.u < 1.15) touch(G, p.u, p.d); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const p = potAt(d.x, d.y); if (p.u > -0.15 && p.u < 1.15) touch(G, p.u, p.d); else lift(G); });
+  // 23 Nov 2026, his note: "Fix controls make sure it can actually be beat by a human": the finger had to land exactly on the clay's edge
+  // (within a few pixels) or it did nothing, and slipped off as soon as it strayed. Now the finger GRABS the wall at its height wherever it
+  // lands (on the clay, beside it, either side): sliding away from the middle moves that part of the wall out, towards the middle moves it in.
+  const p = potAt(e.clientX, e.clientY), u0 = clamp(p.u, 0, 1), side = e.clientX < potScreen(u0, 0).x ? -1 : 1, r0 = G.r[Math.round(u0 * (NR - 1))];
+  ui.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, side, off: r0 - p.d }; if (p.u > -0.15 && p.u < 1.15) touch(G, p.u, clamp(p.d + ui.drag.off, 0, 0.9)); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const p = potAt(d.x, d.y); if (p.u > -0.2 && p.u < 1.2) touch(G, clamp(p.u, 0, 1), clamp(p.d + d.off, 0, 0.9)); else lift(G); });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) lift(G); }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------

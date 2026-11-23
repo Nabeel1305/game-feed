@@ -24,7 +24,7 @@ function onEvent(G, e) {
   switch (e.k) {
     case 'soul': sfx.arrive(); ui.enter = 1; break;
     case 'right': { const s = G.last.s; ui.fly = { s, dir: e.dir, t: 0, ok: true }; if (e.dir === 'up') { sfx.heaven(e.n); sparks(cx, 60 * k, 24, '#ffe9a0', 200, -60); } else if (e.dir === 'down') { sfx.hell(); sparks(cx, H - 40 * k, 22, '#ff7a3a', 220, -300); FX.shake = 6; } else { sfx.mist(); sparks(e.dir === 'side' ? W - 20 : 20, H / 2, 14, '#c8ccd4', 120, 0); }
-      vibe(HAP.light); if (e.n >= 3 && e.n % 3 === 0) say(`${e.n} IN A ROW!`, cx, C.y - 14 * k, '#ffe08a', 22); break; }
+      vibe(HAP.light); break; }
     case 'wrong': ui.fly = { s: G.last.s, dir: e.dir, t: 0, ok: false }; ui.bad = { s: e.s, want: e.want, dir: e.dir, t: 0 }; FX.red = 0.6; FX.shake = 8; sfx.wrong(); say('WRONG GATE', cx, C.y + 30 * k, '#ffb4a8', 26);
       tip('wrong', e.s.deeds.some(d => d.hidden) && !e.s.looked ? 'It was close: the sealed deeds decided it. Look in the Book when the count is near even.' : 'Count every halo against every horn, under today\'s rule.', 3.4); break;
     case 'look': sfx.book(); ui.glow = 1; if (e.n === 0) say('NOTHING HIDDEN', cx, C.y + C.h * 0.75, '#fff', 18); break;
@@ -84,10 +84,9 @@ function deedRow(G, d, x, y, w, kind, s) {
   const good = d.w > 0, m = mult(G, d), lit = upLv('lantern') && m > 1, h = 58 * k, forged = d.forged && (s.looked || upLv('quill'));
   ctx.fillStyle = good ? 'rgba(255,236,170,.75)' : 'rgba(120,30,24,.82)'; rrect(x, y, w, h, 10); ctx.fill(); if (lit) { ctx.strokeStyle = '#fff7b0'; ctx.lineWidth = 3; rrect(x, y, w, h, 10); ctx.stroke(); }
   ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `800 ${Math.round(10 * k)}px ${BODY}`; ctx.fillStyle = good ? '#8a6a10' : '#ffc8b8'; ctx.fillText(`${kind}  ${KINDS[d.kind]}`, x + 10 * k, y + 7 * k);
-  ctx.font = `700 ${Math.round(13.5 * k)}px ${BODY}`; ctx.fillStyle = good ? '#3a2a08' : '#fff'; const lines = wrapText(d.text, w - 110 * k); lines.slice(0, 2).forEach((l, i) => ctx.fillText(l, x + 10 * k, y + 22 * k + i * 16 * k));
+  ctx.font = `700 ${Math.round(13.5 * k)}px ${BODY}`; ctx.fillStyle = good ? '#3a2a08' : '#fff'; const lines = wrapText(d.text, w - 24 * k); lines.slice(0, 2).forEach((l, i) => ctx.fillText(l, x + 10 * k, y + 22 * k + i * 16 * k));
   if (d.forged && !forged && s.liar) { ctx.globalAlpha = 0.25 + 0.2 * Math.sin(performance.now() / 160); ctx.fillStyle = '#fff'; rrect(x, y, w, h, 10); ctx.fill(); ctx.globalAlpha = 1; }
   if (forged) { ctx.strokeStyle = '#b8261a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 8, y + h / 2); ctx.lineTo(x + w - 8, y + h / 2); ctx.stroke(); ctx.fillStyle = '#b8261a'; ctx.font = `900 ${Math.round(12 * k)}px ${BODY}`; ctx.textAlign = 'right'; ctx.fillText('FORGED', x + w - 10 * k, y + 6 * k); return h; }
-  marks(d.w, good, x + w - 20 * k, y + h * 0.58, 10 * k);
   if (m > 1) { ctx.textAlign = 'right'; ctx.font = `900 ${Math.round(12 * k)}px ${BODY}`; ctx.fillStyle = good ? '#8a6a10' : '#ffd36a'; ctx.fillText('×2 TODAY', x + w - 10 * k, y + 6 * k); }
   return h;
 }
@@ -138,19 +137,14 @@ function draw(now) {
 }
 function hud(G, t) {
   const c = G.cfg, x = 14;
-  // the day's rule, on a scroll under the gates
-  const rules = G.rules.length ? G.rules : [DAYRULES[0]]; ctx.font = `800 ${Math.round(12 * k)}px ${BODY}`; const lines = []; rules.forEach(r => wrapText('TODAY: ' + r.text, W - 60 * k).forEach(l => lines.push(l)));
-  const rh = 10 * k + lines.length * 15 * k, ry = 74 * k; ctx.fillStyle = 'rgba(250,240,210,.94)'; rrect(22 * k, ry, W - 44 * k, rh, 8); ctx.fill(); ctx.strokeStyle = '#c8a860'; ctx.lineWidth = 1.5; rrect(22 * k, ry, W - 44 * k, rh, 8); ctx.stroke();
-  ctx.fillStyle = G.rules.length ? '#7a3a10' : '#8a7a5a'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; lines.forEach((l, i) => ctx.fillText(l, W / 2, ry + 5 * k + i * 15 * k));
-  // the sun crossing the sky, the souls waiting, the wrong judgements
+  // the souls still waiting today (23 Nov 2026: no rule to count by, no sunset, no wrong gates: just where you send them)
   ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.font = `800 ${Math.round(12 * k)}px ${BODY}`; ctx.fillStyle = '#3a2a18';
-  const waiting = (G.soul ? 1 : 0) + G.queue.length; if (!G.lesson) { ctx.fillText(`👥 ${waiting}`, x, 22 * k); const u = clamp(G.sun / G.sunLen, 0, 1), sx = x + 2, sw = 70 * k; ctx.fillStyle = 'rgba(0,0,0,.15)'; rrect(sx, 42 * k, sw, 6 * k, 3); ctx.fill(); ctx.fillStyle = u > 0.8 ? '#e0603a' : '#e8b040'; rrect(sx, 42 * k, Math.max(4, sw * (1 - u)), 6 * k, 3); ctx.fill(); ctx.font = `${Math.round(12 * k)}px sans-serif`; ctx.fillText('☀️', sx + sw + 4, 45 * k); }
-  ctx.textAlign = 'right'; ctx.font = `900 ${Math.round(16 * k)}px ${BODY}`; let ws = ''; for (let i = 0; i < c.wrongs; i++) ws += i < G.wrong ? '✖' : '○'; ctx.fillStyle = '#b8261a'; ctx.fillText(G.lesson ? '' : ws, W - 14, 24 * k);
-  if (G.streak >= 2) { ctx.font = `800 ${Math.round(11 * k)}px ${BODY}`; ctx.fillStyle = '#8a6a10'; ctx.fillText(`✨ ${G.streak} in a row`, W - 14, 44 * k); }
+  const waiting = (G.soul ? 1 : 0) + G.queue.length; if (!G.lesson) ctx.fillText(`👥 ${waiting} waiting`, x, 22 * k);
+  ctx.textAlign = 'right'; if (!G.lesson) ctx.fillText(`☁ ${G.sent.up}   🔥 ${G.sent.down}   🌫 ${G.sent.side}`, W - 14, 22 * k);
   // the Book
-  const B = bookRect(), s = G.soul, can = s && !s.looked && G.looks > 0 && s.deeds.some(d => d.hidden);
+  const B = bookRect(), s = G.soul, can = s && !s.looked && s.deeds.some(d => d.hidden);
   ctx.fillStyle = can ? '#6a3a1a' : 'rgba(80,60,40,.6)'; rrect(B.x, B.y, B.w, B.h, 10); ctx.fill(); ctx.strokeStyle = can ? '#e8c868' : 'rgba(232,200,104,.4)'; ctx.lineWidth = 2.5; rrect(B.x, B.y, B.w, B.h, 10); ctx.stroke();
-  ctx.textAlign = 'center'; ctx.fillStyle = '#fff3d0'; ctx.font = `800 ${Math.round(13 * k)}px ${BODY}`; ctx.fillText(`📖 THE BOOK`, B.x + B.w / 2, B.y + B.h * 0.38); ctx.font = `700 ${Math.round(10.5 * k)}px ${BODY}`; ctx.fillStyle = '#e8d8b0'; ctx.fillText(G.lesson && G.looks > 50 ? 'tap to read' : `${G.looks} look${G.looks === 1 ? '' : 's'} left`, B.x + B.w / 2, B.y + B.h * 0.72);
+  ctx.textAlign = 'center'; ctx.fillStyle = '#fff3d0'; ctx.font = `800 ${Math.round(13 * k)}px ${BODY}`; ctx.fillText(`📖 THE BOOK`, B.x + B.w / 2, B.y + B.h * 0.38); ctx.font = `700 ${Math.round(10.5 * k)}px ${BODY}`; ctx.fillStyle = '#e8d8b0'; ctx.fillText(can ? 'tap to read' : 'nothing sealed', B.x + B.w / 2, B.y + B.h * 0.72);
   if (G.lesson) lessonPanel(G);
   else if (G.N <= 3 && G.judged < 2) { ctx.font = `800 ${Math.round(12 * k)}px ${BODY}`; ctx.fillStyle = 'rgba(40,30,20,.75)'; ctx.fillText('↑ HEAVEN   ·   ↓ HELL   ·   ↔ PURGATORY', W / 2, B.y - 14 * k); }
 }

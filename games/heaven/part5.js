@@ -39,15 +39,14 @@ function saveResult(G) {      // a win saves the next level at once (leaving bef
 }
 function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
-  $('eTitle').textContent = r.win ? (r.wrong === 0 ? 'A PERFECT DAY' : 'THE GATES CLOSE') : r.why === 'dusk' ? 'THE SUN HAS SET' : 'SENT HOME'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
-  $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
-  $('eSub').innerHTML = (r.win ? `${r.right} of ${r.souls} judged right · best run ${r.best} · <b>+${r.karma} 🕊️</b>${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}` + (r.stars < 3 ? '<br>No wrong judgements for three stars.' : '')
-    : (r.why === 'dusk' ? `${r.souls - r.judged} souls were still waiting at sunset` : `${r.wrong} wrong judgements`) + ` · <b>+${r.karma} 🕊️</b>`) + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: the sun sets a little later.</span>' : '');
+  $('eTitle').textContent = 'THE GATES CLOSE FOR TODAY'; $('eTitle').style.color = 'var(--acc)';
+  $('eStars').innerHTML = '';      // no grading: where you sent them is your answer
+  $('eSub').innerHTML = `Today you sent <b>${r.sent.up}</b> to Heaven, <b>${r.sent.down}</b> to Hell and <b>${r.sent.side}</b> to Purgatory.<br>Would the people with you have chosen the same? · <b>+${r.karma} 🕊️</b>` + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '');
   renderShop();
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !r.win);
   show('ovEnd');
-  if (r.win) [1, 2, 3].forEach(i => { if (i <= r.stars) setTimeout(() => sfx.star(i), 250 + i * 180); });
+
 }
 $('playBtn').onclick = () => { audio(); sfx.click(); startGame(); };
 window.gameFeedStart = () => { savedLevel(); audio(); startGame(); };      // the feed's instant start: his level, playing at once

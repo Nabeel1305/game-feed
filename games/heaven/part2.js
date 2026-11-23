@@ -1,17 +1,16 @@
 // ===================== RULES: Heaven or Hell (game 27) =====================
-// You keep the gate. Souls arrive one at a time, each with the best and the worst thing they did in life: the best deed shows
-// its halos (how good, 1 to 3), the worst its horns (how bad, 1 to 3). Some keep smaller deeds sealed in the Book of Life
-// (a sealed scroll for each, worth one halo or one horn). Add them up: more halos, swipe UP to Heaven; more horns, swipe DOWN
-// to Hell; exactly even, swipe SIDEWAYS to the grey mists of Purgatory. Tap the Book to unseal a soul's hidden deeds: only a
-// few looks a day. Each day brings a rule (deeds of one kind count double, or a kind of soul always goes one way), and from
-// later days LIARS, whose best deed may be forged (the Book shows it struck out). Three wrong judgements and you are sent home.
-// Karma from every day buys blessings that stay; rank by karma ever earned. 2D on purpose: the card is the game.
+// You keep the gate. Souls arrive one at a time with the best and the worst thing they did in life; some have smaller deeds sealed in
+// the Book of Life (tap the Book to read them). Send each soul where YOU think: swipe UP to Heaven, DOWN to Hell, SIDEWAYS to the
+// grey mists of Purgatory. 23 Nov 2026, his note: "We can't tell people what to think morally; this isn't a game you can win, but rather
+// one to stimulate interesting conversations so dont rank the good or evil this game isnt a winning one but just allow people to send
+// the individuals where they like no winning here just move on to the next level": no halos or horns, no score of good and evil, no right
+// or wrong gate, nothing lost, no sunset; when the queue is empty the day is done and the next day comes. At the end of a day: where you
+// sent them. 2D on purpose: the card is the game.
 const RULES = [
-  'Each soul shows its <b>best deed</b> (halos) and its <b>worst</b> (horns).',
-  'More halos: <b>swipe UP</b> to Heaven. More horns: <b>swipe DOWN</b> to Hell. Even: <b>swipe SIDEWAYS</b> to Purgatory.',
-  'Sealed scrolls are deeds hidden in the Book of Life, worth one halo or one horn each. <b>Tap the Book</b> to read them: only a few looks a day.',
-  'Read <b>today\'s rule</b> at the top: it changes how deeds count.',
-  'Three wrong judgements and you are sent home. Finish the queue before the sun sets.',
+  'Each soul shows the <b>best</b> and the <b>worst</b> thing they did.',
+  'Send them where <b>you</b> think: <b>swipe UP</b> to Heaven, <b>DOWN</b> to Hell, <b>SIDEWAYS</b> to Purgatory.',
+  'Some deeds are sealed in the Book of Life: <b>tap the Book</b> to read them before you decide.',
+  'There is no right answer and nothing to win: talk it over with whoever is with you. When the queue is empty, the next day comes.',
 ];
 // deeds: kind (for the day's rules), text, weight (+ good, - bad)
 const KINDS = { animal: '🐾', family: '🏠', money: '🪙', truth: '🗣️', courage: '🔥', work: '🔨' };
@@ -47,6 +46,9 @@ const DAYRULES = [
   { id: 'nomist', text: 'Purgatory is closed: an even soul goes to Heaven today.' },
 ];
 const UPGRADES = [
+  { id: 'choir', name: 'Choir', desc: 'More karma for every soul you send on.', max: 3, cost: l => 12 + l * 12 },
+];
+const OLD_UPGRADES = [
   { id: 'sight', name: 'Second sight', desc: 'One more look in the Book each day.', max: 3, cost: l => 10 + l * 12 },
   { id: 'grace', name: 'Grace', desc: 'One more wrong judgement forgiven.', max: 2, cost: l => 30 + l * 30 },
   { id: 'sun', name: 'Long summer', desc: 'The sun sets later.', max: 3, cost: l => 8 + l * 10 },
@@ -68,9 +70,9 @@ function dayRules(N) { if (N < 3) return []; const R = rng(N * 9157 + 3); R(); c
   while (out.length < n && tries++ < 20) { const r = DAYRULES[1 + ((R() * (DAYRULES.length - 1)) | 0)]; if (!out.includes(r) && !(r.id !== 'x2' && out.some(q => q.id === r.id))) out.push(r); } return out; }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
-  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null,
-    rules: dayRules(N), queue: [], soul: null, judged: 0, right: 0, wrong: 0, streak: 0, best: 0, looks: cfg.looks, sun: 0, karma: 0, id: 0, gap: 0 };
-  G.sunLen = cfg.souls * cfg.secs;
+  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, sent: { up: 0, down: 0, side: 0 },
+    rules: [], queue: [], soul: null, judged: 0, right: 0, wrong: 0, streak: 0, best: 0, looks: cfg.looks, sun: 0, karma: 0, id: 0, gap: 0 };
+  G.sunLen = 1e9; G.looks = 1e9;      // no sunset, no limit on reading the Book
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else { G.queue = makeQueue(G, cfg.souls); nextSoul(G); }
   return G;
 }
@@ -89,14 +91,14 @@ function makeSoul(G, want, o = {}) {
     const nh = o.hidden != null ? o.hidden : Math.min(3, Math.floor(R() * (c.hidden + 0.999) + (R() < c.hidden % 1 ? 1 : 0)));
     const deeds = [{ kind: g[0], text: g[1], w: g[2], best: true }, { kind: b[0], text: b[1], w: -b[2], worst: true }];
     for (let i = 0; i < nh; i++) { const good = R() < 0.5, s = (good ? SMALL_GOOD : SMALL_BAD)[(R() * 6) | 0]; deeds.push({ kind: s[0], text: s[1], w: good ? 1 : -1, hidden: true }); }
-    const liar = !L && R() < c.liars && nh < 3; if (liar) { deeds[0].forged = true; deeds.push({ kind: 'truth', text: 'Forged a good deed in the Book', w: -1, hidden: true }); }
+    const liar = false;
     const age = o.age != null ? o.age : R() < 0.06 ? 6 + ((R() * 5) | 0) : R() < 0.06 ? 101 + ((R() * 5) | 0) : 18 + ((R() * 80) | 0);
     const female = R() < 0.5, s = { id: ++G.id, name: (female ? SHE : HE)[(R() * 16) | 0] + ' ' + LAST[(R() * LAST.length) | 0], age, cause: CAUSE[(R() * CAUSE.length) | 0], deeds, liar, face: (R() * 1e9) | 0, female, looked: false };
     deeds.forEach(d => d.text = say3(s, d.text));
     // close calls: the visible sum near zero, so the sealed deeds decide (more often later)
     const vis = deeds.filter(d => !d.hidden).reduce((a, d) => a + d.w * mult(G, d), 0), close = Math.abs(vis) <= nh;
     if (o.close != null && close !== o.close) continue; if (o.close == null && close && R() > c.close) continue;
-    if (verdict(G, s) === want) return s;
+    return s;
   }
   return null;
 }
@@ -108,34 +110,30 @@ function makeQueue(G, n) {
 }
 function nextSoul(G) { G.soul = G.queue.shift() || null; G.wait = 0; if (G.soul) G.ev.push({ k: 'soul' }); }
 // ---------- the thumb ----------
-function judge(G, dir) {
-  const s = G.soul; if (G.over || !s || G.gap > 0) return; const want = verdict(G, s), ok = dir === want;
-  G.judged++; G.gap = 0.55; G.last = { s, dir, want, ok };
-  if (ok) { G.right++; G.streak++; G.best = Math.max(G.best, G.streak); G.karma += 1 + Math.min(4, Math.floor(G.streak / 3)) * (1 + 0.25 * upLv('choir')); G.ev.push({ k: 'right', dir, n: G.streak }); lessonSee(G, 'right'); }
-  else { G.wrong++; G.streak = 0; G.ev.push({ k: 'wrong', dir, want, s }); if (G.lesson) G.gap = 3.5; lessonMiss(G, 'wrong'); if (!G.lesson && G.wrong >= G.cfg.wrongs) { G.soul = null; G.gap = 0; finish(G, false, 'wrong'); return; } }
+function judge(G, dir) {      // wherever you send them is your answer: nothing is right or wrong
+  const s = G.soul; if (G.over || !s || G.gap > 0) return; G.judged++; G.gap = 0.55; G.last = { s, dir }; G.sent[dir]++; G.right++;
+  G.karma += 1 * (1 + 0.25 * upLv('choir')); G.ev.push({ k: 'right', dir, n: 0 }); lessonSee(G, 'right');
 }
 function look(G) {
   const s = G.soul; if (G.over || !s || s.looked || G.gap > 0) return false; if (G.looks <= 0) { G.ev.push({ k: 'nolooks' }); return false; }
-  G.looks--; s.looked = true; G.ev.push({ k: 'look', n: s.deeds.filter(d => d.hidden).length }); lessonSee(G, 'look'); return true;
+  s.looked = true; G.ev.push({ k: 'look', n: s.deeds.filter(d => d.hidden).length }); lessonSee(G, 'look'); return true;
 }
 function step(G, dt) {
   if (G.over) return; G.t += dt;
   if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0) { G.gap = 0; nextSoul(G); if (!G.soul) { if (G.lesson) lessonSee(G, 'done'); else finish(G, true); } } return; }
-  if (!G.lesson) { G.sun += dt; if (G.sun >= G.sunLen) { const left = (G.soul ? 1 : 0) + G.queue.length; G.wrong += left; G.ev.push({ k: 'dusk', left }); finish(G, G.wrong < G.cfg.wrongs, 'dusk'); } }
 }
 function finish(G, win, why) {
   const c = G.cfg; G.over = win ? 'won' : 'lost';
-  const stars = win ? (G.wrong === 0 ? 3 : G.wrong === 1 ? 2 : 1) : 0;
-  G.res = { win, why, stars, right: G.right, wrong: G.wrong, judged: G.judged, souls: c.souls, best: G.best, karma: Math.round(G.karma + (win ? stars * 2 + Math.ceil(G.N / 3) : 0)), combo: G.best, time: G.t };
+  const stars = win ? 3 : 0;      // a day done is a day done: no grading
+  G.res = { win, why, stars, sent: G.sent, right: G.right, wrong: G.wrong, judged: G.judged, souls: c.souls, best: G.best, karma: Math.round(G.karma + (win ? stars * 2 + Math.ceil(G.N / 3) : 0)), combo: G.best, time: G.t };
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'weigh', title: 'WEIGH THE DEEDS', how: 'Count the halos against the horns. More halos: swipe UP to Heaven. More horns: swipe DOWN to Hell. Exactly even: swipe SIDEWAYS. Five right in a row.', need: 5, ok: w => w === 'right', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 0 }) }],
-  2: [{ id: 'book', title: 'THE BOOK OF LIFE', how: 'Sealed scrolls hide small deeds. When it is close, tap the BOOK to read them, then judge. Four right in a row.', need: 4, ok: w => w === 'right', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 2, close: true }) }],
-  3: [{ id: 'rule', title: 'TODAY\'S RULE', how: 'Read the rule at the top: it can make a deed count double. Judge four with the rule in mind.', need: 4, ok: w => w === 'right', make: G => makeSoul(G, G.rnd() < 0.5 ? 'up' : 'down', { hidden: 0 }) }],
+  1: [{ id: 'weigh', title: 'YOU KEEP THE GATE', how: 'Read the best and the worst thing each soul did, then send them where you think: swipe UP to Heaven, DOWN to Hell, SIDEWAYS to Purgatory. There is no right answer. Send three.', need: 3, ok: w => w === 'right', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 0 }) }],
+  2: [{ id: 'book', title: 'THE BOOK OF LIFE', how: 'Sealed scrolls hide smaller deeds. Tap the BOOK to read them, then send the soul where you think. Read two.', need: 2, ok: w => w === 'look', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 2 }) }],
 };
-function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; if (G.N === 3 && !G.rules.length) G.rules = [DAYRULES[1]]; G.looks = 99; lessonFeed(G); G.ev.push({ k: 'lessonnext', first: true }); }
+function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.looks = 99; lessonFeed(G); G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonFeed(G) { const st = lessonNow(G); G.queue = []; for (let i = 0; i < 3; i++) G.queue.push(st.make(G)); nextSoul(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what) {
@@ -144,7 +142,7 @@ function lessonSee(G, what) {
   if (!st.ok(what)) return;
   D.n++; if (D.n < st.need) { G.ev.push({ k: 'lessonok', n: D.n, need: st.need }); if (G.queue.length < 2) G.queue.push(st.make(G)); return; }
   D.i++; D.n = 0; D.miss = 0;
-  if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.rules = dayRules(G.N); Object.assign(G, { judged: 0, right: 0, wrong: 0, streak: 0, best: 0, karma: 0, sun: 0, looks: G.cfg.looks }); G.queue = makeQueue(G, G.cfg.souls); G.gap = 0.6; G.soul = null; }
+  if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.rules = []; Object.assign(G, { judged: 0, right: 0, wrong: 0, streak: 0, best: 0, karma: 0, sun: 0, looks: G.cfg.looks }); G.queue = makeQueue(G, G.cfg.souls); G.gap = 0.6; G.soul = null; }
   else { G.ev.push({ k: 'lessonnext' }); lessonFeed(G); }
 }
 function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; D.n = 0; G.ev.push({ k: 'lessonmiss', why, how: D.steps[D.i].how }); if (G.queue.length < 2) G.queue.push(D.steps[D.i].make(G)); }
@@ -154,18 +152,10 @@ function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; D.n 
 const BLIND = { u: G => judge(G, 'up'), d: G => judge(G, 'down'), s: G => judge(G, 'side'), b: G => look(G) };
 // a gatekeeper who reads: adds the halos and horns under today's rule; if the sealed deeds could change the answer, looks
 // (while looks last); otherwise judges the sign; a liar's forged deed only shows in the Book (or with the quill)
-function honest(G, o, mem) {
-  const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, s = G.soul;
+function honest(G, o, mem) {      // a gatekeeper who reads the card (and the Book, if anything is sealed), thinks, and sends the soul where they think
+  const react = o.react == null ? 0.3 : o.react, s = G.soul;
   if (!s || G.gap > 0) return; if (mem.id !== s.id) { mem.id = s.id; mem.at = G.t + 1.2 + react * 4 + s.deeds.length * 0.4; } if (G.t < mem.at) return;
-  const forcedUp = (G.rules.some(r => r.id === 'young') && s.age < 12) || (G.rules.some(r => r.id === 'old') && s.age > 100);
-  const vis = s.deeds.filter(d => !d.hidden && !(s.looked && d.forged)), nh = s.deeds.filter(d => d.hidden).length;
-  let t = vis.reduce((a, d) => a + d.w * mult(G, d), 0); if (s.looked) t += s.deeds.filter(d => d.hidden).reduce((a, d) => a + d.w * mult(G, d), 0);
-  if (s.liar && !s.looked && !forcedUp && G.looks <= 0) t -= s.deeds[0].w * mult(G, s.deeds[0]);      // the ink shimmers: do not trust that deed
-  const span = s.deeds.filter(d => d.hidden).reduce((a, d) => a + mult(G, d), 0), unsure = !s.looked && !forcedUp && ((nh > 0 && Math.abs(t) <= span) || s.liar);
-  if (unsure && G.looks > 0 && !mem.lookedFor) { mem.lookedFor = true; mem.at = G.t + 0.6 + react; look(G); return; } mem.lookedFor = false;
-  let dir = forcedUp ? 'up' : t > 0 ? 'up' : t < 0 ? 'down' : G.rules.some(r => r.id === 'nomist') ? 'up' : 'side';
-  if (unsure && !s.looked && t === 0) dir = nh % 2 ? (Math.random() < 0.5 ? 'up' : 'down') : 'side';
-  if (Math.random() > acc + (1 - acc) * 0.7) dir = ['up', 'down', 'side'][(Math.random() * 3) | 0];
-  judge(G, dir);
+  if (!s.looked && s.deeds.some(d => d.hidden)) { look(G); mem.at = G.t + 0.6 + react; return; }
+  const t = s.deeds.reduce((a, d) => a + d.w, 0); judge(G, Math.random() < 0.25 ? ['up', 'down', 'side'][(Math.random() * 3) | 0] : t > 0 ? 'up' : t < 0 ? 'down' : 'side');
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.queue.length = 0; G.soul = null; G.gap = 0; finish(G, true); }

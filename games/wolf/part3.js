@@ -13,25 +13,19 @@ function fxStep(dt) {
 }
 const ui = { drag: null };
 function snowH(x, z) { return Math.sin(x * 0.02) * 1.5 + Math.cos(z * 0.013) * 2 + Math.sin((x - z) * 0.007) * 3; }
-// a four-legged animal from smooth shapes: kind 'wolf' or 'elk'
+// a four-legged animal (23 Nov 2026, his words: "Running graphics are absolutely horrible. Fix the Running graphics on all animals. Now its
+// just vibrating"): the old animal swung four stiff sticks at a rate tied to the frame count (11 strides a second at a full run). Now the
+// jointed animal from Hunter (part25_quad.js: shoulders, knees, hocks, a bounding gallop) with strides timed in seconds from its speed.
 function quad(T, kind, col) {
-  const g = new T.Group(), E = kind === 'elk', L = E ? 2.1 : 1.15, leg = E ? 1.25 : 0.62, ry = E ? 0.48 : 0.24, rz = E ? 0.4 : 0.2;
-  const fur = new T.MeshStandardMaterial({ color: col, roughness: 0.9, map: W3.grainTex(128, E ? 3 : 8, 200, 45, 3) }), dark = new T.MeshStandardMaterial({ color: E ? 0x3a2a1c : 0x2a2a2c, roughness: 0.85 }), pale = new T.MeshStandardMaterial({ color: E ? 0xd8c8a8 : 0xd8d4cc, roughness: 0.9 });
-  const blob = (sx, sy, sz, m, x, y, z, par = g) => { const s = new T.Mesh(new T.SphereGeometry(1, 20, 14), m); s.scale.set(sx, sy, sz); s.position.set(x, y, z); s.castShadow = true; par.add(s); return s; };
-  const body = new T.Group(); g.add(body); const by = leg + ry * 0.8;
-  blob(rz, ry, L * 0.5, fur, 0, by, 0, body); blob(rz * 1.02, ry * 1.08, L * 0.24, fur, 0, by + 0.04, L * 0.25, body); if (E) blob(rz * 0.9, ry * 0.6, L * 0.4, pale, 0, by - ry * 0.4, 0, body); else blob(rz * 0.85, ry * 0.55, L * 0.38, pale, 0, by - ry * 0.45, 0.05, body);
-  const neck = new T.Group(); neck.position.set(0, by + ry * 0.3, L * 0.42); body.add(neck); blob(rz * 0.6, ry * 0.8, ry * 0.9, E ? dark : fur, 0, ry * 0.5, ry * 0.4, neck);
-  const head = new T.Group(); head.position.set(0, ry * (E ? 1.5 : 0.9), ry * (E ? 0.9 : 1.1)); neck.add(head); blob(rz * 0.55, rz * 0.55, rz * 0.8, fur, 0, 0, 0, head); blob(rz * 0.3, rz * 0.3, rz * (E ? 0.9 : 0.75), E ? dark : pale, 0, -rz * 0.15, rz * 0.8, head);
-  blob(rz * 0.1, rz * 0.1, rz * 0.1, new T.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.2 }), 0, -rz * 0.05, rz * 1.55, head);
-  for (const s of [-1, 1]) { const ear = new T.Mesh(new T.ConeGeometry(rz * 0.18, rz * 0.5, 6), E ? fur : dark); ear.position.set(s * rz * 0.35, rz * 0.5, -rz * 0.1); ear.rotation.z = -s * 0.3; head.add(ear);
-    const eye = blob(rz * 0.07, rz * 0.07, rz * 0.05, new T.MeshStandardMaterial({ color: E ? 0x110a05 : 0xd8a830, roughness: 0.1, emissive: E ? 0 : 0x302000 }), s * rz * 0.33, rz * 0.12, rz * 0.45, head);
-    if (E) { const ant = new T.Group(); ant.position.set(s * rz * 0.25, rz * 0.5, 0); head.add(ant); const beam = new T.Mesh(new T.CylinderGeometry(0.03, 0.05, 1.1, 5), pale); beam.position.set(s * 0.25, 0.45, -0.2); beam.rotation.set(-0.5, 0, -s * 0.6); ant.add(beam); for (let t = 0; t < 3; t++) { const tine = new T.Mesh(new T.CylinderGeometry(0.015, 0.03, 0.45, 4), pale); tine.position.set(s * (0.15 + t * 0.15), 0.4 + t * 0.25, -0.05 - t * 0.15); tine.rotation.set(0.6, 0, -s * 0.2); ant.add(tine); } } }
-  const legs = []; for (const [lx, lz] of [[-1, 1], [1, 1], [-1, -1], [1, -1]]) { const lg = new T.Group(); lg.position.set(lx * rz * 0.55, by - ry * 0.3, lz * L * 0.36); body.add(lg); const up = new T.Mesh(new T.CylinderGeometry(rz * 0.28, rz * 0.2, leg * 0.55, 8), fur); up.position.y = -leg * 0.27; lg.add(up); const lo = new T.Mesh(new T.CylinderGeometry(rz * 0.16, rz * 0.13, leg * 0.55, 8), E ? dark : fur); lo.position.y = -leg * 0.78; lg.add(lo); const ft = blob(rz * 0.18, rz * 0.1, rz * 0.26, dark, 0, -leg + 0.25 + rz * 0.05, rz * 0.06, lg); ft.position.y = -leg * 1.03 + (by - ry * 0.3 - leg) * 0; legs.push(lg); }
-  const tail = new T.Group(); tail.position.set(0, by + ry * 0.4, -L * 0.48); body.add(tail); const tm = new T.Mesh(new T.CylinderGeometry(E ? 0.06 : 0.09, E ? 0.03 : 0.05, E ? 0.25 : 0.55, 8), E ? pale : fur); tm.position.set(0, -0.12, -0.18); tm.rotation.x = -0.9; tail.add(tm);
-  g.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.userData = { legs, body, neck, head, tail, leg, ph: Math.random() * 6 };
-  return g;
+  const id = kind === 'elk' ? 'elk' : 'wolf', R = quadMake(T, id, W3.grainTex(128, id === 'elk' ? 3 : 8, 205, 40, 3), col != null ? { col } : {});
+  if (id === 'elk') { const am = R.M.pale; for (const s of [-1, 1]) { const ant = new T.Group(); ant.position.set(s * 0.05, 0.08, -0.03); R.head.add(ant);
+      const beam = new T.Mesh(new T.CylinderGeometry(0.012, 0.022, 0.5, 5), am); beam.position.set(s * 0.1, 0.22, -0.08); beam.rotation.set(-0.45, 0, -s * 0.5); ant.add(beam);
+      for (let t2 = 0; t2 < 3; t2++) { const tine = new T.Mesh(new T.CylinderGeometry(0.006, 0.012, 0.18, 4), am); tine.position.set(s * (0.07 + t2 * 0.06), 0.15 + t2 * 0.1, -0.02 - t2 * 0.06); tine.rotation.set(0.6, 0, -s * 0.2); ant.add(tine); } } }
+  const g = R.g; g.userData = { R, body: R.body, neck: R.neck, head: R.head, tail: R.tail, legs: R.legs, ph: Math.random() * 6, last: 0 }; return g;
 }
-function gait(m, speed, t, turnHead = 0) { const u = m.userData, f = speed * 0.9; u.ph += f * 0.016 * 6; u.legs.forEach((lg, i) => lg.rotation.x = Math.sin(u.ph + [0, 0.4, Math.PI, Math.PI + 0.4][i]) * Math.min(0.9, speed * 0.07)); u.body.position.y = Math.abs(Math.sin(u.ph)) * Math.min(0.12, speed * 0.008); u.body.rotation.x = Math.sin(u.ph * 2) * 0.03; u.neck.rotation.y = turnHead; u.tail.rotation.y = Math.sin(t * 3) * 0.2; }
+function gait(m, speed, t, turnHead = 0) { const u = m.userData, R = u.R, now = performance.now() / 1000, dt = Math.min(0.05, Math.max(0, now - (u.last || now))); u.last = now;
+  const sp = Math.abs(speed), ga = sp < 0.3 ? 0 : sp < 5 ? 1 : 2, freq = ga === 2 ? clamp(sp / (R.S.stride * 2.1 * R.S.sz), 1.6, 3.2) : ga === 1 ? clamp(sp / (R.S.stride * 0.9 * R.S.sz), 0.6, 1.8) : 0;
+  u.ph += dt * freq * Math.PI * 2; quadPose(R, { t, ph: u.ph, gait: ga, amt: ga === 2 ? clamp(sp / 9, 0.6, 1) : 1, yaw: turnHead, neck: ga === 2 ? 0.15 : null, tail: ga === 2 ? 0.45 : 0.1, ear: 0.2 }, dt || 1 / 60); }
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 60, far: 4000, near: 0.1 })) { V3 = { none: true }; return V3; }
   const S = W3.scene;

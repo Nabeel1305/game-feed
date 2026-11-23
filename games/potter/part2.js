@@ -8,7 +8,7 @@
 const RULES = [
   '<b>Match the dotted outline.</b> The order\'s shape is drawn on both sides of the spinning clay.',
   '<b>Touch the side of the clay</b> and move your finger slowly: the clay follows it, in or out, at that height.',
-  'Move <b>slowly</b>: too fast and your finger slips off; pressed hard and fast, the pot wobbles and can collapse.',
+  'Put your finger <b>anywhere at the height you want</b> and slide it: right or left moves that part of the wall out or in. Move <b>slowly</b>: hard, fast sweeps make the pot wobble.',
   'The match grows as you go. <b>Tap FIRE</b> when it reaches the order\'s mark.',
   'Fire too early, or let a pot collapse, and it is ruined. Three ruined pots and the day is over.',
 ];

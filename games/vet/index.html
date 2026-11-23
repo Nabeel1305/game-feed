@@ -5102,8 +5102,18 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
+  // see-through, never cut away (23 Nov 2026, his words on Vine: "They shouldn't disappear... render it like invisible, but it should still be kind of
+  // seeable"): a material passed to seeThrough() is drawn as a fine screen (three pixels in four left out) where it stands between the camera and
+  // the player, so the player is always seen and nothing vanishes. Each frame the game says where the camera and the player are: setSee(a, b, r).
+  const SEE = { seeA: { value: V(0, 0, 0) }, seeB: { value: V(0, 0, 0) }, seeR: { value: 0 } };
+  function seeThrough(mat) { if (!mat || mat.userData.see) return mat; mat.userData.see = true; const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); Object.assign(sh.uniforms, SEE);
+      sh.vertexShader = 'varying vec3 vSeeW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvec4 seeW = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nseeW = instanceMatrix * seeW;\n#endif\nvSeeW = (modelMatrix * seeW).xyz;');
+      sh.fragmentShader = 'varying vec3 vSeeW; uniform vec3 seeA; uniform vec3 seeB; uniform float seeR;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (seeR > 0.0) { vec3 ab = seeB - seeA; float u = clamp(dot(vSeeW - seeA, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); float dd = length(vSeeW - (seeA + ab * u)); float f = (1.0 - smoothstep(seeR * 0.55, seeR, dd)) * step(0.01, u) * step(u, 0.93); if (f > 0.0) { vec2 q = mod(floor(gl_FragCoord.xy), 2.0); float bay = (mix(mix(0.0, 3.0, q.y), mix(2.0, 1.0, q.y), q.x) + 0.5) / 4.0; if (bay < f * 0.76) discard; } }'); };
+    mat.customProgramCacheKey = () => 'see' + (prev ? prev.toString().length : 0); mat.needsUpdate = true; return mat; }
+  function setSee(a, b, r) { SEE.seeA.value.copy(a); SEE.seeB.value.copy(b); SEE.seeR.value = r || 0; }
   function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
-  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
+  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, seeThrough, setSee, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();
 
@@ -5121,7 +5131,7 @@ const RULES = [
   '<b>Thorn:</b> tweezers on it, then pull away <b>slowly</b>. <b>Hoof:</b> rasp strokes down to the line, short ones near the end.',
   '<b>Cut:</b> hold the spray on it, then wrap the bandage round the leg, <b>unhurried</b>. <b>Fever:</b> hold the needle in; lift off when she shivers.',
   '<b>Mud:</b> brush <b>with the hair</b> (head to tail). <b>Ear:</b> a drop each time the head is still.',
-  '<b>Rough handling frightens her.</b> Stroke her slowly with your hand to calm her. Three animals bolt and the day is over.',
+  '<b>Rough handling frightens her.</b> Stroke her slowly with your hand to calm her. If she gets too nervous, you fail the round.',
 ];
 // the animals and what can be wrong with them
 const ANIMALS = {
@@ -5152,10 +5162,10 @@ function makeCfg(N, help) {
   return { N, f, e, boss, help: !!help, lives: 3,
     patients: N <= 2 ? 2 : Math.round(x(3, 5, 30)) + (boss ? 1 : 0),
     probsMax: N <= 4 ? 1 : 2,
-    arrive: x(0.15, 0.7, 30),                                  // how frightened she is when she comes in
-    drift: N <= 3 ? 0 : x(0, 0.075, 30) / slow,                  // fear rising by itself while it hurts (a second)
+    arrive: x(0.15, 0.6, 30),      // (23 Nov 2026: one bolt now ends the round, so a little less fear far on)                                  // how frightened she is when she comes in
+    drift: N <= 3 ? 0 : x(0, 0.055, 30) / slow,                  // fear rising by itself while it hurts (a second)
     still: 0.72,                                                // above this she will not hold still
-    pullMax: x(1.6, 0.8, 30) * slow,                           // fastest a thorn may come out (lengths a second)
+    pullMax: x(1.6, 0.8, 30) * slow * 1.5,      // 23 Nov 2026: a normal pull must never count as a yank                           // fastest a thorn may come out (lengths a second)
     raspTol: x(0.09, 0.035, 30) * slow,                          // how far past the line is still fine
     wrapMin: x(0.35, 0.9, 30) / slow, wraps: N <= 3 ? 2 : 3,    // seconds a turn of bandage must take at least
     spray: 1.1,                                                 // seconds of spray to clean a cut
@@ -5218,14 +5228,14 @@ function fright(G, amt, why, rough) {
 function bolt(G) {
   const p = G.pt; endHold(G);
   if (G.lesson) { p.stress = 0.35; G.ev.push({ k: 'settle' }); return; }      // in a lesson she never runs off
-  p.phase = 'out'; p.pt = 0; p.bolted = true; G.lost++; G.lives--; G.streak = 0; G.ev.push({ k: 'bolt', animal: p.animal, name: p.name });
-  if (G.lives <= 0) finish(G, false, 'bolted');
+  p.phase = 'out'; p.pt = 0; p.bolted = true; G.lost++; G.lives = 0; G.streak = 0; G.ev.push({ k: 'bolt', animal: p.animal, name: p.name });
+  finish(G, false, 'nervous');      // 23 Nov 2026, his note: "If the animal becomes too nervous, immediately end the round and display: You failed. You made the animal too nervous. Offer a retry button"
 }
 // a tool put down on a spot (spot null: on nothing that matters). Returns the problem it started on, or null.
 function touch(G, spot) {
   const p = G.pt; if (G.over || busy(G) || G.tool === 'hand' || G.hold) return null; const c = G.cfg;
   if (!spot) return null;
-  if (p.stress >= c.still) { G.ev.push({ k: 'restless' }); p.stress = Math.min(0.99, p.stress + 0.02); return null; }
+      // (23 Nov 2026: a nervous animal no longer ignores the tool: tools always register; too nervous and the round ends)
   const pr = probAt(G, spot);
   if (!pr) { fright(G, c.poke, 'nothing', true); return null; }
   if (nowStep(pr) !== G.tool) { fright(G, c.rough, 'wrongtool', true); G.ev.push({ k: 'wrongtool', want: nowStep(pr), spot }); return null; }
@@ -5781,10 +5791,10 @@ function saveResult(G) {      // a win saves the next level at once (leaving bef
 }
 function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
-  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'A BUSY DAY DONE' : 'DAY DONE') : 'TOO MANY BOLTED'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'A BUSY DAY DONE' : 'DAY DONE') : 'YOU FAILED'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
   $('eSub').innerHTML = r.win ? `<b>${r.treated}</b> made better · <b>${r.combo}</b> gentle in a row${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}` + (r.stars < 3 ? '<br>None bolting and no rough handling for three stars.' : '')
-    : `<b>${r.treated}</b> made better before three bolted.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
+    : `You made the animal too nervous.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !r.win);
   show('ovEnd');
@@ -5829,7 +5839,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (made for each tool): the tray picks a tool; with the hand, slow strokes along her calm her; tweezers: on the thorn,
 // then pull away slowly; rasp: strokes along the hoof; spray and needle: hold on the spot; bandage: circle round the leg;
 // brush: strokes, head to tail; drops: a tap on the ear when her head is still.
-function spotNear(x, y) { if (!G || !G.pt) return null; let best = null, bd = 1e9; const lim = (G.focus ? 70 : 52) * k; for (const s of SPOTS) { const p = spotScreen(s); if (!p.front) continue; const d = Math.hypot(p.x - x, p.y - y); if (d < lim && d < bd) { bd = d; best = s; } } return best; }
+function spotNear(x, y) { if (!G || !G.pt) return null; let best = null, bd = 1e9; const lim = (G.focus ? 70 : 52) * k, sick = s => typeof probAt === 'function' && probAt(G, s) && !probAt(G, s).done;
+  // 23 Nov 2026, his note: "All tools... must register reliably when used correctly": a spot with something wrong is found from much further (100 px)
+  for (const s of SPOTS) { const p = spotScreen(s); if (!p.front) continue; const d = Math.hypot(p.x - x, p.y - y) * (sick(s) ? 0.5 : 1); if (d < lim && d < bd) { bd = d; best = s; } } return best; }
 function bodyLen() { const [h, t] = headTail(); return Math.max(80 * k, Math.hypot(h.x - t.x, h.y - t.y)); }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const x = e.clientX, y = e.clientY, now = performance.now() / 1000;
   const tl = toolAt(x, y); if (tl) { pickTool(G, tl); return; }
@@ -5838,7 +5850,7 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused ||
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 function segEnd(d) { if (!G || !d.on || d.seg < 14 * k) { d.seg = 0; return; } const v = d.segV;
   if (G.tool === 'rasp') rasp(G, clamp(d.seg / (170 * k) * 0.32, 0.02, 0.32));
-  if (G.tool === 'brush' && d.seg > 30 * k) { const [h, t] = headTail(), gx = t.x - h.x, gy = t.y - h.y; brush(G, Math.sign(v.x * gx + v.y * gy) || 1); }
+  if (G.tool === 'brush' && d.seg > 22 * k) { const [h, t] = headTail(), gx = t.x - h.x, gy = t.y - h.y, gl = Math.hypot(gx, gy) || 1, vl = Math.hypot(v.x, v.y) || 1; brush(G, (v.x * gx + v.y * gy) / (gl * vl) > -0.35 ? 1 : -1); }      // only a stroke clearly against the hair counts as against
   d.seg = 0; }
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; const x = e.clientX, y = e.clientY, now = performance.now() / 1000, dx = x - d.lx, dy = y - d.ly, step = Math.hypot(dx, dy);
   d.x = x; d.y = y; d.len += step;

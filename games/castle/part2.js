@@ -70,9 +70,12 @@ function weatherOf(N) { if (N <= 3) return ['morning', 'noon', 'golden'][N - 1];
 
 function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
-  return { N, f, e, boss, help: !!help,
+  // 23 Nov 2026, his note: "AMAZING GAME!!!! but just a little too hard on the earlier levels ramp it slowly": the first 15 levels are gentler
+  // (weaker foes, a lighter army, more gold, longer between waves) and the full strength comes in step by step
+  const ez = N <= 3 ? 0 : 1 - Math.min(1, (N - 4) / 18);      // the first three are the lessons (already gentle); from level 4 the climb is slowed and reaches full strength by level 22
+  return { N, f, e, boss, help: !!help, ez,
     waves: N <= 2 ? 3 : Math.min(7, Math.round(x(4, 7, 40))), gold: Math.round(190 + x(0, 500, 25)) + 40 * upLv('treasury') + (help ? 60 : 0), gate: 12 + 3 * upLv('walls'),
-    hpX: x(0.75, 1.4, 90) * (help ? 0.85 : 1), budget: x(135, 175, 80), grow: x(0.2, 0.28, 30), gap: x(11, 8, 30),
+    hpX: x(0.75, 1.4, 90) * (help ? 0.85 : 1) * (1 - 0.22 * ez), budget: x(135, 175, 80) * (1 - 0.15 * ez), grow: x(0.2, 0.28, 30) * (1 - 0.25 * ez), gap: x(11, 8, 30) + 3 * ez,
     meteorCD: 30 * (1 - 0.15 * upLv('meteor')), meteorDmg: 160 + N * 6, dmgUp: { arrow: 1 + 0.12 * upLv('arrows'), stone: 1 + 0.12 * upLv('stones'), magic: 1 + 0.12 * upLv('arcane'), frost: 1 } };
 }
 // which kinds can come on this level, and the waves themselves: a budget of strength spent on a few kinds per wave

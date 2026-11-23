@@ -315,11 +315,13 @@ function draw(now, dt) {
 }
 let IG = null; function idleG() { if (!IG) { IG = newGame(Math.max(1, store.get('level', 1) | 0), { seed: 1 }); IG.ph = 'idle'; } return IG; }
 // ---------- the head-up display: only what he needs, mostly on the edges ----------
+// 23 Nov 2026, his note: "The big fish here sign is not nessesary just the fishes coming out of the water is enough": no arrows or words over the fish
+const REEL_SIGNS = false;
 function hud(G) {
   const c = G.cfg, x = 14, y = 44 * k;
   // over each place fish are rising: an arrow and, early on, the words; while aiming: whether the aim is on the fish
   if (V3 && !V3.none && ['idle', 'wait', 'reelin'].includes(G.ph)) { ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; const bob = Math.sin(performance.now() / 260) * 3 * k;
-    for (const q of G.spots) { const p = W3.screen(g2w(q.x, q.z, 0.2)); if (!p.front) continue; const px = clamp(p.x, 30 * k, W - 30 * k), py = p.y - 26 * k + bob; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(20,10,0,.75)'; ctx.fillStyle = '#ffa52a';
+    for (const q of (REEL_SIGNS ? G.spots : [])) { const p = W3.screen(g2w(q.x, q.z, 0.2)); if (!p.front) continue; const px = clamp(p.x, 30 * k, W - 30 * k), py = p.y - 26 * k + bob; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(20,10,0,.75)'; ctx.fillStyle = '#ffa52a';
       ctx.beginPath(); ctx.moveTo(px - 9 * k, py - 8 * k); ctx.lineTo(px + 9 * k, py - 8 * k); ctx.lineTo(px, py + 5 * k); ctx.closePath(); ctx.stroke(); ctx.fill();
       if ((G.N <= 3 || G.lesson) && q === G.spots[0]) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.strokeText('FISH HERE', px, py - 20 * k); ctx.fillText('FISH HERE', px, py - 20 * k); } }
     if (ui.aim) { const p = W3.screen(g2w(ui.aim.x, ui.aim.z, 0.1)), txt = ui.onSpot ? 'ON THE FISH: LET GO' : 'MOVE IT ONTO AN ORANGE RING'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.fillStyle = ui.onSpot ? '#7dff9a' : '#fff'; const ty = Math.min(H - 150 * k, p.y + 34 * k); ctx.strokeText(txt, W / 2, ty); ctx.fillText(txt, W / 2, ty); } }

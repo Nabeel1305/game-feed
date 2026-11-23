@@ -36,10 +36,10 @@ function saveResult(G) {      // a win saves the next level at once (leaving bef
 }
 function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
-  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'A BUSY DAY DONE' : 'DAY DONE') : 'TOO MANY BOLTED'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eTitle').textContent = r.win ? (L % 10 === 0 ? 'A BUSY DAY DONE' : 'DAY DONE') : 'YOU FAILED'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
   $('eSub').innerHTML = r.win ? `<b>${r.treated}</b> made better · <b>${r.combo}</b> gentle in a row${r.nb ? ' <b class="nb">NEW BEST</b>' : ''}` + (r.stars < 3 ? '<br>None bolting and no rough handling for three stars.' : '')
-    : `<b>${r.treated}</b> made better before three bolted.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
+    : `You made the animal too nervous.` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !r.win);
   show('ovEnd');
@@ -84,7 +84,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (made for each tool): the tray picks a tool; with the hand, slow strokes along her calm her; tweezers: on the thorn,
 // then pull away slowly; rasp: strokes along the hoof; spray and needle: hold on the spot; bandage: circle round the leg;
 // brush: strokes, head to tail; drops: a tap on the ear when her head is still.
-function spotNear(x, y) { if (!G || !G.pt) return null; let best = null, bd = 1e9; const lim = (G.focus ? 70 : 52) * k; for (const s of SPOTS) { const p = spotScreen(s); if (!p.front) continue; const d = Math.hypot(p.x - x, p.y - y); if (d < lim && d < bd) { bd = d; best = s; } } return best; }
+function spotNear(x, y) { if (!G || !G.pt) return null; let best = null, bd = 1e9; const lim = (G.focus ? 70 : 52) * k, sick = s => typeof probAt === 'function' && probAt(G, s) && !probAt(G, s).done;
+  // 23 Nov 2026, his note: "All tools... must register reliably when used correctly": a spot with something wrong is found from much further (100 px)
+  for (const s of SPOTS) { const p = spotScreen(s); if (!p.front) continue; const d = Math.hypot(p.x - x, p.y - y) * (sick(s) ? 0.5 : 1); if (d < lim && d < bd) { bd = d; best = s; } } return best; }
 function bodyLen() { const [h, t] = headTail(); return Math.max(80 * k, Math.hypot(h.x - t.x, h.y - t.y)); }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const x = e.clientX, y = e.clientY, now = performance.now() / 1000;
   const tl = toolAt(x, y); if (tl) { pickTool(G, tl); return; }
@@ -93,7 +95,7 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused ||
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 function segEnd(d) { if (!G || !d.on || d.seg < 14 * k) { d.seg = 0; return; } const v = d.segV;
   if (G.tool === 'rasp') rasp(G, clamp(d.seg / (170 * k) * 0.32, 0.02, 0.32));
-  if (G.tool === 'brush' && d.seg > 30 * k) { const [h, t] = headTail(), gx = t.x - h.x, gy = t.y - h.y; brush(G, Math.sign(v.x * gx + v.y * gy) || 1); }
+  if (G.tool === 'brush' && d.seg > 22 * k) { const [h, t] = headTail(), gx = t.x - h.x, gy = t.y - h.y, gl = Math.hypot(gx, gy) || 1, vl = Math.hypot(v.x, v.y) || 1; brush(G, (v.x * gx + v.y * gy) / (gl * vl) > -0.35 ? 1 : -1); }      // only a stroke clearly against the hair counts as against
   d.seg = 0; }
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; const x = e.clientX, y = e.clientY, now = performance.now() / 1000, dx = x - d.lx, dy = y - d.ly, step = Math.hypot(dx, dy);
   d.x = x; d.y = y; d.len += step;

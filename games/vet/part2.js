@@ -12,7 +12,7 @@ const RULES = [
   '<b>Thorn:</b> tweezers on it, then pull away <b>slowly</b>. <b>Hoof:</b> rasp strokes down to the line, short ones near the end.',
   '<b>Cut:</b> hold the spray on it, then wrap the bandage round the leg, <b>unhurried</b>. <b>Fever:</b> hold the needle in; lift off when she shivers.',
   '<b>Mud:</b> brush <b>with the hair</b> (head to tail). <b>Ear:</b> a drop each time the head is still.',
-  '<b>Rough handling frightens her.</b> Stroke her slowly with your hand to calm her. Three animals bolt and the day is over.',
+  '<b>Rough handling frightens her.</b> Stroke her slowly with your hand to calm her. If she gets too nervous, you fail the round.',
 ];
 // the animals and what can be wrong with them
 const ANIMALS = {
@@ -43,10 +43,10 @@ function makeCfg(N, help) {
   return { N, f, e, boss, help: !!help, lives: 3,
     patients: N <= 2 ? 2 : Math.round(x(3, 5, 30)) + (boss ? 1 : 0),
     probsMax: N <= 4 ? 1 : 2,
-    arrive: x(0.15, 0.7, 30),                                  // how frightened she is when she comes in
-    drift: N <= 3 ? 0 : x(0, 0.075, 30) / slow,                  // fear rising by itself while it hurts (a second)
+    arrive: x(0.15, 0.6, 30),      // (23 Nov 2026: one bolt now ends the round, so a little less fear far on)                                  // how frightened she is when she comes in
+    drift: N <= 3 ? 0 : x(0, 0.055, 30) / slow,                  // fear rising by itself while it hurts (a second)
     still: 0.72,                                                // above this she will not hold still
-    pullMax: x(1.6, 0.8, 30) * slow,                           // fastest a thorn may come out (lengths a second)
+    pullMax: x(1.6, 0.8, 30) * slow * 1.5,      // 23 Nov 2026: a normal pull must never count as a yank                           // fastest a thorn may come out (lengths a second)
     raspTol: x(0.09, 0.035, 30) * slow,                          // how far past the line is still fine
     wrapMin: x(0.35, 0.9, 30) / slow, wraps: N <= 3 ? 2 : 3,    // seconds a turn of bandage must take at least
     spray: 1.1,                                                 // seconds of spray to clean a cut
@@ -109,14 +109,14 @@ function fright(G, amt, why, rough) {
 function bolt(G) {
   const p = G.pt; endHold(G);
   if (G.lesson) { p.stress = 0.35; G.ev.push({ k: 'settle' }); return; }      // in a lesson she never runs off
-  p.phase = 'out'; p.pt = 0; p.bolted = true; G.lost++; G.lives--; G.streak = 0; G.ev.push({ k: 'bolt', animal: p.animal, name: p.name });
-  if (G.lives <= 0) finish(G, false, 'bolted');
+  p.phase = 'out'; p.pt = 0; p.bolted = true; G.lost++; G.lives = 0; G.streak = 0; G.ev.push({ k: 'bolt', animal: p.animal, name: p.name });
+  finish(G, false, 'nervous');      // 23 Nov 2026, his note: "If the animal becomes too nervous, immediately end the round and display: You failed. You made the animal too nervous. Offer a retry button"
 }
 // a tool put down on a spot (spot null: on nothing that matters). Returns the problem it started on, or null.
 function touch(G, spot) {
   const p = G.pt; if (G.over || busy(G) || G.tool === 'hand' || G.hold) return null; const c = G.cfg;
   if (!spot) return null;
-  if (p.stress >= c.still) { G.ev.push({ k: 'restless' }); p.stress = Math.min(0.99, p.stress + 0.02); return null; }
+      // (23 Nov 2026: a nervous animal no longer ignores the tool: tools always register; too nervous and the round ends)
   const pr = probAt(G, spot);
   if (!pr) { fright(G, c.poke, 'nothing', true); return null; }
   if (nowStep(pr) !== G.tool) { fright(G, c.rough, 'wrongtool', true); G.ev.push({ k: 'wrongtool', want: nowStep(pr), spot }); return null; }

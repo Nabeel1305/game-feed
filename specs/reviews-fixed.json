@@ -18,6 +18,12 @@
    "when": "from your Taxi Driver review",
    "said": "you don't animate the person entering the car, nor do you animate them leaving the car",
    "did": "When his car is stopped you see him get out and run, and your officer get out after him."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "It's ok as long as it actually gets more challenging in the higher levels because right now its just way too easy",
+   "did": "Far levels now push on much further: a faster crook, thicker traffic and cars crossing, more blocked alleys and dead ends, a closer tackle and a harder struggle."
   }
  ],
  "taxi": [
@@ -74,6 +80,12 @@
    "when": "23 Nov, said in the chat",
    "said": "On Vine, the vines are disappearing. Where are they going? They shouldn't disappear... I don't want any impossible physics in any of these games... And the graphics are still bad.",
    "did": "The vines were being cut away by the camera when close; now they never vanish (near the camera they fade a little and stay seen). The swing is now real: a rope that keeps its length, gravity, you pump with your legs to swing higher, no steering in the air, you catch where your hand meets the vine. The vine you let go swings back on its own. A new jungle: bark and leaves, ferns, mossy rocks, a waterfall, the tree house round a giant trunk."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "I cant see the vine that is supposed to be infront of me WTF make the vines I'm supposed to catch visable",
+   "did": "My fault: a missing starting value in the last update made every vine you hadn't grabbed yet invisible. Fixed: all the vines hang there again, and the next one glows gold with a NEXT VINE ring (an arrow at the edge when it's out of view)."
   }
  ],
  "reel": [
@@ -82,6 +94,12 @@
    "when": "23 Nov, written on this page",
    "said": "Make the fish clear currently its just a circle make the fish come out of the water in the place I'm supposed to put my fishing stick even is just briefly.  If you have bad eyes you won't even see the circle you are supposed to put make the circle distinct from the water color so its easy to see.",
    "did": "Fish leap out of the water where you should cast. Each place is a bright orange ring with a dark edge and an arrow over it. The aim ring turns green and says ON THE FISH when it is on one. While you fight a fish you see it at the surface, with a ring round it."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "The big fish here sighn is not nessesary just the fishes coming out of the water is enough",
+   "did": "The arrows and FISH HERE words over the water are gone; the fish leaping out show where they are."
   }
  ],
  "soar": [
@@ -126,6 +144,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "A crash jumped the drone at once to the restart spot. Now you see it bounce off, tumble and fall, then it is put back."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "As long as it gets more challenging as the levels go up but currently its ok.",
+   "did": "Far levels now keep getting harder: smaller hoops further apart, stronger wind and gusts, more moving hoops, more trees, less time."
   }
  ],
  "rope": [
@@ -224,6 +248,46 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "You fell 3 to 4 times faster than gravity out of the door. Now it is gravity and air: you speed up, then level off."
+  }
+ ],
+ "wolf": [
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "Running graphics are absolutely horrible. Fix the Running graphics on all animals. Now its just vibrating",
+   "did": "The legs were stiff sticks swinging about 11 times a second (tied to the frame rate). Every animal (your wolf, the pack, the elk) is now a jointed animal with shoulders, knees and hocks, galloping at a real stride rate (2 to 3 strides a second)."
+  }
+ ],
+ "castle": [
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "AMAZING GAME!!!! but just a little too hard on the earlier levels ramp it slowly once the player is an expert then you can make it more challenging",
+   "did": "From level 4 the climb is slower: weaker foes, smaller armies and longer gaps between waves, reaching full strength only by level 22."
+  }
+ ],
+ "heaven": [
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "We can't tell people what to think morally; this isn't a game you can win... dont rank the good or evil... just allow people to send the individuals where they like no winning here just move on to the next level",
+   "did": "No halos or horns, no right or wrong gate, no lives, no sunset, no stars. You send each soul where you think; the Book can always be read; when the queue is empty the next day comes, with where you sent them."
+  }
+ ],
+ "vet": [
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "All tools and interactions—including the brush, needle and tweezers—must register reliably... If the animal becomes too nervous, immediately end the round and display: You failed. You made the animal too nervous. Offer a retry button.",
+   "did": "Tools now find the sore spot from twice as far, a nervous animal no longer ignores a tool, a normal pull never counts as a yank, and a brush stroke only counts as 'against the hair' when it clearly is. Too nervous: the round ends at once with YOU FAILED, 'You made the animal too nervous', and TRY AGAIN."
+  }
+ ],
+ "potter": [
+  {
+   "kind": "yours",
+   "when": "23 Nov, your review (evening)",
+   "said": "Fix controls make sure it can actually be beat by a human otherwise its good",
+   "did": "Your finger had to land exactly on the clay's edge or it did nothing. Now it grabs the wall at that height wherever it lands: slide out to widen, in to narrow. Robot players of every skill win it (an ordinary one levels 1-20)."
   }
  ]
 }

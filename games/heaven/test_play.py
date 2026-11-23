@@ -34,33 +34,16 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('file://' + os.path.join(here, 'index.html')); pg.wait_for_function('typeof window.gameFeedStart === "function"'); pg.add_script_tag(path=os.path.join(here, 'bots.js'))
     rate = lambda name, levels, n=10, extra=None: {int(k2): v for k2, v in pg.evaluate("([o, L, n]) => { const r = {}; for (const N of L) { let w = 0; for (let s = 0; s < n; s++) w += __B.runHonest(N, 500 + s * 13 + N, o).won ? 1 : 0; r[N] = w / n; } return r; }", [dict(TARGETS[name], **(extra or {})), levels, n]).items()}
-    print('People who look')
-    o = rate('ordinary', [1, 2, 3, 5, 10, 20, 40]); print('  ordinary', o)
-    s = rate('sloppy', [1, 2, 3, 10], 20); print('  sloppy  ', s)
-    h = rate('sharp', [10, 40, 80]); print('  sharp   ', h)
-    ok(min(o[1], o[2], o[3]) >= TARGETS['ordinary_early'], 'an ordinary player wins the first three levels', str(o))
-    ok(s[1] >= TARGETS['sloppy_first'], 'a sloppy player wins the first level', str(s))
-    ok(o[40] < o[3], 'it gets harder', str(o))
-    ok(h[40] >= TARGETS['sharp_far'], 'a sharp player can still win far on (never impossible)', str(h))
-    print('Players who do not look')
-    keys = pg.evaluate('Object.keys(__sim.BLIND)'); alpha = ''.join(keys) + '.'
-    pats = set()
-    for L in (1, 2, 3, 4):
-        for t in itertools.product(alpha, repeat=L):
-            q = ''.join(t)
-            if set(q) == {'.'} or any(L % d == 0 and q == q[:d] * (L // d) for d in range(1, L)): continue
-            pats.add(canon(q))
-    pats = sorted(pats); Ps = [0.1, 0.18, 0.26, 0.35, 0.5, 0.7, 1.0, 1.4]; t0 = time.time(); rows = []
-    for i in range(0, len(pats), 10): rows += pg.evaluate('(spec) => __B.blindBeats(spec)', dict(pats=pats[i:i + 10], Ps=Ps, levels=[1, 2, 3, 6], n=2, seed=900))
-    tot = sum(r['n'] for r in rows); won = sum(r['w'] for r in rows); worst = max(rows, key=lambda r: r['w'])
-    print(f'  every blind string of up to four moves ({len(pats)} strings x {len(Ps)} beats x levels 1 2 3 6): {tot} games, won {won}   ({time.time() - t0:.0f} s)')
-    ok(won <= tot * TARGETS['blind_rate'], 'SPAM: no blind string wins (beyond one game in a thousand)', f'{won} of {tot}; worst {worst}')
-    if worst['w']:
-        d = pg.evaluate("([pat, P]) => { let w = 0; for (let s = 0; s < 100; s++) w += __B.blindBeat(1 + s % 3, 7000 + s * 17, pat, P).won ? 1 : 0; return w; }", [worst['pat'], worst['P']])
-        print(f"    closest: {worst['pat']} every {worst['P']} s, 100 more on levels 1-3: won {d}")
-        ok(d <= 100 * TARGETS['blind_one'], 'the blind string that came closest wins under one in ten', str(d))
-    r = pg.evaluate("() => { let w = 0, n = 0; for (const m of [0.1, 0.25, 0.5, 1]) for (const N of [1, 2, 3]) for (let s = 0; s < 40; s++) { n++; w += __B.blindRandom(N, 4000 + s * 7 + N, m).won ? 1 : 0; } return [w, n]; }")
-    print(f'  random moves at random gaps: {r[1]} games, won {r[0]}'); ok(r[0] <= r[1] * TARGETS['blind_rate'] * 2, 'SPAM: random moves do not win', str(r))
+    # 23 Nov 2026, his note: "this isn't a game you can win... no winning here just move on to the next level": there is no right gate,
+    # so the old tests (people who look win, blind tapping does not) no longer apply. Instead: every gatekeeper, careful or not, finishes
+    # the day and goes on; nothing is ever marked wrong; the day ends by itself when the queue is empty.
+    print('Every day ends and the next comes, whoever keeps the gate')
+    for name in ('ordinary', 'sloppy', 'sharp'):
+        r = rate(name, [1, 2, 3, 10, 40], 4); print(f'  {name:9s}', r); ok(all(v == 1 for v in r.values()), f'a {name} gatekeeper always finishes the day', str(r))
+    r = pg.evaluate("() => { let w = 0, n = 0; for (const m of [0.1, 0.25, 0.5, 1]) for (const N of [1, 2, 3, 10]) for (let s = 0; s < 6; s++) { n++; w += __B.blindRandom(N, 4000 + s * 7 + N, m).won ? 1 : 0; } return [w, n]; }")
+    print(f'  someone swiping at random: {r[0]} of {r[1]} days finished'); ok(r[0] == r[1], 'even swiping at random, the day ends and the next comes', str(r))
+    r = pg.evaluate("() => { const S = __sim; S.start(5, { seed: 11 }); const G = S.G; for (let i = 0; i < 60 * 300 && !G.over; i++) { if (i % 40 === 0) S.BLIND[['u', 'd', 's', 'b'][(i / 40) % 4]](G); S.step(1 / 60); } return [G.over, G.wrong, G.sent, Math.round(G.t)]; }")
+    print('  ', r); ok(r[0] == 'won' and r[1] == 0, 'nothing is ever marked wrong, and no clock runs out: the day ends when the queue is empty', str(r))
     print('Lessons')
     for N in (1, 2, 3):
         if not pg.evaluate(f'!!__sim.LESSONS[{N}]'): continue
@@ -69,7 +52,7 @@ with sync_playwright() as p:
             took = [round(x['lessons'], 1) if x['lessons'] is not None else None for x in rs]; print(f'  level {N}, {name}: lessons took {took} s')
             ok(all(t is not None and t < 180 for t in took), f'a {name} player gets through the lessons of level {N}', str(took))
     r = pg.evaluate("() => { const S = __sim; S.start(1, { seed: 3, teach: true }); const G = S.G; for (let i = 0; i < 60 * 90; i++) { if (i % 9 === 0) S.BLIND[Object.keys(S.BLIND)[i % Object.keys(S.BLIND).length]](G); S.step(1 / 60); } return [G.over, !!G.lesson]; }")
-    ok(r[0] is None and r[1], 'nothing is lost while a lesson is on (90 s of blind tapping: still in the lesson, not lost)', str(r))
+    ok(r[0] != 'lost', 'nothing is lost while a lesson is on (90 s of tapping: any send counts here, so it may finish the day)', str(r))
     print('Sound')
     snd = pg.evaluate('__sim.soundCheck()'); bad = {k: v for k, v in snd.items() if isinstance(v, str) or v > 1.0 or v == 0}
     print('  ', snd); ok(not bad, 'every sound plays, without clipping', str(bad))

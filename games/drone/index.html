@@ -5139,13 +5139,13 @@ function weatherOf(N) { if (N <= 3) return ['morning', 'noon', 'golden'][N - 1];
 function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, e, boss, help: !!help, lives: 3,
-    hoops: N <= 2 ? 5 : Math.round(x(5, 13, 30)) + (boss ? 2 : 0),
-    gapZ: x(20, 26, 30), side: x(8, 22, 25), rise: N <= 1 ? 0 : x(1.5, 7, 25),     // how far apart, how far across, how far up and down
-    radius: x(2.4, 1.3, 30) * (help ? 1.12 : 1),
-    wind: N < 4 ? 0 : x(0, 3.2, 30), gust: N < 4 ? 0 : x(0, 2.4, 30),
-    moving: N >= 12 ? x(0, 0.5, 30) : 0,                                     // share of hoops that slide to and fro
-    trees: Math.round(x(10, 40, 30)),
-    start: x(26, 16, 30) * (help ? 1.3 : 1), bonus: x(7.5, 4.6, 30) * (help ? 1.2 : 1),
+    hoops: N <= 2 ? 5 : Math.round(x(5, 15, 40)) + (boss ? 2 : 0),      // 23 Nov 2026, his note: "As long as it gets more challenging as the levels go up": far levels push on further (smaller hoops, stronger gusts, more moving hoops, more trees, less time)
+    gapZ: x(20, 26, 30), side: x(8, 26, 35), rise: N <= 1 ? 0 : x(1.5, 9, 35),     // how far apart, how far across, how far up and down
+    radius: x(2.4, 1.1, 40) * (help ? 1.12 : 1),
+    wind: N < 4 ? 0 : x(0, 3.8, 40), gust: N < 4 ? 0 : x(0, 3.2, 40),
+    moving: N >= 12 ? x(0, 0.7, 40) : 0,                                     // share of hoops that slide to and fro
+    trees: Math.round(x(10, 55, 40)),
+    start: x(26, 14, 40) * (help ? 1.3 : 1), bonus: x(7.5, 4.0, 40) * (help ? 1.2 : 1),
     vmax: 11, climb: 5, yawR: 1.9, drag: 1.5 };
 }
 function newGame(N, o = {}) {

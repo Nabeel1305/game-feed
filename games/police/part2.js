@@ -30,16 +30,16 @@ const onRoad = (x, s, m = 0) => Math.abs(x - nearLine(x)) <= RW - m || Math.abs(
 function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, e, boss, help: !!help, lives: 3,
-    vmax: x(28, 34, 35), crookV: x(0.72, 0.84, 35) * (1 - 0.1 * e),                 // your top speed (m/s); his, as a share of it
-    pits: N <= 2 ? 1 : Math.min(4, 1 + Math.round(x(0, 3, 25))) + (boss ? 1 : 0),
-    traffic: x(0.01, 0.022, 35) * (1 - 0.4 * e),                   // cars per metre of avenue
-    cross: N >= 4 ? x(0.2, 0.5, 30) : 0,                            // chance a car crosses at a junction
-    escape: x(230, 200, 35) + 30 * e,                                // he is gone if this far ahead (m)
+    vmax: x(28, 34, 35), crookV: x(0.72, 0.91, 45) * (1 - 0.1 * e),                 // your top speed (m/s); his, as a share of it
+    pits: N <= 2 ? 1 : Math.min(5, 1 + Math.round(x(0, 4, 30))) + (boss ? 1 : 0),
+    traffic: x(0.01, 0.032, 45) * (1 - 0.4 * e),                   // cars per metre of avenue
+    cross: N >= 4 ? x(0.2, 0.75, 40) : 0,                            // chance a car crosses at a junction
+    escape: x(230, 165, 45) + 30 * e,                                // he is gone if this far ahead (m)
     footLen: x(230, 380, 30), footGap: 12, run: 8.2, crookRun: x(6.5, 7.4, 30),
-    obst: x(0.05, 0.11, 30) * (1 - 0.3 * e),                        // obstacles per metre of alley
-    tackle: (x(2.8, 2.0, 25) + 0.5 * e) * (help ? 1.2 : 1),          // how close you must be to tackle (m)
-    turnGap: Math.round(x(9, 6, 30)), tee: N >= 6 ? x(0.15, 0.5, 30) : 0,      // corridor between corners (6 m modules); how often a corner is a T (follow him: the other way is a dead end)
-    pull: 0.055, resist: x(0.11, 0.2, 30) * (1 - 0.25 * e) * (help ? 0.85 : 1), surgeX: 1.7, surgeGap: x(2.6, 1.6, 30) };      // the struggle: what a tap gains; what he drags back a second; how much harder in a surge; how often he surges
+    obst: x(0.05, 0.16, 40) * (1 - 0.3 * e),                        // obstacles per metre of alley
+    tackle: (x(2.8, 1.8, 35) + 0.5 * e) * (help ? 1.2 : 1),          // how close you must be to tackle (m)
+    turnGap: Math.round(x(9, 6, 30)), tee: N >= 6 ? x(0.15, 0.7, 40) : 0,      // corridor between corners (6 m modules); how often a corner is a T (follow him: the other way is a dead end)
+    pull: 0.055, resist: x(0.11, 0.26, 40) * (1 - 0.25 * e) * (help ? 0.85 : 1), surgeX: 1.7, surgeGap: x(2.6, 1.2, 40) };      // 23 Nov 2026, his note: "it's ok as long as it actually gets more challenging in the higher levels because right now its just way too easy": every far-level number pushed on (a faster crook, thicker traffic and cross traffic, more blocked alleys and dead ends, a closer tackle, a harder struggle)      // the struggle: what a tap gains; what he drags back a second; how much harder in a surge; how often he surges
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
