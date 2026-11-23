@@ -1,17 +1,19 @@
 // ===================== RULES: Police Chase (game 14) =====================
 // Three parts, one chase:
-//   DRIVE: down a one-way avenue at night, lights and siren. Hold the left side of the screen to steer left, the right side to
-//          steer right, both to brake. Weave through the traffic and ram the getaway car's BACK CORNER from the side (a PIT):
-//          it spins. Enough spins and he crashes and runs. Hit traffic and you lose a life; fall too far behind and he is gone.
+//   DRIVE: (second version, 23 Nov 2026, his review: specs/police-v2-2026-11-23.md) through a CITY OF STREETS AND CORNERS. Left thumb: a
+//          stick that steers. Right thumb: GAS and BRAKE (held at a standstill, BRAKE reverses). He turns at junctions; brake for the
+//          corner or you will not make it. Ram his SIDE or BACK CORNER (a PIT): he spins. Enough spins and he crashes and runs.
+//          A wall scrape costs speed; a hard hit on a wall or a car costs a life; fall too far behind and he is gone.
 //   FOOT:  after him down an alley, running by yourself. Swipe left or right to change lane round crates and bins, up to jump a
 //          fence, down to slide under a pipe. Close in and tap to tackle him: too far and you dive at air.
 //   CUFF:  he fights to break free. When his shoulders twist one way, swipe the other way to hold him. Hold him enough times
 //          and the cuffs are on.
-// World: metres; x across (right +), s along the street (ahead +).
+// World: metres; x east, s north. A heading h is clockwise from north: forward is (sin h, cos h). Streets run along every
+// multiple of P in x and in s, RW either side of the line; everything else is a block of buildings.
 
 const RULES = [
-  '<b>Drive:</b> hold the left side to steer left, the right side to steer right, both to brake.',
-  '<b>Ram his back corner</b> from the side to spin him (a PIT). Straight into his bumper does nothing. Miss the traffic.',
+  '<b>Chase the car under the RED ARROW.</b> Left thumb: the stick steers. Right thumb: <b>GAS</b> and <b>BRAKE</b> (hold BRAKE when stopped to reverse).',
+  '<b>Brake for corners.</b> Ram his <b>side or back corner</b> to spin him (a PIT). Straight into his bumper does nothing. Miss the traffic.',
   '<b>On foot:</b> swipe left or right round crates, up over fences, down under pipes. You run by yourself.',
   '<b>Tap to tackle</b> when you are right behind him. Too far and you dive at air.',
   '<b>Cuff him:</b> when he twists one way, swipe the other way to hold him down.',
@@ -19,16 +21,18 @@ const RULES = [
 ];
 const WEATHERS = ['night', 'rain', 'dusk', 'storm', 'night', 'overcast', 'mist', 'night', 'golden'];
 function weatherOf(N) { if (N <= 2) return ['night', 'rain'][N - 1]; const R = rng(N * 7001 + 1); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
-const LANES = [-5.25, -1.75, 1.75, 5.25], HALF = 7, ALLEY = [-1.3, 0, 1.3];
+const ALLEY = [-1.3, 0, 1.3], P = 84, RW = 8, LANE = 3.4, DIRS = [[0, 1], [1, 0], [0, -1], [-1, 0]];      // streets every P metres, RW either side; N E S W
+const wrapPi = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }, nearLine = v => Math.round(v / P) * P;
+const onRoad = (x, s, m = 0) => Math.abs(x - nearLine(x)) <= RW - m || Math.abs(s - nearLine(s)) <= RW - m;
 
 function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, e, boss, help: !!help, lives: 3,
-    vmax: x(28, 34, 35), crookV: x(0.86, 0.91, 35),                 // your top speed (m/s); his, as a share of it
+    vmax: x(28, 34, 35), crookV: x(0.72, 0.84, 35) * (1 - 0.1 * e),                 // your top speed (m/s); his, as a share of it
     pits: N <= 2 ? 1 : Math.min(4, 1 + Math.round(x(0, 3, 25))) + (boss ? 1 : 0),
     traffic: x(0.01, 0.022, 35) * (1 - 0.4 * e),                   // cars per metre of avenue
     cross: N >= 4 ? x(0.2, 0.5, 30) : 0,                            // chance a car crosses at a junction
-    escape: x(170, 150, 35) + 30 * e,                                // he is gone if this far ahead (m)
+    escape: x(230, 200, 35) + 30 * e,                                // he is gone if this far ahead (m)
     footLen: x(230, 380, 30), footGap: 12, run: 8.2, crookRun: x(6.5, 7.4, 30),
     obst: x(0.05, 0.11, 30) * (1 - 0.3 * e),                        // obstacles per metre of alley
     tackle: (x(2.8, 2.0, 25) + 0.5 * e) * (help ? 1.2 : 1),          // how close you must be to tackle (m)
@@ -38,14 +42,13 @@ function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null,
     weather: weatherOf(N), ph: 'drive', ph_t: 0, lives: cfg.lives, crashes: 0, pitN: 0, stumbles: 0,
-    in: { left: false, right: false }, me: { x: LANES[1], s: 0, v: 18, vx: 0, imm: 0 }, crook: { x: LANES[2], s: 40, v: 18, lane: 2, spin: 0, nextLane: 2 },
-    traffic: [], junctions: [], gone: 0, foot: null, cuff: null, passed: 0 };
-  for (let s = 140; s < 6000; s += 140 + G.rnd() * 80) G.junctions.push({ s, car: G.rnd() < cfg.cross ? { t: null, dir: G.rnd() < 0.5 ? -1 : 1 } : null });
+    in: { sx: 0, gas: false, brake: false }, me: { x: LANE, s: 12, h: 0, v: 12, w: 0, imm: 0 }, crook: { x: LANE, s: 52, h: 0, v: 14, spin: 0, dir: 0, ni: 0, nj: 1, next: null, off: LANE },
+    traffic: [], trail: [], turns: [], gone: 0, foot: null, cuff: null, passed: 0 };
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
   return G;
 }
 // ---------- the thumbs ----------
-function hold(G, side, on) { if (side < 0) G.in.left = on; else G.in.right = on; }
+function drive(G, sx, gas, brake) { const I = G.in; I.sx = clamp(sx, -1, 1); I.gas = !!gas; I.brake = !!brake; }      // the stick (left -1 .. right +1) and the two pedals
 function swipe(G, dir) {      // 'l' 'r' 'u' 'd'
   if (G.over) return;
   if (G.ph === 'foot') { const F = G.foot; if (dir === 'l') F.lane = Math.max(0, F.lane - 1); else if (dir === 'r') F.lane = Math.min(2, F.lane + 1); else if (dir === 'u' && F.air <= 0 && F.low <= 0) { F.air = 0.75; G.ev.push({ k: 'jump' }); } else if (dir === 'd' && F.air <= 0 && F.low <= 0) { F.low = 0.8; G.ev.push({ k: 'slide' }); } G.ev.push({ k: 'dodge', dir }); return; }
@@ -63,35 +66,52 @@ function step(G, dt) {
   if (G.ph === 'drive') driveStep(G, dt); else if (G.ph === 'crash') { if (G.ph_t > 1.6) startFoot(G); } else if (G.ph === 'foot') footStep(G, dt); else if (G.ph === 'cuff') cuffStep(G, dt);
 }
 function driveStep(G, dt) {
-  const c = G.cfg, me = G.me, ck = G.crook, R = G.rnd, L = lessonNow(G), brake = G.in.left && G.in.right, steer = brake ? 0 : (G.in.right ? 1 : 0) - (G.in.left ? 1 : 0);
-  const vmax = c.vmax * (L ? 0.85 : 1), stuck = L && G.lesson.miss >= 4;      // a lesson that keeps going wrong gets gentler
-  me.v += (brake ? -16 : me.v < vmax ? 6 : -3) * dt; me.v = clamp(me.v, 6, vmax);
-  me.vx += (steer * 7.5 - me.vx) * Math.min(1, dt * 6); me.x += me.vx * dt; me.s += me.v * dt; me.imm = Math.max(0, me.imm - dt);
-  if (Math.abs(me.x) > HALF - 1) { me.x = Math.sign(me.x) * (HALF - 1); me.vx = 0; if (me.imm <= 0) { me.v *= 0.85; G.ev.push({ k: 'kerb' }); me.imm = 0.4; } }
-  // the getaway car: fast, weaving round traffic and now and then on a whim (its own clock); after a PIT it spins and slows
-  ck.v += ((ck.spin > 0 ? vmax * 0.35 : vmax * (L ? (L.id === 'steer' ? 0.95 : ck.s - me.s > 25 || stuck ? 0.55 : 0.8) : c.crookV)) - ck.v) * Math.min(1, dt * 2); ck.spin = Math.max(0, ck.spin - dt);
-  ck.nextT = (ck.nextT || 2) - dt; const ahead = G.traffic.find(t => Math.abs(t.x - LANES[ck.lane]) < 1 && t.s > ck.s && t.s - ck.s < 35);
-  if ((ahead || ck.nextT <= 0) && !(L && L.id === 'pit')) { const opts = [ck.lane - 1, ck.lane + 1].filter(l => l >= 0 && l < 4 && !G.traffic.some(t => Math.abs(t.x - LANES[l]) < 1 && Math.abs(t.s - ck.s) < 20)); if (opts.length) ck.lane = opts[(R() * opts.length) | 0]; ck.nextT = 2 + R() * 3; }
-  ck.x += clamp(LANES[ck.lane] - ck.x, -4 * dt, 4 * dt) + (ck.spin > 0 ? Math.sin(G.t * 20) * 0.05 : 0); ck.s += ck.v * dt;
-  // traffic: slower cars in the lanes ahead; some cross at junctions
-  while (G.traffic.length < 60) { const last = G.traffic.length ? Math.max(...G.traffic.map(t => t.s0)) : me.s + 60; const s = last + 1 / (c.traffic * (L && L.id === 'steer' ? (stuck ? 1.2 : 2.2) : L && L.id === 'pit' ? 0.0001 : 1)) * (0.5 + R()); G.traffic.push({ x: LANES[(R() * 4) | 0], s, s0: s, v: L && L.id === 'steer' ? 7 + R() * 3 : 11 + R() * 7, col: (R() * 6) | 0, hit: 0 }); }
-  for (const t of G.traffic) { const behind = t.s < me.s && t.s > me.s - 12 && Math.abs(t.x - me.x) < 2.4; t.s += (behind ? Math.min(t.v, me.v - 2) : t.v) * dt; if (t.hit > 0) { t.hit -= dt; t.x += t.hx * dt; } }      // drivers behind you slow down for you
-  for (const t of G.traffic) if (!t.passed && t.s < me.s - 3) { t.passed = true; if (!t.hit) { G.passed++; lessonSee(G, 'pass'); } }
-  G.traffic = G.traffic.filter(t => t.s > me.s - 30);
-  for (const j of G.junctions) if (j.car && j.s > me.s && j.s - me.s < 70 && j.car.t == null) { j.car.t = 0; G.ev.push({ k: 'horn' }); }
-  for (const j of G.junctions) if (j.car && j.car.t != null && j.car.t < 4) { j.car.t += dt; const cx = j.car.dir * (-12 + j.car.t * 8); j.car.x = cx; if (Math.abs(me.s - j.s) < 3 && Math.abs(me.x - cx) < 2.2 && me.imm <= 0) crash(G, 'cross'); }
-  for (const t of G.traffic) if (Math.abs(t.x - me.x) < 1.9 && t.s - me.s < 4.4 && t.s - me.s > -1.5 && me.imm <= 0) { t.hit = 0.6; t.hx = Math.sign(t.x - me.x || 1) * 4; crash(G, 'car'); }
-  // the PIT: your front into his back corner, from the side
-  const dx = ck.x - me.x, ds = ck.s - me.s;
-  if (Math.abs(dx) < 2.1 && ds > -1 && ds < 4.7 && me.imm <= 0 && ck.spin <= 0) {
-    const easy = L && L.id === 'pit';      // the lesson's PIT is forgiving
-    if (easy ? ds > 0 && Math.abs(dx) > 0.3 : ds > 1.4 && Math.abs(dx) > 0.75 && Math.sign(me.vx) === Math.sign(dx) && Math.abs(me.vx) > 1.6) { ck.spin = 1.6; G.pitN++; me.imm = 0.6; G.ev.push({ k: 'pit', n: G.pitN }); lessonSee(G, 'pit'); if (!G.lesson && G.pitN >= c.pits) { G.ph = 'crash'; G.ph_t = 0; G.ev.push({ k: 'crookcrash' }); } }
-    else { me.v = Math.min(me.v, ck.v * 0.8); me.imm = 0.5; me.x -= Math.sign(dx || 1) * 0.6; G.ev.push({ k: 'bump' }); lessonMiss(G, 'bump'); } }
-  if (ds > c.escape) { G.gone += dt; if (G.gone > 4) { if (L) { ck.s = me.s + 40; G.gone = 0; lessonMiss(G, 'far'); } else finish(G, false, 'escaped'); } } else G.gone = 0;
-  if (ds < -25) { ck.s = me.s + 30; }      // passed him: he ducks back in ahead (never a free win)
+  const c = G.cfg, me = G.me, ck = G.crook, I = G.in, R = G.rnd, L = lessonNow(G), vmax = c.vmax * (L ? 0.8 : 1), stuck = L && G.lesson.miss >= 4;
+  // ---- your car: gas, brake (then reverse), a stick that turns it less the faster it goes
+  me.imm = Math.max(0, me.imm - dt);
+  if (I.brake) me.v = me.v > 0.3 ? Math.max(0, me.v - 24 * dt) : Math.max(-8, me.v - 9 * dt);
+  else if (I.gas) me.v = me.v < vmax ? Math.min(vmax, me.v + (me.v < 0 ? 22 : 1.5 + 9 * (1 - 0.55 * me.v / vmax)) * dt) : Math.max(vmax, me.v - 6 * dt);
+  else me.v -= Math.sign(me.v) * Math.min(Math.abs(me.v), 3.2 * dt);
+  const sp = Math.abs(me.v), grip = Math.min(1, sp / 6) / (1 + Math.max(0, sp - 15) * 0.045); me.w = I.sx * 2.3 * grip * (me.v < 0 ? -1 : 1); me.h = wrapPi(me.h + me.w * dt);
+  let nx = me.x + Math.sin(me.h) * me.v * dt, ns = me.s + Math.cos(me.h) * me.v * dt;
+  if (!onRoad(nx, ns, 1.1)) {      // a wall: slide along it, lose speed by how squarely you met it, and be turned a little to run with the street
+    const okx = onRoad(nx, me.s, 1.1), oks = onRoad(me.x, ns, 1.1), into = okx ? Math.abs(Math.cos(me.h)) : oks ? Math.abs(Math.sin(me.h)) : 1;
+    if (okx) ns = me.s; else if (oks) nx = me.x; else { nx = me.x; ns = me.s; }
+    if (me.imm <= 0) { if (sp * into > 21 && !L) crash(G, 'wall'); else if (sp > 4) { G.ev.push({ k: 'kerb' }); me.imm = 0.35; } }
+    me.v -= me.v * Math.min(1, into * 5 * dt); const along = okx ? (Math.sin(me.h) >= 0 ? Math.PI / 2 : -Math.PI / 2) : (Math.cos(me.h) >= 0 ? 0 : Math.PI); me.h = wrapPi(me.h + wrapPi(along - me.h) * Math.min(1, dt * 2.5 * into)); }
+  me.x = nx; me.s = ns;
+  // ---- the getaway car: keeps to the right-hand lane, picks a way at every junction (never back the way he came), slows for the corner
+  const D = DIRS[ck.dir], nxC = ck.ni * P, nsC = ck.nj * P, toNode = (nxC - ck.x) * D[0] + (nsC - ck.s) * D[1];
+  if (ck.next == null && toNode < 46) { const pick = [ck.dir, (ck.dir + 1) % 4, (ck.dir + 3) % 4], away = pick.filter(d => { const ax = nxC + DIRS[d][0] * P, as = nsC + DIRS[d][1] * P; return Math.hypot(ax - me.x, as - me.s) > Math.hypot(nxC - me.x, nsC - me.s) - 20; });
+    const from = away.length ? away : pick; ck.next = L && L.id === 'pit' ? ck.dir : from[(R() * from.length) | 0]; if (R() < 0.35 && from.includes(ck.dir)) ck.next = ck.dir; }
+  if (toNode < (ck.next !== ck.dir ? 7.5 : 0)) { if (ck.next !== ck.dir) { G.turns.push({ x: nxC, s: nsC }); if (G.turns.length > 6) G.turns.shift(); G.ev.push({ k: 'turn' }); } ck.dir = ck.next == null ? ck.dir : ck.next; ck.next = null; ck.ni += DIRS[ck.dir][0]; ck.nj += DIRS[ck.dir][1]; }
+  { const d = DIRS[ck.dir], rx = d[1], rs = -d[0];      // his right-hand side
+    let blocked = false; for (const t of G.traffic) { const fz = (t.x - ck.x) * d[0] + (t.s - ck.s) * d[1], fx = (t.x - ck.x) * rx + (t.s - ck.s) * rs; if (t.dir === ck.dir && fz > 0 && fz < 26 && Math.abs(fx) < 2.4) blocked = true; }
+    ck.off += ((blocked ? -0.4 : LANE) - ck.off) * Math.min(1, dt * 2.5);      // round a slower car by the middle of the street
+    const ax = (d[0] ? ck.x : nearLine(ck.x)) + rx * ck.off + d[0] * 13, as = (d[1] ? ck.s : nearLine(ck.s)) + rs * ck.off + d[1] * 13, err = wrapPi(Math.atan2(ax - ck.x, as - ck.s) - ck.h);
+    const turning = ck.next != null && ck.next !== ck.dir && toNode < 34 || Math.abs(err) > 0.5, dist = Math.hypot(ck.x - me.x, ck.s - me.s);
+    const top = ck.spin > 0 ? vmax * 0.3 : L ? (dist > 50 || stuck ? 5 : L.id === 'pit' ? vmax * 0.5 : vmax * 0.62) : vmax * c.crookV * (dist > 170 ? 0.62 : dist > 115 ? 0.8 : 1), want = turning ? Math.min(top, 12.5) : top;      /* far ahead, he eases off: he thinks he has lost you */
+    ck.v += clamp(want - ck.v, -16 * dt, 7 * dt); ck.spin = Math.max(0, ck.spin - dt);
+    if (ck.spin <= 0) ck.h = wrapPi(ck.h + clamp(err * 4, -2.4, 2.4) * dt); ck.x += Math.sin(ck.h) * ck.v * dt; ck.s += Math.cos(ck.h) * ck.v * dt;
+    if (!onRoad(ck.x, ck.s, 1)) { ck.x += (nearLine(ck.x) - ck.x) * 0.05; ck.s += (nearLine(ck.s) - ck.s) * 0.05; }
+    const tl = G.trail, last = tl[tl.length - 1]; if (!last || Math.hypot(ck.x - last[0], ck.s - last[1]) > 4) { tl.push([ck.x, ck.s]); if (tl.length > 160) tl.shift(); } }
+  // ---- traffic: cars keeping to their lane along the streets near you
+  const want = L ? (L.id === 'pit' ? 0 : 5) : Math.round(c.traffic * 900);
+  for (let tries = 0; G.traffic.length < want && tries < 4; tries++) { const dir = (R() * 4) | 0, d = DIRS[dir], line = nearLine((d[0] ? me.s : me.x) + (R() - 0.5) * 5 * P), pos = (d[0] ? me.x : me.s) + (R() - 0.5) * 6 * P;
+    const x = d[0] ? pos : line + d[1] * LANE, s2 = d[0] ? line - d[0] * LANE : pos; if (Math.hypot(x - me.x, s2 - me.s) < 70 || Math.hypot(x - ck.x, s2 - ck.s) < 30) continue; G.traffic.push({ x, s: s2, dir, v: 8 + R() * 6, col: (R() * 6) | 0, hit: 0 }); }
+  for (const t of G.traffic) { const d = DIRS[t.dir]; t.x += d[0] * t.v * dt; t.s += d[1] * t.v * dt; if (t.hit > 0) { t.hit -= dt; t.x += t.hx * dt; t.s += t.hs * dt; }
+    const dx = t.x - me.x, ds = t.s - me.s; if (dx * dx + ds * ds < 7.3 && me.imm <= 0) { const k2 = Math.hypot(dx, ds) || 1; t.hit = 0.6; t.hx = dx / k2 * 5; t.hs = ds / k2 * 5; if (sp > 6) crash(G, 'car'); else { me.v *= 0.5; me.imm = 0.5; G.ev.push({ k: 'kerb' }); } } }
+  G.traffic = G.traffic.filter(t => Math.hypot(t.x - me.x, t.s - me.s) < 3.6 * P);
+  // ---- the PIT: into his side or his back corner. Square into his bumper does nothing.
+  const dx = me.x - ck.x, ds = me.s - ck.s, dist = Math.hypot(dx, ds);
+  if (dist < 2.9 && me.imm <= 0 && ck.spin <= 0) { const lx = dx * Math.cos(ck.h) - ds * Math.sin(ck.h), easy = L && L.id === 'pit';
+    if (easy ? sp > 3 : Math.abs(lx) > 0.75 && sp > 8) { ck.spin = 1.8; G.pitN++; me.imm = 0.7; me.v *= 0.8; G.ev.push({ k: 'pit', n: G.pitN }); lessonSee(G, 'pit'); if (!G.lesson && G.pitN >= c.pits) { G.ph = 'crash'; G.ph_t = 0; G.ev.push({ k: 'crookcrash' }); } }
+    else { me.v = Math.min(me.v, ck.v * 0.8); me.imm = 0.5; me.x += dx / (dist || 1) * 0.6; me.s += ds / (dist || 1) * 0.6; G.ev.push({ k: 'bump' }); lessonMiss(G, 'bump'); } }
+  if (me.hRef == null) me.hRef = me.h; if (Math.abs(wrapPi(me.h - me.hRef)) > 1.25 && sp > 4) { me.hRef = me.h; if (dist < 90) lessonSee(G, 'corner'); }      // you came round a corner with him still in reach (the lesson counts these; it cannot stall on a turn you missed)
+  if (dist > c.escape) { G.gone += dt; if (G.gone > 4) { if (L) { G.gone = 0; lessonMiss(G, 'far'); } else finish(G, false, 'escaped'); } } else G.gone = 0;
 }
 function crash(G, what) {
-  const me = G.me; me.v *= 0.3; me.imm = 1.2; G.crashes++; G.ev.push({ k: 'crash', what });
+  const me = G.me; me.v *= what === 'wall' ? -0.25 : 0.3; me.imm = 1.2; G.crashes++; G.ev.push({ k: 'crash', what });
   if (lessonNow(G)) { lessonMiss(G, 'crash'); return; } G.lives--; if (G.lives <= 0) finish(G, false, 'wrecked');
 }
 // ---------- on foot ----------
@@ -133,8 +153,8 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'steer', ph: 'drive', title: 'STEER THROUGH THE TRAFFIC', how: 'Hold the LEFT side of the screen to steer left, the RIGHT side to steer right. Pass the cars without touching them.', need: 3, ok: w => w === 'pass' },
-      { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', how: 'Come up beside his back wheel, then steer INTO it. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],
+  1: [{ id: 'steer', ph: 'drive', title: 'FOLLOW THE RED ARROW', how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow him round 2 corners.', need: 2, ok: w => w === 'corner' },
+      { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', how: 'Catch him up and drive into his SIDE or back corner. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],
   2: [{ id: 'dodge', ph: 'foot', title: 'DODGE, JUMP, SLIDE', how: 'Swipe left or right round crates, UP over fences, DOWN under pipes.', need: 4, ok: w => w === 'cleared' },
       { id: 'tackle', ph: 'foot', title: 'TACKLE HIM', how: 'Wait until you are right behind him, then tap.', need: 1, ok: w => w === 'tackle' }],
   3: [{ id: 'hold', ph: 'cuff', title: 'HOLD HIM DOWN', how: 'When he twists one way, swipe the OTHER way to hold him.', need: 3, ok: w => w === 'held' }],
@@ -146,29 +166,33 @@ function lessonSee(G, what) {
   const D = G.lesson; if (!D) return; const st = D.steps[D.i]; if (!st.ok(what)) return;
   D.n++; if (D.n < st.need) { G.ev.push({ k: 'lessonok', n: D.n, need: st.need }); return; }
   D.i++; D.n = 0; D.miss = 0;
-  if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); Object.assign(G, { ph: 'drive', ph_t: 0, lives: G.cfg.lives, crashes: 0, pitN: 0, foot: null, cuff: null }); G.crook.s = G.me.s + 40; G.crook.spin = 0; G.ev.push({ k: 'drive' }); }
+  if (D.i >= D.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); Object.assign(G, { ph: 'drive', ph_t: 0, lives: G.cfg.lives, crashes: 0, pitN: 0, foot: null, cuff: null }); G.crook.spin = 0; G.turns.length = 0; G.ev.push({ k: 'drive' }); }
   else { G.ev.push({ k: 'lessonnext' }); lessonPhase(G); }
 }
 function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev.push({ k: 'lessonmiss', why, how: D.steps[D.i].how }); }
 
 // ---------- for the robots ----------
-// BLIND: hold left, hold right, let go, hold both (brake), swipe left/right/up/down, tap.
-const BLIND = { L: G => { G.in.left = true; G.in.right = false; }, R: G => { G.in.right = true; G.in.left = false; }, N: G => { G.in.left = G.in.right = false; }, B: G => { G.in.left = G.in.right = true; },
+// BLIND: the stick left, right, centred; GAS (brake off), BRAKE (gas off); on foot and in the arrest: swipes and a tap.
+const BLIND = { L: G => { G.in.sx = -1; }, R: G => { G.in.sx = 1; }, N: G => { G.in.sx = 0; }, G: G => { G.in.gas = true; G.in.brake = false; }, B: G => { G.in.brake = true; G.in.gas = false; },
   l: G => swipe(G, 'l'), r: G => swipe(G, 'r'), u: G => swipe(G, 'u'), d: G => swipe(G, 'd'), t: G => tap(G) };
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, t = G.t;
   const later = (key, cond) => { if (!cond) { mem[key] = null; return false; } if (mem[key] == null) mem[key] = t; return t - mem[key] >= react; };
-  if (G.ph === 'drive') { const me = G.me, ck = G.crook, ds = ck.s - me.s;
-    // where to be: beside his back corner when close, else behind him; never in a lane with a car just ahead
-    let tx = ds < 14 ? ck.x + (mem.side || (mem.side = me.x < ck.x ? -1 : 1)) * 1.6 : ck.x; if (ds < 4.3 && ds > 1.5 && Math.abs(me.x - ck.x) < 2.4) tx = ck.x + (mem.side || 1) * 0.5;      // in for the PIT: into his corner, not his bumper
-    const blockedAt = l => { let m = 1e9; for (const c2 of G.traffic) if (c2.s > me.s - 5 && Math.abs(c2.x - l) < 2.2) m = Math.min(m, c2.s - me.s); return m; };
-    const look = 12 + (me.v - 12) * (react + 1.0), pathBlocked = x0 => blockedAt(x0) < look;
-    if (pathBlocked(tx) || pathBlocked(me.x)) { const best = LANES.slice().sort((a, b) => (blockedAt(b) - Math.abs(b - me.x) * 4) - (blockedAt(a) - Math.abs(a - me.x) * 4))[0]; tx = best; if (blockedAt(me.x) < 8 + me.v * react && Math.abs(best - me.x) > 2) mem.brake = true; }
-    if (!later('drv', true)) return; mem.drv = null;
-    const want = Math.random() < acc ? tx : tx + (Math.random() - 0.5) * 6, dx = want - me.x;
-    G.in.left = dx < -0.35; G.in.right = dx > 0.35; if (mem.brake || (ds < 0 && ds > -6)) { G.in.left = G.in.right = true; mem.brake = false; }
-    for (const j of G.junctions) if (j.car && j.car.t != null && j.car.t < 4 && j.s - me.s > 0 && j.s - me.s < me.v * 1.6) { const ta = (j.s - me.s) / me.v, cx = j.car.dir * (-12 + (j.car.t + ta) * 8); if (Math.abs(cx - me.x) < 3.2) G.in.left = G.in.right = true; }      // a car crossing ahead: brake
-    if (Math.abs(me.x - ck.x) > 3) mem.side = null; return; }
+  if (G.ph === 'drive') { const me = G.me, ck = G.crook, I = G.in, tl = G.trail, sp = Math.abs(me.v), dist = Math.hypot(ck.x - me.x, ck.s - me.s);
+    // someone who looks: follows the way he went (round the corners he took), brakes for a corner and for a car ahead, then goes for his side
+    let bi = 0, bd = 1e9; for (let i = 0; i < tl.length; i++) { const d2 = Math.hypot(tl[i][0] - me.x, tl[i][1] - me.s); if (d2 <= bd) { bd = d2; bi = i; } }
+    const ahead = Math.round((7 + sp * 0.5) / 4), far = Math.round((14 + sp * 1.1) / 4), p1 = tl[Math.min(tl.length - 1, bi + ahead)] || [ck.x, ck.s], p2 = tl[Math.min(tl.length - 1, bi + far)] || p1;
+    let tx = p1[0], ts = p1[1]; const fx = Math.sin(ck.h), fs = Math.cos(ck.h), rx = fs, rs = -fx;
+    if (dist < 20 && bi + ahead >= tl.length - 2) { const side = mem.side || (mem.side = ((me.x - ck.x) * rx + (me.s - ck.s) * rs) < 0 ? -1 : 1), lz = (me.x - ck.x) * fx + (me.s - ck.s) * fs; const o2 = lz > -5 ? 0.3 : 2.2; tx = ck.x + rx * side * o2 + fx * 1.5; ts = ck.s + rs * side * o2 + fs * 1.5; } else mem.side = null;
+    let err = wrapPi(Math.atan2(tx - me.x, ts - me.s) - me.h); const bend = Math.abs(wrapPi(Math.atan2(p2[0] - me.x, p2[1] - me.s) - me.h));
+    let brake = (Math.abs(err) > 0.5 && sp > 11) || (bend > 0.55 && sp > 15) || (bend > 0.9 && sp > 12), dodge = 0;
+    for (const t2 of G.traffic) { const lz = (t2.x - me.x) * Math.sin(me.h) + (t2.s - me.s) * Math.cos(me.h), lx = (t2.x - me.x) * Math.cos(me.h) - (t2.s - me.s) * Math.sin(me.h); if (lz > 0 && lz < 9 + sp * (0.7 + react) && Math.abs(lx) < 2.6) { dodge = lx > 0 ? -0.9 : 0.9; if (lz < 6 + sp * react * 1.5 && sp > 9) brake = true; } }
+    // slow hands, not blind ones: the stick follows what he wants with a lag (his reaction time), the brake comes on a reaction late, and now and then he misjudges
+    if (t > (mem.offT || 0)) { mem.offT = t + 0.7; mem.off = Math.random() > acc ? (Math.random() - 0.5) * 0.7 : 0; } err += mem.off || 0;
+    if (sp < 1.5 && !onRoad(me.x + Math.sin(me.h) * 4, me.s + Math.cos(me.h) * 4, 1.1)) mem.back = t + 0.9;      // nose against a wall: back out
+    if (mem.back && t < mem.back) { drive(G, -clamp(err * 2, -1, 1), false, true); return; }
+    mem.sx = (mem.sx || 0) + (clamp(err * 2.4 + dodge, -1, 1) - (mem.sx || 0)) * Math.min(1, (1 / 60) / (0.08 + react * 0.5)); const br = later('br', brake) && sp > 6;
+    drive(G, mem.sx, !br, br); return; }
   if (G.ph === 'foot') { const F = G.foot, next = F.obs.find(q => !q.done && q.s > F.s), look = 7.6 * (react + 0.25);
     if (next && next.s - F.s < look + 2 && next.s - F.s > look - 1.5 && mem.obs !== next) { mem.obs = next; const right = Math.random() < acc;
       if (next.type === 'fence') swipe(G, right ? 'u' : 'd'); else if (next.type === 'pipe') swipe(G, right ? 'd' : 'u');

@@ -5544,6 +5544,7 @@ function buildWorld() {
   const ring = new T.Mesh(new T.RingGeometry(0.75, 0.95, 24), new T.MeshBasicMaterial({ color: 0xffe060, transparent: true, opacity: 0.95, depthWrite: false })); ring.rotation.x = -Math.PI / 2; S.add(ring);
   const ball = new T.Mesh(new T.SphereGeometry(0.2, 14, 10), M(0xffffff, { roughness: 0.4, emissive: 0x404040 })); ball.castShadow = true; S.add(ball);
   V3 = { T, S, nets, crowdG, flood, lamps, men, blob, trings, tgt, dB, ring, ball, kit: null, sky: null, M: [new T.Matrix4(), new T.Matrix4(), new T.Matrix4(), new T.Matrix4()], col: new T.Color() };
+  W3.scene.traverse(o => { if (o.isInstancedMesh) o.frustumCulled = false; });      /* 23 Nov 2026: copies that are re-placed as you go must never be culled by where they first were (Police Chase's vanishing skyscrapers; tools/stale_bounds.py) */
   W3.setQuality(stepN); return V3;
 }
 const SV = new (window.THREE ? THREE.Vector3 : Object)();

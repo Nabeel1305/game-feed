@@ -77,7 +77,27 @@ function buildWorld() {
   // coins in the alley, and the safehouse door at its end
   const coinI = new T.InstancedMesh(new T.CylinderGeometry(0.22, 0.22, 0.05, 16), new T.MeshStandardMaterial({ color: 0xffd040, metalness: 0.9, roughness: 0.25, emissive: 0x403000 }), 60); alley.add(coinI);
   const door = new T.Group(); { const fr = new T.Mesh(new T.BoxGeometry(5.2, 6, 0.4), new T.MeshStandardMaterial({ color: 0x3a3430, roughness: 0.9 })); fr.position.y = 3; const dr = new T.Mesh(new T.BoxGeometry(1.6, 2.6, 0.2), new T.MeshStandardMaterial({ color: 0x2a4a3a, roughness: 0.6 })); dr.position.set(0, 1.3, 0.2); const lt = new T.Mesh(new T.SphereGeometry(0.15, 8, 6), new T.MeshStandardMaterial({ color: 0x9bff9b, emissive: 0x6bff6b, emissiveIntensity: 3 })); lt.position.set(0, 2.9, 0.4); door.add(fr, dr, lt); } alley.add(door);
-  V3 = { T, S, road, walks, dash, D, blds, poleI, headI, lamps, me, flame, cops, traffic, redL, blueL, head, thingPool, mkThing, heli, heliL, alley, alleyLamps, obsPool, crateM, metal, coinI, door, camPos: new T.Vector3(), look: new T.Vector3(), sky: null, bk: -1, lk: -1 };
+  // 23 Nov 2026 (his Police Chase review, "the running graphics are just awful": this alley was the same first-person tunnel with nobody in it): you are
+  // seen from behind, running properly, and the officer on your heels comes into the picture as he closes. The same people as Police Chase.
+  const person = (top, legs, o = {}) => { const g = new T.Group(), body = new T.Group(); g.add(body); const M2 = (c2, r = 0.8) => new T.MeshStandardMaterial({ color: c2, roughness: r }), sk = M2(o.skin || 0x8a5a3c, 0.6), tp = M2(top), lg = M2(legs), sh = M2(o.shoe || 0xf2f2f2, 0.5);
+    const cap = (par, r, l, m, x, y, z) => { const q = new T.Mesh(new T.CapsuleGeometry(r, l, 6, 10), m); q.position.set(x, y, z); q.castShadow = true; par.add(q); return q; };
+    cap(body, 0.19, 0.4, tp, 0, 1.27, 0); cap(body, 0.17, 0.12, lg, 0, 0.98, 0); const hd = new T.Mesh(new T.SphereGeometry(0.125, 14, 10), sk); hd.position.set(0, 1.74, -0.01); hd.castShadow = true; body.add(hd);
+    if (o.hood) { const h2 = new T.Mesh(new T.SphereGeometry(0.15, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), tp); h2.position.set(0, 1.75, 0.02); body.add(h2); }
+    if (o.cap) { const c2 = new T.Mesh(new T.CylinderGeometry(0.13, 0.135, 0.07, 14), M2(o.cap)); c2.position.set(0, 1.85, 0); const pk = new T.Mesh(new T.BoxGeometry(0.2, 0.02, 0.12), M2(0x0a0c10)); pk.position.set(0, 1.83, -0.15); body.add(c2, pk); }
+    if (o.bag) { const b2 = new T.Mesh(new T.BoxGeometry(0.34, 0.26, 0.2), M2(o.bag)); b2.position.set(0.05, 1.2, 0.24); b2.rotation.z = 0.3; b2.castShadow = true; body.add(b2); g.userData.bag = b2; }
+    if (o.stripe) { const st = new T.Mesh(new T.BoxGeometry(0.4, 0.06, 0.34), M2(o.stripe, 0.4)); st.position.set(0, 1.32, 0); body.add(st); }
+    const J = { arm: [], fore: [], thigh: [], shin: [] };
+    for (const sd of [-1, 1]) { const a = new T.Group(); a.position.set(sd * 0.27, 1.5, 0); cap(a, 0.06, 0.24, tp, 0, -0.16, 0); const f = new T.Group(); f.position.set(0, -0.32, 0); cap(f, 0.052, 0.22, o.sleeve ? tp : sk, 0, -0.14, 0); const hand = new T.Mesh(new T.SphereGeometry(0.06, 8, 6), sk); hand.position.set(0, -0.3, 0); f.add(hand); a.add(f); body.add(a);
+      const th = new T.Group(); th.position.set(sd * 0.11, 0.92, 0); cap(th, 0.085, 0.3, lg, 0, -0.2, 0); const sn = new T.Group(); sn.position.set(0, -0.42, 0); cap(sn, 0.068, 0.3, lg, 0, -0.2, 0); const shoe = new T.Mesh(new T.BoxGeometry(0.11, 0.09, 0.27), sh); shoe.position.set(0, -0.42, -0.06); shoe.castShadow = true; sn.add(shoe); th.add(sn); body.add(th);
+      J.arm.push(a); J.fore.push(f); J.thigh.push(th); J.shin.push(sn); }
+    g.userData.J = J; g.userData.body = body; return g; };
+  // a run you can read: thighs swing, knees fold as the leg comes through, arms pump the other way with bent elbows, the body leans and bounces
+  const runPose = (m, ph, amt = 1) => { const J = m.userData.J, b = m.userData.body; for (let i = 0; i < 2; i++) { const p = ph + i * Math.PI, sw = Math.sin(p); J.thigh[i].rotation.x = (sw * 0.95 + 0.12) * amt; J.shin[i].rotation.x = -(0.25 + 1.25 * Math.max(0, Math.cos(p + 0.5))) * amt; J.arm[i].rotation.x = -sw * 0.95 * amt; J.arm[i].rotation.z = (i ? -1 : 1) * 0.08; J.fore[i].rotation.x = (1.25 + sw * 0.25) * amt; }
+    b.rotation.x = -0.24 * amt; b.position.y = Math.abs(Math.sin(ph)) * 0.09 * amt; b.rotation.y = Math.sin(ph) * 0.12 * amt; if (m.userData.bag) m.userData.bag.rotation.x = Math.sin(ph * 2) * 0.25; };
+  const you = person(0xc8322a, 0x26303a, { sleeve: true, bag: 0x3f6a3a }); you.visible = false; S.add(you); const footCop = person(0x1c2a44, 0x10141c, { cap: 0x1c2a44, shoe: 0x101010, stripe: 0xd8e04a, sleeve: true }); footCop.visible = false; S.add(footCop);
+  const alleyFill = new T.HemisphereLight(0xdfe8ff, 0x5a5048, 0); S.add(alleyFill);
+  V3 = { T, S, you, footCop, runPose, alleyFill, road, walks, dash, D, blds, poleI, headI, lamps, me, flame, cops, traffic, redL, blueL, head, thingPool, mkThing, heli, heliL, alley, alleyLamps, obsPool, crateM, metal, coinI, door, camPos: new T.Vector3(), look: new T.Vector3(), sky: null, bk: -1, lk: -1 };
+  W3.scene.traverse(o => { if (o.isInstancedMesh) o.frustumCulled = false; });      /* 23 Nov 2026: copies that are re-placed as you go must never be culled by where they first were (Police Chase's vanishing skyscrapers; tools/stale_bounds.py) */
   W3.setQuality(stepN); return V3;
 }
 function setWeather(G) {
@@ -127,7 +147,7 @@ function draw(now, dt) {
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D city.', W / 2, H / 2); return; }
   const T = V.T, cam = W3.cam, g = G || idleG(), t = now; setWeather(g);
   const onFoot = g.ph === 'foot' || g.ph === 'home', me = g.me, D = V.D;
-  V.alley.visible = onFoot; for (const m of [V.road, ...V.walks, V.dash, V.blds, V.poleI, V.headI, V.me]) m.visible = !onFoot; V.traffic.forEach(c => c.visible = false); V.cops.forEach(c => c.visible = false); V.thingPool.forEach(c => c.visible = false); V.heli.visible = false; V.heliL.intensity = 0;
+  V.alley.visible = onFoot; V.alleyFill.intensity = onFoot ? 1.2 : 0; if (!onFoot) V.you.visible = V.footCop.visible = false; for (const m of [V.road, ...V.walks, V.dash, V.blds, V.poleI, V.headI, V.me]) m.visible = !onFoot; V.traffic.forEach(c => c.visible = false); V.cops.forEach(c => c.visible = false); V.thingPool.forEach(c => c.visible = false); V.heli.visible = false; V.heliL.intensity = 0;
   const flash = Math.sin(t * 14) > 0;
   if (!onFoot) {
     const base = Math.floor(me.s / 100) * 100; V.road.position.z = -(base + 450); V.walks.forEach(w => w.position.z = -(base + 450));
@@ -157,7 +177,7 @@ function draw(now, dt) {
   } else {
     const F = g.foot, s = F ? F.s : 0, ph = t * 11;
     V.alley.position.z = 0;
-    V.alleyLamps.forEach((l, q) => { l.intensity = 25; l.position.set((q % 2 ? 1.8 : -1.8), 3.5, -(Math.floor(s / 25) * 25 + q * 25 + 10)); });
+    V.alleyLamps.forEach((l, q) => { l.intensity = 45; l.position.set((q % 2 ? 1.8 : -1.8), 3.5, -(Math.floor(s / 25) * 25 + q * 25 + 10)); });
     let n = 0; if (F) for (const o of F.obs) { if (o.s < s - 3 || o.s > s + 70 || n >= V.obsPool.length) continue; const gO = V.obsPool[n++]; gO.visible = true; if (gO.userData.type !== o.type + o.lane + o.two) { gO.clear(); gO.userData.type = o.type + o.lane + o.two;
         if (o.type === 'crate') for (const ln of [o.lane, o.two]) { if (ln < 0) continue; const b = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.0, 1.0), V.crateM); b.position.set(ALLEY[ln], 0.5, 0); b.castShadow = true; gO.add(b); const b2 = b.clone(); b2.scale.setScalar(0.7); b2.position.y = 1.35; b2.rotation.y = 0.4; gO.add(b2); }
         if (o.type === 'fence') { for (let x = -2.4; x <= 2.4; x += 0.3) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 0.04), V.crateM); p.position.set(x, 0.5, 0); gO.add(p); } const r = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.1, 0.06), V.crateM); r.position.set(0, 0.75, 0); gO.add(r); }
@@ -166,10 +186,13 @@ function draw(now, dt) {
     for (let q = n; q < V.obsPool.length; q++) V.obsPool[q].visible = false;
     let ci = 0; if (F) for (const c2 of F.coins) { if (c2.done || c2.s < s - 2 || c2.s > s + 60 || ci >= 60) continue; D.position.set(ALLEY[c2.lane], 0.9, -c2.s); D.rotation.set(Math.PI / 2, 0, t * 3 + c2.s); D.scale.setScalar(1); D.updateMatrix(); V.coinI.setMatrixAt(ci++, D.matrix); } V.coinI.count = ci; V.coinI.instanceMatrix.needsUpdate = true;
     V.door.position.set(0, 0, -(F ? F.len + 2 : 9999));
-    const bob = g.ph === 'foot' ? Math.sin(ph * 2) * 0.05 : 0, ey = F && F.air > 0 ? 1.7 + Math.sin(F.air / 0.75 * Math.PI) * 0.9 : F && F.low > 0 ? 0.75 : 1.7;
-    const want = new T.Vector3(F ? F.x : 0, ey + bob, -s), look = new T.Vector3((F ? F.x : 0) * 0.5, 1.4, -(s + 14));
+    const running = g.ph === 'foot' && F; V.you.visible = V.footCop.visible = !!running;
+    if (running) { const Y = V.you, jump = F.air > 0 ? Math.sin(F.air / 0.75 * Math.PI) * 1.0 : 0, low = F.low > 0, st = (F.stumble || 0) > 0, rp = t * 12.5; Y.position.set(F.x, low ? 0.25 : jump, -s); V.runPose(Y, rp, st ? 0.5 : 1); Y.rotation.set(low ? 1.15 : 0, 0, st ? Math.sin(t * 30) * 0.15 : 0);
+      if (jump > 0.1) { const J = Y.userData.J; J.thigh[0].rotation.x = 1.3; J.shin[0].rotation.x = -1.5; J.thigh[1].rotation.x = 0.6; J.shin[1].rotation.x = -1.2; }
+      V.footCop.position.set(F.x * 0.6, 0, -(s - Math.max(1.2, F.gap))); V.footCop.rotation.set(0, 0, 0); V.runPose(V.footCop, rp + 2); }
+    const want = running ? new T.Vector3(F.x * 0.55, 3.3, -s + 5.4) : new T.Vector3(F ? F.x : 0, 1.7, -s), look = running ? new T.Vector3(F.x * 0.5, 1.0, -(s + 8)) : new T.Vector3((F ? F.x : 0) * 0.5, 1.4, -(s + 14));
     if (ui.snap) { V.camPos.copy(want); V.look.copy(look); } else { V.camPos.lerp(want, Math.min(1, dt * 12)); V.look.lerp(look, Math.min(1, dt * 8)); } ui.snap = false;
-    cam.position.copy(V.camPos); cam.fov = innerWidth > innerHeight ? 62 : 74; cam.updateProjectionMatrix(); cam.lookAt(V.look);
+    cam.position.copy(V.camPos); cam.fov = innerWidth > innerHeight ? 56 : 66; cam.updateProjectionMatrix(); cam.lookAt(V.look);
     W3.setFocus(V.camPos.x, 0, V.camPos.z - 5, 10);
   }
   if (FX.shake > 0) { cam.rotation.x += (Math.random() - 0.5) * FX.shake * 0.002; cam.rotation.y += (Math.random() - 0.5) * FX.shake * 0.002; }

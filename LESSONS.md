@@ -77,6 +77,22 @@ genius, and that's what you forget." What that changed, for every game from now 
 - **His notes must outlive the phone** (23 Nov): browser storage on a published page can come back empty, so the Game Review
   page writes every note to the page's `db` store as he types (and keeps a list of what has not got there yet). Proved live:
   his notes appeared in the store seconds after the page was republished.
+- **Scenery that vanishes after a long play** (his Police Chase review, 23 Nov): an InstancedMesh that is re-placed as the
+  player travels is culled by the bounding sphere three.js worked out the FIRST time it drew it. Far from the start, the
+  whole mesh disappears whenever the old place is off the screen. `frustumCulled = false` on every re-placed instanced mesh;
+  `python3 tools/stale_bounds.py` plays each 3D game and checks every such mesh (it caught Police Chase, Run and Eleven's rings).
+- **Who am I chasing?** (same review): the target gets a marker nothing can hide (drawn on the 2D layer at his place on the
+  screen, and at the screen's edge with the distance when he is out of sight), a ring on the ground, and a colour nothing else has.
+- **A car is driven, not swiped** (same review: "a joystick with a button for brake, acceleration and reverse... turns and
+  corners"): a stick under the left thumb, GAS and BRAKE pedals under the right (BRAKE reverses from a standstill), streets
+  with corners so braking matters. A chase needs the runaway to ease off when far ahead, or one missed corner ends it.
+- **People who run** have knees and elbows: thighs swing, the shin folds as the leg comes through, arms pump the other way,
+  the body leans and bounces (`person` and `runPose` in games/police/part3.js; Run uses the same). And the player sees his
+  own runner from behind: a first-person alley was a black half-screen with a blob in it.
+- **A robot's reaction time is a lag, not a blink**: sampling the stick every 0.5 s made the clumsy robot swerve into walls
+  at speed. The stick now follows what it wants with a lag and the brake comes on a reaction late.
+- **A lesson must not hang on one particular thing** (Police's first lesson waited for the exact junction he turned at; miss it
+  and the lesson never ended). Count what the player does (came round a corner with him in reach).
 - **Look at GitHub after every push** (`gh run list --limit 3`). Both pushes of 22 Nov failed there and I did not look: Splash
   Course's result card never came in the full controls run. The cause was real: a run ended in its first instant (only a robot
   can) saved an empty ghost trace, and drawing an empty ghost threw on every frame, so the game froze. "It passes alone" was the

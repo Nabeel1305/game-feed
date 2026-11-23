@@ -46,6 +46,8 @@ FIXED = {
  'paint': 'Richer colours and a jar you can see.', 'dash': 'A beating sun, a skyline and bars that jump on the beat; the cube is a little bigger.',
  'lifeguard': 'The sea looks like sea now (it mirrored the sky).', 'santa': 'A fuller village: more trees, snowdrifts, cottages with lit windows.',
  'crew': 'Faster: the shadow you cannot see into is drawn a cheaper way.',
+ 'police': 'YOUR REVIEW, DONE: a red arrow and ring mark the suspect (and an arrow at the screen edge when he is out of sight); a stick to steer with GAS and BRAKE pedals (hold BRAKE when stopped to reverse); a city of streets and corners; on foot you see your own officer from behind and both runners have knees and elbows; the buildings no longer vanish.',
+ 'run': 'From your Police Chase review: the buildings no longer vanish (same fault), and on foot you now see yourself running from behind with the officer on your heels. Its driving is still lanes on a straight road: tell me if you want the stick, pedals and corners here too.',
  'blocks': 'You can see the squares of the board now.', 'peaks': 'Bigger cards.', 'kingdom': 'A hidden fault fixed. It keeps its own race music.',
 }
 NOBAND = {'drumline', 'keys', 'dash', 'kingdom'}

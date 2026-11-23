@@ -8,7 +8,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 
 ## Where to carry on
 
-**Checkpoint, 23 Nov 2026, end of the third pass.** Every game from 9 to 111 is marked verified: nothing known is left unfixed. What is listed under a game as still open is either his to judge (sound by ear, feel under the thumb, vibration, speed on his phone) or a small note. To carry on: (1) wait for his notes from the Game Review page and fix those first; (2) his movement prompt (`specs/movement-prompt-2026-11-22.md`) has only been applied to Mocktail, Hunter and the team games; (3) twins to decide with him: Potter's Wheel / Pottery Wheel, and the three kart racers; (4) the tools for looking live in `/tmp/audit` and are not in the repo: a two-picture sheet per game (level 1's first seconds, level 5 after 9 s of robot play, with `window.__fullGL = true`), honest-robot rates through each game's `bots.js`, and a short spam proof; `tools/win_sweep.py` is in the repo; (5) after any change to how a team plays, run that game's full `test_play.py` to the end (Eleven about 40 minutes, the others under 25); (6) after any change to `tools/juice-kit.js` or `tools/world3d.js`, rebuild all 103 games and re-run every `test_touch.py`, then `tools/test_controls.py` with no arguments, alone; (7) after every push, `gh run list --limit 3`; (8) nothing goes on the app without his word.
+**Checkpoint, 23 Nov 2026 (his review has begun).** He reviews on the Game Review page over several days; his notes are in the page's store (db_list, collection `reviews`). Act on a game when he has submitted or pasted it in chat. DONE from his notes: Police Chase (second version). SEEN in the store but not yet submitted when this was written: Reel 'Em In (make the fish clear, let it break the water where to cast, a ring that stands out from the water) and Soar (prettier rings, a cape flying instead of a person is fine, beautiful surroundings, easier: see the rings and go into them slowly); Wild Water rated Good. OPEN QUESTION to him: Run's driving (lanes on a straight road) to get Police Chase's stick, pedals and corners or not. Apply each criticism to every game with the SAME fault, with evidence, and say which got it. Tools: tools/stale_bounds.py, tools/small_screen.py, tools/win_sweep.py, tools/test_review_page.py; the picture tools are in /tmp/audit (not in the repo). After every push: gh run list.
 
 ## What no check here can tell (true of every game)
 
@@ -28,6 +28,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - Regression at the end of the third pass (22 Nov, evening): tools/check.py all 111 pass; tools/test_controls.py all 111, 3540 checks pass; tools/win_sweep.py on the 23 games changed: clean; every changed game's test_touch.py passes, and its test_play.py (18 games: all pass; Convoy's ran out of time at 15 minutes with every part it reached passing).
 - The team games' long proofs, all run to the end on the final builds (22-23 Nov): Eleven 16 of 16, Hoops 16 of 16, Ice Hockey 16 of 16 (after its team-mate change was withdrawn), Gridiron 15 of 16 plus its corrected lesson check passing 18 runs of 18. GitHub's checks passed on the third-pass build (a8716b4).
 - GitHub failed the closing push (43b2d19) on one check of 3540: 'Sandworm: Resume carries the game on' (the test allowed 350 ms for the next frame; Sandworm was not changed and passes here every time). The check now waits up to 4 s.
+- 23 Nov, before his review: tools/test_tutorial.py on all 103 (all pass); tools/small_screen.py on all 103 at 360 x 640 (the eleven sideways games' cards were cut off: fixed with fitCards; Sweets' test shortcut fixed); tools/stale_bounds.py on every 3D game (Police Chase and Run: re-placed scenery culled; Eleven's rings: fixed).
 
 ## Game by game
 
@@ -113,11 +114,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Running is new: whether creep/run feels right needs his thumb.
 
 ### 14. Police Chase (`police`): VERIFIED
-- **Where:** `games/police/index.html` · v0.1.2 · Chase · 2 thumb(s)
+- **Where:** `games/police/index.html` · v0.2.0 · Chase · 2 thumb(s)
 - **What it is:** A three-part police chase in 3D through a city at night. Pursuit: hold the left or right side of the screen to steer your patrol car (both to brake) through traffic, and ram the getaway car's back corner from the side to spin him out. On foot: chase him down a brick alley, swiping round crates, over fences and under pipes, and tap to tackle when you are right behind him. Arrest: when he twists one way, swipe the other way to hold him until the cuffs are on. Lights, siren, rain on the tarmac; weather changes by case.
 - **Problem:** white fog swallows the road ahead at level 5.
+- **Problem:** HIS REVIEW (23 Nov, critical): not clear which car is the criminal; the running graphics on foot are awful; the skyscrapers vanish if you play long enough; the controls should be a joystick with brake, accelerate and reverse; the city should have turns and corners, not a straight line.
+- **Changed:** 23 Nov, second version (specs/police-v2-2026-11-23.md): (1) a red arrow and 'SUSPECT' over his car that nothing hides, a red ring on the road under it, a bright orange car, and an edge arrow with the distance when he is off the screen; (2) on foot the camera is behind your own officer, both people are rebuilt with knees and elbows and a proper run, the alley is lit and has coloured doors; (3) the vanishing skyscrapers were three.js culling a re-placed mesh by where it first was: fixed; (4) a floating stick steers, GAS and BRAKE pedals under the right thumb, BRAKE reverses from a standstill; (5) a grid city with corners: he turns at junctions, you brake for corners, walls scrape; he eases off when far ahead.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (9 checks passed, 0 failed.).
 - **Checked:** third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.
+- **Checked:** 23 Nov: test_play 15 of 15 (ordinary wins 100%, 90%, 100% of levels 1-3, clumsy 80% of level 1, sharp 30% of level 40; no blind string wins in 264,640 games; random tapping 0 of 480; lessons done in 9 to 19 s, 23 runs of 24); test_touch 15 pass (stick, GAS, BRAKE, reverse, wall); controls, tutorial, small-screen and odd-moment-win checks pass; tools/stale_bounds.py: the old build is caught (buildings 735 m outside their culling sphere), the new one is clean; pictures of the chase, the marker and the foot chase looked at.
+- **Still open:** How the car feels under the thumb (turning, braking) and whether the on-foot running now looks right: his to judge.
 
 ### 15. Pilot (`pilot`): VERIFIED
 - **Where:** `games/pilot/index.html` · v0.1.3 · Flight · 2 thumb(s)
@@ -194,11 +199,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 7 pass (new: BITE beside her brings her down while the other thumb steers); test_play 16 pass.
 
 ### 24. On the Run (`run`): VERIFIED
-- **Where:** `games/run/index.html` · v0.1.2 · Getaway · 1 thumb(s)
+- **Where:** `games/run/index.html` · v0.1.3 · Getaway · 1 thumb(s)
 - **What it is:** Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse; a garage of upgrades and a rank that stay.
 - **First look:** fine.
+- **Problem:** From his Police Chase review (same code): the buildings vanish after a long drive (confirmed: 735 m outside their culling sphere); the on-foot alley was a first-person tunnel with nobody in it.
+- **Changed:** 23 Nov: re-placed scenery is never culled; on foot you are seen from behind, running properly (the people from Police Chase), with the officer chasing you coming into the picture as he closes; the alley is lit.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): lane swipes, as every runner uses, taught in its lessons. Judged plain enough; nothing changed.
+- **Checked:** 23 Nov: test_touch 8 pass; controls, tutorial, small-screen and odd-moment-win checks pass; stale_bounds clean; picture looked at.
+- **Still open:** Its driving is still lane swipes down a straight avenue (the fault he named in Police Chase): not changed without his word, because its roadblocks, spikes and ramming police are built round lanes. Asked him.
 
 ### 25. Castle Siege (`castle`): VERIFIED
 - **Where:** `games/castle/index.html` · v0.1.3 · Strategy · 1 thumb(s)
@@ -268,11 +277,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** touch test 8 pass; pictures looked at.
 
 ### 34. Eleven (`eleven`): VERIFIED
-- **Where:** `games/eleven/index.html` · v0.3.1 · Football · 2 thumb(s)
+- **Where:** `games/eleven/index.html` · v0.3.3 · Football · 2 thumb(s)
 - **What it is:** A full eleven-a-side football match played sideways: run with the left thumb, PASS, SHOOT and LOB; beat a team and the next one is better.
 - **Problem:** CRITICAL: (his words) team-mates do not get open for a pass; also the pitch is dark, players are tiny and both teams read as the same dark colour.
 - **Changed:** Team-mates get open for a pass (support): clear of markers, a clear line, a sensible distance, onside. Team rings, a white ring on the pass target, players a third bigger, a closer camera, no SPRINT button (a full push sprints).
 - **Changed:** third pass, 22 Nov evening: the first ten levels are easier for a player who looks: softer tackles from the other team and a surer aimed shot, easing off level by level. (Easing their keeper as well let random tapping fluke a goal, so that was taken back.)
+- **Changed:** 23 Nov: the team rings are never culled (stale_bounds found them 3 m outside their sphere); cards fit a 360-wide phone.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (14 checks passed, 0 failed.).
 - **Checked:** test_touch 14 pass; quick robot matches: ordinary won 3 of 4 on levels 1, 3 and 10.
 - **Checked:** Robot matches, 20 a level: ordinary wins 95%, 90%, 95% of levels 1-3 (it was 69-75%), clumsy 75% of level 1 (it was 31%), sharp still wins 40% of level 40; random tapping wins 0 of 480; touch test 14 pass; controls test passes; a win at an odd moment is clean.
@@ -450,7 +460,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).
 
 ### 60. Sugar Swap (`sweets`): VERIFIED
-- **Where:** `games/sweets/index.html` · v0.1.1 · Match-3 / puzzle · 1 thumb(s)
+- **Where:** `games/sweets/index.html` · v0.1.2 · Match-3 / puzzle · 1 thumb(s)
 - **What it is:** Match-3 like Candy Crush: swipe sweets into lines; striped, wrapped and colour-bomb specials and their combos; goals (collect, jelly, cherries, frosting, score) with a move limit; the Sugar Rush.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (4 passed, 0 failed).
@@ -678,7 +688,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (28 passed, 0 failed).
 
 ### 92. Ice Hockey (`hockey`): VERIFIED
-- **Where:** `games/hockey/index.html` · v0.2.1 · Sports / hockey · 2 thumb(s)
+- **Where:** `games/hockey/index.html` · v0.2.2 · Sports / hockey · 2 thumb(s)
 - **What it is:** Three-on-three ice hockey, played sideways: skate with the stick, pass, tap or hold to shoot, one-timers; on defence switch and poke. Two-minute matches or first to three.
 - **First look:** looks fine; team positioning to check with Eleven.
 - **Changed:** Team-mates get open for a pass (getOpen), one forward in the slot.
@@ -719,7 +729,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** touch test 25 pass; pictures looked at.
 
 ### 97. Hoops 3v3 (`hoops3`): VERIFIED
-- **Where:** `games/hoops3/index.html` · v0.2.1 · Sports / basketball · 2 thumb(s)
+- **Where:** `games/hoops3/index.html` · v0.2.2 · Sports / basketball · 2 thumb(s)
 - **What it is:** Three-a-side basketball played sideways: a stick and PASS / SHOOT / SPRINT, a shot meter with a moving green, layups and dunks, steals that can leave you off balance, a 12-second shot clock, and a three-game tournament.
 - **Problem:** CRITICAL: (his words) positioning: everyone bunches in the paint, nobody spaces out for a pass.
 - **Changed:** Team-mates spread out, get free and cut to the basket when marked; no SPRINT button.
@@ -730,7 +740,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** Full test_play (24 minutes): 16 of 16 pass, including no blind string of up to four moves winning.
 
 ### 98. Gridiron (`gridiron`): VERIFIED
-- **Where:** `games/gridiron/index.html` · v0.3.0 · Sports / American football · 2 thumb(s)
+- **Where:** `games/gridiron/index.html` · v0.3.1 · Sports / American football · 2 thumb(s)
 - **What it is:** Five-a-side arcade American football, sideways: pick a play, SNAP, throw to a receiver's button or hand off and run; defend with SWITCH and TACKLE; replays of big plays.
 - **Problem:** dark pitch, players are specks, hard to tell teams apart; receivers' routes to check.
 - **Changed:** Players nearly half as big again, each on a disc of his team's colour; no SPRINT button (a full push sprints).
@@ -761,13 +771,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 25 pass (new: the VENT button vents and does not fire the burner); test_play 15 pass.
 
 ### 102. Sandworm Rider (`sandworm`): VERIFIED
-- **Where:** `games/sandworm/index.html` · v0.1.1 · Riding / desert · 2 thumb(s)
+- **Where:** `games/sandworm/index.html` · v0.1.2 · Riding / desert · 2 thumb(s)
 - **What it is:** His idea 25: stand on the head of a giant worm swimming through the dunes. Left thumb steers (heavy, late turns), hold SURGE to speed up, hold BRACE for knocks and landings; keep your balance, breach over dune crests, pass every pair of waystones before sunset. Canyons, cracked sand, storms, ruins, three worms, shortcuts, a challenge per level, free roam.
 - **First look:** fine.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (36 passed, 0 failed).
 
 ### 103. Skydive (`skydive`): VERIFIED
-- **Where:** `games/skydive/index.html` · v0.1.1 · Sky sport · 2 thumb(s)
+- **Where:** `games/skydive/index.html` · v0.1.2 · Sky sport · 2 thumb(s)
 - **What it is:** His idea 28: out of the plane into freefall (drag to fly, hold TUCK to dive), tap CHUTE between the yellow marks, fly the canopy down (turn, brakes) with the ring on the ground showing where you will land, hold FLARE for a soft landing on the X. Gold rings, ring courses, crosswinds that turn low down, islands, rooftops, a scenic mode.
 - **First look:** fine; the diver is tiny.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (43 passed, 0 failed).
@@ -781,7 +791,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.
 
 ### 105. Convoy Escort (`convoy`): VERIFIED
-- **Where:** `games/convoy/index.html` · v0.2.1 · Naval / tactics · 2 thumb(s)
+- **Where:** `games/convoy/index.html` · v0.2.2 · Naval / tactics · 2 thumb(s)
 - **What it is:** His idea 34: command an escort ship guarding merchant ships to the harbour. Steer with a heavy wheel and a throttle; hydrophones and sonar pings show where submarines may be (rings that tighten when sure and grow when old); depth charges at shallow, medium or deep, the deck gun for surfaced boats; stay close and they will not fire; crew teams repair, fight fires and rescue. Night runs, rescues, a damaged ship, other escorts later.
 - **Problem:** thirteen buttons on screen (far too many controls) and a dark, glaring sea.
 - **Changed:** Thirteen buttons down to the wheel, PING, DROP, one SPEED button and one DEPTH button (a tap moves to the next setting); GUN only shows when a submarine is on the surface, one CREW button only when there is a job.
@@ -797,13 +807,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (20 passed, 0 failed).
 
 ### 107. Joust (`joust`): VERIFIED
-- **Where:** `games/joust/index.html` · v0.1.1 · Tournament / jousting · 2 thumb(s)
+- **Where:** `games/joust/index.html` · v0.1.2 · Tournament / jousting · 2 thumb(s)
 - **What it is:** Jousting tournament in 3D lists: the horse gallops by itself; drag right to aim a lance whose tip sways in a learnable figure of eight, slide left to lean, hold BRACE just before the crash. Shield hit 1, braced centre (lance breaks) 2, unhorse them to win outright. Training targets, then six rivals with habits through tournament rounds.
 - **First look:** fine; blocky horses.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (42 passed, 0 failed).
 
 ### 108. Splash Course (`splash`): VERIFIED
-- **Where:** `games/splash/index.html` · v0.1.2 · Obstacle course · 2 thumb(s)
+- **Where:** `games/splash/index.html` · v0.1.3 · Obstacle course · 2 thumb(s)
 - **What it is:** Obstacle course above sparkling pools in 3D: giant bouncing balls, the sweeper, the punch wall, the treadmill and the spinning cross. Left stick moves, hold-and-let-go JUMP (a ring shows the landing), DUCK. A splash puts you back at that obstacle in two seconds; medals for time; your best run races you as a ghost.
 - **First look:** good.
 - **Changed:** A crash fixed: a run that ended in its first instant saved an empty ghost, and drawing that ghost stopped the game dead with no result card. No player could finish that fast, but GitHub's robot did, and that failure had blocked GitHub's checks since 11:21.
@@ -811,7 +821,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** Winning at twelve different moments from 0 to 9 s: the card comes every time, no errors; controls test passes.
 
 ### 109. Surf (`surf`): VERIFIED
-- **Where:** `games/surf/index.html` · v0.1.2 · Surfing · 2 thumb(s)
+- **Where:** `games/surf/index.html` · v0.1.3 · Surfing · 2 thumb(s)
 - **What it is:** Surfing in 3D: hold PADDLE and swipe up as the wave lifts you, then steer up and down the face ahead of the curl. Carves, snaps, cutbacks, airs with spins and barrel rides score; the same move again scores less. Three waves a session, beat the target; fast sections and barrels as you go; free surf.
 - **Problem:** the surfer is a speck and the wave is grey-white rather than glassy blue-green.
 - **Changed:** Hold PADDLE and let go when the ring turns green: you stand up. A tap in the air spins. The swipes still work.
@@ -820,7 +830,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Tricks are still named in the rules as turns at the right place: to judge by hand.
 
 ### 110. Santa's Round (`santa`): VERIFIED
-- **Where:** `games/santa/index.html` · v0.1.2 · Delivery / sneaking · 2 thumb(s)
+- **Where:** `games/santa/index.html` · v0.1.3 · Delivery / sneaking · 2 thumb(s)
 - **What it is:** Christmas Eve in a 3D snowy village: fly the sleigh, hold LAND over a roof's glowing marker, slip down the chimney; inside, tiptoe past sleepers, creaky boards and a curious cat, leave the wished-for presents under the tree, fill the stockings, back up. Every house before dawn.
 - **Problem:** the village is a bare lilac plain with a few boxes; the room is dark blocks.
 - **Changed:** third pass, 22 Nov evening: the village has many more trees of all sizes, snowdrifts, and cottages with lit windows.
