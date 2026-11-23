@@ -54,6 +54,12 @@
    "when": "23 Nov, written on this page",
    "said": "Once again horrible animation with the animal and the spear throw. Plus the animal  just waits for me to kill it it should run away or even attack if I run or come too close or throw a spear. The animation must better fot animal and spear",
    "did": "New animals with real legs, necks, heads, ears and tails: they graze, look up, gallop off and fall. Come too close or run and a deer or horse bolts. A boar, bison or mammoth may charge: wait for DIVE ASIDE, push the stick sideways, then it stands winded for an easy throw. The throw: the arm whips forward, the spear leaves the hand with a streak and sticks in the animal or the ground."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, said in the chat (17:31)",
+   "said": "in Hunter, you're supposed to tap left to face left, tap right to face right. But every time I tap, the joystick just goes there... for Hunter, the joystick should be in a set location... I would even recommend making it bigger... A lion attacked me and then it just left me alone? No... swipe to dodge... then tap to hit, tap to hit... I have to defeat that lion.",
+   "did": "The stick is now fixed (bottom left) and a third bigger; a tap anywhere else never makes a stick. The lion is a fight: tap its side to face it, it leaps: SWIPE to dodge, it stumbles past you: TAP, TAP, TAP to spear it (its strength shows at the top). It turns and comes again until it is dead. If it gets you, you lose a chance and it is still there to fight."
   }
  ],
  "vine": [

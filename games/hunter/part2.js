@@ -4,8 +4,10 @@
 //   look: be still, or it sees you, and if it sees enough it bolts.
 //   right thumb: pull back and let go to throw; a mark on the ground shows where the spear will land. The closer you are, the
 //   steadier your aim. Hit the chest (heart and lungs) to bring it down; the haunch only wounds it and it runs.
-//   sometimes a cave lion stalks you: a growl from one side; swipe that way to turn and face it, and tap the instant it leaps
-//   to brace the spear. Too soon, too late or facing the wrong way and it mauls you.
+//   sometimes a cave lion stalks you: a growl from one side; tap that side to face it. It leaps: SWIPE to dodge. It lands past you
+//   and stumbles: TAP, TAP, TAP to spear it. It turns and comes again until it is dead (23 Nov 2026, his words: "if a lion's gonna
+//   attack me, you have to show me, boom, lion attacking you, swipe to dodge... then tap to hit, tap to hit... I have to defeat that
+//   lion. It can't just attack me and leave me alone"). A leap you do not dodge mauls you (a life), and it still comes again.
 //   (22 Nov 2026: the controls were rebuilt to his note: a stick to creep or run, a crosshair moved by the right thumb, a THROW
 //   button, and taps instead of swipes for the lion.)
 // World: metres; you start at x 0, z 0 facing -z (game z grows away from you); y is up.
@@ -17,7 +19,7 @@ const RULES = [
   '<b>Right thumb: drag to move the crosshair, tap THROW.</b> It turns green on the chest. Closer is steadier.',
   '<b>Hit the chest</b> to bring it down. A haunch only wounds it, a miss scares it off.',
   '<b>A boar, a bison or the mammoth may charge.</b> Keep still until DIVE ASIDE shows, then push the stick hard to one side. It runs past and stands winded: throw then.',
-  '<b>A growl? A cave lion.</b> Tap the side it growls from to face it, then tap again the instant it leaps to brace your spear.',
+  '<b>A growl? A cave lion.</b> Tap the side it growls from to face it. When it leaps, <b>swipe</b> to dodge; then <b>tap, tap, tap</b> to spear it before it turns. It keeps coming until it is dead.',
   'Bring down the animals asked for. Three escapes or maulings and the hunt is over.',
 ];
 const WEATHERS = ['golden', 'morning', 'overcast', 'mist', 'dawn', 'sunset', 'storm', 'noon', 'rain', 'dusk'];
@@ -46,7 +48,9 @@ function makeCfg(N, help) {
     graze: [x(2.6, 1.6, 25), x(5.5, 3.6, 25)],                     // seconds of grazing between looks
     lookT: [x(1.1, 1.5, 25), x(2.0, 3.0, 25)],                     // seconds it looks for
     lion: N >= 3 ? Math.min(0.6, 0.18 + f * 0.012) : 0,            // chance a cave lion comes during a stalk
-    leap: (x(0.45, 0.22, 25) + 0.1 * e) * (help ? 1.2 : 1),         // how long the moment to brace lasts
+    leap: (x(0.8, 0.45, 25) + 0.12 * e) * (help ? 1.2 : 1),         // how long you have to swipe aside when it leaps
+    open: (x(1.7, 1.15, 25) + 0.15 * e) * (help ? 1.2 : 1),         // how long it stumbles after a dodge: the moment to spear it
+    lionHp: 5 + Math.min(5, Math.floor(f / 10)),                    // spear thrusts it takes
     growl: x(2.2, 1.3, 25),
     shy: x(1.0, 1.25, 30) * (1 - 0.1 * e),                        // how wide the ring it will not let you inside is
     threat: (x(1.1, 0.6, 30) + 0.25 * e) * (help ? 1.25 : 1),       // seconds it paws the ground before it charges
@@ -86,25 +90,33 @@ function throwAt(G, x, z) {
   G.spears.push({ x0: me.x, z0: me.z, tx, tz, T, t: 0, done: false });
   me.creep = false; G.ev.push({ k: 'throw', d }); return true;
 }
-// facing the lion: swipe toward the growl to turn; tap when it leaps to brace
-function turn(G, side) { if (G.over || !G.lion || G.lion.st === 'gone') return; G.me.face = side; G.ev.push({ k: 'turn', side }); }
-function brace(G) {
-  const Ln = G.lion; if (G.over || !Ln || Ln.st === 'gone') return;
-  if (Ln.st === 'leap' && G.me.face === Ln.side) { Ln.st = 'gone'; G.lionsKilled++; G.ev.push({ k: 'lionkill' }); lessonSee(G, 'lion'); return; }
-  maul(G, G.me.face !== Ln.side ? 'wrongway' : 'soon');
-}
-function maul(G, why) { const Ln = G.lion; Ln.st = 'gone'; G.maulings++; G.ev.push({ k: 'maul', why }); if (lessonNow(G)) { lessonMiss(G, why); return; } G.lives--; if (G.lives <= 0) finish(G, false, 'maul'); }
+// the lion fight: face it (tap its side), dodge the leap (a swipe), spear it while it stumbles (taps), until it is dead
+const lionLive = G => G.lion && G.lion.st !== 'gone' && G.lion.st !== 'dead';
+function turn(G, side) { const Ln = G.lion; if (G.over || !lionLive(G) || Ln.st !== 'stalk') return; G.me.face = side; G.ev.push({ k: 'turn', side }); }
+function dodge(G, dir) { const Ln = G.lion; if (G.over || !lionLive(G) || Ln.st !== 'leap' || Ln.dodged) return false;
+  if (G.me.face !== Ln.side) return false;      // you cannot dodge what you are not looking at
+  Ln.dodged = true; Ln.st = 'open'; Ln.t = 0; Ln.dir = dir || 1; G.ev.push({ k: 'dodge', dir: Ln.dir }); return true; }
+function hit(G) { const Ln = G.lion; if (G.over || !lionLive(G) || Ln.st !== 'open' || G.t - (Ln.lastHit || -9) < 0.11) return false;
+  Ln.lastHit = G.t; Ln.hp--; G.ev.push({ k: 'lionhit', hp: Ln.hp, max: Ln.max });
+  if (Ln.hp <= 0) { Ln.st = 'dead'; Ln.t = 0; G.lionsKilled++; G.ev.push({ k: 'lionkill' }); lessonSee(G, 'lion'); } return true; }
+function brace(G) { const Ln = G.lion; if (!Ln) return; if (Ln.st === 'stalk') turn(G, Ln.side); else if (Ln.st === 'leap') dodge(G, 1); else hit(G); }      // one tap that does the right thing (the robots and old tests)
+function maul(G, why) { const Ln = G.lion; G.maulings++; G.ev.push({ k: 'maul', why }); Ln.st = 'down'; Ln.t = 0; Ln.dodged = false; G.me.face = Ln.side;      // knocked down; it is still there
+  if (lessonNow(G)) { lessonMiss(G, why); return; } G.lives--; if (G.lives <= 0) finish(G, false, 'maul'); }
 // ---------- every frame ----------
 function step(G, dt) {
   if (G.over) return; G.t += dt; const c = G.cfg, me = G.me, a = G.a, R = G.rnd, L = lessonNow(G);
   // the lion: a growl from one side, then it comes; it leaps; a brace in that moment, facing it, kills it
   const Ln = G.lion;
   if (Ln && Ln.st !== 'gone') { Ln.t += dt;
-    if (Ln.st === 'stalk' && Ln.t >= Ln.leapAt) { Ln.st = 'leap'; Ln.t = 0; G.ev.push({ k: 'leap' }); }
-    else if (Ln.st === 'leap' && Ln.t >= c.leap * (L ? 1.8 : 1)) maul(G, 'late');
+    if (Ln.st === 'stalk' && Ln.t >= Ln.leapAt) { Ln.st = 'leap'; Ln.t = 0; Ln.dodged = false; G.ev.push({ k: 'leap', seen: me.face === Ln.side }); }
+    else if (Ln.st === 'leap' && Ln.t >= c.leap * (L ? 1.8 : 1)) maul(G, me.face !== Ln.side ? 'wrongway' : 'late');
+    else if (Ln.st === 'open' && Ln.t >= c.open * (L ? 1.6 : 1)) { Ln.st = 'circle'; Ln.t = 0; G.ev.push({ k: 'circle', hp: Ln.hp }); }
+    else if (Ln.st === 'down' && Ln.t >= 1.3) { Ln.st = 'circle'; Ln.t = 0; G.ev.push({ k: 'circle', hp: Ln.hp }); }
+    else if (Ln.st === 'circle' && Ln.t >= 1.4 + G.rnd() * 0.02) { Ln.st = 'leap'; Ln.t = 0; Ln.dodged = false; G.ev.push({ k: 'leap', seen: true }); }
+    else if (Ln.st === 'dead' && Ln.t >= 1.6) { Ln.st = 'gone'; Ln.t = 0; }
     return; }
-  if (!Ln && a.st !== 'flee' && a.st !== 'dead' && !angry(a) && c.lion && !L && R() < c.lion * dt / 25) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: c.growl * (0.8 + 0.4 * R()) }; me.creep = false; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
-  if (L && L.lion && !Ln) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: 2.6 }; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
+  if (!Ln && a.st !== 'flee' && a.st !== 'dead' && !angry(a) && c.lion && !L && R() < c.lion * dt / 25) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: c.growl * (0.8 + 0.4 * R()), hp: c.lionHp, max: c.lionHp }; me.creep = false; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
+  if (L && L.lion && !Ln) { const side = R() < 0.5 ? -1 : 1; G.lion = { side, st: 'stalk', t: 0, leapAt: 2.6, hp: 4, max: 4 }; me.face = 0; G.ev.push({ k: 'growl', side }); return; }
   if (Ln && Ln.st === 'gone') { Ln.t += dt; if (Ln.t > 1.2) G.lion = null; }
   // creeping
   if (me.creep && a.st !== 'flee' && a.st !== 'dead') { const sp = me.run ? 3.2 : 1.15, d = Math.max(0.5, distA(G)), lk = a.st === 'charge' && a.locked, ux = lk ? -Math.sin(a.face) : (a.x - me.x) / d, uz = lk ? -Math.cos(a.face) : (a.z - me.z) / d, mf = me.mf == null ? 1 : me.mf, ms = me.ms || 0, chg = a.st === 'charge' || a.st === 'threat';      // (once it has committed, sideways is across ITS line, so a dive goes straight out of its way and not round it)
@@ -176,7 +188,7 @@ const LESSONS = {
   1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
       { id: 'throw', title: 'THROW AT THE CHEST', how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
   2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
-  3: [{ id: 'lion', title: 'A LION!', how: 'Tap the side the growl comes from to face it. Then wait, and tap the moment it leaps to brace your spear.', need: 2, ok: w => w === 'lion', lion: 1 }],
+  3: [{ id: 'lion', title: 'A LION!', how: 'Tap the side the growl comes from to face it. When it leaps, SWIPE to dodge. Then TAP, TAP, TAP to spear it. It comes again until it is dead.', need: 1, ok: w => w === 'lion', lion: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); if (lessonNow(G).near) newAnimal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -194,16 +206,17 @@ function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev
 const BLIND = {
   H: G => creep(G, true), S: G => creep(G, false),
   T: G => throwAt(G, G.a.x, G.a.z), A: G => throwAt(G, G.me.x + (Math.random() - 0.5) * 20, G.me.z + 5 + Math.random() * 30),
-  L: G => turn(G, -1), R: G => turn(G, 1), B: G => brace(G),
+  L: G => turn(G, -1), R: G => turn(G, 1), D: G => dodge(G, Math.random() < 0.5 ? -1 : 1), B: G => hit(G),
 };
 // HONEST: creeps while it grazes, freezes on the tell (late by react), throws at the chest from a comfortable range, faces a growl
 // and braces on the leap (late by react).
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, a = G.a, Ln = G.lion, t = G.t;
   const seen = (key, cond) => { if (!cond) { mem[key] = null; return false; } if (mem[key] == null) mem[key] = t; return t - mem[key] >= react; };
-  if (Ln && Ln.st !== 'gone') { creep(G, false); if (seen('growl', true) && G.me.face !== Ln.side) turn(G, Math.random() < acc ? Ln.side : -Ln.side);
-    if (seen('leap', Ln.st === 'leap')) { brace(G); mem.leap = null; } return; }
-  mem.growl = mem.leap = null;
+  if (Ln && Ln.st !== 'gone') { creep(G, false); setMove(G, 0, 0); if (Ln.st === 'stalk' && seen('growl', true) && G.me.face !== Ln.side) turn(G, Math.random() < acc ? Ln.side : -Ln.side);
+    if (seen('leap', Ln.st === 'leap')) { dodge(G, Math.random() < 0.5 ? -1 : 1); mem.leap = null; }
+    if (Ln.st === 'open' && seen('open', true) && t - (mem.hitT || -9) > 0.14 + (1 - acc) * 0.35) { hit(G); mem.hitT = t; } if (Ln.st !== 'open') mem.open = null; return; }
+  mem.growl = mem.leap = mem.open = null;
   // a charge: keeps still until it has committed, then dives (late by react)
   if (a.st === 'threat' || a.st === 'charge') { if (a.locked && seen('lock', true)) { if (!mem.side) mem.side = Math.random() < 0.5 ? -1 : 1; setMove(G, 0, mem.side); } else creep(G, false); return; }
   mem.side = null; mem.lock = null;

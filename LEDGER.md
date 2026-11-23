@@ -20,7 +20,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 10 | **Wild Water** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/Gj5M8daF6XDMtHkNv1gmW4) | `games/wild-water/index.html` |
 | 11 | **Soar** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/Weu2fZSYbgxPVNK4xFahTC) | `games/soar/index.html` |
 | 12 | **Vine** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/XhM3zzwfyV75DiLSYwqXUr) | `games/vine/index.html` |
-| 13 | **Hunter** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS) | `games/hunter/index.html` |
+| 13 | **Hunter** | testing | not yet (he has not said so) | 0.4.0 | [play](https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS) | `games/hunter/index.html` |
 | 14 | **Police Chase** | testing | not yet (he has not said so) | 0.3.1 | [play](https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy) | `games/police/index.html` |
 | 15 | **Pilot** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/673SzKv3kg9inkqwy1KHXc) | `games/pilot/index.html` |
 | 16 | **Short Order** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV) | `games/cook/index.html` |

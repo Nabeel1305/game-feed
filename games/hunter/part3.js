@@ -81,11 +81,14 @@ function onEvent(G, e) {
     case 'gored': FX.red = 1; FX.shake = 18; sfx.maul(); vibe(HAP.heavy); say('IT RAN YOU DOWN!', cx, cy, '#ffb4a8', 30); tip('gored', 'Wait until it is close, then push the stick hard to one side', 3.2); break;
     case 'bolt': sfx.bolt(); say(e.why === 'seen' ? 'IT SAW YOU!' : e.why === 'heard' ? 'IT HEARD YOU RUN!' : e.why === 'close' ? 'TOO CLOSE: IT RAN!' : 'IT GOT AWAY', cx, cy, '#ffb4a8', 28); FX.red = 0.4; tip('bolt_' + e.why, e.why === 'seen' ? 'Let go of the stick the moment its ears flick' : e.why === 'heard' ? 'Running is loud: creep (a gentle push) when you are close' : e.why === 'close' ? 'It will not let you that close: throw from further back' : 'Aim at the chest, just behind the front legs', 3); break;
     case 'calm': break;
-    case 'growl': sfx.growl(e.side); FX.shake = 4; vibe(HAP.heavy); say(e.side < 0 ? '◀ GROWL' : 'GROWL ▶', e.side < 0 ? W * 0.25 : W * 0.75, H * 0.45, '#ffb48a', 30); tip('lion', 'Tap the side of the growl to face it, then tap when it leaps', 3); break;
+    case 'growl': sfx.growl(e.side); FX.shake = 4; vibe(HAP.heavy); say(e.side < 0 ? '◀ GROWL' : 'GROWL ▶', e.side < 0 ? W * 0.25 : W * 0.75, H * 0.45, '#ffb48a', 30); tip('lion', 'Tap the side of the growl to face it. When it leaps, swipe to dodge, then tap, tap, tap', 3); break;
     case 'turn': sfx.turn(); break;
     case 'leap': sfx.roar(); FX.shake = 10; break;
-    case 'lionkill': FX.stop = 0.1; FX.flash = 0.8; FX.shake = 14; sfx.brace(); say('YOU HELD IT!', cx, cy, '#ffe08a', 32); vibe(HAP.best); break;
-    case 'maul': FX.red = 1; FX.shake = 16; sfx.maul(); say(e.why === 'wrongway' ? 'IT CAME FROM BEHIND!' : e.why === 'soon' ? 'TOO SOON!' : 'TOO LATE!', cx, cy, '#ffb4a8', 28); break;
+    case 'lionkill': FX.stop = 0.12; FX.flash = 0.8; FX.shake = 14; sfx.brace(); say('THE LION IS DEAD!', cx, cy, '#ffe08a', 30); vibe(HAP.best); break;
+    case 'dodge': sfx.turn(); FX.shake = 6; vibe(HAP.heavy); say('DODGED!', cx, H * 0.4, '#9be3b5', 26); break;
+    case 'lionhit': sfx.brace(); FX.flash = 0.25; FX.shake = 7; ui.lionFlinch = 1; ui.stab = 1; vibe(HAP.heavy); break;
+    case 'circle': sfx.growl(0); break;
+    case 'maul': FX.red = 1; FX.shake = 16; sfx.maul(); say(e.why === 'wrongway' ? 'IT CAME FROM THE SIDE!' : 'MAULED! SWIPE WHEN IT LEAPS', cx, cy, '#ffb4a8', 26); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
     case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; break;
@@ -137,7 +140,7 @@ function draw(now, dt) {
     else { ui.rl += dt; const u = Math.min(1, ui.rl / 0.38), e2 = u * u * (3 - 2 * u); hy = -0.95 + e2 * 0.63; hz = 0.3 + e2 * 0.12; hrx = 0.9 - e2 * 0.78; if (u >= 1) { ui.thr = null; ui.rl = 0; } } }
   const s = g.spears[g.spears.length - 1]; if (s && !s.done && !s.p0) s.p0 = V.hand.position.clone().addScaledVector(fw, 0.5).add(new T.Vector3(0, 0.12, 0));      // it leaves from where the hand is
   V.hand.position.copy(eye).addScaledVector(rt, hx).addScaledVector(fw, hz).add(new T.Vector3(0, hy, 0)); V.hand.rotation.set(0, -V.yaw + hry, 0); V.hand.rotateX(hrx);
-  V.hand.userData.sp.visible = showSp; if (Ln && Ln.st !== 'gone') { V.hand.rotateX(-0.1); V.hand.position.addScaledVector(rt, -0.12); }
+  V.hand.userData.sp.visible = showSp; if (Ln && Ln.st !== 'gone') { V.hand.rotateX(-0.1); V.hand.position.addScaledVector(rt, -0.12).addScaledVector(fw, (ui.stab || 0) * 3.5); }      // a thrust with each tap
   // the spear in flight: from the hand, in a low arc, nose along its path; at an animal it goes for the chest, and follows one that is charging
   V.flying.visible = !!(s && !s.done); V.flying.scale.setScalar(1.5); if (!V.flying.visible) ui.trail = null;
   if (s && !s.done) { const u = s.t / s.T, onA = Math.hypot(s.tx - a.x, s.tz - a.z) < a.kind.body * 0.9, chg = false;
@@ -154,9 +157,18 @@ function draw(now, dt) {
   V.aim.visible = false; ui.fireT = Math.max(0, ui.fireT - dt);      // (the old mark on the ground is gone: the crosshair shows the aim)
   // the lion: crouched in the grass to the side, coming; then the leap
   if (!V.lion) V.lion = beast('lion'); V.lion.g.visible = false;
-  if (Ln && Ln.st !== 'gone') { const L2 = V.lion; L2.g.visible = true; const ang = toA + Ln.side * Math.PI / 2, lp = Ln.st === 'leap' ? Math.min(1, Ln.t / g.cfg.leap) : 0, d = Ln.st === 'stalk' ? Math.max(3.5, 14 - Ln.t / Ln.leapAt * 10) : Math.max(0.6, 3.5 - lp * 3);
-    const lx = me.x + Math.sin(ang) * d, lz = me.z + Math.cos(ang) * d; L2.g.position.copy(g2w(lx, lz, HGT(lx, lz) + Math.sin(lp * Math.PI) * 1.2)); L2.g.rotation.y = Math.PI - (ang + Math.PI); L2.ph += dt * (Ln.st === 'stalk' ? 5 : 0);
-    quadPose(L2, Ln.st === 'stalk' ? { t, ph: L2.ph, gait: 1, amt: 0.8, crouch: 0.9, neck: 0.05, nod: 0.1, back: 1, tail: 0.2 } : { t, ph: 3.5, gait: 2, amt: 1, pitch: 0.45 - lp * 0.5, neck: 0.5, nod: 0.3, tail: 0.6 }, dt); }
+  if (Ln && Ln.st !== 'gone') { const L2 = V.lion, u = L2.g.userData; L2.g.visible = true; const ang = toA + Ln.side * Math.PI / 2, cf = g.cfg; let d = 3.5, hy = 0, off = 0, pose, roll = 0;
+    // stalk: creeping in from the side; leap: springs at you from where it was; open: landed past you (the other way from your dodge),
+    // stumbling, side-on: the moment to spear it; circle: backs off and paces; down: on top of you; dead: falls
+    if (Ln.st === 'stalk') { d = Math.max(3.5, 14 - Ln.t / Ln.leapAt * 10); pose = { t, ph: (L2.ph += dt * 5), gait: 1, amt: 0.8, crouch: 0.9, neck: 0.05, nod: 0.1, back: 1, tail: 0.2 }; u.d0 = d; u.off0 = 0; }
+    else if (Ln.st === 'leap') { const lp = Math.min(1, Ln.t / (cf.leap * (G && G.lesson ? 1.8 : 1))); d = (u.d0 || 3.5) * (1 - lp) + 2.1 * lp; off = (u.off0 || 0) * (1 - lp); hy = Math.sin(Math.min(1, lp * 1.1) * Math.PI) * 0.9 + lp * 0.5; pose = { t, ph: 3.5, gait: 2, amt: 1, pitch: 0.45 - lp * 0.5, neck: 0.5, nod: 0.3, tail: 0.6 }; }
+    else if (Ln.st === 'open') { const q = Math.min(1, Ln.t / 0.25); d = 2.1 + 0.8 * q; off = -(Ln.dir || 1) * 0.3 * q; roll = Math.sin(t * 9) * 0.06 + (ui.lionFlinch > 0 ? ui.lionFlinch * 0.6 : 0); pose = { t, ph: (L2.ph += dt * 2), gait: 1, amt: 0.4, crouch: 0.6, neck: 0.3, nod: 0.4, tail: 0.5 }; u.d0 = d; u.off0 = off; }
+    else if (Ln.st === 'circle') { const q = Math.min(1, Ln.t / 1.0); d = (u.d0 || 2.6) + (6 - (u.d0 || 2.6)) * q; off = (u.off0 || 0) * (1 - q) + Math.sin(t * 1.6) * 0.25 * q; pose = { t, ph: (L2.ph += dt * 4), gait: 1, amt: 0.7, crouch: 0.4, neck: 0.1, nod: 0.15, back: 0.6, tail: 0.3 }; if (q >= 1) { u.d0 = d; u.off0 = off; } }
+    else if (Ln.st === 'down') { d = 2.0; pose = { t, ph: 3.5, gait: 2, amt: 1, pitch: 0.25 + Math.sin(t * 14) * 0.05, neck: 0.6, nod: 0.5, tail: 0.6 }; u.d0 = 2.0; u.off0 = 0; }
+    else { const q = Math.min(1, Ln.t / 0.6); d = u.d0 || 2.6; off = u.off0 || 0; roll = q * 1.45; hy = -0.2 * q; pose = { t, ph: 0, gait: 0, amt: 0, crouch: 0.2, neck: -0.2, nod: 0, tail: 0 }; }
+    const a2 = ang + off, lx = me.x + Math.sin(a2) * d, lz = me.z + Math.cos(a2) * d; L2.g.position.copy(g2w(lx, lz, HGT(lx, lz) + hy)); L2.g.rotation.set(0, Math.PI - (a2 + Math.PI) + (Ln.st === 'open' ? (Ln.dir || 1) * 0.9 : 0), 0); L2.g.rotateZ(roll);
+    quadPose(L2, pose, dt); }
+  if (ui.lionFlinch > 0) ui.lionFlinch = Math.max(0, ui.lionFlinch - dt * 4); if (ui.stab > 0) ui.stab = Math.max(0, ui.stab - dt * 5);
   W3.setFocus(eye.x + fw.x * 6, eye.y, eye.z + fw.z * 6, 14);
   W3.render(dt);
   // the throw's streak: the path the spear has just flown, drawn over the picture so that a spear going straight away from you is still seen
@@ -192,6 +204,8 @@ function hud(G) {
 }
 // ---------- the controls on screen: the stick (creep / run), the crosshair, THROW; and big prompts for a lion ----------
 function layout() { return { fire: { x: W - 74 * k, y: H - 96 * k, r: 50 * k } }; }
+// the stick never moves (23 Nov 2026, his words: "for Hunter, the joystick should be in a set location... I would even recommend making it bigger"): bottom left, big
+function stickBase() { const r = 74 * k; return { x: r + 22 * k, y: H - r - 66 * k, r, zone: r * 1.45 }; }
 // where the crosshair points: on the animal (the upright sheet through it that faces you), or the ground in front of it
 function aimPoint() { if (!G || !V3 || V3.none) return G ? { x: G.a.x, z: G.a.z, sx: W / 2, sy: H / 2 } : null; const a = G.a, me = G.me, T = V3.T, cam = W3.cam; cam.updateMatrixWorld(); const c0 = W3.screen(g2w(a.x, a.z, HGT(a.x, a.z) + 0.75 * a.kind.body)), ch = ui.ch || { x: 0, y: 0 }, sx = c0.x + ch.x, sy = c0.y + ch.y;
   const ray = new T.Raycaster(); ray.setFromCamera(new T.Vector2(sx / W * 2 - 1, -(sy / H * 2 - 1)), cam); const o = ray.ray.origin, d = ray.ray.direction, gy = HGT(a.x, a.z);
@@ -205,10 +219,17 @@ function controlsHud(G) { if (G.over) return; const L = layout(), Ln = G.lion &&
     ctx.font = `700 ${Math.round((lock ? 26 : 19) * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.fillStyle = lock ? `rgba(255,${Math.round(120 + 100 * pulse)},90,1)` : '#ffe08a';
     const msg = lock ? '◀ DIVE ASIDE! ▶' : a.st === 'threat' ? 'IT IS GOING TO CHARGE' : 'WAIT FOR IT…'; ctx.strokeText(msg, W / 2, y0); ctx.fillText(msg, W / 2, y0);
     if (lock) { ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('PUSH THE STICK HARD TO ONE SIDE', W / 2, y0 + 26 * k); ctx.fillText('PUSH THE STICK HARD TO ONE SIDE', W / 2, y0 + 26 * k);
-      ctx.strokeStyle = `rgba(255,150,90,${pulse})`; ctx.lineWidth = 5 * k; const s2 = ui.stick, bx = s2 ? s2.x0 : 86 * k, by = s2 ? s2.y0 : H - 100 * k; ctx.beginPath(); ctx.arc(bx, by, 64 * k, 0, TAU); ctx.stroke(); } } ctx.textBaseline = 'middle';
-  if (Ln) { const turned = me.face === Ln.side, pulse = 0.6 + 0.4 * Math.sin(performance.now() / 90);
-    for (const sd of [-1, 1]) { const x0 = sd < 0 ? 0 : W / 2, hot = Ln.st === 'stalk' && !me.face && sd === Ln.side; ctx.fillStyle = hot ? `rgba(255,120,60,${0.25 + 0.2 * pulse})` : 'rgba(0,0,0,.18)'; ctx.fillRect(x0, H * 0.62, W / 2, H * 0.38); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(34 * k)}px ${BC}`; ctx.fillText(sd < 0 ? '◀' : '▶', x0 + W / 4, H * 0.76); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillText(sd < 0 ? 'TAP: FACE LEFT' : 'TAP: FACE RIGHT', x0 + W / 4, H * 0.84); }
-    const msg = Ln.st === 'leap' ? 'NOW! TAP!' : turned ? 'WAIT FOR THE LEAP… THEN TAP' : me.face ? 'WRONG WAY! TAP THE OTHER SIDE' : (Ln.side < 0 ? '◀ A LION ON YOUR LEFT: TAP LEFT' : 'A LION ON YOUR RIGHT: TAP RIGHT ▶'); ctx.font = `700 ${Math.round((Ln.st === 'leap' ? 30 : 17) * k)}px ${BC}`; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(msg, W / 2, H * 0.56); ctx.fillStyle = Ln.st === 'leap' ? '#ffe08a' : '#fff'; ctx.fillText(msg, W / 2, H * 0.56); return; }
+      ctx.strokeStyle = `rgba(255,150,90,${pulse})`; ctx.lineWidth = 5 * k; const SB = stickBase(); ctx.beginPath(); ctx.arc(SB.x, SB.y, SB.r + 8 * k, 0, TAU); ctx.stroke(); } } ctx.textBaseline = 'middle';
+  if (Ln && Ln.st !== 'dead') { const turned = me.face === Ln.side, pulse = 0.6 + 0.4 * Math.sin(performance.now() / 90), big = (txt, y, sz, col) => { ctx.font = `700 ${Math.round(sz * k)}px ${BC}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.65)'; ctx.strokeText(txt, W / 2, y); ctx.fillStyle = col; ctx.fillText(txt, W / 2, y); };
+    if (Ln.st === 'stalk') { for (const sd of [-1, 1]) { const x0 = sd < 0 ? 0 : W / 2, hot = !me.face && sd === Ln.side; ctx.fillStyle = hot ? `rgba(255,120,60,${0.25 + 0.2 * pulse})` : 'rgba(0,0,0,.18)'; ctx.fillRect(x0, H * 0.62, W / 2, H * 0.38); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(34 * k)}px ${BC}`; ctx.fillText(sd < 0 ? '◀' : '▶', x0 + W / 4, H * 0.76); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillText(sd < 0 ? 'TAP: FACE LEFT' : 'TAP: FACE RIGHT', x0 + W / 4, H * 0.84); }
+      big(turned ? 'IT IS COMING… GET READY TO SWIPE' : me.face ? 'WRONG WAY! TAP THE OTHER SIDE' : (Ln.side < 0 ? '◀ A LION ON YOUR LEFT: TAP LEFT' : 'A LION ON YOUR RIGHT: TAP RIGHT ▶'), H * 0.56, 17, '#fff'); }
+    else if (Ln.st === 'leap') { big(turned ? '⟵ SWIPE TO DODGE! ⟶' : 'IT IS ON YOU!', H * 0.5, 30, `rgba(255,${Math.round(140 + 100 * pulse)},90,1)`); }
+    else if (Ln.st === 'open') { big('TAP! TAP! TAP!', H * 0.5, 34 + 4 * pulse, '#ffe08a'); big('SPEAR IT BEFORE IT TURNS', H * 0.5 + 34 * k, 14, '#fff'); }
+    else if (Ln.st === 'circle') big('IT TURNS FOR YOU AGAIN… GET READY', H * 0.5, 17, '#fff');
+    // the lion's strength
+    const bw = W * 0.5, bx = W * 0.25, by = H * 0.2; ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(bx - 3, by - 3, bw + 6, 16 * k + 6); ctx.fillStyle = '#d8402a'; ctx.fillRect(bx, by, bw * Math.max(0, Ln.hp) / Ln.max, 16 * k); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('CAVE LION', W / 2, by + 8 * k);
+    return; }
+  if (Ln) return;
   // the crosshair: a circle, four marks and a dot; amber on the animal, green on its chest. It sways as your arm does.
   if (a.st !== 'dead' && a.st !== 'flee' && !angry(a) && !G.spears.some(s => !s.done)) { const A = aimPoint(); if (A) { const d = Math.hypot(A.x - me.x, A.z - me.z) || 1, sw = swayOf(G, d), short = Math.max(0, d - 16) * 0.65, lx = A.x + sw.x - (A.x - me.x) / d * short, lz = A.z + sw.z - (A.z - me.z) / d * short, k2 = a.kind;
       const vx = a.x + Math.sin(a.face) * k2.body * 0.5, vz = a.z + Math.cos(a.face) * k2.body * 0.5, onChest = Math.hypot(lx - vx, lz - vz) < k2.vital * (1 - Math.min(0.3, G.cfg.f / 150)) * (lessonNow(G) ? 1.3 : 1), onBody = Math.hypot(lx - a.x, lz - a.z) < k2.body * 0.75;
@@ -219,9 +240,9 @@ function controlsHud(G) { if (G.over) return; const L = layout(), Ln = G.lion &&
   { const B = L.fire, on = ui.fireT > 0, can = !G.spears.some(s => !s.done) && a.st !== 'dead' && a.st !== 'flee' && !angry(a); ctx.globalAlpha = can ? 0.95 : 0.4; ctx.fillStyle = on ? '#ffd36a' : '#c8502a'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.93 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffe8c8'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(19 * k)}px ${BC}`; ctx.fillText('THROW', B.x, B.y - 2 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('tap', B.x, B.y + 16 * k); ctx.globalAlpha = 1;
     if (ui.aiming == null && G.N <= 3) { ctx.globalAlpha = 0.8; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.fillText('DRAG HERE TO AIM', W * 0.75, H - 190 * k); ctx.globalAlpha = 1; } }
   // the stick: an inner ring (creep) and an outer one (run)
-  { const s2 = ui.stick, R = 56 * k, bx = s2 ? s2.x0 : 86 * k, by = s2 ? s2.y0 : H - 100 * k; ctx.globalAlpha = s2 ? 0.9 : 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, R, 0, TAU); ctx.stroke(); ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(bx, by, R * 0.78, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-    const dx = s2 ? s2.x - s2.x0 : 0, dy = s2 ? s2.y - s2.y0 : 0, m = Math.hypot(dx, dy), c2 = m > R ? R / m : 1; ctx.fillStyle = me.run ? '#ff9a6a' : me.creep ? '#9be3b5' : 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(bx + dx * c2, by + dy * c2, 20 * k, 0, TAU); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'left'; ctx.fillText(me.run ? 'RUNNING (IT HEARS YOU!)' : me.creep ? 'CREEPING…' : 'GENTLE PUSH: CREEP · FULL PUSH: RUN', 12 * k, Math.min(H - 12 * k, by + R + 16 * k)); ctx.textAlign = 'center'; ctx.globalAlpha = 1; } }
+  { const s2 = ui.stick, SB = stickBase(), R = SB.r, bx = SB.x, by = SB.y; ctx.globalAlpha = s2 ? 0.95 : 0.7; ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.arc(bx, by, R, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, by, R, 0, TAU); ctx.stroke(); ctx.setLineDash([4, 5]); ctx.beginPath(); ctx.arc(bx, by, R * 0.78, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    const dx = s2 ? s2.x - bx : 0, dy = s2 ? s2.y - by : 0, m = Math.hypot(dx, dy), c2 = m > R ? R / m : 1; ctx.fillStyle = me.run ? '#ff9a6a' : me.creep ? '#9be3b5' : 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(bx + dx * c2, by + dy * c2, 28 * k, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'left'; ctx.fillText(me.run ? 'RUNNING (IT HEARS YOU!)' : me.creep ? 'CREEPING…' : 'GENTLE PUSH: CREEP · FULL PUSH: RUN', 12 * k, Math.min(H - 12 * k, by + R + 18 * k)); ctx.textAlign = 'center'; ctx.globalAlpha = 1; } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) {
   const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28, y = 42 * k; ctx.save();

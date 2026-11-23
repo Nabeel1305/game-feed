@@ -82,21 +82,23 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (22 Nov 2026, his note: "a crosshair that shows you where to aim, moved with one hand, and you creep with the other; if
-// you go slowly you creep, faster you run"): the LEFT thumb is a floating stick (gentle = creep, full = run; up is towards the
-// animal); the RIGHT thumb drags the crosshair, and THROW throws where it is. A lion: tap the side it growls from to face it,
-// then tap when it leaps. No swipes, no pull-backs.
+// input (22 Nov 2026, his note: "a crosshair that shows you where to aim, moved with one hand, and you creep with the other"). 23 Nov 2026,
+// his words: "every time I tap, the joystick just goes there... for Hunter, the joystick should be in a set location... I would even
+// recommend making it bigger": the stick is fixed, bottom left, big, and works only where it is drawn; dragging anywhere else moves the
+// crosshair; THROW throws. A lion: tap its side to face it, swipe to dodge its leap, tap, tap, tap to spear it.
 const touches = new Map();
-const lionOn = () => G && G.lion && G.lion.st !== 'gone';
-function stickMove(t, x, y) { const R = 56 * k, dx = (x - t.x0) / R, dy = (y - t.y0) / R; ui.stick.x = x; ui.stick.y = y; setMove(G, clamp(-dy, -1, 1), clamp(dx, -1, 1)); }
+const lionOn = () => G && G.lion && G.lion.st !== 'gone' && G.lion.st !== 'dead';
+function stickMove(x, y) { const S = stickBase(); if (!ui.stick) return; ui.stick.x = x; ui.stick.y = y; setMove(G, clamp((S.y - y) / S.r, -1, 1), clamp((x - S.x) / S.r, -1, 1)); }
+function dropStick() { if (ui.stick) touches.delete(ui.stick.id); ui.stick = null; if (G && !G.over) setMove(G, 0, 0); }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const x = e.clientX, y = e.clientY, side = x < W / 2 ? -1 : 1, L = layout();
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-  if (lionOn()) { const Ln = G.lion; if (Ln.st === 'stalk' && G.me.face !== side) turn(G, side); else brace(G); return; }
+  if (lionOn()) { const Ln = G.lion; dropStick(); touches.set(e.pointerId, { kind: 'lion', x0: x, y0: y }); if (Ln.st === 'stalk') turn(G, side); else if (Ln.st === 'open') hit(G); return; }
   if (Math.hypot(x - L.fire.x, y - L.fire.y) < L.fire.r * 1.15) { ui.fireT = 0.25; const A = aimPoint(); if (A) { if (!throwAt(G, A.x, A.z)) sfx.no && sfx.no(); } return; }
-  if (side < 0) { if (!ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; touches.set(e.pointerId, { kind: 'stick', x0: x, y0: y }); } return; }
+  const S = stickBase(); if (Math.hypot(x - S.x, y - S.y) < S.zone) { if (!ui.stick) { ui.stick = { id: e.pointerId, x, y }; touches.set(e.pointerId, { kind: 'stick' }); stickMove(x, y); } return; }
   touches.set(e.pointerId, { kind: 'aim', lx: x, ly: y }); ui.aiming = e.pointerId; if (!ui.ch) ui.ch = { x: 0, y: 0 }; });
 cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if (!t || !G || paused) return; const x = e.clientX, y = e.clientY;
-  if (t.kind === 'stick') { if (!lionOn()) stickMove(t, x, y); return; }
+  if (t.kind === 'stick') { if (!lionOn() && ui.stick && ui.stick.id === e.pointerId) stickMove(x, y); return; }
+  if (t.kind === 'lion') { if (G.lion && G.lion.st === 'leap' && Math.hypot(x - t.x0, y - t.y0) > 34 * k) { dodge(G, x >= t.x0 ? 1 : -1); t.kind = 'done'; } return; }
   if (t.kind === 'aim') { ui.ch.x = clamp(ui.ch.x + (x - t.lx) * 0.9, -W * 0.45, W * 0.45); ui.ch.y = clamp(ui.ch.y + (y - t.ly) * 0.9, -H * 0.3, H * 0.3); t.lx = x; t.ly = y; } });
 function endTouch(e) { const t = touches.get(e.pointerId); if (!t) return; touches.delete(e.pointerId); if (t.kind === 'stick') { ui.stick = null; if (G && !G.over) setMove(G, 0, 0); } if (ui.aiming === e.pointerId) ui.aiming = null; }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
@@ -133,7 +135,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  creep(on) { creep(G, on); }, setMove(f, s) { setMove(G, f, s); }, layout() { return layout(); }, aimPoint() { return aimPoint(); }, throwAt(x, z) { return throwAt(G, x, z); }, turn(s) { turn(G, s); }, brace() { brace(G); }, ui, get V3() { return V3; }, W3,
+  creep(on) { creep(G, on); }, setMove(f, s) { setMove(G, f, s); }, layout() { return layout(); }, aimPoint() { return aimPoint(); }, throwAt(x, z) { return throwAt(G, x, z); }, turn(s) { turn(G, s); }, brace() { brace(G); }, dodge(d) { return dodge(G, d); }, hit() { return hit(G); }, stickBase() { return stickBase(); }, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
