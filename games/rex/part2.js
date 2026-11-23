@@ -1,6 +1,6 @@
 // ===================== RULES: Rex (game 51, his idea) =====================
 // You are a Tyrannosaurus in a wide green valley: ferns, pines, a watering hole, a cave in the cliffs, the nesting ground of a
-// rival. Your left thumb walks you (one floating stick: push to stride, push far to charge, sideways to turn); the right
+// rival. Your left thumb walks you (one floating stick: push the way you want to go on the screen, far to charge); the right
 // thumb has BITE and ROAR. Every level gives you a near goal: eat certain prey, or beat a rival. Prey notice you sooner when
 // you charge (your footsteps shake the ground) and later when you creep. Each kind lives its own way:
 //  - runners: small and quick, dart off in zigzags; one bite.
@@ -12,7 +12,7 @@
 // the time; eating fills it. Empty, you weaken. Health gone: the valley has a new king.
 // World: metres; x across, z ahead; heading h, forward is (sin h, cos h).
 const RULES = [
-  '<b>Left thumb</b>: push to walk, push far to <b>charge</b>, sideways to turn. Creep up: prey hear a charge from far off.',
+  '<b>Left thumb</b>: push the way you want to go, far to <b>charge</b>. Creep up: prey hear a charge from far off.',
   '<b>BITE</b> when they are in front of your jaws. <b>ROAR</b> freezes small prey near you, and makes a rival flinch.',
   '<b>Watch for the warning</b>: a tail that lifts, a head that lowers, a rival that rears. Step out of the way, then bite.',
   'Spikebacks: bite the <b>head</b>. Hornfaces and rivals: bite them while they <b>recover</b> from their charge.',
@@ -49,11 +49,11 @@ function goalsOf(N) { const boss = N % 10 === 0;
   if (boss || (N >= 7 && R() < 0.4)) out.push({ k: 'rival', n: 1, big: boss });
   return out; }
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
-  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), goals: goalsOf(N), hungerT: x(140, 140, 30) * (help ? 1.25 : 1), alertK: x(0.85, 1.15, 30), preySp: x(0.92, 1.08, 30), tell: x(1.15, 0.85, 30) * (help ? 1.25 : 1),
+  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), goals: goalsOf(N), hungerT: x(140, 122, 30) * (help ? 1.25 : 1), alertK: x(0.85, 1.3, 30), preySp: x(0.92, 1.15, 30), tell: x(1.15, 0.7, 30) * (help ? 1.25 : 1),
     rivalHp: x(5, 7, 30), rivalDmg: x(18, 25, 30) * (1 - 0.15 * upLv('hide')), dmgK: 1 - 0.15 * upLv('hide'), bite: 1 + 0.25 * upLv('jaws'), stam: 3.4 * (1 + 0.25 * upLv('legs')), roarCD: 10 / (1 + 0.25 * upLv('lungs')), roarR: 20 * (1 + 0.15 * upLv('lungs')), extra: Math.round(x(4, 9, 30)) }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, weather: cfg.weather, wait: 0, nid: 1,
-    me: { x: 0, z: -20, h: 0, v: 0, hp: 100, hunger: 100, stam: cfg.stam, bite: 0, bcd: 0, roarCD: 0, hit: 0 }, in: { sx: 0, sy: 0, run: false }, dinos: [], got: {}, eaten: 0, bites: 0, hits: 0, wins: 0 };
+    me: { x: 0, z: -20, h: 0, v: 0, hp: 100, hunger: 100, stam: cfg.stam, bite: 0, bcd: 0, roarCD: 0, hit: 0 }, in: { sx: 0, sy: 0, ref: 0, run: false }, dinos: [], got: {}, eaten: 0, bites: 0, hits: 0, wins: 0 };
   spawnAll(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G; }
 function mk(G, k, x, z, o = {}) { const K = KINDS[k], d = Object.assign({ id: G.nid++, k, x, z, h: G.rnd() * TAU, v: 0, hp: K.hp * (k === 'rival' ? G.cfg.rivalHp / 6 : 1), max: 0, state: 'idle', t: 0, alerted: false, zig: 0, tell: 0, tired: 0, lunge: 0, freeze: 0, dead: false, eat: 0, hx: x, hz: z }, o); if (k === 'rival' && o.big) d.hp *= 1.4; d.max = d.hp; G.dinos.push(d); return d; }
@@ -71,7 +71,11 @@ const angTo = (a, b) => Math.atan2(b.x - a.x, b.z - a.z);
 const wrapA = a => Math.atan2(Math.sin(a), Math.cos(a));
 const goalLeft = G => G.cfg.goals.map(g => ({ k: g.k, left: g.n - (G.got[g.k] || 0) })).filter(g => g.left > 0);
 // ---------- what you do ----------
-function stick(G, sx, sy) { G.in.sx = clamp(sx, -1, 1); G.in.sy = clamp(sy, -1, 1); }
+// 23 Nov 2026 (his words: "the movements are not accurate at all. The joystick is not working, I go left it goes somewhere else"): the stick
+// says where to go as seen on the screen, not how to turn. ref is the heading that up on the stick means (the view's heading when the thumb
+// came down); the rex turns towards the stick's way (a heavy beast: a moment to turn round) and walks when he faces it.
+function stick(G, sx, sy, ref) { G.in.sx = clamp(sx, -1, 1); G.in.sy = clamp(sy, -1, 1); if (ref != null) G.in.ref = ref; }
+function go(G, h, p) { const m = G.me; stick(G, Math.sin(h - m.h) * p, Math.cos(h - m.h) * p, m.h); }      // the robots: walk on heading h, push p
 function bite(G) { const m = G.me; if (G.over || G.wait > 0 || m.bcd > 0 || m.hp <= 0) return false; m.bite = 0.35; m.bcd = 0.75; G.bites++; G.ev.push({ k: 'snap' });
   // what is in front of the jaws
   let best = null, bd = 9; for (const d of G.dinos) { if (d.dead) continue; const r = 4.8 + KINDS[d.k].size * 1.6, dd = dist(m, d), da = Math.abs(wrapA(angTo(m, d) - m.h)); if (dd < r && da < 0.85 && dd < bd) { best = d; bd = dd; } }
@@ -100,8 +104,9 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 
   const c = G.cfg, m = G.me, I = G.in;
   // you
   m.bcd = Math.max(0, m.bcd - dt); m.bite = Math.max(0, m.bite - dt); m.roarCD = Math.max(0, m.roarCD - dt); m.hit = Math.max(0, m.hit - dt);
-  const push = Math.hypot(I.sx, I.sy), fwd = Math.max(0, I.sy), run = push > 0.85 && I.sy > 0.5 && m.stam > 0.2;
-  m.h += I.sx * (run ? 1.3 : m.v < 3 ? 2.8 : 2) * dt; const want = m.bite > 0 ? 7 : run ? 11.5 : fwd * 5.5; m.v += (want - m.v) * Math.min(1, dt * (want > m.v ? 4.2 : 5));
+  const push = Math.min(1, Math.hypot(I.sx, I.sy)); let face = 0, run = false;
+  if (push > 0.12) { const dh = wrapA((I.ref || 0) + Math.atan2(I.sx, I.sy) - m.h); face = Math.max(0, Math.cos(dh)); run = push > 0.85 && face > 0.75 && m.stam > 0.2; const rate = run ? 1.8 : m.v < 3 ? 3.6 : 2.8; m.h += clamp(dh, -rate * dt, rate * dt); }      // a gentle push (under 0.3) only turns him to look
+  const want = m.bite > 0 ? 7 : run ? 11.5 : 5.5 * clamp((push - 0.3) / 0.55, 0, 1) * face; m.v += (want - m.v) * Math.min(1, dt * (want > m.v ? 4.2 : 5));
   m.stam = run ? Math.max(0, m.stam - dt) : Math.min(c.stam, m.stam + dt * 0.45); m.run = run;
   m.x = clamp(m.x + Math.sin(m.h) * m.v * dt, -BOUND, BOUND); m.z = clamp(m.z + Math.cos(m.h) * m.v * dt, -BOUND + 40, BOUND + 60);
   if (!G.lesson) { m.hunger -= dt * 100 / c.hungerT; if (m.hunger <= 0) { m.hunger = 0; m.hp -= dt * 4; if (m.hp <= 0) return finish(G, false); } }
@@ -177,10 +182,10 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   const live = G.dinos.filter(d => !d.dead), need = G.lesson ? live.map(d => d.k) : goalLeft(G).map(g => g.k), hungry = m.hunger < 35;
   // danger first: a warning aimed at me
   const threat = live.find(d => (d.state === 'tell' && (KINDS[d.k].rival || KINDS[d.k].charger) && dist(d, m) < 26) || ((d.state === 'lunge' || d.state === 'charge') && dist(d, m) < 30) || (KINDS[d.k].armour && (d.state === 'tell' || d.state === 'swing') && dist(d, m) < 9));
-  if (threat && KINDS[threat.k].armour && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), turn = wrapA(away - m.h); stick(G, clamp(turn * 2, -1, 1), 1); return; }
-  if (threat && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), side = wrapA(m.h - away) > 0 ? 1 : -1; const h = away + side * Math.PI / 2; const turn = wrapA(h - m.h); stick(G, clamp(turn * 2, -1, 1), 1); return; }
+  if (threat && KINDS[threat.k].armour && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), turn = wrapA(away - m.h); go(G, away, 1); return; }
+  if (threat && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), side = wrapA(m.h - away) > 0 ? 1 : -1; const h = away + side * Math.PI / 2; go(G, h, 1); return; }
   const cands = live.filter(d => need.includes(d.k) || (hungry && KINDS[d.k].food && d.k !== 'horns'));
-  let t = null, bd = 1e9; for (const d of cands) { const dd = dist(d, m) + (d.cave ? 30 : 0); if (dd < bd) { bd = dd; t = d; } } if (!t) { stick(G, 0.4, 0.6); return; }
+  let t = null, bd = 1e9; for (const d of cands) { const dd = dist(d, m) + (d.cave ? 30 : 0); if (dd < bd) { bd = dd; t = d; } } if (!t) { go(G, m.h + 0.6, 0.75); return; }
   const K = KINDS[t.k], dd = dist(t, m); let aim = { x: t.x, z: t.z };
   if (K.armour) { const atHead = Math.abs(wrapA(angTo(t, m) - t.h)) < 1.0; if (t.recover > 0 || atHead) aim = { x: t.x + Math.sin(t.h) * 4.5, z: t.z + Math.cos(t.h) * 4.5 }; else if (dd > 14) aim = { x: t.x, z: t.z }; else aim = { x: t.x - Math.sin(t.h) * 6, z: t.z - Math.cos(t.h) * 6 }; }      /* tempt the swing from behind, then run round to the head while it recovers */
   if ((K.rival || K.charger) && !(t.tired > 0 || t.state === 'stuck') && dd < 7) aim = { x: t.x + Math.sin(angTo(t, m)) * 8, z: t.z + Math.cos(angTo(t, m)) * 8 };      // keep a distance until it commits
@@ -189,5 +194,5 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   if (dd < reach - 0.3 && da < 0.8 && open && m.bcd <= 0 && R() < 0.5 + acc * 0.5) { bite(G); }
   if (K.flee && t.state === 'flee' && dd < G.cfg.roarR * 0.7 && m.roarCD <= 0 && R() < acc) roar(G);
   const fleeing = K.flee && t.state === 'flee', creep = K.flee && !fleeing && dd < K.alert * G.cfg.alertK * 1.6, sprint = (fleeing && dd < 30) || ((K.rival || K.charger) && open && dd > 4) || (K.armour && t.recover > 0);
-  const err = (R() - 0.5) * (1 - acc) * 0.8; stick(G, clamp((turn + err) * 2.2, -1, 1), dist(aim, m) < 2 ? 0 : Math.abs(turn) > 1.4 ? 0.1 : sprint ? 1 : creep ? 0.45 : dd < 6 ? 0.5 : 1); }
+  const err = (R() - 0.5) * (1 - acc) * 0.8; go(G, m.h + turn + err, dist(aim, m) < 2 || Math.abs(turn) > 1.4 ? 0.25 : sprint ? 1 : creep ? 0.55 : dd < 6 ? 0.58 : 1); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; for (const g of G.cfg.goals) G.got[g.k] = g.n; finish(G, true); }

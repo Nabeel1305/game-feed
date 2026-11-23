@@ -431,13 +431,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 
 ### 51. Rex (`rex`): VERIFIED
-- **Where:** `games/rex/index.html` · v0.1.4 · Dinosaur / hunt · 2 thumb(s)
+- **Where:** `games/rex/index.html` · v0.1.5 · Dinosaur / hunt · 2 thumb(s)
 - **What it is:** Be the T-Rex in a 3D valley: one stick to creep or charge, BITE and ROAR; runners, duckbill herds, armoured spikebacks, charging hornfaces and rival rexes, each warning before it strikes.
 - **Problem:** rainy night levels are too dark to see the prey.
 - **Changed:** third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen).
 - **Changed:** 23 Nov, 0.1.4 (from Vine: nothing vanishes): the moving cut-away near the camera (up to 7 m) removed; a tree between the camera and the rex is a see-through screen (W3.seeThrough).
+- **Changed:** 23 Nov, 0.1.5 (his words: "the movements are not accurate at all... I go left it goes somewhere else"): the stick says the way to go as seen on the screen (it turned him like a tank); the view holds its heading while the thumb is down; harder far on to match (prey hear you sooner and run faster, shorter warnings, a shorter hunger clock).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 - **Checked:** touch test 7 pass; pictures of a rainy level looked at: rex and prey both in sight.
+- **Checked:** 23 Nov, 0.1.5: test_touch 11 (new: pushed left, right, down, up, he faces within 15 degrees and walks that way on the screen); test_play 15/15: ordinary {1-10: 1, 20: 0.6, 40: 0.9}, sharp {40: 0.9, 80: 0.1}, blind 0 of 5,696; controls 33. NOT judged by me: how it feels under a thumb.
 
 ### 52. High Wire (`rope`): VERIFIED
 - **Where:** `games/rope/index.html` · v0.1.4 · Balance · 1 thumb(s)

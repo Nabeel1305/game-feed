@@ -9,7 +9,7 @@ function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, si
 function tip(key, txt, secs = 2.8) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 1.8);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.3) TXT.shift(); if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
-const ui = { drag: null };
+const ui = { drag: null, snap: false };
 // a dinosaur from smooth shapes
 function dino(T, kind, col) {
   const g = new T.Group(), skin = new T.MeshStandardMaterial({ color: col, roughness: 0.85, map: W3.grainTex(128, 9, 200, 50, 4) }), belly = new T.MeshStandardMaterial({ color: new T.Color(col).lerp(new T.Color(0xe8d8b0), 0.45), roughness: 0.9 });
@@ -113,11 +113,14 @@ function draw(now, dt) {
   const left = g.lesson ? g.dinos.filter(d => !d.dead).map(d => d.k) : goalLeft(g).map(q => q.k); let tg = null, bd = 1e9; for (const d of g.dinos) if (!d.dead && left.includes(d.k)) { const dd = dist(d, m); if (dd < bd) { bd = dd; tg = d; } }
   V.ring.visible = !!tg; if (tg) { V.ring.position.set(tg.x, hgt(tg.x, tg.z) + 0.15, tg.z); V.ring.material.opacity = 0.45 + Math.sin(t * 5) * 0.25; V.ring.scale.setScalar(KINDS[tg.k].size * 1.1 + 0.4); }
   const pa = V.dust.geometry.attributes.position; V.P.forEach((q, i) => { if (q.t < q.life) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; q.vy -= 5 * dt; } pa.setXYZ(i, q.x, q.t < q.life ? q.y : -99, q.z); }); pa.needsUpdate = true;
-  // the camera: high behind you
-  const C = V.cam, back = m.run ? 19 : 17, cx = m.x - Math.sin(m.h) * back, cz = m.z - Math.cos(m.h) * back, cy = Math.max(hgt(cx, cz) + 3, hgt(m.x, m.z) + 10), e = 1 - Math.exp(-dt * 3.5);
+  // the camera: high behind you. While your thumb is on the stick the view holds its heading, so left on the stick stays left on the
+  // screen (23 Nov 2026); let go and it swings round behind you again.
+  if (V.camYaw == null || ui.snap) V.camYaw = m.h; ui.snap = false;
+  if (ui.drag && G && g === G) V.camYaw = g.in.ref; else V.camYaw += wrapA(m.h - V.camYaw) * Math.min(1, dt * (m.v > 1 ? 1.3 : 0.6));
+  const C = V.cam, back = m.run ? 19 : 17, cx = m.x - Math.sin(V.camYaw) * back, cz = m.z - Math.cos(V.camYaw) * back, cy = Math.max(hgt(cx, cz) + 3, hgt(m.x, m.z) + 10), e = 1 - Math.exp(-dt * 3.5);
   C.x += (cx - C.x) * e; C.y += (cy - C.y) * e; C.z += (cz - C.z) * e;
   const cam = W3.cam, stomp = m.run ? Math.abs(Math.sin(V.me.userData.ph)) * 0.12 : 0; cam.position.set(C.x, C.y + stomp, C.z); if (cam.near !== 0.3) { cam.near = 0.3; cam.updateProjectionMatrix(); } if (W3.setSee) W3.setSee(cam.position, new THREE.Vector3(m.x, hgt(m.x, m.z) + 2.2, m.z), 5.5);      /* 23 Nov 2026: trees between the camera and the rex are see-through, never cut away (his words on Vine: they shouldn't disappear) */
-  cam.lookAt(m.x + Math.sin(m.h) * 10, hgt(m.x, m.z) + 3.5, m.z + Math.cos(m.h) * 10);
+  const lx = m.x + Math.sin(V.camYaw) * 10, lz = m.z + Math.cos(V.camYaw) * 10; cam.lookAt(lx, hgt(m.x, m.z) + 3.5, lz); V.viewYaw = Math.atan2(lx - C.x, lz - C.z);
   if (FX.shake > 0) { cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.003; cam.position.y += (Math.random() - 0.5) * FX.shake * 0.02; }
   W3.setFocus(m.x, 0, m.z + 10, 50); W3.render(dt);
   if (G) hud(G, t, tg);

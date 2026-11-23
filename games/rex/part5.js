@@ -23,7 +23,7 @@ function showHome() {
 function startGame() {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; ui.drag = null; hint = null;
+  TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; ui.drag = null; ui.snap = true; hint = null;
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -83,12 +83,12 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (two thumbs): the left thumb lands anywhere on the left and slides: a floating stick (up walks, far charges, sideways
-// turns); the right thumb taps BITE or ROAR
+// input (two thumbs): the left thumb lands anywhere on the left and slides: a floating stick (the way you push on the screen is the way
+// he goes; far charges); the right thumb taps BITE or ROAR
 const inC = (r, x, y) => Math.hypot(x - (r.x + r.w / 2), y - (r.y + r.h / 2)) < r.w / 2 + 8;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const B = btnRects(), x = e.clientX, y = e.clientY;
   if (inC(B.bite, x, y)) { bite(G); return; } if (inC(B.roar, x, y)) { if (!roar(G)) sfx.click(); return; }
-  if (ui.drag || x > W * 0.62) return; ui.drag = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+  if (ui.drag || x > W * 0.62) return; ui.drag = { id: e.pointerId, x0: x, y0: y, x, y }; G.in.ref = V3 && V3.viewYaw != null ? V3.viewYaw : G.me.h; if (V3 && !V3.none) V3.camYaw = G.in.ref; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const R = 46 * k; stick(G, clamp((d.x - d.x0) / R, -1, 1), clamp((d.y0 - d.y) / R, -1, 1)); });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) stick(G, 0, 0); }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);

@@ -150,6 +150,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "A tree between the camera and the rex was cut away. Now it turns see-through and stays seen."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, said in the chat",
+   "said": "With Rex the movments are not accurate at all. The joystick is not working i go left is goes somewhere else",
+   "did": "The stick used to turn him like a tank: left spun him on the spot and the camera swung round with him. Now he goes the way you push, as you see it on the screen: left is left, down turns him round to walk towards you. While your thumb is on the stick the view holds still, so left stays left; let go and it swings back behind him."
   }
  ],
  "kingdom": [
