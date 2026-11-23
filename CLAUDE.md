@@ -48,7 +48,7 @@ can say first review fixed. Just make it clear that I made a complaint and you f
 what is in the store when he says to. For each review fixed, add what he said (his exact words) and what was done to `specs/reviews-fixed.json`
 (`kind: "yours"`, or `"also"` on another game the same fault was fixed in); the page then shows YOUR FIRST REVIEW: FIXED on that game. Then empty his
 note in the store (`db_write` a `set` of `{ rating: '', critical: '', flaw: '', at: <now, in ms> }` to `reviews/<id>` with its `ifVersion`), so that what
-he writes next is his next review. Never empty a note that has not been fixed.
+he writes next is his next review. Never empty a note that has not been fixed. (Again, 23 Nov 2026, 22:29: "Whenever you fix something, say that you fixed it in the game review make it clear so old enries dont remain": every fix, in the same sitting, gets its FIXED entry on the page and his old note emptied, and the review page is republished.)
 **What looks like a button is a button** (his words, 23 Nov 2026, 13:47, after I wrote UP and DOWN round a stick that followed his thumb: "You literally
 made Pilot worse... You need to pay very close attention... anytime I try to click the side button that'll take it up, it just takes me to the
 joystick... You don't need the joystick"): a word or an arrow drawn at a fixed place is a button and is pressed; a stick, if there is one, stays in one

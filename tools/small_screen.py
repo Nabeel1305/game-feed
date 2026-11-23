@@ -6,7 +6,8 @@ import json, os, sys
 from playwright.sync_api import sync_playwright
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 games = [g for g in json.load(open(R + '/games.json'))['games'] if (g['id'] in sys.argv[1:] if len(sys.argv) > 1 else g['number'] > 8)]
-CUT = """() => { const W = innerWidth, H = innerHeight, out = []; const scrolls = el => { for (let p = el.parentElement; p; p = p.parentElement) { const s = getComputedStyle(p); if (/(auto|scroll)/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 2) return true; } return false; };
+CUT = """() => { const W = document.documentElement.clientWidth || innerWidth, H = document.documentElement.clientHeight || innerHeight, out = [];      // the glass, not what a sideways game reports (Cook, 23 Nov 2026)
+   const scrolls = el => { for (let p = el.parentElement; p; p = p.parentElement) { const s = getComputedStyle(p); if (/(auto|scroll)/.test(s.overflowY) && p.scrollHeight > p.clientHeight + 2) return true; } return false; };
   for (const el of document.querySelectorAll('button, .btn, input, select, textarea, a[href]')) { if (!el.offsetParent && getComputedStyle(el).position !== 'fixed') continue; const s = getComputedStyle(el); if (s.visibility === 'hidden' || s.display === 'none' || +s.opacity === 0) continue; const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) continue;
     const offX = r.left < -2 || r.right > W + 2, offY = r.top < -2 || r.bottom > H + 2; if (offX || (offY && !scrolls(el))) out.push((el.id || el.textContent.trim().slice(0, 14) || el.tagName) + ' ' + [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)].join(',')); }
   if (document.documentElement.scrollWidth > W + 2) out.push('page is wider than the screen: ' + document.documentElement.scrollWidth); return out; }"""

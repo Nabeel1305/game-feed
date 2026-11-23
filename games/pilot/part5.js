@@ -24,7 +24,7 @@ function startGame() {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(level, { help: helpOn(), teach: true, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
   TXT.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; ui.aim = null; ui.drag = null; hint = null;
-  ui.snap = true; ui.stick = null; touch.id = null; touch.thr = null;
+  ui.snap = true; ui.stick = null; touch.id = null; touch.thr = null; ui.look = null; if (V3 && V3.look2) { V3.look2.yaw = V3.look2.pitch = 0; }
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -37,10 +37,11 @@ function saveResult(G) {      // a win saves the next level at once (leaving bef
 }
 function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
-  $('eTitle').textContent = r.win ? ({ butter: 'BUTTER!', smooth: 'SMOOTH LANDING', firm: 'LANDED', hard: 'DOWN, HARD' }[r.q]) : 'CRASHED'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
+  $('eTitle').textContent = r.win ? ({ butter: 'BUTTER LANDING!', smooth: 'SMOOTH LANDING', firm: 'LANDED SAFELY', hard: 'LANDED, HARD' }[r.q]) : (WHY[r.why] ? WHY[r.why][0] : 'CRASHED'); $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
-  $('eSub').innerHTML = r.win ? `Touchdown <b>${r.sink} m/s</b>${r.nb ? ' <b class="nb">NEW BEST</b>' : ''} · <b>${r.cl} m</b> off the centre line` + (r.stars < 3 ? '<br>A butter landing on the centre line for three stars.' : '')
-    : `${{ short: 'Short of the runway.', side: 'Off the side of the runway.', hard: 'Too hard: flare just before touchdown.', wing: 'A wing hit: level the wings.', drift: 'Sideways at touchdown.', long: 'Ran out of runway.', lost: 'Lost the airport.' }[r.why] || ''}` + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: everything is a little slower until you get through.</span>' : '');
+  // his note: "Clearly recognise a successful landing and explain when an attempt fails"
+  $('eSub').innerHTML = r.win ? `You flew to <b>${destName(G)}</b> and landed on runway <b>${rwyNum(G.B.h)}</b>.<br>Touchdown <b>${r.sink} m/s</b>${r.nb ? ' <b class="nb">NEW BEST</b>' : ''} · <b>${r.cl} m</b> off the centre line · <b>${r.at} m</b> past the threshold` + (r.stars < 3 ? '<br>A butter landing (under 1 m/s) on the centre line for three stars.' : '')
+    : (WHY[r.why] ? WHY[r.why][1] : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: the gear is a little stronger until you get through.</span>' : '');
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !r.win);
   show('ovEnd');
@@ -91,10 +92,14 @@ const touch = { id: null, thr: null };
 function padAt() { return { x: W - 112 * k, y: H - 168 * k, d: 62 * k, s: 56 * k }; }      // centre, how far out each button is, each button's size
 function padSet(x, y) { const P = padAt(), vx = (x - P.x) / P.d, vy = (P.y - y) / P.d, dz = v => Math.abs(v) < 0.42 ? 0 : Math.sign(v); G.st.x = dz(vx) * 0.6; G.st.y = dz(vy) * 0.45; ui.pad = { x: dz(vx), y: dz(vy) }; }      // a button is a steady nudge, not the stick thrown to its stop (measured: a thumb tapping full deflection lands hard)
 const onPad = (x, y) => { const P = padAt(); return Math.hypot(x - P.x, y - P.y) < P.d + P.s * 0.95; };
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (e.clientX < 84 * k && !onPad(e.clientX, e.clientY)) { touch.thr = { id: e.pointerId, y0: e.clientY, t0: G.thr }; } else if (touch.id == null && onPad(e.clientX, e.clientY)) { touch.id = e.pointerId; padSet(e.clientX, e.clientY); } try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+// his note (23 Nov 2026): "Drag your thumb across the screen to move the camera naturally... Allow looking around without accidentally changing
+// the plane's flight controls". A finger that lands anywhere but the four buttons and the power lever turns the view, and only the view.
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (e.clientX < 84 * k && !onPad(e.clientX, e.clientY)) { touch.thr = { id: e.pointerId, y0: e.clientY, t0: G.thr }; } else if (touch.id == null && onPad(e.clientX, e.clientY)) { touch.id = e.pointerId; padSet(e.clientX, e.clientY); }
+  else if (!ui.look && !onPad(e.clientX, e.clientY)) { ui.look = { id: e.pointerId, x: e.clientX, y: e.clientY }; } try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { if (!G) return; if (touch.thr && e.pointerId === touch.thr.id) { G.thr = clamp(touch.thr.t0 - (e.clientY - touch.thr.y0) / (H * 0.35), 0, 1); return; }
+  if (ui.look && e.pointerId === ui.look.id) { if (V3 && V3.look2) { const L2 = V3.look2; L2.yaw = clamp(L2.yaw + (e.clientX - ui.look.x) * 0.008, -Math.PI, Math.PI); L2.pitch = clamp(L2.pitch - (e.clientY - ui.look.y) * 0.006, -0.6, 0.9); L2.idle = 0; } ui.look.x = e.clientX; ui.look.y = e.clientY; return; }
   if (e.pointerId !== touch.id) return; padSet(e.clientX, e.clientY); });
-function endTouch(e) { if (touch.thr && e.pointerId === touch.thr.id) { touch.thr = null; return; } if (e.pointerId !== touch.id) return; touch.id = null; ui.pad = null; if (G) { G.st.x = 0; G.st.y = 0; } }
+function endTouch(e) { if (ui.look && e.pointerId === ui.look.id) { ui.look = null; if (V3 && V3.look2) V3.look2.idle = 0; return; } if (touch.thr && e.pointerId === touch.thr.id) { touch.thr = null; return; } if (e.pointerId !== touch.id) return; touch.id = null; ui.pad = null; if (G) { G.st.x = 0; G.st.y = 0; } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------
 const STEPS = W3 ? W3.Q : [{ pr: 2 }];      // the 3D picture's notches (tools/world3d.js): sharpness, shadows, reflections

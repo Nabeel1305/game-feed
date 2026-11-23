@@ -10,11 +10,11 @@
 // Lives: three whales lost (gone, line snapped, boat over). World: metres, x across, z ahead.
 
 const RULES = [
-  '<b>The chase:</b> the crew rows. Your left thumb steers. Row to the spout; she dives and comes up again.',
-  '<b>The throw:</b> hold your right thumb down: a ring shows where the harpoon will land. Move the ring onto her back (ahead of her: she is moving) and let go.',
-  '<b>The ride:</b> hold your right thumb to haul the line in: that tires her. Lift it to let the line run.',
+  '<b>The chase:</b> your crew rows and steers for her. Watch for her spout: she dives and comes up again.',
+  '<b>The throw:</b> hold your thumb anywhere: a ring shows where the harpoon will land. Slide it onto her back (a little ahead: she is moving) and let go.',
+  '<b>The ride:</b> hold your thumb anywhere to haul the line in: that tires her. Lift it to let the line run.',
   '<b>When her flukes rise and the water whitens, let go!</b> Haul through a run and the line snaps.',
-  'Keep the bow pointing at her (left thumb) or the boat heels over. Three whales lost and the voyage is over.',
+  'Three whales lost and the voyage is over.',
 ];
 const WEATHERS = ['overcast', 'storm', 'rain', 'mist', 'golden', 'sunset', 'morning', 'storm', 'overcast', 'dawn'];
 function weatherOf(N) { if (N <= 3) return ['morning', 'overcast', 'golden'][N - 1]; const R = rng(N * 2711 + 3); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
@@ -23,7 +23,7 @@ function makeCfg(N, help) {
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), slow = help ? 1.2 : 1;
   return { N, f, e, boss, help: !!help, lives: 3,
     whales: N <= 3 ? 1 : Math.round(x(1, 2.4, 25)) + (boss ? 1 : 0),
-    row: 5.2, turn: 0.9,                                              // boat speed m/s, turn rad/s
+    row: 5.2, turn: 1.3,                                              // boat speed m/s, turn rad/s
     up: x(9, 5, 30) * slow, down: x(5, 8, 30), wSpeed: x(2.2, 3.6, 30), shy: N < 5 ? 0 : x(0, 0.6, 30),    // surfacing
     range: 30, fly: 0.75, harpoons: 3, body: x(5.5, 4, 30) * slow,     // the throw: max distance, time in the air, how wide a target
     stamina: x(16, 26, 30), haulV: 7, runV: 9, lineMax: 220,          // the ride
@@ -58,6 +58,9 @@ function haul(G, on) { G.haul = !!on; }
 function step(G, dt) {
   if (G.over) return; G.t += dt; const c = G.cfg, b = G.boat, w = G.whale, R = G.rnd, L = lessonNow(G);
   if (G.gap > 0) { G.gap -= dt; if (G.gap <= 0) { if (!G.lesson && G.caught >= c.whales) { finish(G, true); return; } newWhale(G); } return; }
+  // 23 Nov 2026, his note: "Controls too complicated": the crew steers. In the chase they row for where she will come up (her heading), on the line
+  // they keep the bow on her; your one thumb only throws and hauls
+  if (w && G.ph !== 'done') { const up = G.ph === 'ride' || w.up, ahead = up ? 0 : 12, tx = w.x + Math.sin(w.h) * ahead, tz = w.z + Math.cos(w.h) * ahead; let e2 = Math.atan2(tx - b.x, tz - b.z) - b.h; while (e2 > Math.PI) e2 -= TAU; while (e2 < -Math.PI) e2 += TAU; G.steer = clamp(e2 * 2.5, -1, 1); }
   b.h += G.steer * c.turn * dt;
   if (G.ph === 'chase') {
     b.x += Math.sin(b.h) * c.row * dt; b.z += Math.cos(b.h) * c.row * dt;
@@ -111,7 +114,7 @@ function finish(G, win, why) {
 const LESSONS = {
   1: [{ id: 'throw', title: 'ROW, THEN THROW', how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
       { id: 'haul', title: 'HAUL WHEN SHE IS CALM', how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],
-  2: [{ id: 'bow', title: 'BOW TOWARDS HER', how: 'She swerves. Keep the bow pointing at her with your left thumb, or the boat heels over. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
+  2: [{ id: 'bow', title: 'SHE SWERVES', how: 'She swerves and runs: your crew keeps the bow on her. Hold to haul, let go when her flukes rise. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
   3: [{ id: 'lead', title: 'LEAD HER', how: 'This one is quicker. The harpoon takes a moment to fly: throw a little ahead of where she is going.', need: 1, ok: w => w === 'caught' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }

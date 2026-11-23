@@ -12,6 +12,9 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #gl{z-index:0}#cv{z-index:1}
+html.land body{position:fixed;left:0;top:0;width:100vh;height:100vw;transform-origin:0 0;transform:translateX(100vw) rotate(90deg);overflow:hidden}
+html.land #gl,html.land #cv{width:100vh!important;height:100vw!important}
+html.land .card{padding:8px 0}html.land .card h1{font-size:40px}html.land .btn{margin-top:8px;padding:11px}html.land .ov{align-items:flex-start}
 .tf{font-family:"Pacifico","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
 #pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
 #pauseBtn.hidden{display:none}
@@ -49,6 +52,18 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 </style>
 </head>
 <body>
+<script>
+// 23 Nov 2026, his note: "Make this game sideways. It will allow for more space to see and move the food": the kitchen is laid out wide.
+// On a phone held upright the whole page is turned a quarter (turn the phone sideways to play); the game sees a wide screen
+// (innerWidth/innerHeight swapped), and touches are turned back the same way (LAND.x / LAND.y).
+(() => { const realW = Object.getOwnPropertyDescriptor(window, 'innerWidth') || Object.getOwnPropertyDescriptor(Window.prototype, 'innerWidth');
+  const rw = () => document.documentElement.clientWidth || window.outerWidth, rh = () => document.documentElement.clientHeight || window.outerHeight;
+  const land = () => rh() > rw();
+  try { Object.defineProperty(window, 'innerWidth', { configurable: true, get: () => land() ? rh() : rw() }); Object.defineProperty(window, 'innerHeight', { configurable: true, get: () => land() ? rw() : rh() }); } catch (e) {}
+  const mark = () => document.documentElement.classList.toggle('land', land()); mark(); addEventListener('resize', mark);
+  window.LAND = { on: land, x: e => land() ? e.clientY : e.clientX, y: e => land() ? rw() - e.clientX : e.clientY };
+})();
+</script>
 <canvas id="gl"></canvas>
 <canvas id="cv"></canvas>
 <button id="skipTut" class="hidden">Skip tutorial ›</button>
@@ -131,7 +146,7 @@ const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
 const TF = '"Pacifico", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
 let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
-function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62, W > H ? H : 1e9) / 390; if (W > H) k = Math.min(W * 0.5, H) / 390; }
 addEventListener('resize', resize);
 const store = {
   get(key, d) { try { const v = localStorage.getItem('sh.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },

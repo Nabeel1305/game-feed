@@ -12,6 +12,9 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
 canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #gl{z-index:0}#cv{z-index:1}
+html.land body{position:fixed;left:0;top:0;width:100vh;height:100vw;transform-origin:0 0;transform:translateX(100vw) rotate(90deg);overflow:hidden}
+html.land #gl,html.land #cv{width:100vh!important;height:100vw!important}
+html.land .card{padding:8px 0}html.land .card h1{font-size:40px}html.land .btn{margin-top:8px;padding:11px}html.land .ov{align-items:flex-start}
 .tf{font-family:"Pacifico","Barlow Condensed",Impact,"Arial Narrow",sans-serif;font-weight:400;letter-spacing:1px}
 #pauseBtn{position:fixed;left:50%;transform:translateX(-50%);top:10px;z-index:3;width:40px;height:30px;border-radius:10px;border:0;background:rgba(0,0,0,.35);color:var(--ink);font-weight:800;cursor:pointer}
 #pauseBtn.hidden{display:none}
@@ -49,6 +52,18 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:
 </style>
 </head>
 <body>
+<script>
+// 23 Nov 2026, his note: "Make this game sideways. It will allow for more space to see and move the food": the kitchen is laid out wide.
+// On a phone held upright the whole page is turned a quarter (turn the phone sideways to play); the game sees a wide screen
+// (innerWidth/innerHeight swapped), and touches are turned back the same way (LAND.x / LAND.y).
+(() => { const realW = Object.getOwnPropertyDescriptor(window, 'innerWidth') || Object.getOwnPropertyDescriptor(Window.prototype, 'innerWidth');
+  const rw = () => document.documentElement.clientWidth || window.outerWidth, rh = () => document.documentElement.clientHeight || window.outerHeight;
+  const land = () => rh() > rw();
+  try { Object.defineProperty(window, 'innerWidth', { configurable: true, get: () => land() ? rh() : rw() }); Object.defineProperty(window, 'innerHeight', { configurable: true, get: () => land() ? rw() : rh() }); } catch (e) {}
+  const mark = () => document.documentElement.classList.toggle('land', land()); mark(); addEventListener('resize', mark);
+  window.LAND = { on: land, x: e => land() ? e.clientY : e.clientX, y: e => land() ? rw() - e.clientX : e.clientY };
+})();
+</script>
 <canvas id="gl"></canvas>
 <canvas id="cv"></canvas>
 <button id="skipTut" class="hidden">Skip tutorial ›</button>
@@ -4694,7 +4709,7 @@ const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const $ = id => document.getElementById(id);
 const TF = '"Pacifico", "Barlow Condensed", Impact, "Arial Narrow", sans-serif', BC = '"Barlow Condensed", "Arial Narrow", sans-serif';
 let W = 390, H = 844, DPR = 1, k = 1, DPR_CAP = 2;
-function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62) / 390; }
+function resize() { DPR = Math.min(devicePixelRatio || 1, DPR_CAP); W = innerWidth; H = innerHeight; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR); k = Math.min(W, H * 0.62, W > H ? H : 1e9) / 390; if (W > H) k = Math.min(W * 0.5, H) / 390; }
 addEventListener('resize', resize);
 const store = {
   get(key, d) { try { const v = localStorage.getItem('sh.' + key); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -5102,8 +5117,18 @@ const W3 = (() => {
     list.forEach((t, i) => { d.position.set(t.x, t.y, t.z); d.rotation.set(t.lean || 0, t.rot || 0, (t.lean2 || 0)); d.scale.setScalar(t.s || 1); d.scale.y *= t.sy || 1; d.updateMatrix(); m.setMatrixAt(i, d.matrix); c.setHSL(0.28 + (t.hue || 0) * 0.06, 0.35, 0.35 + (t.shade || 0) * 0.25); m.setColorAt(i, c); });
     m.castShadow = !!o.shadow; m.receiveShadow = true; scene.add(m); return m;
   }
+  // see-through, never cut away (23 Nov 2026, his words on Vine: "They shouldn't disappear... render it like invisible, but it should still be kind of
+  // seeable"): a material passed to seeThrough() is drawn as a fine screen (three pixels in four left out) where it stands between the camera and
+  // the player, so the player is always seen and nothing vanishes. Each frame the game says where the camera and the player are: setSee(a, b, r).
+  const SEE = { seeA: { value: V(0, 0, 0) }, seeB: { value: V(0, 0, 0) }, seeR: { value: 0 } };
+  function seeThrough(mat) { if (!mat || mat.userData.see) return mat; mat.userData.see = true; const prev = mat.onBeforeCompile;
+    mat.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r); Object.assign(sh.uniforms, SEE);
+      sh.vertexShader = 'varying vec3 vSeeW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvec4 seeW = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\nseeW = instanceMatrix * seeW;\n#endif\nvSeeW = (modelMatrix * seeW).xyz;');
+      sh.fragmentShader = 'varying vec3 vSeeW; uniform vec3 seeA; uniform vec3 seeB; uniform float seeR;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', '#include <clipping_planes_fragment>\nif (seeR > 0.0) { vec3 ab = seeB - seeA; float u = clamp(dot(vSeeW - seeA, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0); float dd = length(vSeeW - (seeA + ab * u)); float f = (1.0 - smoothstep(seeR * 0.55, seeR, dd)) * step(0.01, u) * step(u, 0.93); if (f > 0.0) { vec2 q = mod(floor(gl_FragCoord.xy), 2.0); float bay = (mix(mix(0.0, 3.0, q.y), mix(2.0, 1.0, q.y), q.x) + 0.5) / 4.0; if (bay < f * 0.76) discard; } }'); };
+    mat.customProgramCacheKey = () => 'see' + (prev ? prev.toString().length : 0); mat.needsUpdate = true; return mat; }
+  function setSee(a, b, r) { SEE.seeA.value.copy(a); SEE.seeB.value.copy(b); SEE.seeR.value = r || 0; }
   function screen(v) { const p = v.clone().project(cam), [w, h] = dims(); return { x: (p.x + 1) / 2 * w, y: (1 - p.y) / 2 * h, front: p.z < 1 }; }
-  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, rng: rngW, PRESETS, Q, S,
+  return { init, setSky, setQuality, setFocus, render, resize, water, terrain, pines, normalTex, grainTex, screen, seeThrough, setSee, rng: rngW, PRESETS, Q, S,
     get q() { return q; }, get ok() { return ok; }, get R() { return R; }, get scene() { return scene; }, get cam() { return cam; }, get sun() { return sun; }, get hemi() { return hemi; }, T };
 })();
 
@@ -5138,6 +5163,15 @@ const DISHES = [
   { id: 'salmon', name: 'Salmon salad', items: ['salmon', 'lettuce', 'tomato'], from: 4 },
   { id: 'steak', name: 'Steak & onions', items: ['steak', 'onion'], from: 6 },
   { id: 'stack', name: 'Pancake stack', items: ['pancake', 'pancake'], from: 8 },
+  // 23 Nov 2026, his note: "make the orders more creative and complex as time goes on": more dishes, bigger ones later, and later shifts lean to them
+  { id: 'garden', name: 'Garden toast', items: ['toast', 'tomato', 'lettuce'], from: 3 },
+  { id: 'onionburger', name: 'Onion burger', items: ['bun', 'patty', 'onion'], from: 5 },
+  { id: 'lox', name: 'Salmon & eggs', items: ['toast', 'salmon', 'egg'], from: 9 },
+  { id: 'breakfast', name: 'Big breakfast', items: ['toast', 'egg', 'pancake', 'tomato'], from: 11 },
+  { id: 'surfturf', name: 'Surf & turf', items: ['steak', 'salmon', 'onion'], from: 13 },
+  { id: 'double', name: 'Double deluxe', items: ['bun', 'patty', 'patty', 'lettuce', 'tomato', 'onion'], from: 16 },
+  { id: 'tower', name: 'Pancake tower', items: ['pancake', 'pancake', 'pancake'], from: 18 },
+  { id: 'feast', name: 'The works', items: ['steak', 'egg', 'toast', 'tomato', 'onion'], from: 22 },
 ];
 const TRAY = ['patty', 'steak', 'salmon', 'egg', 'pancake', 'lettuce', 'tomato', 'onion', 'bun', 'toast'];
 const GOLD = [0.78, 1.12], BURNT = 1.3;
@@ -5159,7 +5193,8 @@ function newGame(N, o = {}) {
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
   return G;
 }
-function newTicket(G) { const c = G.cfg, R = G.rnd, L = lessonNow(G), pool = DISHES.filter(d => d.from <= Math.max(G.N, 1)); const d = L && L.dish ? DISHES.find(q => q.id === L.dish) : pool[(R() * pool.length) | 0];
+function newTicket(G) { const c = G.cfg, R = G.rnd, L = lessonNow(G), pool = DISHES.filter(d => d.from <= Math.max(G.N, 1)), wts = pool.map(q => 1 + Math.max(0, q.items.length - 1) * Math.min(1.5, G.N / 15) + (q.from > G.N - 4 ? 1 : 0)), tw = wts.reduce((a2, b2) => a2 + b2, 0); let r2 = R() * tw, pick = pool[0]; for (let i = 0; i < pool.length; i++) { r2 -= wts[i]; if (r2 <= 0) { pick = pool[i]; break; } }      /* bigger dishes, and the newest, come more often later */
+  const d = L && L.dish ? DISHES.find(q => q.id === L.dish) : pick;
   G.tickets.push({ dish: d, wait: 0, max: c.patience * (L ? 3 : 1), id: ++G.made }); G.ev.push({ k: 'ticket', name: d.name }); }
 // ---------- the moves ----------
 // take a food from the trays to where it goes ('pan' i, 'board', 'plate')
@@ -5275,13 +5310,18 @@ function fxStep(dt) {
   if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; }
 }
 // where things are on the counter (x across, z toward you)
-function spots(G) { const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: (i - (n - 1) / 2) * 0.27, z: -0.42 }); return { pans, board: { x: 0.2, z: -0.13 }, plate: { x: -0.1, z: -0.13 }, bin: { x: -0.33, z: -0.15 }, pass: { x: 0, z: -0.72 },
+// the kitchen laid out wide (23 Nov 2026, sideways): the trays on the left, the hob in the middle at the back, the plate, the board and the
+// bin to the right, the pass behind
+function spots(G) { if (W > H) { const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: -0.02 + (i - (n - 1) / 2) * 0.28, z: -0.4 });
+    return { pans, plate: { x: 0.2, z: -0.06 }, board: { x: 0.5, z: -0.1 }, bin: { x: 0.79, z: -0.12 }, pass: { x: 0.1, z: -0.72 },
+      tray: TRAY.map((f, i) => ({ food: f, x: -0.86 + (i % 5) * 0.135, z: -0.2 + Math.floor(i / 5) * 0.16 })) }; }
+  const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: (i - (n - 1) / 2) * 0.27, z: -0.42 }); return { pans, board: { x: 0.2, z: -0.13 }, plate: { x: -0.1, z: -0.13 }, bin: { x: -0.33, z: -0.15 }, pass: { x: 0, z: -0.72 },
   tray: TRAY.map((f, i) => ({ food: f, x: ((i % 5) - 2) * 0.145, z: 0.08 + Math.floor(i / 5) * 0.125 })) }; }
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 60, far: 3000, near: 0.02 })) { V3 = { none: true }; return V3; }
   const S = W3.scene, R0 = W3.rng(8);
   const steel = new T.MeshStandardMaterial({ color: 0x9da3a9, metalness: 0.8, roughness: 0.4, envMapIntensity: 0.55, map: W3.grainTex(128, 3, 230, 18, 6) });
-  const counter = new T.Mesh(new T.BoxGeometry(1.8, 0.06, 1.3), steel); counter.position.set(0, TOP - 0.03, -0.25); counter.receiveShadow = true; S.add(counter);
+  const counter = new T.Mesh(new T.BoxGeometry(2.2, 0.06, 1.3), steel); counter.position.set(0, TOP - 0.03, -0.25); counter.receiveShadow = true; S.add(counter);
   const glass = new T.Mesh(new T.BoxGeometry(0.95, 0.012, 0.32), new T.MeshStandardMaterial({ color: 0x090a0c, metalness: 0.2, roughness: 0.08 })); glass.position.set(0, TOP + 0.006, -0.42); S.add(glass);
   // the back wall: white tiles, with a window onto the street
   const tc = document.createElement('canvas'); tc.width = 256; tc.height = 128; { const g = tc.getContext('2d'); g.fillStyle = '#c9c6bd'; g.fillRect(0, 0, 256, 128); for (let y = 0; y < 128; y += 16) for (let x = (y / 16 % 2) * 16; x < 256; x += 32) { g.fillStyle = `hsl(45,${10 + R0() * 6}%,${90 + R0() * 6}%)`; g.fillRect(x + 1, y + 1, 30, 14); } }
@@ -5299,7 +5339,7 @@ function buildWorld() {
   const kitL = new T.PointLight(0xfff0dc, 3.5, 4, 1.4); kitL.position.set(0.3, TOP + 1.3, 0.2); kitL.castShadow = true; S.add(kitL);
   // burners, pans, board, knife, plate, bin
   const burnM = new T.MeshStandardMaterial({ color: 0x220400, emissive: 0xff3a10, emissiveIntensity: 0.9, transparent: true, opacity: 0.85 });
-  const ironM = new T.MeshStandardMaterial({ color: 0x1c1d20, metalness: 0.5, roughness: 0.45 }), woodM = new T.MeshStandardMaterial({ color: 0xa47a4c, roughness: 0.75, map: W3.grainTex(128, 15, 180, 50, 4) });
+  const ironM = new T.MeshStandardMaterial({ color: 0x5a5e66, metalness: 0.75, roughness: 0.35, side: T.DoubleSide }), woodM = new T.MeshStandardMaterial({ color: 0xa47a4c, roughness: 0.75, map: W3.grainTex(128, 15, 180, 50, 4) });
   const pans = [], burners = []; for (let i = 0; i < 3; i++) { const g = new T.Group(); const pan = new T.Mesh(new T.CylinderGeometry(0.11, 0.095, 0.035, 28, 1, true), ironM); pan.position.y = 0.0175; const base = new T.Mesh(new T.CircleGeometry(0.095, 28), ironM); base.rotation.x = -Math.PI / 2; base.position.y = 0.004;
     const h = new T.Mesh(new T.BoxGeometry(0.03, 0.015, 0.16), ironM); h.position.set(0, 0.03, 0.19); g.add(pan, base, h); g.traverse(o => o.castShadow = true); S.add(g); pans.push(g);
     const r = new T.Mesh(new T.RingGeometry(0.06, 0.1, 32), burnM); r.rotation.x = -Math.PI / 2; S.add(r); burners.push(r); }
@@ -5318,19 +5358,31 @@ function buildWorld() {
 // food: a little model for each kind; cooked things change colour with how done the side you can see is
 const RAWC = { patty: [0.62, 0.27, 0.27], steak: [0.55, 0.2, 0.2], salmon: [0.96, 0.55, 0.45], pancake: [0.96, 0.88, 0.66], egg: [0.98, 0.98, 0.95] };
 const GOLDC = { patty: [0.42, 0.24, 0.12], steak: [0.36, 0.2, 0.11], salmon: [0.86, 0.55, 0.28], pancake: [0.82, 0.55, 0.22], egg: [1, 0.97, 0.9] };
+// 23 Nov 2026, his note: "impove the graphics with the food": painted surfaces (mince, marbling, the lines of a salmon fillet, pancake
+// bubbles, crumb and crust), sesame on the bun, a stalk on the tomato, a root on the onion, layered lettuce leaves
+const FOODTEX = {};
+function foodTex(kind) { if (FOODTEX[kind]) return FOODTEX[kind]; const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), R = W3.rng(kind.length * 31 + 7);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 128, 128);
+  if (kind === 'mince') for (let i = 0; i < 900; i++) { const v = 150 + R() * 105; g.fillStyle = `rgb(${v},${v * 0.82},${v * 0.82})`; g.beginPath(); g.arc(R() * 128, R() * 128, 1 + R() * 2.2, 0, 7); g.fill(); }
+  if (kind === 'marble') { g.strokeStyle = 'rgba(255,240,235,.9)'; for (let i = 0; i < 14; i++) { g.lineWidth = 0.8 + R() * 2.2; g.beginPath(); let x = R() * 128, y = R() * 128; g.moveTo(x, y); for (let j = 0; j < 6; j++) { x += (R() - 0.5) * 40; y += (R() - 0.3) * 30; g.lineTo(x, y); } g.stroke(); } }
+  if (kind === 'fillet') { for (let i = -128; i < 256; i += 11) { g.strokeStyle = 'rgba(255,250,245,.95)'; g.lineWidth = 2.4; g.beginPath(); g.moveTo(i, 0); g.quadraticCurveTo(i + 20, 64, i + 6, 128); g.stroke(); } }
+  if (kind === 'batter') { g.fillStyle = '#f3e2b8'; g.fillRect(0, 0, 128, 128); for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(160,110,50,${0.2 + R() * 0.3})`; g.beginPath(); g.arc(R() * 128, R() * 128, 0.8 + R() * 2.4, 0, 7); g.fill(); } }
+  if (kind === 'crumb') for (let i = 0; i < 1400; i++) { const v = 200 + R() * 55; g.fillStyle = `rgb(${v},${v * 0.92},${v * 0.8})`; g.fillRect(R() * 128, R() * 128, 1 + R() * 2, 1 + R() * 2); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return (FOODTEX[kind] = t); }
 function foodMesh(food, chopped) {
-  const T = THREE, g = new T.Group(), M = c => new T.MeshStandardMaterial({ color: new T.Color(...(Array.isArray(c) ? c : [0, 0, 0])), roughness: 0.55 }), add = (geo, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); return m; };
+  const T = THREE, g = new T.Group(), M = (c, tex) => new T.MeshStandardMaterial({ color: new T.Color(...(Array.isArray(c) ? c : [0, 0, 0])), roughness: 0.55, map: tex ? foodTex(tex) : null }), add = (geo, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); return m; };
   const R0 = Math.random;
-  if (food === 'patty') add(new T.CylinderGeometry(0.048, 0.05, 0.018, 20), M(RAWC.patty), 0, 0.009);
-  if (food === 'steak') add(new T.SphereGeometry(0.06, 20, 10), M(RAWC.steak), 0, 0.012, 0, 1.15, 0.22, 0.8);
-  if (food === 'salmon') add(new T.BoxGeometry(0.11, 0.024, 0.055), M(RAWC.salmon), 0, 0.012);
-  if (food === 'pancake') add(new T.CylinderGeometry(0.058, 0.06, 0.012, 28), M(RAWC.pancake), 0, 0.006);
+  if (food === 'patty') add(new T.CylinderGeometry(0.048, 0.05, 0.018, 20), M(RAWC.patty, 'mince'), 0, 0.009);
+  if (food === 'steak') { add(new T.SphereGeometry(0.06, 20, 10), M(RAWC.steak, 'marble'), 0, 0.012, 0, 1.15, 0.22, 0.8); add(new T.TorusGeometry(0.05, 0.006, 6, 24, 2.2), M([0.95, 0.9, 0.82]), 0, 0.016, 0, 1.15, 0.8, 1).rotation.x = Math.PI / 2; }      /* a rim of fat */
+  if (food === 'salmon') { add(new T.CylinderGeometry(0.03, 0.03, 0.11, 18, 1, false, 0, Math.PI), M(RAWC.salmon, 'fillet'), 0, 0.004, 0, 1, 1, 1).rotation.set(0, 0, Math.PI / 2); add(new T.BoxGeometry(0.11, 0.004, 0.058), M([0.55, 0.55, 0.58]), 0, 0.002); }      /* a fillet on its silver skin */
+  if (food === 'pancake') add(new T.CylinderGeometry(0.058, 0.06, 0.012, 28), M(RAWC.pancake, 'batter'), 0, 0.006);
   if (food === 'egg') { add(new T.CylinderGeometry(0.052, 0.055, 0.006, 24), M(RAWC.egg), 0, 0.003, 0, 1, 1, 0.85); add(new T.SphereGeometry(0.018, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), new T.MeshStandardMaterial({ color: 0xffb21a, roughness: 0.2 }), 0.008, 0.005, 0.004); }
-  if (food === 'bun') { add(new T.SphereGeometry(0.055, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), M([0.82, 0.55, 0.25]), 0, 0.012, 0, 1, 0.55, 1); add(new T.CylinderGeometry(0.055, 0.055, 0.014, 20), M([0.9, 0.75, 0.5]), 0, 0.007); }
-  if (food === 'toast') add(new T.BoxGeometry(0.09, 0.012, 0.09), M([0.8, 0.58, 0.3]), 0, 0.006);
-  if (food === 'lettuce') { if (!chopped) for (let i = 0; i < 5; i++) add(new T.SphereGeometry(0.03, 10, 6), M([0.35 + R0() * 0.1, 0.62, 0.22]), (R0() - 0.5) * 0.04, 0.02, (R0() - 0.5) * 0.04, 1.3, 0.5, 1); else for (let i = 0; i < 14; i++) add(new T.BoxGeometry(0.03, 0.004, 0.008), M([0.4, 0.66, 0.24]), (R0() - 0.5) * 0.07, 0.004 + R0() * 0.008, (R0() - 0.5) * 0.06); }
-  if (food === 'tomato') { if (!chopped) add(new T.SphereGeometry(0.032, 18, 12), M([0.85, 0.12, 0.08]), 0, 0.03); else for (let i = 0; i < 4; i++) add(new T.CylinderGeometry(0.03, 0.03, 0.006, 16), M([0.88, 0.2, 0.12]), (i - 1.5) * 0.022, 0.004, 0); }
-  if (food === 'onion') { if (!chopped) add(new T.SphereGeometry(0.03, 18, 12), M([0.8, 0.66, 0.75]), 0, 0.03); else for (let i = 0; i < 4; i++) add(new T.TorusGeometry(0.022 - i * 0.004, 0.003, 6, 18), M([0.95, 0.9, 0.92]), (i - 1.5) * 0.015, 0.004, 0).rotation.x = Math.PI / 2; }
+  if (food === 'bun') { add(new T.SphereGeometry(0.055, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), M([0.86, 0.56, 0.24]), 0, 0.012, 0, 1, 0.55, 1); add(new T.CylinderGeometry(0.055, 0.055, 0.014, 20), M([0.95, 0.85, 0.65], 'crumb'), 0, 0.007);
+    const sm = M([0.98, 0.95, 0.85]); for (let i = 0; i < 16; i++) { const a = R0() * 6.28, r = Math.sqrt(R0()) * 0.04, yy = 0.012 + 0.03 * Math.sqrt(Math.max(0, 1 - (r / 0.055) ** 2)); add(new T.SphereGeometry(0.004, 6, 4), sm, Math.cos(a) * r, yy, Math.sin(a) * r, 1.6, 0.6, 1).rotation.y = a; } }      /* sesame */
+  if (food === 'toast') { add(new T.BoxGeometry(0.09, 0.012, 0.09), M([0.62, 0.38, 0.16]), 0, 0.006); add(new T.BoxGeometry(0.078, 0.0125, 0.078), M([0.95, 0.82, 0.58], 'crumb'), 0, 0.0065); }      /* crust round a crumb */
+  if (food === 'lettuce') { if (!chopped) for (let i = 0; i < 9; i++) { const l = add(new T.SphereGeometry(0.03, 12, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), M([0.42 + R0() * 0.18, 0.72 + R0() * 0.12, 0.28]), (R0() - 0.5) * 0.04, 0.008 + i * 0.003, (R0() - 0.5) * 0.04, 1.35, 0.55, 1.1); l.rotation.set((R0() - 0.5) * 0.9, R0() * 6, (R0() - 0.5) * 0.9); }      /* a head of leaves */ else for (let i = 0; i < 14; i++) add(new T.BoxGeometry(0.03, 0.004, 0.008), M([0.4, 0.66, 0.24]), (R0() - 0.5) * 0.07, 0.004 + R0() * 0.008, (R0() - 0.5) * 0.06); }
+  if (food === 'tomato') { if (!chopped) { add(new T.SphereGeometry(0.032, 18, 12), M([0.85, 0.12, 0.08]), 0, 0.03, 0, 1, 0.86, 1); for (let i = 0; i < 5; i++) add(new T.ConeGeometry(0.004, 0.022, 4), M([0.25, 0.5, 0.18]), Math.cos(i * 1.26) * 0.008, 0.058, Math.sin(i * 1.26) * 0.008).rotation.set(Math.sin(i * 1.26) * 1.3, 0, -Math.cos(i * 1.26) * 1.3); } else for (let i = 0; i < 4; i++) add(new T.CylinderGeometry(0.03, 0.03, 0.006, 16), M([0.88, 0.2, 0.12]), (i - 1.5) * 0.022, 0.004, 0); }
+  if (food === 'onion') { if (!chopped) { add(new T.SphereGeometry(0.03, 18, 12), M([0.72, 0.46, 0.62]), 0, 0.03); add(new T.ConeGeometry(0.008, 0.02, 8), M([0.82, 0.7, 0.55]), 0, 0.066); } else for (let i = 0; i < 4; i++) add(new T.TorusGeometry(0.022 - i * 0.004, 0.003, 6, 18), M([0.95, 0.9, 0.92]), (i - 1.5) * 0.015, 0.004, 0).rotation.x = Math.PI / 2; }
   return g;
 }
 function shade(m, food, s) { const a = RAWC[food], b = GOLDC[food]; if (!a) return; const c = s < 1 ? a.map((v, i) => v + (b[i] - v) * Math.min(1, s / 0.95)) : b.map(v => v * Math.max(0.12, 1 - (s - 1.05) * 2.4)); m.traverse(o => { if (o.isMesh && o.material.color && !(food === 'egg' && o.geometry.type === 'SphereGeometry')) o.material.color.setRGB(c[0], c[1], c[2]); }); }
@@ -5372,7 +5424,8 @@ function draw(now, dt) {
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D kitchen.', W / 2, H / 2); return; }
   const T = V.T, cam = W3.cam, g = G || idleG(), t = now, sp = spots(g); setWeather(g);
   const asp = innerWidth / innerHeight; /* 22 Nov 2026 (the audit): on a phone the camera looks more nearly straight down, so the hob, the board and the food fill the screen instead of a dark wall above and glare below */
-  if (asp < 0.6) { cam.position.set(0, TOP + 1.5, 0.2); cam.fov = 60; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.34); } else { cam.position.set(0, TOP + 0.95, 0.62); cam.fov = 50; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.4); }
+  if (asp > 1.3) { cam.position.set(-0.05, TOP + 1.05, 0.42); cam.fov = 48; cam.updateProjectionMatrix(); cam.lookAt(-0.05, TOP, -0.3); }      // sideways: the whole counter, a little from the front
+  else if (asp < 0.6) { cam.position.set(0, TOP + 1.5, 0.2); cam.fov = 60; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.34); } else { cam.position.set(0, TOP + 0.95, 0.62); cam.fov = 50; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.4); }
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   // stations
   V.pans.forEach((p, i) => { const s = sp.pans[i]; p.visible = V.burners[i].visible = !!s; if (s) { place(p, s.x, s.z); place(V.burners[i], s.x, s.z, TOP + 0.013); V.burners[i].material.opacity = 0.6 + Math.sin(t * 7 + i) * 0.1; } });
@@ -5560,13 +5613,13 @@ function hitAt(x, y) { const sp = spots(G), d = (s, r) => { const p = scr(s.x, s
   for (let i = 0; i < G.pans.length; i++) if (d(sp.pans[i], 46)) return { kind: 'pan', i };
   if (d(sp.board, 50)) return { kind: 'board' }; if (d(sp.plate, 50)) return { kind: 'plate' }; if (d(sp.bin, 40)) return { kind: 'bin' };
   const pass = scr(0, -0.72, TOP + 0.22); if (y < pass.y + 30 * k && Math.abs(x - pass.x) < W * 0.45) return { kind: 'pass' }; return null; }
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const h = hitAt(e.clientX, e.clientY); if (!h) return;
-  ui.drag = { id: e.pointerId, from: h, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, moved: false, t0: performance.now(), lastDir: 0, label: h.kind === 'tray' ? FOOD[h.food].name : h.kind === 'pan' && G.pans[h.i] ? FOOD[G.pans[h.i].food].name : h.kind === 'board' && G.board ? FOOD[G.board.food].name : h.kind === 'plate' && G.plate.length ? 'Plate' : null };
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const h = hitAt(LAND.x(e), LAND.y(e)); if (!h) return;
+  ui.drag = { id: e.pointerId, from: h, x0: LAND.x(e), y0: LAND.y(e), x: LAND.x(e), y: LAND.y(e), moved: false, t0: performance.now(), lastDir: 0, label: h.kind === 'tray' ? FOOD[h.food].name : h.kind === 'pan' && G.pans[h.i] ? FOOD[G.pans[h.i].food].name : h.kind === 'board' && G.board ? FOOD[G.board.food].name : h.kind === 'plate' && G.plate.length ? 'Plate' : null };
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; if (Math.hypot(d.x - d.x0, d.y - d.y0) > 12 * k) d.moved = true;
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = LAND.x(e); d.y = LAND.y(e); if (Math.hypot(d.x - d.x0, d.y - d.y0) > 12 * k) d.moved = true;
   // chopping: each sweep across the board, back or forth, is one chop
-  if (d.from.kind === 'board' && G.board && G.board.chops < FOOD[G.board.food].chops) { const dx = e.clientX - (d.lx == null ? d.x0 : d.lx); if (Math.abs(dx) > 26 * k) { const dir = Math.sign(dx); if (dir !== d.lastDir) { chop(G); d.lastDir = dir; d.chopped = true; } d.lx = e.clientX; } } });
-function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (!G || G.over || paused) return; const to = hitAt(e.clientX, e.clientY), f = d.from;
+  if (d.from.kind === 'board' && G.board && G.board.chops < FOOD[G.board.food].chops) { const dx = LAND.x(e) - (d.lx == null ? d.x0 : d.lx); if (Math.abs(dx) > 26 * k) { const dir = Math.sign(dx); if (dir !== d.lastDir) { chop(G); d.lastDir = dir; d.chopped = true; } d.lx = LAND.x(e); } } });
+function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (!G || G.over || paused) return; const to = hitAt(LAND.x(e), LAND.y(e)), f = d.from;
   if (!d.moved) { if (f.kind === 'pan') flip(G, f.i); return; }
   if (d.chopped) return; if (!to) return;
   if (f.kind === 'tray') { if (to.kind === 'pan') take(G, f.food, 'pan', G.pans[to.i] ? null : to.i); else if (to.kind === 'board') take(G, f.food, 'board'); else if (to.kind === 'plate') take(G, f.food, 'plate'); }

@@ -52,6 +52,12 @@
    "when": "23 Nov, said in the chat",
    "said": "anytime I try to click the side button that'll take it up, it just takes me to the joystick... you have to make the joystick in a single location... If you press this one, it goes up in altitude. If you press this one, it goes down in altitude... left... right. That was fine. You don't need the joystick. But... when I tried to bring it down in altitude, it doesn't bring it down.",
    "did": "Four buttons that never move: UP, DOWN, LEFT, RIGHT. Press and hold. No joystick. DOWN takes the plane down and UP takes it up, on every flight including the first."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, written on this page",
+   "said": "Pilot — fixes needed\n\n- Longer viewing distance: Render the world farther ahead so you can see distant terrain and the horizon clearly.\n- Better surroundings: Improve the landscape and environment graphics. The plane itself looks fine.\n- Clear starting location: Start on a recognisable runway, ready for takeoff. The current starting point looks like a mountain and is confusing.\n- Takeoff and landing: Allow a complete flight from taking off to descending and successfully landing.\n- Look around: Drag your thumb across the screen to move the camera naturally—right to look right, left to look left, and vertically to look up or down. Allow looking around without accidentally changing the plane’s flight controls.\n- Destination waypoint: Clearly mark where you must fly and which runway you must land on, with useful direction and distance guidance.\n- Mission progression: Begin with straightforward flights and landings, then make missions increasingly challenging.\n- Landing feedback: Clearly recognise a successful landing and explain when an attempt fails.",
+   "did": "Rebuilt. Every flight now starts lined up on runway 36 at the home airport: push the power lever up, and at ROTATE hold UP to take off. Then fly to the destination airport (its name, runway number, distance and a gold arrow are always on screen, with a gold beam over the runway and a gold ring where you line up), come down the slope (two white, two red lights) and land and stop. Drag anywhere on the open screen to look around (right looks right, up looks up); it never touches the controls, and the view swings back when you let go. You can now see 40-60 km on a clear day, with fields, woods, villages, a river, lakes and mountains on the horizon. Flight 1 is short and straight; later flights add turns, a waypoint ring, runways at an angle, crosswind and weather. A landing says BUTTER/SMOOTH/LANDED SAFELY with where you touched down; a failed one says exactly what went wrong and what to do next time."
   }
  ],
  "hunter": [
@@ -288,6 +294,22 @@
    "when": "23 Nov, your review (evening)",
    "said": "Fix controls make sure it can actually be beat by a human otherwise its good",
    "did": "Your finger had to land exactly on the clay's edge or it did nothing. Now it grabs the wall at that height wherever it lands: slide out to widen, in to narrow. Robot players of every skill win it (an ordinary one levels 1-20)."
+  }
+ ],
+ "whaling": [
+  {
+   "kind": "yours",
+   "when": "23 Nov, written on this page",
+   "said": "Controls too complicated. Fix graphics when it comes to rowing and I seem to be able to phase through the ways no more physical impossibilites ",
+   "did": "One thumb now: hold anywhere to row, the crew steers the boat towards the whale for you, and you throw when the harpoon ring is gold. The oars now dip into the water and sweep back in a proper rowing stroke, and the boat rides on the waves instead of sinking through them (the swell is lower and the boat sits on top of it)."
+  }
+ ],
+ "cook": [
+  {
+   "kind": "yours",
+   "when": "23 Nov, written on this page",
+   "said": "Make this game sideways. It will allow for more space to see and move the food and impove the graphics with the food. And make sure everything that is being ordered is actually something there that i can make. And make the orders more creative and complex as tine goes on",
+   "did": "The kitchen is now sideways (landscape), with the trays, pans, board and plate spread across the wider screen. The food has new pictures: marbled steak, fish fillet with its skin, sesame buns, toast with crust, leafy lettuce, tomatoes with their stalks. Every order is checked to be something you can make from the trays, and 8 new, bigger dishes (a garden burger, a double, a tower, a surf-and-turf, a breakfast plate, a feast and more) come in as the levels go on."
   }
  ]
 }

@@ -13,13 +13,18 @@ function fxStep(dt) {
   if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; }
 }
 // where things are on the counter (x across, z toward you)
-function spots(G) { const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: (i - (n - 1) / 2) * 0.27, z: -0.42 }); return { pans, board: { x: 0.2, z: -0.13 }, plate: { x: -0.1, z: -0.13 }, bin: { x: -0.33, z: -0.15 }, pass: { x: 0, z: -0.72 },
+// the kitchen laid out wide (23 Nov 2026, sideways): the trays on the left, the hob in the middle at the back, the plate, the board and the
+// bin to the right, the pass behind
+function spots(G) { if (W > H) { const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: -0.02 + (i - (n - 1) / 2) * 0.28, z: -0.4 });
+    return { pans, plate: { x: 0.2, z: -0.06 }, board: { x: 0.5, z: -0.1 }, bin: { x: 0.79, z: -0.12 }, pass: { x: 0.1, z: -0.72 },
+      tray: TRAY.map((f, i) => ({ food: f, x: -0.86 + (i % 5) * 0.135, z: -0.2 + Math.floor(i / 5) * 0.16 })) }; }
+  const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: (i - (n - 1) / 2) * 0.27, z: -0.42 }); return { pans, board: { x: 0.2, z: -0.13 }, plate: { x: -0.1, z: -0.13 }, bin: { x: -0.33, z: -0.15 }, pass: { x: 0, z: -0.72 },
   tray: TRAY.map((f, i) => ({ food: f, x: ((i % 5) - 2) * 0.145, z: 0.08 + Math.floor(i / 5) * 0.125 })) }; }
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 60, far: 3000, near: 0.02 })) { V3 = { none: true }; return V3; }
   const S = W3.scene, R0 = W3.rng(8);
   const steel = new T.MeshStandardMaterial({ color: 0x9da3a9, metalness: 0.8, roughness: 0.4, envMapIntensity: 0.55, map: W3.grainTex(128, 3, 230, 18, 6) });
-  const counter = new T.Mesh(new T.BoxGeometry(1.8, 0.06, 1.3), steel); counter.position.set(0, TOP - 0.03, -0.25); counter.receiveShadow = true; S.add(counter);
+  const counter = new T.Mesh(new T.BoxGeometry(2.2, 0.06, 1.3), steel); counter.position.set(0, TOP - 0.03, -0.25); counter.receiveShadow = true; S.add(counter);
   const glass = new T.Mesh(new T.BoxGeometry(0.95, 0.012, 0.32), new T.MeshStandardMaterial({ color: 0x090a0c, metalness: 0.2, roughness: 0.08 })); glass.position.set(0, TOP + 0.006, -0.42); S.add(glass);
   // the back wall: white tiles, with a window onto the street
   const tc = document.createElement('canvas'); tc.width = 256; tc.height = 128; { const g = tc.getContext('2d'); g.fillStyle = '#c9c6bd'; g.fillRect(0, 0, 256, 128); for (let y = 0; y < 128; y += 16) for (let x = (y / 16 % 2) * 16; x < 256; x += 32) { g.fillStyle = `hsl(45,${10 + R0() * 6}%,${90 + R0() * 6}%)`; g.fillRect(x + 1, y + 1, 30, 14); } }
@@ -37,7 +42,7 @@ function buildWorld() {
   const kitL = new T.PointLight(0xfff0dc, 3.5, 4, 1.4); kitL.position.set(0.3, TOP + 1.3, 0.2); kitL.castShadow = true; S.add(kitL);
   // burners, pans, board, knife, plate, bin
   const burnM = new T.MeshStandardMaterial({ color: 0x220400, emissive: 0xff3a10, emissiveIntensity: 0.9, transparent: true, opacity: 0.85 });
-  const ironM = new T.MeshStandardMaterial({ color: 0x1c1d20, metalness: 0.5, roughness: 0.45 }), woodM = new T.MeshStandardMaterial({ color: 0xa47a4c, roughness: 0.75, map: W3.grainTex(128, 15, 180, 50, 4) });
+  const ironM = new T.MeshStandardMaterial({ color: 0x5a5e66, metalness: 0.75, roughness: 0.35, side: T.DoubleSide }), woodM = new T.MeshStandardMaterial({ color: 0xa47a4c, roughness: 0.75, map: W3.grainTex(128, 15, 180, 50, 4) });
   const pans = [], burners = []; for (let i = 0; i < 3; i++) { const g = new T.Group(); const pan = new T.Mesh(new T.CylinderGeometry(0.11, 0.095, 0.035, 28, 1, true), ironM); pan.position.y = 0.0175; const base = new T.Mesh(new T.CircleGeometry(0.095, 28), ironM); base.rotation.x = -Math.PI / 2; base.position.y = 0.004;
     const h = new T.Mesh(new T.BoxGeometry(0.03, 0.015, 0.16), ironM); h.position.set(0, 0.03, 0.19); g.add(pan, base, h); g.traverse(o => o.castShadow = true); S.add(g); pans.push(g);
     const r = new T.Mesh(new T.RingGeometry(0.06, 0.1, 32), burnM); r.rotation.x = -Math.PI / 2; S.add(r); burners.push(r); }
@@ -56,19 +61,31 @@ function buildWorld() {
 // food: a little model for each kind; cooked things change colour with how done the side you can see is
 const RAWC = { patty: [0.62, 0.27, 0.27], steak: [0.55, 0.2, 0.2], salmon: [0.96, 0.55, 0.45], pancake: [0.96, 0.88, 0.66], egg: [0.98, 0.98, 0.95] };
 const GOLDC = { patty: [0.42, 0.24, 0.12], steak: [0.36, 0.2, 0.11], salmon: [0.86, 0.55, 0.28], pancake: [0.82, 0.55, 0.22], egg: [1, 0.97, 0.9] };
+// 23 Nov 2026, his note: "impove the graphics with the food": painted surfaces (mince, marbling, the lines of a salmon fillet, pancake
+// bubbles, crumb and crust), sesame on the bun, a stalk on the tomato, a root on the onion, layered lettuce leaves
+const FOODTEX = {};
+function foodTex(kind) { if (FOODTEX[kind]) return FOODTEX[kind]; const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), R = W3.rng(kind.length * 31 + 7);
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 128, 128);
+  if (kind === 'mince') for (let i = 0; i < 900; i++) { const v = 150 + R() * 105; g.fillStyle = `rgb(${v},${v * 0.82},${v * 0.82})`; g.beginPath(); g.arc(R() * 128, R() * 128, 1 + R() * 2.2, 0, 7); g.fill(); }
+  if (kind === 'marble') { g.strokeStyle = 'rgba(255,240,235,.9)'; for (let i = 0; i < 14; i++) { g.lineWidth = 0.8 + R() * 2.2; g.beginPath(); let x = R() * 128, y = R() * 128; g.moveTo(x, y); for (let j = 0; j < 6; j++) { x += (R() - 0.5) * 40; y += (R() - 0.3) * 30; g.lineTo(x, y); } g.stroke(); } }
+  if (kind === 'fillet') { for (let i = -128; i < 256; i += 11) { g.strokeStyle = 'rgba(255,250,245,.95)'; g.lineWidth = 2.4; g.beginPath(); g.moveTo(i, 0); g.quadraticCurveTo(i + 20, 64, i + 6, 128); g.stroke(); } }
+  if (kind === 'batter') { g.fillStyle = '#f3e2b8'; g.fillRect(0, 0, 128, 128); for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(160,110,50,${0.2 + R() * 0.3})`; g.beginPath(); g.arc(R() * 128, R() * 128, 0.8 + R() * 2.4, 0, 7); g.fill(); } }
+  if (kind === 'crumb') for (let i = 0; i < 1400; i++) { const v = 200 + R() * 55; g.fillStyle = `rgb(${v},${v * 0.92},${v * 0.8})`; g.fillRect(R() * 128, R() * 128, 1 + R() * 2, 1 + R() * 2); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return (FOODTEX[kind] = t); }
 function foodMesh(food, chopped) {
-  const T = THREE, g = new T.Group(), M = c => new T.MeshStandardMaterial({ color: new T.Color(...(Array.isArray(c) ? c : [0, 0, 0])), roughness: 0.55 }), add = (geo, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); return m; };
+  const T = THREE, g = new T.Group(), M = (c, tex) => new T.MeshStandardMaterial({ color: new T.Color(...(Array.isArray(c) ? c : [0, 0, 0])), roughness: 0.55, map: tex ? foodTex(tex) : null }), add = (geo, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); return m; };
   const R0 = Math.random;
-  if (food === 'patty') add(new T.CylinderGeometry(0.048, 0.05, 0.018, 20), M(RAWC.patty), 0, 0.009);
-  if (food === 'steak') add(new T.SphereGeometry(0.06, 20, 10), M(RAWC.steak), 0, 0.012, 0, 1.15, 0.22, 0.8);
-  if (food === 'salmon') add(new T.BoxGeometry(0.11, 0.024, 0.055), M(RAWC.salmon), 0, 0.012);
-  if (food === 'pancake') add(new T.CylinderGeometry(0.058, 0.06, 0.012, 28), M(RAWC.pancake), 0, 0.006);
+  if (food === 'patty') add(new T.CylinderGeometry(0.048, 0.05, 0.018, 20), M(RAWC.patty, 'mince'), 0, 0.009);
+  if (food === 'steak') { add(new T.SphereGeometry(0.06, 20, 10), M(RAWC.steak, 'marble'), 0, 0.012, 0, 1.15, 0.22, 0.8); add(new T.TorusGeometry(0.05, 0.006, 6, 24, 2.2), M([0.95, 0.9, 0.82]), 0, 0.016, 0, 1.15, 0.8, 1).rotation.x = Math.PI / 2; }      /* a rim of fat */
+  if (food === 'salmon') { add(new T.CylinderGeometry(0.03, 0.03, 0.11, 18, 1, false, 0, Math.PI), M(RAWC.salmon, 'fillet'), 0, 0.004, 0, 1, 1, 1).rotation.set(0, 0, Math.PI / 2); add(new T.BoxGeometry(0.11, 0.004, 0.058), M([0.55, 0.55, 0.58]), 0, 0.002); }      /* a fillet on its silver skin */
+  if (food === 'pancake') add(new T.CylinderGeometry(0.058, 0.06, 0.012, 28), M(RAWC.pancake, 'batter'), 0, 0.006);
   if (food === 'egg') { add(new T.CylinderGeometry(0.052, 0.055, 0.006, 24), M(RAWC.egg), 0, 0.003, 0, 1, 1, 0.85); add(new T.SphereGeometry(0.018, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), new T.MeshStandardMaterial({ color: 0xffb21a, roughness: 0.2 }), 0.008, 0.005, 0.004); }
-  if (food === 'bun') { add(new T.SphereGeometry(0.055, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), M([0.82, 0.55, 0.25]), 0, 0.012, 0, 1, 0.55, 1); add(new T.CylinderGeometry(0.055, 0.055, 0.014, 20), M([0.9, 0.75, 0.5]), 0, 0.007); }
-  if (food === 'toast') add(new T.BoxGeometry(0.09, 0.012, 0.09), M([0.8, 0.58, 0.3]), 0, 0.006);
-  if (food === 'lettuce') { if (!chopped) for (let i = 0; i < 5; i++) add(new T.SphereGeometry(0.03, 10, 6), M([0.35 + R0() * 0.1, 0.62, 0.22]), (R0() - 0.5) * 0.04, 0.02, (R0() - 0.5) * 0.04, 1.3, 0.5, 1); else for (let i = 0; i < 14; i++) add(new T.BoxGeometry(0.03, 0.004, 0.008), M([0.4, 0.66, 0.24]), (R0() - 0.5) * 0.07, 0.004 + R0() * 0.008, (R0() - 0.5) * 0.06); }
-  if (food === 'tomato') { if (!chopped) add(new T.SphereGeometry(0.032, 18, 12), M([0.85, 0.12, 0.08]), 0, 0.03); else for (let i = 0; i < 4; i++) add(new T.CylinderGeometry(0.03, 0.03, 0.006, 16), M([0.88, 0.2, 0.12]), (i - 1.5) * 0.022, 0.004, 0); }
-  if (food === 'onion') { if (!chopped) add(new T.SphereGeometry(0.03, 18, 12), M([0.8, 0.66, 0.75]), 0, 0.03); else for (let i = 0; i < 4; i++) add(new T.TorusGeometry(0.022 - i * 0.004, 0.003, 6, 18), M([0.95, 0.9, 0.92]), (i - 1.5) * 0.015, 0.004, 0).rotation.x = Math.PI / 2; }
+  if (food === 'bun') { add(new T.SphereGeometry(0.055, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), M([0.86, 0.56, 0.24]), 0, 0.012, 0, 1, 0.55, 1); add(new T.CylinderGeometry(0.055, 0.055, 0.014, 20), M([0.95, 0.85, 0.65], 'crumb'), 0, 0.007);
+    const sm = M([0.98, 0.95, 0.85]); for (let i = 0; i < 16; i++) { const a = R0() * 6.28, r = Math.sqrt(R0()) * 0.04, yy = 0.012 + 0.03 * Math.sqrt(Math.max(0, 1 - (r / 0.055) ** 2)); add(new T.SphereGeometry(0.004, 6, 4), sm, Math.cos(a) * r, yy, Math.sin(a) * r, 1.6, 0.6, 1).rotation.y = a; } }      /* sesame */
+  if (food === 'toast') { add(new T.BoxGeometry(0.09, 0.012, 0.09), M([0.62, 0.38, 0.16]), 0, 0.006); add(new T.BoxGeometry(0.078, 0.0125, 0.078), M([0.95, 0.82, 0.58], 'crumb'), 0, 0.0065); }      /* crust round a crumb */
+  if (food === 'lettuce') { if (!chopped) for (let i = 0; i < 9; i++) { const l = add(new T.SphereGeometry(0.03, 12, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), M([0.42 + R0() * 0.18, 0.72 + R0() * 0.12, 0.28]), (R0() - 0.5) * 0.04, 0.008 + i * 0.003, (R0() - 0.5) * 0.04, 1.35, 0.55, 1.1); l.rotation.set((R0() - 0.5) * 0.9, R0() * 6, (R0() - 0.5) * 0.9); }      /* a head of leaves */ else for (let i = 0; i < 14; i++) add(new T.BoxGeometry(0.03, 0.004, 0.008), M([0.4, 0.66, 0.24]), (R0() - 0.5) * 0.07, 0.004 + R0() * 0.008, (R0() - 0.5) * 0.06); }
+  if (food === 'tomato') { if (!chopped) { add(new T.SphereGeometry(0.032, 18, 12), M([0.85, 0.12, 0.08]), 0, 0.03, 0, 1, 0.86, 1); for (let i = 0; i < 5; i++) add(new T.ConeGeometry(0.004, 0.022, 4), M([0.25, 0.5, 0.18]), Math.cos(i * 1.26) * 0.008, 0.058, Math.sin(i * 1.26) * 0.008).rotation.set(Math.sin(i * 1.26) * 1.3, 0, -Math.cos(i * 1.26) * 1.3); } else for (let i = 0; i < 4; i++) add(new T.CylinderGeometry(0.03, 0.03, 0.006, 16), M([0.88, 0.2, 0.12]), (i - 1.5) * 0.022, 0.004, 0); }
+  if (food === 'onion') { if (!chopped) { add(new T.SphereGeometry(0.03, 18, 12), M([0.72, 0.46, 0.62]), 0, 0.03); add(new T.ConeGeometry(0.008, 0.02, 8), M([0.82, 0.7, 0.55]), 0, 0.066); } else for (let i = 0; i < 4; i++) add(new T.TorusGeometry(0.022 - i * 0.004, 0.003, 6, 18), M([0.95, 0.9, 0.92]), (i - 1.5) * 0.015, 0.004, 0).rotation.x = Math.PI / 2; }
   return g;
 }
 function shade(m, food, s) { const a = RAWC[food], b = GOLDC[food]; if (!a) return; const c = s < 1 ? a.map((v, i) => v + (b[i] - v) * Math.min(1, s / 0.95)) : b.map(v => v * Math.max(0.12, 1 - (s - 1.05) * 2.4)); m.traverse(o => { if (o.isMesh && o.material.color && !(food === 'egg' && o.geometry.type === 'SphereGeometry')) o.material.color.setRGB(c[0], c[1], c[2]); }); }
@@ -110,7 +127,8 @@ function draw(now, dt) {
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0b1418'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D kitchen.', W / 2, H / 2); return; }
   const T = V.T, cam = W3.cam, g = G || idleG(), t = now, sp = spots(g); setWeather(g);
   const asp = innerWidth / innerHeight; /* 22 Nov 2026 (the audit): on a phone the camera looks more nearly straight down, so the hob, the board and the food fill the screen instead of a dark wall above and glare below */
-  if (asp < 0.6) { cam.position.set(0, TOP + 1.5, 0.2); cam.fov = 60; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.34); } else { cam.position.set(0, TOP + 0.95, 0.62); cam.fov = 50; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.4); }
+  if (asp > 1.3) { cam.position.set(-0.05, TOP + 1.05, 0.42); cam.fov = 48; cam.updateProjectionMatrix(); cam.lookAt(-0.05, TOP, -0.3); }      // sideways: the whole counter, a little from the front
+  else if (asp < 0.6) { cam.position.set(0, TOP + 1.5, 0.2); cam.fov = 60; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.34); } else { cam.position.set(0, TOP + 0.95, 0.62); cam.fov = 50; cam.updateProjectionMatrix(); cam.lookAt(0, TOP + 0.02, -0.4); }
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   // stations
   V.pans.forEach((p, i) => { const s = sp.pans[i]; p.visible = V.burners[i].visible = !!s; if (s) { place(p, s.x, s.z); place(V.burners[i], s.x, s.z, TOP + 0.013); V.burners[i].material.opacity = 0.6 + Math.sin(t * 7 + i) * 0.1; } });

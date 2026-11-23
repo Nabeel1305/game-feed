@@ -407,6 +407,15 @@ genius, and that's what you forget." What that changed, for every game from now 
 - **0.3.0 (23 Nov 2026, his second review; `specs/police-v3-2026-11-23.md`):** alleys with corners (`footPath`, `footAt`, `layAlley`: 6 m wall and floor modules, corner squares, arrow boards, T-junctions from case 6 whose wrong way is a short dead end); near a corner the first sideways swipe is the turn (`FOOT_WIN` 13 m); `tap()` on foot is the ARREST button (`arrestBtn()`), and in the struggle every tap: a tug of war on `G.cuff.m` (0.35 at the start, +0.055 a tap, `cfg.resist` a second drained, times 1.7 in a surge); the arrest is drawn with both people (your officer kneels astride him; wrists behind his back; the cuffs are rings on his forearms). The people's `rotation.order` is 'YXZ' so they can face along the path and still lean. In a lesson the foot chase is restarted for each step (corners with nothing in the way, then a straight alley to dodge in, then the arrest).
 
 ### 15. Pilot (`games/pilot/`)
+- **Rebuilt 23 Nov 2026 (0.3.0), from his eight-point note: a whole flight.** Every flight starts lined up on the home runway (36):
+  power up, ROTATE at 66 m/s, hold UP. Then a waypoint ring (from flight 5), a line-up ring well out on the destination's centre line
+  (`target()`/`legStep()` in part2: legs 0, 1, 2), the 4° slope (two white, two red), flare, stop. The destination airport moves and
+  turns each flight (`placeLevel()` in part3 clears trees and houses round both airports). The game's ground is flat everywhere; the
+  mountains are only beyond 27 km, so what you see is what you can hit. Fog is set per weather in `setWeather` (5.5 to 60 km) after
+  `W3.setSky`, which on its own stops at 2.4 km: that was "the view is short". A drag on the open screen only turns the view
+  (`V3.look2`); the buttons and the power lever are the only controls. Every failure has a name and a sentence of what to do (`WHY`).
+  Flights run 1.5 to 4 minutes; the robots' limit is 300 s, so keep the longest flights under it. Screenshots need
+  `window.__softGL = true` before the page loads, or the 3D is black.
 - **Pilot 0.2.1 (23 Nov 2026):** the right thumb's control is four buttons at `padAt()` (centre `W - 112k, H - 168k`, 62k out, 56k square): `padSet` gives `G.st.x = ±0.6`, `G.st.y = ±0.45` (0 inside 0.42 of the way out), `ui.pad` lights the pressed ones; a touch off the pad is ignored; the POWER lever takes touches left of 84k. `G.st.y` is still + for nose up, so the robots are unchanged. In an autopilot lesson the pitch is `autoPitch(G) + G.st.y * 0.16`. `/tmp/audit/pilot_buttons.py` was the buttons-only robot (not kept in the repo).
 - **Doing nothing must not land.** The plane starts trimmed on the glide path, so a still thumb flew it onto the runway; the glide comes down at 3.8 m/s and the gear now takes at most 2.3 to 3.3, so every landing needs a flare (a blind pull-push still flares by luck now and then: 7 in 100 on flights 1-3).
 - **The column holds what you leave it on** (the trim follows the nose while the thumb is still), pulled back down the screen raises the nose, as a real column does; the lesson says so in capitals.

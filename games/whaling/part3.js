@@ -23,7 +23,7 @@ function buildBoat(T) {
   const oars = [];
   for (let i = 0; i < 6; i++) { const z = -2.6 + i * 1.0, s = i % 2 ? 1 : -1; const man = new T.Group(); man.position.set(-s * 0.25, 0.55, z); g.add(man);
     const body = new T.Mesh(new T.CapsuleGeometry(0.2, 0.45, 4, 8), crewM[i % 4]); body.position.y = 0.3; man.add(body); const hd = new T.Mesh(new T.SphereGeometry(0.13, 10, 8), skin); hd.position.y = 0.72; man.add(hd); const hat = new T.Mesh(new T.CylinderGeometry(0.14, 0.16, 0.08, 10), dark); hat.position.y = 0.82; man.add(hat);
-    const oar = new T.Group(); oar.position.set(s * 0.85, 0.65, z); const shaft = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 4.2, 6), wood); shaft.rotation.z = Math.PI / 2; shaft.position.x = s * 1.6; oar.add(shaft); const blade = new T.Mesh(new T.BoxGeometry(0.6, 0.02, 0.18), wood); blade.position.x = s * 3.5; oar.add(blade); oar.userData = { s, man, i }; g.add(oar); oars.push(oar); }
+    const oar = new T.Group(); oar.position.set(s * 0.78, 0.62, z); const shaft = new T.Mesh(new T.CylinderGeometry(0.028, 0.034, 4.0, 6), wood); shaft.rotation.z = Math.PI / 2; shaft.position.x = s * 1.25; shaft.castShadow = false; oar.add(shaft); const blade = new T.Mesh(new T.BoxGeometry(0.62, 0.025, 0.16), wood); blade.position.x = s * 3.05; blade.castShadow = false; oar.add(blade); oar.userData = { s, man, i }; g.add(oar); oars.push(oar); }
   const harp = new T.Group(); harp.position.set(0, 0.6, 3.2); g.add(harp); const hb = new T.Mesh(new T.CapsuleGeometry(0.22, 0.6, 4, 8), crewM[0]); hb.position.y = 0.45; harp.add(hb); const hh = new T.Mesh(new T.SphereGeometry(0.14, 10, 8), skin); hh.position.y = 0.95; harp.add(hh);
   const arm = new T.Group(); arm.position.set(0.25, 0.75, 0); harp.add(arm); const iron = new T.Mesh(new T.CylinderGeometry(0.025, 0.025, 2.2, 6), new T.MeshStandardMaterial({ color: 0x8a7a6a, roughness: 0.6 })); iron.position.y = 0.9; arm.add(iron); arm.rotation.x = -0.4;
   const tub = new T.Mesh(new T.CylinderGeometry(0.3, 0.28, 0.4, 14), wood); tub.position.set(0, 0.5, -0.3); g.add(tub);
@@ -43,7 +43,7 @@ function buildWhale(T) {
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 58, far: 5000, near: 0.1 })) { V3 = { none: true }; return V3; }
   const S = W3.scene, glow = glowTex();
-  const sea = W3.water({ size: 9000, color: 0x0a1e26, distort: 2.0, ripple: 1.3, speed: 0.9 });
+  const sea = W3.water({ size: 9000, color: 0x0a1e26, distort: 5.0, ripple: 2.2, speed: 1.1 });      // (23 Nov 2026) a rougher, choppier surface: it was a mirror that showed the oars as long black lines
   const boat = buildBoat(T), whale = buildWhale(T); S.add(boat, whale);
   const NP = 90, pG = new T.BufferGeometry(); pG.setAttribute('position', new T.BufferAttribute(new Float32Array(NP * 3), 3));
   const puffs = new T.Points(pG, new T.PointsMaterial({ map: glow, color: 0xf4f6f8, size: 2.2, transparent: true, opacity: 0.8, depthWrite: false, sizeAttenuation: true })); puffs.frustumCulled = false; S.add(puffs);
@@ -94,9 +94,15 @@ function draw(now, dt) {
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#0e1a20'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D sea.', W / 2, H / 2); return; }
   const T = V.T, g = G || idleG(), t = now; setWeather(g); const b = g.boat, w = g.whale;
   // the boat: bobbing on the swell, heeling on the line, oars rowing in the chase
-  const swell = Math.sin(t * 1.1) * 0.25 + Math.sin(t * 0.7 + 1) * 0.15;
+  const swell = Math.sin(t * 1.1) * 0.05 + Math.sin(t * 0.7 + 1) * 0.03;      // 23 Nov 2026 ("I seem to be able to phase through the waves"): the sea is a flat surface with painted waves, so the hull only bobs a hand's width; it rode 40 cm up and down through the water
   V.boat.position.set(b.x, swell, b.z); V.boat.rotation.set(Math.sin(t * 1.1 + 0.5) * 0.05, b.h, Math.sin(t * 0.9) * 0.04 + (b.heel || 0) * 0.5 * Math.sign(b.err || 1));
-  V.row += dt * (g.ph === 'chase' ? 2.2 : 0); V.boat.userData.oars.forEach(o => { const a = V.row * TAU / 2.2 + o.userData.i * 0.1; o.rotation.y = (g.ph === 'chase' ? Math.sin(a) * 0.45 : 0.6) * o.userData.s; o.rotation.z = (g.ph === 'chase' ? Math.cos(a) * 0.12 : 0.25) * -o.userData.s; o.userData.man.rotation.x = g.ph === 'chase' ? Math.sin(a) * 0.3 : -0.2; });
+  // 23 Nov 2026, his note: "Fix graphics when it comes to rowing": a real stroke. Each oar pivots at the gunwale and reaches down to the water;
+  // the catch (blade drops in, forward), the drive (blade in the water, swept aft, the man leaning back), the release and the recovery (blade
+  // lifted clear, carried forward, the man leaning in). All six together, about one stroke every 1.6 s; in the ride the oars are shipped.
+  V.row += dt * (g.ph === 'chase' ? 1 : 0); V.boat.userData.oars.forEach(o => { const s = o.userData.s, ph = (V.row / 1.6) % 1, drive = ph < 0.55, u = drive ? ph / 0.55 : (ph - 0.55) / 0.45;
+    const sweep = drive ? 0.5 - u : -0.5 + u, dip = drive ? 0.24 : 0.24 - 0.18 * Math.sin(u * Math.PI);      // sweep: blade forward (+) to aft (-); dip: how far the blade end goes down (radians)
+    if (g.ph === 'chase') { o.rotation.set(0, sweep * 0.75 * s, -dip * s); o.userData.man.rotation.x = drive ? -0.15 - 0.35 * u : -0.5 + 0.35 * u + 0.15; }
+    else { o.rotation.set(0, -0.9 * s, 0.05 * s); o.userData.man.rotation.x = -0.1; } });      /* shipped: oars swung in along the boat */
   V.throwT = Math.max(0, (V.throwT || 0) - dt); V.boat.userData.arm.rotation.x = V.throwT > 0 ? -2.2 + (0.5 - V.throwT) * 4 : -0.4;
   // the whale: rolling along the top, or down below; flukes up as she dives and before a run
   if (w) { const riding = g.ph === 'ride' || g.ph === 'done'; let y = -6; if (g.ph === 'chase') { const k2 = w.up ? Math.min(1, w.t / 1.2) * Math.min(1, (w.dur - w.t) / 1.2 + 0.2) : 0; y = -6 + 5.6 * k2; } else if (riding) y = -0.6 + Math.sin(t * 0.8) * 0.3 - (w.surge > 0 ? 1.2 : 0);
@@ -156,14 +162,13 @@ function hud(G, t) {
     // her strength, the line left on the tub, the heel
     const bx = 16, bw = W * 0.55, by = H * 0.24; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('HER STRENGTH', bx, by - 6 * k); ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(bx, by, bw, 9 * k, 4); ctx.fill(); ctx.fillStyle = '#c8d8e8'; rrect(bx, by, bw * clamp(w.stam / c.stamina, 0, 1), 9 * k, 4); ctx.fill();
     const lf = 1 - G.line / c.lineMax; ctx.fillStyle = '#fff'; ctx.fillText('LINE LEFT IN THE TUB', bx, by + 24 * k); ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(bx, by + 30 * k, bw, 7 * k, 3); ctx.fill(); ctx.fillStyle = lf < 0.25 ? '#ff7a5a' : '#e8d8a8'; rrect(bx, by + 30 * k, bw * clamp(lf, 0, 1), 7 * k, 3); ctx.fill();
-    if (b.heel > 0.2) { ctx.fillStyle = `rgba(255,140,100,${Math.min(1, b.heel)})`; ctx.font = `700 ${Math.round(16 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText((b.err > 0 ? 'STEER LEFT' : 'STEER RIGHT') + ': BOW TO HER!', W / 2, H * 0.62); }
+    if (b.heel > 0.2) { ctx.fillStyle = `rgba(255,140,100,${Math.min(1, b.heel)})`; ctx.font = `700 ${Math.round(16 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('SHE PULLS HARD: LET THE LINE RUN!', W / 2, H * 0.62); }
     if (w.warn > 0 || w.surge > 0) { ctx.fillStyle = Math.sin(t * 20) > 0 ? '#ffb46a' : '#fff'; ctx.font = `800 ${Math.round(20 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText(G.haul ? 'LET GO!' : 'LET IT RUN', W / 2, H * 0.55); }
   }
   // the thumbs: left steers, right throws or hauls
-  const lb = ui.L, rb = ui.R; ctx.globalAlpha = 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-  const lx = lb ? lb.x0 : W * 0.22, ly = lb ? lb.y0 : H - 110 * k; ctx.beginPath(); ctx.arc(lx, ly, 46 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(lx - G.steer * 46 * k, ly, 14 * k, 0, TAU); ctx.fill();
-  ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('STEER', lx, ly + 62 * k);
-  const rx = W * 0.78, ry = H - 110 * k; ctx.fillText(G.ph === 'ride' ? (G.haul ? 'HAULING' : 'HOLD TO HAUL') : 'HOLD · MOVE THE RING · LET GO', rx, ry + 62 * k); if (G.ph === 'ride') { ctx.globalAlpha = G.haul ? 0.9 : 0.5; ctx.beginPath(); ctx.arc(rx, ry, 30 * k, 0, TAU); ctx.fillStyle = G.haul ? '#9be3b5' : 'rgba(255,255,255,.3)'; ctx.fill(); }
+  const rb = ui.R; ctx.globalAlpha = 0.6; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillStyle = '#fff';      // one thumb, anywhere (23 Nov 2026): the crew steers
+  ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center';
+  const rx = W * 0.5, ry = H - 110 * k; ctx.fillText(G.ph === 'ride' ? (G.haul ? 'HAULING' : 'HOLD ANYWHERE TO HAUL') : 'HOLD ANYWHERE · SLIDE THE RING ONTO HER · LET GO', rx, ry + 62 * k); if (G.ph === 'ride') { ctx.globalAlpha = G.haul ? 0.9 : 0.5; ctx.beginPath(); ctx.arc(rx, ry, 30 * k, 0, TAU); ctx.fillStyle = G.haul ? '#9be3b5' : 'rgba(255,255,255,.3)'; ctx.fill(); }
   ctx.globalAlpha = 1;
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }

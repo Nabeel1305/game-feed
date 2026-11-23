@@ -29,6 +29,15 @@ const DISHES = [
   { id: 'salmon', name: 'Salmon salad', items: ['salmon', 'lettuce', 'tomato'], from: 4 },
   { id: 'steak', name: 'Steak & onions', items: ['steak', 'onion'], from: 6 },
   { id: 'stack', name: 'Pancake stack', items: ['pancake', 'pancake'], from: 8 },
+  // 23 Nov 2026, his note: "make the orders more creative and complex as time goes on": more dishes, bigger ones later, and later shifts lean to them
+  { id: 'garden', name: 'Garden toast', items: ['toast', 'tomato', 'lettuce'], from: 3 },
+  { id: 'onionburger', name: 'Onion burger', items: ['bun', 'patty', 'onion'], from: 5 },
+  { id: 'lox', name: 'Salmon & eggs', items: ['toast', 'salmon', 'egg'], from: 9 },
+  { id: 'breakfast', name: 'Big breakfast', items: ['toast', 'egg', 'pancake', 'tomato'], from: 11 },
+  { id: 'surfturf', name: 'Surf & turf', items: ['steak', 'salmon', 'onion'], from: 13 },
+  { id: 'double', name: 'Double deluxe', items: ['bun', 'patty', 'patty', 'lettuce', 'tomato', 'onion'], from: 16 },
+  { id: 'tower', name: 'Pancake tower', items: ['pancake', 'pancake', 'pancake'], from: 18 },
+  { id: 'feast', name: 'The works', items: ['steak', 'egg', 'toast', 'tomato', 'onion'], from: 22 },
 ];
 const TRAY = ['patty', 'steak', 'salmon', 'egg', 'pancake', 'lettuce', 'tomato', 'onion', 'bun', 'toast'];
 const GOLD = [0.78, 1.12], BURNT = 1.3;
@@ -50,7 +59,8 @@ function newGame(N, o = {}) {
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
   return G;
 }
-function newTicket(G) { const c = G.cfg, R = G.rnd, L = lessonNow(G), pool = DISHES.filter(d => d.from <= Math.max(G.N, 1)); const d = L && L.dish ? DISHES.find(q => q.id === L.dish) : pool[(R() * pool.length) | 0];
+function newTicket(G) { const c = G.cfg, R = G.rnd, L = lessonNow(G), pool = DISHES.filter(d => d.from <= Math.max(G.N, 1)), wts = pool.map(q => 1 + Math.max(0, q.items.length - 1) * Math.min(1.5, G.N / 15) + (q.from > G.N - 4 ? 1 : 0)), tw = wts.reduce((a2, b2) => a2 + b2, 0); let r2 = R() * tw, pick = pool[0]; for (let i = 0; i < pool.length; i++) { r2 -= wts[i]; if (r2 <= 0) { pick = pool[i]; break; } }      /* bigger dishes, and the newest, come more often later */
+  const d = L && L.dish ? DISHES.find(q => q.id === L.dish) : pick;
   G.tickets.push({ dish: d, wait: 0, max: c.patience * (L ? 3 : 1), id: ++G.made }); G.ev.push({ k: 'ticket', name: d.name }); }
 // ---------- the moves ----------
 // take a food from the trays to where it goes ('pan' i, 'board', 'plate')

@@ -146,7 +146,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** How the car feels under the thumb (turning, braking) and whether the on-foot running now looks right: his to judge.
 
 ### 15. Pilot (`pilot`): VERIFIED
-- **Where:** `games/pilot/index.html` · v0.2.1 · Flight · 2 thumb(s)
+- **Where:** `games/pilot/index.html` · v0.3.0 · Flight · 2 thumb(s)
 - **What it is:** Land an airliner in 3D at a countryside airport, seen from just behind the plane, in weather that changes by flight (fog, rain, storm, sunset, night with the runway lights). Right thumb is the control column: left and right to bank, pull back to raise the nose; left thumb is the throttle. Follow the glide-path lights (two white, two red), keep on the centre line in a crosswind, hold the speed, then flare just before the wheels touch for a soft landing. The first three flights teach it a piece at a time. 0.2.1 (23 Nov 2026, his review and his words at 13:47): four buttons that never move under the right thumb, UP, DOWN, LEFT, RIGHT (press and hold; no joystick; it was a cockpit column pulled DOWN the screen to climb); UP and DOWN work on every flight, the first included; the POWER lever is on the left edge.
 - **Problem:** CRITICAL: night levels are black, plane tiny, no runway to see.
 - **Problem:** His review (23 Nov, the page): "I literally cannot desend". True: the column was a cockpit's (thumb DOWN the screen made the plane climb: measured, 227 m to 266 m in 6 s) and on flight 1 the autopilot ignored up and down. Then, 13:47, of my first fix (a floating stick with UP and DOWN written round it): "anytime I try to click the side button that'll take it up, it just takes me to the joystick... You don't need the joystick".
@@ -158,7 +158,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether a button is too strong or too weak in the hand: his to say.
 
 ### 16. Short Order (`cook`): VERIFIED
-- **Where:** `games/cook/index.html` · v0.1.3 · Cooking · 1 thumb(s)
+- **Where:** `games/cook/index.html` · v0.1.4 · Cooking · 1 thumb(s)
 - **What it is:** Run the grill of a small 3D diner kitchen, seen from where the cook stands, with the street's weather and light in the window. Drag food from the trays onto the pans, the board or the plate; tap a pan to flip when the ring turns golden; sweep across the board to chop; drag the plate up to the pass. Pancakes, eggs on toast, burgers, salmon salad, steak and onions: golden, not burnt, before the customer walks out. The first three levels teach it a piece at a time.
 - **Problem:** top half of the screen is empty and dark, the food is small; white glare at the bottom.
 - **Changed:** On a phone the camera looks nearly straight down: the hob, the board and the food fill the lower two thirds of the screen (it was a dark wall above, small food, glare and a black strip below).
@@ -209,7 +209,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether one thumb feels like flying needs his thumb.
 
 ### 22. Whaling (`whaling`): VERIFIED
-- **Where:** `games/whaling/index.html` · v0.2.0 · Sea hunt · 2 thumb(s)
+- **Where:** `games/whaling/index.html` · v0.2.1 · Sea hunt · 2 thumb(s)
 - **What it is:** Hunt whales the old way from a wooden whaleboat on a grey 3D sea. Left thumb steers while the crew rows to her spout; swipe up with the right thumb to throw the harpoon while her back is up (lead her). Then hold on: hold to haul the line and tire her, let go when her flukes rise before a run or the line snaps, keep the bow pointing at her or the boat heels over. The first three levels teach it.
 - **Problem:** boat, crew and whale are black silhouettes (lit from behind) under a grey sky.
 - **Changed:** The throw: hold the right thumb and a ring on the water shows where the harpoon will land, with its arc; move the ring onto her and let go. (It was a blind swipe: direction for aim, length for distance.) A quick accidental tap does not throw.

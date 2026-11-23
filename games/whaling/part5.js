@@ -83,7 +83,7 @@ window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contai
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (made for a whaleboat): the left thumb is the tiller (slide left and right from where it lands); the right thumb throws
 // (swipe up towards her: the direction is the aim, the length the distance) and, on the line, hauls while it is held down.
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const side = e.clientX < W / 2 ? 'L' : 'R'; if (ui[side]) return;
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const side = 'R'; if (ui[side]) return;      // one thumb, anywhere (23 Nov 2026)
   ui[side] = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), moved: false }; if (side === 'R' && G.ph === 'ride') haul(G, true); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { for (const side of ['L', 'R']) { const u = ui[side]; if (!u || u.id !== e.pointerId) continue; u.x = e.clientX; u.y = e.clientY; if (Math.hypot(u.x - u.x0, u.y - u.y0) > 12 * k) u.moved = true; if (side === 'L' && G) steer(G, -clamp((u.x - u.x0) / (46 * k), -1, 1)); } });      // screen right is the world's -x from behind the boat
 function endTouch(e) { for (const side of ['L', 'R']) { const u = ui[side]; if (!u || u.id !== e.pointerId) continue; ui[side] = null; if (!G) continue;
