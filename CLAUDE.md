@@ -26,6 +26,10 @@ criticism may apply to so that I don't have to be making the same criticism for 
 with this one though, so that you don't apply random criticism just on any game"): for each point he makes, name the games that
 share the SAME fault, show why with evidence (a picture, a measurement, the same code), fix those, and tell him which games got
 it and which were looked at and left alone. Never stretch a point to a game it does not fit.
+**Do it, do not ask** (his words, 23 Nov 2026, 09:49, after I had asked whether On the Run's driving should get Police Chase's stick and pedals
+instead of giving it them: "when I tell you to fix one thing on one app, you shouldn't just keep to that app. You should think, is there any other
+apps that need?... Why don't you apply those to on the run?"): where another game has the same fault, fix it in the same sitting and tell him
+afterwards. A question is for when the fit is truly unclear, not for when the work is big.
 **Every fix goes on the game's own page** (his words, 23 Nov 2026, after two days of fixes had reached only the Game Review page: "I don't want you to fix it
 on the review page. Like, actually make the artifact, put the game normally how you would put it"): a change to a game is delivered when the game's own
 artifact (`artifact_slug` in `games.json`) has it, in the same sitting, and his link in the reply is that page. The review page gets its copy as well, but it

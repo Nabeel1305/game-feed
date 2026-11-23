@@ -85,12 +85,21 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (easy): a swipe changes lane (or jumps and slides on foot); a tap is nitro
+// input: driving is two thumbs, each with its own job, and both stay down (his words for Police Chase, applied here: "a joystick with a button for
+// brake, acceleration and reverse"). The left thumb is a stick that steers (it appears where the thumb lands); the right thumb holds GAS or BRAKE,
+// two big pedals at the bottom right (slide from one to the other without lifting), with the NITRO button above them. On foot: swipes.
 const touches = new Map();
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; touches.set(e.pointerId, { x0: e.clientX, y0: e.clientY, t0: performance.now(), done: false }); try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if (!t || t.done || !G || G.over || paused) return; const dx = e.clientX - t.x0, dy = e.clientY - t.y0;
+const inBox = (b, x, y, m) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
+function pedalAt(x, y) { const Pd = pedals(); for (const key of ['gas', 'brake']) { const b = Pd[key]; if (x >= b.x - 10 * k && x <= b.x + b.w + 10 * k && y >= b.y - 4 * k && y <= b.y + b.h + 30 * k) return key; } return null; }
+function driveInput() { let sx = 0, gas = false, brake = false; for (const t of touches.values()) { if (t.role === 'stick') sx = clamp((t.x - t.x0) / (46 * k), -1, 1); else if (t.role === 'gas') gas = true; else if (t.role === 'brake') brake = true; } if (Math.abs(sx) < 0.08) sx = 0; drive(G, sx, gas && !brake, brake); ui.stick = [...touches.values()].find(t => t.role === 'stick') || null; }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return;
+  const t = { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), done: false, role: null }; touches.set(e.pointerId, t);
+  if (G.ph === 'drive') { if (inBox(nitroBtn(), e.clientX, e.clientY, 8 * k)) { t.role = 'nitro'; nitro(G); } else t.role = pedalAt(e.clientX, e.clientY) || (e.clientX < W * 0.5 ? ([...touches.values()].some(q => q !== t && q.role === 'stick') ? null : 'stick') : (e.clientX > W * 0.75 ? 'gas' : 'brake')); driveInput(); }
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
+cv.addEventListener('pointermove', e => { const t = touches.get(e.pointerId); if (!t || !G || G.over || paused) return; t.x = e.clientX; t.y = e.clientY;
+  if (G.ph === 'drive') { if (t.role === 'gas' || t.role === 'brake') t.role = pedalAt(t.x, t.y) || t.role; if (t.role) driveInput(); return; } if (t.done || t.role) return; const dx = e.clientX - t.x0, dy = e.clientY - t.y0;
   if (Math.max(Math.abs(dx), Math.abs(dy)) > 24 * k) { t.done = true; swipe(G, Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? 'l' : 'r') : (dy < 0 ? 'u' : 'd')); } });
-function endTouch(e) { const t = touches.get(e.pointerId); if (!t) return; touches.delete(e.pointerId); if (!G || G.over || paused) return; if (!t.done && performance.now() - t.t0 < 350) tap(G); }
+function endTouch(e) { const t = touches.get(e.pointerId); if (!t) return; touches.delete(e.pointerId); if (!G || G.over || paused) return; if (G.ph === 'drive') driveInput(); }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- the garage: upgrades bought from the bank; they stay with you (nothing expires) ----------
 const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
@@ -133,6 +142,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
+  drive(sx, gas, brake) { drive(G, sx, gas, brake); }, pedals() { return pedals(); }, nitroBtn() { return nitroBtn(); }, onRoad, P, RW, segRel(k2, x, s2) { return segRel(G, k2, x, s2); }, nodeAt(k2) { return nodeAt(G, k2); },
   swipe(d) { swipe(G, d); }, tap() { tap(G); }, startFoot() { startFoot(G); }, footAt(s) { return footAt(G.foot, s); }, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },

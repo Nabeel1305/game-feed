@@ -823,7 +823,7 @@
       "id": "run",
       "name": "On the Run",
       "status": "testing",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "added": "2026-11-17",
       "path": "games/run/index.html",
       "artifact": "https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1",
@@ -833,10 +833,10 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "Swipe to dodge, tap for nitro. Get to the safehouse.",
+        "hook": "Follow the green arrows through the city with the cops on your tail: stick, gas, brake and nitro. Get to the safehouse.",
         "genre": "Getaway",
         "intensity": 4,
-        "thumbs": 1,
+        "thumbs": 2,
         "start": [
           "#playBtn"
         ],
@@ -850,7 +850,7 @@
         "P14",
         "P18"
       ],
-      "summary": "Getaway in three phases: weave the night avenue, dodge rams and roadblocks with swipes and nitro, then run the alleys on foot to the safehouse, round their corners (swipe the way the yellow arrow points), with the officer on your heels; a garage of upgrades and a rank that stay."
+      "summary": "Getaway in three phases. Driving: a floating stick steers, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse) and a NITRO button, through a city of streets and corners; green arrows on the road and a green marker show the way to the drop; police cars pull alongside and flash before they ram (steer away), roadblocks leave one gap, spike strips and a helicopter. Then the alleys on foot, round their corners, to the safehouse, with the officer on your heels; a garage of upgrades and a rank that stay."
     },
     {
       "number": 25,
