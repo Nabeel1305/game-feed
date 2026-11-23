@@ -15,6 +15,7 @@ His words: "we're done making games... fix these 111 games... lots of them are b
 dog shit... some of the soundtracks sound so robotic... the players' positioning is horrible... the controls on that hunter game
 are horrible... the minute someone opens this game, they don't need to be a genius to understand the controls. Because you're a
 genius, and that's what you forget." What that changed, for every game from now on:
+- **A fix is delivered on the game's own page, not on the review page.** For two days every fix went to the Game Review page's copies and no game's own page was touched: all 103 were behind, Police Chase's second version included, and he had to say so (23 Nov: "actually make the artifact, put the game normally how you would put it"). The review page is for his notes. Publish the game's own artifact in the same sitting as the fix, give him that link, and run `python3 tools/pages.py` before reporting: it compares each game with what was last put on its page.
 - **Look at it before he does.** `/tmp/audit/shoot.py`-style sheets (level 1's first seconds, then level 5 at 3, 10 and 20 s,
   played by the game's own robot, the real 3D picture) for every game, every time. Passing tests said nothing about the levels
   being too dark to see, the hero being a speck, or the drink being a ghost behind a blob.

@@ -26,6 +26,11 @@ criticism may apply to so that I don't have to be making the same criticism for 
 with this one though, so that you don't apply random criticism just on any game"): for each point he makes, name the games that
 share the SAME fault, show why with evidence (a picture, a measurement, the same code), fix those, and tell him which games got
 it and which were looked at and left alone. Never stretch a point to a game it does not fit.
+**Every fix goes on the game's own page** (his words, 23 Nov 2026, after two days of fixes had reached only the Game Review page: "I don't want you to fix it
+on the review page. Like, actually make the artifact, put the game normally how you would put it"): a change to a game is delivered when the game's own
+artifact (`artifact_slug` in `games.json`) has it, in the same sitting, and his link in the reply is that page. The review page gets its copy as well, but it
+is where he writes notes, not where a fix is delivered. `python3 tools/pages.py` lists the games whose own page is behind; `--done <ids>` records a
+publish; run it before saying anything is finished. (About twelve publishes a minute go through; more are refused.)
 The page is built by `python3 tools/review_page.py` and proved by `python3 tools/test_review_page.py` (what he types reaches the
 store, comes back on a phone that has forgotten everything, survives no signal). `python3 tools/small_screen.py` opens every
 card of every game on a 360 x 640 phone and reports buttons that cannot be reached.
