@@ -5296,7 +5296,7 @@ function lessonSee(G, what, st) { const L = lessonNow(G); if (!L || G.wait > 0) 
 // crossing, cars in front and coming the other way. The camera rides behind and above; at a stop it swings round to the door.
 const FX = { shake: 0, stop: 0, flash: 0, red: 0, slow: 0 }, TXT = [], PARTS = [];
 let hint = null, V3 = null;
-const ui = { snap: true, cam: null, banner: null, pend: null, held: { go: false, br: false } };
+const ui = { snap: true, cam: null, banner: null, pend: null, held: { go: false, br: false }, off: [] };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
 function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 160) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.5 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 2.5) * k }); } if (PARTS.length > 240) PARTS.splice(0, PARTS.length - 240); }
@@ -5449,6 +5449,10 @@ function sync(V, g, dt) { const b = g.bus, T = V.T; V.t += dt; if (V.signFor !==
       q.g.position.set(p.x - rx * ox + Math.sin(p.h) * oz, 0.16, p.z - rz * ox + Math.cos(p.h) * oz); q.g.rotation.y = p.h - Math.PI / 2; q.b.position.y = 0.75 + (walk > 0 ? Math.abs(Math.sin(V.t * 12)) * 0.05 : 0); } });
   if (g.runner) { const q = use(); if (q) { const st = nextStop(g), p = pathAt(g, st ? st.s : b.s), f2 = clamp((g.t - g.runner.t0) / g.runner.eta, 0, 1), [rx, rz] = RIGHT(p.h), back = -1.3 + (1 - f2) * 18; q.g.visible = true; q.g.position.set(p.x + rx * 3.2 + Math.sin(p.h) * back, 0.16 + Math.abs(Math.sin(V.t * 14)) * 0.12, p.z + rz * 3.2 + Math.cos(p.h) * back); q.g.rotation.y = p.h + Math.PI; } }
   g.zebras.forEach(Z => { if (!Z.ped) return; const f2 = (g.t - Z.ped.t0) / Z.ped.dur; if (f2 < -0.05 || f2 > 1.05) return; const q = use(); if (!q) return; const p = pathAt(g, Z.s), [rx, rz] = RIGHT(p.h), off = Z.ped.side > 0 ? lerp(3.5, -7, clamp(f2, 0, 1)) : lerp(-7, 3.5, clamp(f2, 0, 1)); q.g.visible = true; q.g.position.set(p.x + rx * off, 0.05, p.z + rz * off); q.g.rotation.y = p.h + (Z.ped.side > 0 ? Math.PI / 2 : -Math.PI / 2); q.b.position.y = 0.75 + Math.abs(Math.sin(V.t * 10)) * 0.05; });
+  // people getting off (his words on Taxi Driver, 23 Nov 2026: "you don't animate the person entering the car, nor do you animate them leaving the car"; here the ones getting on walked to the
+  // door, but the ones getting off were only a number): each steps down from the front door (where the stop's camera is looking), crosses the pavement past the queue and walks off up the street
+  ui.off = ui.off.filter(L => { if (L.t0 == null) L.t0 = V.t; const u = (V.t - L.t0) / 2.8; if (u < 0 || u >= 1) return false; const q = use(); if (!q) return true; const p = pathAt(g, L.s), [rx, rz] = RIGHT(p.h), a = clamp(u / 0.35, 0, 1), d = Math.max(0, u - 0.35) * 8, ox = -1.2 - a * 3.3, oz = -1.3 + a * 2.1 + d;
+    q.g.visible = true; q.g.position.set(p.x - rx * ox + Math.sin(p.h) * oz, 0.16 + (1 - a) * 0.25, p.z - rz * ox + Math.cos(p.h) * oz); q.g.rotation.y = a < 1 ? p.h + Math.PI / 4 : p.h; q.b.position.y = 0.75 + Math.abs(Math.sin(V.t * 12 + L.t0)) * 0.05; return true; });
   for (; pi < V.people.length; pi++) V.people[pi].g.visible = false;
   // cars: the ones in your lane, and the oncoming ones
   let ci = 0; for (const car of g.cars) { const c = V.cars[ci++]; if (!c) break; c.g.visible = !car.gone && car.s - b.s < 220; if (!c.g.visible) continue; const p = pathAt(g, car.s - CARLEN / 2), p2 = pathAt(g, car.s - CARLEN); c.g.position.set(p.x, 0, p.z); c.g.rotation.y = Math.atan2(p.x - p2.x, p.z - p2.z); c.bl.material.emissiveIntensity = car.v < 1 ? 2.5 : 0.4; }
@@ -5471,7 +5475,7 @@ function onEvent(G, e) { const cx = W / 2;
     case 'arrive': sfx.brakes(); vibe(HAP.light); if (e.perfect) { say('PERFECT STOP!', cx, H * 0.36, '#ffd040', 26); sfx.combo(2); } else say('STOPPED', cx, H * 0.36, '#fff', 20); if (e.late > 3) say(`${e.late} s LATE`, cx, H * 0.42, '#ffb070', 20); else if (!G.yard || G.yard === 'time') say('ON TIME', cx, H * 0.42, '#80ff90', 20); break;
     case 'doors': sfx.doors(); break;
     case 'on': sfx.beep(e.n); break;
-    case 'off': sfx.step(); break;
+    case 'off': sfx.step(); ui.off.push({ t0: null, s: G.bus.s }); break;
     case 'ready': sfx.bell(); if (e.due >= 0 && G.t < e.due - 1) tip('wait', 'Everyone is on. Wait for the stop\'s time, then press GO. Leaving early is as bad as late.', 3.5); break;
     case 'doorsopen': if (G.bus.dwell && G.bus.dwell.ready == null) tip('doors', 'Wait: people are still getting on.', 2); break;
     case 'runner': say('SOMEONE IS RUNNING FOR IT!', cx, H * 0.3, '#7af0ff', 18); tip('runner', 'Wait a moment for them, if the time allows: they will thank you (and tip).', 3); break;

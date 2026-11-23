@@ -2,7 +2,7 @@
 // only what the game itself declares in part2: BLIND (moves a thumb can make without looking) and honest() (a person who looks).
 // Nothing here needs changing for a new game; test_play.py calls these.
 (() => {
-const S = window.__sim, DT = 1 / 60, LIMIT = 60 * 300;
+const S = window.__sim, DT = 1 / 60, LIMIT = 60 * 900;      // a shift is three to seven minutes now
 function seeded(seed) { let a = (seed * 7919 + 13) >>> 0; Math.random = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const done = G => ({ won: G.over === 'won', t: Math.round(G.t), over: G.over, stuck: !G.over });
 // a person who looks: react seconds, acc chance a tap lands

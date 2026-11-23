@@ -59,7 +59,12 @@ function buildWorld() {
 function makeTaxi(V) { const T = V.T, g = new T.Group(), body = new T.Group(); g.add(body);
   const paint = new T.MeshPhysicalMaterial({ color: mySkin().col, roughness: 0.3, clearcoat: 0.9, clearcoatRoughness: 0.15 });
   const B = (w, h, d, x, y, z, m) => { const ms = new T.Mesh(V.boxG, m); ms.scale.set(w, h, d); ms.position.set(x, y, z); ms.castShadow = true; body.add(ms); return ms; };
-  B(1.9, 0.72, 4.6, 0, 0.66, 0, paint); B(1.66, 0.52, 2.3, 0, 1.28, -0.2, V.glass); B(1.72, 0.1, 2.1, 0, 1.58, -0.25, paint); for (const sx of [-0.8, 0.8]) B(0.08, 0.5, 0.1, sx, 1.28, 0.9, paint);
+  const tglass = new T.MeshPhysicalMaterial({ color: 0x2a3a4c, roughness: 0.08, metalness: 0.2, clearcoat: 1, transparent: true, opacity: 0.42, depthWrite: false });      // you can see who is on the back seat
+  B(1.9, 0.72, 4.6, 0, 0.66, 0, paint); const cabin = B(1.66, 0.52, 2.3, 0, 1.28, -0.2, tglass); cabin.castShadow = false; cabin.renderOrder = 3; B(1.72, 0.1, 2.1, 0, 1.58, -0.25, paint);
+  // the back seat and its passenger (shown while a fare is aboard); the kerb-side rear door, hinged at its front edge (the kerb side is -x: the model faces +z)
+  B(1.5, 0.3, 0.5, 0, 1.12, -1.05, new T.MeshStandardMaterial({ color: 0x3a2a22, roughness: 0.9 }));
+  const pax = new T.Group(); { const pb = new T.Mesh(new T.CapsuleGeometry(0.2, 0.22, 3, 8), V.clothM[3]); pb.position.y = 1.02; const ph = new T.Mesh(V.sphG, V.skinM[0]); ph.scale.setScalar(0.13); ph.position.y = 1.36; pax.add(pb, ph); pax.position.set(-0.42, 0, -0.75); pax.visible = false; body.add(pax); pax.userData = { pb, ph }; }
+  const door = new T.Group(); { const dp = new T.Mesh(V.boxG, paint); dp.scale.set(0.07, 0.62, 1.05); dp.position.set(0, 0, -0.525); dp.castShadow = true; const dw = new T.Mesh(V.boxG, tglass); dw.scale.set(0.05, 0.42, 0.9); dw.position.set(0, 0.52, -0.5); door.add(dp, dw); door.position.set(-0.985, 0.7, 0.18); body.add(door); } for (const sx of [-0.8, 0.8]) B(0.08, 0.5, 0.1, sx, 1.28, 0.9, paint);
   const check = new T.MeshStandardMaterial({ map: canvasTex(128, 16, (c, w, h) => { for (let x = 0; x < w; x += 8) for (let y = 0; y < h; y += 8) { c.fillStyle = ((x + y) / 8) % 2 ? '#111' : '#fff'; c.fillRect(x, y, 8, 8); } }) });
   B(1.92, 0.14, 4.0, 0, 0.82, 0, check);
   const sign = new T.Mesh(V.boxG, new T.MeshStandardMaterial({ map: canvasTex(128, 40, (c, w, h) => { c.fillStyle = '#fff6c0'; c.fillRect(0, 0, w, h); c.fillStyle = '#111'; c.font = '900 30px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('TAXI', w / 2, h / 2 + 2); }), emissive: 0xfff0a0, emissiveIntensity: 0.4 }));
@@ -68,7 +73,7 @@ function makeTaxi(V) { const T = V.T, g = new T.Group(), body = new T.Group(); g
     const tl = new T.Mesh(V.sphG, new T.MeshStandardMaterial({ color: 0xff2020, emissive: 0xff1010, emissiveIntensity: 0.6 })); tl.scale.set(0.18, 0.1, 0.05); tl.position.set(sx, 0.78, -2.31); body.add(tl); if (sx < 0) V.brakeL = tl; else V.brakeR = tl; }
   const wheels = []; for (const z of [-1.45, 1.45]) for (const sx of [-1, 1]) { const w = new T.Mesh(V.cylG, V.tyre); w.scale.set(0.34, 0.24, 0.34); w.rotation.z = Math.PI / 2; w.position.set(sx * 0.88, 0.34, z); body.add(w); wheels.push(w); }
   const sh = new T.Mesh(new T.PlaneGeometry(2.4, 5.2), new T.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.y = 0.03; g.add(sh);
-  return { g, body, paint, wheels }; }
+  return { g, body, paint, wheels, door, pax }; }
 function makePerson(V, i) { const T = V.T, g = new T.Group(), cl = V.clothM[i % V.clothM.length], sk = V.skinM[(i * 7) % V.skinM.length];
   const b = new T.Mesh(new T.CapsuleGeometry(0.22, 0.75, 3, 8), cl); b.position.y = 0.8; b.castShadow = true; g.add(b);
   const h = new T.Mesh(V.sphG, sk); h.scale.setScalar(0.14); h.position.y = 1.52; g.add(h); const l = new T.Mesh(new T.CapsuleGeometry(0.09, 0.4, 2, 6), V.clothM[(i + 4) % V.clothM.length]); l.position.y = 0.28; g.add(l);
@@ -142,10 +147,20 @@ function sync(V, g, dt) { const t = g.taxi, T = V.T; V.t += dt;
   for (; ci < V.cars.length; ci++) V.cars[ci].g.visible = false;
   for (const o of V.onc) { o.s -= (9 + (o.lane ? 2 : 0)) * dt; if (o.s < -6) o.s += BL + 12; const q = wp(t.i, t.j, t.h, o.s, -LANES[o.lane]); o.c.g.position.set(q.x, 0, q.z); o.c.g.rotation.y = yaw + Math.PI; o.c.g.visible = false; }      /* the oncoming cars are real ones now (g.cars) */
   // the goal: a person waving (or the door), the ring, the beam
-  const G2 = g.goal; V.beam.visible = V.ring.visible = !!G2; V.hailer.g.visible = !!G2 && G2.kind === 'pick'; V.rider.g.visible = false;
+  const G2 = g.goal, A = g.anim, ease = u => u * u * (3 - 2 * u), cl01 = u => clamp(u, 0, 1); V.beam.visible = V.ring.visible = !!G2 && !A; V.hailer.g.visible = !!G2 && G2.kind === 'pick'; V.rider.g.visible = false;
   if (G2) { const gp = wp(G2.e.i, G2.e.j, G2.e.h, G2.s, LANES[1]), kerb = wp(G2.e.i, G2.e.j, G2.e.h, G2.s, HW + 1.2), col = G2.kind === 'pick' ? 0x40ff80 : 0xffc61a;
     V.beam.position.set(kerb.x, 30, kerb.z); V.beam.material.color.setHex(col); V.beam.material.opacity = 0.16 + 0.08 * Math.sin(V.t * 4); V.ring.position.set(gp.x, 0.05, gp.z); V.ring.material.color.setHex(col); const sc = 1 + 0.08 * Math.sin(V.t * 6); V.ring.scale.set(sc, sc, sc);
-    if (G2.kind === 'pick') { const H2 = V.hailer; H2.g.position.set(kerb.x, 0.16, kerb.z); H2.g.rotation.y = yawOf(G2.e.h) - Math.PI / 2 * 0; H2.g.lookAt(gp.x, 0.16, gp.z); H2.arm.rotation.z = -2.4 + Math.sin(V.t * 9) * 0.5; } }
+    if (G2.kind === 'pick' && !A) { const H2 = V.hailer; H2.g.scale.setScalar(1); H2.g.position.set(kerb.x, 0.16, kerb.z); H2.g.lookAt(gp.x, 0.16, gp.z); H2.arm.rotation.z = -2.4 + Math.sin(V.t * 9) * 0.5; } }
+  // getting in and getting out (his words, 23 Nov 2026: "you don't animate the person entering the car, nor do you animate them leaving the car"): the kerb-side
+  // rear door swings open, they walk between the kerb and the door and step in or out, the door shuts. On the way they are on the back seat, seen through the glass.
+  { const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = -fz, rz = fx, dpt = { x: px + rx * 1.45 - fx * 0.35, z: pz + rz * 1.45 - fz * 0.35 }, seat = { x: px + rx * 0.45 - fx * 0.7, z: pz + rz * 0.45 - fz * 0.7 }; let open = 0, aboard = !!g.fare;
+    if (A) { const u = cl01(1 - g.wait / A.T), K = wp(A.e.i, A.e.j, A.e.h, A.s, HW + 1.2), P = A.kind === 'in' ? V.hailer : V.rider, walk = (a, b2, w) => { const q = ease(cl01(w)); P.g.position.set(a.x + (b2.x - a.x) * q, 0.16 + Math.abs(Math.sin(w * 9)) * 0.05 * (w > 0 && w < 1 ? 1 : 0), a.z + (b2.z - a.z) * q); P.g.lookAt(b2.x, 0.16, b2.z); };
+      P.g.visible = true; P.arm.rotation.z = -0.2 + Math.sin(V.t * 12) * 0.25;
+      if (A.kind === 'in') { open = u < 0.72 ? cl01(u / 0.22) : cl01((1 - u) / 0.2); aboard = u > 0.7; if (u < 0.42) { walk(K, dpt, u / 0.42); P.g.scale.setScalar(1); } else if (u < 0.7) { const w = (u - 0.42) / 0.28; walk(dpt, seat, w); P.g.scale.setScalar(1 - 0.3 * w); P.g.position.y = 0.16 + 0.22 * w; } else P.g.visible = false; }
+      else { open = u < 0.62 ? cl01(u / 0.2) : cl01((0.86 - u) / 0.2); aboard = u < 0.2; if (u < 0.2) P.g.visible = false; else if (u < 0.45) { const w = (u - 0.2) / 0.25; walk(seat, dpt, w); P.g.scale.setScalar(0.7 + 0.3 * w); P.g.position.y = 0.38 - 0.22 * w; } else if (u < 0.8) { walk(dpt, K, (u - 0.45) / 0.35); P.g.scale.setScalar(1); } else { P.g.scale.setScalar(1); P.g.position.set(K.x, 0.16, K.z); P.g.lookAt(px, 0.16, pz); P.arm.rotation.z = -2.5 + Math.sin(V.t * 10) * 0.45; }      // a wave goodbye
+        ui.left = { x: K.x, z: K.z, t: 0, ax: K.x - wp(A.e.i, A.e.j, A.e.h, A.s, HW - 2).x, az: K.z - wp(A.e.i, A.e.j, A.e.h, A.s, HW - 2).z }; } }
+    else if (ui.left) { const Lf = ui.left, P = V.rider; Lf.t += dt; if (Lf.t > 3.2 || ui.snap) ui.left = null; else { const m = Math.hypot(Lf.ax, Lf.az) || 1, d2 = Math.min(3.4, Lf.t * 1.5); P.g.visible = true; P.g.scale.setScalar(1); P.g.position.set(Lf.x + Lf.ax / m * d2, 0.16 + Math.abs(Math.sin(Lf.t * 9)) * 0.05, Lf.z + Lf.az / m * d2); P.g.lookAt(Lf.x + Lf.ax / m * 9, 0.16, Lf.z + Lf.az / m * 9); P.arm.rotation.z = -0.2 + Math.sin(V.t * 12) * 0.25; } }      // then off across the pavement to their door
+    X.door.rotation.y = ease(open) * 1.2; X.pax.visible = aboard; if (aboard) { X.pax.userData.ph.position.x = Math.sin(V.t * 1.3) * 0.02; } }
   if (V.spray) V.spray.scale.y = 1 + 0.08 * Math.sin(V.t * 7);
   // the turn zone and the arrows
   const d2n = BL - t.s, [ni, nj] = ahead(t.i, t.j, t.h), zoneOn = d2n > 1, inZ = inZone(g);
@@ -174,9 +189,9 @@ function onEvent(G, e) { const cx = W / 2;
     case 'pass': if (!G.yard || G.yard === 'lane') sfx.whoosh(); break;
     case 'turn': if (!e.right && !G.lesson) say('RECALCULATING...', cx, H * 0.36, '#ffb070', 16); break;
     case 'forced': say('ROAD CLOSED', cx, H * 0.36, '#ffb070', 18); break;
-    case 'pick': sfx.door(); vibe(HAP.light); break;
+    case 'pick': sfx.door(); vibe(HAP.light); setTimeout(() => { if (!paused) sfx.door(); }, 1300); break;
     case 'in': sfx.meter(); say(`${TYPES[e.type].icon} ${TYPES[e.type].name.toUpperCase()}: ${e.allow} s`, cx, H * 0.32, '#fff', 20); if (e.type === 'calm') tip('calm', 'A nervous passenger: no crashes, no red lights, no fast corners, no hard braking. Gentle!', 3.6); if (e.type === 'rush') tip('rush', 'A rusher: quick, and they tip double.', 3); if (e.type === 'sight') tip('sight', 'A tourist: drive past the fountain (📷 on the map) for a tip.', 3.4); break;
-    case 'out': sfx.till(); sfx.coin(2); say(`+${e.pay} 🪙` + (e.tip ? `  TIP +${e.tip}` : ''), cx, H * 0.34, e.late ? '#ffb070' : '#80ff90', 26); if (e.late) say('LATE: HALF FARE', cx, H * 0.41, '#ffb070', 18); burst(cx, H * 0.34, '#ffd040', 20); break;
+    case 'out': sfx.door(); setTimeout(() => { if (!paused) sfx.door(); }, 1250); sfx.till(); sfx.coin(2); say(`+${e.pay} 🪙` + (e.tip ? `  TIP +${e.tip}` : ''), cx, H * 0.34, e.late ? '#ffb070' : '#80ff90', 26); if (e.late) say('LATE: HALF FARE', cx, H * 0.41, '#ffb070', 18); burst(cx, H * 0.34, '#ffd040', 20); break;
     case 'missed': sfx.no(); say(e.kind === 'pick' ? 'MISSED THEM: GO ROUND THE BLOCK' : 'MISSED THE DOOR: GO ROUND', cx, H * 0.38, '#ffb070', 18); tip('missed', 'Pull over to the kerb (on the right) and BRAKE to stop in the ring.', 3); break;
     case 'red': sfx.alarm(); FX.red = 1; vibe(HAP.heavy); ui.banner = { txt: 'RED LIGHT! -5', t: 0, secs: 1.3, col: '#ff5a4a' }; break;
     case 'skid': sfx.skid(); FX.shake = 8; say('TOO FAST FOR THE CORNER!', cx, H * 0.4, '#ffb070', 18); tip('skid', 'BRAKE before the corner, then turn.', 2.6); break;

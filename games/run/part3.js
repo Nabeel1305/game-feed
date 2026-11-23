@@ -156,7 +156,7 @@ function onEvent(G, e) {
     case 'through': sfx.through(); FX.flash = 0.3; say('THROUGH THE GAP!', cx, cy, '#ffe08a', 28); vibe(HAP.light); break;
     case 'heli': sfx.heli(); say('HELICOPTER!', cx, cy, '#ffd0c4', 26); tip('heli', 'Stay out of the searchlight: it raises the heat', 2.8); break;
     case 'spotted': sfx.alert(); break;
-    case 'ditch': sfx.door(); FX.flash = 0.4; say('DITCH THE CAR!', cx, cy, '#ffe08a', 30); ui.snap = true; break;
+    case 'ditch': sfx.door(); FX.flash = 0.4; say('DITCH THE CAR!', cx, cy, '#ffe08a', 30); break;
     case 'foot': ui.snap = true; break;
     case 'jump': sfx.jump(); break; case 'slide': sfx.slide(); break;
     case 'cleared': sfx.step(); break;
@@ -198,6 +198,11 @@ function draw(now, dt) {
     // your car, its lights, the nitro flame
     carPose(V.me, me.x, me.s, me.h, -(me.w || 0) * Math.min(1, Math.abs(me.v) / 20) * 0.05); V.flame.visible = g.boost > 0; V.flame.scale.set(1, 0.7 + Math.random() * 0.6, 1);
     const fx = Math.sin(me.h), fs = Math.cos(me.h); V.head.position.set(me.x + fx * 2.2, 0.9, -(me.s + fs * 2.2)); V.head.target.position.set(me.x + fx * 26, 0, -(me.s + fs * 26));
+    // out of the car (his words on Taxi Driver, 23 Nov 2026: "you don't animate the person entering the car, nor do you animate them leaving the car"; the same was true here, where
+    // DITCH THE CAR simply cut to the alley): you are out of the driver's door and running before the picture changes
+    const getOut = (m, x, s, h, side, u, ph) => { if (u <= 0) { m.visible = false; return; } const a = clamp(u / 0.3, 0, 1), d = Math.max(0, u - 0.3) * 7, th = h + side * 0.85, rx = Math.cos(h) * side, rs = -Math.sin(h) * side; m.visible = true; m.scale.setScalar(0.65 + 0.35 * a);
+      m.position.set(x + rx * 1.25 + Math.sin(th) * d, 0.3 * (1 - a), -(s + rs * 1.25 + Math.cos(th) * d)); m.rotation.set(0, -th, 0); V.runPose(m, t * 12.5 + ph, a); };
+    if (g.ph === 'ditch') getOut(V.you, me.x, me.s, me.h, -1, g.ph_t - 0.15, 0);
     let q = 0; for (const c2 of g.traffic) { if (q >= V.traffic.length) break; const m = V.traffic[q++]; m.visible = true; carPose(m, c2.x, c2.s, DIRH[c2.dir] + (c2.hit > 0 ? c2.hit * 1.5 : 0)); }
     // the cops, light bars going; the one about to ram is beside you with its lights brighter
     let nearest = null, nd = 1e9; g.cops.forEach((cp, i) => { if (i >= V.cops.length) return; const m = V.cops[i]; m.visible = true; carPose(m, cp.x, cp.s, cp.h + (cp.ram > 0 ? Math.sin(cp.ram * 9) * 0.06 : 0)); const bar = m.userData.bar; bar.children[0].material.emissiveIntensity = flash ? 5 : 0.2; bar.children[1].material.emissiveIntensity = flash ? 0.2 : 5; const d2 = Math.hypot(cp.x - me.x, cp.s - me.s); if (d2 < nd) { nd = d2; nearest = cp; } });
@@ -222,7 +227,7 @@ function draw(now, dt) {
     cam.position.copy(V.camPos); cam.fov = (port ? 66 : 56) + Math.max(0, me.v - 22) * 0.3 + (g.boost > 0 ? 5 : 0); if (cam.near !== 3) cam.near = 3; cam.updateProjectionMatrix(); cam.lookAt(V.look);
     W3.setFocus(me.x, 0, -me.s, 22);
   } else {
-    const F = g.foot || NOFOOT, s = F.s, ph = t * 11; layAlley(V, F);
+    const F = g.foot || NOFOOT, s = F.s, ph = t * 11; layAlley(V, F); V.you.scale.setScalar(1);
     const at = (s2, lat = 0) => { const p = footAt(F, s2); return { x: p.x + Math.cos(p.h) * lat, z: -(p.y - Math.sin(p.h) * lat), h: p.h }; };
     V.alley.position.z = 0;
     V.alleyLamps.forEach((l, q) => { const p = at(Math.floor(s / 20) * 20 + q * 20 + 6, q % 2 ? 1.8 : -1.8); l.intensity = 55; l.distance = 24; l.position.set(p.x, 3.5, p.z); });

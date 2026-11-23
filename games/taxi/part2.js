@@ -32,9 +32,10 @@ const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.g
 const RANKS = [[0, 'New driver'], [60, 'Cabbie'], [200, 'Night owl'], [500, 'Street king'], [1100, 'Road legend'], [2500, 'Taxi tycoon']];
 const TYPES = { plain: { name: 'Passenger', icon: '🙂', time: 1, tip: 1 }, rush: { name: 'Rusher', icon: '⚡', time: 0.8, tip: 2 }, calm: { name: 'Nervous', icon: '😰', time: 1.3, tip: 1.5 }, sight: { name: 'Tourist', icon: '📷', time: 1.15, tip: 1 } };
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 5 === 0;
-  return { fares: Math.min(3, 2 + (f >= 15 ? 1 : 0) + (boss ? 1 : 0)), lights: N >= 2, cars: N === 1 ? 0.3 : x(0.7, 2.6, 18), works: N >= 4 ? Math.round(x(2, 8, 20)) : 0, jams: N >= 6 ? Math.round(x(2, 9, 25)) : 0,
-    far: N <= 2 ? 1 : Math.min(3.5, 2 + f / 20), near: N <= 2 ? 1 : 1.5, types: ['plain'].concat(N >= 3 ? ['rush'] : [], N >= 5 ? ['calm'] : [], N >= 8 ? ['sight'] : []),
-    vRef: x(7.0, 10.6, 22) * (1 - 0.15 * easyOf(N)) * (help ? 0.85 : 1), slack: Math.round(x(14, 4, 18) + 5 * easyOf(N)) + (help ? 8 : 0), wait: Math.round(x(40, 25, 20) + 10 * easyOf(N)) + (help ? 15 : 0), boss, help: !!help,
+  return { fares: N === 1 || N > 5 ? 4 : 3, hailNear: N <= 1 ? 1 : 1.5, hailFar: N <= 1 ? 2 : 3, lights: N >= 2, cars: N === 1 ? 0.3 : x(0.7, 2.6, 18), works: N >= 4 ? Math.round(x(2, 8, 20)) : 0, jams: N >= 6 ? Math.round(x(2, 9, 25)) : 0,
+    far: x(9.5, 10.5, 25), near: x(7, 8, 25),      // (23 Nov 2026, his words: "you're literally taking them just around the corner... let the people drive for... 3 to 5 minutes at least") a fare is a drive across town, in blocks
+    types: ['plain'].concat(N >= 3 ? ['rush'] : [], N >= 5 ? ['calm'] : [], N >= 8 ? ['sight'] : []),
+    vRef: x(7.0, 9.4, 22) * (1 - 0.15 * easyOf(N)) * (help ? 0.85 : 1), slack: Math.round(x(14, 4, 18) + 5 * easyOf(N)) + (help ? 8 : 0), wait: Math.round(x(40, 25, 20) + 10 * easyOf(N)) + (help ? 15 : 0), boss, help: !!help,
     vmax: 15 * (1 + 0.04 * upLv('engine')), acc: 4.0 * (1 + 0.08 * upLv('engine')), brake: 8 * (1 + 0.08 * upLv('brakes')), smart: upLv('gps') > 0, forgive: upLv('seats'), crashes: 3 }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, wait: 0, next: null, mini: !!o.mini };
@@ -66,9 +67,9 @@ function setup(G, o = {}) { const c = G.cfg, R = G.rnd; G.t = 0; G.yard = o.yard
 // a light at a node: the north-south road has green, then amber, then east-west (and back)
 function lightAt(G, i, j, axis, t) { const L = G.light[i] && G.light[i][j]; if (!L || !L.on) return 'g'; const C = 14, p = ((t + L.off) % C + C) % C, ns = p < 5.5 ? 'g' : p < 7 ? 'a' : 'r', ew = p >= 7 && p < 12.5 ? 'g' : p >= 12.5 ? 'a' : 'r'; return axis === 0 ? ns : ew; }
 // ---------- the GPS: the shortest way from the junction ahead (no U-turns) to the start of the road the goal is on ----------
-function gps(G, goal, from) { const t = from || G.taxi; if (!goal) return null; const e = goal.e;
+function gps(G, goal, from, looks) { const t = from || G.taxi; if (!goal) return null; const e = goal.e;
   if (t.i === e.i && t.j === e.j && t.h === e.h && t.s < goal.s - 2) return { turn: 'S', dist: goal.s - t.s, path: [], on: true };
-  const [ni, nj] = ahead(t.i, t.j, t.h), smart = G.cfg.smart, cost = (i, j, h) => BL * (smart && G.jams.has(twoWay(i, j, h)) ? 3.5 : 1) + (lightAt(G, i, j, 0, 0) && G.light[i][j].on ? 3 : 0);
+  const [ni, nj] = ahead(t.i, t.j, t.h), smart = G.cfg.smart || looks, cost = (i, j, h) => BL * (smart && G.jams.has(twoWay(i, j, h)) ? 3.5 : 1) + (lightAt(G, i, j, 0, 0) && G.light[i][j].on ? 3 : 0);
   const D = new Map(), P = new Map(), Q = [[BL - t.s, ni, nj, t.h]]; D.set(ekey(ni, nj, t.h), BL - t.s);
   while (Q.length) { Q.sort((a, b) => a[0] - b[0]); const [d, i, j, hin] = Q.shift(), key = ekey(i, j, hin); if (d > D.get(key)) continue;
     if (i === e.i && j === e.j && hin !== (e.h + 2) % 4 && edgeOk(G, i, j, e.h)) { // reached the goal's road: walk back for the first turn
@@ -84,23 +85,22 @@ function placeFrom(G, from, near, far, avoid) { const R = G.rnd; let best = null
     if (d < 99 && (!best || Math.abs(d - near) < best.d)) best = { p, d: Math.abs(d - near) }; }
   return best ? best.p : { e: { i: 1, j: 1, h: 0 }, s: 26 }; }
 function newHail(G, at) { const t = G.taxi, c = G.cfg;
-  const p = at ? { e: Object.assign({}, at.e), s: at.s } : placeFrom(G, t, 0.3, 0.5 + c.near * 0.5);
+  const p = at ? { e: Object.assign({}, at.e), s: at.s } : placeFrom(G, t, c.hailNear, c.hailFar);
   const type = G.yard ? 'plain' : c.types[(G.rnd() * c.types.length) | 0];
   G.goal = Object.assign(p, { kind: 'pick', type, patience: 0 }); const g = gps(G, G.goal); G.goal.patience = g.dist / Math.max(6, c.vRef) + c.wait; G.goal.left = G.goal.patience; G.ev.push({ k: 'hail', type }); }
 function pickedUp(G) { const c = G.cfg, g = G.goal, T = TYPES[g.type], t = G.taxi;
   const d = G.yard && G.yardDrop ? G.yardDrop : placeFrom(G, { i: g.e.i, j: g.e.j, h: g.e.h, s: g.s }, c.near, c.far, g.e);
   G.fare = { type: g.type, t0: G.t, bumps: 0, sight: false, tipOk: true };
   G.goal = Object.assign(d, { kind: 'drop', type: g.type }); const r = gps(G, G.goal); G.fare.blocks = Math.max(1, Math.round(r.dist / BL));
-  G.fare.allow = Math.round((r.dist / c.vRef + 6 + c.slack) * T.time); G.fare.left = G.fare.allow; G.fare.pay = 4 + G.fare.blocks * 2;
+  G.fare.allow = Math.round((r.dist / c.vRef + 6 + c.slack + G.fare.blocks) * T.time); G.fare.left = G.fare.allow; G.fare.pay = 4 + G.fare.blocks;      // the meter allows a second a block for lights and corners
   G.ev.push({ k: 'in', type: g.type, allow: G.fare.allow }); }
 function dropped(G) { const F = G.fare, T = TYPES[F.type], c = G.cfg; let pay = F.pay, tip = 0;
   if (F.left >= 0) { if (F.tipOk) tip = Math.round((2 + F.left / 6) * T.tip) + c.forgive; } else { pay = Math.ceil(pay / 2); G.late++; }
   if (F.type === 'sight' && F.sight) tip += 6; G.coins += pay + tip; if (tip > 0) G.tips++; G.done++;
   G.log.push({ type: F.type, left: Math.round(F.left), pay, tip, bumps: F.bumps }); G.ev.push({ k: 'out', pay, tip, late: F.left < 0, type: F.type });
-  G.fare = null; G.goal = null;
-  if (G.lesson) { lessonSee(G, 'drop'); return; }
-  if (G.done >= c.fares) { finish(G, true); return; }
-  G.wait = 0.9; G.next = () => newHail(G); }
+  // they get out: the door, a step to the kerb, a wave (the taxi waits; the view plays it from G.anim)
+  G.anim = { kind: 'out', T: 1.9, type: F.type, e: Object.assign({}, G.goal.e), s: G.goal.s }; G.fare = null; G.goal = null; G.taxi.v = 0;
+  G.wait = G.anim.T; G.next = () => { G.anim = null; if (G.lesson) { lessonSee(G, 'drop'); return; } if (G.done >= c.fares) { finish(G, true); return; } newHail(G); }; }
 // ---------- your thumbs ----------
 function drive(G, sx, gas, brake) { if (!G.in) return; const I = G.in; I.sx = clamp(sx, -1, 1); I.gas = !!gas; I.brake = !!brake; }      // the stick (left -1 .. right +1) and the two pedals
 // is this place on a street? Streets run along the grid lines, HW either side; not beyond the edge of town, not through road works
@@ -157,7 +157,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return;
     if (car.i === t.i && car.j === t.j && car.h === t.h) { const ds = car.s - t.s; if (ds < -1 && ds > -3 && Math.abs(car.lx - t.lx) >= 2.0 && !car.passed && t.v > car.v) { car.passed = true; G.passed++; G.ev.push({ k: 'pass' }); if (G.lesson) lessonSee(G, 'pass'); } } }
   // the goal: stop in the ring, in the kerb lane
   const g = G.goal; if (g) { const on = g.e.i === t.i && g.e.j === t.j && g.e.h === t.h, d = g.s - t.s;
-    if (on && Math.abs(d) < 6 && t.lx > 3.4 && Math.abs(t.v) < 1.2) { if (g.kind === 'pick') { G.ev.push({ k: 'pick' }); pickedUp(G); if (G.lesson) lessonSee(G, 'pick'); } else dropped(G); if (G.over) return; }
+    if (on && Math.abs(d) < 6 && t.lx > 3.4 && Math.abs(t.v) < 1.2) { if (g.kind === 'pick') { G.ev.push({ k: 'pick' }); t.v = 0; G.anim = { kind: 'in', T: 1.8, type: g.type, e: Object.assign({}, g.e), s: g.s }; G.wait = G.anim.T; G.next = () => { G.anim = null; pickedUp(G); if (G.lesson) lessonSee(G, 'pick'); }; return; } else { dropped(G); return; } }      // they walk to the door and get in (the taxi waits)
     else if (on && d < -6 && !g.passT) { g.passT = 1; G.ev.push({ k: 'missed', kind: g.kind }); if (G.lesson) { lessonMiss(G, 'missed'); return; } }
     if (!on) g.passT = 0; }
   // the meter and the wait
@@ -193,7 +193,7 @@ function finish(G, win, o = {}) { if (G.over) return true; G.over = win ? 'won' 
 function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.taxi) return; const t = G.taxi, c = G.cfg, acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react, T = G.t;
   const g = G.goal, d2n = BL - t.s, F = G.fare, sp = Math.abs(t.v), inJ = !!t.box;
   // decisions a few times a second: the turn at the junction ahead, the lane, the speed to hold
-  mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd <= 0) { mem.cd = react * 0.3 * (0.5 + Math.random()); const r = g ? gps(G, g) : null;
+  mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd <= 0) { mem.cd = react * 0.3 * (0.5 + Math.random()); const r = g ? gps(G, g, null, Math.random() < acc) : null;      // he looks at the map: the red streets are jams, and he goes round them when he notices
     const zkey = t.i + ',' + t.j + ',' + t.h + ':' + (G.deals | 0) + ':' + G.done + ':' + (g ? g.kind : '');
     if (!inJ && mem.zone !== zkey && r) { mem.zone = zkey; let q = r.turn === 'U' ? 'R' : r.turn; if (Math.random() < 0.02 + (1 - acc) * 0.2) q = ['L', 'R', 'S'].filter(x => x !== q)[(Math.random() * 2) | 0];      // a slip: the wrong way
       if (F && F.type === 'sight' && !F.sight && Math.random() < acc) { const [ni, nj] = ahead(t.i, t.j, t.h), dI = Math.sign(G.sight.i - ni), dJ = Math.sign(G.sight.j - nj); const toward = [0, 1, 2, 3].find(h => DIRS[h][0] === dI && DIRS[h][1] === dJ); if (toward != null && Math.abs(G.sight.i - ni) + Math.abs(G.sight.j - nj) <= 3 && F.left > 25) { const q2 = turnOf(t.h, toward); if (q2 !== 'U') q = q2; } }

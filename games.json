@@ -482,7 +482,7 @@
       "id": "police",
       "name": "Police Chase",
       "status": "testing",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "added": "2026-11-17",
       "path": "games/police/index.html",
       "artifact": "https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy",
@@ -509,7 +509,7 @@
         "P14",
         "P30"
       ],
-      "summary": "A three-part police chase in 3D through a night city of streets and corners. Pursuit: a floating stick steers your patrol car, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse); the getaway car is orange, with a red SUSPECT arrow over it and a red ring under it; he turns at junctions, you brake for the corner, and a ram to his back corner spins him out. On foot: you see your officer from behind, chasing him through brick alleys with corners: swipe round crates, over fences, under pipes, and at a corner swipe the way he turned (from case 6 some are T-junctions). Close in and press the ARREST button. Arrest: a tug of war, your officer kneeling on him: tap faster than he fights to fill the bar to CUFFED; let it empty and he is up and running. Lights, siren, rain on the tarmac; weather changes by case."
+      "summary": "A three-part police chase in 3D through a night city of streets and corners. Pursuit: a floating stick steers your patrol car, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse); the getaway car is orange, with a red SUSPECT arrow over it and a red ring under it; he turns at junctions, you brake for the corner, and a ram to his back corner spins him out. On foot: you see your officer from behind, chasing him through brick alleys with corners: swipe round crates, over fences, under pipes, and at a corner swipe the way he turned (from case 6 some are T-junctions). Close in and press the ARREST button. Arrest: a tug of war, your officer kneeling on him: tap faster than he fights to fill the bar to CUFFED; let it empty and he is up and running. Lights, siren, rain on the tarmac; weather changes by case. 0.3.1: when his car is stopped he is seen getting out and running, and your officer getting out after him, before the alley."
     },
     {
       "number": 15,
@@ -823,7 +823,7 @@
       "id": "run",
       "name": "On the Run",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "added": "2026-11-17",
       "path": "games/run/index.html",
       "artifact": "https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1",
@@ -850,7 +850,7 @@
         "P14",
         "P18"
       ],
-      "summary": "Getaway in three phases. Driving: a floating stick steers, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse) and a NITRO button, through a city of streets and corners; green arrows on the road and a green marker show the way to the drop; police cars pull alongside and flash before they ram (steer away), roadblocks leave one gap, spike strips and a helicopter. Then the alleys on foot, round their corners, to the safehouse, with the officer on your heels; a garage of upgrades and a rank that stay."
+      "summary": "Getaway in three phases. Driving: a floating stick steers, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse) and a NITRO button, through a city of streets and corners; green arrows on the road and a green marker show the way to the drop; police cars pull alongside and flash before they ram (steer away), roadblocks leave one gap, spike strips and a helicopter. Then the alleys on foot, round their corners, to the safehouse, with the officer on your heels; a garage of upgrades and a rank that stay. 0.2.1: at DITCH THE CAR you are seen getting out and running before the alley."
     },
     {
       "number": 25,
@@ -2660,7 +2660,7 @@
       "id": "bus",
       "name": "Bus Driver",
       "status": "testing",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "added": "2026-11-20",
       "path": "games/bus/index.html",
       "artifact": "https://claude.ai/artifact/SvgMcmUkQVPx1rcU36EjW9",
@@ -2687,7 +2687,7 @@
         "P21",
         "P26"
       ],
-      "summary": "His idea: drive a city bus along its route through a 3D town with two pedals (hold GO, hold BRAKE; both ease in). Stop with the front door on the stop's mark and the doors open by themselves; people step off and climb aboard; leave on the stop's time, never before it. Red lights, zebra crossings with people, the car in front, speed cameras, corners to slow for, and a cup of tea that spills if you drive roughly. Six districts, rush hours, liveries, upgrades and ranks."
+      "summary": "His idea: drive a city bus along its route through a 3D town with two pedals (hold GO, hold BRAKE; both ease in). Stop with the front door on the stop's mark and the doors open by themselves; people step off and climb aboard; leave on the stop's time, never before it. Red lights, zebra crossings with people, the car in front, speed cameras, corners to slow for, and a cup of tea that spills if you drive roughly. Six districts, rush hours, liveries, upgrades and ranks. 0.1.2: the people getting off are seen stepping down from the front door and walking away (they were only a number)."
     },
     {
       "number": 79,
@@ -2829,7 +2829,7 @@
       "id": "taxi",
       "name": "Taxi Driver",
       "status": "testing",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "added": "2026-11-20",
       "path": "games/taxi/index.html",
       "artifact": "https://claude.ai/artifact/UM1but5VAXNifXVKai5S7y",
@@ -2839,7 +2839,7 @@
       "feed": {
         "mini": true,
         "full": true,
-        "hook": "Pick them up, find the way, beat the meter.",
+        "hook": "Pick them up, drive them right across town, beat the meter.",
         "genre": "Driving / city",
         "intensity": 3,
         "thumbs": 2,
@@ -2855,7 +2855,7 @@
         "P12",
         "P13"
       ],
-      "summary": "You drive the cab: a floating stick steers, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse). Pick up whoever waves by pulling over and stopping in their ring, find the way (GPS or round the jams), stop at their door before the meter runs out; rushers, nervous passengers and tourists each want a different drive."
+      "summary": "You drive the cab: a floating stick steers, with GAS and BRAKE pedals (hold BRAKE when stopped to reverse). Pick up whoever waves by pulling over and stopping in their ring, find the way (GPS or round the jams), stop at their door before the meter runs out; rushers, nervous passengers and tourists each want a different drive. 0.3.0 (23 Nov 2026, his review): a fare is a drive across town (7 to 10 blocks; it was one), three or four to a shift, so a shift is about four to five minutes; the passenger is seen walking to the back door, getting in, riding on the back seat, getting out and walking away."
     },
     {
       "number": 84,

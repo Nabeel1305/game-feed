@@ -178,6 +178,11 @@ function draw(now, dt) {
     V.redL.position.set(me.x, 2.2, -me.s); V.blueL.position.set(me.x, 2.2, -me.s); V.redL.intensity = flash ? 40 : 0; V.blueL.intensity = flash ? 0 : 40;
     const fx = Math.sin(me.h), fs = Math.cos(me.h); V.head.position.set(me.x + fx * 2.2, 0.9, -(me.s + fs * 2.2)); V.head.target.position.set(me.x + fx * 26, 0, -(me.s + fs * 26));
     const ck = g.crook; carPose(V.crook, ck.x, ck.s, ck.h + (ck.spin > 0 ? (1.8 - ck.spin) * 7 : 0)); V.ring.position.set(ck.x, 0.05, -ck.s); V.ring.scale.setScalar(1 + Math.sin(t * 6) * 0.12); V.ring.visible = g.ph === 'drive';
+    // out of the car (his words on Taxi Driver, 23 Nov 2026: "you don't animate the person entering the car, nor do you animate them leaving the car"; the same was true here, where the
+    // screen simply cut to the alley): when his car is stopped for good his door is open and he is out and running; a moment later your officer is out after him
+    const getOut = (m, x, s, h, side, u, ph) => { if (u <= 0) { m.visible = false; return; } const a = clamp(u / 0.3, 0, 1), d = Math.max(0, u - 0.3) * 7, th = h + side * 0.85, rx = Math.cos(h) * side, rs = -Math.sin(h) * side; m.visible = true; m.scale.setScalar(0.65 + 0.35 * a);
+      m.position.set(x + rx * 1.25 + Math.sin(th) * d, 0.3 * (1 - a), -(s + rs * 1.25 + Math.cos(th) * d)); m.rotation.set(0, -th, 0); V.runPose(m, t * 12.5 + ph, a); };
+    if (g.ph === 'crash') { getOut(V.runner, ck.x, ck.s, ck.h, -1, g.ph_t - 0.2, 1.3); getOut(V.cop, me.x, me.s, me.h, -1, g.ph_t - 0.65, 0); }
     let q = 0; for (const c2 of g.traffic) { if (q >= V.traffic.length) break; const m = V.traffic[q++]; m.visible = true; carPose(m, c2.x, c2.s, [0, Math.PI / 2, Math.PI, -Math.PI / 2][c2.dir] + (c2.hit > 0 ? c2.hit * 1.5 : 0)); }
     // camera: above and behind the patrol car, coming round after it through the corners
     V.camH = ui.snap ? me.h : V.camH + wrapPi(me.h - V.camH) * Math.min(1, dt * 3.2); const cx2 = Math.sin(V.camH), cs2 = Math.cos(V.camH), port = innerWidth <= innerHeight, back = port ? 13 : 11, up = port ? 10 : 7.5;
@@ -186,7 +191,7 @@ function draw(now, dt) {
     cam.position.copy(V.camPos); cam.fov = (port ? 66 : 56) + Math.max(0, me.v - 22) * 0.3; if (cam.near !== 3) cam.near = 3; cam.updateProjectionMatrix(); cam.lookAt(V.look);
     W3.setFocus(me.x, 0, -me.s, 22); if (g.ph === 'drive') ui.mark = { p: toScreen(ck.x, 2.6, -ck.s), d: Math.hypot(ck.x - me.x, ck.s - me.s) };
   } else {
-    const F = g.foot || NOFOOT, s = F.s, ph = t * 12.5; layAlley(V, F);
+    const F = g.foot || NOFOOT, s = F.s, ph = t * 12.5; layAlley(V, F); V.runner.scale.setScalar(1); V.cop.scale.setScalar(1);
     const at = (s2, lat = 0) => { const p = footAt(F, s2); return { x: p.x + Math.cos(p.h) * lat, z: -(p.y - Math.sin(p.h) * lat), h: p.h }; };
     V.alleyLamps.forEach((l, q) => { const p = at(Math.floor(s / 20) * 20 + q * 20 + 6, q % 2 ? 1.8 : -1.8); l.intensity = 55; l.distance = 24; l.position.set(p.x, 3.5, p.z); });
     // obstacles ahead
