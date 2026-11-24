@@ -68,11 +68,12 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length; i
   for (const [, m] of V.karts) V.S.remove(m); V.karts.clear(); }
 function sync(V, g, t, dt) {
   for (const k of g.karts) { let m = V.karts.get(k); if (!m) { m = kartModel(k.me ? g.kart.col : k.who.col, k.me ? g.kart.col2 : 0xffffff); V.S.add(m); V.karts.set(k, m); }
-    m.position.set(k.x, 0, k.z); m.rotation.y = -(k.h); const u = m.userData; u.body.rotation.x = (k.slip || 0) * 0.4; u.body.rotation.z = Math.sin(t * 30) * 0.004 * k.v; u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.3 : 0;
+    m.position.set(k.x, 0, k.z); m.rotation.y = -(k.h); const u = m.userData; u.body.rotation.x = (k.slip || 0) * 0.4 + (k.wob || 0) * Math.sin(t * 26) * 0.28; u.body.rotation.z = Math.sin(t * 30) * 0.004 * k.v + (k.wob || 0) * Math.sin(t * 23) * 0.1; u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.3 : 0;
     for (const w of u.wheels) w.rotation.y = 0; u.wheels[0].rotation.z = u.wheels[1].rotation.z = 0; u.wheels.forEach(w => { w.rotation.x = Math.PI / 2; });
     u.flame.visible = k.boost > 0; u.flame.scale.set(1, 0.8 + Math.random() * 0.6 + k.boost * 0.4, 1); u.flame.material.color.setHex(k.tierBoost === 3 ? 0xd060ff : k.boost > 1 ? 0xff9a20 : 0x60c0ff); u.bub.visible = k.shield > 0;
     // drift sparks from the back wheels
     if (k.drift && k.tier && Math.random() < 0.9) for (const s of [-1, 1]) V.sparkP.push({ x: k.x - Math.cos(k.h) * 0.8 + Math.sin(k.h) * 0.75 * s, y: 0.15, z: k.z - Math.sin(k.h) * 0.8 - Math.cos(k.h) * 0.75 * s, vx: (Math.random() - 0.5) * 3 - Math.cos(k.h) * 3, vy: 1 + Math.random() * 2.5, vz: (Math.random() - 0.5) * 3 - Math.sin(k.h) * 3, t: 0, c: TIERC[k.tier] }); }
+  if (V.impacts) for (let i = V.impacts.length - 1; i >= 0; i--) { const q = V.impacts[i]; q.t += dt; const u = q.t / (q.big ? 0.7 : 0.5); if (u >= 1) { q.m.visible = false; V.impacts.splice(i, 1); continue; } q.m.visible = true; q.m.scale.setScalar((q.big ? 1.0 : 0.7) + u * (q.big ? 3.2 : 2.2)); q.m.material.opacity = 0.75 * (1 - u) * (1 - u); }
   const P = V.sparkP; while (P.length > 220) P.shift(); const pa = V.sparks.geometry.attributes.position, ca = V.sparks.geometry.attributes.color, col = new THREE.Color();
   for (let i = 0; i < 220; i++) { const q = P[i]; if (q) { q.t += dt; q.vy -= 9 * dt; q.x += q.vx * dt; q.y = Math.max(0.02, q.y + q.vy * dt); q.z += q.vz * dt; pa.setXYZ(i, q.x, q.y, q.z); col.setHex(q.c); ca.setXYZ(i, col.r, col.g, col.b); } else pa.setXYZ(i, 0, -1e4, 0); } for (let i = P.length - 1; i >= 0; i--) if (P[i].t > 0.35) P.splice(i, 1); pa.needsUpdate = ca.needsUpdate = true;
   V.boxes.forEach(m => { const b = m.userData.b; m.visible = b.t <= 0; m.rotation.set(t * 0.8, t * 1.2, 0); m.position.y = 1 + Math.sin(t * 2 + m.position.x) * 0.15; m.material.emissive.setHSL((t * 0.2 + m.position.x * 0.01) % 1, 0.8, 0.35); });
@@ -84,6 +85,11 @@ function sync(V, g, t, dt) {
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
 function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2, front: true }; SV.set(x, y, z); return W3.screen(SV); }
 // ---------- events ----------
+function impact(x, y, z, h, big) { const V = V3, T = THREE; V.impacts = V.impacts || []; V.ringPool = V.ringPool || [];
+  let m = V.ringPool.find(r => !r.visible); if (!m) { m = new T.Mesh(new T.RingGeometry(0.55, 0.75, 32), new T.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide })); V.S.add(m); V.ringPool.push(m); }
+  m.position.set(x, y, z); m.rotation.set(0, -h, 0); m.material.color.setHex(big ? 0xffe08a : 0xffffff); V.impacts.push({ m, t: 0, big }); }
+// the camera stays on the road's side of the fence, so a kart along the rail is never seen through the net
+function camIn(g, k2) { const cam = W3.cam, l = locate(g.T, cam.position.x, cam.position.z, k2.i), lim = TW / 2 + 3.0; if (Math.abs(l.lat) > lim) { const p = g.T.S[l.i], s = Math.sign(l.lat), b = Math.abs(l.lat) - lim; cam.position.x += Math.sin(p.h) * s * b; cam.position.z -= Math.cos(p.h) * s * b; } }
 function onEvent(G, e) {
   const cx = W / 2;
   switch (e.k) {
@@ -99,7 +105,13 @@ function onEvent(G, e) {
     case 'pop': if (e.me) { sfx.pop(); say('BUBBLE SAVED YOU', cx, H * 0.42, '#9adfff', 16); } break;
     case 'gotem': sfx.gotem(); { const p = scr(e.x, 1.5, e.z); say(e.why === 'zap' ? 'ZAP! +1 🪙' : 'SLICKED! +1 🪙', p.x, p.y - 20 * k, '#ffd040', 16); } break;
     case 'bump': sfx.bump(); break;
-    case 'wall': sfx.wall(); FX.shake = 5; break;
+    case 'wall': { sfx.wall(); if (sfx.clang) sfx.clang(e.fly); FX.shake = e.fly ? 12 : 7; vibe(HAP.thud);
+      /* the hit you see: a burst of sparks off the rail, a ring flashing where you struck, the kart rocking */
+      const V = V3; if (V && !V.none && V.sparkP) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s;
+        for (let i = 0; i < (e.fly ? 40 : 26); i++) { const sp = 3 + Math.random() * 6; V.sparkP.push({ x: e.x, y: e.y + 0.4 + Math.random() * 0.5, z: e.z, vx: -nx * sp + (Math.random() - 0.5) * 5, vy: 1.5 + Math.random() * 4, vz: -nz * sp + (Math.random() - 0.5) * 5, t: Math.random() * 0.08, c: Math.random() < 0.6 ? 0xffd27a : 0xffffff }); }
+        impact(e.x + nx * 0.15, e.y + (e.fly ? 1.4 : 0.6), e.z + nz * 0.15, e.h, e.fly); }
+      say(e.fly ? 'CRASH!' : 'BANG!', W / 2, H * 0.42, '#ffd0a0', e.fly ? 26 : 20); break; }
+    case 'scrape': { const V = V3; if (V && !V.none && V.sparkP) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s; for (let i = 0; i < 5; i++) V.sparkP.push({ x: e.x, y: e.y + 0.3, z: e.z, vx: -nx * 2 + (Math.random() - 0.5) * 3 - Math.cos(e.h) * 4, vy: 1 + Math.random() * 2, vz: -nz * 2 + (Math.random() - 0.5) * 3 - Math.sin(e.h) * 4, t: 0, c: 0xffc860 }); } if (sfx.scrape) sfx.scrape(); break; }
     case 'lap': ui.lapT = 2; if (e.lap < G.cfg.laps) { sfx.lap(e.lap); say(e.lap === G.cfg.laps - 1 ? 'FINAL LAP!' : `LAP ${e.lap + 1}`, cx, H * 0.3, '#ffd080', 30); } break;
     case 'finish': break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.3, '#ffe08a', 20); sfx.go(); break;
@@ -114,7 +126,7 @@ function onEvent(G, e) {
 function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k2 = g.me; cam.fov = asp < 0.8 ? 66 + Math.min(8, k2.v * 0.2) : 52; cam.aspect = asp; cam.updateProjectionMatrix();
   if (!ui.cam || ui.snap) { ui.cam = { h: k2.h }; ui.snap = false; } let dh = k2.h + (k2.slip || 0) * 0.5 - ui.cam.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); ui.cam.h += dh * Math.min(1, dt * 5);
   const h = ui.cam.h, back = 6.4, up = 3.1, sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.02 : 0;
-  cam.position.set(k2.x - Math.cos(h) * back + sh, up, k2.z - Math.sin(h) * back + sh); cam.lookAt(k2.x + Math.cos(h) * 6, 0.6, k2.z + Math.sin(h) * 6); cam.updateMatrixWorld(); }
+  cam.position.set(k2.x - Math.cos(h) * back + sh, up, k2.z - Math.sin(h) * back + sh); camIn(g, k2); cam.lookAt(k2.x + Math.cos(h) * 6, 0.6, k2.z + Math.sin(h) * 6); cam.updateMatrixWorld(); }
 let IG = null; function idleG() { if (!IG || IG.over) { IG = newGame(Math.max(2, store.get('level', 1) | 0), { seed: (Math.random() * 1e6) | 0 }); IG.mem = {}; ui.snap = true; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';

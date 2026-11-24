@@ -11,6 +11,9 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Engagement factors in every game, always, without being told** (his words: "I shouldn't have to tell you"). They are the research in `PLAYBOOK.md`: pick the ones that suit each game from the player's point of view, never all of them blindly, but never none.
 
 ## The audit of 22 Nov 2026 (read `specs/audit-2026-11-22.md` before changing any game from 9 on)
+- **A rail stops the kart's side, not its middle (24 Nov 2026, Kart Kingdom, also Stunt Kart and Drift Kings).** The wall test used the
+  kart's centre, so half the kart sank into the rail: he saw it as "phasing". Take off half the kart's width (KW). And a physics wall that is
+  taller than the wall you can see (a kart in the air stopped by nothing) needs something seen there: a catch fence over the rail.
 - **Tutorials are pictures (24 Nov 2026).** The shared coach is at the end of `tools/juice-kit.js`: `coachPanel(G)` (called by every game's
   `lessonPanel`), `coachMiss()` (from `'lessonmiss'`), `coachCue()`. A step's `say`, `do`, `dir` and `at` may be functions of G, so the words
   and the hand change with the moment (Reel: WAIT… over the float, then TAP NOW! on the strike button). Reel's lesson showed TAP while a tap

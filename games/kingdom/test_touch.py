@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Kart Kingdom's buttons with real touches (version 2, KartRider-style): ◀ held steers left, ▶ right, let go goes straight, a
 thumb slid from ◀ to ▶ turns the other way. DRIFT held with an arrow at speed slides with sparks, let go gives a boost; in the
-air DRIFT is a trick (a second tap during it does nothing; landing after it is a boost, in the middle a wipeout). ITEM tapped
+air DRIFT is a trick (from the middle of the road, so no rail hit gets in the way; a second tap during it does nothing; landing after it is a boost, in the middle a wipeout). ITEM tapped
 throws a banana far ahead (in a high arc), swiped down throws it behind; three shells fire one tap at a time. NITRO with a full
 bar boosts. DRIFT held from the second light is a rocket start; from the first, a stall. No JavaScript errors.
 Run: python3 games/kingdom/test_touch.py"""
@@ -63,13 +63,13 @@ with sync_playwright() as p:
     nx, ny = at('N'); E("(() => { const k = __sim.G.me; k.nitro = 0.4; k.nitroT = 0; })()"); pg.touchscreen.tap(nx, ny); pg.wait_for_timeout(60); ok(E("__sim.G.me.nitroT") == 0, 'NITRO not full: nothing happens')
     E("(() => { const k = __sim.G.me; k.nitro = 1.2; })()"); pg.touchscreen.tap(nx, ny); pg.wait_for_timeout(60); r = E("[__sim.G.me.nitroT > 0, __sim.G.me.nitro]"); ok(r[0] and r[1] < 1, 'NITRO full: tapped, a big boost', str(r))
     # in the air: DRIFT is a trick
-    pg.wait_for_timeout(300); E("(() => { const k = __sim.G.me; k.air = true; k.glide = false; k.y += 2; k.vy = 6; k.airTricks = 0; k.trick = null; k.boost = 0; k.orbit = 0; k.item = null; })()")
+    pg.wait_for_timeout(300); E("(() => { const k = __sim.G.me, p = __sim.G.T.S[k.i]; k.x = p.x; k.z = p.z; k.h = p.h; k.slip = 0; k.air = true; k.glide = false; k.y += 2; k.vy = 6; k.airTricks = 0; k.trick = null; k.boost = 0; k.orbit = 0; k.item = null; })()")
     pg.touchscreen.tap(x, y); pg.wait_for_timeout(40); r = E("[!!__sim.G.me.trick, __sim.G.me.airTricks]"); ok(r[0] and r[1] == 1, 'in the air DRIFT starts a trick', str(r))
     pg.touchscreen.tap(x, y); pg.wait_for_timeout(30); ok(E("__sim.G.me.airTricks") == 1, 'a tap during a trick does nothing')
     pg.wait_for_function("!__sim.G.me.air", timeout=5000); r = E("[__sim.G.me.spin, __sim.G.me.boost, __sim.G.tricks, __sim.G.wipeouts]")
     ok(r[0] == 0 and r[1] > 0.3 and r[2] == 1, 'landing after the trick: clean, a boost', str(r))
-    pg.wait_for_timeout(300); E("(() => { const k = __sim.G.me; k.air = true; k.y += 0.6; k.vy = 0; k.airTricks = 0; k.trick = null; })()"); pg.touchscreen.tap(x, y)
-    pg.wait_for_function("!__sim.G.me.air", timeout=5000); ok(E("__sim.G.wipeouts") == 1 and E("__sim.G.me.spin") > 0, 'landing mid-trick: a wipeout')
+    pg.wait_for_timeout(300); E("(() => { const k = __sim.G.me, p = __sim.G.T.S[k.i]; k.x = p.x; k.z = p.z; k.h = p.h; k.slip = 0; k.v = 8; k.air = true; k.y = p.y + 0.6; k.vy = 0; k.airTricks = 0; k.trick = null; })()"); pg.touchscreen.tap(x, y)
+    pg.wait_for_function("!__sim.G.me.air", timeout=5000); ok(E("__sim.G.wipeouts") == 1 and E("__sim.G.me.spin") > 0, "landing mid-trick: a wipeout")
     pg.wait_for_timeout(200); ok(not errs, 'no JavaScript errors', str(errs[:3]))
     b.close()
 print(f'\n{oks} checks passed, {len(fails)} failed.')

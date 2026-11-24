@@ -298,6 +298,7 @@ function shotsStep(G, dt) { const T = G.T, S = T.S, n = S.length;
     if (!dead) for (let j = 0; j < G.shots.length; j++) { const p2 = G.shots[j]; if (p2 !== o && p2.kind !== 'comet' && Math.hypot(p2.x - o.x, p2.z - o.z) < 1.2) { G.shots.splice(Math.max(j, q), 1); G.shots.splice(Math.min(j, q), 1); q--; dead = 'both'; G.ev.push({ k: 'clash', x: o.x, z: o.z, y: o.y }); break; } }
     if (dead === 'both') continue; if (dead || o.t > 6) G.shots.splice(q, 1); } }
 // one kart: speed, steering, the drift and its sparks, hills, ramps and the air, tricks and landings, grass, walls and edges, laps
+const KW = 0.9;      // half a kart's width (its wheels): where its side meets a rail
 function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me = k.me;
   const st = me ? G.steer : k.steer, go2 = !k.done || !me, grip = me ? c.grip : 1;
   k.boost = Math.max(0, k.boost - dt); k.shield = Math.max(0, k.shield - dt); k.spin = Math.max(0, k.spin - dt); k.mud = Math.max(0, k.mud - dt); k.ice = Math.max(0, k.ice - dt);
@@ -323,9 +324,20 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   const slip = k.drift ? -k.drift * 0.32 : k.ice > 0 ? -st * 0.25 : 0; k.slip += (slip - k.slip) * Math.min(1, dt * (k.ice > 0 ? 2 : 6)); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
-  // the walls (not on a course with no walls, nor over the chasm)
-  let l2 = locate(T, k.x, k.z, k.i); const p = S[l2.i], lim2 = T.info.edge === 'void' ? TW / 2 + 0.9 : TW / 2 + 3.2;
-  if (!p.gap && Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.6; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } l2 = locate(T, k.x, k.z, l2.i); }
+  // the walls (not on a course with no walls, nor over the chasm). His review (24 Nov 2026): "I shouldn't be phasing against the rail I
+  // should clearly hit it... a realistic graphic for what happens when I hit the side of the race course while flying". The kart's SIDE
+  // stops at the rail (KW, half its width; it used to be its middle, so half the kart went into the rail), and a catch fence above the
+  // rail (part3) stops a flying kart where it can be seen. Brushing the rail scrapes (sparks, a little speed); running into it is a hit:
+  // the kart bounces off, loses half its speed, rocks, and a flying kart drops.
+  let l2 = locate(T, k.x, k.z, k.i); const p = S[l2.i], lim2 = (T.info.edge === 'void' ? TW / 2 + 1.0 : TW / 2 + 3.4) - KW;
+  if (!p.gap && Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back;
+    let rel = mh - p.h; rel = Math.atan2(Math.sin(rel), Math.cos(rel)); const into = k.v * Math.abs(Math.sin(rel)), hard = into > 4.5 || (k.air && into > 2.5);
+    if (hard) { k.v *= k.air ? 0.5 : 0.6; k.h = p.h - rel * 0.45; k.slip = 0; k.wob = 1; if (k.air) k.vy = Math.min(k.vy, 0) * 0.5 - 1.5; if (k.drift) { k.tier = 0; k.charge = 0; endDrift(G, k); } }
+    else { k.v *= 1 - Math.min(0.08, dt * 2.5); k.h -= rel * Math.min(1, dt * 8); }
+    if (me && (hard ? !G.wallT : !G.scrapeT)) { if (hard) G.wallT = 0.45; else G.scrapeT = 0.09;
+      G.ev.push({ k: hard ? 'wall' : 'scrape', x: k.x - Math.sin(p.h) * s * KW * 1.05, z: k.z + Math.cos(p.h) * s * KW * 1.05, y: k.y || 0, h: p.h, s, air: !!k.air, into, fly: k.air && (k.y - p.y) > 1.2 }); }
+    l2 = locate(T, k.x, k.z, l2.i); }
+  k.wob = Math.max(0, (k.wob || 0) - dt * 1.4); if (me) G.scrapeT = Math.max(0, (G.scrapeT || 0) - dt);
   if (me) G.wallT = Math.max(0, (G.wallT || 0) - dt);
   // up and down: the ground under the kart (hills, ramps, the chasm, the edge), gravity, and leaving the ground over a crest
   const gr = GRAV * c.grav * (k.glide ? 0.32 : 1), gy = groundAt(T, l2), rp = rampAt(T, l2); if (gy > VOID + 1) k.gyLast = gy;

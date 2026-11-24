@@ -61,6 +61,14 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length; i
     const geo = new T.BufferGeometry(); geo.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); geo.setIndex(idx); geo.computeVertexNormals(); const m = new T.Mesh(geo, mat); m.receiveShadow = true; H.add(m); return m; };
   ribbon(-TW / 2, TW / 2, 0.02, new T.MeshStandardMaterial({ map: roadTex(), roughness: 0.85 }), 12);
   for (const s of [-1, 1]) { ribbon(s * TW / 2, s * (TW / 2 + 0.9), 0.03, new T.MeshStandardMaterial({ map: kerbTex(), roughness: 0.7 }), 6); const wl = ribbon(s * (TW / 2 + 3.4), 0, 0, new T.MeshStandardMaterial({ map: fenceTex(), roughness: 0.6, side: T.DoubleSide }), 4, 0.8); }
+  // the catch fence above the rail, as at a real circuit (his review of Kart Kingdom, 24 Nov 2026: a flying kart must hit something you can
+  // see, not pass through the rail): a wire net on posts
+  { const netTex = canvasTex(64, 64, (q, w, h) => { q.clearRect(0, 0, w, h); q.strokeStyle = 'rgba(225,230,235,.95)'; q.lineWidth = 2.2; q.beginPath(); q.moveTo(0, 0); q.lineTo(w, h); q.moveTo(w, 0); q.lineTo(0, h); q.stroke(); q.fillStyle = 'rgba(200,205,210,.9)'; q.fillRect(0, 0, w, 3); });
+    netTex.wrapS = netTex.wrapT = T.RepeatWrapping; netTex.repeat.set(9, 1);
+    const fm = new T.MeshBasicMaterial({ map: netTex, color: 0xffffff, transparent: true, opacity: 0.55, alphaTest: 0.05, depthWrite: false, side: T.DoubleSide });
+    for (const s of [-1, 1]) ribbon(s * (TW / 2 + 3.4), 0, 0.8, fm, 0.5, 4.6);
+    const posts = [], pm = new T.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 0.6, roughness: 0.4 }); for (let q = 0; q < S.length; q += 4) { const p = S[q]; for (const s of [-1, 1]) { const g2 = new T.CylinderGeometry(0.09, 0.09, 5.4, 6); g2.translate(p.x - Math.sin(p.h) * s * (TW / 2 + 3.55), (p.y || 0) + 2.7, p.z + Math.cos(p.h) * s * (TW / 2 + 3.55)); posts.push(g2); } }
+    if (T.mergeGeometries) H.add(new T.Mesh(T.mergeGeometries(posts), pm)); }
   // the start line
   const st = new T.Mesh(new T.PlaneGeometry(2, TW), new T.MeshStandardMaterial({ map: canvasTex(16, 64, (q, w, h) => { for (let i = 0; i < 2; i++) for (let j = 0; j < 8; j++) { q.fillStyle = (i + j) % 2 ? '#111' : '#fff'; q.fillRect(i * 8, j * 8, 8, 8); } }), roughness: 0.7 })); st.rotation.set(-Math.PI / 2, 0, -S[0].h); st.position.set(S[0].x, 0.04, S[0].z); H.add(st);
   const arch = new T.Group(); for (const s of [-1, 1]) { const p = new T.Mesh(new T.BoxGeometry(0.4, 5, 0.4), new T.MeshStandardMaterial({ color: 0x2a2a34 })); p.position.set(0, 2.5, s * (TW / 2 + 1.2)); arch.add(p); } const bar = new T.Mesh(new T.BoxGeometry(0.6, 1, TW + 3), new T.MeshStandardMaterial({ color: 0xff3a4a, emissive: 0x401010 })); bar.position.y = 5; arch.add(bar); arch.position.set(S[0].x, 0, S[0].z); arch.rotation.y = -S[0].h; H.add(arch);
@@ -89,7 +97,7 @@ function sync(V, g, t, dt) {
   for (const k of g.karts) { let m = V.karts.get(k); if (!m) { m = kartModel(k.me ? g.kart.col : k.who.col, k.me ? g.kart.col2 : 0xffffff); V.S.add(m); V.karts.set(k, m); }
     m.position.set(k.x, k.y || 0, k.z); m.rotation.y = -(k.h); const u = m.userData; u.body.rotation.z = Math.sin(t * 30) * 0.004 * k.v; u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.3 : 0;
     // the trick: a whole turn about the kart's own axis (flip, spin, roll, a table-top, a corkscrew)
-    const inr = u.inner; inr.rotation.set(0, 0, 0); inr.position.y = 0; if (k.trick) { const p = clamp(k.trick.t / TRICK, 0, 1), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, a = e * TAU, kd = k.trick.kind;
+    const inr = u.inner; inr.rotation.set((k.wob || 0) * Math.sin(t * 26) * 0.28, (k.wob || 0) * Math.sin(t * 19) * 0.12, (k.wob || 0) * Math.sin(t * 23) * 0.1); inr.position.y = 0; if (k.trick) { const p = clamp(k.trick.t / TRICK, 0, 1), e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2, a = e * TAU, kd = k.trick.kind;
       inr.position.y = Math.sin(p * Math.PI) * 0.5; if (kd === 0) inr.rotation.z = a; else if (kd === 1) inr.rotation.y = a; else if (kd === 2) inr.rotation.x = a; else if (kd === 3) { inr.rotation.x = Math.sin(p * Math.PI) * 1.3; } else { inr.rotation.x = a; inr.rotation.y = a * 0.5; } }
     else if (k.air) inr.rotation.z = clamp(k.vy * 0.03, -0.35, 0.35);
     u.wings.visible = !!k.glide; if (k.star > 0) { const hue = (t * 1.5 + k.x * 0.01) % 1; u.mats.forEach(mt => { mt.emissive.setHSL(hue, 1, 0.45); }); } else u.mats.forEach(mt => mt.emissive.setHex(0x000000));
@@ -100,6 +108,7 @@ function sync(V, g, t, dt) {
   // coins
   if (V.coins) V.coins.forEach((m, i) => { const cn = g.coinsT[i]; m.visible = !!cn && cn.t <= 0; if (cn) { m.position.set(cn.x, cn.y + Math.sin(t * 3 + i) * 0.12, cn.z); m.rotation.y = t * 3 + i; } });
   if (V.pads) V.pads.forEach((m, i) => { m.material.opacity = 0.65 + 0.35 * Math.sin(t * 8 + i); });
+  if (V.impacts) for (let i = V.impacts.length - 1; i >= 0; i--) { const q = V.impacts[i]; q.t += dt; const u = q.t / (q.big ? 0.7 : 0.5); if (u >= 1) { q.m.visible = false; V.impacts.splice(i, 1); continue; } q.m.visible = true; q.m.scale.setScalar((q.big ? 1.0 : 0.7) + u * (q.big ? 3.2 : 2.2)); q.m.material.opacity = 0.75 * (1 - u) * (1 - u); }
   const P = V.sparkP; while (P.length > 220) P.shift(); const pa = V.sparks.geometry.attributes.position, ca = V.sparks.geometry.attributes.color, col = new THREE.Color();
   for (let i = 0; i < 220; i++) { const q = P[i]; if (q) { q.t += dt; q.vy -= 9 * dt; q.x += q.vx * dt; q.y = Math.max(0.02, q.y + q.vy * dt); q.z += q.vz * dt; pa.setXYZ(i, q.x, q.y, q.z); col.setHex(q.c); ca.setXYZ(i, col.r, col.g, col.b); } else pa.setXYZ(i, 0, -1e4, 0); } for (let i = P.length - 1; i >= 0; i--) if (P[i].t > 0.35) P.splice(i, 1); pa.needsUpdate = ca.needsUpdate = true;
   V.boxes.forEach(m => { const b = m.userData.b; m.visible = b.t <= 0; m.rotation.set(t * 0.8, t * 1.2, 0); m.position.y = 1 + Math.sin(t * 2 + m.position.x) * 0.15; m.material.emissive.setHSL((t * 0.2 + m.position.x * 0.01) % 1, 0.8, 0.35); });
@@ -111,6 +120,11 @@ function sync(V, g, t, dt) {
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
 function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2, front: true }; SV.set(x, y, z); return W3.screen(SV); }
 // ---------- events ----------
+function impact(x, y, z, h, big) { const V = V3, T = THREE; V.impacts = V.impacts || []; V.ringPool = V.ringPool || [];
+  let m = V.ringPool.find(r => !r.visible); if (!m) { m = new T.Mesh(new T.RingGeometry(0.55, 0.75, 32), new T.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide })); V.S.add(m); V.ringPool.push(m); }
+  m.position.set(x, y, z); m.rotation.set(0, -h, 0); m.material.color.setHex(big ? 0xffe08a : 0xffffff); V.impacts.push({ m, t: 0, big }); }
+// the camera stays on the road's side of the fence, so a kart along the rail is never seen through the net
+function camIn(g, k2) { const cam = W3.cam, l = locate(g.T, cam.position.x, cam.position.z, k2.i), lim = TW / 2 + 3.0; if (Math.abs(l.lat) > lim) { const p = g.T.S[l.i], s = Math.sign(l.lat), b = Math.abs(l.lat) - lim; cam.position.x += Math.sin(p.h) * s * b; cam.position.z -= Math.cos(p.h) * s * b; } }
 function onEvent(G, e) {
   const cx = W / 2;
   switch (e.k) {
@@ -132,7 +146,13 @@ function onEvent(G, e) {
     case 'pop': if (e.me) { sfx.pop(); say('BUBBLE SAVED YOU', cx, H * 0.42, '#9adfff', 16); } break;
     case 'gotem': sfx.gotem(); { const p = scr(e.x, 1.5, e.z); say(e.why === 'zap' ? 'ZAP!' : e.why === 'star' ? 'BOOM!' : 'SLICKED!', p.x, p.y - 20 * k, '#ffd040', 16); } break;
     case 'bump': sfx.bump(); break;
-    case 'wall': sfx.wall(); FX.shake = 5; break;
+    case 'wall': { sfx.wall(); if (sfx.clang) sfx.clang(e.fly); FX.shake = e.fly ? 12 : 7; vibe(HAP.thud);
+      /* the hit you see: a burst of sparks off the rail, a ring flashing where you struck, the kart rocking */
+      const V = V3; if (V && !V.none && V.sparkP) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s;
+        for (let i = 0; i < (e.fly ? 40 : 26); i++) { const sp = 3 + Math.random() * 6; V.sparkP.push({ x: e.x, y: e.y + 0.4 + Math.random() * 0.5, z: e.z, vx: -nx * sp + (Math.random() - 0.5) * 5, vy: 1.5 + Math.random() * 4, vz: -nz * sp + (Math.random() - 0.5) * 5, t: Math.random() * 0.08, c: Math.random() < 0.6 ? 0xffd27a : 0xffffff }); }
+        impact(e.x + nx * 0.15, e.y + (e.fly ? 1.4 : 0.6), e.z + nz * 0.15, e.h, e.fly); }
+      say(e.fly ? 'CRASH!' : 'BANG!', W / 2, H * 0.42, '#ffd0a0', e.fly ? 26 : 20); break; }
+    case 'scrape': { const V = V3; if (V && !V.none && V.sparkP) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s; for (let i = 0; i < 5; i++) V.sparkP.push({ x: e.x, y: e.y + 0.3, z: e.z, vx: -nx * 2 + (Math.random() - 0.5) * 3 - Math.cos(e.h) * 4, vy: 1 + Math.random() * 2, vz: -nz * 2 + (Math.random() - 0.5) * 3 - Math.sin(e.h) * 4, t: 0, c: 0xffc860 }); } if (sfx.scrape) sfx.scrape(); break; }
     case 'lap': ui.lapT = 2; if (e.lap < G.cfg.laps) { sfx.lap(e.lap); say(e.lap === G.cfg.laps - 1 ? 'FINAL LAP!' : `LAP ${e.lap + 1}`, cx, H * 0.3, '#ffd080', 30); } break;
     case 'finish': break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.3, '#ffe08a', 20); sfx.go(); break;
@@ -147,7 +167,7 @@ function onEvent(G, e) {
 function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k2 = g.me; cam.fov = asp < 0.8 ? 66 + Math.min(8, k2.v * 0.2) : 52; cam.aspect = asp; cam.updateProjectionMatrix();
   if (!ui.cam || ui.snap) { ui.cam = { h: k2.h }; ui.snap = false; } let dh = k2.h - ui.cam.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); ui.cam.h += dh * Math.min(1, dt * 5);
   const h = ui.cam.h, back = 6.4, up = 3.1, sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.02 : 0;
-  ui.cy = lerp(ui.cy || 0, (k2.y || 0) * 0.75, Math.min(1, dt * 6)); cam.position.set(k2.x - Math.cos(h) * back + sh, up + ui.cy, k2.z - Math.sin(h) * back + sh); cam.lookAt(k2.x + Math.cos(h) * 6, 0.6 + ui.cy * 0.8, k2.z + Math.sin(h) * 6); cam.updateMatrixWorld(); }
+  ui.cy = lerp(ui.cy || 0, (k2.y || 0) * 0.75, Math.min(1, dt * 6)); cam.position.set(k2.x - Math.cos(h) * back + sh, up + ui.cy, k2.z - Math.sin(h) * back + sh); camIn(g, k2); cam.lookAt(k2.x + Math.cos(h) * 6, 0.6 + ui.cy * 0.8, k2.z + Math.sin(h) * 6); cam.updateMatrixWorld(); }
 let IG = null; function idleG() { if (!IG || IG.over) { IG = newGame(Math.max(2, store.get('level', 1) | 0), { seed: (Math.random() * 1e6) | 0 }); IG.mem = {}; ui.snap = true; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';

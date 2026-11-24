@@ -17,6 +17,8 @@ const sfx = {
   gotem() { [0, 4].forEach((q, j) => tone(note(784, q), 0.12, 0.05, 'triangle', j * 0.06)); },
   bump() { if (!gate('bump', 250)) return; noise(0.08, 600, 0.05, 'lowpass', 1); tone(120, 0.1, 0.05, 'triangle', 0, 90); },
   wall() { if (!gate('wall', 300)) return; noise(0.15, 400, 0.07, 'lowpass', 1); tone(90, 0.18, 0.07, 'sine', 0, 60); },
+  clang(big) { tone(big ? 320 : 420, 0.25, 0.05, 'square', 0, 180); tone(big ? 610 : 760, 0.3, 0.03, 'triangle', 0.01, 300); noise(big ? 0.35 : 0.2, 2400, 0.05, 'bandpass', 2); },      /* metal: the rail */
+  scrape() { if (!gate('scrape', 90)) return; noise(0.1, 3200, 0.025, 'bandpass', 3); },
   lap(n = 1) { pluck(note(523, n * 2), 0.6, 0.09); pluck(note(523, n * 2 + 4), 0.7, 0.07, 0.1); },
   no() { if (!gate('no', 300)) return; tone(260, 0.14, 0.06, 'triangle', 0, 200, 900); },
   coin(i = 0) { if (!gate('coin', 60)) return; const b = note(784, Math.min(10, i + 1)); tone(b, 0.18, 0.07, 'triangle'); tone(b * 2, 0.12, 0.03, 'sine', 0.01); },

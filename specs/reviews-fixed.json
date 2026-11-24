@@ -290,6 +290,12 @@
    "when": "24 Nov, from your note on Reel",
    "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
    "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  },
+  {
+   "kind": "yours",
+   "when": "24 Nov, in the chat",
+   "said": "I kart kingdom i shouldn't be phasing against the rail i should clearly hit it and the rail and figure out a realistic graphic for what happens when I hit the side of the race course while flying currently its not good",
+   "did": "Your kart's side now stops at the rail (before, its middle did, so half the kart went into the rail). Brushing the rail throws sparks and scrapes a little speed off; running into it is a real hit: BANG, a burst of sparks, the kart bounces off, loses half its speed and rocks. Above the rail there is now a catch fence like a real circuit (a wire net on posts; on the sky courses a faint glowing force field), so when you fly into the side you hit the fence where you can see it: CRASH, a ring flashes on the fence where you struck, sparks, the kart rocks and drops back onto the road."
   }
  ],
  "stunt": [
@@ -304,6 +310,12 @@
    "when": "24 Nov, from your note on Reel",
    "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
    "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Kart Kingdom",
+   "said": "I kart kingdom i shouldn't be phasing against the rail i should clearly hit it and the rail and figure out a realistic graphic for what happens when I hit the side of the race course while flying currently its not good",
+   "did": "The same rail fault was here: the kart's side now stops at the rail, brushing it scrapes with sparks, hitting it bounces you off with a BANG. And as in Kart Kingdom, a wire catch fence on posts now stands above the rail, so a flying kart hits it where you can see it (CRASH, a flash on the net, sparks, the kart rocks and drops). The camera stays on the road's side of the fence."
   }
  ],
  "surf": [
@@ -678,6 +690,12 @@
    "when": "24 Nov, from your note on Reel",
    "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
    "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Kart Kingdom",
+   "said": "I kart kingdom i shouldn't be phasing against the rail i should clearly hit it and the rail and figure out a realistic graphic for what happens when I hit the side of the race course while flying currently its not good",
+   "did": "The same rail fault was here (half the kart went into the rail): the kart's side now stops at it, brushing it scrapes with sparks, hitting it bounces you off with a BANG and the kart rocks. (No flying in this game, so no fence.)"
   }
  ],
  "helix": [

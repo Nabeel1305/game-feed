@@ -128,6 +128,7 @@ function pickItem(G, k) { const R = G.rnd(), back = (k.place || 3) / G.karts.len
 function hit(G, k, why, by) { if (k.star > 0) return; if (k.shield > 0) { k.shield = 0; G.ev.push({ k: 'pop', me: k.me, x: k.x, z: k.z }); return; } if (k.spin > 0) return;
   k.spin = 1.1; k.boost = 0; const lost = Math.min(3, k.coin); k.coin -= lost; G.ev.push({ k: 'spin', me: k.me, why, x: k.x, z: k.z, lost }); if (k.me) { G.hits++; lessonMiss(G, why); } if (by && by.me && !k.me) { G.zaps++; G.ev.push({ k: 'gotem', x: k.x, z: k.z, why }); } }
 // one kart: speed, steering, ramps and the air, tricks and landings, boost pads, barriers, laps
+const KW = 0.9;      // half a kart's width (its wheels): where its side meets the rail
 function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const st = k.me ? G.steer : k.steer, go = !k.done || !k.me;
   k.boost = Math.max(0, k.boost - dt); k.shield = Math.max(0, k.shield - dt); k.spin = Math.max(0, k.spin - dt); if (k.star > 0) { k.star -= dt; if (k.star <= 0 && k.me) G.ev.push({ k: 'starend' }); }
@@ -143,7 +144,16 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   if (k.air) { k.vy -= gravOf(k) * dt; k.y += k.vy * dt; if (k.trick) { k.trick.t += dt; if (k.trick.t >= TRICK) { k.trick = null; k.lastTrickEnd = G.t; if (k.me) G.ev.push({ k: 'trickdone', n: k.airTricks }); } }
     if (k.y <= 0) land(G, k); }
   // the barriers
-  const l2 = locate(T, k.x, k.z, k.i), p = S[l2.i], lim2 = TW / 2 + 3.2; if (Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.6; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (k.me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } }
+  // the rail (his review of Kart Kingdom, 24 Nov 2026, the same fault here: "I shouldn't be phasing against the rail I should clearly hit it"):
+  // the kart's SIDE stops at the rail (KW, half its width; it used to be its middle, so half the kart went into the rail). Brushing it
+  // scrapes (sparks, a little speed); running into it is a hit: the kart bounces off, loses speed and rocks, and a flying kart drops.
+  const l2 = locate(T, k.x, k.z, k.i), p = S[l2.i], lim2 = TW / 2 + 3.4 - KW; if (Math.abs(l2.lat) > lim2) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim2; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back;
+    let rel = k.h - p.h; rel = Math.atan2(Math.sin(rel), Math.cos(rel)); const air = k.air, into = k.v * Math.abs(Math.sin(rel)), hard = into > 4.5 || (air && into > 2.5);
+    if (hard) { k.v *= air ? 0.5 : 0.6; k.h = p.h - rel * 0.45; k.slip = 0; k.wob = 1; if (air) k.vy = Math.min(k.vy, 0) * 0.5 - 1.5; if (k.drift) { k.drift = 0; k.charge = 0; k.tier = 0; } }
+    else { k.v *= 1 - Math.min(0.08, dt * 2.5); k.h -= rel * Math.min(1, dt * 8); }
+    if (k.me && (hard ? !G.wallT : !G.scrapeT)) { if (hard) G.wallT = 0.45; else G.scrapeT = 0.09;
+      G.ev.push({ k: hard ? 'wall' : 'scrape', x: k.x - Math.sin(p.h) * s * KW * 1.05, z: k.z + Math.cos(p.h) * s * KW * 1.05, y: k.y || 0, h: p.h, s, air, fly: air && (k.y - (p.y || 0)) > 1.2 }); } }
+  k.wob = Math.max(0, (k.wob || 0) - dt * 1.4); if (k.me) G.scrapeT = Math.max(0, (G.scrapeT || 0) - dt);
   if (k.me) G.wallT = Math.max(0, (G.wallT || 0) - dt);
   // progress, ramps, pads
   const di = l2.i - k.last; let dd = di; if (di < -n / 2) dd = di + n; if (di > n / 2) dd = di - n;

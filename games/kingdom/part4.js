@@ -29,6 +29,8 @@ const sfx = {
   gotem() { [0, 4, 7].forEach((q, j) => tone(note(784, q), 0.12, 0.05, 'triangle', j * 0.05)); },
   bump() { if (!gate('bump', 250)) return; noise(0.08, 600, 0.05, 'lowpass', 1); tone(120, 0.1, 0.05, 'triangle', 0, 90); },
   wall() { if (!gate('wall', 300)) return; noise(0.15, 400, 0.07, 'lowpass', 1); tone(90, 0.18, 0.07, 'sine', 0, 60); },
+  clang(big) { tone(big ? 320 : 420, 0.25, 0.05, 'square', 0, 180); tone(big ? 610 : 760, 0.3, 0.03, 'triangle', 0.01, 300); noise(big ? 0.35 : 0.2, 2400, 0.05, 'bandpass', 2); },      /* metal: the rail or the fence posts */
+  scrape() { if (!gate('scrape', 90)) return; noise(0.1, 3200, 0.025, 'bandpass', 3); },
   fall() { tone(800, 0.9, 0.05, 'triangle', 0, 120); },
   bee() { tone(220, 0.6, 0.03, 'sawtooth', 0, 240, 900); tone(226, 0.6, 0.03, 'sawtooth', 0, 246, 900); },
   ring(n = 1) { [0, 4, 7].forEach((q, j) => tone(note(784, q + n * 2), 0.2, 0.045, 'sine', j * 0.03)); },

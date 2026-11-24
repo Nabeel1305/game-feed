@@ -5302,6 +5302,7 @@ function pickItem(G, k) { const R = G.rnd(), back = (k.place || 3) / G.karts.len
 function hit(G, k, why, by) { if (k.shield > 0) { k.shield = 0; G.ev.push({ k: 'pop', me: k.me, x: k.x, z: k.z }); return; } if (k.spin > 0) return;
   k.spin = 1.1; k.drift = 0; k.charge = 0; k.boost = 0; G.ev.push({ k: 'spin', me: k.me, why, x: k.x, z: k.z }); if (k.me) { G.hits++; lessonMiss(G); } if (by && by.me && !k.me) { G.zaps++; G.coins++; G.ev.push({ k: 'gotem', x: k.x, z: k.z, why }); } }
 // one kart: speed, steering, the drift and its sparks, grass and barriers, laps
+const KW = 0.9;      // half a kart's width (its wheels): where its side meets the rail
 function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const st = k.me ? G.steer : k.steer, go = !k.done || !k.me;
   k.boost = Math.max(0, k.boost - dt); k.shield = Math.max(0, k.shield - dt); k.spin = Math.max(0, k.spin - dt);
@@ -5318,7 +5319,16 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const slip = k.drift ? -k.drift * 0.32 : 0; k.slip = (k.slip || 0) + (slip - (k.slip || 0)) * Math.min(1, dt * 6); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
   // the barriers, just off the grass
-  const l2 = locate(T, k.x, k.z, k.i), p = S[l2.i], lim = TW / 2 + 3.2; if (Math.abs(l2.lat) > lim) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.55; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (k.me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } }
+  // the rail (his review of Kart Kingdom, 24 Nov 2026, the same fault here: "I shouldn't be phasing against the rail I should clearly hit it"):
+  // the kart's SIDE stops at the rail (KW, half its width; it used to be its middle, so half the kart went into the rail). Brushing it
+  // scrapes (sparks, a little speed); running into it is a hit: the kart bounces off, loses speed and rocks.
+  const l2 = locate(T, k.x, k.z, k.i), p = S[l2.i], lim = TW / 2 + 3.4 - KW; if (Math.abs(l2.lat) > lim) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back;
+    let rel = mh - p.h; rel = Math.atan2(Math.sin(rel), Math.cos(rel)); const air = false, into = k.v * Math.abs(Math.sin(rel)), hard = into > 4.5 || (air && into > 2.5);
+    if (hard) { k.v *= air ? 0.5 : 0.6; k.h = p.h - rel * 0.45; k.slip = 0; k.wob = 1; if (air) k.vy = Math.min(k.vy, 0) * 0.5 - 1.5; if (k.drift) { k.drift = 0; k.charge = 0; k.tier = 0; } }
+    else { k.v *= 1 - Math.min(0.08, dt * 2.5); k.h -= rel * Math.min(1, dt * 8); }
+    if (k.me && (hard ? !G.wallT : !G.scrapeT)) { if (hard) G.wallT = 0.45; else G.scrapeT = 0.09;
+      G.ev.push({ k: hard ? 'wall' : 'scrape', x: k.x - Math.sin(p.h) * s * KW * 1.05, z: k.z + Math.cos(p.h) * s * KW * 1.05, y: k.y || 0, h: p.h, s, air, fly: air && (k.y - (p.y || 0)) > 1.2 }); } }
+  k.wob = Math.max(0, (k.wob || 0) - dt * 1.4); if (k.me) G.scrapeT = Math.max(0, (G.scrapeT || 0) - dt);
   if (k.me) G.wallT = Math.max(0, (G.wallT || 0) - dt);
   // progress and laps (a step back over the line does not count)
   const di = l2.i - k.last; let dd = di; if (di < -n / 2) dd = di + n; if (di > n / 2) dd = di - n; k.prog += dd * T.ds; k.last = l2.i; k.i = l2.i; k.lat = l2.lat; k.off = Math.abs(l2.lat) > TW / 2;
@@ -5441,11 +5451,12 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length; i
   for (const [, m] of V.karts) V.S.remove(m); V.karts.clear(); }
 function sync(V, g, t, dt) {
   for (const k of g.karts) { let m = V.karts.get(k); if (!m) { m = kartModel(k.me ? g.kart.col : k.who.col, k.me ? g.kart.col2 : 0xffffff); V.S.add(m); V.karts.set(k, m); }
-    m.position.set(k.x, 0, k.z); m.rotation.y = -(k.h); const u = m.userData; u.body.rotation.x = (k.slip || 0) * 0.4; u.body.rotation.z = Math.sin(t * 30) * 0.004 * k.v; u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.3 : 0;
+    m.position.set(k.x, 0, k.z); m.rotation.y = -(k.h); const u = m.userData; u.body.rotation.x = (k.slip || 0) * 0.4 + (k.wob || 0) * Math.sin(t * 26) * 0.28; u.body.rotation.z = Math.sin(t * 30) * 0.004 * k.v + (k.wob || 0) * Math.sin(t * 23) * 0.1; u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.3 : 0;
     for (const w of u.wheels) w.rotation.y = 0; u.wheels[0].rotation.z = u.wheels[1].rotation.z = 0; u.wheels.forEach(w => { w.rotation.x = Math.PI / 2; });
     u.flame.visible = k.boost > 0; u.flame.scale.set(1, 0.8 + Math.random() * 0.6 + k.boost * 0.4, 1); u.flame.material.color.setHex(k.tierBoost === 3 ? 0xd060ff : k.boost > 1 ? 0xff9a20 : 0x60c0ff); u.bub.visible = k.shield > 0;
     // drift sparks from the back wheels
     if (k.drift && k.tier && Math.random() < 0.9) for (const s of [-1, 1]) V.sparkP.push({ x: k.x - Math.cos(k.h) * 0.8 + Math.sin(k.h) * 0.75 * s, y: 0.15, z: k.z - Math.sin(k.h) * 0.8 - Math.cos(k.h) * 0.75 * s, vx: (Math.random() - 0.5) * 3 - Math.cos(k.h) * 3, vy: 1 + Math.random() * 2.5, vz: (Math.random() - 0.5) * 3 - Math.sin(k.h) * 3, t: 0, c: TIERC[k.tier] }); }
+  if (V.impacts) for (let i = V.impacts.length - 1; i >= 0; i--) { const q = V.impacts[i]; q.t += dt; const u = q.t / (q.big ? 0.7 : 0.5); if (u >= 1) { q.m.visible = false; V.impacts.splice(i, 1); continue; } q.m.visible = true; q.m.scale.setScalar((q.big ? 1.0 : 0.7) + u * (q.big ? 3.2 : 2.2)); q.m.material.opacity = 0.75 * (1 - u) * (1 - u); }
   const P = V.sparkP; while (P.length > 220) P.shift(); const pa = V.sparks.geometry.attributes.position, ca = V.sparks.geometry.attributes.color, col = new THREE.Color();
   for (let i = 0; i < 220; i++) { const q = P[i]; if (q) { q.t += dt; q.vy -= 9 * dt; q.x += q.vx * dt; q.y = Math.max(0.02, q.y + q.vy * dt); q.z += q.vz * dt; pa.setXYZ(i, q.x, q.y, q.z); col.setHex(q.c); ca.setXYZ(i, col.r, col.g, col.b); } else pa.setXYZ(i, 0, -1e4, 0); } for (let i = P.length - 1; i >= 0; i--) if (P[i].t > 0.35) P.splice(i, 1); pa.needsUpdate = ca.needsUpdate = true;
   V.boxes.forEach(m => { const b = m.userData.b; m.visible = b.t <= 0; m.rotation.set(t * 0.8, t * 1.2, 0); m.position.y = 1 + Math.sin(t * 2 + m.position.x) * 0.15; m.material.emissive.setHSL((t * 0.2 + m.position.x * 0.01) % 1, 0.8, 0.35); });
@@ -5457,6 +5468,11 @@ function sync(V, g, t, dt) {
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
 function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2, front: true }; SV.set(x, y, z); return W3.screen(SV); }
 // ---------- events ----------
+function impact(x, y, z, h, big) { const V = V3, T = THREE; V.impacts = V.impacts || []; V.ringPool = V.ringPool || [];
+  let m = V.ringPool.find(r => !r.visible); if (!m) { m = new T.Mesh(new T.RingGeometry(0.55, 0.75, 32), new T.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide })); V.S.add(m); V.ringPool.push(m); }
+  m.position.set(x, y, z); m.rotation.set(0, -h, 0); m.material.color.setHex(big ? 0xffe08a : 0xffffff); V.impacts.push({ m, t: 0, big }); }
+// the camera stays on the road's side of the fence, so a kart along the rail is never seen through the net
+function camIn(g, k2) { const cam = W3.cam, l = locate(g.T, cam.position.x, cam.position.z, k2.i), lim = TW / 2 + 3.0; if (Math.abs(l.lat) > lim) { const p = g.T.S[l.i], s = Math.sign(l.lat), b = Math.abs(l.lat) - lim; cam.position.x += Math.sin(p.h) * s * b; cam.position.z -= Math.cos(p.h) * s * b; } }
 function onEvent(G, e) {
   const cx = W / 2;
   switch (e.k) {
@@ -5472,7 +5488,13 @@ function onEvent(G, e) {
     case 'pop': if (e.me) { sfx.pop(); say('BUBBLE SAVED YOU', cx, H * 0.42, '#9adfff', 16); } break;
     case 'gotem': sfx.gotem(); { const p = scr(e.x, 1.5, e.z); say(e.why === 'zap' ? 'ZAP! +1 🪙' : 'SLICKED! +1 🪙', p.x, p.y - 20 * k, '#ffd040', 16); } break;
     case 'bump': sfx.bump(); break;
-    case 'wall': sfx.wall(); FX.shake = 5; break;
+    case 'wall': { sfx.wall(); if (sfx.clang) sfx.clang(e.fly); FX.shake = e.fly ? 12 : 7; vibe(HAP.thud);
+      /* the hit you see: a burst of sparks off the rail, a ring flashing where you struck, the kart rocking */
+      const V = V3; if (V && !V.none && V.sparkP) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s;
+        for (let i = 0; i < (e.fly ? 40 : 26); i++) { const sp = 3 + Math.random() * 6; V.sparkP.push({ x: e.x, y: e.y + 0.4 + Math.random() * 0.5, z: e.z, vx: -nx * sp + (Math.random() - 0.5) * 5, vy: 1.5 + Math.random() * 4, vz: -nz * sp + (Math.random() - 0.5) * 5, t: Math.random() * 0.08, c: Math.random() < 0.6 ? 0xffd27a : 0xffffff }); }
+        impact(e.x + nx * 0.15, e.y + (e.fly ? 1.4 : 0.6), e.z + nz * 0.15, e.h, e.fly); }
+      say(e.fly ? 'CRASH!' : 'BANG!', W / 2, H * 0.42, '#ffd0a0', e.fly ? 26 : 20); break; }
+    case 'scrape': { const V = V3; if (V && !V.none && V.sparkP) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s; for (let i = 0; i < 5; i++) V.sparkP.push({ x: e.x, y: e.y + 0.3, z: e.z, vx: -nx * 2 + (Math.random() - 0.5) * 3 - Math.cos(e.h) * 4, vy: 1 + Math.random() * 2, vz: -nz * 2 + (Math.random() - 0.5) * 3 - Math.sin(e.h) * 4, t: 0, c: 0xffc860 }); } if (sfx.scrape) sfx.scrape(); break; }
     case 'lap': ui.lapT = 2; if (e.lap < G.cfg.laps) { sfx.lap(e.lap); say(e.lap === G.cfg.laps - 1 ? 'FINAL LAP!' : `LAP ${e.lap + 1}`, cx, H * 0.3, '#ffd080', 30); } break;
     case 'finish': break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.3, '#ffe08a', 20); sfx.go(); break;
@@ -5487,7 +5509,7 @@ function onEvent(G, e) {
 function placeCam(g, dt) { const cam = W3.cam, asp = innerWidth / innerHeight, k2 = g.me; cam.fov = asp < 0.8 ? 66 + Math.min(8, k2.v * 0.2) : 52; cam.aspect = asp; cam.updateProjectionMatrix();
   if (!ui.cam || ui.snap) { ui.cam = { h: k2.h }; ui.snap = false; } let dh = k2.h + (k2.slip || 0) * 0.5 - ui.cam.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); ui.cam.h += dh * Math.min(1, dt * 5);
   const h = ui.cam.h, back = 6.4, up = 3.1, sh = FX.shake ? (Math.random() - 0.5) * FX.shake * 0.02 : 0;
-  cam.position.set(k2.x - Math.cos(h) * back + sh, up, k2.z - Math.sin(h) * back + sh); cam.lookAt(k2.x + Math.cos(h) * 6, 0.6, k2.z + Math.sin(h) * 6); cam.updateMatrixWorld(); }
+  cam.position.set(k2.x - Math.cos(h) * back + sh, up, k2.z - Math.sin(h) * back + sh); camIn(g, k2); cam.lookAt(k2.x + Math.cos(h) * 6, 0.6, k2.z + Math.sin(h) * 6); cam.updateMatrixWorld(); }
 let IG = null; function idleG() { if (!IG || IG.over) { IG = newGame(Math.max(2, store.get('level', 1) | 0), { seed: (Math.random() * 1e6) | 0 }); IG.mem = {}; ui.snap = true; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -5552,6 +5574,8 @@ const sfx = {
   gotem() { [0, 4].forEach((q, j) => tone(note(784, q), 0.12, 0.05, 'triangle', j * 0.06)); },
   bump() { if (!gate('bump', 250)) return; noise(0.08, 600, 0.05, 'lowpass', 1); tone(120, 0.1, 0.05, 'triangle', 0, 90); },
   wall() { if (!gate('wall', 300)) return; noise(0.15, 400, 0.07, 'lowpass', 1); tone(90, 0.18, 0.07, 'sine', 0, 60); },
+  clang(big) { tone(big ? 320 : 420, 0.25, 0.05, 'square', 0, 180); tone(big ? 610 : 760, 0.3, 0.03, 'triangle', 0.01, 300); noise(big ? 0.35 : 0.2, 2400, 0.05, 'bandpass', 2); },      /* metal: the rail */
+  scrape() { if (!gate('scrape', 90)) return; noise(0.1, 3200, 0.025, 'bandpass', 3); },
   lap(n = 1) { pluck(note(523, n * 2), 0.6, 0.09); pluck(note(523, n * 2 + 4), 0.7, 0.07, 0.1); },
   no() { if (!gate('no', 300)) return; tone(260, 0.14, 0.06, 'triangle', 0, 200, 900); },
   coin(i = 0) { if (!gate('coin', 60)) return; const b = note(784, Math.min(10, i + 1)); tone(b, 0.18, 0.07, 'triangle'); tone(b * 2, 0.12, 0.03, 'sine', 0.01); },

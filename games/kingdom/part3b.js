@@ -31,7 +31,7 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
     const u = m.userData; m.visible = k.fall <= 0 || k.y > (S[k.i].y - 12);
     m.position.set(k.x, (k.y || 0), k.z); m.rotation.set(0, -(k.h + (k.slip || 0) * 0.6), 0);
     // nose up or down with the slope; a lean in the drift; a wobble at speed; a hop when spun
-    const sl = k.air ? clamp(k.vy * 0.03, -0.35, 0.35) : Math.atan(S[k.i].slope || 0); u.inner.rotation.set(k.drift || k.drifting ? -(k.drift || Math.sign(S[k.i].curve)) * 0.12 : 0, 0, sl); u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.4 : Math.sin(t * 30 + k.x) * 0.012 * Math.min(1, k.v / 10);
+    const sl = k.air ? clamp(k.vy * 0.03, -0.35, 0.35) : Math.atan(S[k.i].slope || 0); u.inner.rotation.set((k.drift || k.drifting ? -(k.drift || Math.sign(S[k.i].curve)) * 0.12 : 0) + (k.wob || 0) * Math.sin(t * 26) * 0.28, (k.wob || 0) * Math.sin(t * 19) * 0.12, sl + (k.wob || 0) * Math.sin(t * 23) * 0.1); u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.4 : Math.sin(t * 30 + k.x) * 0.012 * Math.min(1, k.v / 10);
     u.body.rotation.y = k.spin ? t * 14 : 0; u.wheels.forEach((w, i) => { w.rotation.z -= k.v * dt / 0.33; if (i < 2) w.rotation.y = -(k.me ? g.steer : k.steer) * 0.4; });
     u.head.rotation.y = -(k.me ? g.steer : k.steer) * 0.35 + (k.lookBack > 0 ? Math.PI * 0.8 : 0); u.head.rotation.z = k.air ? 0.2 : 0; u.drv.rotation.x = (k.me ? g.steer : k.steer) * 0.22; k.lookBack = Math.max(0, (k.lookBack || 0) - dt);
     if (!u.sh) { u.sh = new T.Mesh(new T.PlaneGeometry(3.4, 2.4), new T.MeshBasicMaterial({ map: SHADOW(), transparent: true, depthWrite: false, opacity: 0.75 })); u.sh.rotation.x = -Math.PI / 2; u.sh.renderOrder = 1; V.S.add(u.sh); }
@@ -84,6 +84,8 @@ function sync(V, g, t, dt) { const T = THREE, TR = g.T, S = TR.S;
   V.lobsM.forEach((m, i) => { const o = g.lobs[i]; m.visible = m.userData.ring.visible = !!o; if (o) { m.position.set(o.x, o.y, o.z); m.rotation.set(t * 9, t * 7, 0); m.userData.ring.position.set(o.tx, o.ty + 0.08, o.tz); m.userData.ring.scale.setScalar(1 + 0.2 * Math.sin(t * 14)); } });
   // the start lights on the arch
   if (V.startLights) V.startLights.forEach((l, i) => { const lit = g.count > 0 ? (3 - Math.ceil(g.count)) >= i : false, gl = g.count <= 0 && g.t < 4; l.material.color.setHex(gl ? 0x3aff6a : lit ? 0xff2a2a : 0x331111); });
+  // the impact rings on the fence (a hit)
+  if (V.impacts) for (let i = V.impacts.length - 1; i >= 0; i--) { const q = V.impacts[i]; q.t += dt; const u = q.t / (q.big ? 0.7 : 0.5); if (u >= 1) { q.m.visible = false; V.impacts.splice(i, 1); continue; } q.m.visible = true; q.m.scale.setScalar((q.big ? 1.0 : 0.7) + u * (q.big ? 3.2 : 2.2)); q.m.material.opacity = 0.75 * (1 - u) * (1 - u); }
   // sparks
   const P = V.sparkP; while (P.length > 400) P.shift(); const pa = V.sparks.geometry.attributes.position, ca = V.sparks.geometry.attributes.color, col = new T.Color();
   for (let i = 0; i < 400; i++) { const q = P[i]; if (q) { q.t += dt; q.vy -= 9 * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; pa.setXYZ(i, q.x, q.y, q.z); col.setHex(q.c); ca.setXYZ(i, col.r, col.g, col.b); } else pa.setXYZ(i, 0, -1e4, 0); } for (let i = P.length - 1; i >= 0; i--) if (P[i].t > 0.4) P.splice(i, 1); pa.needsUpdate = ca.needsUpdate = true;
@@ -97,6 +99,9 @@ function scr(x, y, z) { if (!V3 || V3.none) return { x: W / 2, y: H / 2, front: 
 function dropKart(V, m) { V.S.remove(m); const u = m.userData; for (const x of [u.bee, u.sh, u.stars]) if (x) V.S.remove(x); if (u.orb) u.orb.forEach(s2 => V.S.remove(s2)); }
 // ---------- events: calls, sounds, shakes ----------
 const nth = q => q + (q === 1 ? 'st' : q === 2 ? 'nd' : q === 3 ? 'rd' : 'th');
+function impact(x, y, z, h, big) { const V = V3, T = THREE; V.impacts = V.impacts || []; V.ringPool = V.ringPool || [];
+  let m = V.ringPool.find(r => !r.visible); if (!m) { m = new T.Mesh(new T.RingGeometry(0.55, 0.75, 32), new T.MeshBasicMaterial({ color: 0xfff0c0, transparent: true, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide })); V.S.add(m); V.ringPool.push(m); }
+  m.position.set(x, y, z); m.rotation.set(0, -h, 0); m.material.color.setHex(big ? 0xffe08a : 0xffffff); V.impacts.push({ m, t: 0, big }); }
 function onEvent(G, e) {
   const cx = W / 2;
   switch (e.k) {
@@ -133,7 +138,14 @@ function onEvent(G, e) {
     case 'clash': sfx.bump(); { const p = scr(e.x, (e.y || 0) + 0.5, e.z); burst(p.x, p.y, '#ffffff', 8, 120); } break;
     case 'gotem': sfx.gotem(); { const p = scr(e.x, (e.y || 0) + 1.6, e.z); say({ shell: 'HIT!', homing: 'GOT \'EM!', peel: 'SLIPPED!', star: 'BOOM!', comet: 'KABOOM!', freeze: 'FROZEN!' }[e.why] || 'HIT!', p.front ? p.x : cx, p.front ? p.y - 20 * k : H * 0.3, '#ffd040', 18); } break;
     case 'bump': sfx.bump(); break;
-    case 'wall': sfx.wall(); FX.shake = 5; break;
+    case 'wall': { sfx.wall(); if (sfx.clang) sfx.clang(e.fly); FX.shake = e.fly ? 12 : 7; vibe(HAP.thud);
+      /* the hit you see: a burst of sparks off the rail (or the fence), a ring rippling out on the fence where you struck, the kart rocking */
+      const V = V3; if (V && !V.none) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s, n2 = e.fly ? 40 : 26;
+        for (let i = 0; i < n2; i++) { const sp = 3 + Math.random() * 6; V.sparkP.push({ x: e.x, y: e.y + 0.4 + Math.random() * 0.6, z: e.z, vx: -nx * sp + (Math.random() - 0.5) * 5, vy: 1.5 + Math.random() * 4, vz: -nz * sp + (Math.random() - 0.5) * 5, t: Math.random() * 0.1, c: Math.random() < 0.6 ? 0xffd27a : 0xffffff }); }
+        for (let i = 0; i < 4; i++) V.smokeP.push({ x: e.x, y: e.y + 0.5, z: e.z, vx: -nx * 1.5 + (Math.random() - 0.5), vy: 0.8, vz: -nz * 1.5 + (Math.random() - 0.5), t: 0, life: 0.7, s: 1.1, c: 0xd8d0c8 });
+        impact(e.x + nx * 0.15, e.y + (e.fly ? 1.4 : 0.6), e.z + nz * 0.15, e.h, e.fly); }
+      say(e.fly ? 'CRASH!' : 'BANG!', cx, H * 0.42, '#ffd0a0', e.fly ? 26 : 20); break; }
+    case 'scrape': { const V = V3; if (V && !V.none) { const nx = -Math.sin(e.h) * e.s, nz = Math.cos(e.h) * e.s; for (let i = 0; i < 5; i++) V.sparkP.push({ x: e.x, y: e.y + 0.3, z: e.z, vx: -nx * 2 + (Math.random() - 0.5) * 3 - Math.cos(e.h) * 4, vy: 1 + Math.random() * 2, vz: -nz * 2 + (Math.random() - 0.5) * 3 - Math.sin(e.h) * 4, t: 0, c: 0xffc860 }); } if (sfx.scrape) sfx.scrape(); break; }
     case 'fall': sfx.fall(); say('FELL OFF!', cx, H * 0.38, '#ff9a8a', 28); FX.red = 0.3; tip('fall', 'No walls here! Keep on the road: the bee brings you back, but it costs time.', 3); break;
     case 'rescue': sfx.bee(); break;
     case 'star': break;

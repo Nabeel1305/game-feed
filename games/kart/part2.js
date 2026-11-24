@@ -103,6 +103,7 @@ function pickItem(G, k) { const R = G.rnd(), back = (k.place || 3) / G.karts.len
 function hit(G, k, why, by) { if (k.shield > 0) { k.shield = 0; G.ev.push({ k: 'pop', me: k.me, x: k.x, z: k.z }); return; } if (k.spin > 0) return;
   k.spin = 1.1; k.drift = 0; k.charge = 0; k.boost = 0; G.ev.push({ k: 'spin', me: k.me, why, x: k.x, z: k.z }); if (k.me) { G.hits++; lessonMiss(G); } if (by && by.me && !k.me) { G.zaps++; G.coins++; G.ev.push({ k: 'gotem', x: k.x, z: k.z, why }); } }
 // one kart: speed, steering, the drift and its sparks, grass and barriers, laps
+const KW = 0.9;      // half a kart's width (its wheels): where its side meets the rail
 function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const st = k.me ? G.steer : k.steer, go = !k.done || !k.me;
   k.boost = Math.max(0, k.boost - dt); k.shield = Math.max(0, k.shield - dt); k.spin = Math.max(0, k.spin - dt);
@@ -119,7 +120,16 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const slip = k.drift ? -k.drift * 0.32 : 0; k.slip = (k.slip || 0) + (slip - (k.slip || 0)) * Math.min(1, dt * 6); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
   // the barriers, just off the grass
-  const l2 = locate(T, k.x, k.z, k.i), p = S[l2.i], lim = TW / 2 + 3.2; if (Math.abs(l2.lat) > lim) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back; k.v *= 0.55; let dh = p.h - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); k.h += dh * 0.5; if (k.me && !G.wallT) { G.wallT = 0.5; G.ev.push({ k: 'wall' }); } }
+  // the rail (his review of Kart Kingdom, 24 Nov 2026, the same fault here: "I shouldn't be phasing against the rail I should clearly hit it"):
+  // the kart's SIDE stops at the rail (KW, half its width; it used to be its middle, so half the kart went into the rail). Brushing it
+  // scrapes (sparks, a little speed); running into it is a hit: the kart bounces off, loses speed and rocks.
+  const l2 = locate(T, k.x, k.z, k.i), p = S[l2.i], lim = TW / 2 + 3.4 - KW; if (Math.abs(l2.lat) > lim) { const s = Math.sign(l2.lat), back = Math.abs(l2.lat) - lim; k.x += Math.sin(p.h) * s * back; k.z -= Math.cos(p.h) * s * back;
+    let rel = mh - p.h; rel = Math.atan2(Math.sin(rel), Math.cos(rel)); const air = false, into = k.v * Math.abs(Math.sin(rel)), hard = into > 4.5 || (air && into > 2.5);
+    if (hard) { k.v *= air ? 0.5 : 0.6; k.h = p.h - rel * 0.45; k.slip = 0; k.wob = 1; if (air) k.vy = Math.min(k.vy, 0) * 0.5 - 1.5; if (k.drift) { k.drift = 0; k.charge = 0; k.tier = 0; } }
+    else { k.v *= 1 - Math.min(0.08, dt * 2.5); k.h -= rel * Math.min(1, dt * 8); }
+    if (k.me && (hard ? !G.wallT : !G.scrapeT)) { if (hard) G.wallT = 0.45; else G.scrapeT = 0.09;
+      G.ev.push({ k: hard ? 'wall' : 'scrape', x: k.x - Math.sin(p.h) * s * KW * 1.05, z: k.z + Math.cos(p.h) * s * KW * 1.05, y: k.y || 0, h: p.h, s, air, fly: air && (k.y - (p.y || 0)) > 1.2 }); } }
+  k.wob = Math.max(0, (k.wob || 0) - dt * 1.4); if (k.me) G.scrapeT = Math.max(0, (G.scrapeT || 0) - dt);
   if (k.me) G.wallT = Math.max(0, (G.wallT || 0) - dt);
   // progress and laps (a step back over the line does not count)
   const di = l2.i - k.last; let dd = di; if (di < -n / 2) dd = di + n; if (di > n / 2) dd = di - n; k.prog += dd * T.ds; k.last = l2.i; k.i = l2.i; k.lat = l2.lat; k.off = Math.abs(l2.lat) > TW / 2;

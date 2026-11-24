@@ -383,7 +383,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** touch test 7 pass; pictures looked at.
 
 ### 44. Drift Kings (`kart`): VERIFIED
-- **Where:** `games/kart/index.html` · v0.1.3 · Racing · 2 thumb(s)
+- **Where:** `games/kart/index.html` · v0.1.4 · Racing · 2 thumb(s)
 - **What it is:** Kart racing with two thumbs: slide the left to steer, hold a hard turn to drift and charge a boost, tap the right for your item; a cup of four tracks.
 - **First look:** good.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (kart rc=1 fails=1 7 checks passed, 1 failed.).
@@ -544,7 +544,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): taps on the pipes. Judged plain enough; nothing changed.
 
 ### 66. Stunt Kart (`stunt`): VERIFIED
-- **Where:** `games/stunt/index.html` · v0.1.5 · Racing / stunts · 2 thumb(s)
+- **Where:** `games/stunt/index.html` · v0.1.6 · Racing / stunts · 2 thumb(s)
 - **What it is:** His idea, Mario Kart with cool things: kart racing in 3D with ramps (tap in the air for flips, spins and rolls; land between them for a boost, mid-trick is a wipeout), a gold glider jump through air coins, boost pads, coins, items and a STAR you fill with tricks.
 - **First look:** good (one of three kart games: 44, 66, 76).
 - **Changed:** 23 Nov, 0.1.4 (from Vine: no impossible physics): no steering a kart in the air; the glider still steers.
@@ -613,7 +613,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Speed on his phone is his to judge.
 
 ### 76. Kart Kingdom (`kingdom`): VERIFIED
-- **Where:** `games/kingdom/index.html` · v0.2.3 · Racing / kart · 2 thumb(s)
+- **Where:** `games/kingdom/index.html` · v0.2.4 · Racing / kart · 2 thumb(s)
 - **What it is:** His idea, a kart racer like Super Mario Kart (all our own): 16 courses in 4 cups (then 100cc, 150cc, mirror, 200cc), 10 drivers led by Tobi the turtle, turtle shells and 10 other items, KartRider-style buttons (steer arrows, DRIFT, ITEM, NITRO), drifts with coloured sparks that fill the nitro, bananas thrown far ahead or behind, tricks off every jump, gliders through gold rings over chasms, rocket starts, course dangers, cup points and trophies.
 - **First look:** good.
 - **Changed:** Name clash with the kit fixed; keeps its own race music.
