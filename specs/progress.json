@@ -1307,15 +1307,17 @@
    "problems": [],
    "changes": [
     "A VENT button (bottom left). The flick down still works.",
-    "23 Nov (from his review of Reel 'Em In): the target's rings are wider, a stronger red, dark-edged, and drawn without haze."
+    "23 Nov (from his review of Reel 'Em In): the target's rings are wider, a stronger red, dark-edged, and drawn without haze.",
+    "24 Nov, 0.2.0 (his review in the chat: the graphics, the ground, seeing yourself go up, the balloon): the look rebuilt (part3.js only; rules untouched). A real balloon (shape, panels, pattern, basket with two people, burner flame and glow, lit inside while burning); a camera that circles the balloon so it never leaves the picture; 36 clouds, twelve always near and at every height; a painted map for each of the five places with trees, buildings and rocks standing on what is painted; far hills and mountains; lakes with real shores and a raft for a start on water; rings, X and landing field draped on the land; the current X the bright one."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (24 passed, 0 failed).",
     "test_touch 25 pass (new: the VENT button vents and does not fire the burner); test_play 15 pass.",
-    "23 Nov: test_touch 25; a picture looked at: the ring is darker than it was, still softened by the picture's depth blur."
+    "23 Nov: test_touch 25; a picture looked at: the ring is darker than it was, still softened by the picture's depth blur.",
+    "24 Nov: pictures looked at on a computer (not on a phone) for all five places at 0 m, about 60 m and about 200 m, and one lesson; build, test_play 15, test_touch 25, controls 33 and the tutorial test pass; speed.py 20.6 ms a frame against 20.1 before (slowed x4, no chip). Not checked: how it runs and looks on his phone; the lakes draw everything twice (the reflection) and are the heaviest place."
    ],
    "remaining": [],
-   "note": "fine; ground a bit washed out."
+   "note": "rebuilt look; wants his eye on a phone."
   },
   "sandworm": {
    "status": "verified",

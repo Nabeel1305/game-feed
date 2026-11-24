@@ -108,7 +108,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 98 | **Gridiron** | testing | not yet (he has not said so) | 0.3.2 | [play](https://claude.ai/artifact/HvQWqkpk5GnA3h1CkKC5dV) | `games/gridiron/index.html` |
 | 99 | **Rock Climb** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/JLU7eXVLjB4YVHbcXNtA2a) | `games/climb/index.html` |
 | 100 | **Dentist** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/VNy4QXi8pVMuLkLQ6Wdn1B) | `games/dentist/index.html` |
-| 101 | **Balloon Drift** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX) | `games/balloon/index.html` |
+| 101 | **Balloon Drift** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX) | `games/balloon/index.html` |
 | 102 | **Sandworm Rider** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/PbXWEHsATZqDX9T7CuvtmZ) | `games/sandworm/index.html` |
 | 103 | **Skydive** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/MNp1BHLVL7mAUuG2g3LBQS) | `games/skydive/index.html` |
 | 104 | **Detective** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/DoNRuvKurjoX26yW9XdhHv) | `games/detective/index.html` |

@@ -3423,7 +3423,7 @@
       "id": "balloon",
       "name": "Balloon Drift",
       "status": "testing",
-      "version": "0.1.5",
+      "version": "0.2.0",
       "added": "2026-11-21",
       "path": "games/balloon/index.html",
       "artifact": "https://claude.ai/artifact/46vnWt3GEF3pTPH6mtiinX",

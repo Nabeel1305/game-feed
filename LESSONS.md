@@ -1440,6 +1440,38 @@ Seeded `rng(seed)` (mulberry32); `store.get/set` around localStorage with try/ca
   38% of the best; a linear one let random drops at 60-100 m pass level 1.
 - **A minimum-detector needs a margin** (3 m): it fired on jitter and dropped markers at once.
 - Lessons start in the air (no slow take-off), and place their X where the ring will be in 20 s at this height.
+- **The look was rebuilt on 24 Nov 2026 (0.2.0)** after his review ("the graphics need to be way better. The graphics on the
+  ground, the graphics going up... if you're going up, you should see yourself going up... You see yourself going past the
+  clouds. The air balloon doesn't even look like an air balloon"). Only `part3.js` changed; the rules are untouched.
+  - **What flies stays in the picture.** The old camera sat behind and above and looked down at the next X; as soon as the
+    balloon climbed it left the top of the frame, so climbing showed nothing. Now the camera circles the balloon at 80 m and
+    only its height angle changes: low when the X is far (sky, horizon and clouds in view), swinging up over the balloon as
+    you come over the X by just as much as keeps the X and the drop ring above the buttons (`frame(el)` in `sync`).
+  - **Climbing needs things to climb past.** 36 cloud sprites; twelve of them are always kept within 330 m of the balloon,
+    spread through 55-285 m, so one goes by about every 20 m of height (a cloud right by the camera thins; inside one the
+    view whitens). Other balloons drift on the wind at their own heights; the balloon's shadow on the ground shrinks; faint
+    streaks run down the screen as you climb (kept faint: at 0.5 they looked like rain).
+  - **A balloon is its shape and its details**: a lathe profile (narrow mouth, widest at 60% of its height, rounded crown)
+    with 16 gores that bulge between the load tapes, a painted pattern per skin (`envTex`), a parachute top that drops
+    when you vent, a dark scoop, a wicker basket with a rim, burner frame, two people, wires, a flame and a glow at the
+    burner (a sprite: the cones alone are hidden in the mouth), and the envelope lit from inside while you burn.
+  - **The ground is a painted map, and what is painted is built.** `paintGround(place)` paints a 2048 px map of 1300 m that
+    joins at its edges (every stroke is drawn again one map-width over), and returns lists (`hedges`, `woods`, `spots`,
+    `rocks`) in metres; trees, houses and rocks are stood on those same places in each of the four copies of the map.
+    The far hills are a second, coarser terrain eight maps wide (so the same map lines up on it: 10400 m / 1300 m = 8),
+    lowered out of sight inside the near square and meeting it along a line of its own vertices (cells of 100 m).
+  - **What lies on the ground must lie ON it**: rings, the X and the landing field were flat at one height and a hillside
+    cut them into arcs; they are draped (`drape`: each vertex lifted to the land under it).
+  - **One material for many rings is one brightness for all**: the three targets shared a material, so "the X you are
+    flying to is the bright one" never worked. Each target has its own.
+  - **Lakes**: the rules' ground is `max(0, h)`, so the flat at 0 IS the lake. The view carries the land on down under the
+    water (same formula, not clamped) and puts the water at 0.5: real shores. Water seen from above is `waterColor` plus the
+    sun's glitter on every ripple, which read as grey rock; a deep blue and the glitter turned down fixed it (set after
+    `W3.setSky`, which resets them). A start on the lake gets a raft; things on water rest on `V.top`.
+  - **Something between the camera and the player**: trees stood in front of the basket at take-off. Their materials go
+    through `W3.seeThrough` and `sync` calls `W3.setSee(camera, basket, 9)`.
+  - Cost: farmland is the heaviest (2600 trees), about 250,000 triangles; the lakes draw everything twice for the
+    reflection (about 310,000). `tools/speed.py` gave 20.6 ms a frame against 20.1 before (slowed x4, no chip).
 
 ### 102. Sandworm Rider (`games/sandworm/`): his idea 25, riding a giant worm through waystones (sideways, two thumbs, 3D)
 - **Walls make a funnel: in the open, have none.** With soft walls on every leg (bounce or turn-you-along), a worm left alone
