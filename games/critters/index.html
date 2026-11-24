@@ -5545,7 +5545,7 @@ function hud(G, t) {
         if (e > 1 && c.alive) { ctx.font = `800 ${Math.round(10 * k)}px ${TF}`; ctx.fillStyle = '#ffe08a'; ctx.fillText('×2', cx + r * 0.8, cy - r * 0.8); } }
       if (b.k === 'catch' || b.k === 'berry') { ctx.fillStyle = b.k === 'catch' ? (b.on ? '#ffe07a' : '#8a8a7a') : '#ff8a9a'; rrect(b.x, b.y, b.w, b.h, b.h / 2); ctx.fill(); ctx.textAlign = 'center'; ctx.fillStyle = '#2a1a06'; ctx.font = `800 ${Math.round(14 * k)}px ${TF}`; ctx.fillText(b.k === 'catch' ? '✨ CATCH' : `🍓 BERRY`, b.x + b.w / 2, b.y + b.h / 2); }
       ctx.globalAlpha = 1; }
-    if (G.ph === 'choose' && !G.lesson && G.N <= 4) { ctx.textAlign = 'left'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; const bx = 12 + bench(G).length * (50 * k + 12) + 4; if (bench(G).length) ctx.fillText('← tap to send in', bx, B[0].y - 60 * k + 25 * k); } }
+    if ((G && G.lesson) && G.ph === 'choose' && !G.lesson && G.N <= 4) { ctx.textAlign = 'left'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; const bx = 12 + bench(G).length * (50 * k + 12) + 4; if (bench(G).length) ctx.fillText('← tap to send in', bx, B[0].y - 60 * k + 25 * k); } }
   // the timing ring round the foe
   if (G.ph === 'ring' && G.act) { const a = G.act, c = G.cfg, p = headAt('foe', G), R0 = 30 * k, tt = G.pt - a.wait, u = tt / (0.6 * c.ringT);
     ctx.strokeStyle = '#ffd23a'; ctx.lineWidth = 6 * k; ctx.beginPath(); ctx.arc(p.x, p.y + 26 * k, R0, 0, TAU); ctx.stroke();

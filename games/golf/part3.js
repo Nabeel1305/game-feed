@@ -128,7 +128,7 @@ function hud(G, t) {
     ctx.fillStyle = '#ffe08a'; ctx.strokeText(`🪙 ${G.coins}`, W - 14, y + 38 * k); ctx.fillText(`🪙 ${G.coins}`, W - 14, y + 38 * k); }
   if (G.lesson) lessonPanel(G);
   if (G.mullUsable && G.mull > 0 && !G.moving) { const m = mullBtn(); ctx.fillStyle = 'rgba(30,60,30,.85)'; ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, TAU); ctx.fill(); ctx.strokeStyle = '#9be3b5'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `${Math.round(20 * k)}px sans-serif`; ctx.fillText('↶', m.x, m.y - 4 * k); ctx.font = `700 ${Math.round(9 * k)}px ${BC}`; ctx.fillText(`REDO ×${G.mull}`, m.x, m.y + 14 * k); }
-  if (!G.moving && !ui.aim && G.ball && !G.ball.in && G.gap <= 0 && (G.N <= 2 || G.lesson)) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('PULL BACK ANYWHERE, THEN LET GO', W / 2, H - 40 * k); ctx.fillText('PULL BACK ANYWHERE, THEN LET GO', W / 2, H - 40 * k); }
+  if ((G && G.lesson) && !G.moving && !ui.aim && G.ball && !G.ball.in && G.gap <= 0 && (G.N <= 2 || G.lesson)) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('PULL BACK ANYWHERE, THEN LET GO', W / 2, H - 40 * k); ctx.fillText('PULL BACK ANYWHERE, THEN LET GO', W / 2, H - 40 * k); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }

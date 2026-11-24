@@ -5598,7 +5598,7 @@ function hud(G, t) {
   const items = Object.keys(G.weapons).map(w => WEAPONS[w].icon + G.weapons[w]).concat(Object.keys(G.pass).map(p => PASSIVES[p].icon + G.pass[p])); ctx.textAlign = 'right'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText(items.join(' '), W - 12, y + 50 * k); ctx.fillText(items.join(' '), W - 12, y + 50 * k);
   if (G.lesson) lessonPanel(G);
   const st = ui.stick; if (st) { ctx.globalAlpha = 0.45; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(st.x0, st.y0, 46 * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 0.8; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(st.x0 + clamp(st.x - st.x0, -46 * k, 46 * k), st.y0 + clamp(st.y - st.y0, -46 * k, 46 * k), 18 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
-  if (G.N <= 3 && G.t < 6 && !G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('DRAG TO MOVE · YOU ATTACK BY YOURSELF', W / 2, H - 60 * k); ctx.fillText('DRAG TO MOVE · YOU ATTACK BY YOURSELF', W / 2, H - 60 * k); }
+  if ((G && G.lesson) && G.N <= 3 && G.t < 6 && !G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('DRAG TO MOVE · YOU ATTACK BY YOURSELF', W / 2, H - 60 * k); ctx.fillText('DRAG TO MOVE · YOU ATTACK BY YOURSELF', W / 2, H - 60 * k); }
 }
 // the level-up: three cards to pick from
 function cardRects(G) { const n = G.choice.opts.length, cw = Math.min(W - 40, 320 * k), ch = 92 * k, gap = 12 * k, top = H / 2 - (n * ch + (n - 1) * gap) / 2 + 20 * k; return G.choice.opts.map((o, i) => ({ x: W / 2 - cw / 2, y: top + i * (ch + gap), w: cw, h: ch, o })); }

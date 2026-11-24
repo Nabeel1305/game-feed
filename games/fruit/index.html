@@ -5432,7 +5432,7 @@ function hud(G, t) { const c = G.cfg;
   for (const b of B) { const F = FRUITS[b.f], on = G.fruit === b.f, cd = G.cd[b.f] / (F.reload * (b.f === 'orange' ? 1 : c.reloadK)); ctx.fillStyle = on ? 'rgba(255,154,42,.85)' : 'rgba(0,0,0,.45)'; rrect(b.x, b.y, b.w, b.h, 16); ctx.fill();
     ctx.font = `${Math.round(b.h * 0.5)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = cd > 0 ? 0.4 : 1; ctx.fillText(F.icon, b.x + b.w / 2, b.y + b.h / 2); ctx.globalAlpha = 1;
     if (cd > 0) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(b.x + b.w / 2, b.y + b.h / 2, b.w * 0.42, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - cd)); ctx.stroke(); } }
-  if (!ui.drag && !G.lesson && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('PULL BACK ANYWHERE · LET GO TO FIRE', W / 2, H * 0.62); } }
+  if ((G && G.lesson) && !ui.drag && !G.lesson && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('PULL BACK ANYWHERE · LET GO TO FIRE', W / 2, H * 0.62); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
 // ===================== SOUND: the slingshot (PLAYBOOK S1-S11) =====================

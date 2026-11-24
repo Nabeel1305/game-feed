@@ -278,7 +278,7 @@ function hud(G, t) { ctx.textBaseline = 'middle'; const y = G.you, D = G.D, run 
     for (let i = 0; i < 10; i++) { ctx.fillStyle = i < y.flow ? (y.flow >= 5 ? '#7af0ff' : '#ffd040') : 'rgba(255,255,255,.22)'; rrect(W / 2 - 50 * k + i * 10 * k, H - 132 * k, 8 * k, 6 * k, 2); ctx.fill(); }
     ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('FLOW', W / 2, H - 120 * k); }
   pads(G, t);
-  if (G.N <= 1 && !G.lesson && run && y.strides < 6 && y.fin == null) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 6); ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('TAP THE SIDE WHOSE RING IS CLOSING', W / 2, H - 180 * k); ctx.globalAlpha = 1; } }
+  if ((G && G.lesson) && G.N <= 1 && !G.lesson && run && y.strides < 6 && y.fin == null) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 6); ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('TAP THE SIDE WHOSE RING IS CLOSING', W / 2, H - 180 * k); ctx.globalAlpha = 1; } }
 function pads(G, t) { const y = G.you, run = G.phase === 'run' && y.fin == null && !G.over, h = G.H.length && y.hi < G.H.length ? G.H[y.hi] : null;
   const L = Math.max(4, y.v * JT(G)), inZone = h != null && y.started && y.s >= h - L * 0.85 && y.s <= h - L * 0.15, dipZone = !G.yard && !G.H.length && y.started && G.D - y.s < 3.6 && G.D - y.s > 0 && y.dip <= 0, both = inZone || dipZone;
   for (const s of ['L', 'R']) { const p = padPos(s), fl = ui.pads[s];
@@ -288,7 +288,7 @@ function pads(G, t) { const y = G.you, run = G.phase === 'run' && y.fin == null 
     // the beat: a ring closing on the pad that is due
     if (run && y.started && y.due != null && y.stag <= 0 && y.air <= 0 && (y.side == null || y.side === s)) { const per = T_OF(y.v), left = y.due - G.t, f = clamp(left / per, -0.3, 1), on = Math.abs(left) <= G.cfg.perfW;
       if (f > -0.3) { ctx.strokeStyle = on ? '#ffd040' : left < 0 ? '#ffb070' : '#ffffff'; ctx.lineWidth = (on ? 6 : 3.5) * k; ctx.globalAlpha = left < -0.12 ? 0.5 : 1; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (1 + 1.1 * Math.max(0, f)), 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
-      if (left < -0.08) { ctx.fillStyle = '#ffb070'; ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.fillText('TAP!', p.x, p.y - p.r - 14 * k); } }
+      if ((G && G.lesson) && left < -0.08) { ctx.fillStyle = '#ffb070'; ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.fillText('TAP!', p.x, p.y - p.r - 14 * k); } }
     if (run && !y.started && G.phase === 'run' && !G.yard) { ctx.strokeStyle = '#ffd040'; ctx.lineWidth = 5 * k; ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 20); ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 1.15, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
     if (y.stag > 0) { ctx.fillStyle = 'rgba(255,80,60,.35)'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } }
   if (both && run) { ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(22 * k)}px ${TF}`; ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t * 18); ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,30,10,.7)'; const tx = inZone ? 'BOTH: JUMP!' : 'BOTH: DIP!'; ctx.strokeText(tx, W / 2, H - 100 * k); ctx.fillStyle = '#80ff90'; ctx.fillText(tx, W / 2, H - 100 * k); ctx.globalAlpha = 1; }

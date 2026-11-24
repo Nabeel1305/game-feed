@@ -5486,7 +5486,7 @@ function hud(G, t) { ctx.textBaseline = 'middle'; const z = G.scoped, s = swayNo
   // the FIRE pad
   const P = padAt(), on = !!G.hold; ctx.globalAlpha = 0.9; ctx.fillStyle = on ? '#ff4a3a' : 'rgba(255,74,58,.75)'; ctx.beginPath(); ctx.arc(P.x, P.y, P.r * (on ? 0.92 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
   ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(on ? 'LET GO' : 'FIRE', P.x, P.y - 4 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText(on ? 'TO SHOOT' : 'HOLD', P.x, P.y + 12 * k); ctx.globalAlpha = 1;
-  if (G.N <= 1 && G.t < 5 && !ui.aim && !G.lesson) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.fillText('← DRAG TO AIM', W * 0.35, H - 60 * k); ctx.globalAlpha = 1; } }
+  if ((G && G.lesson) && G.N <= 1 && G.t < 5 && !ui.aim && !G.lesson) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.fillText('← DRAG TO AIM', W * 0.35, H - 60 * k); ctx.globalAlpha = 1; } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
 

@@ -151,7 +151,7 @@ function hud(G, t) {
   const st = ui.stick; if (st) { const R = 70 * k, dx = st.x - st.x0, dy = st.y - st.y0, L = Math.hypot(dx, dy), u = Math.min(1, L / R); ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.arc(st.x0, st.y0, R, 0, TAU); ctx.stroke(); ctx.setLineDash([4 * k, 5 * k]); ctx.beginPath(); ctx.arc(st.x0, st.y0, R * 0.4, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = u > 0.4 ? 'rgba(255,224,138,.6)' : 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(st.x0 + (L ? dx / L : 0) * R * u, st.y0 + (L ? dy / L : 0) * R * u, 20 * k, 0, TAU); ctx.fill();
     ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(u > 0.4 ? 'walk' : 'turn', st.x0, st.y0 + R + 12 * k); }
-  else if (G.t < 6 && G.N <= 2 && !G.over) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('drag a little to turn · further to walk', W / 2, H - 70 * k); ctx.globalAlpha = 1; }
+  else if ((G && G.lesson) && G.t < 6 && G.N <= 2 && !G.over) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('drag a little to turn · further to walk', W / 2, H - 70 * k); ctx.globalAlpha = 1; }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }

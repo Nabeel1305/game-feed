@@ -5417,7 +5417,7 @@ function hud(G, t) { ctx.textBaseline = 'middle'; if (G.lesson) { lessonPanel(G)
   ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(34 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(30,16,50,.35)'; ctx.strokeText(G.score, W / 2, y0 + 44 * k); ctx.fillText(G.score, W / 2, y0 + 44 * k);
   const bst = best[G.N]; if (bst) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = G.score > bst ? '#ffd040' : 'rgba(255,255,255,.75)'; ctx.fillText(G.score > bst ? 'NEW BEST!' : `BEST ${bst}`, W / 2, y0 + 70 * k); }
   if (G.shields) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#9ae6ff'; ctx.textAlign = 'left'; ctx.fillText('🛡 shield', 14, y0); }
-  if (G.N <= 1 && G.passed === 0 && !ui.drag) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('← SLIDE TO TURN →', W / 2, H - 90 * k); ctx.globalAlpha = 1; } }
+  if ((G && G.lesson) && G.N <= 1 && G.passed === 0 && !ui.drag) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('← SLIDE TO TURN →', W / 2, H - 90 * k); ctx.globalAlpha = 1; } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
 

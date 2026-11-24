@@ -648,7 +648,7 @@ function hud(G, t) { ctx.textBaseline = 'middle'; if (G.lesson) { lessonPanel(G)
   ctx.font = `700 ${Math.round(13 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(`${Math.floor(p * 100)}%`, W / 2, y0 + 20 * k);
   ctx.textAlign = 'left'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#ff6a9a'; ctx.fillText('♥'.repeat(Math.max(0, G.lives)), 14, y0 + 20 * k);
   ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillText(`LEVEL ${G.N}${G.coins.length ? ' · ★ ' + G.got + '/' + G.coins.length : ''}`, W - 14, y0 + 20 * k);
-  if (G.N <= 1 && G.x < 6) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5); ctx.font = `700 ${Math.round(15 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('TAP TO JUMP', W / 2, H * 0.8); ctx.globalAlpha = 1; } }
+  if ((G && G.lesson) && G.N <= 1 && G.x < 6) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5); ctx.font = `700 ${Math.round(15 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('TAP TO JUMP', W / 2, H * 0.8); ctx.globalAlpha = 1; } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
 

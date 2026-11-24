@@ -5540,7 +5540,7 @@ function hud(G, sp) {
   if (G.board) { const s = scr(sp.board.x, sp.board.z), F = FOOD[G.board.food]; if (G.board.chops < F.chops) { ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s2 = `SWIPE TO CHOP ${G.board.chops}/${F.chops}`; ctx.strokeText(s2, s.x, s.y - 34 * k); ctx.fillText(s2, s.x, s.y - 34 * k); } }
   // what is being dragged
   if (ui.drag && ui.drag.moved && ui.drag.label) { const d = ui.drag; ctx.globalAlpha = 0.9; ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const w = ctx.measureText(d.label).width + 18; rrect(d.x - w / 2, d.y - 44 * k, w, 24 * k, 10); ctx.fill(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.label, d.x, d.y - 32 * k); ctx.globalAlpha = 1; }
-  if (G.N <= 2 && !G.lesson && G.t < 8) { ctx.globalAlpha = 0.8; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; const p = scr(0, -0.72, TOP + 0.24); ctx.fillText('THE PASS: DRAG THE PLATE HERE', p.x, p.y); ctx.globalAlpha = 1; }
+  if ((G && G.lesson) && G.N <= 2 && !G.lesson && G.t < 8) { ctx.globalAlpha = 0.8; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; const p = scr(0, -0.72, TOP + 0.24); ctx.fillText('THE PASS: DRAG THE PLATE HERE', p.x, p.y); ctx.globalAlpha = 1; }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }

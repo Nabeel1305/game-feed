@@ -5506,7 +5506,7 @@ function hud(G, t) { ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(255,255,255,.35)'; rrect(x0, y0 - 5 * k, w, 10 * k, 5 * k); ctx.fill(); ctx.fillStyle = '#fff'; rrect(x0, y0 - 5 * k, Math.max(10 * k, w * p), 10 * k, 5 * k); ctx.fill();
   for (const [x, n, on] of [[x0 - 12 * k, G.N, true], [x0 + w + 12 * k, '☠', p >= 1]]) { ctx.fillStyle = on ? '#ffffff' : 'rgba(255,255,255,.4)'; ctx.beginPath(); ctx.arc(x, y0, 13 * k, 0, TAU); ctx.fill(); ctx.fillStyle = '#2a3a5a'; ctx.font = `400 ${Math.round(12 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(n, x, y0 + 1); }
   ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#ffe08a'; ctx.textAlign = 'right'; ctx.fillText(`🪙 ${G.coins}`, W - 14, y0 + 30 * k); ctx.textAlign = 'left'; ctx.fillStyle = '#ffd0d0'; ctx.fillText(`GIANT ${G.hp}`, 14, y0 + 30 * k);
-  if (G.N <= 1 && G.d < 18 && !ui.drag) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('← SLIDE TO STEER →', W / 2, H - 90 * k); ctx.globalAlpha = 1; } }
+  if ((G && G.lesson) && G.N <= 1 && G.d < 18 && !ui.drag) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 4); ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('← SLIDE TO STEER →', W / 2, H - 90 * k); ctx.globalAlpha = 1; } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
 

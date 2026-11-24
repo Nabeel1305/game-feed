@@ -232,7 +232,7 @@ function hud(G, t) {
   else lessonPanel(G);
   const lab = G.side === 'S' ? 'YOUR KICK' : 'SAVE IT!', ly = G.lesson ? H - 120 * k : 134 * k; ctx.textAlign = 'center'; ctx.font = `${Math.round(17 * k)}px ${TF}`; ctx.fillStyle = G.side === 'S' ? '#ffe08a' : '#9be3b5'; ctx.strokeText(lab, W / 2, ly); ctx.fillText(lab, W / 2, ly);
   if (G.side === 'S' && G.S) { const S = G.S;
-    if (G.ph === 'aim' && (G.N <= 3 || G.lesson)) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = '#fff'; const ty = H * 0.86; ctx.strokeText('TAP THE GOAL WHERE YOU WANT TO SHOOT', W / 2, ty); ctx.fillText('TAP THE GOAL WHERE YOU WANT TO SHOOT', W / 2, ty); }
+    if ((G && G.lesson) && G.ph === 'aim' && (G.N <= 3 || G.lesson)) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = '#fff'; const ty = H * 0.86; ctx.strokeText('TAP THE GOAL WHERE YOU WANT TO SHOOT', W / 2, ty); ctx.fillText('TAP THE GOAL WHERE YOU WANT TO SHOOT', W / 2, ty); }
     if (S.aim && (G.ph === 'meter' || (G.ph === 'kickS' && G.pt < S.strike))) { const p = scr(S.aim.x, S.aim.y, 0), r = 12 * k + Math.sin(t * 8) * 2; ctx.strokeStyle = '#ffe08a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p.x - r - 5, p.y); ctx.lineTo(p.x + r + 5, p.y); ctx.moveTo(p.x, p.y - r - 5); ctx.lineTo(p.x, p.y + r + 5); ctx.stroke(); }
     if (G.ph === 'meter' || (G.ph === 'kickS' && G.pt < 0.6)) meter(G, S); }
   if (G.side === 'K' && G.K) { const K = G.K;
@@ -250,7 +250,7 @@ function meter(G, S) {
   ctx.fillStyle = '#f2c14b'; ctx.fillRect(X(S.bc - S.w / 2 - 0.05), y - h / 2, (S.w + 0.1) * w, h);
   ctx.fillStyle = '#4ad86a'; ctx.fillRect(X(S.bc - S.w / 2), y - h / 2, S.w * w, h);
   const nx = X(S.m); ctx.fillStyle = '#fff'; ctx.fillRect(nx - 2.5, y - h / 2 - 8, 5, h + 16); ctx.beginPath(); ctx.moveTo(nx, y - h / 2 - 8); ctx.lineTo(nx - 8, y - h / 2 - 18); ctx.lineTo(nx + 8, y - h / 2 - 18); ctx.closePath(); ctx.fill();
-  if (G.N <= 3 || G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 4; ctx.strokeText('TAP WHEN THE NEEDLE IS IN THE GREEN', W / 2, y + h + 6 * k); ctx.fillText('TAP WHEN THE NEEDLE IS IN THE GREEN', W / 2, y + h + 6 * k); }
+  if ((G && G.lesson) && G.N <= 3 || G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 4; ctx.strokeText('TAP WHEN THE NEEDLE IS IN THE GREEN', W / 2, y + h + 6 * k); ctx.fillText('TAP WHEN THE NEEDLE IS IN THE GREEN', W / 2, y + h + 6 * k); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }

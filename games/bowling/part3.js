@@ -191,7 +191,7 @@ function hud(G, t) {
     ctx.restore();
     const tch = ui.touch; if (tch && pulling) { const R = 62 * k, px = tch.x0 + 46 * k; ctx.fillStyle = 'rgba(255,255,255,.18)'; rrect(px - 5 * k, tch.y0, 10 * k, R * 1.6, 5 * k); ctx.fill(); const pw = a.p; ctx.fillStyle = pw > 0.85 ? '#ff7a5a' : pw > 0.55 ? '#ffd040' : '#7af0a0'; rrect(px - 5 * k, tch.y0, 10 * k, R * 1.6 * pw, 5 * k); ctx.fill();
       ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2 * k; ctx.setLineDash([4 * k, 4 * k]); ctx.beginPath(); ctx.moveTo(tch.x0, tch.y0); ctx.lineTo(tch.x, Math.max(tch.y, tch.y0)); ctx.stroke(); ctx.setLineDash([]); }
-    else if (!tch && G.N <= 3 && !G.over) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('touch to line up · pull down ↓ and let go', W / 2, H - 70 * k); ctx.globalAlpha = 1; }
+    else if ((G && G.lesson) && !tch && G.N <= 3 && !G.over) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('touch to line up · pull down ↓ and let go', W / 2, H - 70 * k); ctx.globalAlpha = 1; }
   }
 }
 // the pins still standing, from above: a little triangle at the top right (gold for a golden pin)

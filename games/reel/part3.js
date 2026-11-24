@@ -327,7 +327,7 @@ function hud(G) {
     for (const q of (REEL_SIGNS ? G.spots : [])) { const p = W3.screen(g2w(q.x, q.z, 0.2)); if (!p.front) continue; const px = clamp(p.x, 30 * k, W - 30 * k), py = p.y - 26 * k + bob; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(20,10,0,.75)'; ctx.fillStyle = '#ffa52a';
       ctx.beginPath(); ctx.moveTo(px - 9 * k, py - 8 * k); ctx.lineTo(px + 9 * k, py - 8 * k); ctx.lineTo(px, py + 5 * k); ctx.closePath(); ctx.stroke(); ctx.fill();
       if ((G.N <= 3 || G.lesson) && q === G.spots[0]) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.strokeText('FISH HERE', px, py - 20 * k); ctx.fillText('FISH HERE', px, py - 20 * k); } }
-    if (ui.aim) { const p = W3.screen(g2w(ui.aim.x, ui.aim.z, 0.1)), txt = ui.onSpot ? 'ON THE FISH: LET GO' : 'AIM WHERE THE FISH JUMP'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.fillStyle = ui.onSpot ? '#7dff9a' : '#fff'; const ty = Math.min(H - 150 * k, p.y + 34 * k); ctx.strokeText(txt, W / 2, ty); ctx.fillText(txt, W / 2, ty); } }
+    if ((G && G.lesson) && ui.aim) { const p = W3.screen(g2w(ui.aim.x, ui.aim.z, 0.1)), txt = ui.onSpot ? 'ON THE FISH: LET GO' : 'AIM WHERE THE FISH JUMP'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.fillStyle = ui.onSpot ? '#7dff9a' : '#fff'; const ty = Math.min(H - 150 * k, p.y + 34 * k); ctx.strokeText(txt, W / 2, ty); ctx.fillText(txt, W / 2, ty); } }
   drawStrike(G);
   if (G.lesson) lessonPanel(G);
   else {
@@ -374,6 +374,7 @@ function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split
 function lessonPanel(G) { coachPanel(G); }
 function strikeBtn() { return [W / 2, H - 150 * k]; }
 function floatAt() { if (!V3 || V3.none || !G) return [W / 2, H * 0.45]; const p = W3.screen(g2w(G.fl.x, G.fl.z, 0.1)); return [p.x, p.y + 40 * k]; }
-function drawStrike(G) { if (G.ph !== 'bite' && !(G.ph === 'wait' && lessonNow(G) && lessonNow(G).id === 'strike')) return; const [x, y] = strikeBtn(), on = G.ph === 'bite', r = 52 * k * (on ? 1 + Math.sin(performance.now() / 90) * 0.06 : 0.85);
+function drawStrike(G) { if (!G.lesson) return;      /* his words (24 Nov 2026): "The tap is only supposed to be in the tutorial... After the tutorial, you're supposed to leave people to their own devices" */
+  if (G.ph !== 'bite' && !(G.ph === 'wait' && lessonNow(G) && lessonNow(G).id === 'strike')) return; const [x, y] = strikeBtn(), on = G.ph === 'bite', r = 52 * k * (on ? 1 + Math.sin(performance.now() / 90) * 0.06 : 0.85);
   ctx.save(); ctx.globalAlpha = on ? 1 : 0.45; ctx.fillStyle = on ? '#ff6a3a' : 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 5 * k; ctx.stroke();
   ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `800 ${Math.round(26 * k)}px ${BC}`; ctx.fillText(on ? 'TAP!' : 'WAIT', x, y); ctx.restore(); }

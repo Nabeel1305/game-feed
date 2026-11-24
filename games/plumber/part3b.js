@@ -92,7 +92,7 @@ function drawFix(G, L, now) { const J = G.job, F = J.fix, s = L.s, y = L.sy + 4;
     ctx.lineWidth = 6 * s; ctx.strokeStyle = near ? '#4ad86a' : '#fff'; ctx.beginPath(); ctx.arc(cx, cy, r0, 0, TAU); ctx.stroke(); ctx.lineWidth = 3 * s; ctx.strokeStyle = `rgba(255,211,106,${0.4 + 0.6 * F.p})`; ctx.beginPath(); ctx.arc(cx, cy, r1, 0, TAU); ctx.stroke();
     const pl = F.lastHit != null && G.t - F.lastHit < 0.2 ? 8 * s : 0; fillR(cx - 3 * s, cy - 44 * s + pl, 6 * s, 40 * s, 3 * s, '#c98d55'); ctx.fillStyle = '#d83a3a'; ctx.beginPath(); ctx.ellipse(cx, cy + 4 * s + pl, 18 * s, 10 * s, 0, Math.PI, 0); ctx.fill();
     for (let i = 0; i < F.need; i++) circ(cx + (i - (F.need - 1) / 2) * 18 * s, cy + 58 * s, 6 * s, i < F.hits ? '#4ad86a' : 'rgba(255,255,255,.18)');
-    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('TAP when the ring meets the circle', cx, cy + 80 * s); }
+    ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; if (G && G.lesson) ctx.fillText('TAP when the ring meets the circle', cx, cy + 80 * s); }
   if (k === 'feed') { const [cx, cy, R] = gaugeAt(L), px0 = 30 * s, px1 = W - 30 * s, py = cy - R * 0.65;
     fillR(px0, py - 9 * s, px1 - px0, 18 * s, 9 * s, '#5a6672'); fillR(px0 + 3, py - 6 * s, (px1 - px0 - 6) * F.prog, 12 * s, 6 * s, '#ffd36a'); ctx.fillStyle = '#2a3038'; fillR(px1 - 30 * s, py - 9 * s, 26 * s, 18 * s, 6 * s, '#3a2a1a');
     ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(11 * s)}px ${NU}`; ctx.textAlign = 'right'; ctx.fillText('BLOCKAGE', px1 - 2 * s, py - 18 * s);
@@ -103,11 +103,11 @@ function drawFix(G, L, now) { const J = G.job, F = J.fix, s = L.s, y = L.sy + 4;
   if (k === 'set') { const r = sliderRect(L), gx = r.x + r.w * (F.tgt - F.w / 2), gw = r.w * F.w; fillR(r.x, r.y, r.w, r.h, r.h / 2, 'rgba(255,255,255,.12)'); fillR(gx, r.y, gw, r.h, 6, '#4ad86a');
     for (let i = 0; i <= 10; i++) fillR(r.x + r.w * i / 10 - 1, r.y + r.h + 4 * s, 2, 6 * s, 1, 'rgba(255,255,255,.35)');
     const kx = r.x + r.w * F.v; circ(kx, r.y + r.h / 2, 18 * s, F.drag ? '#fff' : '#ffd36a'); circ(kx, r.y + r.h / 2, 7 * s, '#0e2236');
-    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('drag the knob into the green, then let go', W / 2, r.y + r.h + 30 * s); }
+    ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; if (G && G.lesson) ctx.fillText('drag the knob into the green, then let go', W / 2, r.y + r.h + 30 * s); }
   if (k === 'fit') { const [tx, ty] = fitTarget(L), [sx, sy] = dragFit ? [dragFit.x, dragFit.y] : fitStart(L), gw = 54 * s;
     line([[24 * s, ty], [tx - gw / 2, ty]], '#3a8ad0', 16 * s); line([[tx + gw / 2, ty], [W - 24 * s, ty]], '#3a8ad0', 16 * s); ctx.setLineDash([5, 5]); ctx.strokeStyle = `rgba(255,211,106,${0.5 + 0.4 * Math.sin(now * 6)})`; ctx.lineWidth = 2; rrect(tx - gw / 2, ty - 10 * s, gw, 20 * s, 4); ctx.stroke(); ctx.setLineDash([]);
     fillR(sx - gw / 2 + 2, sy - 8 * s, gw - 4, 16 * s, 4, F.name === 'New hose' ? '#3a4450' : F.name === 'New cartridge' ? '#c0c8d0' : '#d9a441'); ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.fillRect(sx - gw / 2 + 4, sy - 6 * s, gw - 8, 3 * s);
-    if (!dragFit) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; ctx.fillText('drag me ↑', sx, sy + 22 * s); } } }
+    if (!dragFit) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.textAlign = 'center'; if (G && G.lesson) ctx.fillText('drag me ↑', sx, sy + 22 * s); } } }
 // ---------- the picture ----------
 function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G;
   ctx.fillStyle = '#123a5a'; ctx.fillRect(0, 0, W, H);

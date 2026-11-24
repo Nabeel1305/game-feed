@@ -182,7 +182,7 @@ function hud(G, now) { const c = G.cfg, hs = G.route.holds, L = layout(G);
   // the jump: a bar that fills while you hold; let go in the green
   if (G.dyno) { const p = scrOf(G, G.body.x + 0.6, G.body.y + 0.8) || { x: W * 0.7, y: H * 0.45 }, bh = 120 * k, bw = 16 * k, x0 = Math.min(W - 40 * k, p.x + 30 * k), y0 = p.y - bh / 2, u = Math.min(1, dynoP(G));
     ctx.fillStyle = 'rgba(10,12,20,.8)'; rrect(x0 - 4, y0 - 4, bw + 8, bh + 8, 8); ctx.fill(); ctx.fillStyle = 'rgba(120,240,150,.85)'; ctx.fillRect(x0, y0 + bh * (1 - G.dyno.g0 - G.dyno.gw), bw, bh * G.dyno.gw);
-    ctx.fillStyle = '#fff'; ctx.fillRect(x0 - 3, y0 + bh * (1 - u) - 2, bw + 6, 4); ctx.font = `400 ${Math.round(13 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('LET GO IN THE GREEN', x0 + bw / 2, y0 - 16 * k); }
+    ctx.fillStyle = '#fff'; ctx.fillRect(x0 - 3, y0 + bh * (1 - u) - 2, bw + 6, 4); ctx.font = `400 ${Math.round(13 * k)}px ${TF}`; ctx.textAlign = 'center'; if (G && G.lesson) ctx.fillText('LET GO IN THE GREEN', x0 + bw / 2, y0 - 16 * k); }
   if (G.lesson) lessonPanel(G);
   else { // grip, height, falls left
     const x0 = 14, w = Math.min(W * 0.36, 180 * k), y0 = 12 * k, s = clamp(G.st, 0, 1), col = s > 0.5 ? '#7ee08f' : s > 0.25 ? '#ffd23a' : '#ff6a4a', pulse = s < 0.25 ? 0.6 + 0.4 * Math.sin(now * 12) : 1;

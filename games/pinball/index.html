@@ -5555,7 +5555,7 @@ function hud(G, t) {
       const bw = 80 * k, bx = x + w - 12 - bw, by = y + 50 * k; ctx.fillStyle = 'rgba(255,255,255,.15)'; rrect(bx, by, bw, 7 * k, 3.5 * k); ctx.fill(); ctx.fillStyle = hex(th.b); rrect(bx, by, bw * Math.min(1, G.mis.n / G.mis.need), 7 * k, 3.5 * k); ctx.fill(); ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.fillText(`${G.mis.n}/${G.mis.need}`, bx - 6, by + 3.5 * k); }
     if (G.saveT > 0 && G.inPlay > 0) { ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = Math.sin(t * 8) > 0 ? '#8fe0ab' : 'rgba(143,224,171,.4)'; ctx.fillText('BALL SAVER ON', W / 2, y + h + 12 * k); }
   } else lessonPanel(G);
-  if (G.balls.some(b => b.lane && b.y < 1)) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5); ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(16 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.fillText('TAP TO LAUNCH', W / 2, H * 0.7); ctx.globalAlpha = 1; }
+  if (G.balls.some(b => b.lane && b.y < 1)) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5); ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(16 * k)}px ${BC}`; ctx.fillStyle = '#fff'; if (G && G.lesson) ctx.fillText('TAP TO LAUNCH', W / 2, H * 0.7); ctx.globalAlpha = 1; }
   // the two halves of the screen (faint), lit while held
   if (G.N <= 3 || G.fl.some(f => f.up)) for (const f of G.fl) { const x0 = f.side < 0 ? 0 : W / 2; ctx.fillStyle = f.up ? 'rgba(255,255,255,.08)' : G.N <= 3 ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,0)'; ctx.fillRect(x0, H - 120 * k, W / 2, 120 * k); }
 }

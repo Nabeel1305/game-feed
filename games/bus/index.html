@@ -5619,7 +5619,7 @@ function hud(G, t) { ctx.textBaseline = 'middle'; const b = G.bus, st = nextStop
   // speed
   ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,12,20,.6)'; const kmh = Math.round(b.v * 3.6); ctx.strokeText(kmh, W / 2, H - 112 * k); ctx.fillStyle = '#fff'; ctx.fillText(kmh, W / 2, H - 112 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('km/h', W / 2, H - 92 * k);
   pedals(G, t);
-  if (G.N <= 1 && !G.lesson && G.t < 5) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5); ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.fillText('HOLD GO TO DRIVE', W / 2, H - 175 * k); ctx.globalAlpha = 1; } }
+  if ((G && G.lesson) && G.N <= 1 && !G.lesson && G.t < 5) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5); ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.fillText('HOLD GO TO DRIVE', W / 2, H - 175 * k); ctx.globalAlpha = 1; } }
 function pedals(G, t) { const b = G.bus; for (const [w, name, col, lv] of [['br', 'BRAKE', '#e0463a', b.br], ['go', 'GO', '#2fbf5a', b.go]]) { const p = pedalPos(w), held = w === 'go' ? b.goH : b.brH;
     ctx.fillStyle = 'rgba(14,18,28,.45)'; rrect(p.x, p.y, p.w, p.h, 18 * k); ctx.fill(); ctx.fillStyle = col; ctx.globalAlpha = 0.35 + 0.55 * lv; rrect(p.x, p.y + p.h * (1 - lv), p.w, p.h * lv, 18 * k); ctx.fill(); ctx.globalAlpha = 1;
     ctx.strokeStyle = held ? '#fff' : 'rgba(255,255,255,.55)'; ctx.lineWidth = (held ? 4 : 2.5) * k; rrect(p.x, p.y, p.w, p.h, 18 * k); ctx.stroke();

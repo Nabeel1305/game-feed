@@ -5657,7 +5657,7 @@ function hud(G, t, tg) { const c = G.cfg, m = G.me;
     ctx.fillStyle = on ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(sb.x, sb.y, sb.r, 0, TAU); ctx.fill(); ctx.strokeStyle = on ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,.5)'; for (let a = 0; a < 4; a++) { const ax = sb.x + Math.sin(a * Math.PI / 2) * sb.r * 0.78, ay = sb.y - Math.cos(a * Math.PI / 2) * sb.r * 0.78; ctx.beginPath(); ctx.arc(ax, ay, 3.5 * k, 0, TAU); ctx.fill(); }
     ctx.fillStyle = m.run ? '#ffb030' : on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(kx, ky, 24 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 2; ctx.stroke(); }
-  if (!ui.drag && !G.lesson && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('STICK: WALK · PUSH FAR: CHARGE', W / 2, H * 0.6); ctx.fillText('DRAG ANYWHERE ELSE TO LOOK ROUND', W / 2, H * 0.6 + 17 * k); } }
+  if ((G && G.lesson) && !ui.drag && !G.lesson && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('STICK: WALK · PUSH FAR: CHARGE', W / 2, H * 0.6); ctx.fillText('DRAG ANYWHERE ELSE TO LOOK ROUND', W / 2, H * 0.6 + 17 * k); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
 // ===================== SOUND: the valley (PLAYBOOK S1-S11) =====================

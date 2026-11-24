@@ -613,7 +613,7 @@ function hud(G, L, now) { const s = L.s; ctx.textBaseline = 'middle';
     if (G.spares) { ctx.fillStyle = '#9ae6ff'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.fillText(`🛡 spare knife`, W - 14, 104 * s); } }
   // knives left: a column at the bottom left
   if (G.log) { const left = G.log.need - G.log.stuck - (G.fly ? 1 : 0), x = 22 * s, y0 = H - 40 * s; for (let i = 0; i < G.log.need; i++) { const y = y0 - i * 17 * s, on = i < left; ctx.save(); ctx.translate(x, y); ctx.rotate(-Math.PI / 4); ctx.globalAlpha = on ? 1 : 0.22; fillR(-2 * s, -9 * s, 4 * s, 11 * s, 2 * s, on ? '#e8eef4' : '#888'); fillR(-2.5 * s, 2 * s, 5 * s, 7 * s, 2 * s, on ? '#a0582a' : '#666'); ctx.restore(); } ctx.globalAlpha = 1; }
-  if (G.N <= 1 && !G.lesson && G.thrown === 0 && !G.over) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('TAP TO THROW', W / 2, L.ky + L.klen + 16 * s); ctx.globalAlpha = 1; } }
+  if ((G && G.lesson) && G.N <= 1 && !G.lesson && G.thrown === 0 && !G.over) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('TAP TO THROW', W / 2, L.ky + L.klen + 16 * s); ctx.globalAlpha = 1; } }
 function lessonPanel(G, L) { coachPanel(G); }
 // ---------- what each happening looks and sounds like ----------
 function onEvent(G, e) { const L = lay(), s = L.s, bx = L.cx, by = L.cy + L.R;

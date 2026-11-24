@@ -130,7 +130,7 @@ function drawMouth(G, now) { const L = layout(G), P = pat(G), A = archOf(G), S =
   // the wire key's gauge
   if (G.gauge) { const g = G.gauge, bx = W - 40 * k, bh = 160 * k, y0 = L.cy - bh / 2, u = Math.min(1.25, gaugeP(G)) / 1.25; ctx.fillStyle = 'rgba(20,24,34,.85)'; rrect(bx - 14 * k, y0 - 6, 28 * k, bh + 12, 10); ctx.fill();
     ctx.fillStyle = 'rgba(120,230,150,.9)'; ctx.fillRect(bx - 9 * k, y0 + bh * (1 - (g.g0 + g.gw) / 1.25), 18 * k, bh * g.gw / 1.25); ctx.fillStyle = '#fff'; ctx.fillRect(bx - 12 * k, y0 + bh * (1 - u) - 2, 24 * k, 4);
-    ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'right'; ctx.fillText('LET GO IN THE GREEN', bx - 18 * k, y0 + bh * (1 - g.g0 / 1.25)); }
+    ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'right'; if (G && G.lesson) ctx.fillText('LET GO IN THE GREEN', bx - 18 * k, y0 + bh * (1 - g.g0 / 1.25)); }
   // buttons and the tray
   const btn = (b, txt, on, sub) => { ctx.fillStyle = on ? 'rgba(106,208,184,.95)' : 'rgba(30,40,56,.75)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill(); ctx.font = `${Math.round(b.r * 0.9)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText(txt, b.x, b.y + 1);
     if (sub) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = '#3a4a5a'; ctx.fillText(sub, b.x, b.y + b.r + 9 * k); } };

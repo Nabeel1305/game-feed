@@ -171,7 +171,7 @@ function hud(G, t) {
   // the stick under the thumb, and the dash ring
   const st = ui.stick; if (st) { ctx.globalAlpha = 0.5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(st.x0, st.y0, 46 * k, 0, TAU); ctx.stroke(); ctx.globalAlpha = 0.85; ctx.fillStyle = '#fff'; ctx.beginPath(); const dx = clamp(st.x - st.x0, -46 * k, 46 * k), dy = clamp(st.y - st.y0, -46 * k, 46 * k); ctx.arc(st.x0 + dx, st.y0 + dy, 18 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
   { const s = scr(me.x, 0.05, me.z), r = 22 * k, u = 1 - me.cd / c.dashCD; if (u < 1) { ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s.x, s.y + 6 * k, r, 0, TAU); ctx.stroke(); ctx.strokeStyle = '#ffe060'; ctx.beginPath(); ctx.arc(s.x, s.y + 6 * k, r, -Math.PI / 2, -Math.PI / 2 + TAU * u); ctx.stroke(); } }
-  if (G.N <= 3 && G.t < 6 && !G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); ctx.fillText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); }
+  if ((G && G.lesson) && G.N <= 3 && G.t < 6 && !G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); ctx.fillText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
