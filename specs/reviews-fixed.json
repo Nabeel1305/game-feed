@@ -296,6 +296,12 @@
    "when": "24 Nov, in the chat",
    "said": "I kart kingdom i shouldn't be phasing against the rail i should clearly hit it and the rail and figure out a realistic graphic for what happens when I hit the side of the race course while flying currently its not good",
    "did": "Your kart's side now stops at the rail (before, its middle did, so half the kart went into the rail). Brushing the rail throws sparks and scrapes a little speed off; running into it is a real hit: BANG, a burst of sparks, the kart bounces off, loses half its speed and rocks. Above the rail there is now a catch fence like a real circuit (a wire net on posts; on the sky courses a faint glowing force field), so when you fly into the side you hit the fence where you can see it: CRASH, a ring flashes on the fence where you struck, sparks, the kart rocks and drops back onto the road."
+  },
+  {
+   "kind": "yours",
+   "when": "24 Nov, in the chat",
+   "said": "There's also one thing, when you're in the air or you're doing nitro, you seem to be temporarily unable to maneuver. So try and fix that. When you're in the air or you're doing nitro, for some reason, you try to maneuver, but it doesn't work.",
+   "did": "In the air the kart now turns when you steer (a little gentler than on the road; before, steering did nothing until you landed). With nitro or a boost, the turning is now as sharp as at normal speed (before, the faster you went the less it turned, and a turn also slowed you down)."
   }
  ],
  "stunt": [
@@ -316,6 +322,12 @@
    "when": "24 Nov, from your note on Kart Kingdom",
    "said": "I kart kingdom i shouldn't be phasing against the rail i should clearly hit it and the rail and figure out a realistic graphic for what happens when I hit the side of the race course while flying currently its not good",
    "did": "The same rail fault was here: the kart's side now stops at the rail, brushing it scrapes with sparks, hitting it bounces you off with a BANG. And as in Kart Kingdom, a wire catch fence on posts now stands above the rail, so a flying kart hits it where you can see it (CRASH, a flash on the net, sparks, the kart rocks and drops). The camera stays on the road's side of the fence."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Kart Kingdom",
+   "said": "There's also one thing, when you're in the air or you're doing nitro, you seem to be temporarily unable to maneuver. So try and fix that. When you're in the air or you're doing nitro, for some reason, you try to maneuver, but it doesn't work.",
+   "did": "The same here: you can steer in the air now, and a boost no longer takes the turning away."
   }
  ],
  "surf": [

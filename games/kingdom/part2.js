@@ -319,8 +319,8 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length, me =
   const sp = Math.min(1, k.v / 12), hnd = me ? 1 + (G.driver.hnd + G.kart.hnd) * 0.03 : 1; let yaw;
   if (k.rocket > 0) { const p = S[(k.i + 10) % n]; let dh = Math.atan2(p.z - k.z, p.x - k.x) - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); yaw = clamp(dh * 4, -2.5, 2.5); }
   else if (k.drift) { const u = clamp(st * k.drift, -1, 1); yaw = k.drift * (0.78 + 0.6 * u) * sp * hnd; }
-  else { const want = st * 1.75 * sp * hnd * (k.air ? (k.glide ? 0.8 : 0) : 1), lim = GRIP * grip * (k.ice > 0 ? 0.45 : 1) / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
-  if (k.air && !k.glide && !(k.rocket > 0)) yaw = 0;      // off the ground a kart keeps the line it took off on
+  else { const want = st * 1.75 * sp * hnd * (k.air ? (k.glide ? 0.8 : 0.65) : 1), lim = GRIP * grip * (k.ice > 0 ? 0.45 : 1) / Math.max(6, Math.min(k.v, VMAX * 1.05)); yaw = clamp(want, -lim, lim); if (!k.air && k.boost <= 0 && !(k.nitroT > 0) && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
+      // his review (24 Nov 2026): "when you're in the air or you're doing nitro... you try to maneuver, but it doesn't work": in the air the kart now turns (a little gentler than on the road), and a boost no longer takes the turning away (the grip is reckoned at ordinary top speed, and a boost does not scrub speed in a turn)
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   const slip = k.drift ? -k.drift * 0.32 : k.ice > 0 ? -st * 0.25 : 0; k.slip += (slip - k.slip) * Math.min(1, dt * (k.ice > 0 ? 2 : 6)); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;

@@ -5335,8 +5335,8 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const top = (k.me ? c.vmax : VMAX * c.skill * k.skill * (k.rubber || 1)) * (1 + 0.012 * k.coin) * (k.boost > 0 ? 1.32 : 1) * (k.star > 0 ? 1.28 : 1) * (off && k.boost <= 0 && k.star <= 0 ? 0.5 : 1) * (k.spin > 0 ? 0.25 : 1) * (go ? 1 : 0.6);
   if (!k.air) k.v += (top - k.v) * Math.min(1, dt * (k.v < top ? 0.9 : 2.5));
   // steering: a grip limit (wide at full speed); in the air a kart cannot turn (nothing to push on), only a glider steers (23 Nov 2026)
-  const sp = Math.min(1, k.v / 12), want = st * 1.75 * sp * (k.air ? (k.glide ? 0.9 : 0) : 1), lim = GRIP / Math.max(6, k.v); let yaw = clamp(want, -lim, lim); if (!k.air && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.5 * dt;
-  if (k.air && !k.glide && !(k.rocket > 0)) yaw = 0;      // off the ground a kart keeps the line it took off on
+  const sp = Math.min(1, k.v / 12), want = st * 1.75 * sp * (k.air ? (k.glide ? 0.9 : 0.65) : 1), lim = GRIP / Math.max(6, Math.min(k.v, VMAX * 1.05)); let yaw = clamp(want, -lim, lim); if (!k.air && !(k.boost > 0) && Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.5 * dt;
+      // his review of Kart Kingdom, the same here (24 Nov 2026): "when you're in the air or you're doing nitro... you try to maneuver, but it doesn't work": in the air the kart now turns (a little gentler than on the road), and a boost no longer takes the turning away (the grip is reckoned at ordinary top speed, and a boost does not scrub speed in a turn)
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   k.x += Math.cos(k.h) * k.v * dt; k.z += Math.sin(k.h) * k.v * dt;
   // the air
