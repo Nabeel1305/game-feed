@@ -140,7 +140,7 @@ function groundAt(T, l) { const s = T.S[l.i], a = Math.abs(l.lat); if (s.gap && 
 function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N), cl = classOf(N), boss = N % 10 === 0;
   return { N, f, help: !!help, track: placeOf(N), cup: cupOf(N), cls: cl, mirror: cl === 3, boss, laps: N <= 2 ? 2 : 3,
-    place: N <= 4 ? 4 : N <= 12 ? 3 : 2,
+    place: 1,      // his words (24 Nov 2026): "If you don't win first place, you shouldn't be able to progress to the next level"
     skill: x(0.8, 1.07, 34) * (1 - 0.04 * e) * (help ? 0.96 : 1) * (boss ? 1.015 : 1), speedK: 1 + [0, 0.05, 0.1, 0.1, 0.16][cl],
     aiItems: x(0.35, 1, 30), aiTricks: x(0.5, 3, 30), aiDodge: x(0.5, 0.95, 30), aiDrift: x(0.3, 1, 30),
     hz: x(0, 1, 18), grav: TRACKS[placeOf(N)].grav || 1,

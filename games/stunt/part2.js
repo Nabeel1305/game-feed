@@ -68,7 +68,7 @@ function locate(T, x, z, hint) { const S = T.S, n = S.length; let bi = hint == n
   const p = S[best], lat = -(x - p.x) * Math.sin(p.h) + (z - p.z) * Math.cos(p.h); return { i: best, lat }; }
 function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
-  return { N, f, help: !!help, track: placeOf(N), place: N <= 2 ? 3 : N <= 6 ? 2 : 1, laps: N <= 2 ? 2 : 3, boss: N % 10 === 0,
+  return { N, f, help: !!help, track: placeOf(N), place: 1 /* his words (24 Nov 2026): "If you don't win first place, you shouldn't be able to progress to the next level" */, laps: N <= 2 ? 2 : 3, boss: N % 10 === 0,
     skill: x(0.8, 1.0, 35) * (1 - 0.03 * e) * (help ? 0.96 : 1) * (N % 10 === 0 ? 1.03 : 1), aiTricks: x(0.6, 3.2, 30), aiItems: x(0.4, 1, 30), aiCrash: x(0.25, 0.06, 30),
     vmax: VMAX * (1 + 0.025 * upLv('engine')), air: 1 + 0.12 * upLv('springs'), starRate: 1 + 0.25 * upLv('star'), magnet: 1.4 + 0.9 * upLv('magnet') }; }
 function newGame(N, o = {}) {

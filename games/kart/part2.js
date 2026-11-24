@@ -4,7 +4,7 @@
 // corner and sparks build under it, blue, then orange, then purple; straighten up (or let go) and you get a boost, longer
 // for each colour. Drive through a ? box for an item and TAP the right half to use it: a Turbo can, an Oil slick dropped
 // behind you, a Zap orb that flies to the kart just ahead, a Bubble shield. Grass slows you; barriers bump you. Finish in the
-// place the race asks for (top three at first, the win later). Four tracks make a cup; karts to collect; upgrades stay.
+// place the race asks for (first: since 24 Nov 2026, his words "If you don't win first place, you shouldn't be able to progress"). Four tracks make a cup; karts to collect; upgrades stay.
 // World: metres on a flat plane; x across, z (screen-down) the other way; a heading h points along (cos h, sin h).
 const RULES = [
   'The kart drives itself. <b>Left thumb</b>: put it down and slide to <b>steer</b>, further for a harder turn.',
@@ -51,7 +51,7 @@ function locate(T, x, z, hint) { const S = T.S, n = S.length; let bi = hint == n
   const p = S[best], lat = -(x - p.x) * Math.sin(p.h) + (z - p.z) * Math.cos(p.h); return { i: best, lat }; }
 function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
-  return { N, f, help: !!help, track: placeOf(N), place: N <= 2 ? 3 : N <= 6 ? 2 : 1, laps: N <= 2 ? 2 : 3,
+  return { N, f, help: !!help, track: placeOf(N), place: 1 /* his words (24 Nov 2026): "If you don't win first place, you shouldn't be able to progress to the next level" */, laps: N <= 2 ? 2 : 3,
     skill: x(0.8, 1.14, 30) * (1 - 0.03 * e) * (help ? 0.96 : 1), aiItems: x(0.5, 1, 30), corner: x(0.45, 0.22, 30),
     vmax: VMAX * (1 + 0.025 * upLv('engine')), grass: 0.45 + 0.12 * upLv('tyres'), spark: 1 + 0.25 * upLv('spark') };
 }

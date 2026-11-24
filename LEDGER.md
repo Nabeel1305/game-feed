@@ -51,7 +51,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 41 | **Bonsai** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/FRzkTn7ah218Nz3tL5ZZ3Y) | `games/bonsai/index.html` |
 | 42 | **Star Miner** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/1brYRfNx8etgzvfCvpxfyF) | `games/miner/index.html` |
 | 43 | **Ghost Lantern** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/PwJQKnzTmyULwZCjM9TWmD) | `games/lantern/index.html` |
-| 44 | **Drift Kings** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy) | `games/kart/index.html` |
+| 44 | **Drift Kings** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy) | `games/kart/index.html` |
 | 45 | **The Bench** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/YCgzobKcQ8zkpCULKaBShb) | `games/judge/index.html` |
 | 46 | **Haggle** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5) | `games/haggle/index.html` |
 | 47 | **Battle Lines** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/Dxurc2KCKBwA5BaEWBBjXj) | `games/war/index.html` |
@@ -73,7 +73,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 63 | **Pour** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/QmpG7WcZG2wV2k3XTvGEuY) | `games/pour/index.html` |
 | 64 | **Block Party** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/UaQb7Pkffx2PavfwZ5JVL8) | `games/blocks/index.html` |
 | 65 | **Plumber** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/QspkqDVm5vnfzGjJWVBmzd) | `games/plumber/index.html` |
-| 66 | **Stunt Kart** | testing | not yet (he has not said so) | 0.1.7 | [play](https://claude.ai/artifact/1aSgdzNK6JWszpPCLwUKCJ) | `games/stunt/index.html` |
+| 66 | **Stunt Kart** | testing | not yet (he has not said so) | 0.1.8 | [play](https://claude.ai/artifact/1aSgdzNK6JWszpPCLwUKCJ) | `games/stunt/index.html` |
 | 67 | **Knife Spin** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/W9MYa4oFq3bMgN2bi48M6m) | `games/knife/index.html` |
 | 68 | **Mow It** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/TxRAf2ZspQ9BS5m6Gs5156) | `games/mow/index.html` |
 | 69 | **Helix Drop** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/AjmPj39viu1U3HLgSvzRS9) | `games/helix/index.html` |
@@ -83,7 +83,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 73 | **Sharpshooter** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/W5XXdXd3AgPV7CRfJMevJs) | `games/sniper/index.html` |
 | 74 | **Beat Dash** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/ESJ8vDMkWnqvMDPuumRsEu) | `games/dash/index.html` |
 | 75 | **Shadow Crew** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/Q6rGZr1RAon8w53BWFRS5a) | `games/crew/index.html` |
-| 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.2.5 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
+| 76 | **Kart Kingdom** | testing | not yet (he has not said so) | 0.2.6 | [play](https://claude.ai/artifact/XUfQM4YCebEbMzU2YaiNMU) | `games/kingdom/index.html` |
 | 77 | **Sprint** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/MmQxLMvqSpTbUQbya1HT97) | `games/sprint/index.html` |
 | 78 | **Bus Driver** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/SvgMcmUkQVPx1rcU36EjW9) | `games/bus/index.html` |
 | 79 | **Cake Designer** | testing | not yet (he has not said so) | 0.1.2 | [play](https://claude.ai/artifact/73cvdYLtDKLqvV4ji1aeii) | `games/cake/index.html` |

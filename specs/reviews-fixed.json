@@ -302,6 +302,12 @@
    "when": "24 Nov, in the chat",
    "said": "There's also one thing, when you're in the air or you're doing nitro, you seem to be temporarily unable to maneuver. So try and fix that. When you're in the air or you're doing nitro, for some reason, you try to maneuver, but it doesn't work.",
    "did": "In the air the kart now turns when you steer (a little gentler than on the road; before, steering did nothing until you landed). With nitro or a boost, the turning is now as sharp as at normal speed (before, the faster you went the less it turned, and a turn also slowed you down)."
+  },
+  {
+   "kind": "yours",
+   "when": "24 Nov, in the chat",
+   "said": "Should you really be able to progress to the next level if you don't win first place? If you don't win first place, you shouldn't be able to progress to the next level.",
+   "did": "Now only first place moves you on. The race tells you WIN THE RACE / need 1st, and if another kart crosses the line first the race ends there and you try again."
   }
  ],
  "stunt": [
@@ -328,6 +334,12 @@
    "when": "24 Nov, from your note on Kart Kingdom",
    "said": "There's also one thing, when you're in the air or you're doing nitro, you seem to be temporarily unable to maneuver. So try and fix that. When you're in the air or you're doing nitro, for some reason, you try to maneuver, but it doesn't work.",
    "did": "The same here: you can steer in the air now, and a boost no longer takes the turning away."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Kart Kingdom",
+   "said": "Should you really be able to progress to the next level if you don't win first place? If you don't win first place, you shouldn't be able to progress to the next level.",
+   "did": "The same here: it used to let you through in 3rd or 2nd on the early tracks; now only first place moves you on."
   }
  ],
  "surf": [
@@ -708,6 +720,12 @@
    "when": "24 Nov, from your note on Kart Kingdom",
    "said": "I kart kingdom i shouldn't be phasing against the rail i should clearly hit it and the rail and figure out a realistic graphic for what happens when I hit the side of the race course while flying currently its not good",
    "did": "The same rail fault was here (half the kart went into the rail): the kart's side now stops at it, brushing it scrapes with sparks, hitting it bounces you off with a BANG and the kart rocks. (No flying in this game, so no fence.)"
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Kart Kingdom",
+   "said": "Should you really be able to progress to the next level if you don't win first place? If you don't win first place, you shouldn't be able to progress to the next level.",
+   "did": "The same here: it used to let you through in 3rd or 2nd on the early tracks; now only first place moves you on."
   }
  ],
  "helix": [
