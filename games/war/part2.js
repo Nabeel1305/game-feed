@@ -147,9 +147,9 @@ function finish(G, win) { const mine0 = G.units.filter(u => u.side === 0), kept 
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'order', title: 'ORDERS', how: 'Tap one of your units (blue), then tap a red unit to attack it: men you send in yourself fight twice as hard. Break two enemy units.', need: 2 }],
-  2: [{ id: 'match', title: 'SPEARS STOP HORSES', how: 'Horsemen are coming for your archers. Send your SPEARMEN at them. Break two with spears.', need: 2 }],
-  3: [{ id: 'flank', title: 'THE FLANK', how: 'Send your horsemen round the side of the red unit that is fighting, and hit it from the side or behind. Three flank blows.', need: 3 }],
+  1: [{ id: 'order', title: 'ORDERS', say: 'TAP BLUE, TAP RED', do: 'tap', how: 'Tap one of your units (blue), then tap a red unit to attack it: men you send in yourself fight twice as hard. Break two enemy units.', need: 2 }],
+  2: [{ id: 'match', title: 'SPEARS STOP HORSES', say: 'SPEARS AT HORSES', do: 'tap', how: 'Horsemen are coming for your archers. Send your SPEARMEN at them. Break two with spears.', need: 2 }],
+  3: [{ id: 'flank', title: 'THE FLANK', say: 'HIT THEM FROM THE SIDE', do: 'tap', how: 'Send your horsemen round the side of the red unit that is fighting, and hit it from the side or behind. Three flank blows.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

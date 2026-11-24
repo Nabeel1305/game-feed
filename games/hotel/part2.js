@@ -114,9 +114,9 @@ function finish(G, win, why) { const c = G.cfg; if (G.lesson) return; G.over = w
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'bags', title: 'BAGS UP', how: 'Two guests at the desk. Tap the VIP\'s 🧳 (the gold one) first: you carry the bags up to a clean room. Then the other. Twice.', need: 2 }],
-  2: [{ id: 'two', title: 'ONE TRIP', how: 'Two rooms want food. Tap BOTH 🍝 bubbles before you reach the kitchen, and you fetch both plates in one trip. Do it twice.', need: 2 }],
-  3: [{ id: 'clean', title: 'A CLEAN ROOM', how: 'Every room is full or dirty and a guest is waiting. Tap the 🧹 dirty room first, then the guest\'s 🧳. Twice.', need: 2 }],
+  1: [{ id: 'bags', title: 'BAGS UP', say: 'TAP THE GOLD 🧳', do: 'tap', how: 'Two guests at the desk. Tap the VIP\'s 🧳 (the gold one) first: you carry the bags up to a clean room. Then the other. Twice.', need: 2 }],
+  2: [{ id: 'two', title: 'ONE TRIP', say: 'TAP BOTH 🍝', do: 'tap', how: 'Two rooms want food. Tap BOTH 🍝 bubbles before you reach the kitchen, and you fetch both plates in one trip. Do it twice.', need: 2 }],
+  3: [{ id: 'clean', title: 'A CLEAN ROOM', say: 'TAP 🧹 FIRST', do: 'tap', how: 'Every room is full or dirty and a guest is waiting. Tap the 🧹 dirty room first, then the guest\'s 🧳. Twice.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

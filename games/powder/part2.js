@@ -118,9 +118,9 @@ function finish(G) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'gate', title: 'CARVE', how: 'Hold your thumb and slide it left or right to carve. Ride between the flags of three gates in a row.', need: 3 }],
-  2: [{ id: 'rock', title: 'JUMP', how: 'Tap to jump. Hop over two rocks in a row.', need: 2 }],
-  3: [{ id: 'trick', title: 'SPIN', how: 'Ride over the kicker. In the air hold a side to spin, let go when the board faces down the hill again. Land two spins.', need: 2 }],
+  1: [{ id: 'gate', title: 'CARVE', say: 'HOLD, SLIDE TO CARVE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Hold your thumb and slide it left or right to carve. Ride between the flags of three gates in a row.', need: 3 }],
+  2: [{ id: 'rock', title: 'JUMP', say: 'TAP TO JUMP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Tap to jump. Hop over two rocks in a row.', need: 2 }],
+  3: [{ id: 'trick', title: 'SPIN', say: 'HOLD A SIDE TO SPIN', do: 'hold', how: 'Ride over the kicker. In the air hold a side to spin, let go when the board faces down the hill again. Land two spins.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -148,9 +148,9 @@ const BLIND = { g: G => pedal(G, 'go', !G.bus.goH), b: G => pedal(G, 'br', !G.bu
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.stops.forEach(s => { s.served = true; s.at = s.at || G.t; }); G.late = G.stops.map(() => 0); G.lateEnd = 0; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'stop', title: 'GO, BRAKE, STOP ON THE MARK', how: 'Hold GO (right) to drive. Hold BRAKE (left) to slow. Stop with the front door on the yellow mark: the doors open by themselves. Serve 2 stops.', need: 2 }],
-  2: [{ id: 'time', title: 'KEEP TO TIME', how: 'Every stop has a time. When everyone is on, wait for the time, then press GO to leave. Not before it! Leave 2 stops on time.', need: 2 }],
-  3: [{ id: 'light', title: 'RED LIGHTS AND ZEBRAS', how: 'Stop at a red light and go on green. Stop for people on a zebra crossing. Get past 3 of them safely.', need: 3 }],
+  1: [{ id: 'stop', title: 'GO, BRAKE, STOP ON THE MARK', say: 'HOLD GO, STOP ON YELLOW', do: 'hold', how: 'Hold GO (right) to drive. Hold BRAKE (left) to slow. Stop with the front door on the yellow mark: the doors open by themselves. Serve 2 stops.', need: 2 }],
+  2: [{ id: 'time', title: 'KEEP TO TIME', say: 'WAIT FOR THE TIME, THEN GO', do: 'wait', how: 'Every stop has a time. When everyone is on, wait for the time, then press GO to leave. Not before it! Leave 2 stops on time.', need: 2 }],
+  3: [{ id: 'light', title: 'RED LIGHTS AND ZEBRAS', say: 'STOP ON RED', do: 'hold', how: 'Stop at a red light and go on green. Stop for people on a zebra crossing. Get past 3 of them safely.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

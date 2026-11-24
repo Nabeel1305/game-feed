@@ -148,10 +148,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'shoot', kind: 'S', title: 'SHOOT', how: 'Tap the spot in the goal you want to hit. Then tap again when the needle is in the GREEN. Score twice in a row.', need: 2 },
-    { id: 'save', kind: 'K', title: 'SAVE', how: 'Watch the kicker. When he plants his foot his body turns to where he will shoot: tap that side (the middle to stay). Not before, or he sees you go. Save two in a row.', need: 2 }],
-  2: [{ id: 'read', kind: 'S', title: 'READ THE KEEPER', how: 'The keeper leans to the side he is going to dive to. Shoot to the OTHER side. Score twice in a row.', need: 2 }],
-  3: [{ id: 'stutter', kind: 'K', title: 'THE STUTTER', how: 'This kicker stops in his run-up to fool you. Wait for him to plant his foot, then dive. Save two in a row.', need: 2 }],
+  1: [{ id: 'shoot', kind: 'S', title: 'SHOOT', say: 'TAP A SPOT, TAP IN GREEN', do: 'tap', how: 'Tap the spot in the goal you want to hit. Then tap again when the needle is in the GREEN. Score twice in a row.', need: 2 },
+    { id: 'save', kind: 'K', title: 'SAVE', say: 'WAIT… TAP HIS SIDE', do: 'tap', how: 'Watch the kicker. When he plants his foot his body turns to where he will shoot: tap that side (the middle to stay). Not before, or he sees you go. Save two in a row.', need: 2 }],
+  2: [{ id: 'read', kind: 'S', title: 'READ THE KEEPER', say: 'SHOOT THE OTHER WAY', do: 'tap', how: 'The keeper leans to the side he is going to dive to. Shoot to the OTHER side. Score twice in a row.', need: 2 }],
+  3: [{ id: 'stutter', kind: 'K', title: 'THE STUTTER', say: 'WAIT FOR THE FOOT', do: 'wait', how: 'This kicker stops in his run-up to fool you. Wait for him to plant his foot, then dive. Save two in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonGo(G); }
 function lessonGo(G) { if (lessonNow(G).kind === 'S') startShot(G); else startSave(G); }

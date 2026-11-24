@@ -115,9 +115,9 @@ function finish(G) { const c = G.cfg, win = G.score >= c.target; G.over = win ? 
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'roll', title: 'ROLL', how: 'Touch to line the ball up, pull back toward you and let go. Knock down 6 pins or more, twice in a row.', need: 2 }],
-  2: [{ id: 'pocket', title: 'THE POCKET', how: 'Roll just beside the front pin, not straight at it. Get a strike, or 9 pins.', need: 1 }],
-  3: [{ id: 'spare', title: 'A SPARE', how: 'Knock down what is left with your second ball. Aim at the middle of the pins still standing.', need: 1 }],
+  1: [{ id: 'roll', title: 'ROLL', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Touch to line the ball up, pull back toward you and let go. Knock down 6 pins or more, twice in a row.', need: 2 }],
+  2: [{ id: 'pocket', title: 'THE POCKET', say: 'AIM BESIDE THE FRONT PIN', do: 'drag', dir: 'down', how: 'Roll just beside the front pin, not straight at it. Get a strike, or 9 pins.', need: 1 }],
+  3: [{ id: 'spare', title: 'A SPARE', say: 'HIT WHAT IS LEFT', do: 'drag', dir: 'down', how: 'Knock down what is left with your second ball. Aim at the middle of the pins still standing.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

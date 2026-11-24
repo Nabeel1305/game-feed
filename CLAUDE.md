@@ -49,6 +49,11 @@ what is in the store when he says to. For each review fixed, add what he said (h
 (`kind: "yours"`, or `"also"` on another game the same fault was fixed in); the page then shows YOUR FIRST REVIEW: FIXED on that game. Then empty his
 note in the store (`db_write` a `set` of `{ rating: '', critical: '', flaw: '', at: <now, in ms> }` to `reviews/<id>` with its `ifVersion`), so that what
 he writes next is his next review. Never empty a note that has not been fixed. (Again, 23 Nov 2026, 22:29: "Whenever you fix something, say that you fixed it in the game review make it clear so old enries dont remain": every fix, in the same sitting, gets its FIXED entry on the page and his old note emptied, and the review page is republished.)
+**Tutorials are pictures, not reading** (his words, 24 Nov 2026, after Reel: "make the tutorials as easy as possible. Make the tutorial something that
+a five-year-old can understand... visual cues. Tap here. Swipe here... as little words as possible... People want to play games"). Every lesson step has
+`say` (two to four big words), `do` (the gesture: tap, hold, release, swipe, drag, wait) and, where the place matters, `at` (where on the screen); the
+kit's `coachPanel(G)` draws them (a hand doing the move, a tick when it is done, TRY AGAIN when not) and a lesson's `how` is never shown to him.
+One action at a time; a hand never points at a wrong place (no `at` = a small picture of the move under the words).
 **What looks like a button is a button** (his words, 23 Nov 2026, 13:47, after I wrote UP and DOWN round a stick that followed his thumb: "You literally
 made Pilot worse... You need to pay very close attention... anytime I try to click the side button that'll take it up, it just takes me to the
 joystick... You don't need the joystick"): a word or an arrow drawn at a fixed place is a button and is pressed; a stick, if there is one, stays in one

@@ -123,9 +123,9 @@ const BLIND = { h: G => hold(G, true), r: G => hold(G, false), t: G => { hold(G,
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.cuts = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'steer', title: 'LET GO TO TURN, HOLD TO GO', how: 'Let go and the kite turns on the spot. When its nose (the arrow) points at a ring, HOLD to dart through it. Fly through all 4 rings.', need: 4 }],
-  2: [{ id: 'cut', title: 'CROSS AND CUT', how: 'Fly so your line crosses the practice kite\'s line, then HOLD while they cross: you saw through it. Cut it!', need: 1 }],
-  3: [{ id: 'fight', title: 'PULL HARDER', how: 'This one fights back. When the lines cross, keep HOLDING (nose up): whoever pulls harder cuts the other.', need: 1 }],
+  1: [{ id: 'steer', title: 'LET GO TO TURN, HOLD TO GO', say: 'LET GO TO TURN, HOLD TO GO', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Let go and the kite turns on the spot. When its nose (the arrow) points at a ring, HOLD to dart through it. Fly through all 4 rings.', need: 4 }],
+  2: [{ id: 'cut', title: 'CROSS AND CUT', say: 'CROSS LINES, HOLD', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Fly so your line crosses the practice kite\'s line, then HOLD while they cross: you saw through it. Cut it!', need: 1 }],
+  3: [{ id: 'fight', title: 'PULL HARDER', say: 'KEEP HOLDING', do: 'hold', at: G => [W / 2, H * 0.7], how: 'This one fights back. When the lines cross, keep HOLDING (nose up): whoever pulls harder cuts the other.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

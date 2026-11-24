@@ -140,9 +140,9 @@ function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lo
   G.res = { win, stars, why: o.why || null, served: G.served, failed: G.failed, tips: G.tips, log: G.log, coins: win ? G.tips + Math.ceil(G.N / 2) + stars * 3 : Math.max(1, G.tips >> 1) }; G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pour', title: 'POUR TO THE MARKS', how: 'Tap a GLASS. Then HOLD a bottle: it pours while you hold. Let go at the STOP line. Then the next bottle. Tap SERVE.', need: 1 }],
-  2: [{ id: 'ice', title: 'GLASS AND ICE', how: 'Each drink has its glass and its ice. Tap the right glass, tap ICE, then pour, garnish if asked, and SERVE.', need: 1 }],
-  3: [{ id: 'garnish', title: 'THE FINISHING TOUCH', how: 'The finishing touch: tap the garnish (in GLASS · GARNISH). The card shows which.', need: 1 }],
+  1: [{ id: 'pour', title: 'POUR TO THE MARKS', say: 'TAP A GLASS, HOLD A BOTTLE', do: 'hold', how: 'Tap a GLASS. Then HOLD a bottle: it pours while you hold. Let go at the STOP line. Then the next bottle. Tap SERVE.', need: 1 }],
+  2: [{ id: 'ice', title: 'GLASS AND ICE', say: 'GLASS, ICE, POUR', do: 'tap', how: 'Each drink has its glass and its ice. Tap the right glass, tap ICE, then pour, garnish if asked, and SERVE.', need: 1 }],
+  3: [{ id: 'garnish', title: 'THE FINISHING TOUCH', say: 'TAP THE GARNISH', do: 'tap', how: 'The finishing touch: tap the garnish (in GLASS · GARNISH). The card shows which.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); nextOrder(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

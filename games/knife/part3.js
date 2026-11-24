@@ -90,9 +90,7 @@ function hud(G, L, now) { const s = L.s; ctx.textBaseline = 'middle';
   // knives left: a column at the bottom left
   if (G.log) { const left = G.log.need - G.log.stuck - (G.fly ? 1 : 0), x = 22 * s, y0 = H - 40 * s; for (let i = 0; i < G.log.need; i++) { const y = y0 - i * 17 * s, on = i < left; ctx.save(); ctx.translate(x, y); ctx.rotate(-Math.PI / 4); ctx.globalAlpha = on ? 1 : 0.22; fillR(-2 * s, -9 * s, 4 * s, 11 * s, 2 * s, on ? '#e8eef4' : '#888'); fillR(-2.5 * s, 2 * s, 5 * s, 7 * s, 2 * s, on ? '#a0582a' : '#666'); ctx.restore(); } ctx.globalAlpha = 1; }
   if (G.N <= 1 && !G.lesson && G.thrown === 0 && !G.over) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(now * 5); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('TAP TO THROW', W / 2, L.ky + L.klen + 16 * s); ctx.globalAlpha = 1; } }
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20, y = 46; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; const lines = wrapText(st.how, w - 24), h = 36 * s + lines.length * 17 * s;
-  fillR(x, y, w, h, 14, 'rgba(20,12,8,.92)'); ctx.strokeStyle = '#ffb020'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffb020'; ctx.font = `${Math.round(14 * s)}px ${TF}`; ctx.fillText('LESSON · ' + st.title, x + 12, y + 9 * s); ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 29 * s + i * 17 * s)); ctx.restore(); }
+function lessonPanel(G, L) { coachPanel(G); }
 // ---------- what each happening looks and sounds like ----------
 function onEvent(G, e) { const L = lay(), s = L.s, bx = L.cx, by = L.cy + L.R;
   switch (e.k) {
@@ -107,7 +105,7 @@ function onEvent(G, e) { const L = lay(), s = L.s, bx = L.cx, by = L.cy + L.R;
     case 'burst': { const Lg = G.log, n = 7; for (let i = 0; i < n; i++) { const a0 = i / n * TAU, a1 = (i + 1) / n * TAU, am = (a0 + a1) / 2; WEDGES.push({ x: L.cx, y: L.cy, vx: Math.cos(am) * 340, vy: Math.sin(am) * 340 - 220, ang: Lg.rot, ang0: 0, va: (Math.random() - 0.5) * 6, a0: a0, a1: a1, t: 0 }); }
       for (const q of Lg.items) { if (q.kind === 'stud') continue; const a = q.a + Lg.rot; FLYING.push({ x: L.cx + Math.cos(a) * L.R, y: L.cy + Math.sin(a) * L.R, vx: Math.cos(a) * 420, vy: Math.sin(a) * 420 - 200, ang: a - Math.PI / 2, va: (Math.random() - 0.5) * 16, t: 0, mine: q.kind === 'mine' }); }
       Lg.burst = true; sfx.burst(e.boss); FX.flash = e.boss ? 0.8 : 0.45; FX.shake = e.boss ? 16 : 9; FX.stop = 0.06; vibe(e.boss ? HAP.best : HAP.sharp); sparks(L.cx, L.cy, 30, '#ffd040', 380); say(e.boss ? 'BOSS DOWN!' : ['NICE!', 'SMASHED!', 'GREAT!', 'BOOM!'][(Math.random() * 4) | 0], W / 2, L.cy, '#ffd040', e.boss ? 34 : 26); break; }
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.2 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessonnext': if (e.first) hint = null; break;
     case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.cy, '#ffd040', 28); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); break;

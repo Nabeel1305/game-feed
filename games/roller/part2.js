@@ -113,9 +113,9 @@ const BLIND = { d: G => press(G, Math.random() < 0.08 ? { done: true } : blindAt
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.score = 100; G.parts = []; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'roll', title: 'DRAG TO PAINT', how: 'Drag your thumb over the fence plank to roll paint on. Cover it all; keep off the grass.', need: 1 }],
-  2: [{ id: 'pots', title: 'TWO COLOURS', how: 'Tap a pot to change colour. Paint each part the colour its faint pattern shows.', need: 1 }],
-  3: [{ id: 'tape', title: 'TAPE IS SAFE', how: 'Use the BRUSH near the window. The blue tape is safe to paint over: it peels off at the end. Keep paint off the glass!', need: 1 }],
+  1: [{ id: 'roll', title: 'DRAG TO PAINT', say: 'DRAG TO PAINT', do: 'drag', dir: 'lr', how: 'Drag your thumb over the fence plank to roll paint on. Cover it all; keep off the grass.', need: 1 }],
+  2: [{ id: 'pots', title: 'TWO COLOURS', say: 'TAP A POT, PAINT', do: 'tap', how: 'Tap a pot to change colour. Paint each part the colour its faint pattern shows.', need: 1 }],
+  3: [{ id: 'tape', title: 'TAPE IS SAFE', say: 'BRUSH NEAR THE GLASS', do: 'drag', dir: 'lr', how: 'Use the BRUSH near the window. The blue tape is safe to paint over: it peels off at the end. Keep paint off the glass!', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

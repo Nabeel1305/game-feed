@@ -126,9 +126,9 @@ function finish(G, win, acc = 0) { if (G.over) return; G.over = win ? 'won' : 'l
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS: one way of answering at a time ----------
 const LESSONS = {
-  1: [{ id: 'which', type: 'which', title: 'WHICH WERE THERE?', how: 'Look at the three things. When they are covered, tap the three you saw (twice in a row).', need: 2 }],
-  2: [{ id: 'place', type: 'place', title: 'PUT THEM BACK', how: 'Remember where each thing sits. Then drag each one back to its place (or tap it, then tap the place).', need: 2 }],
-  3: [{ id: 'order', type: 'order', title: 'IN ORDER', how: 'Watch them light up one by one (each has its own note). Then tap them in the same order.', need: 2 }],
+  1: [{ id: 'which', type: 'which', title: 'WHICH WERE THERE?', say: 'LOOK… TAP THE 3', do: 'tap', how: 'Look at the three things. When they are covered, tap the three you saw (twice in a row).', need: 2 }],
+  2: [{ id: 'place', type: 'place', title: 'PUT THEM BACK', say: 'DRAG BACK TO ITS PLACE', do: 'drag', dir: 'up', how: 'Remember where each thing sits. Then drag each one back to its place (or tap it, then tap the place).', need: 2 }],
+  3: [{ id: 'order', type: 'order', title: 'IN ORDER', say: 'TAP IN ORDER', do: 'tap', how: 'Watch them light up one by one (each has its own note). Then tap them in the same order.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); G.ri = -1; nextRound(G); G.ri = -1; }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

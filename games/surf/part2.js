@@ -117,9 +117,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.score = Math.max(G.score, G.cfg.target); finish(G, true, 'target'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'ride', title: 'CATCH AND RIDE', how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
-  2: [{ id: 'snap', title: 'SNAP OFF THE LIP', how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],
-  3: [{ id: 'barrel', title: 'GET BARRELLED', how: 'Where the wave throws over (the dark hollow), drop low on the face and hold CROUCH: ride through the tube and out the other end.', need: 1 }],
+  1: [{ id: 'ride', title: 'CATCH AND RIDE', say: 'HOLD, LET GO ON GREEN', do: 'hold', how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
+  2: [{ id: 'snap', title: 'SNAP OFF THE LIP', say: 'TOP, THEN TURN DOWN', do: 'drag', dir: 'ud', how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],
+  3: [{ id: 'barrel', title: 'GET BARRELLED', say: 'HOLD CROUCH', do: 'hold', how: 'Where the wave throws over (the dark hollow), drop low on the face and hold CROUCH: ride through the tube and out the other end.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, id) { const D = G.lesson; if (!D || D.done) return; let good = false;

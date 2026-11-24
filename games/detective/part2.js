@@ -174,9 +174,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: turn things over, challenge a story, accuse with proof ----------
 const LESSONS = {
-  1: [{ id: 'search', title: 'LOOK CLOSELY', how: 'Tap an object to look at it. Drag to turn it round: some clues are only on the back. Tap what you notice. Find three hidden marks.', need: 3 }],
-  2: [{ id: 'challenge', title: 'CHALLENGE A STORY', how: 'In People, ask where they were. Then Show a clue that is about them: a liar cracks, someone with a secret owns up. Do it twice. (A clue about someone else starts the count again.)', need: 2 }],
-  3: [{ id: 'accuse', title: 'PROVE IT', how: 'In Accuse, choose who, how and when, and the two clues that prove it (one puts them at the scene, one shows how). Everything you need is already in the Notebook.', need: 1 }],
+  1: [{ id: 'search', title: 'LOOK CLOSELY', say: 'TAP IT, TURN IT', do: 'drag', dir: 'lr', how: 'Tap an object to look at it. Drag to turn it round: some clues are only on the back. Tap what you notice. Find three hidden marks.', need: 3 }],
+  2: [{ id: 'challenge', title: 'CHALLENGE A STORY', say: 'ASK, THEN SHOW A CLUE', do: 'tap', how: 'In People, ask where they were. Then Show a clue that is about them: a liar cracks, someone with a secret owns up. Do it twice. (A clue about someone else starts the count again.)', need: 2 }],
+  3: [{ id: 'accuse', title: 'PROVE IT', say: 'WHO, HOW, WHEN: ACCUSE', do: 'tap', how: 'In Accuse, choose who, how and when, and the two clues that prove it (one puts them at the scene, one shows how). Everything you need is already in the Notebook.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true });
   if (st.id === 'search') { G.clues.forEach(c => { if (!c.hidden && c.room === 0) { c.hidden = true; c.face = 1 + (c.id % 3); c.spot = [((c.id * 37) % 9 - 4) / 10, ((c.id * 53) % 9 - 4) / 10]; } }); }

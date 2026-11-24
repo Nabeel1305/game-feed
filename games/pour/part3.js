@@ -65,10 +65,7 @@ function hud(G, L, now) { const s = L.s, dark = G.place === 3, ink = dark ? '#f0
     if (G.fumble >= 1) { ctx.textAlign = 'center'; ctx.fillStyle = chip > 0 ? '#e83a4a' : soft; ctx.fillText(chip > 0 ? CHIPTXT : `Next wrong pour costs ${G.fumble} move${G.fumble > 1 ? 's' : ''}`, W / 2, 112 * s); } }
   const btn = (b, txt, on) => { ctx.globalAlpha = on ? 1 : 0.35; ctx.fillStyle = dark ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.75)'; rrect(b.x, b.y, b.w, b.h, 14); ctx.fill(); ctx.fillStyle = ink; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, b.x + b.w / 2, b.y + b.h / 2); ctx.globalAlpha = 1; };
   if (G.undos > 0 || G.hist.length) btn(L.undo, `↶ UNDO ${G.undos}`, G.undos > 0 && G.hist.length > 0); if (G.spare > 0) btn(L.spareB, '+ GLASS', true); }
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20, y = 44 * s; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 42 * s + lines.length * 17 * s;
-  ctx.fillStyle = 'rgba(30,40,60,.92)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#ffd83a'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd83a'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (D.left != null ? `  · ${Math.max(0, D.left)} pours to spare` : ''), x + 12, y + 9 * s);
-  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * s + i * 17 * s)); ctx.restore(); }
+function lessonPanel(G, L) { coachPanel(G); }
 function onEvent(G, e) { const L = lay(G), s = L.s, dark = G.place === 3, ink = dark ? '#ffe08a' : '#2a5aaa';
   switch (e.k) {
     case 'start': say(`Level ${G.N}`, W / 2, H * 0.12 + 40 * s, ink, 22); sfx.start(); CORK = {}; ANIM = null; if (G.N <= 1) tip('how', 'Tap a glass, then another to pour into it.', 3); break;
@@ -82,7 +79,7 @@ function onEvent(G, e) { const L = lay(G), s = L.s, dark = G.place === 3, ink = 
     case 'spare': sfx.full(1); say('+1 GLASS', W / 2, H * 0.5, ink, 24); break;
     case 'stuck': if (e.end) say('NO POURS LEFT', W / 2, H * 0.45, '#e83a4a', 26); else tip('stuck', 'No pours left! Tap UNDO to take one back.', 3); break;
     case 'sorted': FX.flash = 0.6; sfx.win(); vibe(HAP.best); for (let i = 0; i < 60; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: H * 0.45, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320 - 160, life: 1.2, t: 0, col: LIQ[i % LIQ.length], r: 3.5 }); } say('ALL SORTED!', W / 2, H * 0.4, ink, 34); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; sfx.nope(); break;
+    case 'lessonmiss': coachMiss(); sfx.nope(); break;
     case 'lessondone': say('YOU\'VE GOT IT!', W / 2, H * 0.4, ink, 30); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'lost': sfx.lose(); break;
   } }

@@ -133,9 +133,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'putt', title: 'PULL BACK, LET GO', how: 'Put your thumb down anywhere and pull back, away from where you want the ball to go. Let go. Sink it in two strokes or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
-  2: [{ id: 'bank', title: 'OFF THE RAILS', how: 'The ball bounces off the wooden rails. Play it off a rail round the corner: sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
-  3: [{ id: 'mill', title: 'THE WINDMILL', how: 'Time your shot between the turning blades. Sand slows the ball. Sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
+  1: [{ id: 'putt', title: 'PULL BACK, LET GO', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Put your thumb down anywhere and pull back, away from where you want the ball to go. Let go. Sink it in two strokes or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
+  2: [{ id: 'bank', title: 'OFF THE RAILS', say: 'BOUNCE OFF THE RAIL', do: 'drag', dir: 'down', how: 'The ball bounces off the wooden rails. Play it off a rail round the corner: sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
+  3: [{ id: 'mill', title: 'THE WINDMILL', say: 'WAIT FOR THE GAP', do: 'drag', dir: 'down', how: 'Time your shot between the turning blades. Sand slows the ball. Sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
 };
 function lessonStart(G) { G.cfg.lessonCup = 1.12; const L = { 1: ['straight', []], 2: ['lright', ['bumper']], 3: ['straight', ['windmill', 'sand']] }[G.N]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 };
   const T = TEMPLATES[L[0]], h = { key: L[0], poly: T.poly, tee: T.tee, cup: T.cup, walls: [], obst: [], coins: [], par: T.par }; h.poly.forEach((p, j) => h.walls.push([p, h.poly[(j + 1) % h.poly.length]]));

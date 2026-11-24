@@ -161,9 +161,9 @@ const BLIND = { d: G => { if (Math.random() < 0.25) dogTo(G, null); else dogTo(G
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.penned = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'push', title: 'HOLD TO RUN, PUSH THEM IN', how: 'Hold your thumb on the field: your dog runs there. Sheep walk away from her. Get behind them (away from the pen) and walk them in. 3 sheep.', need: 3 }],
-  2: [{ id: 'gather', title: 'GATHER THE STRAYS', how: 'They are scattered. Go round the FAR side of a stray to bring it back to the others; then drive them all in. Come in slowly: rushing scatters them. 5 sheep.', need: 5 }],
-  3: [{ id: 'bark', title: 'TAP TO BARK', how: 'The black ram ignores you. Get close and TAP quickly: a bark. Bark him into the pen.', need: 1 }],
+  1: [{ id: 'push', title: 'HOLD TO RUN, PUSH THEM IN', say: 'HOLD BEHIND THEM', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Hold your thumb on the field: your dog runs there. Sheep walk away from her. Get behind them (away from the pen) and walk them in. 3 sheep.', need: 3 }],
+  2: [{ id: 'gather', title: 'GATHER THE STRAYS', say: 'GO ROUND THE FAR SIDE', do: 'hold', at: G => [W / 2, H * 0.7], how: 'They are scattered. Go round the FAR side of a stray to bring it back to the others; then drive them all in. Come in slowly: rushing scatters them. 5 sheep.', need: 5 }],
+  3: [{ id: 'bark', title: 'TAP TO BARK', say: 'TAP TO BARK', do: 'tap', how: 'The black ram ignores you. Get close and TAP quickly: a bark. Bark him into the pen.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -334,6 +334,71 @@ function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.m
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
 if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(bandTick, 60); window.__band = BAND; }
+// ---------- the coach: a tutorial you see, not read (his words, 24 Nov 2026) ----------
+// "The tutorials should be more of like visual cues with a few big words like tap here to catch the fish... make the tutorial
+// something that a five-year-old can understand... visual cues, big button that is kind of telling them to tap, big button that is
+// pointing left or right." Each lesson step can give: say (two or three big words: 'TAP!', 'HOLD TO REEL'), do (the gesture the hand
+// shows: 'tap', 'hold', 'release', 'swipe', 'drag', 'wait', 'tilt'), dir ('up', 'down', 'left', 'right', 'lr' for a swipe or drag),
+// and at (G => [x, y] on the screen where to do it, or [x, y, x2, y2] for a swipe or drag from one place to another). A game's
+// lessonPanel(G) calls coachPanel(G); its 'lessonmiss' calls coachMiss(). Nothing here reads like a page of instructions.
+const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
+// The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
+let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+    const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
+
+function coachMiss() { COACH.miss = performance.now(); }
+function coachWord(txt, x, y, size, col) { const F = typeof BC !== 'undefined' ? BC : 'sans-serif'; CCX.font = `800 ${Math.round(size)}px ${F}`; const mw = CCX.measureText(txt).width; if (mw > W - 28) { size *= (W - 28) / mw; CCX.font = `800 ${Math.round(size)}px ${F}`; } CCX.textAlign = 'center'; CCX.textBaseline = 'middle'; CCX.lineJoin = 'round';
+  CCX.lineWidth = Math.max(5, size * 0.2); CCX.strokeStyle = 'rgba(0,0,0,.72)'; CCX.strokeText(txt, x, y); CCX.fillStyle = col; CCX.fillText(txt, x, y); }
+function coachHand(x, y, press, a) {      // a finger: a white glove pointing up, its tip at (x, y)
+  const s = 30 * k; CCX.save(); CCX.globalAlpha = a; CCX.translate(x, y + s * 0.15 + press * 6 * k); CCX.rotate(-0.25);
+  CCX.fillStyle = '#fff'; CCX.strokeStyle = 'rgba(0,0,0,.75)'; CCX.lineWidth = 2.5 * k;
+  CCX.beginPath(); CCX.moveTo(-s * 0.16, 0); CCX.quadraticCurveTo(-s * 0.16, -s * 0.18, 0, -s * 0.18); CCX.quadraticCurveTo(s * 0.16, -s * 0.18, s * 0.16, 0); CCX.lineTo(s * 0.17, s * 0.55);
+  CCX.quadraticCurveTo(s * 0.32, s * 0.42, s * 0.42, s * 0.6); CCX.quadraticCurveTo(s * 0.55, s * 0.55, s * 0.6, s * 0.78); CCX.quadraticCurveTo(s * 0.72, s * 0.76, s * 0.74, s * 0.98);
+  CCX.lineTo(s * 0.7, s * 1.35); CCX.quadraticCurveTo(s * 0.6, s * 1.62, s * 0.25, s * 1.65); CCX.lineTo(-s * 0.18, s * 1.6); CCX.quadraticCurveTo(-s * 0.42, s * 1.45, -s * 0.5, s * 1.1);
+  CCX.lineTo(-s * 0.62, s * 0.72); CCX.quadraticCurveTo(-s * 0.62, s * 0.55, -s * 0.45, s * 0.58); CCX.lineTo(-s * 0.16, s * 0.85); CCX.closePath(); CCX.fill(); CCX.stroke(); CCX.restore(); }
+function coachRing(x, y, r, col, a) { CCX.save(); CCX.globalAlpha = a; CCX.strokeStyle = col; CCX.lineWidth = 5 * k; CCX.beginPath(); CCX.arc(x, y, r, 0, Math.PI * 2); CCX.stroke(); CCX.restore(); }
+function coachArrow(x1, y1, x2, y2, a) { const ang = Math.atan2(y2 - y1, x2 - x1), h = 18 * k; CCX.save(); CCX.globalAlpha = a; CCX.lineCap = 'round';
+  for (const [w, c] of [[14 * k, 'rgba(0,0,0,.55)'], [8 * k, '#ffd36a']]) { CCX.strokeStyle = c; CCX.lineWidth = w; CCX.beginPath(); CCX.moveTo(x1, y1); CCX.lineTo(x2 - Math.cos(ang) * h * 0.6, y2 - Math.sin(ang) * h * 0.6); CCX.stroke(); }
+  CCX.fillStyle = '#ffd36a'; CCX.strokeStyle = 'rgba(0,0,0,.6)'; CCX.lineWidth = 2.5 * k; CCX.beginPath(); CCX.moveTo(x2, y2); CCX.lineTo(x2 - Math.cos(ang - 0.5) * h * 1.6, y2 - Math.sin(ang - 0.5) * h * 1.6); CCX.lineTo(x2 - Math.cos(ang + 0.5) * h * 1.6, y2 - Math.sin(ang + 0.5) * h * 1.6); CCX.closePath(); CCX.fill(); CCX.stroke(); CCX.restore(); }
+// the gesture, drawn where it is to be done; c = { do, dir, at } (at already worked out: [x, y] or [x, y, x2, y2])
+function coachCue(c, now) {
+  const d = c.do; if (!d || d === 'none') return; const p = c.at || [W / 2, H * 0.68], x = p[0], y = p[1], T = (now % 1400) / 1400;
+  if (d === 'tap') { const pr = T < 0.3 ? T / 0.3 : T < 0.45 ? 1 : Math.max(0, 1 - (T - 0.45) / 0.3); coachRing(x, y, (22 + 30 * (T > 0.3 ? (T - 0.3) / 0.7 : 0)) * k, '#ffd36a', T > 0.3 ? 1 - (T - 0.3) / 0.7 : 0.9); coachRing(x, y, 22 * k, '#fff', 0.8); coachHand(x, y, pr, 1); return; }
+  if (d === 'hold') { const f = ((now % 2000) / 2000); CCX.save(); CCX.globalAlpha = 0.9; CCX.strokeStyle = '#9be3b5'; CCX.lineWidth = 7 * k; CCX.beginPath(); CCX.arc(x, y, 30 * k, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); CCX.stroke(); CCX.restore(); coachRing(x, y, 30 * k, '#fff', 0.5); coachHand(x, y, 1, 1); return; }
+  if (d === 'release') { const up = T * 28 * k; coachRing(x, y, (22 + T * 30) * k, '#9be3b5', 1 - T); coachHand(x, y - up, 0, 1 - T * 0.5); return; }
+  if (d === 'wait') { const a = 0.55 + 0.45 * Math.sin(now / 250); coachRing(x, y, 30 * k, '#fff', a * 0.7); coachWord('⏳', x, y, 30 * k, '#fff'); return; }
+  if (d === 'tilt') { const s = Math.sin(now / 400); CCX.save(); CCX.translate(x, y); CCX.rotate(s * 0.35); CCX.fillStyle = 'rgba(255,255,255,.9)'; CCX.strokeStyle = 'rgba(0,0,0,.7)'; CCX.lineWidth = 3 * k; CCX.fillRect(-18 * k, -30 * k, 36 * k, 60 * k); CCX.strokeRect(-18 * k, -30 * k, 36 * k, 60 * k); CCX.restore(); return; }
+  // a swipe or a drag: the hand travels along the arrow, again and again (a swipe quick, a drag slow)
+  let x2, y2; const L = 120 * k, dir = c.dir || 'up';
+  if (p.length >= 4) { x2 = p[2]; y2 = p[3]; } else { const v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0], lr: [Math.sin(now / 700) > 0 ? 1 : -1, 0], ud: [0, Math.sin(now / 700) > 0 ? 1 : -1] }[dir] || [0, -1]; x2 = x + v[0] * L; y2 = y + v[1] * L; }
+  const sp = d === 'swipe' ? 1100 : 1900, u = (now % sp) / sp, m = u < 0.15 ? 0 : u > 0.75 ? 1 : (u - 0.15) / 0.6, e = m * m * (3 - 2 * m);
+  coachArrow(x, y, x2, y2, 0.85); coachRing(x, y, 20 * k, '#fff', 0.7); coachHand(x + (x2 - x) * e, y + (y2 - y) * e, u < 0.85 ? 1 : 0, u > 0.9 ? 1 - (u - 0.9) * 10 : 1);
+}
+// the lesson on screen: which lesson of how many, the dots of what is done, the few big words, the gesture, and a big tick or TRY AGAIN
+function coachPanel(G, extra) {
+  const D = G.lesson; if (!D || !D.steps) return; const st = D.steps[D.i]; if (!st) return; const now = performance.now(); if (typeof HEADLESS !== 'undefined' && HEADLESS) return; coachLayer();
+  if (COACH.i !== D.i || COACH.n > D.n) { COACH.i = D.i; COACH.n = D.n; COACH.t0 = now; } if (D.n > COACH.n) { COACH.n = D.n; COACH.ok = now; }
+  CCX.save(); const top = 64 * k, need = st.need || 1;
+  CCX.font = `800 ${Math.round(12 * k)}px ${typeof BC !== 'undefined' ? BC : 'sans-serif'}`; const lab = `${D.i + 1} / ${D.steps.length}`, lw = CCX.measureText(lab).width + 22 + need * 18 * k;
+  CCX.fillStyle = 'rgba(0,0,0,.5)'; coachRR(W / 2 - lw / 2, top - 12 * k, lw, 24 * k, 12 * k); CCX.fill(); CCX.textAlign = 'left'; CCX.textBaseline = 'middle'; CCX.fillStyle = '#ffd36a'; CCX.fillText(lab, W / 2 - lw / 2 + 10, top);
+  for (let i = 0; i < need; i++) { const cx = W / 2 + lw / 2 - 14 - (need - 1 - i) * 18 * k; CCX.beginPath(); CCX.arc(cx, top, 6 * k, 0, Math.PI * 2); if (i < D.n) { CCX.fillStyle = '#8fe0ab'; CCX.fill(); } else { CCX.strokeStyle = 'rgba(255,255,255,.75)'; CCX.lineWidth = 2; CCX.stroke(); } }
+  const fv = v => typeof v === 'function' ? v(G) : v, words = String(fv(st.say) || st.title || '').toUpperCase(), pop = Math.min(1, (now - COACH.t0) / 250), sz = 38 * k;
+  CCX.globalAlpha = pop; coachWord(words, W / 2, top + 42 * k, sz * (0.7 + 0.3 * pop), '#fff'); CCX.globalAlpha = 1;
+  let at = null; try { at = typeof st.at === 'function' ? st.at(G) : null; } catch (e) { at = null; }
+  // with a place (at), the hand shows the gesture right there; without one, a small picture of the gesture sits under the words, in its own
+  // box, so the hand never points at a wrong place
+  const dd = fv(st.do); if (at) coachCue({ do: dd, dir: fv(st.dir), at }, now);
+  else if (dd && dd !== 'none' && at !== false) { const bx = W / 2, by = top + 118 * k, bw = 150 * k, bh = 92 * k; CCX.fillStyle = 'rgba(0,0,0,.38)'; coachRR(bx - bw / 2, by - bh / 2, bw, bh, 16 * k); CCX.fill();
+    const sw = dd === 'swipe' || dd === 'drag', dir = fv(st.dir) || 'up', L = 50 * k, v = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0], lr: [1, 0], ud: [0, 1] }[dir] || [0, -1];
+    CCX.save(); CCX.beginPath(); CCX.rect(bx - bw / 2, by - bh / 2, bw, bh); CCX.clip(); const k0 = k; k = k0 * 0.7;
+    coachCue({ do: dd, dir, at: sw ? [bx - v[0] * L / 2, by - v[1] * L / 2 - 14 * k0, bx + v[0] * L / 2, by + v[1] * L / 2 - 14 * k0] : [bx, by - 12 * k0] }, now); k = k0; CCX.restore(); }
+  const sm = (now - COACH.miss) / 1000; if (sm < 1.4) { CCX.globalAlpha = Math.min(1, (1.4 - sm) * 2); coachWord('TRY AGAIN', W / 2, top + 84 * k, 30 * k, '#ffb0a0'); CCX.globalAlpha = 1; }
+  const so = (now - COACH.ok) / 1000; if (so < 0.9) { CCX.globalAlpha = Math.min(1, (0.9 - so) * 2.5); coachWord('✔', W / 2, H * 0.45, (60 + so * 40) * k, '#8fe0ab'); CCX.globalAlpha = 1; }
+  CCX.restore();
+}
 
 // ===================== RULES: Heaven or Hell (game 27) =====================
 // You keep the gate. Souls arrive one at a time with the best and the worst thing they did in life; some have smaller deeds sealed in
@@ -467,8 +532,8 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'weigh', title: 'YOU KEEP THE GATE', how: 'Read the best and the worst thing each soul did, then send them where you think: swipe UP to Heaven, DOWN to Hell, SIDEWAYS to Purgatory. There is no right answer. Send three.', need: 3, ok: w => w === 'right', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 0 }) }],
-  2: [{ id: 'book', title: 'THE BOOK OF LIFE', how: 'Sealed scrolls hide smaller deeds. Tap the BOOK to read them, then send the soul where you think. Read two.', need: 2, ok: w => w === 'look', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 2 }) }],
+  1: [{ id: 'weigh', title: 'YOU KEEP THE GATE', say: 'SWIPE UP, DOWN OR SIDEWAYS', do: 'swipe', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Read the best and the worst thing each soul did, then send them where you think: swipe UP to Heaven, DOWN to Hell, SIDEWAYS to Purgatory. There is no right answer. Send three.', need: 3, ok: w => w === 'right', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 0 }) }],
+  2: [{ id: 'book', title: 'THE BOOK OF LIFE', say: 'TAP THE BOOK', do: 'tap', how: 'Sealed scrolls hide smaller deeds. Tap the BOOK to read them, then send the soul where you think. Read two.', need: 2, ok: w => w === 'look', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 2 }) }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.looks = 99; lessonFeed(G); G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonFeed(G) { const st = lessonNow(G); G.queue = []; for (let i = 0; i < 3; i++) G.queue.push(st.make(G)); nextSoul(G); }
@@ -530,7 +595,7 @@ function onEvent(G, e) {
     case 'dusk': sfx.bell(); say(e.left ? `SUNSET: ${e.left} STILL WAITING` : 'SUNSET', cx, H * 0.4, '#ffb4a8', 24); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffe08a', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 24); sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('THE GATE IS YOURS!', cx, H * 0.5, '#ffe08a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': FX.flash = 0.8; sfx.win(); vibe(HAP.best); break;
     case 'lost': sfx.lose(); break;
@@ -647,15 +712,7 @@ function hud(G, t) {
   else if (G.N <= 3 && G.judged < 2) { ctx.font = `800 ${Math.round(12 * k)}px ${BODY}`; ctx.fillStyle = 'rgba(40,30,20,.75)'; ctx.fillText('↑ HEAVEN   ·   ↓ HELL   ·   ↔ PURGATORY', W / 2, B.y - 14 * k); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) {
-  const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28; ctx.save();
-  ctx.font = `700 ${Math.round(12.5 * k)}px ${BODY}`; const lines = wrapText(st.how, w - 24), h = 46 * k + lines.length * 16 * k, B = bookRect(), y = B.y - h - 10 * k;
-  ctx.fillStyle = 'rgba(30,22,40,.86)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(232,200,104,.8)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#e8c868'; ctx.font = `800 ${Math.round(11 * k)}px ${BODY}`; ctx.fillText(`LESSON ${G.N} OF 3 · ${D.n} OF ${st.need}`, x + 12, y + 8 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `${Math.round(16 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 22 * k);
-  ctx.font = `700 ${Math.round(12.5 * k)}px ${BODY}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 42 * k + i * 16 * k));
-  ctx.restore(); ctx.textBaseline = 'middle';
-}
+function lessonPanel(G) { coachPanel(G); }
 
 // ===================== SOUND: the gate (PLAYBOOK S1-S11) =====================
 // A soft chime as each soul arrives; a rising choir chord to Heaven (a note higher with each right judgement in a row); a low

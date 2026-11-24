@@ -83,7 +83,7 @@ function onEvent(G, e) { const p = e.x != null ? scr(e.x, 2, e.z) : { x: W / 2, 
     case 'rally': sfx.horn(2); say('RALLY!', cx, H * 0.35, '#ffe08a', 30); FX.flash = 0.3; break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.3, '#ffe08a', 24); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.36, '#9be3b5', 22); sfx.cheer(); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('NOW, THE REAL BATTLE!', cx, H * 0.3, '#ffe08a', 24); sfx.horn(1); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); vibe(HAP.best); say('VICTORY!', cx, H * 0.3, '#ffd040', 40); FX.flash = 0.5; break;
     case 'lost': sfx.lose(); say('DEFEAT', cx, H * 0.3, '#ffb4a8', 36); break;
@@ -123,7 +123,4 @@ function overlay(G, t) { ui.btn = []; const sel = G.units.find(u => u.id === G.s
   else if (!G.over) { const r = 30 * k, b = { x: W - 2 * r - 16, y: H - 2 * r - 30 * k, w: 2 * r, h: 2 * r, id: 'horn' }; ui.btn.push(b); ctx.fillStyle = G.rally > 0 ? 'rgba(200,140,40,.9)' : 'rgba(80,70,50,.6)'; ctx.beginPath(); ctx.arc(b.x + r, b.y + r, r, 0, TAU); ctx.fill(); ctx.font = `${Math.round(26 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText('📯', b.x + r, b.y + r + 2); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText(`RALLY ×${G.rally}`, b.x + r, b.y - 8 * k);
     if (sel) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = '#ffe08a'; ctx.fillText(`${UT[sel.type].name}: tap the ground, or an enemy`, W / 2, H - 40 * k); } else if (G.N <= 3 && G.bt < 12) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.fillText('tap one of your units', W / 2, H - 40 * k); ctx.globalAlpha = 1; } } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 12, w = W - 24, y = 48 * k; ctx.save(); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 50 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(24,18,8,.9)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,224,138,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffe08a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3 · ${D.n} OF ${st.need}`, x + 12, y + 9 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(17 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 23 * k); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 46 * k + i * 17 * k)); ctx.restore(); ctx.textBaseline = 'middle'; }
+function lessonPanel(G) { coachPanel(G); }

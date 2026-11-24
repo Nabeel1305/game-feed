@@ -155,10 +155,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'hire', title: 'FIND THE JOB IT FITS', how: 'Read the CV. Which job at the top does it fit? Drag the CV onto that job.', need: 2, ok: w => w === 'hire', want: 'job' },
-      { id: 'bin', title: 'FITS NONE? THE BIN', how: 'This one fits none of the three jobs. Drag it down into the bin.', need: 1, ok: w => w === 'bin', want: 'bin' }],
-  2: [{ id: 'two', title: 'EVERYTHING IT ASKS FOR', how: 'Jobs now need two things. The CV must have both. Drag it onto the job, or the bin.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
-  3: [{ id: 'dates', title: 'IN DATE?', how: 'Certificates run out. Look at the date it runs until, and today\'s date at the top right. Out of date: it does not count.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
+  1: [{ id: 'hire', title: 'FIND THE JOB IT FITS', say: 'DRAG IT TO ITS JOB', do: 'drag', dir: 'up', how: 'Read the CV. Which job at the top does it fit? Drag the CV onto that job.', need: 2, ok: w => w === 'hire', want: 'job' },
+      { id: 'bin', title: 'FITS NONE? THE BIN', say: 'NO JOB? DRAG TO THE BIN', do: 'drag', dir: 'down', how: 'This one fits none of the three jobs. Drag it down into the bin.', need: 1, ok: w => w === 'bin', want: 'bin' }],
+  2: [{ id: 'two', title: 'EVERYTHING IT ASKS FOR', say: 'IT NEEDS BOTH', do: 'drag', dir: 'up', how: 'Jobs now need two things. The CV must have both. Drag it onto the job, or the bin.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
+  3: [{ id: 'dates', title: 'IN DATE?', say: 'CHECK THE DATE', do: 'drag', dir: 'up', how: 'Certificates run out. Look at the date it runs until, and today\'s date at the top right. Out of date: it does not count.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -115,9 +115,9 @@ function finish(G, win) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'place', title: 'DROP', how: 'Tap when the stone is right over the middle of the stack. Four in a row, each near the middle.', need: 4 }],
-  2: [{ id: 'perfect', title: 'JUST RIGHT', how: 'Wait for the stone to come right over the middle, then tap. Three perfect drops in a row.', need: 3 }],
-  3: [{ id: 'pick', title: 'CHOOSE', how: 'Your stack leans. Tap the wide slab in your basket to take it, and drop it to steady the stack. Twice.', need: 2 }],
+  1: [{ id: 'place', title: 'DROP', say: 'TAP OVER THE MIDDLE', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Tap when the stone is right over the middle of the stack. Four in a row, each near the middle.', need: 4 }],
+  2: [{ id: 'perfect', title: 'JUST RIGHT', say: 'WAIT… TAP!', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Wait for the stone to come right over the middle, then tap. Three perfect drops in a row.', need: 3 }],
+  3: [{ id: 'pick', title: 'CHOOSE', say: 'TAP THE WIDE STONE', do: 'tap', how: 'Your stack leans. Tap the wide slab in your basket to take it, and drop it to steady the stack. Twice.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

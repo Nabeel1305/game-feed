@@ -219,9 +219,9 @@ function finish(G, win, why) {
 
 // ---------- LESSONS: brush (three teeth clean, gently), scrape (three teeth of tartar), polish (three stained teeth) ----------
 const LESSONS = {
-  1: [{ id: 'brush', title: 'BRUSH', tool: 'brush', how: 'Take the 🪥 brush. Drag it calmly over the dirty teeth until they shine. Three teeth. Scrubbing fast starts the count again.', need: 3 }],
-  2: [{ id: 'scaler', title: 'SCRAPE', tool: 'scaler', how: 'The yellow crust at the gum is tartar. Take the 🪝 scaler and drag it slowly along the crust. Three teeth.', need: 3 }],
-  3: [{ id: 'polish', title: 'POLISH', tool: 'polish', how: 'Brown stains: hold the ✨ polisher on them and move it slowly. Three teeth.', need: 3 }],
+  1: [{ id: 'brush', title: 'BRUSH', say: 'TAP 🪥, RUB SLOWLY', do: 'drag', dir: 'lr', tool: 'brush', how: 'Take the 🪥 brush. Drag it calmly over the dirty teeth until they shine. Three teeth. Scrubbing fast starts the count again.', need: 3 }],
+  2: [{ id: 'scaler', title: 'SCRAPE', say: 'TAP 🪝, SCRAPE THE YELLOW', do: 'drag', dir: 'lr', tool: 'scaler', how: 'The yellow crust at the gum is tartar. Take the 🪝 scaler and drag it slowly along the crust. Three teeth.', need: 3 }],
+  3: [{ id: 'polish', title: 'POLISH', say: 'HOLD ✨ ON THE BROWN', do: 'hold', tool: 'polish', how: 'Brown stains: hold the ✨ polisher on them and move it slowly. Three teeth.', need: 3 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, seen: [] }; G.ev.push({ k: 'lessonnext', first: true });
   const P = G.pts[0], A = P.arches[0], R = rng(G.seed + 77), L = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain';

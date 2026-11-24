@@ -94,9 +94,9 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'aim', title: 'PULL AND LET GO', how: 'Pull back with your thumb: the dotted arc shows where it goes. Let go when it ends on the blob. Splat three blobs.', need: 3 }],
-  2: [{ id: 'melon', title: 'THE WATERMELON', how: 'Tap 🍉, then burst it in the middle of the crowd. Hit two or more with one melon.', need: 1 }],
-  3: [{ id: 'lob', title: 'OVER THE SHIELD', how: 'The troll\'s board stops a flat shot. Pull further DOWN to lob a fruit high, so it comes down on him. Twice.', need: 2 }],
+  1: [{ id: 'aim', title: 'PULL AND LET GO', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Pull back with your thumb: the dotted arc shows where it goes. Let go when it ends on the blob. Splat three blobs.', need: 3 }],
+  2: [{ id: 'melon', title: 'THE WATERMELON', say: 'TAP 🍉, THEN FIRE', do: 'tap', how: 'Tap 🍉, then burst it in the middle of the crowd. Hit two or more with one melon.', need: 1 }],
+  3: [{ id: 'lob', title: 'OVER THE SHIELD', say: 'PULL FURTHER DOWN', do: 'drag', dir: 'down', how: 'The troll\'s board stops a flat shot. Pull further DOWN to lob a fruit high, so it comes down on him. Twice.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

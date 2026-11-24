@@ -183,7 +183,7 @@ function onEvent(G, e) { const cx = W / 2;
     case 'won': sfx.win(); ui.banner = { txt: 'SHIFT DONE!', t: 0, secs: 1.5, col: '#ff9ac0' }; break;
     case 'lost': sfx.lose(); break;
     case 'lessonnext': hint = null; break; case 'lessonok': sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how + ' Look at the card and try again.', t: 0, secs: 3.4 }; sfx.no(); break;
+    case 'lessonmiss': coachMiss(); sfx.no(); break;
     case 'lessondone': sfx.goal(); say('YOU CAN MIX!', cx, H * 0.4, '#ff9ac0', 28); burst(cx, H * 0.4, '#ff9ac0', 24); break;
   } }
 let IG = null; function idleG() { if (!IG || IG.over || IG.t > 60) { IG = newGame(4 + ((Math.random() * 4) | 0), { seed: (Math.random() * 1e6) | 0 }); IG.mem = {}; } honest(IG, { react: 0.5, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
@@ -276,7 +276,4 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const o = G.order, D = G.dri
   { const S2 = L.serve, glow = step && step.kind === 'serve'; ctx.fillStyle = o && o.free ? '#9be3b5' : '#9ad8ff'; rrect(S2.x, S2.y, S2.w, S2.h, 18 * k); ctx.fill(); if (glow) { ctx.strokeStyle = `rgba(255,211,106,${pulse})`; ctx.lineWidth = 4; rrect(S2.x, S2.y, S2.w, S2.h, 18 * k); ctx.stroke(); } ctx.fillStyle = '#0a1a24'; ctx.font = `400 ${Math.round(20 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(o && o.free ? 'Save' : 'Serve', S2.x + S2.w / 2, S2.y + S2.h / 2 - 5 * k); ctx.font = `700 ${Math.round(9 * k)}px ${BC}`; ctx.fillText('TAP WHEN READY', S2.x + S2.w / 2, S2.y + S2.h / 2 + 15 * k); }
   if (ui.banner) { const B = ui.banner; ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(28 * k)}px ${TF}`; ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(20,10,20,.75)'; ctx.strokeText(B.txt, W / 2, H * 0.24); ctx.fillStyle = B.col || '#fff'; ctx.fillText(B.txt, W / 2, H * 0.24); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 10, w = W - 20, y = 44 * k, o = G.order; ctx.save(); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; const lines = (nextStep(G) ? [] : wrapText(st.how, w - 24)).concat(cardLines(G).map(l => '→ ' + l)), h = 44 * k + lines.length * 15 * k; ui.panelB = y + h;
-  ctx.fillStyle = 'rgba(30,16,30,.94)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,122,168,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ff7aa8'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3 · ${o && o.drink ? o.drink.name.toUpperCase() : ''}`, x + 12, y + 8 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(16 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 20 * k); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 42 * k + i * 15 * k)); ctx.restore(); ctx.textBaseline = 'middle'; }
+function lessonPanel(G) { coachPanel(G); }

@@ -128,9 +128,9 @@ const BLIND = { t: G => { press(G, blindAt()); if (G.stage === 'ice') lift(G); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.score = 100; G.parts = []; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'ice', title: 'HOLD TO ICE', how: 'The cake spins. Hold your thumb on it: the knife spreads icing where your thumb is. Slide up and down until it is all covered.', need: 1 }],
-  2: [{ id: 'pipe', title: 'TAP TO PIPE', how: 'The cake turns under the piping bag. Tap as each guide dot passes under the bag. Pipe 4 swirls right on their dots.', need: 4 }],
-  3: [{ id: 'top', title: 'TAP TO TOP', how: 'Tap on top of the cake to place each strawberry on its faint ring spot. Place 4 evenly.', need: 4 }],
+  1: [{ id: 'ice', title: 'HOLD TO ICE', say: 'HOLD AND SLIDE', do: 'drag', dir: 'ud', how: 'The cake spins. Hold your thumb on it: the knife spreads icing where your thumb is. Slide up and down until it is all covered.', need: 1 }],
+  2: [{ id: 'pipe', title: 'TAP TO PIPE', say: 'TAP ON THE DOT', do: 'tap', how: 'The cake turns under the piping bag. Tap as each guide dot passes under the bag. Pipe 4 swirls right on their dots.', need: 4 }],
+  3: [{ id: 'top', title: 'TAP TO TOP', say: 'TAP ON THE RING', do: 'tap', how: 'Tap on top of the cake to place each strawberry on its faint ring spot. Place 4 evenly.', need: 4 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

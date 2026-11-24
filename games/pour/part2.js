@@ -89,9 +89,9 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: small rigged glasses; in a lesson a second wrong pour starts it again, and so does wandering ----------
 const LESSONS = {
-  1: [{ id: 'pour', title: 'POUR', how: 'Tap a glass, then another: the top colour pours onto the same colour, or into an empty glass. Fill two glasses with one colour each.', need: 2 }],
-  2: [{ id: 'plan', title: 'MAKE ROOM', how: 'Use the empty glass to make room, then sort all three colours. Every move counts!', need: 1 }],
-  3: [{ id: 'undo', title: 'UNDO', how: 'Stuck? Tap UNDO to take back a pour. Sort the colours: there is a trap, so think first.', need: 1 }],
+  1: [{ id: 'pour', title: 'POUR', say: 'TAP ONE, TAP ANOTHER', do: 'tap', how: 'Tap a glass, then another: the top colour pours onto the same colour, or into an empty glass. Fill two glasses with one colour each.', need: 2 }],
+  2: [{ id: 'plan', title: 'MAKE ROOM', say: 'USE THE EMPTY ONE', do: 'tap', how: 'Use the empty glass to make room, then sort all three colours. Every move counts!', need: 1 }],
+  3: [{ id: 'undo', title: 'UNDO', say: 'TAP UNDO', do: 'tap', how: 'Stuck? Tap UNDO to take back a pour. Sort the colours: there is a trap, so think first.', need: 1 }],
 };
 const LRIG = { pour: { T: [[0, 1, 0, 1], [1, 0, 1, 0], [], []], par: 6 }, plan: { T: [[0, 1, 2, 0], [1, 2, 0, 1], [2, 0, 1, 2], [], []], par: 0 }, undo: { T: [[0, 1, 2, 3], [3, 2, 1, 0], [2, 0, 3, 1], [1, 3, 0, 2], [], []], par: 0 } };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }

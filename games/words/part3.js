@@ -52,7 +52,7 @@ function onEvent(G, e) { const L = lay(G), cx = W / 2;
     case 'shuffle': sfx.shuffle(); FX.wob = 0.4; break;
     case 'page': sfx.goal(); FX.flash = 0.5; say('PAGE DONE!', cx, H * 0.3, '#ffd040', 32); vibe(HAP.best); break;
     case 'lessonnext': if (e.first) hint0 = null; say('FIRST, A LESSON', cx, H * 0.22, '#ffe08a', 20); break;
-    case 'lessonmiss': hint0 = { txt: e.how, t: 0, secs: 3.8 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('YOU\'VE GOT IT!', cx, H * 0.3, '#ffe08a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); break;
     case 'lost': break;
@@ -100,6 +100,4 @@ function draw(now, dt) {
   if (FX.red > 0) { ctx.fillStyle = `rgba(255,90,90,${FX.red * 0.12})`; ctx.fillRect(0, 0, W, H); }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,235,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 12, w = W - 24, y = 84 * k; ctx.save(); ctx.font = `700 ${Math.round(13 * k)}px ${NUN}`; const lines = wrapText(st.how, w - 24), h = 46 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(40,36,70,.88)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(16 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 10 * k); ctx.font = `700 ${Math.round(13 * k)}px ${NUN}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 34 * k + i * 17 * k)); ctx.restore(); ctx.textBaseline = 'middle'; ctx.textAlign = 'center'; }
+function lessonPanel(G) { coachPanel(G); }

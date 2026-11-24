@@ -98,9 +98,9 @@ function closing(G) { const c = G.cfg, sales = G.bought.map(b => ({ ...b, sold: 
   G.ev.push({ k: 'closing', profit }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'buy', title: 'BUY LOW', how: 'Drag the dial to an offer below what it is worth and tap OFFER. They counter; meet somewhere sensible. Two good buys in a row.', need: 2 }],
-  2: [{ id: 'haggle', title: 'HAGGLE', how: 'Open low but not insulting, then come up a little each time. Buy two for under 70% of their worth, in a row.', need: 2 }],
-  3: [{ id: 'fake', title: 'SPOT THE FAKE', how: 'Shine the 🔦 UV lamp on fine things. Pass on fakes, buy the real ones cheaply. Three right calls in a row.', need: 3 }],
+  1: [{ id: 'buy', title: 'BUY LOW', say: 'SLIDE, TAP OFFER', do: 'drag', dir: 'lr', how: 'Drag the dial to an offer below what it is worth and tap OFFER. They counter; meet somewhere sensible. Two good buys in a row.', need: 2 }],
+  2: [{ id: 'haggle', title: 'HAGGLE', say: 'START LOW', do: 'drag', dir: 'lr', how: 'Open low but not insulting, then come up a little each time. Buy two for under 70% of their worth, in a row.', need: 2 }],
+  3: [{ id: 'fake', title: 'SPOT THE FAKE', say: 'SHINE THE 🔦', do: 'tap', how: 'Shine the 🔦 UV lamp on fine things. Pass on fakes, buy the real ones cheaply. Three right calls in a row.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonVisit(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

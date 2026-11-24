@@ -74,9 +74,9 @@ function finish(G, place) { if (G.over) return; const win = place === 1; G.over 
   G.ev.push({ k: win ? 'won' : 'lost', place }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'together', title: 'TOGETHER', how: 'Tap left and right at the same time, each time both rings turn green. Six perfect strokes together.', need: 6 }],
-  2: [{ id: 'steer', title: 'STEER', how: 'One oar turns you: the LEFT oar turns you RIGHT, the right oar turns you left. Row 150 m down the bends without touching the bank.', need: 1 }],
-  3: [{ id: 'race', title: 'RHYTHM', how: 'Keep stroking together on the green: your RHYTHM grows and so does your speed. Reach a rhythm of 5.', need: 1 }],
+  1: [{ id: 'together', title: 'TOGETHER', say: 'TAP BOTH ON GREEN', do: 'tap', how: 'Tap left and right at the same time, each time both rings turn green. Six perfect strokes together.', need: 6 }],
+  2: [{ id: 'steer', title: 'STEER', say: 'LEFT OAR TURNS RIGHT', do: 'tap', how: 'One oar turns you: the LEFT oar turns you RIGHT, the right oar turns you left. Row 150 m down the bends without touching the bank.', need: 1 }],
+  3: [{ id: 'race', title: 'RHYTHM', say: 'KEEP THE RHYTHM', do: 'tap', how: 'Keep stroking together on the green: your RHYTHM grows and so does your speed. Reach a rhythm of 5.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

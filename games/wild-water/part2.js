@@ -164,12 +164,12 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS: the first three runs teach every stroke, slowly, two or three times each ----------
 const LESSONS = {
-  1: [{ id: 'left', title: 'A STROKE ON THE LEFT', how: 'Swipe down on the left half of the screen. The bow swings to the right.', need: 3, ok: w => w === 'stroke-1', slow: 1 },
-      { id: 'right', title: 'A STROKE ON THE RIGHT', how: 'Swipe down on the right half. The bow swings to the left.', need: 3, ok: w => w === 'stroke1', slow: 1 },
-      { id: 'line', title: 'FIND THE GAP', how: 'Steer for the gap in each row of rocks. Left stroke to go right, right stroke to go left.', need: 3, ok: w => w === 'line', slow: 1 }],
-  2: [{ id: 'back', title: 'BACK-PADDLE', how: 'Swipe UP on a side to brake. It turns you toward that side.', need: 2, ok: w => w === 'back', slow: 1 },
-      { id: 'gate', title: 'THROUGH THE GATES', how: 'Go between the two poles of a gate. Line up early: the river carries you.', need: 2, ok: w => w === 'gate' }],
-  3: [{ id: 'drop', title: 'OVER THE LEDGE, STRAIGHT', how: 'Go over a ledge through the smooth tongue, pointing straight down the river, or you roll.', need: 2, ok: w => w === 'drop', slow: 1 }],
+  1: [{ id: 'left', title: 'A STROKE ON THE LEFT', say: 'SWIPE DOWN ON THE LEFT', do: 'swipe', dir: 'down', at: G => [W * 0.27, H * 0.72], how: 'Swipe down on the left half of the screen. The bow swings to the right.', need: 3, ok: w => w === 'stroke-1', slow: 1 },
+      { id: 'right', title: 'A STROKE ON THE RIGHT', say: 'SWIPE DOWN ON THE RIGHT', do: 'swipe', dir: 'down', at: G => [W * 0.73, H * 0.72], how: 'Swipe down on the right half. The bow swings to the left.', need: 3, ok: w => w === 'stroke1', slow: 1 },
+      { id: 'line', title: 'FIND THE GAP', say: 'AIM FOR THE GAP', do: 'swipe', dir: 'down', how: 'Steer for the gap in each row of rocks. Left stroke to go right, right stroke to go left.', need: 3, ok: w => w === 'line', slow: 1 }],
+  2: [{ id: 'back', title: 'BACK-PADDLE', say: 'SWIPE UP TO BRAKE', do: 'swipe', dir: 'up', how: 'Swipe UP on a side to brake. It turns you toward that side.', need: 2, ok: w => w === 'back', slow: 1 },
+      { id: 'gate', title: 'THROUGH THE GATES', say: 'BETWEEN THE POLES', do: 'swipe', dir: 'down', how: 'Go between the two poles of a gate. Line up early: the river carries you.', need: 2, ok: w => w === 'gate' }],
+  3: [{ id: 'drop', title: 'OVER THE LEDGE, STRAIGHT', say: 'GO STRAIGHT', do: 'swipe', dir: 'down', how: 'Go over a ledge through the smooth tongue, pointing straight down the river, or you roll.', need: 2, ok: w => w === 'drop', slow: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonRiver(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

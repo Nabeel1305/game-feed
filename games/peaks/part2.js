@@ -63,9 +63,9 @@ function finish(G, win) { if (G.over) return true; if (G.lesson) { lessonSee(G, 
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'ONE UP, ONE DOWN', how: 'Your card is on the pile. Tap a face-up card one higher or one lower. Keep going! Play a run of four.', need: 1 }],
-  2: [{ id: 'choose', title: 'CHOOSE WELL', how: 'Two cards fit. One leads to a longer run. Look ahead and pick the one that keeps you going: a run of five without drawing.', need: 1 }],
-  3: [{ id: 'peak', title: 'TO THE TOP', how: 'Clear a peak: play cards until the top card of a peak is gone.', need: 1 }],
+  1: [{ id: 'run', title: 'ONE UP, ONE DOWN', say: 'TAP ONE UP OR DOWN', do: 'tap', how: 'Your card is on the pile. Tap a face-up card one higher or one lower. Keep going! Play a run of four.', need: 1 }],
+  2: [{ id: 'choose', title: 'CHOOSE WELL', say: 'PICK THE BEST ONE', do: 'tap', how: 'Two cards fit. One leads to a longer run. Look ahead and pick the one that keeps you going: a run of five without drawing.', need: 1 }],
+  3: [{ id: 'peak', title: 'TO THE TOP', say: 'CLEAR THE TOP', do: 'tap', how: 'Clear a peak: play cards until the top card of a peak is gone.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

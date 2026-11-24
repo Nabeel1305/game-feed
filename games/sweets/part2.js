@@ -228,9 +228,9 @@ function progress(G) { const g = G.cfg.goal; if (g === 'score') return Math.min(
   if (g === 'collect') { if (!G.collect || !G.collect.length) return 0; const a = G.collect.reduce((s, x) => s + Math.min(x.got, x.n), 0), b = G.collect.reduce((s, x) => s + x.n, 0); return a / b; } if (g === 'cherry') return G.cherOut / G.cherT; return 0; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'match', title: 'MAKE A LINE', how: 'Swipe a sweet into its neighbour to swap them. Three of a colour in a line pop! Pop three lines.', need: 3 }],
-  2: [{ id: 'four', title: 'FOUR IN A ROW', how: 'Line up FOUR of a colour to make a STRIPED sweet. Then put it in a line: it clears a whole row or column!', need: 1 }],
-  3: [{ id: 'jelly', title: 'THE JELLY', how: 'Pop the sweets sitting on the pink jelly. Clear all the jelly.', need: 1 }],
+  1: [{ id: 'match', title: 'MAKE A LINE', say: 'SWIPE TO SWAP', do: 'swipe', dir: 'right', how: 'Swipe a sweet into its neighbour to swap them. Three of a colour in a line pop! Pop three lines.', need: 3 }],
+  2: [{ id: 'four', title: 'FOUR IN A ROW', say: 'MAKE FOUR', do: 'swipe', dir: 'right', how: 'Line up FOUR of a colour to make a STRIPED sweet. Then put it in a line: it clears a whole row or column!', need: 1 }],
+  3: [{ id: 'jelly', title: 'THE JELLY', say: 'POP THE PINK', do: 'swipe', dir: 'right', how: 'Pop the sweets sitting on the pink jelly. Clear all the jelly.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

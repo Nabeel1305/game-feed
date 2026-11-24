@@ -23,9 +23,9 @@ function quad(T, kind, col) {
       for (let t2 = 0; t2 < 3; t2++) { const tine = new T.Mesh(new T.CylinderGeometry(0.006, 0.012, 0.18, 4), am); tine.position.set(s * (0.07 + t2 * 0.06), 0.15 + t2 * 0.1, -0.02 - t2 * 0.06); tine.rotation.set(0.6, 0, -s * 0.2); ant.add(tine); } } }
   const g = R.g; g.userData = { R, body: R.body, neck: R.neck, head: R.head, tail: R.tail, legs: R.legs, ph: Math.random() * 6, last: 0 }; return g;
 }
-function gait(m, speed, t, turnHead = 0) { const u = m.userData, R = u.R, now = performance.now() / 1000, dt = Math.min(0.05, Math.max(0, now - (u.last || now))); u.last = now;
+function gait(m, speed, t, turnHead = 0, more) { const u = m.userData, R = u.R, now = performance.now() / 1000, dt = Math.min(0.05, Math.max(0, now - (u.last || now))); u.last = now;
   const sp = Math.abs(speed), ga = sp < 0.3 ? 0 : sp < 5 ? 1 : 2, freq = ga === 2 ? clamp(sp / (R.S.stride * 2.1 * R.S.sz), 1.6, 3.2) : ga === 1 ? clamp(sp / (R.S.stride * 0.9 * R.S.sz), 0.6, 1.8) : 0;
-  u.ph += dt * freq * Math.PI * 2; quadPose(R, { t, ph: u.ph, gait: ga, amt: ga === 2 ? clamp(sp / 9, 0.6, 1) : 1, yaw: turnHead, neck: ga === 2 ? 0.15 : null, tail: ga === 2 ? 0.45 : 0.1, ear: 0.2 }, dt || 1 / 60); }
+  u.ph += dt * freq * Math.PI * 2; quadPose(R, { t, ph: u.ph, gait: ga, amt: ga === 2 ? clamp(sp / 9, 0.6, 1) : 1, yaw: turnHead, neck: ga === 2 ? 0.15 : null, tail: ga === 2 ? 0.45 : 0.1, ear: 0.2, ...(more || {}) }, dt || 1 / 60); }
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 60, far: 4000, near: 0.1 })) { V3 = { none: true }; return V3; }
   const S = W3.scene;
@@ -58,11 +58,12 @@ function onEvent(G, e) {
     case 'short': sfx.snap(); say('TOO FAR!', cx, cy, '#ffd0c4', 22); tip('far', 'Get close and beside her first, then BITE', 2.6); break;
     case 'slip': sfx.snap(); say('FROM THE SIDE!', cx, cy, '#ffd0c4', 22); tip('side', 'Strike from beside her, not from straight behind', 2.6); break;
     case 'kicked': sfx.kick(); FX.red = 0.6; FX.shake = 14; vibe(HAP.thud); say('KICKED!', cx, cy, '#ffb4a8', 28); tip('kick', 'Behind her you get kicked: come up alongside', 3); break;
-    case 'caught': sfx.caught(e.n); FX.shake = 10; FX.flash = 0.5; vibe(HAP.best); say('BROUGHT DOWN!', cx, cy, '#ffe08a', 28); break;
-    case 'gone': if (e.why !== 'kicked') { sfx.lose1(); say(e.why === 'trees' ? 'SHE REACHED THE TREES' : 'SHE GOT AWAY', cx, cy, '#ffd0c4', 22); } break;
+    case 'caught': { const w = G.wolf, p = G.prey; ui.kill = { x: w.x, z: w.z, h: w.h, side: Math.sign(Math.cos(p.h) * (w.x - p.x) - Math.sin(p.h) * (w.z - p.z)) || 1 }; }
+      sfx.caught(e.n); FX.shake = 10; FX.flash = 0.5; vibe(HAP.best); say('BROUGHT DOWN!', cx, cy, '#ffe08a', 28); break;
+    case 'gone': ui.kill = null; if (e.why !== 'kicked') { sfx.lose1(); say(e.why === 'trees' ? 'SHE REACHED THE TREES' : 'SHE GOT AWAY', cx, cy, '#ffd0c4', 22); } break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('YOU LEAD THE PACK!', cx, H * 0.5, '#ffd36a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); vibe(HAP.best); break;
     case 'lost': sfx.lose(); break;
@@ -77,7 +78,19 @@ function draw(now, dt) {
   const g = G || idleG(), t = now; setWeather(g); const w = g.wolf, p = g.prey, down = g.ph === 'down';
   place(V.me, w, down ? 0 : w.v, t); if (w.lunge > 0) { V.me.userData.body.rotation.x = -0.3; V.me.position.y += 0.4 * Math.sin((0.5 - w.lunge) * TAU); }
   g.pack.forEach((q, i) => place(V.mates[i], q, down ? 0 : 11, t));
-  place(V.prey, p, down ? 0 : p.v, t, p.tell > 0 ? Math.sign(p.turnTo) * 0.6 : 0); if (down && g.caught && g.gap > 0) { V.prey.rotation.z = Math.min(1.4, (2.6 - g.gap) * 2); V.prey.position.y -= 0.3; } else V.prey.rotation.z = 0;
+  place(V.prey, p, down ? 0 : p.v, t, p.tell > 0 ? Math.sign(p.turnTo) * 0.6 : 0); V.prey.rotation.z = 0;
+  // his review (23 Nov 2026): "Animate the wolf pouncing on the animal, grabbing its neck or other parts of the animal's body". The lead wolf
+  // springs from where it struck onto her neck and hangs on, its front paws on her shoulder, while she goes down away from it; two of the
+  // pack come in behind and take her hind legs.
+  const K = ui.kill; if (down && K && G && g === G && g.gap > 0) { const u = 2.6 - g.gap, fx = Math.sin(p.h), fz = Math.cos(p.h), sx = Math.cos(p.h) * K.side, sz = -Math.sin(p.h) * K.side, gy = snowH(p.x, p.z);
+    const nx = p.x + fx * 1.15 + sx * (0.55 + 0.35 * clamp((2.6 - g.gap - 0.5) / 0.9, 0, 1)), nz = p.z + fz * 1.15 + sz * (0.55 + 0.35 * clamp((2.6 - g.gap - 0.5) / 0.9, 0, 1)), leap = clamp(u / 0.42, 0, 1), fall = clamp((u - 0.5) / 0.9, 0, 1), e2 = leap * leap * (3 - 2 * leap);
+    const wx = K.x + (nx - K.x) * e2, wz = K.z + (nz - K.z) * e2, hy = Math.sin(leap * Math.PI) * 1.1 + leap * 1.25 * (1 - fall);
+    V.me.position.set(wx, gy + hy, wz); V.me.rotation.set(0, Math.atan2(p.x + fx * 1.25 - wx, p.z + fz * 1.25 - wz), 0); gait(V.me, 0, t, 0, { pitch: leap < 1 ? 0.4 : 0.75 * (1 - fall) - 0.25 * fall, neck: 0.1 - 0.5 * fall, crouch: fall * 0.6 });
+    const bd = V.me.userData.body; if (bd) bd.rotation.x = leap < 1 ? -0.5 + leap * 0.2 : -0.75 * (1 - fall) + 0.25 * fall + Math.sin(t * 18) * 0.06;      /* then down at her throat, shaking */      /* reared up, jaws on her neck, shaking */
+    gait(V.prey, 0, t, -K.side * 0.5 * leap, { fall, side: -K.side, neck: 0.2 });      /* she goes down on her side, away from the wolf */
+    g.pack.forEach((q, i) => { if (!V.mates[i] || i > 1) return; const s2 = i ? -1 : 1, r2 = clamp((u - 0.25 - i * 0.15) / 0.6, 0, 1), hx = p.x - fx * 1.0 + sx * 0.5 * s2, hz = p.z - fz * 1.0 + sz * 0.5 * s2, m = V.mates[i];
+      m.position.set(q.x + (hx - q.x) * r2, snowH(hx, hz) + Math.sin(r2 * Math.PI) * 0.6, q.z + (hz - q.z) * r2); m.rotation.set(0, Math.atan2(p.x - fx * 1.2 - m.position.x, p.z - fz * 1.2 - m.position.z), 0); if (m.userData.body) m.userData.body.rotation.x = r2 >= 1 ? -0.35 + Math.sin(t * 16 + i) * 0.05 : -0.3; }); }
+  else if (down && g.caught && g.gap > 0) { V.prey.rotation.z = Math.min(1.4, (2.6 - g.gap) * 2); V.prey.position.y -= 0.3; }
   g.herd.forEach((h, i) => place(V.herd[i], h, h.v, t));
   V.ring.position.set(p.x, snowH(p.x, p.z) + 0.08, p.z); V.ring.material.opacity = 0.5 + Math.sin(t * 6) * 0.3; V.ring.visible = !down;
   // snow from the paws on a burst
@@ -85,8 +98,11 @@ function draw(now, dt) {
   const pa = V.spray.geometry.attributes.position; V.P.forEach((q, i) => { if (q.t < q.life) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; q.vy -= 6 * dt; } pa.setXYZ(i, q.x, q.t < q.life ? q.y : -99, q.z); }); pa.needsUpdate = true;
   // the camera: low behind the lead wolf, looking up the line towards her
   const C = V.cam, look = Math.atan2(p.x - w.x, p.z - w.z) * 0.35 + w.h * 0.65, cx = w.x - Math.sin(look) * 3.9, cz = w.z - Math.cos(look) * 3.9, cy = snowH(cx, cz) + 1.6, e = 1 - Math.exp(-dt * 4);
-  C.x += (cx - C.x) * e; C.y += (cy - C.y) * e; C.z += (cz - C.z) * e;
-  const cam = W3.cam; cam.position.set(C.x, C.y + (w.bursting ? Math.sin(t * 30) * 0.03 : 0), C.z); cam.lookAt(w.x + Math.sin(look) * 9, snowH(w.x, w.z) + 0.9, w.z + Math.cos(look) * 9);
+  if (!(ui.kill && down && G && g === G && g.gap > 0)) { C.x += (cx - C.x) * e; C.y += (cy - C.y) * e; C.z += (cz - C.z) * e; }
+  const KC = ui.kill && down && G && g === G && g.gap > 0;      // the kill: the camera swings round to watch it from the side, close
+  if (KC) { const fx = Math.sin(p.h), fz = Math.cos(p.h), sx = Math.cos(p.h) * ui.kill.side, sz = -Math.sin(p.h) * ui.kill.side, tx = p.x + fx * 0.3 + sx * 6.8 - fx * 2.2, tz = p.z + fz * 0.3 + sz * 6.8 - fz * 2.2, e3 = 1 - Math.exp(-dt * 3);
+    C.x += (tx - C.x) * e3; C.z += (tz - C.z) * e3; C.y += (snowH(tx, tz) + 1.5 - C.y) * e3; }
+  const cam = W3.cam; cam.position.set(C.x, C.y + (w.bursting ? Math.sin(t * 30) * 0.03 : 0), C.z); if (KC) cam.lookAt(p.x + Math.sin(p.h) * 0.4, snowH(p.x, p.z) + 0.9, p.z + Math.cos(p.h) * 0.4); else cam.lookAt(w.x + Math.sin(look) * 9, snowH(w.x, w.z) + 0.9, w.z + Math.cos(look) * 9);
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   W3.setFocus(w.x, 0, w.z + 10, 40);
   W3.render(dt);
@@ -125,13 +141,4 @@ function hud(G, t) {
   ctx.globalAlpha = 1; if (ui.drag) { const d2 = ui.drag; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(d2.x0, d2.y0, 40 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = G.in.burst ? '#9be3ff' : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(d2.x0 + clamp(d2.x - d2.x0, -40 * k, 40 * k), d2.y0 + clamp(d2.y - d2.y0, -40 * k, 40 * k), 14 * k, 0, TAU); ctx.fill(); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) {
-  const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28, y = 42 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 54 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(0,0,0,.62)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${D.i + 1} OF ${D.steps.length}`, x + 12, y + 10 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(18 * k)}px ${BC}`; ctx.fillText(st.title, x + 12, y + 25 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 48 * k + i * 17 * k));
-  for (let i = 0; i < st.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st.need - 1 - i) * 18 * k, y + 18 * k, 6 * k, 0, TAU); if (i < D.n) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
-  ctx.restore();
-}
+function lessonPanel(G) { coachPanel(G); }

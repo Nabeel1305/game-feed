@@ -135,9 +135,9 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.r
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.left = G.n; G.stair = 0; finish(G, true); }
 // ---------- LESSONS: short tracks ----------
 const LESSONS = {
-  1: [{ id: 'gates', title: 'PICK THE BETTER GATE', how: 'Slide left and right. Run through the gate that makes your crowd BIGGER. Beat the giant at the end!' }],
-  2: [{ id: 'dodge', title: 'DODGE THE SAWS', how: 'Saws and bars knock runners off. Slide to where they are not. Keep enough runners to beat the giant!' }],
-  3: [{ id: 'fight', title: 'BIGGER CROWD WINS', how: 'Red crowds fight you one for one. Take the best gates first, grab the grey runners, then beat them all!' }],
+  1: [{ id: 'gates', title: 'PICK THE BETTER GATE', say: 'SLIDE TO THE BIG NUMBER', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Slide left and right. Run through the gate that makes your crowd BIGGER. Beat the giant at the end!' }],
+  2: [{ id: 'dodge', title: 'DODGE THE SAWS', say: 'SLIDE AWAY FROM SAWS', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Saws and bars knock runners off. Slide to where they are not. Keep enough runners to beat the giant!' }],
+  3: [{ id: 'fight', title: 'BIGGER CROWD WINS', say: 'GET BIGGER, WIN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Red crowds fight you one for one. Take the best gates first, grab the grey runners, then beat them all!' }],
 };
 const LTRACK = {
   gates: G => { const p = [[{ op: '+', v: 10 }, { op: '-', v: 5 }], [{ op: '/', v: 2 }, { op: 'x', v: 2 }], [{ op: '+', v: 8 }, { op: '-', v: 10 }], [{ op: '-', v: 20 }, { op: '+', v: 20 }], [{ op: 'x', v: 2 }, { op: '/', v: 3 }], [{ op: '+', v: 30 }, { op: '/', v: 2 }], [{ op: '-', v: 40 }, { op: 'x', v: 2 }], [{ op: '/', v: 2 }, { op: '+', v: 50 }], [{ op: 'x', v: 2 }, { op: '-', v: 30 }], [{ op: '-', v: 60 }, { op: '+', v: 100 }], [{ op: 'x', v: 2 }, { op: '/', v: 2 }], [{ op: '+', v: 150 }, { op: '-', v: 100 }]];

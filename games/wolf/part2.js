@@ -94,9 +94,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'RUN HER DOWN', how: 'Slide your thumb left or right to steer at the marked elk. Push it up for a burst. When you are close and BESIDE her, the BITE button glows: tap it.', need: 1, ok: w => w === 'caught', start: 14 }],
-  2: [{ id: 'cut', title: 'CUT THE CORNER', how: 'Her head turns before she swerves. Steer to where she is going, come up alongside, and strike from the side.', need: 1, ok: w => w === 'caught' }],
-  3: [{ id: 'flank', title: 'USE THE PACK', how: 'Tap FLANK on a side: a packmate runs up that side of her and she swerves the other way, towards you. Then strike.', need: 1, ok: w => w === 'caught' }],
+  1: [{ id: 'run', title: 'RUN HER DOWN', say: G => G.wolf && G.prey && Math.hypot(G.prey.x - G.wolf.x, G.prey.z - G.wolf.z) < G.cfg.strike * 1.6 ? 'TAP BITE!' : 'SLIDE TO STEER', do: G => G.wolf && G.prey && Math.hypot(G.prey.x - G.wolf.x, G.prey.z - G.wolf.z) < G.cfg.strike * 1.6 ? 'tap' : 'drag', dir: 'lr', at: G => G.wolf && G.prey && Math.hypot(G.prey.x - G.wolf.x, G.prey.z - G.wolf.z) < G.cfg.strike * 1.6 ? [biteBtn().x, biteBtn().y] : [W * 0.4, H * 0.7], how: 'Slide your thumb left or right to steer at the marked elk. Push it up for a burst. When you are close and BESIDE her, the BITE button glows: tap it.', need: 1, ok: w => w === 'caught', start: 14 }],
+  2: [{ id: 'cut', title: 'CUT THE CORNER', say: 'GO WHERE SHE GOES', do: 'drag', dir: 'lr', at: G => [W * 0.4, H * 0.7], how: 'Her head turns before she swerves. Steer to where she is going, come up alongside, and strike from the side.', need: 1, ok: w => w === 'caught' }],
+  3: [{ id: 'flank', title: 'USE THE PACK', say: 'TAP FLANK', do: 'tap', at: G => { const r = flankRects().L; return [r.x + r.w / 2, r.y + r.h / 2]; }, how: 'Tap FLANK on a side: a packmate runs up that side of her and she swerves the other way, towards you. Then strike.', need: 1, ok: w => w === 'caught' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; newHunt(G); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

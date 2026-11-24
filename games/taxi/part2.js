@@ -227,9 +227,9 @@ const BLIND = { L: G => { G.in.sx = -1; }, R: G => { G.in.sx = 1; }, N: G => { G
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.log = [{ type: 'plain', left: 10, pay: 8, tip: 3, bumps: 0 }]; G.tips = 1; G.done = G.cfg.fares; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pick', title: 'GAS, BRAKE, STOP IN THE RING', how: 'Left thumb: the stick steers. Right thumb: hold GAS to go, BRAKE to stop. Stop in the green ring beside the person waving; then stop in the ring at their door.', need: 2 }],
-  2: [{ id: 'turn', title: 'FOLLOW THE GPS ARROW', how: 'BRAKE before the corner, then steer the way the GPS arrow points (left or right). Take 2 turns.', need: 2 }],
-  3: [{ id: 'lane', title: 'PASS SLOW CARS', how: 'Steer out round a slow car and back in. Pass 3 without touching them.', need: 3 }],
+  1: [{ id: 'pick', title: 'GAS, BRAKE, STOP IN THE RING', say: 'STEER, GAS, STOP IN GREEN', do: 'hold', how: 'Left thumb: the stick steers. Right thumb: hold GAS to go, BRAKE to stop. Stop in the green ring beside the person waving; then stop in the ring at their door.', need: 2 }],
+  2: [{ id: 'turn', title: 'FOLLOW THE GPS ARROW', say: 'BRAKE, THEN TURN', do: 'hold', how: 'BRAKE before the corner, then steer the way the GPS arrow points (left or right). Take 2 turns.', need: 2 }],
+  3: [{ id: 'lane', title: 'PASS SLOW CARS', say: 'GO ROUND THEM', do: 'drag', dir: 'lr', how: 'Steer out round a slow car and back in. Pass 3 without touching them.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

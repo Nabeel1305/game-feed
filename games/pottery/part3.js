@@ -69,7 +69,7 @@ function onEvent(G, e) { const top = toScreen(0, G.h + 3);
     case 'fired': { const p = toScreen(0, G.h * 0.6); if (e.sur) { say(e.sur.toUpperCase() + '!', W / 2, p[1] - 60 * k, '#ffd36a', 26); burst(p[0], p[1], '#ffd36a', 24); sfx.surprise(); } else sfx.fired(); } break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.3, '#ffd36a', 24); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.34, '#8fe0ab', 24); sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; say('AGAIN', W / 2, H * 0.38, '#ffd0a0', 20); break;
+    case 'lessonmiss': coachMiss(); say('AGAIN', W / 2, H * 0.38, '#ffd0a0', 20); break;
     case 'lessondone': say('READY: THE ORDER!', W / 2, H * 0.3, '#ffd36a', 24); sfx.centred(); ui.mode = 'pull'; if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); FX.flash = 0.5; vibe(HAP.best); break;
     case 'lost': sfx.lose(); break;      // (P11: never vibrate on failure)
@@ -118,11 +118,4 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G);
   if (G.phase === 'kiln') txt('FIRING…', W / 2, H * 0.2, '#ffd36a', `700 ${Math.round(28 * k)}px ${TF}`);
   if (G.lesson) lessonPanel(G);
   if (ui.banner) { const b = ui.banner, a = Math.min(1, b.t / 0.2, ((b.secs || 1.6) - b.t) / 0.4); ctx.globalAlpha = Math.max(0, a); txt(b.txt, W / 2, H * 0.24, '#ffd36a', `700 ${Math.round(30 * k)}px ${TF}`); if (b.sub) txt(b.sub, W / 2, H * 0.24 + 28 * k, '#fff', `700 ${Math.round(14 * k)}px ${BC}`); ctx.globalAlpha = 1; } }
-function lessonPanel(G) { const D = G.lesson, st0 = D.steps[D.i], x = 150 * k, w = W - x - 10, y = 52 * k; ctx.save();
-  ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; const lines = wrapText(st0.how, w - 24), h = 48 * k + lines.length * 16 * k;
-  ctx.fillStyle = 'rgba(40,28,20,.9)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(200,118,58,.8)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#e8a060'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3`, x + 12, y + 9 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(st0.title, x + 12, y + 22 * k);
-  ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 42 * k + i * 16 * k));
-  for (let i = 0; i < st0.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st0.need - 1 - i) * 18 * k, y + 16 * k, 6 * k, 0, TAU); if (i < D.n) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
-  ctx.restore(); ctx.textBaseline = 'middle'; }
+function lessonPanel(G) { coachPanel(G); }

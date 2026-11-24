@@ -183,9 +183,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, 'finish'); }
 // ---------- lessons (levels 1-3): one obstacle each, no clock; then the timed run ----------
 const LESSONS = {
-  1: [{ id: 'balls', title: 'HOLD, THEN LET GO', how: 'Left thumb: push towards the next ball. Hold JUMP and let go: the longer you hold, the farther (the ring shows where you will land). Cross all four balls.', need: 5 }],
-  2: [{ id: 'sweep', title: 'JUMP THE SWEEPER', how: 'Jump onto the round platform. Tap JUMP just before the arm reaches you (no direction: straight up). Keep it up until the gate opens, then jump across.', need: 3 }],
-  3: [{ id: 'wall', title: 'STOP AND GO', how: 'Walk along the ledge and wait in the gaps. A glove flashes red and pulls back before it punches: go just after it.', need: 0 }],
+  1: [{ id: 'balls', title: 'HOLD, THEN LET GO', say: 'HOLD JUMP, LET GO', do: 'hold', at: G => { const b = layout(G).jump; return [b.x, b.y]; }, how: 'Left thumb: push towards the next ball. Hold JUMP and let go: the longer you hold, the farther (the ring shows where you will land). Cross all four balls.', need: 5 }],
+  2: [{ id: 'sweep', title: 'JUMP THE SWEEPER', say: 'TAP JUMP!', do: 'tap', at: G => { const b = layout(G).jump; return [b.x, b.y]; }, how: 'Jump onto the round platform. Tap JUMP just before the arm reaches you (no direction: straight up). Keep it up until the gate opens, then jump across.', need: 3 }],
+  3: [{ id: 'wall', title: 'STOP AND GO', say: 'WAIT… GO!', do: 'drag', dir: 'right', how: 'Walk along the ledge and wait in the gaps. A glove flashes red and pulls back before it punches: go just after it.', need: 0 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.id === 'wall' ? G.C.obs[0].gloves.length : st.id === 'sweep' ? G.C.obs[0].need : st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, s) { const D = G.lesson; if (!D || D.done) return; const id = D.id; let good = false;

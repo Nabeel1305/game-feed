@@ -88,9 +88,9 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'rescue', title: 'BRING THEM IN', how: 'Someone is in trouble: low in the water, struggling. TAP THEM to swim out. Then TAP THE BEACH beside the rip, not straight back through it.', need: 2 }],
-  2: [{ id: 'whistle', title: 'WHISTLE THEM BACK', how: 'A swimmer is drifting into the rip (the dark gap in the waves). TAP THEM to whistle them back before it turns to trouble. Three times.', need: 3 }],
-  3: [{ id: 'flag', title: 'FLAG THE RIPS', how: 'Spot each rip: the dark, calm-looking gap where the waves do not break. TAP THE GAP to plant a red flag. Two rips, two flags.', need: 2 }],
+  1: [{ id: 'rescue', title: 'BRING THEM IN', say: 'TAP THEM, TAP THE BEACH', do: 'tap', how: 'Someone is in trouble: low in the water, struggling. TAP THEM to swim out. Then TAP THE BEACH beside the rip, not straight back through it.', need: 2 }],
+  2: [{ id: 'whistle', title: 'WHISTLE THEM BACK', say: 'TAP THEM BACK', do: 'tap', how: 'A swimmer is drifting into the rip (the dark gap in the waves). TAP THEM to whistle them back before it turns to trouble. Three times.', need: 3 }],
+  3: [{ id: 'flag', title: 'FLAG THE RIPS', say: 'TAP THE DARK GAP', do: 'tap', how: 'Spot each rip: the dark, calm-looking gap where the waves do not break. TAP THE GAP to plant a red flag. Two rips, two flags.', need: 2 }],
 };
 function lessonStart(G) { const id = LESSONS[G.N][0].id; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, id, noTrouble: id === 'whistle', spawnT: 1.5 }; G.ev.push({ k: 'lessonnext', first: true });
   const free = []; for (let x = -XW + 0.8; x <= XW - 0.8; x += 0.5) if (!G.rips.some(r => Math.abs(x - r.x) < r.w + 1.2)) free.push(x);

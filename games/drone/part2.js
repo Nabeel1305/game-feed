@@ -107,9 +107,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'fly', title: 'FORWARDS AND TURN', how: 'Hold your thumb down: the drone flies forwards. Slide it left or right to turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
-  2: [{ id: 'climb', title: 'UP AND DOWN', how: 'These hoops are high and low. Slide your thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
-  3: [{ id: 'slide', title: 'LIFT TO BRAKE', how: 'Lift your thumb and the drone brakes to a hover. It drifts: lift early before a tight hoop, line up, then hold again. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
+  1: [{ id: 'fly', title: 'FORWARDS AND TURN', say: 'HOLD, SLIDE TO TURN', do: 'drag', dir: 'lr', how: 'Hold your thumb down: the drone flies forwards. Slide it left or right to turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
+  2: [{ id: 'climb', title: 'UP AND DOWN', say: 'SLIDE UP OR DOWN', do: 'drag', dir: 'ud', how: 'These hoops are high and low. Slide your thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
+  3: [{ id: 'slide', title: 'LIFT TO BRAKE', say: 'LET GO TO STOP', do: 'release', at: G => [W / 2, H * 0.7], how: 'Lift your thumb and the drone brakes to a hover. It drifts: lift early before a tight hoop, line up, then hold again. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; makeCourse(G); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

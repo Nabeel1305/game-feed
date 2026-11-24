@@ -104,7 +104,7 @@ function onEvent(G, e) { const cx = W / 2, here = (x, z) => scr(x, 0.8, z);
     case 'last': say('ONLY ONE LEFT!', cx, H * 0.34, '#ffd040', 30); sfx.goal(); FX.flash = 0.6; vibe(HAP.best); break;
     case 'sheriff': say('THE SHERIFF GOT YOU!', cx, H * 0.36, '#ff6a6a', 26); sfx.lose(); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.24, '#ffe08a', 20); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.8 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('YOU\'VE GOT IT!', cx, H * 0.3, '#ffe08a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); break;
     case 'lost': break;
@@ -145,6 +145,4 @@ function hud(G, t) { ctx.textBaseline = 'middle';
   if (G.faking) { const q = scr(G.you.x, 1.9, G.you.z); ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#9ad8ff'; ctx.fillText('pretending to work...', q.x, q.y); }
   drawButtons(G); }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 12, w = W - 24, y = 48 * k; ctx.save(); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 44 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(20,14,40,.88)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd080'; ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(`LESSON ${G.N}: ${st.title}`, x + 12, y + 9 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * k + i * 17 * k)); ctx.restore(); ctx.textBaseline = 'middle'; }
+function lessonPanel(G) { coachPanel(G); }

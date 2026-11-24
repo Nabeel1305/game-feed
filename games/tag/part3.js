@@ -97,7 +97,7 @@ function onEvent(G, e) {
     case 'power': sfx.power(); vibe(HAP.light); say({ speed: 'SPEED!', ghost: 'GHOST!', shield: 'SHIELD ON', freeze: 'FREEZE WHISTLE!' }[e.p], cx, cy + 40, '#fff', 26); if (e.p === 'freeze') { sfx.whistle(); FX.flash = 0.4; } break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffe060', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
-    case 'lessonmiss': if (e.why === 'nodash') say('DASH TO TAG! TAP DASH', cx, H * 0.55, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': if (e.why === 'nodash') say('DASH TO TAG! TAP DASH', cx, H * 0.55, '#ffd0c4', 22); coachMiss(); break;
     case 'lessondone': say('YOU GOT IT. NOW PLAY!', cx, H * 0.5, '#ffe060', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); vibe(HAP.best); FX.flash = 0.8; say(G.mode === 'chase' || G.mode === 'freeze' ? 'GOT THEM ALL!' : 'THE BELL! SAFE!', cx, cy, '#ffe060', 32); break;
     case 'lost': sfx.lose(); say(e.why === 'bell' ? 'THE BELL!' : 'CAUGHT!', cx, cy, '#ffb4a8', 32); break;
@@ -174,12 +174,4 @@ function hud(G, t) {
   if (G.N <= 3 && G.t < 6 && !G.lesson) { ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.strokeText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); ctx.fillText('DRAG TO RUN · TAP DASH FOR A BURST', W / 2, H - 50 * k); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) {
-  const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28, y = 42 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 54 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(0,0,0,.62)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,224,96,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffe060'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${D.i + 1} OF ${D.steps.length}`, x + 12, y + 10 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `${Math.round(18 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 25 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 48 * k + i * 17 * k));
-  ctx.restore(); ctx.textBaseline = 'middle';
-}
+function lessonPanel(G) { coachPanel(G); }

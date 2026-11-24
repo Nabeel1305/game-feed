@@ -137,9 +137,9 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'boost', title: 'STEER AND DRIFT', how: 'Left thumb: slide to steer. In a corner hold a HARD turn: the kart drifts and sparks. Straighten up for a boost. Twice.', need: 2 }],
-  2: [{ id: 'item', title: 'ITEMS', how: 'Drive through a ? box, then tap the right side of the screen to use what you got. Use 2 items.', need: 2 }],
-  3: [{ id: 'big', title: 'BIG BOOST', how: 'Hold the drift longer: wait for ORANGE sparks before you straighten up. Twice.', need: 2 }],
+  1: [{ id: 'boost', title: 'STEER AND DRIFT', say: 'SLIDE TO STEER', do: 'drag', dir: 'lr', how: 'Left thumb: slide to steer. In a corner hold a HARD turn: the kart drifts and sparks. Straighten up for a boost. Twice.', need: 2 }],
+  2: [{ id: 'item', title: 'ITEMS', say: 'TAP TO USE IT', do: 'tap', how: 'Drive through a ? box, then tap the right side of the screen to use what you got. Use 2 items.', need: 2 }],
+  3: [{ id: 'big', title: 'BIG BOOST', say: 'WAIT FOR ORANGE', do: 'drag', dir: 'lr', how: 'Hold the drift longer: wait for ORANGE sparks before you straighten up. Twice.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

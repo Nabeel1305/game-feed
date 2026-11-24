@@ -116,10 +116,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'catch', title: 'FIND THE BOAT', how: 'A boat is lost out there: its little lamp is in the dark. Touch the sea to move your light onto it, and hold it there until its lamp blinks back.', need: 1, ok: w => w === 'sees' },
-      { id: 'lead', title: 'LEAD IT HOME', how: 'Now it follows your light. Slide your light slowly to the harbour mouth, between the red and green lights. Too fast and it loses you.', need: 1, ok: w => w === 'home' }],
-  2: [{ id: 'rocks', title: 'ROUND THE ROCKS', how: 'Rocks show white with surf where your light falls. Lead the boat round them to the harbour, never across.', need: 1, ok: w => w === 'home', rocks: 4 }],
-  3: [{ id: 'two', title: 'TWO AT ONCE', how: 'Two boats are lost. Bring one in, then go back for the other; a boat you leave drifts towards the shore.', need: 2, ok: w => w === 'home', two: true, rocks: 3 }],
+  1: [{ id: 'catch', title: 'FIND THE BOAT', say: 'DRAG THE LIGHT TO THE BOAT', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'A boat is lost out there: its little lamp is in the dark. Touch the sea to move your light onto it, and hold it there until its lamp blinks back.', need: 1, ok: w => w === 'sees' },
+      { id: 'lead', title: 'LEAD IT HOME', say: 'SLIDE TO THE HARBOUR', do: 'drag', dir: 'down', at: G => [W / 2, H * 0.7], how: 'Now it follows your light. Slide your light slowly to the harbour mouth, between the red and green lights. Too fast and it loses you.', need: 1, ok: w => w === 'home' }],
+  2: [{ id: 'rocks', title: 'ROUND THE ROCKS', say: 'GO ROUND THE ROCKS', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Rocks show white with surf where your light falls. Lead the boat round them to the harbour, never across.', need: 1, ok: w => w === 'home', rocks: 4 }],
+  3: [{ id: 'two', title: 'TWO AT ONCE', say: 'ONE, THEN THE OTHER', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Two boats are lost. Bring one in, then go back for the other; a boat you leave drifts towards the shore.', need: 2, ok: w => w === 'home', two: true, rocks: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; const st = LESSONS[G.N][0]; if (st.rocks != null) makeRocks(G, st.rocks); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

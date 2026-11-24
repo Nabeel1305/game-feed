@@ -118,9 +118,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: fly the freefall, open between the marks, flare to land soft ----------
 const LESSONS = {
-  1: [{ id: 'fly', title: 'FLY YOUR BODY', how: 'Drag the left thumb: forward to fly forward, left or right to turn. Fly through three gold rings.', need: 3 }],
-  2: [{ id: 'open', title: 'OPEN BETWEEN THE MARKS', how: 'Watch the altimeter on the right. When the needle is between the yellow marks, tap CHUTE. Twice.', need: 2 }],
-  3: [{ id: 'flare', title: 'FLARE', how: 'Turn to face the wind arrow, then hold FLARE when the ground is close (the ring turns green). Land softly twice.', need: 2 }],
+  1: [{ id: 'fly', title: 'FLY YOUR BODY', say: 'DRAG TO FLY', do: 'drag', dir: 'up', how: 'Drag the left thumb: forward to fly forward, left or right to turn. Fly through three gold rings.', need: 3 }],
+  2: [{ id: 'open', title: 'OPEN BETWEEN THE MARKS', say: 'TAP CHUTE ON YELLOW', do: 'tap', at: G => { const b = layout(G).a; return [b.x, b.y]; }, how: 'Watch the altimeter on the right. When the needle is between the yellow marks, tap CHUTE. Twice.', need: 2 }],
+  3: [{ id: 'flare', title: 'FLARE', say: 'HOLD FLARE', do: 'hold', at: G => { const b = layout(G).a; return [b.x, b.y]; }, how: 'Turn to face the wind arrow, then hold FLARE when the ground is close (the ring turns green). Land softly twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 function lessonSetup(G) { const D = G.lesson, p = G.p, T = G.T; G.deployCue = G.flareCue = false; p.aad = false;

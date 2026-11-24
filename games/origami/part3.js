@@ -11,10 +11,7 @@ function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, si
 function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 const S1 = () => Math.min(W, H * 0.6) / 390;
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], s = S1(), x = 10, w = W - 20, y = 48 * s; ctx.save(); ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 40 * s + lines.length * 16 * s;
-  ctx.fillStyle = 'rgba(30,20,10,.88)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText(`LESSON: ${st.title}${st.need > 1 ? ` · ${D.n} OF ${st.need}` : ''}`, x + 12, y + 8 * s);
-  ctx.font = `700 ${Math.round(12.5 * s)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 28 * s + i * 16 * s)); ctx.restore(); }
+function lessonPanel(G) { coachPanel(G); }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
   for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 400 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
   for (const t of TXT) { t.t += dt; t.y -= dt * 18; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; }
@@ -76,7 +73,7 @@ function onEvent(G, e) { const L = lay(), s = L.s;
     case 'tear': FX.shake = 14; sfx.tear(); say('IT TORE!', W / 2, H * 0.24, '#ff8a7a', 28); break;
     case 'alive': alive = { mi: e.mi, t: 0 }; FX.flash = 0.5; sfx.alive(); say(`${MODELS[e.mi].name}!`, W / 2, H * 0.32, '#ffe08a', 32); for (let i = 0; i < 30; i++) { const a = Math.random() * TAU; PT.push({ x: L.cx, y: L.cy, vx: Math.cos(a) * 240, vy: Math.sin(a) * 240 - 150, life: 1, t: 0, col: [MODELS[e.mi].col, '#fff', '#ffe08a'][i % 3], r: 3 }); } vibe(HAP.best); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.88, '#ffd36a', 22); break;
-    case 'lessonmiss': say('TRY AGAIN', W / 2, H * 0.88, '#ffd0c4', 22); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': say('TRY AGAIN', W / 2, H * 0.88, '#ffd0c4', 22); coachMiss(); break;
     case 'lessondone': say('LOVELY!', W / 2, H * 0.88, '#ffd36a', 24); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); break;
     case 'lost': sfx.lose(); break;

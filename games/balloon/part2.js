@@ -117,9 +117,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: rise to the ring, sink to the ring, drop on the X ----------
 const LESSONS = {
-  1: [{ id: 'rise', title: 'BURN TO RISE', how: 'Hold anywhere: the burner warms the balloon and it rises, a little late. Let go before the ring: it keeps going a moment. Stop inside the gold ring, twice.', need: 2 }],
-  2: [{ id: 'wind', title: 'STEER BY HEIGHT', how: 'The winds blow different ways at different heights (the arrows on the right). Climb or sink into the one that blows you to the gold flag.', need: 2 }],
-  3: [{ id: 'drop', title: 'DROP ON THE X', how: 'The ring on the ground shows where a marker would land. When it crosses the X, tap 🎯. Get within 40 m, twice.', need: 2 }],
+  1: [{ id: 'rise', title: 'BURN TO RISE', say: 'HOLD TO GO UP', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Hold anywhere: the burner warms the balloon and it rises, a little late. Let go before the ring: it keeps going a moment. Stop inside the gold ring, twice.', need: 2 }],
+  2: [{ id: 'wind', title: 'STEER BY HEIGHT', say: 'GO UP OR DOWN TO THE WIND', do: 'hold', at: G => [W / 2, H * 0.7], how: 'The winds blow different ways at different heights (the arrows on the right). Climb or sink into the one that blows you to the gold flag.', need: 2 }],
+  3: [{ id: 'drop', title: 'DROP ON THE X', say: 'TAP 🎯 ON THE X', do: 'tap', how: 'The ring on the ground shows where a marker would land. When it crosses the X, tap 🎯. Get within 40 m, twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); G.fuel = G.fuel0 = 1e9;
   const b = G.b; b.y = groundAt(G, b.x, b.z) + 45; b.heat = neutral(45); b.landed = false; b.air = true; lessonGoal(G); }      // the lessons start in the air

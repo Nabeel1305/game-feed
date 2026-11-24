@@ -133,10 +133,7 @@ function hud(G, L, now) { const s = L.s;
   const bx = 90 * s, bw = W - bx - 16 - icons.length * 62 * s - 8, by = 72 * s, p = progress(G); ctx.fillStyle = 'rgba(255,255,255,.55)'; rrect(bx, by, bw, 12 * s, 6); ctx.fill();
   const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0); gr.addColorStop(0, '#ff8ab8'); gr.addColorStop(1, '#ffd23a'); ctx.fillStyle = gr; rrect(bx, by, Math.max(12 * s, bw * p), 12 * s, 6); ctx.fill();
   ctx.fillStyle = '#8a2a5a'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.textAlign = 'left'; ctx.fillText(G.score.toLocaleString(), bx, by - 12 * s); ctx.font = `700 ${Math.round(11 * s)}px ${BC}`; ctx.textAlign = 'right'; ctx.fillText(`LEVEL ${G.N}`, bx + bw, by - 12 * s); }
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20, y = 44 * s; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 42 * s + lines.length * 17 * s;
-  ctx.fillStyle = 'rgba(90,30,70,.92)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#ffd23a'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd23a'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n} / ${st.need}` : ''), x + 12, y + 9 * s);
-  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * s + i * 17 * s)); ctx.restore(); }
+function lessonPanel(G, L) { coachPanel(G); }
 // ---------- what each happening looks and sounds like ----------
 const CASC = ['', '', 'Nice!', 'Yummy!', 'Scrumptious!', 'Sugar storm!'];
 function onEvent(G, e) { const L = lay(), s = L.s, cs = L.cs, at = i => [L.cx(colOf(i)), L.cy(rowOf(i))];
@@ -164,7 +161,7 @@ function onEvent(G, e) { const L = lay(), s = L.s, cs = L.cs, at = i => [L.cx(co
     case 'rush': if (G.moves > 0) say('SUGAR RUSH!', W / 2, L.by + L.bh * 0.55, '#ffd23a', 34); break;
     case 'rushfire': { const [x, y] = at(e.i); sparks(x, y, 10, '#fff', 180 * s); sfx.rushfire(G.movesMax - G.moves); break; }
     case 'move': if (e.left === 5 && !G.done && !G.lesson) say('5 moves left!', W / 2, L.by - 8 * s, '#ff5a7a', 18); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; sfx.nope(); break;
+    case 'lessonmiss': coachMiss(); sfx.nope(); break;
     case 'lessonnext': if (e.first) hint = null; VIEW.clear(); dropIn = true; hintMove = null; break;
     case 'lessonok': if (e.txt) say(e.txt, W / 2, L.by + L.bh * 0.45, '#fff', 24); else sfx.tick(); break;
     case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.by + L.bh * 0.45, '#ffd23a', 30); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;

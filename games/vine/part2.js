@@ -146,10 +146,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'go', title: 'LET GO AT THE RIGHT MOMENT', how: 'Hold your thumb down: you swing. Lift it as you swing forward and up. Your hand catches the next vine by itself, for now.', need: 3, ok: w => w === 'catch', autoGrab: 1 },
-      { id: 'grab', title: 'CATCH THE VINE', how: 'This time you let go by yourself. Put your thumb down when your hand reaches the next vine.', need: 3, ok: w => w === 'catch', autoGo: 1 }],
-  2: [{ id: 'both', title: 'LET GO, THEN CATCH', how: 'Lift your thumb at the top of the forward swing, put it down as you reach the vine.', need: 3, ok: w => w === 'catch' }],
-  3: [{ id: 'lean', title: 'STEER THE SWING', how: 'Some vines hang to the side. While you hold on, move your thumb left or right: the swing turns that way. Then let go.', need: 3, ok: w => w === 'catch', side: 1 }],
+  1: [{ id: 'go', title: 'LET GO AT THE RIGHT MOMENT', say: 'HOLD… LET GO!', do: 'release', at: G => [W / 2, H * 0.7], how: 'Hold your thumb down: you swing. Lift it as you swing forward and up. Your hand catches the next vine by itself, for now.', need: 3, ok: w => w === 'catch', autoGrab: 1 },
+      { id: 'grab', title: 'CATCH THE VINE', say: 'TOUCH AT THE VINE', do: 'tap', at: G => [W / 2, H * 0.7], how: 'This time you let go by yourself. Put your thumb down when your hand reaches the next vine.', need: 3, ok: w => w === 'catch', autoGo: 1 }],
+  2: [{ id: 'both', title: 'LET GO, THEN CATCH', say: 'LET GO, THEN TOUCH', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Lift your thumb at the top of the forward swing, put it down as you reach the vine.', need: 3, ok: w => w === 'catch' }],
+  3: [{ id: 'lean', title: 'STEER THE SWING', say: 'HOLD, SLIDE TO STEER', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Some vines hang to the side. While you hold on, move your thumb left or right: the swing turns that way. Then let go.', need: 3, ok: w => w === 'catch', side: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonVines(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

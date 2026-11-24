@@ -164,11 +164,4 @@ function choiceCard(G, L) { ctx.fillStyle = 'rgba(10,12,20,.55)'; ctx.fillRect(0
   G.choice.opts.forEach((o, i) => { const r = L.ch[i], c = CHOICE[o]; ctx.fillStyle = '#f6f4ee'; rrect(r.x, r.y, r.w, r.h, 16 * k); ctx.fill(); ctx.textAlign = 'left'; ctx.font = `${Math.round(34 * k)}px ${BC}`; ctx.fillText(c[0], r.x + 18 * k, r.y + r.h / 2);
     ctx.fillStyle = '#22252e'; ctx.font = `800 ${Math.round(18 * k)}px ${BC}`; ctx.fillText(c[1], r.x + 74 * k, r.y + r.h / 2 - 12 * k); ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#555'; ctx.fillText(c[2], r.x + 74 * k, r.y + r.h / 2 + 14 * k); }); }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st0 = D.steps[D.i], x = 12, w = W - 24, y = 46 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st0.how, w - 24), h = 50 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(20,24,34,.88)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,106,80,.8)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ff9a80'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3`, x + 12, y + 9 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(17 * k)}px ${BC}`; ctx.fillText(st0.title, x + 12, y + 23 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 45 * k + i * 17 * k));
-  for (let i = 0; i < st0.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st0.need - 1 - i) * 18 * k, y + 16 * k, 6 * k, 0, TAU); if (i < D.n || D.done && i < st0.need) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
-  ctx.restore(); }
+function lessonPanel(G) { coachPanel(G); }

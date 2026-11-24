@@ -120,10 +120,7 @@ function hud(G, L, now) { const s = L.s;
   // the bar
   const bx = 130 * s, bw = W - bx - 110 * s, by = 76 * s, p = progress(G); if (bw > 40) { ctx.fillStyle = 'rgba(255,255,255,.14)'; rrect(bx, by, bw, 10 * s, 5 * s); ctx.fill(); const gr = ctx.createLinearGradient(bx, 0, bx + bw, 0); gr.addColorStop(0, '#3ac8d8'); gr.addColorStop(1, '#ffc23a'); ctx.fillStyle = gr; rrect(bx, by, Math.max(10 * s, bw * p), 10 * s, 5 * s); ctx.fill();
     if (G.streak > 0) { ctx.fillStyle = '#ff9a3a'; ctx.font = `900 ${Math.round(14 * s * (1 + comboShow * 0.3))}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(`COMBO ×${G.streak + 1}` + (G.since ? ' ' + '●'.repeat(3 - G.since) : ''), bx + bw / 2, by + 26 * s); } } }
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20; let y = 46; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 40 * s + lines.length * 17 * s;
-  ctx.fillStyle = 'rgba(14,20,48,.94)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#ffc23a'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffc23a'; ctx.font = `900 ${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n} / ${st.need}` : ''), x + 12, y + 9 * s);
-  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 31 * s + i * 17 * s)); ctx.restore(); }
+function lessonPanel(G, L) { coachPanel(G); }
 // ---------- what each happening looks and sounds like ----------
 const WORDS = ['', '', 'DOUBLE!', 'TRIPLE!', 'QUADRUPLE!', 'INCREDIBLE!', 'UNREAL!'];
 function onEvent(G, e) { const L = lay(), s = L.s, cs = L.cs;
@@ -147,7 +144,7 @@ function onEvent(G, e) { const L = lay(), s = L.s, cs = L.cs;
     case 'reroll': sfx.deal(); say('NEW PIECES', W / 2, L.ty - 4 * s, '#ffc23a', 18); break;
     case 'bomb': { const x = L.cx(e.c), y = L.cy(e.r); for (const c of e.cells) { POPS.push({ x: L.cx(colOf(c.i)), y: L.cy(rowOf(c.i)), col: c.col, t: 0, life: 0.3 }); sparks(L.cx(colOf(c.i)), L.cy(rowOf(c.i)), 5, '#ffb43a', 260 * s); } sfx.boom(); FX.shake = 14; FX.flash = 0.4; vibe(HAP.thud); say('BOOM!', x, y, '#ffb43a', 30); break; }
     case 'goal': say('GOAL!', W / 2, L.by + L.bw * 0.4, '#ffe08a', 46); FX.flash = 0.6; sfx.goal(); vibe(HAP.best); for (let i = 0; i < 46; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: L.by + L.bw * 0.4, vx: Math.cos(a) * 340, vy: Math.sin(a) * 340 - 160, life: 1.1, t: 0, col: BCOL[i % 8], r: 3.5 }); } break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; sfx.nope(); break;
+    case 'lessonmiss': coachMiss(); sfx.nope(); break;
     case 'lessonnext': if (e.first) hint = null; break;
     case 'lessonok': sfx.tick(); say(`${e.n} / ${e.need}`, W / 2, L.by + L.bw * 0.55, '#ffc23a', 26); break;
     case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.by + L.bw * 0.45, '#ffc23a', 30); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;

@@ -178,8 +178,9 @@ function onEvent(G, e) {
     case 'cast': sfx.cast(e.d); vibe(HAP.tick); break;
     case 'splash': sfx.plop(); ripple(e.x, e.z, 1.2); ripple(e.x, e.z, 2.2, 2.2); splash(e.x, e.z, 10, 1.6); break;
     case 'inspot': break;
-    case 'nospot': if (G.lesson) break; tip('nospot', 'Cast into an orange ring: that is where the fish are', 2.6); break;
-    case 'rise': ripple(e.x, e.z, e.big ? 2.6 : 1.6, 2.4); setTimeout(() => ripple(e.x, e.z, e.big ? 1.6 : 1, 1.8), 220); splash(e.x, e.z, e.big ? 10 : 6, e.big ? 2.2 : 1.5); if (gate('risefx', 500)) sfx.rise(e.big);
+    case 'nospot': if (G.lesson) break; tip('nospot', 'Cast where the fish jump or bubble', 2.6); break;
+    case 'rise': if (!G.lesson && !e.big && Math.random() < 0.6) { for (let i = 0; i < 4; i++) setTimeout(() => { const bx = e.x + (Math.random() - 0.5) * 1.2, bz = e.z + (Math.random() - 0.5) * 1.2; ripple(bx, bz, 0.5 + Math.random() * 0.5, 1.2); splash(bx, bz, 3, 0.35); }, i * 180); if (gate('risefx', 500)) sfx.nibble(); break; }      /* only bubbles */
+      ripple(e.x, e.z, e.big ? 2.6 : 1.6, 2.4); setTimeout(() => ripple(e.x, e.z, e.big ? 1.6 : 1, 1.8), 220); splash(e.x, e.z, e.big ? 10 : 6, e.big ? 2.2 : 1.5); if (gate('risefx', 500)) sfx.rise(e.big);
       // (it is drawn larger than life, and larger the further off, so that it is seen: about a metre long at the nearest ring)
       // the fish itself comes out of the water where you are meant to cast (his review: "make the fish come out of the water in the place I'm supposed to put my fishing stick")
       if (V3 && !V3.none && e.sp && ['idle', 'wait', 'fly', 'bite', 'reelin'].includes(G.ph)) { const L = V3.leaps.find(q => q.t >= q.T); if (L) { if (L.id !== e.sp.id) { L.g.clear(); const fm = fishMesh(e.sp); L.g.add(fm); L.id = e.sp.id; L.g.scale.setScalar(1); L.g.rotation.set(0, 0, 0); L.g.updateMatrixWorld(true); L.len0 = new THREE.Box3().setFromObject(fm).getSize(new THREE.Vector3()).x || 1; } const d = Math.hypot(e.x, e.z);
@@ -208,7 +209,7 @@ function onEvent(G, e) {
       if (G.noise > 1.6 && !G.lesson) tip('quiet', 'You are scaring the fish. Strike only when it goes under', 3); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 26); sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('YOU KNOW IT. NOW FISH!', cx, H * 0.5, '#ffd36a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); vibe(HAP.best); break;
     case 'lost': sfx.lose(); say(e.why === 'dark' ? 'THE LIGHT IS GONE' : 'OUT OF LINE', cx, H * 0.5, '#ffd0c4', 28); break;      // (P11: never vibrate on failure)
@@ -268,7 +269,7 @@ function draw(now, dt) {
   const onSpot = ui.aim && g.spots.some(q => Math.hypot(q.x - ui.aim.x, q.z - ui.aim.z) < q.r); ui.onSpot = !!onSpot;
   V.aim.visible = !!ui.aim; if (ui.aim) { V.aim.position.copy(g2w(ui.aim.x, ui.aim.z, 0.07)); V.aim.scale.setScalar((0.75 + Math.hypot(ui.aim.x, ui.aim.z) * 0.035) * (1.1 + Math.sin(t * 6) * 0.05)); for (const m of V.aim.userData.m) m.color.set(onSpot ? 0x58ff7a : 0xffffff); }
   // the rings where fish are rising, and the fish that leap in them
-  V.marks.forEach((m, i) => { const q = g.spots[i], show = !!q && (g.ph === 'idle' || g.ph === 'wait' || g.ph === 'fly' || g.ph === 'reelin' || g.ph === 'bite'); m.visible = show; if (!show) return; m.position.copy(g2w(q.x, q.z, 0.05)); m.scale.setScalar(q.r * (1 + Math.sin(t * 3 + i) * 0.03));
+  V.marks.forEach((m, i) => { const q = g.spots[i], show = REEL_RINGS && !!q && (g.ph === 'idle' || g.ph === 'wait' || g.ph === 'fly' || g.ph === 'reelin' || g.ph === 'bite'); m.visible = show; if (!show) return; m.position.copy(g2w(q.x, q.z, 0.05)); m.scale.setScalar(q.r * (1 + Math.sin(t * 3 + i) * 0.03));
     m.userData.r1.material.opacity = 0.75 + 0.2 * Math.sin(t * 4 + i * 2); const u = (t * 0.6 + i * 0.37) % 1; m.userData.r5.scale.setScalar(0.3 + u * 1.5); m.userData.r5.material.opacity = 0.7 * (1 - u); });
   for (const L of V.leaps) { if (L.t >= L.T) { L.g.visible = false; continue; } L.t += dt; const u = Math.min(1, L.t / L.T), y = Math.sin(u * Math.PI) * L.h - 0.15, tr = (u - 0.5) * 1.3; L.g.visible = true;
     L.g.position.copy(g2w(L.x + Math.cos(L.a) * tr, L.z + Math.sin(L.a) * tr, y)); L.g.scale.setScalar(L.sc); L.g.rotation.set(0, 0, 0); L.g.rotateY(L.a); L.g.rotateZ(Math.cos(u * Math.PI) * 1.05); L.g.rotateX(Math.sin(t * 22) * 0.25);
@@ -317,6 +318,8 @@ let IG = null; function idleG() { if (!IG) { IG = newGame(Math.max(1, store.get(
 // ---------- the head-up display: only what he needs, mostly on the edges ----------
 // 23 Nov 2026, his note: "The big fish here sign is not nessesary just the fishes coming out of the water is enough": no arrows or words over the fish
 const REEL_SIGNS = false;
+// his review (24 Nov 2026): "I don't think the large orange circles are necessary": the fish jumping or bubbling show where they are
+const REEL_RINGS = false;
 function hud(G) {
   const c = G.cfg, x = 14, y = 44 * k;
   // over each place fish are rising: an arrow and, early on, the words; while aiming: whether the aim is on the fish
@@ -324,7 +327,8 @@ function hud(G) {
     for (const q of (REEL_SIGNS ? G.spots : [])) { const p = W3.screen(g2w(q.x, q.z, 0.2)); if (!p.front) continue; const px = clamp(p.x, 30 * k, W - 30 * k), py = p.y - 26 * k + bob; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(20,10,0,.75)'; ctx.fillStyle = '#ffa52a';
       ctx.beginPath(); ctx.moveTo(px - 9 * k, py - 8 * k); ctx.lineTo(px + 9 * k, py - 8 * k); ctx.lineTo(px, py + 5 * k); ctx.closePath(); ctx.stroke(); ctx.fill();
       if ((G.N <= 3 || G.lesson) && q === G.spots[0]) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.strokeText('FISH HERE', px, py - 20 * k); ctx.fillText('FISH HERE', px, py - 20 * k); } }
-    if (ui.aim) { const p = W3.screen(g2w(ui.aim.x, ui.aim.z, 0.1)), txt = ui.onSpot ? 'ON THE FISH: LET GO' : 'MOVE IT ONTO AN ORANGE RING'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.fillStyle = ui.onSpot ? '#7dff9a' : '#fff'; const ty = Math.min(H - 150 * k, p.y + 34 * k); ctx.strokeText(txt, W / 2, ty); ctx.fillText(txt, W / 2, ty); } }
+    if (ui.aim) { const p = W3.screen(g2w(ui.aim.x, ui.aim.z, 0.1)), txt = ui.onSpot ? 'ON THE FISH: LET GO' : 'AIM WHERE THE FISH JUMP'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.fillStyle = ui.onSpot ? '#7dff9a' : '#fff'; const ty = Math.min(H - 150 * k, p.y + 34 * k); ctx.strokeText(txt, W / 2, ty); ctx.fillText(txt, W / 2, ty); } }
+  drawStrike(G);
   if (G.lesson) lessonPanel(G);
   else {
     // fish to catch (P14): a little fish for each, filled as they are landed
@@ -367,13 +371,9 @@ function hud(G) {
     ctx.globalAlpha = 1; }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) {
-  const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28, y = 42 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 54 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(0,0,0,.62)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${D.i + 1} OF ${D.steps.length}`, x + 12, y + 10 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(18 * k)}px ${BC}`; ctx.fillText(st.title, x + 12, y + 25 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 48 * k + i * 17 * k));
-  for (let i = 0; i < st.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st.need - 1 - i) * 18 * k, y + 18 * k, 6 * k, 0, TAU); if (i < D.n) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
-  ctx.restore();
-}
+function lessonPanel(G) { coachPanel(G); }
+function strikeBtn() { return [W / 2, H - 150 * k]; }
+function floatAt() { if (!V3 || V3.none || !G) return [W / 2, H * 0.45]; const p = W3.screen(g2w(G.fl.x, G.fl.z, 0.1)); return [p.x, p.y + 40 * k]; }
+function drawStrike(G) { if (G.ph !== 'bite' && !(G.ph === 'wait' && lessonNow(G) && lessonNow(G).id === 'strike')) return; const [x, y] = strikeBtn(), on = G.ph === 'bite', r = 52 * k * (on ? 1 + Math.sin(performance.now() / 90) * 0.06 : 0.85);
+  ctx.save(); ctx.globalAlpha = on ? 1 : 0.45; ctx.fillStyle = on ? '#ff6a3a' : 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 5 * k; ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `800 ${Math.round(26 * k)}px ${BC}`; ctx.fillText(on ? 'TAP!' : 'WAIT', x, y); ctx.restore(); }

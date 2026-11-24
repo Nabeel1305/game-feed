@@ -184,9 +184,9 @@ function finish(G, win, o = {}) { if (G.over) return true; G.over = win ? 'won' 
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'snap', title: 'IN, SNAP, OUT', how: 'Walk in (left thumb), to the desk with the glowing file. Tap PHOTOGRAPH and keep the file in the frame (steady it with the stick). Then back to the van.', need: 1 }],
-  2: [{ id: 'crouch', title: 'CROUCH BEHIND DESKS', how: 'A guard watches the far room. Tap CROUCH: slow and silent, and the desks hide you. Get the photo and get out unseen.', need: 1 }],
-  3: [{ id: 'hide', title: 'HIDE IN A CUPBOARD', how: 'A guard walks the corridor. Stand by a cupboard and tap HIDE until he has passed, then come out and carry on.', need: 1 }],
+  1: [{ id: 'snap', title: 'IN, SNAP, OUT', say: 'WALK IN, TAP PHOTO', do: 'tap', at: G => { const b = btnRects(G).act; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Walk in (left thumb), to the desk with the glowing file. Tap PHOTOGRAPH and keep the file in the frame (steady it with the stick). Then back to the van.', need: 1 }],
+  2: [{ id: 'crouch', title: 'CROUCH BEHIND DESKS', say: 'TAP CROUCH', do: 'tap', at: G => { const b = btnRects(G).crouch; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A guard watches the far room. Tap CROUCH: slow and silent, and the desks hide you. Get the photo and get out unseen.', need: 1 }],
+  3: [{ id: 'hide', title: 'HIDE IN A CUPBOARD', say: 'TAP HIDE', do: 'tap', at: G => { const b = btnRects(G).act; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A guard walks the corridor. Stand by a cupboard and tap HIDE until he has passed, then come out and carry on.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, safe: true }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -24,6 +24,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "It's ok as long as it actually gets more challenging in the higher levels because right now its just way too easy",
    "did": "Far levels now push on much further: a faster crook, thicker traffic and cars crossing, more blocked alleys and dead ends, a closer tackle and a harder struggle."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "taxi": [
@@ -38,6 +44,12 @@
    "when": "from your Police Chase review",
    "said": "the car controls should be a joystick with a button for break acceleration anf reverse",
    "did": "You drive the taxi yourself: a stick, GAS and BRAKE. It used to drive itself."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "pilot": [
@@ -58,6 +70,12 @@
    "when": "23 Nov, written on this page",
    "said": "Pilot — fixes needed\n\n- Longer viewing distance: Render the world farther ahead so you can see distant terrain and the horizon clearly.\n- Better surroundings: Improve the landscape and environment graphics. The plane itself looks fine.\n- Clear starting location: Start on a recognisable runway, ready for takeoff. The current starting point looks like a mountain and is confusing.\n- Takeoff and landing: Allow a complete flight from taking off to descending and successfully landing.\n- Look around: Drag your thumb across the screen to move the camera naturally—right to look right, left to look left, and vertically to look up or down. Allow looking around without accidentally changing the plane’s flight controls.\n- Destination waypoint: Clearly mark where you must fly and which runway you must land on, with useful direction and distance guidance.\n- Mission progression: Begin with straightforward flights and landings, then make missions increasingly challenging.\n- Landing feedback: Clearly recognise a successful landing and explain when an attempt fails.",
    "did": "Rebuilt. Every flight now starts lined up on runway 36 at the home airport: push the power lever up, and at ROTATE hold UP to take off. Then fly to the destination airport (its name, runway number, distance and a gold arrow are always on screen, with a gold beam over the runway and a gold ring where you line up), come down the slope (two white, two red lights) and land and stop. Drag anywhere on the open screen to look around (right looks right, up looks up); it never touches the controls, and the view swings back when you let go. You can now see 40-60 km on a clear day, with fields, woods, villages, a river, lakes and mountains on the horizon. Flight 1 is short and straight; later flights add turns, a waypoint ring, runways at an angle, crosswind and weather. A landing says BUTTER/SMOOTH/LANDED SAFELY with where you touched down; a failed one says exactly what went wrong and what to do next time."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "hunter": [
@@ -72,6 +90,12 @@
    "when": "23 Nov, said in the chat (17:31)",
    "said": "in Hunter, you're supposed to tap left to face left, tap right to face right. But every time I tap, the joystick just goes there... for Hunter, the joystick should be in a set location... I would even recommend making it bigger... A lion attacked me and then it just left me alone? No... swipe to dodge... then tap to hit, tap to hit... I have to defeat that lion.",
    "did": "The stick is now fixed (bottom left) and a third bigger; a tap anywhere else never makes a stick. The lion is a fight: tap its side to face it, it leaps: SWIPE to dodge, it stumbles past you: TAP, TAP, TAP to spear it (its strength shows at the top). It turns and comes again until it is dead. If it gets you, you lose a chance and it is still there to fight."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "vine": [
@@ -92,6 +116,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "I cant see the vine that is supposed to be infront of me WTF make the vines I'm supposed to catch visable",
    "did": "My fault: a missing starting value in the last update made every vine you hadn't grabbed yet invisible. Fixed: all the vines hang there again, and the next one glows gold with a NEXT VINE ring (an arrow at the edge when it's out of view)."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "reel": [
@@ -106,6 +136,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "The big fish here sighn is not nessesary just the fishes coming out of the water is enough",
    "did": "The arrows and FISH HERE words over the water are gone; the fish leaping out show where they are."
+  },
+  {
+   "kind": "yours",
+   "when": "24 Nov, written on this page",
+   "said": "Ok, it's good. I don't think the large orange circles are necessary in the tutorials; after the tutorials, just revert to how it was before. Also, you can make it so that some fish come up while others only bubble. Like, 60 are just under, but the rest come up. Also, in the tutorial, make it clear where the player should tap. Eg when I was playing this game it took me a while, even during the tutorial to learn because it would say tap but when I tapped on the screen, it would simply redirect the fishing reel its only after I realised that I  had to click the bottom left, where there was no lake, that I made progress. After that, I was hooked, so general advice to apply is to make the tutorials easier. Currently, the tutorials make the player read lots of words carefully. No, it should be a few words with visual quews   ",
+   "did": "The big orange circles are gone: the fish show you where they are. Most fish now only bubble under the water; the rest jump out. When a fish takes the float, a big orange TAP! button pulses at the bottom of the screen, and a tap anywhere also strikes: a thumb that slides a little no longer re-casts the line (a new cast needs a long pull). The tutorial is now pictures: a hand shows the pull-and-let-go, WAIT… while the float sits, then TAP NOW! on the button, HOLD TO REEL, LET GO! when the fish runs, and a big tick each time you get it right."
   }
  ],
  "soar": [
@@ -114,6 +150,12 @@
    "when": "23 Nov, written on this page",
    "said": "The rings are ugly.  Make them nore pretty It doesn't even need to be a person flying you can just make a cape flying and flappy through the air. Make ghe surroundings really beautiful here its very important. Take your time renderings the surroundings. Make the game easier let me see the rings and be able to slowly go into them",
    "did": "Rings of light with gems, each the next colour of the rainbow, and a trail of sparks leading to the next one. A crimson cape with a gold hem instead of a person. The surroundings: turquoise shallows and foam round the islands, flower meadows, blossom trees, palms, hot-air balloons, sailing boats, heaped clouds, a rainbow. Easier: you fly at half the speed on the first flights, the rings are bigger and closer, the trail is straighter."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "run": [
@@ -128,6 +170,12 @@
    "when": "from your Taxi Driver review",
    "said": "you don't animate the person entering the car, nor do you animate them leaving the car",
    "did": "At DITCH THE CAR you see yourself get out and run."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "bus": [
@@ -136,6 +184,12 @@
    "when": "from your Taxi Driver review",
    "said": "you don't animate the person entering the car, nor do you animate them leaving the car",
    "did": "The people getting off are seen stepping down from the door and walking away. They were only a number."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "drone": [
@@ -156,6 +210,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "As long as it gets more challenging as the levels go up but currently its ok.",
    "did": "Far levels now keep getting harder: smaller hoops further apart, stronger wind and gusts, more moving hoops, more trees, less time."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "rope": [
@@ -170,6 +230,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "The walker fell at a steady speed. Now he falls faster and faster; the view goes dark before you are back on the wire."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "balloon": [
@@ -178,6 +244,12 @@
    "when": "from your Reel 'Em In review",
    "said": "make the circle distinct from the water color so its easy to see",
    "did": "The target's rings were thin and washed out by the haze. They are wider, a stronger red, with a dark edge, and drawn without haze."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "rex": [
@@ -198,6 +270,12 @@
    "when": "23 Nov, said in the chat (17:08)",
    "said": "you still haven't fixed Rex. Number one, how about you make the joystick in one place, not everywhere I tap... make it that I can be able to see around the area just by clicking the screen and moving around... you still haven't fixed the joystick problem... That T-Rex looks like shit... Make him look like an actual T-Rex.",
    "did": "Found it with real finger touches: the view drifted while you walked, so your push and his path didn't match. Now the stick stays in one place (bottom left), the view never turns by itself, and you drag anywhere else to look round (both thumbs together works). A new T-Rex: a deep skull with teeth and brows, a thick S-neck, heavy body, huge thighs, bird-like feet, tiny two-fingered arms, a long tail, pebbly scales, dark back and pale belly."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "kingdom": [
@@ -206,6 +284,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "A kart in the air could still be steered, and one that went over the edge stopped dead in the air and sank slowly. Now it keeps its line in the air (a glider still steers) and falls faster and faster; the view goes dark before you are put back."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "stunt": [
@@ -214,6 +298,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "A kart in the air could still be steered. Now it keeps the line it took off on; the glider still steers."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "surf": [
@@ -222,6 +312,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "In the air your speed changed with the angle of the board. Now you keep the speed you took off with."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "splash": [
@@ -230,6 +326,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "You could steer in mid-jump. Now the jump goes where you aimed it when you left; after a splash the view goes dark before the checkpoint."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "sandworm": [
@@ -238,6 +340,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "When you fell, the worm froze where it was, even in the air. Now it runs on without you and you fly off on a real arc."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "climb": [
@@ -246,6 +354,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "A fall was a steady slide down. Now it is a real fall until the rope catches you, then the bounce."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "skydive": [
@@ -254,6 +368,12 @@
    "when": "from what you said about Vine (no impossible physics)",
    "said": "I don't want any impossible physics in any of these games. So check the games for impossible physics.",
    "did": "You fell 3 to 4 times faster than gravity out of the door. Now it is gravity and air: you speed up, then level off."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "wolf": [
@@ -262,6 +382,18 @@
    "when": "23 Nov, your review (evening)",
    "said": "Running graphics are absolutely horrible. Fix the Running graphics on all animals. Now its just vibrating",
    "did": "The legs were stiff sticks swinging about 11 times a second (tied to the frame rate). Every animal (your wolf, the pack, the elk) is now a jointed animal with shoulders, knees and hocks, galloping at a real stride rate (2 to 3 strides a second)."
+  },
+  {
+   "kind": "yours",
+   "when": "23 Nov, written on this page (evening)",
+   "said": "Animate the wolf pouncing on the animal, grabbing its neck or other parts of the animal's body. ",
+   "did": "When you bring her down, the camera swings round to watch from the side: your wolf springs onto her neck and hangs on, she goes down on her side, and two of the pack run in and take her hind legs."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "castle": [
@@ -270,6 +402,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "AMAZING GAME!!!! but just a little too hard on the earlier levels ramp it slowly once the player is an expert then you can make it more challenging",
    "did": "From level 4 the climb is slower: weaker foes, smaller armies and longer gaps between waves, reaching full strength only by level 22."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "heaven": [
@@ -278,6 +416,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "We can't tell people what to think morally; this isn't a game you can win... dont rank the good or evil... just allow people to send the individuals where they like no winning here just move on to the next level",
    "did": "No halos or horns, no right or wrong gate, no lives, no sunset, no stars. You send each soul where you think; the Book can always be read; when the queue is empty the next day comes, with where you sent them."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "vet": [
@@ -286,6 +430,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "All tools and interactions—including the brush, needle and tweezers—must register reliably... If the animal becomes too nervous, immediately end the round and display: You failed. You made the animal too nervous. Offer a retry button.",
    "did": "Tools now find the sore spot from twice as far, a nervous animal no longer ignores a tool, a normal pull never counts as a yank, and a brush stroke only counts as 'against the hair' when it clearly is. Too nervous: the round ends at once with YOU FAILED, 'You made the animal too nervous', and TRY AGAIN."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "potter": [
@@ -294,6 +444,12 @@
    "when": "23 Nov, your review (evening)",
    "said": "Fix controls make sure it can actually be beat by a human otherwise its good",
    "did": "Your finger had to land exactly on the clay's edge or it did nothing. Now it grabs the wall at that height wherever it lands: slide out to widen, in to narrow. Robot players of every skill win it (an ordinary one levels 1-20)."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "whaling": [
@@ -302,6 +458,12 @@
    "when": "23 Nov, written on this page",
    "said": "Controls too complicated. Fix graphics when it comes to rowing and I seem to be able to phase through the ways no more physical impossibilites ",
    "did": "One thumb now: hold anywhere to row, the crew steers the boat towards the whale for you, and you throw when the harpoon ring is gold. The oars now dip into the water and sweep back in a proper rowing stroke, and the boat rides on the waves instead of sinking through them (the swell is lower and the boat sits on top of it)."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ],
  "cook": [
@@ -310,6 +472,620 @@
    "when": "23 Nov, written on this page",
    "said": "Make this game sideways. It will allow for more space to see and move the food and impove the graphics with the food. And make sure everything that is being ordered is actually something there that i can make. And make the orders more creative and complex as tine goes on",
    "did": "The kitchen is now sideways (landscape), with the trays, pans, board and plate spread across the wider screen. The food has new pictures: marbled steak, fish fillet with its skin, sesame buns, toast with crust, leafy lettuce, tomatoes with their stalks. Every order is checked to be something you can make from the trays, and 8 new, bigger dishes (a garden burger, a double, a tower, a surf-and-turf, a breakfast plate, a feast and more) come in as the levels go on."
+  },
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "haggle": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "crowd": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "lighthouse": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "hiring": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "fruit": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "shark": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "ramp": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "sumo": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "spy": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "fire": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "kites": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "pour": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "sniper": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "dentist": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "peaks": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "war": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "harvest": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "wild-water": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "sheepdog": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "plumber": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "row": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "eleven": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "golf": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "rodeo": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "kart": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "helix": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "bonsai": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "mocktail": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "hotel": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "skim": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "knife": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "dash": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "safe": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "metro": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "bowling": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "spell": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "pottery": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "dress": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "detective": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "powder": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "hockey": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "sweets": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "roach": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "sprint": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "cairn": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "crew": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "horde": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "roller": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "convoy": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "paint": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "santa": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "penalty": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "tennis": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "lifeguard": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "critters": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "blocks": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "hoopshot": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "house": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "timber": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "words": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "tag": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "joust": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "gridiron": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "sinkhole": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "lantern": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "keys": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "judge": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "cake": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "hoops3": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "binround": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "miner": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "mow": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "origami": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "drumline": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "memory": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
+  }
+ ],
+ "pinball": [
+  {
+   "kind": "also",
+   "when": "24 Nov, from your note on Reel",
+   "said": "All games — make tutorials short, visual and easy: remove long opening explanations; teach through visual cues (animated fingers, arrows, highlighted objects, large pulsing buttons); very few words in large text (Tap here, Swipe left, Hold to reel, Release); one action at a time; demonstrate gestures; teach during gameplay; simple enough for a five-year-old; immediate feedback; allow skipping and replaying the tutorial.",
+   "did": "The tutorial no longer shows paragraphs. Each lesson is two to four big words (like TAP BITE or HOLD TO REEL), with a hand that shows the move (a tap, a hold, a swipe and which way, a drag), a big green tick each time you do it right and TRY AGAIN when not. Skip tutorial and the Tutorial button are still there."
   }
  ]
 }

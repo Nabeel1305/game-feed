@@ -195,9 +195,9 @@ const BLIND = { m: G => { if (Math.random() < 0.2) stick(G, 0, 0); else { const 
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.wins = G.cfg.need; G.log.push({ won: true, how: 'out', tech: 'Yorikiri', counter: true, edge: false, t: 5, rival: G.rival.name }); finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'push', title: 'PRESS IN AND SHOVE', how: 'Left thumb: push the stick UP to press into him. Tap PUSH (right) for a shove. Shove him out of the ring.', need: 1 }],
-  2: [{ id: 'grip', title: 'GRIP AND DRIVE', how: 'Get close and HOLD GRIP: you take his belt. Keep holding and push the stick UP to drive him out.', need: 1 }],
-  3: [{ id: 'tachiai', title: 'SIDESTEP THE CHARGE', how: 'He will charge at the start. Tap DODGE as the bout begins: he charges into nothing and falls. (Later: DODGE as he lunges, then PUSH him as he stumbles past.)', need: 1 }],
+  1: [{ id: 'push', title: 'PRESS IN AND SHOVE', say: 'TAP PUSH', do: 'tap', at: G => { const b = btnRects(G).push; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Left thumb: push the stick UP to press into him. Tap PUSH (right) for a shove. Shove him out of the ring.', need: 1 }],
+  2: [{ id: 'grip', title: 'GRIP AND DRIVE', say: 'HOLD GRIP', do: 'hold', at: G => { const b = btnRects(G).grip; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Get close and HOLD GRIP: you take his belt. Keep holding and push the stick UP to drive him out.', need: 1 }],
+  3: [{ id: 'tachiai', title: 'SIDESTEP THE CHARGE', say: 'TAP DODGE!', do: 'tap', at: G => { const b = btnRects(G).dodge; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'He will charge at the start. Tap DODGE as the bout begins: he charges into nothing and falls. (Later: DODGE as he lunges, then PUSH him as he stumbles past.)', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, dummy: true }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -117,9 +117,9 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.r
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; for (const q of G.words) q.found = true; G.found = G.words.length; finish(G, true); }
 // ---------- LESSONS: little pages ----------
 const LESSONS = {
-  1: [{ id: 'spell', title: 'SLIDE TO SPELL', how: 'Put your thumb on a letter and slide through the others to spell a word. Lift to try it. Fill the crossword!', page: { base: 'heart', words: ['heart', 'earth', 'hate', 'tear', 'hat'] } }],
-  2: [{ id: 'hint', title: 'STUCK? A HINT', how: 'Find the words. Stuck? Tap the 💡 bulb: it shows a letter (two free in this lesson). Made-up words spill ink!', page: { base: 'stone', words: ['stone', 'notes', 'tone', 'nest', 'one', 'set'] } }],
-  3: [{ id: 'bonus', title: 'BONUS WORDS', how: 'Real words that are not in the crossword are BONUS words: a coin each. Find one bonus word, and fill the crossword.', page: { base: 'plane', words: ['plane', 'panel', 'lane', 'plan', 'pal'] } }],
+  1: [{ id: 'spell', title: 'SLIDE TO SPELL', say: 'SLIDE ACROSS LETTERS', do: 'drag', dir: 'right', how: 'Put your thumb on a letter and slide through the others to spell a word. Lift to try it. Fill the crossword!', page: { base: 'heart', words: ['heart', 'earth', 'hate', 'tear', 'hat'] } }],
+  2: [{ id: 'hint', title: 'STUCK? A HINT', say: 'STUCK? TAP 💡', do: 'tap', at: G => { const L = lay(); return [L.bulb.x, L.bulb.y]; }, how: 'Find the words. Stuck? Tap the 💡 bulb: it shows a letter (two free in this lesson). Made-up words spill ink!', page: { base: 'stone', words: ['stone', 'notes', 'tone', 'nest', 'one', 'set'] } }],
+  3: [{ id: 'bonus', title: 'BONUS WORDS', say: 'FIND A BONUS WORD', do: 'drag', dir: 'right', how: 'Real words that are not in the crossword are BONUS words: a coin each. Find one bonus word, and fill the crossword.', page: { base: 'plane', words: ['plane', 'panel', 'lane', 'plan', 'pal'] } }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -204,9 +204,9 @@ function judgeDocket(G) { const c = G.cfg, avg = Math.round(G.done.reduce((a, e)
   G.ev.push({ k: 'council', avg }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'write', title: 'PASS SENTENCE', how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
-  2: [{ id: 'weigh', title: 'WEIGH IT UP', how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],
-  3: [{ id: 'right', title: 'PUT IT RIGHT', how: 'A victim lost money: add + Compensation as well as the punishment. Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
+  1: [{ id: 'write', title: 'PASS SENTENCE', say: 'TAP TO BUILD, THEN PASS', do: 'tap', how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
+  2: [{ id: 'weigh', title: 'WEIGH IT UP', say: 'WEIGH IT UP', do: 'tap', how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],
+  3: [{ id: 'right', title: 'PUT IT RIGHT', say: 'ADD COMPENSATION', do: 'tap', how: 'A victim lost money: add + Compensation as well as the punishment. Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonCase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -20,10 +20,7 @@ function hud(G, L, now) { const s = L.s; ctx.fillStyle = 'rgba(8,24,40,.9)'; ctx
   // the day: a thin bar under the top
   fillR(0, L.top - 3, W * (1 - G.clock / G.cfg.day), 3, 0, late ? '#ff6a5a' : 'rgba(255,255,255,.35)'); }
 // the lesson: its title in the top bar (clear of the pause and Skip buttons), what to do in a box just under it
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#ffb21e'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.fillText('LESSON', 12, 22 * s); ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(12 * s)}px ${NU}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n}/${st.need}` : ''), 12, 44 * s);
-  ctx.font = `700 ${Math.round(13 * s)}px ${NU}`; const ls = wrapText(st.how, W - 44), h = ls.length * 16 * s + 14, y = L.top + 6; fillR(10, y, W - 20, h, 12, 'rgba(8,24,40,.92)'); ctx.strokeStyle = '#ffb21e'; ctx.lineWidth = 1.5; rrect(10, y, W - 20, h, 12); ctx.stroke();
-  ctx.fillStyle = '#fff'; ls.forEach((l, i) => ctx.fillText(l, 22, y + 7 + 8 * s + i * 16 * s)); }
+function lessonPanel(G, L) { coachPanel(G); }
 // ---------- the street (between jobs) ----------
 function street(G, L, now, drive) { const s = L.s, P = PLACES[G.place], h = L.sy0 || L.top + 200 * s; const g = ctx.createLinearGradient(0, L.top, 0, h); g.addColorStop(0, P.sky[0]); g.addColorStop(1, P.sky[1]); ctx.fillStyle = g; ctx.fillRect(0, L.top, W, h - L.top);
   const off = drive ? (now * 260 * s) : now * 6 * s, gy = h - 34 * s;
@@ -163,7 +160,7 @@ function onEvent(G, e) { const L = lay(), s = L.s;
     case 'expired': if (G.phase === 'board') say('A call went elsewhere', W / 2, L.top + 170 * s, 'rgba(255,255,255,.7)', 12); break;
     case 'five': say('5 PM!', W / 2, L.top + 120 * s, '#ff8a7a', 40); sfx.bell(); break;
     case 'goal': say('DAY\'S MONEY MADE!', W / 2, L.top + 120 * s, '#ffd36a', 24); FX.flash = 0.6; sfx.goal(); vibe(HAP.best); for (let i = 0; i < 40; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: L.top + 120 * s, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320 - 160, life: 1.1, t: 0, col: ['#ffd36a', '#7be08a', '#9fd4f0'][i % 3], r: 3.5, g: 520 }); } break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.8 }; sfx.wrong(); break;
+    case 'lessonmiss': coachMiss(); sfx.wrong(); break;
     case 'lessonnext': if (e.first) hint = null; break;
     case 'lessonok': sfx.cash(3); say(`${e.n} / ${e.need}`, W / 2, L.by + L.bh * 0.35, '#ffd36a', 26); break;
     case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.by + L.bh * 0.35, '#ffd36a', 26); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;

@@ -91,10 +91,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'press', title: 'THE CLAY FOLLOWS YOUR FINGER', how: 'Touch the side of the spinning clay and slowly move your finger in towards the middle. Watch it narrow.', need: 1, ok: (w, m) => w === 'shaped' },
-      { id: 'fire', title: 'MATCH, THEN FIRE', how: 'Shape it to the dotted outline, bottom to top, slowly. When the match reaches the mark, tap FIRE.', need: 1, ok: w => w === 'fired', ctrl: 2 }],
-  2: [{ id: 'curve', title: 'IN AND OUT', how: 'This one curves. Move your finger in where it narrows and out where it swells, slowly, all the way up.', need: 1, ok: w => w === 'fired', ctrl: 3 }],
-  3: [{ id: 'two', title: 'TWO ORDERS', how: 'Two pots to make. Slow, steady hands: too fast and the pot wobbles.', need: 2, ok: w => w === 'fired', ctrl: 3 }],
+  1: [{ id: 'press', title: 'THE CLAY FOLLOWS YOUR FINGER', say: 'TOUCH THE SIDE, MOVE IN', do: 'drag', dir: 'right', how: 'Touch the side of the spinning clay and slowly move your finger in towards the middle. Watch it narrow.', need: 1, ok: (w, m) => w === 'shaped' },
+      { id: 'fire', title: 'MATCH, THEN FIRE', say: 'MATCH THE LINE, TAP FIRE', do: 'drag', dir: 'up', how: 'Shape it to the dotted outline, bottom to top, slowly. When the match reaches the mark, tap FIRE.', need: 1, ok: w => w === 'fired', ctrl: 2 }],
+  2: [{ id: 'curve', title: 'IN AND OUT', say: 'IN… AND OUT', do: 'drag', dir: 'up', how: 'This one curves. Move your finger in where it narrows and out where it swells, slowly, all the way up.', need: 1, ok: w => w === 'fired', ctrl: 3 }],
+  3: [{ id: 'two', title: 'TWO ORDERS', say: 'SLOW AND STEADY', do: 'drag', dir: 'up', how: 'Two pots to make. Slow, steady hands: too fast and the pot wobbles.', need: 2, ok: w => w === 'fired', ctrl: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

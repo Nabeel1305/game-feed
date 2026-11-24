@@ -219,12 +219,14 @@ function finish(G, win, why) {
 
 // ---------- LESSONS: the first three trips teach every move, two or three times each, before the clock runs ----------
 const LESSONS = {
-  1: [{ id: 'cast', title: 'CAST TO THE RINGS', how: 'Pull your thumb down, then let go: the float flies the other way. Land it inside the rings, where fish are rising.', need: 2, ok: w => w === 'inspot', soft: 1 },
-      { id: 'strike', title: 'STRIKE WHEN IT GOES UNDER', how: 'Wait. A little dip is a nibble: leave it. When the float is pulled right under, TAP.', need: 2, ok: w => w === 'hooked', nib: 1, soft: 1, calm: 1 },
-      { id: 'reel', title: 'HOLD TO REEL IT IN', how: 'Hold your thumb on the screen to wind the fish in. Lift it and the line goes slack.', need: 2, ok: w => w === 'caught', soft: 1, calm: 1 }],
-  2: [{ id: 'run', title: 'LET GO WHEN IT RUNS', how: 'When the fish thrashes and the line screams, lift your thumb, or it snaps. Hold again when it calms down.', need: 3, ok: w => w === 'survived', calm: 1 },
-      { id: 'steer', title: 'STEER IT FROM THE WEEDS', how: 'Watch which way the line moves. While you hold, drag your thumb the other way to pull it back out.', need: 2, ok: w => w === 'turned' }],
-  3: [{ id: 'all', title: 'PUT IT TOGETHER', how: 'Cast to the rings, strike when it goes under, hold to reel, let go when it runs, steer it from the weeds.', need: 2, ok: w => w === 'caught' }],
+  // his words (24 Nov 2026): "a few big words like tap here to catch the fish... visual cues". say: the big words; do and at: the hand
+  // shows the gesture where it is to be done (the kit's coach). how is kept for the robots and the record, and is never shown.
+  1: [{ id: 'cast', title: 'CAST TO THE FISH', say: G => ui.aim ? (ui.onSpot ? 'LET GO!' : 'PULL TO THE FISH') : 'PULL DOWN, LET GO', do: 'drag', at: G => [W / 2, H * 0.6, W / 2, H * 0.84], how: 'Pull your thumb down, then let go: the float flies the other way. Land it where the fish jump.', need: 2, ok: w => w === 'inspot', soft: 1 },
+      { id: 'strike', title: 'TAP WHEN IT GOES UNDER', say: G => G.ph === 'bite' ? 'TAP NOW!' : 'WAIT…', do: G => G.ph === 'bite' ? 'tap' : 'wait', at: G => G.ph === 'bite' ? strikeBtn() : floatAt(), how: 'Wait. A little dip is a nibble: leave it. When the float is pulled right under, TAP.', need: 2, ok: w => w === 'hooked', nib: 1, soft: 1, calm: 1 },
+      { id: 'reel', title: 'HOLD TO REEL', say: 'HOLD TO REEL', do: 'hold', at: G => [W / 2, H * 0.74], how: 'Hold your thumb on the screen to wind the fish in. Lift it and the line goes slack.', need: 2, ok: w => w === 'caught', soft: 1, calm: 1 }],
+  2: [{ id: 'run', title: 'LET GO WHEN IT RUNS', say: G => G.F && (G.F.surge > 0 || G.F.tell > 0) ? 'LET GO!' : 'HOLD TO REEL', do: G => G.F && (G.F.surge > 0 || G.F.tell > 0) ? 'release' : 'hold', at: G => [W / 2, H * 0.74], how: 'When the fish thrashes and the line screams, lift your thumb, or it snaps. Hold again when it calms down.', need: 3, ok: w => w === 'survived', calm: 1 },
+      { id: 'steer', title: 'PULL IT AWAY', say: G => G.F ? (G.F.dir > 0 ? 'HOLD, DRAG LEFT' : 'HOLD, DRAG RIGHT') : 'HOLD, DRAG', do: 'drag', dir: G => G.F && G.F.dir > 0 ? 'left' : 'right', at: G => [W / 2, H * 0.74], how: 'Watch which way the line moves. While you hold, drag your thumb the other way to pull it back out.', need: 2, ok: w => w === 'turned' }],
+  3: [{ id: 'all', title: 'NOW CATCH TWO!', say: 'NOW CATCH TWO!', how: 'Cast to the rings, strike when it goes under, hold to reel, let go when it runs, steer it from the weeds.', need: 2, ok: w => w === 'caught' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

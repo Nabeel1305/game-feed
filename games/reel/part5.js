@@ -98,7 +98,7 @@ cv.addEventListener('pointerdown', e => {
 cv.addEventListener('pointermove', e => {
   if (e.pointerId !== touch.id || !G) return; touch.x = e.clientX; touch.y = e.clientY; const dx = touch.x - touch.x0, dy = touch.y - touch.y0;
   if (G.ph === 'fight') { G.in.hold = true; G.in.side = clamp(touch.side0 + dx / (W * 0.2), -1, 1); return; }
-  if (ui.drag && ui.drag.mode !== 'reel' && dy > 18 * k && ['idle', 'wait', 'bite', 'reelin'].includes(G.ph)) { ui.drag.mode = 'cast'; const A = castAim(dx, dy); ui.drag.pull = A.pull; ui.aim = A.pull > 0.04 ? A : null; }
+  if (ui.drag && ui.drag.mode !== 'reel' && dy > (G.ph === 'wait' || G.ph === 'bite' ? 70 : 18) * k && ['idle', 'wait', 'bite', 'reelin'].includes(G.ph)) { ui.drag.mode = 'cast'; const A = castAim(dx, dy); ui.drag.pull = A.pull; ui.aim = A.pull > 0.04 ? A : null; }
   else if (ui.drag && ui.drag.mode === 'cast' && dy <= 18 * k) { ui.aim = null; ui.drag.pull = 0; }
 });
 function endTouch(e) {
@@ -106,7 +106,7 @@ function endTouch(e) {
   if (G.ph === 'fight') { G.in.hold = false; ui.drag = null; return; }
   if (ui.drag && ui.drag.mode === 'cast' && ui.aim) { const A = ui.aim; if (G.ph === 'reelin') G.ph = 'idle'; cast(G, A.x, A.z); }
   else if (dy < -30 * k && ms < 900 && -dy > Math.abs(dx) * 0.8) strike(G);
-  else if (Math.hypot(dx, dy) < 16 * k && ms < 450 && (G.ph === 'wait' || G.ph === 'bite')) strike(G);      /* 22 Nov 2026: a TAP strikes (the flick up was a hidden gesture; it still works) */
+  else if (Math.hypot(dx, dy) < 50 * k && ms < 900 && (G.ph === 'wait' || G.ph === 'bite')) strike(G);      /* 24 Nov: a tap anywhere strikes, a slightly sliding thumb too (his review: a tap re-cast the line); re-casting while the float is out needs a long pull */      /* 22 Nov 2026: a TAP strikes (the flick up was a hidden gesture; it still works) */
   ui.aim = null; ui.drag = null;
 }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);

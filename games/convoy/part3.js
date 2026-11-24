@@ -173,11 +173,4 @@ function tacMap(G) { const s = Math.min(W * 0.46, H * 0.62), x0 = W / 2 - s / 2,
   ctx.fillStyle = '#7ad0ff'; ctx.beginPath(); ctx.moveTo(x0 + s / 2, y0 + s / 2 - 8); ctx.lineTo(x0 + s / 2 + 5, y0 + s / 2 + 6); ctx.lineTo(x0 + s / 2 - 5, y0 + s / 2 + 6); ctx.fill();
   ctx.restore(); txt('TACTICAL MAP · tap 🗺 to close', W / 2, y0 + s + 12 * k, '#fff', `700 ${Math.round(11 * k)}px ${BC}`); }
 function banner() { const b = ui.banner, a = Math.min(1, b.t / 0.2, ((b.secs || 1.6) - b.t) / 0.4); ctx.globalAlpha = Math.max(0, a); txt(b.txt, W / 2, H * 0.34, '#ffd36a', `400 ${Math.round((b.small ? 26 : 36) * k)}px ${TF}`); if (b.sub) txt(b.sub, W / 2, H * 0.34 + 28 * k, '#fff', `700 ${Math.round(14 * k)}px ${BC}`); ctx.globalAlpha = 1; }
-function lessonPanel(G) { const D = G.lesson, st0 = D.steps[D.i], w = Math.min(W - 300 * k, 420 * k), x = W / 2 - w / 2, y = 44 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st0.how, w - 24), h = 50 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(10,20,26,.9)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(122,208,255,.8)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#7ad0ff'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3`, x + 12, y + 9 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillText(st0.title, x + 12, y + 23 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 45 * k + i * 17 * k));
-  for (let i = 0; i < st0.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st0.need - 1 - i) * 18 * k, y + 16 * k, 6 * k, 0, TAU); if (i < D.n) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
-  ctx.restore(); ctx.textBaseline = 'middle'; }
+function lessonPanel(G) { coachPanel(G); }

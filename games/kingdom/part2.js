@@ -389,10 +389,10 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: the course to yourself (and a few slow karts to aim at) ----------
 const LESSONS = {
-  1: [{ id: 'boost', title: 'STEER AND DRIFT', how: 'Hold ◀ or ▶ to steer. In a bend, steer AND hold DRIFT: you slide and the sparks go blue, orange, purple. Let go of DRIFT for a BOOST. Twice.', need: 2 },
-      { id: 'nitro', title: 'NITRO!', how: 'Drifts, tricks and slipstreams fill your NITRO. It is full now: tap NITRO (above DRIFT) for a big boost!', need: 1 }],
-  2: [{ id: 'trick', title: 'JUMP AND TRICK', how: 'Off a ramp, tap DRIFT once in the air for a trick, and land after it has finished. Twice. Only in the air!', need: 2 }],
-  3: [{ id: 'item', title: 'TURTLE SHELLS', how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap ITEM to fire ahead (swipe it down to fire behind). Hit two karts.', need: 2 }],
+  1: [{ id: 'boost', title: 'STEER AND DRIFT', say: 'HOLD ◀ ▶, HOLD DRIFT', do: 'hold', how: 'Hold ◀ or ▶ to steer. In a bend, steer AND hold DRIFT: you slide and the sparks go blue, orange, purple. Let go of DRIFT for a BOOST. Twice.', need: 2 },
+      { id: 'nitro', title: 'NITRO!', say: 'TAP NITRO!', do: 'tap', how: 'Drifts, tricks and slipstreams fill your NITRO. It is full now: tap NITRO (above DRIFT) for a big boost!', need: 1 }],
+  2: [{ id: 'trick', title: 'JUMP AND TRICK', say: 'IN THE AIR: TAP DRIFT', do: 'tap', how: 'Off a ramp, tap DRIFT once in the air for a trick, and land after it has finished. Twice. Only in the air!', need: 2 }],
+  3: [{ id: 'item', title: 'TURTLE SHELLS', say: 'GET BEHIND, TAP ITEM', do: 'tap', how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap ITEM to fire ahead (swipe it down to fire behind). Hit two karts.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; G.hz = [];
   if (lessonNow(G).id === 'item') { const S = G.T.S, n = S.length; for (let q = 0; q < 3; q++) { const i = (G.me.i + 30 + q * 26) % n, p = S[i], lat = [-3, 3, 0][q]; const d = newKart(G, { x: p.x - Math.sin(p.h) * lat, z: p.z + Math.cos(p.h) * lat, h: p.h, i }, DRIVERS[1 + q], false, 0); d.dummy = true; d.line = lat; d.skill = 0.55; d.lap = 0; d.prog = G.me.prog + (30 + q * 26) * G.T.ds; d.last = i; d.y = p.y; G.karts.push(d); } } }

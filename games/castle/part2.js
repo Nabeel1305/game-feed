@@ -157,9 +157,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'build', title: 'BUILD ARCHERS', how: 'Tap a stone pad beside the road, then tap the ARCHERS. Build two towers and hold off the goblins.', need: 1, ok: w => w === 'held', kinds: ['goblin'], waves: 2 }],
-  2: [{ id: 'mix', title: 'THE RIGHT TOWER', how: 'Bats fly: catapults and frost cannot touch them. Knights wear plate: arrows bounce off. Build a MAGE and a CATAPULT.', need: 1, ok: w => w === 'held', kinds: ['bat', 'knight', 'soldier'], waves: 2 }],
-  3: [{ id: 'up', title: 'UPGRADE AND FIRE', how: 'Tap a tower you built to UPGRADE it. Tap METEOR, then the road, to drop fire on a crowd. Hold two waves.', need: 1, ok: w => w === 'held', kinds: ['soldier', 'goblin', 'knight'], waves: 2 }],
+  1: [{ id: 'build', title: 'BUILD ARCHERS', say: 'TAP A PAD, THEN ARCHERS', do: 'tap', how: 'Tap a stone pad beside the road, then tap the ARCHERS. Build two towers and hold off the goblins.', need: 1, ok: w => w === 'held', kinds: ['goblin'], waves: 2 }],
+  2: [{ id: 'mix', title: 'THE RIGHT TOWER', say: 'BUILD A MAGE AND A CATAPULT', do: 'tap', how: 'Bats fly: catapults and frost cannot touch them. Knights wear plate: arrows bounce off. Build a MAGE and a CATAPULT.', need: 1, ok: w => w === 'held', kinds: ['bat', 'knight', 'soldier'], waves: 2 }],
+  3: [{ id: 'up', title: 'UPGRADE AND FIRE', say: 'TAP A TOWER: UPGRADE', do: 'tap', how: 'Tap a tower you built to UPGRADE it. Tap METEOR, then the road, to drop fire on a crowd. Hold two waves.', need: 1, ok: w => w === 'held', kinds: ['soldier', 'goblin', 'knight'], waves: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.waves = makeWaves(G); G.wave = 0; G.next = 14; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

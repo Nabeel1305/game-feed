@@ -98,9 +98,9 @@ function finish(G, win) { const c = G.cfg; G.over = win ? 'won' : 'lost'; const 
 function press(G, side, secs = 0.3) { if (side === 'l') G.tl = secs; else G.tr = secs; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'land', title: 'STICK IT', how: 'Off the ramp the bike points up. Hold RIGHT in the air to lean it forward, so it lands flat on the slope. Three clean landings in a row.', need: 3 }],
-  2: [{ id: 'flip', title: 'FLIP', how: 'Big ramp. Hold LEFT in the air to spin a backflip, let go as it comes round, and land it. Twice.', need: 2 }],
-  3: [{ id: 'perfect', title: 'PERFECT', how: 'Land so the wheels meet the slope exactly: a PERFECT gives a boost. Two perfect landings in a row.', need: 2 }],
+  1: [{ id: 'land', title: 'STICK IT', say: 'HOLD RIGHT IN THE AIR', do: 'hold', at: G => [W * 0.73, H * 0.72], how: 'Off the ramp the bike points up. Hold RIGHT in the air to lean it forward, so it lands flat on the slope. Three clean landings in a row.', need: 3 }],
+  2: [{ id: 'flip', title: 'FLIP', say: 'HOLD LEFT TO FLIP', do: 'hold', at: G => [W * 0.27, H * 0.72], how: 'Big ramp. Hold LEFT in the air to spin a backflip, let go as it comes round, and land it. Twice.', need: 2 }],
+  3: [{ id: 'perfect', title: 'PERFECT', say: 'LAND FLAT', do: 'hold', how: 'Land so the wheels meet the slope exactly: a PERFECT gives a boost. Two perfect landings in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonTrack(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

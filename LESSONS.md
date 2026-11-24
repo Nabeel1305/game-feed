@@ -11,6 +11,10 @@ Everything learned building the first games. Every new game must follow the **ru
 - **Engagement factors in every game, always, without being told** (his words: "I shouldn't have to tell you"). They are the research in `PLAYBOOK.md`: pick the ones that suit each game from the player's point of view, never all of them blindly, but never none.
 
 ## The audit of 22 Nov 2026 (read `specs/audit-2026-11-22.md` before changing any game from 9 on)
+- **Tutorials are pictures (24 Nov 2026).** The shared coach is at the end of `tools/juice-kit.js`: `coachPanel(G)` (called by every game's
+  `lessonPanel`), `coachMiss()` (from `'lessonmiss'`), `coachCue()`. A step's `say`, `do`, `dir` and `at` may be functions of G, so the words
+  and the hand change with the moment (Reel: WAIT… over the float, then TAP NOW! on the strike button). Reel's lesson showed TAP while a tap
+  that slid a little re-cast the line: when a gesture means two things, make the one the lesson asks for the easy one.
 His words: "we're done making games... fix these 111 games... lots of them are below average... the graphics are just absolutely
 dog shit... some of the soundtracks sound so robotic... the players' positioning is horrible... the controls on that hunter game
 are horrible... the minute someone opens this game, they don't need to be a genius to understand the controls. Because you're a

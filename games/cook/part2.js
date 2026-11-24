@@ -111,11 +111,11 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'flip', title: 'GOLDEN, THEN FLIP', how: 'Drag a pancake into a pan. When the underside turns golden, tap the pan to flip it. Do it twice.', need: 2, ok: (w, s) => w === 'flip' && s >= GOLD[0] - 0.06 && s <= GOLD[1] + 0.06 },
-      { id: 'serve', title: 'PLATE IT AND SERVE', how: 'Golden both sides? Drag it to the plate, then drag the plate up to the pass.', need: 1, ok: w => w === 'served', dish: 'pancakes' }],
-  2: [{ id: 'chop', title: 'CHOP', how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
-      { id: 'burger', title: 'A WHOLE BURGER', how: 'Patty in the pan (flip when golden), chop lettuce and tomato, a bun on the plate, everything on, then serve.', need: 1, ok: w => w === 'served', dish: 'burger' }],
-  3: [{ id: 'two', title: 'TWO AT ONCE', how: 'While one thing cooks, chop or start the next. Serve two orders.', need: 2, ok: w => w === 'served', dish: null, two: true }],
+  1: [{ id: 'flip', title: 'GOLDEN, THEN FLIP', say: 'DRAG IT TO A PAN, TAP TO FLIP', do: 'drag', dir: 'up', how: 'Drag a pancake into a pan. When the underside turns golden, tap the pan to flip it. Do it twice.', need: 2, ok: (w, s) => w === 'flip' && s >= GOLD[0] - 0.06 && s <= GOLD[1] + 0.06 },
+      { id: 'serve', title: 'PLATE IT AND SERVE', say: 'DRAG TO THE PLATE, THEN UP', do: 'drag', dir: 'up', how: 'Golden both sides? Drag it to the plate, then drag the plate up to the pass.', need: 1, ok: w => w === 'served', dish: 'pancakes' }],
+  2: [{ id: 'chop', title: 'CHOP', say: 'SWIPE TO CHOP', do: 'swipe', dir: 'lr', how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
+      { id: 'burger', title: 'A WHOLE BURGER', say: 'MAKE THE BURGER', do: 'none', how: 'Patty in the pan (flip when golden), chop lettuce and tomato, a bun on the plate, everything on, then serve.', need: 1, ok: w => w === 'served', dish: 'burger' }],
+  3: [{ id: 'two', title: 'TWO AT ONCE', say: 'TWO AT ONCE', do: 'none', how: 'While one thing cooks, chop or start the next. Serve two orders.', need: 2, ok: w => w === 'served', dish: null, two: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

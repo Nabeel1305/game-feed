@@ -144,9 +144,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.done = G.V.map(h => h.i); finish(G, true, 'all'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'land', title: 'LAND ON THE ROOF', how: 'Steer with your left thumb towards the glowing house. Over its marker, hold LAND: the sleigh slows and settles on the roof. Land once.', need: 1 }],
-  2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],
-  3: [{ id: 'sneak', title: 'TIPTOE', how: 'Push gently to tiptoe. Go round furniture and the dark creaky boards; watch the noise meter. Deliver one house without waking anyone.', need: 1 }],
+  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: 'STEER, HOLD LAND', do: 'hold', at: G => { const b = layout(G).btn; return [b.x, b.y]; }, how: 'Steer with your left thumb towards the glowing house. Over its marker, hold LAND: the sleigh slows and settles on the roof. Land once.', need: 1 }],
+  2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', say: 'TAP A PRESENT, ACT', do: 'tap', how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],
+  3: [{ id: 'sneak', title: 'TIPTOE', say: 'PUSH GENTLY', do: 'drag', dir: 'up', how: 'Push gently to tiptoe. Go round furniture and the dark creaky boards; watch the noise meter. Deliver one house without waking anyone.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what) { const D = G.lesson; if (!D || D.done) return; let good = false;

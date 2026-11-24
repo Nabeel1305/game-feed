@@ -206,12 +206,12 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'calm', title: 'CALM HER FIRST', how: 'With your hand, stroke slowly along her back. Slow, gentle strokes: three of them.', need: 3, ok: w => w === 'calm', prob: 'thorn', animal: 'dog', nervous: 0.6 },
-      { id: 'thorn', title: 'THE THORN', how: 'She is limping: find the thorn in her paw. Pick the tweezers, put them on it, then pull away slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'thorn', prob: 'thorn', animal: 'dog' }],
-  2: [{ id: 'hoof', title: 'TRIM THE HOOF', how: 'One hoof is too long. Pick the rasp and stroke along the hoof down to the line. Short strokes near the end.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'hoof', prob: 'hoof', animal: 'cow' },
-      { id: 'mud', title: 'BRUSH WITH THE HAIR', how: 'Pick the brush. Stroke the mud off the way the hair lies: from her head towards her tail.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'mud', prob: 'mud', animal: 'sheep' }],
-  3: [{ id: 'cut', title: 'CLEAN AND WRAP', how: 'Hold the spray on the cut until it is clean. Then the bandage: circle round the leg, slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'cut', prob: 'cut', animal: 'horse' },
-      { id: 'shot', title: 'THE INJECTION', how: 'Hold the needle on her neck. When she starts to shiver, lift off at once, then hold it in again.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'shot', prob: 'shot', animal: 'pig' }],
+  1: [{ id: 'calm', title: 'CALM HER FIRST', say: 'STROKE SLOWLY', do: 'drag', dir: 'right', how: 'With your hand, stroke slowly along her back. Slow, gentle strokes: three of them.', need: 3, ok: w => w === 'calm', prob: 'thorn', animal: 'dog', nervous: 0.6 },
+      { id: 'thorn', title: 'THE THORN', say: 'TWEEZERS, PULL SLOWLY', do: 'drag', dir: 'down', how: 'She is limping: find the thorn in her paw. Pick the tweezers, put them on it, then pull away slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'thorn', prob: 'thorn', animal: 'dog' }],
+  2: [{ id: 'hoof', title: 'TRIM THE HOOF', say: 'RASP DOWN TO THE LINE', do: 'drag', dir: 'down', how: 'One hoof is too long. Pick the rasp and stroke along the hoof down to the line. Short strokes near the end.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'hoof', prob: 'hoof', animal: 'cow' },
+      { id: 'mud', title: 'BRUSH WITH THE HAIR', say: 'BRUSH HEAD TO TAIL', do: 'drag', dir: 'right', how: 'Pick the brush. Stroke the mud off the way the hair lies: from her head towards her tail.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'mud', prob: 'mud', animal: 'sheep' }],
+  3: [{ id: 'cut', title: 'CLEAN AND WRAP', say: 'SPRAY, THEN WRAP', do: 'hold', how: 'Hold the spray on the cut until it is clean. Then the bandage: circle round the leg, slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'cut', prob: 'cut', animal: 'horse' },
+      { id: 'shot', title: 'THE INJECTION', say: 'HOLD… LIFT WHEN SHE SHIVERS', do: 'hold', how: 'Hold the needle on her neck. When she starts to shiver, lift off at once, then hold it in again.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'shot', prob: 'shot', animal: 'pig' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

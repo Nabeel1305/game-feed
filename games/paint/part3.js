@@ -85,10 +85,7 @@ function hud(G, L, now) { const s = L.s, c = G.cfg;
   const nx = W - 34 * s, ny = 58 * s; ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.arc(nx, ny, 22 * s, 0, TAU); ctx.fill(); blob(nx, ny, Math.min(17 * s, radOf(G.queue[1]) * L.u * 0.7), G.queue[1], { held: true, now }); ctx.fillStyle = '#5a2a6a'; ctx.font = `700 ${Math.round(10 * s)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('NEXT', nx, ny + 30 * s);
   if (G.shakes > 0) { const b = shakeBtn(); ctx.fillStyle = 'rgba(255,255,255,.7)'; rrect(b.x, b.y, b.w, b.h, 12); ctx.fill(); ctx.fillStyle = '#5a2a6a'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.fillText('SHAKE', b.x + b.w / 2, b.y + b.h / 2); } }
 function shakeBtn() { const s = S1(); return { x: W - 84 * s, y: 100 * s, w: 70 * s, h: 30 * s }; }
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10 + L.side, w = W - 20 - L.side, y = 44 * s; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 42 * s + lines.length * 17 * s;
-  ctx.fillStyle = 'rgba(60,30,70,.92)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#ffd83a'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd83a'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n} / ${st.need}` : ''), x + 12, y + 9 * s);
-  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * s + i * 17 * s)); ctx.restore(); }
+function lessonPanel(G, L) { coachPanel(G); }
 // ---------- what each happening looks like ----------
 function onEvent(G, e) { const L = lay(G), s = L.s;
   switch (e.k) {
@@ -108,7 +105,7 @@ function onEvent(G, e) { const L = lay(G), s = L.s;
     case 'goal': FX.flash = 0.7; sfx.goal(); vibe(HAP.best); say(`${TIERS[e.t].n.toUpperCase()}! DONE!`, W / 2, H * 0.36, TIERS[e.t].c, 34); for (let i = 0; i < 50; i++) { const a = Math.random() * TAU; PT.push({ x: W / 2, y: H * 0.4, vx: Math.cos(a) * 320, vy: Math.sin(a) * 320 - 160, life: 1.2, t: 0, col: TIERS[i % 10].c, r: 4 }); } break;
     case 'shake': FX.shake = 16; sfx.shake(); break;
     case 'lessonok': if (!e.quiet) say(`${e.n} / ${e.need}`, W / 2, H * 0.4, '#3ac85a', 26); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('LOVELY!', W / 2, H * 0.4, '#ff6ac8', 32); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); break;
     case 'lost': sfx.lose(); break;

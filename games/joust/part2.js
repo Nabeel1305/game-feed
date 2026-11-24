@@ -102,9 +102,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: aim with the rhythm, brace on time, the whole pass ----------
 const LESSONS = {
-  1: [{ id: 'aim', title: 'AIM WITH THE RHYTHM', how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
-  2: [{ id: 'brace', title: 'BRACE AT THE CRASH', how: 'Hold BRACE just before the crash, when it glows (not earlier: your arm tires). Three braced hits.', need: 3 }],
-  3: [{ id: 'clean', title: 'BREAK A LANCE', how: 'Aim for the centre of the shield and brace on time: a clean braced hit breaks your lance (2 points). Twice.', need: 2 }],
+  1: [{ id: 'aim', title: 'AIM WITH THE RHYTHM', say: 'DRAG TO AIM', do: 'drag', dir: 'lr', how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
+  2: [{ id: 'brace', title: 'BRACE AT THE CRASH', say: 'HOLD BRACE AT THE CRASH', do: 'hold', at: G => { const b = layout(G).brace; return [b.x, b.y]; }, how: 'Hold BRACE just before the crash, when it glows (not earlier: your arm tires). Three braced hits.', need: 3 }],
+  3: [{ id: 'clean', title: 'BREAK A LANCE', say: 'MIDDLE + BRACE', do: 'hold', at: G => { const b = layout(G).brace; return [b.x, b.y]; }, how: 'Aim for the centre of the shield and brace on time: a clean braced hit breaks your lance (2 points). Twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, e) { const D = G.lesson; if (!D || D.done || what !== 'clash') return; const id = D.id;

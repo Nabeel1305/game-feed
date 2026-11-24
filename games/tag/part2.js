@@ -173,10 +173,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'YOU ARE IT!', how: 'Put your thumb down anywhere and drag: you run that way. Tag all three kids.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 3 },
-      { id: 'dash', title: 'DASH', how: 'Tap the DASH button: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
-  2: [{ id: 'flee', title: 'THEY ARE IT!', how: 'The kid in red is IT. Keep away from him for 15 seconds. Dash when he gets close.', need: 1, ok: w => w === 'survived', mode: 'run', kids: 1, survive: 15 }],
-  3: [{ id: 'freeze', title: 'FREEZE TAG', how: 'Freeze all four. Free kids can unfreeze a friend with a touch: get them all.', need: 1, ok: w => w === 'all', mode: 'freeze', kids: 4 }],
+  1: [{ id: 'run', title: 'YOU ARE IT!', say: 'DRAG TO RUN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Put your thumb down anywhere and drag: you run that way. Tag all three kids.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 3 },
+      { id: 'dash', title: 'DASH', say: 'TAP DASH', do: 'tap', at: G => { const b = dashBtn(); return [b.x, b.y]; }, how: 'Tap the DASH button: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
+  2: [{ id: 'flee', title: 'THEY ARE IT!', say: 'RUN AWAY!', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'The kid in red is IT. Keep away from him for 15 seconds. Dash when he gets close.', need: 1, ok: w => w === 'survived', mode: 'run', kids: 1, survive: 15 }],
+  3: [{ id: 'freeze', title: 'FREEZE TAG', say: 'TOUCH TO FREEZE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Freeze all four. Free kids can unfreeze a friend with a touch: get them all.', need: 1, ok: w => w === 'all', mode: 'freeze', kids: 4 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0, dashed: 0 }; setup(G); G.lstart = G.t; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

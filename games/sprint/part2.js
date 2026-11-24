@@ -168,9 +168,9 @@ function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; cons
   y.started = true; y.fin = G.t; y.s = G.D; y.react = y.react || 0.18; y.place = 1; finish(G, true, { place: 1 }); }
 // ---------- LESSONS: the first three levels ----------
 const LESSONS = {
-  1: [{ id: 'stride', title: 'LEFT, RIGHT, IN TIME', how: 'Tap the side whose ring is closing, just as it closes. Left, right, left... Too soon, or the same side twice, and you trip. Run 10 strides without tripping!', need: 10 }],
-  2: [{ id: 'gun', title: 'WAIT FOR THE GUN', how: 'On SET keep still. Tap the moment you hear BANG! Tap before it and it is a false start. Make 2 clean starts.', need: 2 }],
-  3: [{ id: 'hurdle', title: 'BOTH THUMBS: JUMP', how: 'Keep striding. When a hurdle reaches the GREEN mark, tap BOTH sides together to jump it. Clear 3 in a row!', need: 3 }],
+  1: [{ id: 'stride', title: 'LEFT, RIGHT, IN TIME', say: 'TAP THE CLOSING RING', do: 'tap', how: 'Tap the side whose ring is closing, just as it closes. Left, right, left... Too soon, or the same side twice, and you trip. Run 10 strides without tripping!', need: 10 }],
+  2: [{ id: 'gun', title: 'WAIT FOR THE GUN', say: 'WAIT FOR BANG!', do: 'wait', at: G => [W / 2, H * 0.7], how: 'On SET keep still. Tap the moment you hear BANG! Tap before it and it is a false start. Make 2 clean starts.', need: 2 }],
+  3: [{ id: 'hurdle', title: 'BOTH THUMBS: JUMP', say: 'TAP BOTH!', do: 'tap', how: 'Keep striding. When a hurdle reaches the GREEN mark, tap BOTH sides together to jump it. Clear 3 in a row!', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

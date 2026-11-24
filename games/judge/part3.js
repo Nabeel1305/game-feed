@@ -19,7 +19,7 @@ function renderCase(G) { if (HEADLESS || !G || !G.case) return; const K = G.case
   const w = d => guide ? ` <small>(${Math.abs(d) >= 9 ? 'big' : Math.abs(d) >= 6 ? 'real' : 'small'})</small>` : '';
   const ch = K.facts.map(f => `<span class="chip ${f.d > 0 ? 'agg' : 'mit'}">${f.d > 0 ? '⚠' : '✓'} ${esc(f.t)}${w(f.d)}</span>`).join('');
   const lo = Math.max(1, K.centre - K.facts.reduce((a, f) => a + f.d, 0)), off = OFF.find(o => o.id === K.off);
-  $('caseCard').innerHTML = (st ? `<div class="lesson">LESSON · ${st.title} · ${G.lesson.n} of ${st.need}<br><span style="font-weight:600">${esc(st.how)}</span></div>` : '')
+  $('caseCard').innerHTML = (st ? `<div class="lesson" style="text-align:center"><span style="font-size:12px">LESSON · ${'●'.repeat(G.lesson.n)}${'○'.repeat(Math.max(0, st.need - G.lesson.n))}</span><br><b style="font-size:22px;line-height:1.15">👆 ${esc(st.say || st.title)}</b></div>` : '')
     + `<h3>R v ${esc(K.who)}</h3><div class="off">${esc(K.name)}${K.complex ? ' · a hard case' : ''}</div><div class="meta">${K.age}, ${esc(K.job)} · ${esc(K.plea)}${c.free ? '' : ` · case ${Math.min(c.cases, G.done.length + 1)} of ${c.cases}`}</div>`
     + `<p>${esc(K.first)} ${esc(K.what)}.</p>` + (ch ? `<div>${ch}</div>` : '<div class="chip mit" style="opacity:.7">Nothing special either way</div>')
     + (K.victim ? `<p class="vic">${esc(K.victim)}</p>` : '')
@@ -37,7 +37,7 @@ function onEvent(G, e) { const cx = W / 2, top = sceneH();
       setPhase('wait'); $('readBack').innerHTML = '<b>Sentence passed.</b> ' + esc(G.done.length ? G.done[G.done.length - 1].read : ''); break;
     case 'lessonnext': if (e.first) hint = null; sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, top * 0.5, '#9be3b5', 22); sfx.coin(e.n); break;
-    case 'lessonmiss': say('THE COUNCIL SAYS:', cx, top * 0.42, '#ffd0c4', 16); hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': say('THE COUNCIL SAYS:', cx, top * 0.42, '#ffd0c4', 16); coachMiss(); break;
     case 'lessondone': say('NOW, YOUR COURT.', cx, top * 0.5, '#ffd36a', 22); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'council': sfx.council(); break;
     case 'won': FX.flash = 0.6; sfx.win(); vibe(HAP.best); break;

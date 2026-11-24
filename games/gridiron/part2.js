@@ -169,9 +169,9 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'RUN IT', how: 'Pick DIVE, tap SNAP, then HANDOFF. Run with the stick: get past the yellow line (ten yards). DODGE just before a tackle.', need: 1 }],
-  2: [{ id: 'pass', title: 'THROW IT', how: 'Pick SLANTS and SNAP. Wait for a receiver to turn GREEN (open), then tap his button. Three catches in a row.', need: 3 }],
-  3: [{ id: 'tackle', title: 'STOP THEM', how: 'You defend now. SWITCH to the player nearest the ball, run at the carrier, tap TACKLE when you are close.', need: 1 }],
+  1: [{ id: 'run', title: 'RUN IT', say: 'SNAP, HANDOFF, RUN', do: 'tap', how: 'Pick DIVE, tap SNAP, then HANDOFF. Run with the stick: get past the yellow line (ten yards). DODGE just before a tackle.', need: 1 }],
+  2: [{ id: 'pass', title: 'THROW IT', say: 'TAP THE GREEN ONE', do: 'tap', how: 'Pick SLANTS and SNAP. Wait for a receiver to turn GREEN (open), then tap his button. Three catches in a row.', need: 3 }],
+  3: [{ id: 'tackle', title: 'STOP THEM', say: 'RUN AT HIM, TACKLE', do: 'tap', how: 'You defend now. SWITCH to the player nearest the ball, run at the carrier, tap TACKLE when you are close.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, id: LESSONS[G.N][0].id, dSlow: 0.55 }; G.ev.push({ k: 'lessonnext', first: true }); lessonReset(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

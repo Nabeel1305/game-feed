@@ -98,9 +98,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: slow, no song to lose; a mistake starts the lesson again ----------
 const LESSONS = {
-  1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
-  2: [{ id: 'hold', title: 'LONG TILES', how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
-  3: [{ id: 'double', title: 'TWO AT ONCE', how: 'Some rows have two black tiles: tap both, one thumb each. Play three double rows.', need: 3 }],
+  1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', say: 'TAP THE BLACK', do: 'tap', how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
+  2: [{ id: 'hold', title: 'LONG TILES', say: 'HOLD THE LONG ONE', do: 'hold', how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
+  3: [{ id: 'double', title: 'TWO AT ONCE', say: 'TAP BOTH', do: 'tap', how: 'Some rows have two black tiles: tap both, one thumb each. Play three double rows.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

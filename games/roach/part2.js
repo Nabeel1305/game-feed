@@ -195,9 +195,9 @@ const BLIND = { m: G => { if (Math.random() < 0.2) stick(G, 0, 0); else { const 
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.stash = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'eat', title: 'RUN, GRAB, GET HOME', how: 'Left thumb: push the stick to run. Touch the crumbs to pick them up, then bring them back to your crack (the glowing gap). 3 crumbs.', need: 3 }],
-  2: [{ id: 'slip', title: 'DODGE THE SLIPPER', how: 'A shadow on the floor: a slipper is coming, aimed where you are heading. Turn away, or push the stick all the way to SPRINT. Dodge 3.', need: 3, force: true }],
-  3: [{ id: 'hide', title: 'HIDE FROM THE SPRAY', how: 'The can comes down and aims: get out of its line, under furniture, or into a hiding place with HIDE. Live through 2 sprays.', need: 2, force: true }],
+  1: [{ id: 'eat', title: 'RUN, GRAB, GET HOME', say: 'PUSH TO RUN', do: 'drag', dir: 'up', how: 'Left thumb: push the stick to run. Touch the crumbs to pick them up, then bring them back to your crack (the glowing gap). 3 crumbs.', need: 3 }],
+  2: [{ id: 'slip', title: 'DODGE THE SLIPPER', say: 'RUN AWAY FROM THE SHADOW', do: 'drag', dir: 'lr', how: 'A shadow on the floor: a slipper is coming, aimed where you are heading. Turn away, or push the stick all the way to SPRINT. Dodge 3.', need: 3, force: true }],
+  3: [{ id: 'hide', title: 'HIDE FROM THE SPRAY', say: 'HIDE!', do: 'tap', how: 'The can comes down and aims: get out of its line, under furniture, or into a hiding place with HIDE. Live through 2 sprays.', need: 2, force: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, force: !!LESSONS[G.N][0].force }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

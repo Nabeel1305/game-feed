@@ -147,9 +147,9 @@ function finish(G, win) { G.over = win ? 'won' : 'lost'; const stars = win ? (G.
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'keep', title: 'FLIP', how: 'Hold the left side of the screen for the left flipper, the right side for the right. Hit the ball up the table 6 times without losing it.', need: 6 }],
-  2: [{ id: 'drop', title: 'AIM', how: 'Flip late to send the ball up its own side, early to send it across. Knock down three drop targets (on the left).', need: 3 }],
-  3: [{ id: 'ramp', title: 'THE RAMP', how: 'Catch the ball on the right flipper (hold it up), let it roll, flip: up the ramp on the left. Once.', need: 1 }],
+  1: [{ id: 'keep', title: 'FLIP', say: 'HOLD LEFT OR RIGHT', do: 'hold', how: 'Hold the left side of the screen for the left flipper, the right side for the right. Hit the ball up the table 6 times without losing it.', need: 6 }],
+  2: [{ id: 'drop', title: 'AIM', say: 'FLIP TO THE LEFT', do: 'hold', how: 'Flip late to send the ball up its own side, early to send it across. Knock down three drop targets (on the left).', need: 3 }],
+  3: [{ id: 'ramp', title: 'THE RAMP', say: 'UP THE RAMP', do: 'hold', how: 'Catch the ball on the right flipper (hold it up), let it roll, flip: up the ramp on the left. Once.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, t: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

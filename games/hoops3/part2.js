@@ -158,9 +158,9 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'shoot', title: 'SHOOT IN THE GREEN', how: 'HOLD SHOOT. The meter fills: let go when it is in the GREEN. Three good releases.', need: 3 }],
-  2: [{ id: 'pass', title: 'GIVE AND GO', how: 'Tap PASS (or drag from it towards a teammate), then RUN TO THE BASKET with the stick. The ball comes back to you: tap SHOOT for the layup.', need: 2 }],
-  3: [{ id: 'steal', title: 'TAKE IT OFF THEM', how: 'Move close to the player with the ball and tap STEAL. Stay between them and the basket. Tap it twice too fast and you lose your balance.', need: 2 }],
+  1: [{ id: 'shoot', title: 'SHOOT IN THE GREEN', say: 'HOLD, LET GO IN GREEN', do: 'hold', how: 'HOLD SHOOT. The meter fills: let go when it is in the GREEN. Three good releases.', need: 3 }],
+  2: [{ id: 'pass', title: 'GIVE AND GO', say: 'PASS, RUN, SHOOT', do: 'tap', how: 'Tap PASS (or drag from it towards a teammate), then RUN TO THE BASKET with the stick. The ball comes back to you: tap SHOOT for the layup.', need: 2 }],
+  3: [{ id: 'steal', title: 'TAKE IT OFF THEM', say: 'GET CLOSE, TAP STEAL', do: 'tap', how: 'Move close to the player with the ball and tap STEAL. Stay between them and the basket. Tap it twice too fast and you lose your balance.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, youMove: true, aiMove: false }; G.ev.push({ k: 'lessonnext', first: true }); lessonReset(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

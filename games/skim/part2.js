@@ -105,9 +105,9 @@ function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, 'goal
 function goalText(cfg) { return cfg.kind === 'skips' ? `Skip a stone ${cfg.skips} times` : cfg.kind === 'far' ? `Skip a stone past the buoy (${cfg.far} m)` : cfg.kind === 'rings' ? `Skip through ${cfg.rings === 1 ? 'the floating ring' : `all ${cfg.rings} floating rings`}` : 'Skip a stone onto the old jetty'; }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'throw', title: 'DRAG BACK, LET GO', how: 'Put your thumb on the stone and drag back down the screen: the line shows where it goes. Let go to throw. Then tap each time it kisses the water. Three good taps in a row.', need: 3 }],
-  2: [{ id: 'perfect', title: 'RIGHT ON TIME', how: 'Watch the ring close on the stone as it comes down: tap just as it touches. Three PERFECT kisses.', need: 3 }],
-  3: [{ id: 'chain', title: 'KEEP IT GOING', how: 'Throw hard and tap every kiss: each perfect tap keeps its speed. Six skips on one stone.', need: 6 }],
+  1: [{ id: 'throw', title: 'DRAG BACK, LET GO', say: 'DRAG BACK, LET GO', do: 'drag', dir: 'down', how: 'Put your thumb on the stone and drag back down the screen: the line shows where it goes. Let go to throw. Then tap each time it kisses the water. Three good taps in a row.', need: 3 }],
+  2: [{ id: 'perfect', title: 'RIGHT ON TIME', say: 'TAP AS IT TOUCHES', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Watch the ring close on the stone as it comes down: tap just as it touches. Three PERFECT kisses.', need: 3 }],
+  3: [{ id: 'chain', title: 'KEEP IT GOING', say: 'TAP EVERY SKIP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Throw hard and tap every kiss: each perfect tap keeps its speed. Six skips on one stone.', need: 6 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, q) { const D = G.lesson; if (!D || D.done) return; let good = false;

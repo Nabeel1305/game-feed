@@ -144,9 +144,9 @@ function finish(G, win, why) { const c = G.cfg; G.over = win ? 'won' : 'lost';
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'light', title: 'LIGHT IT', how: 'Drag a little to turn your lantern without walking. Hold the ghost in the beam until the lantern pulls it in. Catch 2.', need: 2 }],
-  2: [{ id: 'behind', title: 'FROST', how: 'Frost at the edge of the screen: a ghost is close, that way. Turn to it and catch it. Twice.', need: 2 }],
-  3: [{ id: 'shy', title: 'SHY GHOSTS', how: 'Shy ghosts move only when you look away. Turn to it, then walk closer and hold it in the light. Catch 2.', need: 2 }],
+  1: [{ id: 'light', title: 'LIGHT IT', say: 'DRAG TO TURN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drag a little to turn your lantern without walking. Hold the ghost in the beam until the lantern pulls it in. Catch 2.', need: 2 }],
+  2: [{ id: 'behind', title: 'FROST', say: 'TURN TO THE FROST', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Frost at the edge of the screen: a ghost is close, that way. Turn to it and catch it. Twice.', need: 2 }],
+  3: [{ id: 'shy', title: 'SHY GHOSTS', say: 'LOOK, THEN WALK CLOSER', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Shy ghosts move only when you look away. Turn to it, then walk closer and hold it in the light. Catch 2.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

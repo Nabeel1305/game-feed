@@ -211,9 +211,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: a single rigged job; any slip starts it again ----------
 const LESSONS = {
-  1: [{ id: 'washer', title: 'A DRIPPING TAP', how: 'Tap the dripping kitchen tap to look at it. Pick NEW WASHER, then HOLD and let go in the green. Twice.', need: 2, job: 'drip' }],
-  2: [{ id: 'plunge', title: 'PLUNGE IT', how: 'Tap the toilet, pick PLUNGE, then TAP each time the ring closes on the circle. Off-beat taps push the water back.', need: 1, job: 'wcclog' }],
-  3: [{ id: 'burst', title: 'BURST PIPE!', how: 'Water everywhere! First SHUT OFF the main (the stopcock by the meter, downstairs), then fit a new section and solder it.', need: 1, job: 'burst' }],
+  1: [{ id: 'washer', title: 'A DRIPPING TAP', say: 'TAP THE TAP, HOLD… LET GO', do: 'hold', how: 'Tap the dripping kitchen tap to look at it. Pick NEW WASHER, then HOLD and let go in the green. Twice.', need: 2, job: 'drip' }],
+  2: [{ id: 'plunge', title: 'PLUNGE IT', say: 'TAP AS THE RING CLOSES', do: 'tap', how: 'Tap the toilet, pick PLUNGE, then TAP each time the ring closes on the circle. Off-beat taps push the water back.', need: 1, job: 'wcclog' }],
+  3: [{ id: 'burst', title: 'BURST PIPE!', say: 'SHUT OFF THE WATER FIRST', do: 'tap', how: 'Water everywhere! First SHUT OFF the main (the stopcock by the meter, downstairs), then fit a new section and solder it.', need: 1, job: 'burst' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

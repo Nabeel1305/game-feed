@@ -131,9 +131,9 @@ const BLIND = { t: G => { if (Math.random() < 0.6) choose(G, (Math.random() * (c
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.judges = [5, 5, 5]; G.notes = []; G.met = G.wish.length; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'design', title: 'TAP TO DESIGN', how: 'Her card says what she wants. Tap the options that match: the dress changes as you tap. NEXT when it matches. Meet all 3 wishes.', need: 1 }],
-  2: [{ id: 'style', title: 'DOES IT GO TOGETHER?', how: 'STYLE judges what clashes. Sequins with a pattern is too busy. Meet her wishes AND keep it clean.', need: 1 }],
-  3: [{ id: 'trim', title: 'FINISHING TOUCHES', how: 'Pick a trim, then tap where it goes on the dress: pearls at the neck, a belt at the waist, lace at the hem.', need: 1 }],
+  1: [{ id: 'design', title: 'TAP TO DESIGN', say: 'TAP WHAT SHE WANTS', do: 'tap', how: 'Her card says what she wants. Tap the options that match: the dress changes as you tap. NEXT when it matches. Meet all 3 wishes.', need: 1 }],
+  2: [{ id: 'style', title: 'DOES IT GO TOGETHER?', say: 'NO CLASHING', do: 'tap', how: 'STYLE judges what clashes. Sequins with a pattern is too busy. Meet her wishes AND keep it clean.', need: 1 }],
+  3: [{ id: 'trim', title: 'FINISHING TOUCHES', say: 'TAP WHERE IT GOES', do: 'tap', how: 'Pick a trim, then tap where it goes on the dress: pearls at the neck, a belt at the waist, lace at the hem.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

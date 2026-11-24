@@ -91,7 +91,7 @@ function onEvent(G, e) { const mid = { x: W / 2, y: SH() * 0.5 };
     case 'solved': sfx.solved(); FX.flash = 0.6; vibe(HAP.best); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', mid.x, mid.y, '#ffd36a', 24); ui.dirty = true; break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, mid.x, mid.y + 30 * k, '#8fe0ab', 24); sfx.coin(e.n); ui.dirty = true; break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 4 }; say('AGAIN', mid.x, mid.y + 40 * k, '#ffd0a0', 20); break;
+    case 'lessonmiss': say('AGAIN', mid.x, mid.y + 40 * k, '#ffd0a0', 20); break;
     case 'lessondone': say('A REAL CASE NOW', mid.x, mid.y, '#ffd36a', 24); sfx.solved(); ui.snap = true; ui.tab = 'scene'; ui.acc = { who: null, how: null, when: null, proof: [] }; ui.dirty = true; if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); FX.flash = 0.5; vibe(HAP.best); break;
     case 'lost': sfx.lose(); break;      // (P11: never vibrate on failure)

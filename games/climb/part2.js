@@ -247,9 +247,9 @@ function finish(G, win) {
 
 // ---------- LESSONS: reach (three gold holds in a row), rest (on the ledge until the grip is full), the rope (two bolts) ----------
 const LESSONS = {
-  1: [{ id: 'reach', title: 'REACH', how: 'Drag a hand onto the GOLD hold. Let go near it and you grab it. Three gold holds in a row.', need: 3 }],
-  2: [{ id: 'rest', title: 'REST', how: 'Your grip is low (the bar). Get BOTH hands onto the big ledge and hang there until the bar is full.', need: 1 }],
-  3: [{ id: 'clip', title: 'THE ROPE', how: 'Climb past two bolts. The rope clips in as you go, and catches you there if you slip.', need: 2 }],
+  1: [{ id: 'reach', title: 'REACH', say: 'DRAG A HAND TO GOLD', do: 'drag', dir: 'up', how: 'Drag a hand onto the GOLD hold. Let go near it and you grab it. Three gold holds in a row.', need: 3 }],
+  2: [{ id: 'rest', title: 'REST', say: 'BOTH HANDS ON THE LEDGE', do: 'drag', dir: 'up', how: 'Your grip is low (the bar). Get BOTH hands onto the big ledge and hang there until the bar is full.', need: 1 }],
+  3: [{ id: 'clip', title: 'THE ROPE', say: 'KEEP CLIMBING', do: 'drag', dir: 'up', how: 'Climb past two bolts. The rope clips in as you go, and catches you there if you slip.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: LESSONS[G.N][0].id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

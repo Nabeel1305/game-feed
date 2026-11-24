@@ -169,7 +169,7 @@ function onEvent(G, e) {
     case 'next': sfx.go(); ui.snap = false; break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.36, '#ffd36a', 24); sfx.ding(); break;
     case 'lessonok': if (!e.soft) say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.36, '#9be3b5', 24); sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('YOU KNOW IT. OFF WE GO!', W / 2, H * 0.36, '#ffd36a', 24); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': FX.flash = 0.6; sfx.win(); vibe(HAP.best); break;
     case 'rest': sfx.house(); break;
@@ -224,11 +224,4 @@ function hud(G, now) { const L = layout(G), w = G.wk, it = carried(G), atS = G.l
     if (!on && !G.compact) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(G.items.some(q => q.st === 'wait') && w.st === 'idle' ? 'tap a bin' : '', C.x, C.y + 20 * k); }
     if (on && it.wrong && w.st === 'ready') pill(L.pick, '#9be3ff', 'PICK OUT 🛍️', '#0c2430', 16); }
   if (!G.lesson) { const A = L.auto; pill(A, G.auto ? 'rgba(124,211,106,.9)' : 'rgba(20,34,32,.55)', G.auto ? 'AUTO ✓' : 'AUTO', G.auto ? '#10240c' : '#fff', 13); } }
-function lessonPanel(G) { const D = G.lesson, st0 = D.steps[D.i], x = 12, w = W - 24, y = 46 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st0.how, w - 24), h = 50 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(20,34,32,.9)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(124,211,106,.8)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#9be38a'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3`, x + 12, y + 9 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `600 ${Math.round(17 * k)}px ${TF}`; ctx.fillText(st0.title, x + 12, y + 23 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 45 * k + i * 17 * k));
-  for (let i = 0; i < st0.need; i++) { ctx.beginPath(); ctx.arc(x + w - 16 - (st0.need - 1 - i) * 18 * k, y + 16 * k, 6 * k, 0, TAU); if (i < D.n) { ctx.fillStyle = '#8fe0ab'; ctx.fill(); } else { ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 2; ctx.stroke(); } }
-  ctx.restore(); }
+function lessonPanel(G) { coachPanel(G); }

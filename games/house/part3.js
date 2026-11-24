@@ -104,10 +104,4 @@ function hud(G, t) { const L = layout(G), c = G.cfg;
   for (const b of L.tray) { const T = TOOLS.find(q => q.id === b.id), on = G.tool === b.id; ctx.fillStyle = on ? 'rgba(122,208,138,.85)' : 'rgba(255,255,255,.1)'; rrect(b.x, b.y, b.w, b.h, 10); ctx.fill();
     ctx.fillStyle = on ? '#10301a' : '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${Math.round(b.h * 0.38)}px sans-serif`; ctx.fillText(T.icon, b.x + b.w / 2, b.y + b.h * 0.4); ctx.font = `700 ${Math.round(9.5 * k)}px ${BC}`; ctx.fillText(T.name.toUpperCase(), b.x + b.w / 2, b.y + b.h * 0.82); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28, y = 42 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 54 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(0,0,0,.62)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,211,106,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd36a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${D.i + 1} OF ${D.steps.length}`, x + 12, y + 10 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(18 * k)}px ${BC}`; ctx.fillText(st.title, x + 12, y + 25 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.9)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 48 * k + i * 17 * k));
-  ctx.restore(); }
+function lessonPanel(G) { coachPanel(G); }

@@ -195,7 +195,4 @@ function ring(G, R) { const T = G.tree, S = T.spec, r = R.r, cx = R.x, cy = R.y,
   ctx.fillText(label, cx + r + 18 * k, cy - 6 * k); if (T.bc > 0 && T.phase === 'cut' && !T.sawing) { ctx.fillStyle = '#ffd36a'; ctx.fillText(h > lo ? 'standing: WEDGE it, or saw a little' : '', cx + r + 18 * k, cy + 12 * k); }
   ctx.restore(); }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) { const D = G.lesson, st = D.steps[D.i], x = 10, w = W - 20, y = 44 * k; ctx.save(); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 44 * k + lines.length * 15 * k;
-  ctx.fillStyle = 'rgba(16,26,18,.94)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(244,164,60,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#f4a43c'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3`, x + 12, y + 8 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(16 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 20 * k); ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 42 * k + i * 15 * k)); ctx.restore(); ctx.textBaseline = 'middle'; }
+function lessonPanel(G) { coachPanel(G); }

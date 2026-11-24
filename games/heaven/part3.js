@@ -32,7 +32,7 @@ function onEvent(G, e) {
     case 'dusk': sfx.bell(); say(e.left ? `SUNSET: ${e.left} STILL WAITING` : 'SUNSET', cx, H * 0.4, '#ffb4a8', 24); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffe08a', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.5, '#9be3b5', 24); sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.6 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('THE GATE IS YOURS!', cx, H * 0.5, '#ffe08a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': FX.flash = 0.8; sfx.win(); vibe(HAP.best); break;
     case 'lost': sfx.lose(); break;
@@ -149,12 +149,4 @@ function hud(G, t) {
   else if (G.N <= 3 && G.judged < 2) { ctx.font = `800 ${Math.round(12 * k)}px ${BODY}`; ctx.fillStyle = 'rgba(40,30,20,.75)'; ctx.fillText('↑ HEAVEN   ·   ↓ HELL   ·   ↔ PURGATORY', W / 2, B.y - 14 * k); }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) {
-  const D = G.lesson, st = D.steps[D.i], x = 14, w = W - 28; ctx.save();
-  ctx.font = `700 ${Math.round(12.5 * k)}px ${BODY}`; const lines = wrapText(st.how, w - 24), h = 46 * k + lines.length * 16 * k, B = bookRect(), y = B.y - h - 10 * k;
-  ctx.fillStyle = 'rgba(30,22,40,.86)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(232,200,104,.8)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#e8c868'; ctx.font = `800 ${Math.round(11 * k)}px ${BODY}`; ctx.fillText(`LESSON ${G.N} OF 3 · ${D.n} OF ${st.need}`, x + 12, y + 8 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `${Math.round(16 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 22 * k);
-  ctx.font = `700 ${Math.round(12.5 * k)}px ${BODY}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 42 * k + i * 16 * k));
-  ctx.restore(); ctx.textBaseline = 'middle';
-}
+function lessonPanel(G) { coachPanel(G); }

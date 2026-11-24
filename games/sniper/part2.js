@@ -124,9 +124,9 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.thief) return; const
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; if (G.thief) G.thief.asleep = 1; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'aim', title: 'AIM AND FIRE', how: 'The thief stands still by the fountain. Left thumb: drag to aim. Right thumb: HOLD the FIRE pad (the scope), let go to fire.' }],
-  2: [{ id: 'clue', title: 'READ THE CARD', how: 'Only one of these people matches the card. Find him; never hit anyone else.' }],
-  3: [{ id: 'lead', title: 'AIM AHEAD', how: 'He is walking, and the wind blows. The dart takes a moment to fly: aim a little ahead of him, and into the wind.' }],
+  1: [{ id: 'aim', title: 'AIM AND FIRE', say: 'AIM, HOLD, LET GO', do: 'hold', how: 'The thief stands still by the fountain. Left thumb: drag to aim. Right thumb: HOLD the FIRE pad (the scope), let go to fire.' }],
+  2: [{ id: 'clue', title: 'READ THE CARD', say: 'FIND HIM', do: 'drag', dir: 'lr', how: 'Only one of these people matches the card. Find him; never hit anyone else.' }],
+  3: [{ id: 'lead', title: 'AIM AHEAD', say: 'AIM AHEAD', do: 'drag', dir: 'lr', how: 'He is walking, and the wind blows. The dart takes a moment to fly: aim a little ahead of him, and into the wind.' }],
 };
 const LSET = {
   aim: (G, R) => { G.thief = person(G, { thief: true, x: (R() - 0.5) * 6, z: -G.S - 2 - R() * 3, still: true, shirt: 0, hat: 1, bag: 1 }); },

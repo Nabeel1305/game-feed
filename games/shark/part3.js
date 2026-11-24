@@ -159,7 +159,7 @@ function onEvent(G, e) {
     case 'spike': sfx.spike(); say('SPIKY!', sp.x, sp.y - 40 * k, '#e8d070', 18); tip('puffer', 'Pufferfish puff up when you come near: dash at them to catch one before it puffs', 3.2); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.36, '#ffe08a', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.4, '#9be3b5', 24); sfx.coin(e.n); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('NOW THE REAL HUNT!', cx, H * 0.36, '#ffe08a', 26); sfx.win(); ui.snap = true; if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); vibe(HAP.best); say('BIG ENOUGH!', cx, H * 0.3, '#ffe08a', 38); break;
     case 'lost': sfx.lose(); say(e.why === 'starved' ? 'TOO HUNGRY...' : 'EATEN!', cx, H * 0.3, '#ffb4a8', 32); break;
@@ -258,15 +258,7 @@ function hud(G, t) {
   if (ui.toast) { const a = Math.min(1, ui.toast.t / 0.2, (2.6 - ui.toast.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `800 ${Math.round(12 * k)}px ${BC}`; const tw = ctx.measureText(ui.toast.txt).width + 30 * k, ty = H - 120 * k; ctx.fillStyle = 'rgba(4,24,36,.88)'; rrect(W / 2 - tw / 2, ty - 16 * k, tw, 32 * k, 16 * k); ctx.fill(); ctx.strokeStyle = '#ffb83a'; ctx.lineWidth = 1.5; rrect(W / 2 - tw / 2, ty - 16 * k, tw, 32 * k, 16 * k); ctx.stroke(); ctx.textAlign = 'center'; ctx.fillStyle = '#ffe08a'; ctx.fillText('🐠 ' + ui.toast.txt, W / 2, ty); ctx.globalAlpha = 1; }
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
-function lessonPanel(G) {
-  const D = G.lesson, st = D.steps[D.i], x = 12, w = W - 24, y = 48 * k; ctx.save();
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 50 * k + lines.length * 17 * k;
-  ctx.fillStyle = 'rgba(4,20,32,.86)'; rrect(x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = 'rgba(255,224,138,.7)'; ctx.lineWidth = 2; rrect(x, y, w, h, 12); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffe08a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`LESSON ${G.N} OF 3 · ${D.n} OF ${st.need}`, x + 12, y + 9 * k);
-  ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(17 * k)}px ${TF}`; ctx.fillText(st.title, x + 12, y + 23 * k);
-  ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.92)'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 46 * k + i * 17 * k));
-  ctx.restore(); ctx.textBaseline = 'middle';
-}
+function lessonPanel(G) { coachPanel(G); }
 // a little picture of each kind for the aquarium (a shadow if not found yet)
 function fishIcon(c, q, off) { const g = c.getContext('2d'), sp = SPECIES[q], w = c.width, h = c.height, c1 = off ? '#2a3a48' : hex(sp.col), c2 = off ? '#2a3a48' : hex(sp.col2); g.clearRect(0, 0, w, h); g.save(); g.translate(w / 2, h / 2);
   if (q === 'jelly') { g.fillStyle = c1; g.beginPath(); g.arc(0, -4, 18, Math.PI, 0); g.fill(); g.strokeStyle = c2; g.lineWidth = 2; for (let i = -2; i <= 2; i++) { g.beginPath(); g.moveTo(i * 7, -4); g.quadraticCurveTo(i * 7 + 4, 12, i * 7, 26); g.stroke(); } }

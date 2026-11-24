@@ -286,10 +286,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pass', title: 'PASS', how: 'Run with your LEFT thumb. Point at a team-mate (a white ring shows who) and tap PASS. Three passes.', need: 3 },
-    { id: 'goal', title: 'SHOOT', how: 'Run at goal and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
-  2: [{ id: 'tackle', title: 'WIN IT BACK', how: 'Without the ball, run at the man with it and tap TACKLE when you are close (SLIDE reaches further). Win it twice.', need: 2 }],
-  3: [{ id: 'lob', title: 'OVER THE TOP', how: 'Tap LOB to lift the ball over the defenders to a runner. Two lobs that reach a team-mate.', need: 2 }],
+  1: [{ id: 'pass', title: 'PASS', say: 'RUN, THEN TAP PASS', do: 'tap', how: 'Run with your LEFT thumb. Point at a team-mate (a white ring shows who) and tap PASS. Three passes.', need: 3 },
+    { id: 'goal', title: 'SHOOT', say: 'TAP SHOOT', do: 'tap', how: 'Run at goal and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
+  2: [{ id: 'tackle', title: 'WIN IT BACK', say: 'TAP TACKLE', do: 'tap', how: 'Without the ball, run at the man with it and tap TACKLE when you are close (SLIDE reaches further). Win it twice.', need: 2 }],
+  3: [{ id: 'lob', title: 'OVER THE TOP', say: 'TAP LOB', do: 'tap', how: 'Tap LOB to lift the ball over the defenders to a runner. Two lobs that reach a team-mate.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

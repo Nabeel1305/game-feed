@@ -92,9 +92,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'lean', title: 'LEAN AGAINST HIM', how: 'He leans you one way: the arrow shows which. Hold the OTHER half of the screen until he stops. Three in a row.', need: 3 }],
-  2: [{ id: 'buck', title: 'THE BUCK', how: "His head swings to the side he's about to throw you. Hold the OTHER side just before he bucks. Ride out three bucks in a row.", need: 3 }],
-  3: [{ id: 'grip', title: 'GRIP THE SPIN', how: 'When he drops his shoulder and spins, hold BOTH thumbs to grip. Ride out two spins in a row.', need: 2 }],
+  1: [{ id: 'lean', title: 'LEAN AGAINST HIM', say: 'HOLD THE OTHER SIDE', do: 'hold', how: 'He leans you one way: the arrow shows which. Hold the OTHER half of the screen until he stops. Three in a row.', need: 3 }],
+  2: [{ id: 'buck', title: 'THE BUCK', say: 'HOLD THE OTHER SIDE', do: 'hold', how: "His head swings to the side he's about to throw you. Hold the OTHER side just before he bucks. Ride out three bucks in a row.", need: 3 }],
+  3: [{ id: 'grip', title: 'GRIP THE SPIN', say: 'HOLD BOTH', do: 'hold', how: 'When he drops his shoulder and spins, hold BOTH thumbs to grip. Ride out two spins in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, held: 0 }; G.ph = 'ride'; G.pt = 0; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

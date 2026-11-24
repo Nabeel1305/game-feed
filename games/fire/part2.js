@@ -99,9 +99,9 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'hose', title: 'THE HOSE', how: 'Hold your thumb on a fire: the water lands just above your thumb. Put every fire out.', need: 1 }],
-  2: [{ id: 'ladder', title: 'THE LADDER', how: 'Someone is trapped! Put out the fire in their window, then TAP them to send up the ladder.', need: 1 }],
-  3: [{ id: 'tank', title: 'THE TANK', how: 'The tank runs dry if you never stop. Lift your thumb to let it refill. Put every fire out.', need: 1 }],
+  1: [{ id: 'hose', title: 'THE HOSE', say: 'HOLD ON THE FIRE', do: 'hold', how: 'Hold your thumb on a fire: the water lands just above your thumb. Put every fire out.', need: 1 }],
+  2: [{ id: 'ladder', title: 'THE LADDER', say: 'TAP THE PERSON', do: 'tap', how: 'Someone is trapped! Put out the fire in their window, then TAP them to send up the ladder.', need: 1 }],
+  3: [{ id: 'tank', title: 'THE TANK', say: 'LET GO TO REFILL', do: 'release', at: G => [W / 2, H * 0.7], how: 'The tank runs dry if you never stop. Lift your thumb to let it refill. Put every fire out.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

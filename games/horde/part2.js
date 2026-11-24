@@ -179,9 +179,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'move', title: 'MOVE, AND LET HIM FIGHT', how: 'Drag anywhere to move. Your sword swings by itself. Walk over the blue crystals the monsters drop. Fill the bar.', need: 1, ok: w => w === 'pick', kinds: ['zombie', 'bat'], rate: 0.8 }],
-  2: [{ id: 'pick', title: 'PICK YOUR POWER', how: 'Each level-up, pick one of three: a new weapon, a better one, or a blessing. Level up twice.', need: 2, ok: w => w === 'pick', kinds: ['zombie', 'skel', 'bat'], rate: 1 }],
-  3: [{ id: 'arrows', title: 'ARCHERS AND THE BOSS', how: 'Archers draw first: a red line shows where the arrow will fly. Step out of it. Then beat the boss.', need: 1, ok: w => w === 'boss', kinds: ['archer', 'zombie'], rate: 0.8, boss: 12 }],
+  1: [{ id: 'move', title: 'MOVE, AND LET HIM FIGHT', say: 'DRAG TO MOVE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drag anywhere to move. Your sword swings by itself. Walk over the blue crystals the monsters drop. Fill the bar.', need: 1, ok: w => w === 'pick', kinds: ['zombie', 'bat'], rate: 0.8 }],
+  2: [{ id: 'pick', title: 'PICK YOUR POWER', say: 'PICK ONE', do: 'tap', how: 'Each level-up, pick one of three: a new weapon, a better one, or a blessing. Level up twice.', need: 2, ok: w => w === 'pick', kinds: ['zombie', 'skel', 'bat'], rate: 1 }],
+  3: [{ id: 'arrows', title: 'ARCHERS AND THE BOSS', say: 'STEP OUT OF THE RED', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Archers draw first: a red line shows where the arrow will fly. Step out of it. Then beat the boss.', need: 1, ok: w => w === 'boss', kinds: ['archer', 'zombie'], rate: 0.8, boss: 12 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

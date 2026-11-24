@@ -175,9 +175,9 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: a track to yourself ----------
 const LESSONS = {
-  1: [{ id: 'trick', title: 'JUMP AND TRICK', how: 'Off every ramp, TAP the right side once in the air for a trick, and land after it has finished. Two jumps in a row. Tap only in the air!', need: 2 }],
-  2: [{ id: 'two', title: 'TWO IN ONE JUMP', how: 'Fit TWO tricks into one jump: tap as you leave the ramp, tap again the moment the first one ends, and land clean. Twice.', need: 2 }],
-  3: [{ id: 'glide', title: 'THE GLIDER', how: 'The GOLD ramp launches a glider. Steer through the coins in the air: catch 5 in one flight.', need: 1 }],
+  1: [{ id: 'trick', title: 'JUMP AND TRICK', say: 'IN THE AIR: TAP', do: 'tap', at: G => [W * 0.73, H * 0.72], how: 'Off every ramp, TAP the right side once in the air for a trick, and land after it has finished. Two jumps in a row. Tap only in the air!', need: 2 }],
+  2: [{ id: 'two', title: 'TWO IN ONE JUMP', say: 'TAP, TAP AGAIN', do: 'tap', at: G => [W * 0.73, H * 0.72], how: 'Fit TWO tricks into one jump: tap as you leave the ramp, tap again the moment the first one ends, and land clean. Twice.', need: 2 }],
+  3: [{ id: 'glide', title: 'THE GLIDER', say: 'STEER TO THE COINS', do: 'drag', dir: 'lr', how: 'The GOLD ramp launches a glider. Steer through the coins in the air: catch 5 in one flight.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

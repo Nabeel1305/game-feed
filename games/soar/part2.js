@@ -109,9 +109,9 @@ function finish(G, win) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'turn', kind: 'ring', trail: 'turn', title: 'TURN', how: 'Put your thumb down anywhere and move it left or right: you lean and turn. Fly through the rings.', need: 3, ok: w => w === 'ring' }],
-  2: [{ id: 'updown', kind: 'ring', trail: 'updown', title: 'CLIMB AND DIVE', how: 'Move your thumb up to climb, down to dive. Diving is faster. Through the rings, high and low.', need: 3, ok: w => w === 'ring' }],
-  3: [{ id: 'chain', kind: 'ring', trail: 'easy', title: 'A CHAIN OF RINGS', how: 'Look ahead to the next ring and turn early. Three in a row.', need: 3, ok: w => w === 'ring', chain: true }],
+  1: [{ id: 'turn', kind: 'ring', trail: 'turn', title: 'TURN', say: 'SLIDE TO TURN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Put your thumb down anywhere and move it left or right: you lean and turn. Fly through the rings.', need: 3, ok: w => w === 'ring' }],
+  2: [{ id: 'updown', kind: 'ring', trail: 'updown', title: 'CLIMB AND DIVE', say: 'SLIDE UP OR DOWN', do: 'drag', dir: 'ud', at: G => [W / 2, H * 0.7], how: 'Move your thumb up to climb, down to dive. Diving is faster. Through the rings, high and low.', need: 3, ok: w => w === 'ring' }],
+  3: [{ id: 'chain', kind: 'ring', trail: 'easy', title: 'A CHAIN OF RINGS', say: 'TURN EARLY', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Look ahead to the next ring and turn early. Three in a row.', need: 3, ok: w => w === 'ring', chain: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); G.rings.length = G.next; makeTrail(G, G.next ? 1 : 0, 6, LESSONS[G.N][0].trail); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

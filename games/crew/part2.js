@@ -252,9 +252,9 @@ function follow(G, mem) { const Y = G.you; if (!mem.p || !mem.p.length) { stick(
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.meet = null; finish(G, true, 'last'); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'sneak', title: 'WHEN NO ONE IS LOOKING', how: 'SKY works alone in Electrical. LIME walks in and out. Slide to walk there; KNOCK OUT SKY only when LIME is gone.' }],
-  2: [{ id: 'vent', title: 'VANISH', how: 'Knock out RUBY in MedBay, then hide in the VENT (stand on it, tap VENT) and come out somewhere else before anyone comes.' }],
-  3: [{ id: 'talk', title: 'THE MEETING', how: 'Knock out COCOA in Storage (no one looking). Soon the body is found: at the meeting, vote for the one they already doubt.' }],
+  1: [{ id: 'sneak', title: 'WHEN NO ONE IS LOOKING', say: 'KNOCK OUT WHEN NO ONE LOOKS', do: 'tap', how: 'SKY works alone in Electrical. LIME walks in and out. Slide to walk there; KNOCK OUT SKY only when LIME is gone.' }],
+  2: [{ id: 'vent', title: 'VANISH', say: 'KNOCK OUT, TAP VENT', do: 'tap', how: 'Knock out RUBY in MedBay, then hide in the VENT (stand on it, tap VENT) and come out somewhere else before anyone comes.' }],
+  3: [{ id: 'talk', title: 'THE MEETING', say: 'VOTE FOR THE ONE THEY DOUBT', do: 'tap', how: 'Knock out COCOA in Storage (no one looking). Soon the body is found: at the meeting, vote for the one they already doubt.' }],
 };
 const LSET = {
   sneak: (G, R) => { G.ppl.length = 1; G.you.x = 23.5; G.you.z = 12; const s = person(G, 2, 14.5, 22.5); s.job = JOBS[19]; s.path = []; s.work = -999; G.ppl.push(s); const l = person(G, 3, 12.5, 19.5); l.patrol = [[11.5, 20.5], [13, 15.5], [12.5, 11.5], [13, 15.5]]; G.ppl.push(l); G.cd = 0; },

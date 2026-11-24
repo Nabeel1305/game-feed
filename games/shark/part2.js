@@ -154,9 +154,9 @@ function finish(G, win, why, by) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'eat', title: 'EAT', how: 'Drag your thumb: the shark swims that way. Swim into the small fish (they glow green). Eat five.', need: 5 }],
-  2: [{ id: 'escape', title: 'GET AWAY', how: 'A hunter is coming (the red mark). Drag all the way to the edge to dash away until it gives up.', need: 1 }],
-  3: [{ id: 'gold', title: 'THE GOLDEN FISH', how: 'A golden fish is worth three, but it stays near a hunter. Dart in, grab it, dash away.', need: 1 }],
+  1: [{ id: 'eat', title: 'EAT', say: 'DRAG TO SWIM', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drag your thumb: the shark swims that way. Swim into the small fish (they glow green). Eat five.', need: 5 }],
+  2: [{ id: 'escape', title: 'GET AWAY', say: 'DRAG TO THE EDGE!', do: 'drag', dir: 'right', at: G => [W / 2, H * 0.7], how: 'A hunter is coming (the red mark). Drag all the way to the edge to dash away until it gives up.', need: 1 }],
+  3: [{ id: 'gold', title: 'THE GOLDEN FISH', say: 'GRAB IT, DASH AWAY', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'A golden fish is worth three, but it stays near a hunter. Dart in, grab it, dash away.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -123,9 +123,9 @@ const BLIND = { f: G => shoot(G, 0.1 + Math.random() * 0.9, Math.random() * 2 - 
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.made = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pull', title: 'PULL BACK, LET GO', how: 'Put your thumb down, pull it back (down the screen) and let go. Pull further for more power: watch the dotted path. Make 2 baskets.', need: 2 }],
-  2: [{ id: 'aim', title: 'AIM SIDEWAYS', how: 'Now the hoop is off to one side. Move your thumb sideways as you pull: left sends the ball right, like a slingshot. Make 2 baskets.', need: 2 }],
-  3: [{ id: 'far', title: 'FURTHER OUT', how: 'The further from the hoop, the harder you pull. The path is shorter now: feel it. Make 2 baskets from the long spots.', need: 2 }],
+  1: [{ id: 'pull', title: 'PULL BACK, LET GO', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Put your thumb down, pull it back (down the screen) and let go. Pull further for more power: watch the dotted path. Make 2 baskets.', need: 2 }],
+  2: [{ id: 'aim', title: 'AIM SIDEWAYS', say: 'PULL TO THE SIDE', do: 'drag', dir: 'down', how: 'Now the hoop is off to one side. Move your thumb sideways as you pull: left sends the ball right, like a slingshot. Make 2 baskets.', need: 2 }],
+  3: [{ id: 'far', title: 'FURTHER OUT', say: 'PULL HARDER', do: 'drag', dir: 'down', how: 'The further from the hoop, the harder you pull. The path is shorter now: feel it. Make 2 baskets from the long spots.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

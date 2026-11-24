@@ -90,9 +90,9 @@ function finish(G, win) { G.over = win ? 'won' : 'lost'; const tot = G.notes.len
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'hit', title: 'ON THE BEAT', how: 'Tap the left half for the left drum, the right half for the right, as each note reaches its drum. Eight in a row.', need: 8 }],
-  2: [{ id: 'both', title: 'BOTH DRUMS', how: 'Gold notes: tap both halves at once. Three in a row.', need: 3 }],
-  3: [{ id: 'roll', title: 'DRUM ROLL', how: 'A long note: tap it, then keep tapping that drum till it ends. Two rolls.', need: 2 }],
+  1: [{ id: 'hit', title: 'ON THE BEAT', say: 'TAP AS IT HITS', do: 'tap', how: 'Tap the left half for the left drum, the right half for the right, as each note reaches its drum. Eight in a row.', need: 8 }],
+  2: [{ id: 'both', title: 'BOTH DRUMS', say: 'GOLD: TAP BOTH', do: 'tap', how: 'Gold notes: tap both halves at once. Three in a row.', need: 3 }],
+  3: [{ id: 'roll', title: 'DRUM ROLL', say: 'KEEP TAPPING', do: 'tap', how: 'A long note: tap it, then keep tapping that drum till it ends. Two rolls.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSong(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -90,9 +90,9 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
 // lesson 1 asks for aim: drop each red right onto the red in the jar, four in a row (a drop that does not squash on landing
 // starts the count again), so it cannot be passed by luck
 const LESSONS = {
-  1: [{ id: 'aim', title: 'SAME COLOURS SQUASH', how: 'Slide to aim, let go to drop. Drop the red right onto the red in the jar: they squash into an ORANGE! Four in a row.', need: 4 }],
-  2: [{ id: 'chain', title: 'CHAINS', how: 'Drop the red on the red: it makes an orange, which squashes into the orange beside it. Make a YELLOW in one drop, three times.', need: 3 }],
-  3: [{ id: 'line', title: 'MIND THE LINE', how: 'The jar is getting full. Keep everything under the dashed line: squash blobs to make room. Drop twelve blobs safely.', need: 12 }],
+  1: [{ id: 'aim', title: 'SAME COLOURS SQUASH', say: 'SLIDE, LET GO', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Slide to aim, let go to drop. Drop the red right onto the red in the jar: they squash into an ORANGE! Four in a row.', need: 4 }],
+  2: [{ id: 'chain', title: 'CHAINS', say: 'RED ON RED', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drop the red on the red: it makes an orange, which squashes into the orange beside it. Make a YELLOW in one drop, three times.', need: 3 }],
+  3: [{ id: 'line', title: 'MIND THE LINE', say: 'STAY UNDER THE LINE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'The jar is getting full. Keep everything under the dashed line: squash blobs to make room. Drop twelve blobs safely.', need: 12 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

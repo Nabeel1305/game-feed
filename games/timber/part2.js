@@ -122,9 +122,9 @@ function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lo
   G.res = { win, stars, why: o.why || null, done: G.done, failed: G.failed, perfect, log: G.log, coins: win ? G.coins + Math.ceil(G.N / 2) + stars * 3 : Math.max(1, G.coins >> 1) }; G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS: notch and saw; aim; the wedge ----------
 const LESSONS = {
-  1: [{ id: 'cut', title: 'NOTCH, THEN SAW', how: 'The felling line already points at the strip. HOLD NOTCH until the ring shows about a third, let go. Then HOLD SAW and let go while a green strip of wood is left.' }],
-  2: [{ id: 'aim', title: 'AIM THE FALL', how: 'DRAG across the picture to turn the felling line into the open strip, away from the fence. Then NOTCH and SAW.' }],
-  3: [{ id: 'wedge', title: 'THE WEDGE', how: 'This tree leans back: it will sit on its hinge. Stop SAW with green left, then TAP WEDGE until it tips.' }],
+  1: [{ id: 'cut', title: 'NOTCH, THEN SAW', say: G => G.tree && G.tree.nd > 0.05 ? 'NOW HOLD SAW' : 'HOLD NOTCH', do: 'hold', at: G => { const b = G.tree && G.tree.nd > 0.05 ? layout(G).saw : layout(G).notch; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'The felling line already points at the strip. HOLD NOTCH until the ring shows about a third, let go. Then HOLD SAW and let go while a green strip of wood is left.' }],
+  2: [{ id: 'aim', title: 'AIM THE FALL', say: 'DRAG TO AIM', do: 'drag', dir: 'lr', how: 'DRAG across the picture to turn the felling line into the open strip, away from the fence. Then NOTCH and SAW.' }],
+  3: [{ id: 'wedge', title: 'THE WEDGE', say: 'TAP WEDGE', do: 'tap', how: 'This tree leans back: it will sit on its hinge. Stop SAW with green left, then TAP WEDGE until it tips.' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); nextTree(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

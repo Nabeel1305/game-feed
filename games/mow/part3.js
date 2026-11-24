@@ -99,9 +99,7 @@ function hud(G, L, now) { const s = L.s; fillR(0, 0, W, L.top - 10 * s, 0, 'rgba
   const full = G.bag >= G.bagMax; ctx.fillStyle = full ? (Math.sin(now * 8) > 0 ? '#ffd23a' : '#fff') : '#fff'; ctx.fillText(full ? '🧺 FULL!' : '🧺 BAG', rx, 70 * s); bar(rx + 46 * s, 66 * s, 58 * s, 7 * s, G.bag / G.bagMax, full ? '#ff6a5a' : '#7ac050');
   ctx.textAlign = 'right'; ctx.fillStyle = '#ffd23a'; ctx.fillText(`STRIPES ${G.stripes}`, W - 12, 86 * s);
   if (ok && !G.over && G.wait <= 0) { const r = doneRect(L), p = 0.9 + 0.1 * Math.sin(now * 5); fillR(r.x, r.y, r.w, r.h, r.h / 2, `rgba(123,224,138,${p})`); ctx.fillStyle = '#123a1a'; ctx.font = `${Math.round(16 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('DONE ✓', r.x + r.w / 2, r.y + r.h / 2 + 1); } }
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#ffd23a'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.fillText('LESSON · ' + st.title + (st.id === 'mow' ? `  ${G.stripes}/2 stripes` : ''), 12, 40 * s);
-  ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * s)}px ${NU}`; wrapText(st.how, W - 24).slice(0, 3).forEach((l, i) => ctx.fillText(l, 12, 58 * s + i * 14 * s));
-}
+function lessonPanel(G, L) { coachPanel(G); }
 // ---------- what each happening looks and sounds like ----------
 function onEvent(G, e) { const L = lay(G), s = L.s;
   switch (e.k) {
@@ -122,7 +120,7 @@ function onEvent(G, e) { const L = lay(G), s = L.s;
     case 'all': say('EVERY BLADE!', W / 2, L.ly + L.lh * 0.4, '#a8f08a', 26); FX.flash = 0.5; sfx.win(); break;
     case 'done': sfx.click(); break;
     case 'empty': say('OUT OF FUEL', W / 2, L.ly + L.lh * 0.45, '#ffb4a8', 22); sfx.sputter(); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessonnext': if (e.first) hint = null; break;
     case 'lessondone': say('YOU\'VE GOT IT!', W / 2, L.ly + L.lh * 0.4, '#ffd23a', 26); sfx.goal(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.win(); break;

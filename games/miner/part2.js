@@ -123,9 +123,9 @@ function finish(G, win, why) { const c = G.cfg; G.over = win ? 'won' : 'lost';
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'scoop', title: 'FLY AND MINE', how: 'Put your thumb down anywhere and drag to fly. Fly near a rock: your laser cracks it. Scoop up 3 ore in a row, quickly.', need: 3 }],
-  2: [{ id: 'dock', title: 'HOME', how: 'You carry ore. Fly into the green ring under the mothership to unload it. Twice.', need: 2 }],
-  3: [{ id: 'dodge', title: 'DODGE', how: 'A red line warns where a meteor will fly. Get out of its way. Dodge 2 in a row.', need: 2 }],
+  1: [{ id: 'scoop', title: 'FLY AND MINE', say: 'DRAG TO FLY', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Put your thumb down anywhere and drag to fly. Fly near a rock: your laser cracks it. Scoop up 3 ore in a row, quickly.', need: 3 }],
+  2: [{ id: 'dock', title: 'HOME', say: 'FLY INTO THE GREEN', do: 'drag', dir: 'up', how: 'You carry ore. Fly into the green ring under the mothership to unload it. Twice.', need: 2 }],
+  3: [{ id: 'dodge', title: 'DODGE', say: 'MOVE OUT OF THE RED', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'A red line warns where a meteor will fly. Get out of its way. Dodge 2 in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

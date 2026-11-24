@@ -115,9 +115,9 @@ function inspect(G, sid) { const s = st(G, sid); if (!s) return null; const want
   if (s.closed > 0) reasons.unshift('Closed for repairs.'); return { s, want, lines: lines.length, reasons }; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'line', title: 'DRAW A LINE', how: 'Drag from one station to another, then on to the third, without lifting your finger. A train starts on it.', need: 1 }],
-  2: [{ id: 'extend', title: 'REACH THE NEW STATIONS', how: 'New stations keep appearing. Drag from the END of your line to each one. Three of them.', need: 3 }],
-  3: [{ id: 'train', title: 'MORE TRAINS', how: 'A crowd is growing. TAP your line to put a second train on it.', need: 1 }],
+  1: [{ id: 'line', title: 'DRAW A LINE', say: 'DRAG STATION TO STATION', do: 'drag', dir: 'right', how: 'Drag from one station to another, then on to the third, without lifting your finger. A train starts on it.', need: 1 }],
+  2: [{ id: 'extend', title: 'REACH THE NEW STATIONS', say: 'DRAG FROM THE END', do: 'drag', dir: 'right', how: 'New stations keep appearing. Drag from the END of your line to each one. Three of them.', need: 3 }],
+  3: [{ id: 'train', title: 'MORE TRAINS', say: 'TAP YOUR LINE', do: 'tap', how: 'A crowd is growing. TAP your line to put a second train on it.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, rate: 0.5 }; G.ev.push({ k: 'lessonnext', first: true }); firstStations(G); const st0 = lessonNow(G); G.lesson.setup = true;
   if (st0.id !== 'line') { const [a, b, c] = G.S; G.free.lines = Math.max(G.free.lines, 1); newLine(G, a.id, b.id); extendLine(G, G.L[0].id, true, c.id); }

@@ -127,9 +127,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'crit', title: 'ATTACK!', how: 'Tap ATTACK. Then tap anywhere when the white ring meets the gold ring: a CRITICAL! Land two criticals in a row.', need: 2, foe: 'leaf', me: 'fire' }],
-  2: [{ id: 'type', title: 'TYPES', how: 'Water beats fire! Tap Puddlewump on your bench to send it in, then attack: two SUPER EFFECTIVE hits in a row.', need: 2, foe: 'fire', me: 'fire' }],
-  3: [{ id: 'guard', title: 'GUARD', how: 'When the foe shows BIG ATTACK, tap GUARD before it lands. Block two big attacks.', need: 2, foe: 'water', me: 'leaf' }],
+  1: [{ id: 'crit', title: 'ATTACK!', say: 'TAP ON THE GOLD RING', do: 'tap', how: 'Tap ATTACK. Then tap anywhere when the white ring meets the gold ring: a CRITICAL! Land two criticals in a row.', need: 2, foe: 'leaf', me: 'fire' }],
+  2: [{ id: 'type', title: 'TYPES', say: 'SEND IN THE WATER ONE', do: 'tap', how: 'Water beats fire! Tap Puddlewump on your bench to send it in, then attack: two SUPER EFFECTIVE hits in a row.', need: 2, foe: 'fire', me: 'fire' }],
+  3: [{ id: 'guard', title: 'GUARD', say: 'TAP GUARD!', do: 'tap', how: 'When the foe shows BIG ATTACK, tap GUARD before it lands. Block two big attacks.', need: 2, foe: 'water', me: 'leaf' }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.saveFoe = G.foe; G.saveMe = G.me.map(m => Object.assign({}, m));
   const d = critter(st.foe, G.N, false, G.cfg); d.max = d.hp = 999; d.name = 'Practice ' + SPECIES[st.foe].name; G.foe = [d]; G.fi = 0; const mi = G.me.findIndex(m => m.type === st.me); G.ai = mi >= 0 ? mi : 0; G.sinceBig = 0;

@@ -73,9 +73,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: short towers ----------
 const LESSONS = {
-  1: [{ id: 'drop', title: 'TURN AND DROP', how: 'Slide your thumb left or right to turn the tower. Bring the GAP under the ball. Reach the bottom of this little tower; red ends it.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 1, single: true } } }],
-  2: [{ id: 'fire', title: 'CATCH FIRE', how: 'Drop through 3 platforms in a row without a bounce: the ball catches FIRE and smashes the next one. Smash one!', need: 1, tower: { floors: 12, plat: { red: 5, gapW: 3, single: true } } }],
-  3: [{ id: 'spin', title: 'MOVING PLATFORMS', how: 'These platforms turn by themselves. Watch the gap, and turn the tower to meet it. Reach the bottom.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 2, single: true, spin: 0.6 } } }],
+  1: [{ id: 'drop', title: 'TURN AND DROP', say: 'SLIDE TO TURN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Slide your thumb left or right to turn the tower. Bring the GAP under the ball. Reach the bottom of this little tower; red ends it.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 1, single: true } } }],
+  2: [{ id: 'fire', title: 'CATCH FIRE', say: 'DROP 3 IN A ROW', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drop through 3 platforms in a row without a bounce: the ball catches FIRE and smashes the next one. Smash one!', need: 1, tower: { floors: 12, plat: { red: 5, gapW: 3, single: true } } }],
+  3: [{ id: 'spin', title: 'MOVING PLATFORMS', say: 'WATCH THE GAP', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'These platforms turn by themselves. Watch the gap, and turn the tower to meet it. Reach the bottom.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 2, single: true, spin: 0.6 } } }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

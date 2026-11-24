@@ -57,10 +57,7 @@ function hud(G, L, now) { const s = L.s;
   const star = (x, on, dim) => { ctx.font = `${Math.round(18 * s)}px sans-serif`; ctx.fillStyle = on ? '#e8b830' : dim ? 'rgba(0,0,0,.12)' : 'rgba(0,0,0,.25)'; ctx.fillText('★', x, by + 3 * s); };
   star(bx + bw * m1 - 12 * s, G.songDone, false); star(bx + bw * m1 + 10 * s, G.songDone && G.holdsAll, !G.holdsAll); star(bx + bw, G.encDone, false);
   if (!G.go && !G.miss) { ctx.fillStyle = 'rgba(40,30,40,.6)'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText('Tap START', W / 2, H * 0.62); } }
-function lessonPanel(G, L) { const D = G.lesson, st = D.steps[D.i], s = L.s, x = 10, w = W - 20, y = 50 * s; ctx.save(); ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; const lines = wrapText(st.how, w - 24), h = 42 * s + lines.length * 17 * s;
-  ctx.fillStyle = 'rgba(20,20,30,.9)'; rrect(x, y, w, h, 14); ctx.fill(); ctx.strokeStyle = '#e8b830'; ctx.lineWidth = 2; rrect(x, y, w, h, 14); ctx.stroke();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#e8b830'; ctx.font = `${Math.round(15 * s)}px ${TF}`; ctx.fillText(st.title + (st.need > 1 ? `  ${D.n} / ${st.need}` : ''), x + 12, y + 9 * s);
-  ctx.font = `700 ${Math.round(13 * s)}px ${BC}`; ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, x + 12, y + 32 * s + i * 17 * s)); ctx.restore(); }
+function lessonPanel(G, L) { coachPanel(G); }
 function onEvent(G, e) { const L = lay(), s = L.s, vp = viewPos(G);
   switch (e.k) {
     case 'start': say(G.cfg.song.name, W / 2, H * 0.45, '#2a2030', 26); say(G.cfg.song.by, W / 2, H * 0.45 + 30 * s, '#8a7a8a', 16); sfx.chord([60, 64, 67]); if (G.N <= 1) tip('how', 'Tap START, then every black tile. Never the white!', 3); break;
@@ -76,7 +73,7 @@ function onEvent(G, e) { const L = lay(), s = L.s, vp = viewPos(G);
     case 'encoredone': say('★ ENCORE! ★', W / 2, H * 0.4, '#e83a4a', 30); sfx.fanfare(); break;
     case 'lessonnext': if (e.first) hint = null; break;
     case 'lessonok': say(`${e.n} / ${e.need}`, W / 2, H * 0.45, '#e8a830', 26); break;
-    case 'lessonmiss': hint = { txt: e.how, t: 0, secs: 3.4 }; break;
+    case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('BRAVO!', W / 2, H * 0.45, '#e8a830', 32); sfx.fanfare(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': break;
     case 'lost': sfx.lose(); break;

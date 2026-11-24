@@ -135,9 +135,9 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || G.dead) { mem.tap = nul
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.best = 1; finish(G, true); }
 // ---------- LESSONS: short courses ----------
 const LESSONS = {
-  1: [{ id: 'jump', title: 'TAP TO JUMP', how: 'Tap anywhere to jump over the spikes. Land on the blocks. Reach the end!' }],
-  2: [{ id: 'pad', title: 'PADS AND RINGS', how: 'Yellow pads throw you high by themselves. Over a gap, tap as you pass through the yellow ring to jump again.' }],
-  3: [{ id: 'ceil', title: 'DON\'T JUMP!', how: 'Spikes hang low over the floor: do NOT jump under them. Then a blue portal flips you onto the ceiling.' }],
+  1: [{ id: 'jump', title: 'TAP TO JUMP', say: 'TAP TO JUMP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Tap anywhere to jump over the spikes. Land on the blocks. Reach the end!' }],
+  2: [{ id: 'pad', title: 'PADS AND RINGS', say: 'TAP IN THE YELLOW RING', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Yellow pads throw you high by themselves. Over a gap, tap as you pass through the yellow ring to jump again.' }],
+  3: [{ id: 'ceil', title: 'DON\'T JUMP!', say: 'DON\'T JUMP!', do: 'wait', how: 'Spikes hang low over the floor: do NOT jump under them. Then a blue portal flips you onto the ceiling.' }],
 };
 const LCOURSE = {
   jump: (G, R, b) => { let x = 8; for (const k2 of ['spike1', 'spike1', 'block', 'spike2', 'blockspike', 'spike2', 'spike3']) { const P = piece(G, k2, x, R, b); x += P.len + 5; } return x + 6; },

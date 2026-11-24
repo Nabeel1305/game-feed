@@ -158,9 +158,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: steer through waystones, surge into a breach, brace for the knocks ----------
 const LESSONS = {
-  1: [{ id: 'steer', title: 'STEER', how: 'Left thumb: drag to turn. The worm is heavy: start the turn early, ease it back to go straight. Pass between three pairs of waystones.', need: 3 }],
-  2: [{ id: 'breach', title: 'SURGE AND BREACH', how: 'Hold SURGE (right) to speed up. Fast over a dune crest and the worm leaps out of the sand. Breach twice.', need: 2 }],
-  3: [{ id: 'brace', title: 'BRACE', how: 'Hold BRACE before you land from a breach, hit cracked sand or turn hard: braced, you hardly wobble. Three braced knocks or landings.', need: 3 }],
+  1: [{ id: 'steer', title: 'STEER', say: 'DRAG TO TURN', do: 'drag', dir: 'lr', how: 'Left thumb: drag to turn. The worm is heavy: start the turn early, ease it back to go straight. Pass between three pairs of waystones.', need: 3 }],
+  2: [{ id: 'breach', title: 'SURGE AND BREACH', say: 'HOLD SURGE', do: 'hold', at: G => { const b = layout(G).surge; return [b.x, b.y]; }, how: 'Hold SURGE (right) to speed up. Fast over a dune crest and the worm leaps out of the sand. Breach twice.', need: 2 }],
+  3: [{ id: 'brace', title: 'BRACE', say: 'HOLD BRACE', do: 'hold', at: G => { const b = layout(G).brace; return [b.x, b.y]; }, how: 'Hold BRACE before you land from a breach, hit cracked sand or turn hard: braced, you hardly wobble. Three braced knocks or landings.', need: 3 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); if (st.id !== 'steer') { G.cfg = Object.assign({}, G.cfg, { dunes: 1.6 }); } if (st.id === 'brace') { for (let i = 0; i < 6; i++) { const s = G.route.line[4 + i * 5]; if (s) G.route.cracks.push({ x: s.x, z: s.z, r: 16, done: false }); } } }
 function lessonSee(G, what, braced) { const D = G.lesson; if (!D || D.done) return; const id = D.id;

@@ -116,9 +116,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'grow', title: 'SOW, WATER, HARVEST', how: 'Tap an empty bed to plant a carrot. When a 💧 drop shows, tap it to water. When it sparkles, tap to pick it. Then tap the CART to sell three carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 3 }] }],
-  2: [{ id: 'careful', title: 'ONLY WHEN THEY ASK', how: 'Water only crops with a 💧 drop: water a crop that is not thirsty and it rots. Pick a TOMATO in the seed bar too. Sell two carrots and two tomatoes.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 2 }, { kd: 'tomato', want: 2 }] }],
-  3: [{ id: 'hens', title: 'EGGS AND CROWS', how: 'Tap the hen house when eggs are laid (not before: the hens sulk). Tap a crow to shoo it off your crops. Sell three eggs and two carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'egg', want: 3 }, { kd: 'carrot', want: 2 }], eggs: true, crows: true }],
+  1: [{ id: 'grow', title: 'SOW, WATER, HARVEST', say: 'TAP: PLANT, 💧, PICK', do: 'tap', how: 'Tap an empty bed to plant a carrot. When a 💧 drop shows, tap it to water. When it sparkles, tap to pick it. Then tap the CART to sell three carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 3 }] }],
+  2: [{ id: 'careful', title: 'ONLY WHEN THEY ASK', say: '💧 ONLY WHEN IT ASKS', do: 'tap', how: 'Water only crops with a 💧 drop: water a crop that is not thirsty and it rots. Pick a TOMATO in the seed bar too. Sell two carrots and two tomatoes.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 2 }, { kd: 'tomato', want: 2 }] }],
+  3: [{ id: 'hens', title: 'EGGS AND CROWS', say: 'TAP THE EGGS, TAP THE CROW', do: 'tap', how: 'Tap the hen house when eggs are laid (not before: the hens sulk). Tap a crow to shoo it off your crops. Sell three eggs and two carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'egg', want: 3 }, { kd: 'carrot', want: 2 }], eggs: true, crows: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.orders = makeOrders(G); G.eggT = 4; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

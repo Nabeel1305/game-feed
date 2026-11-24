@@ -81,9 +81,9 @@ function finish(G, win) { if (G.over) return; const c = G.cfg; G.over = win ? 'w
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'walk', title: 'WALK AND LEAN', how: 'Thumb down, push UP to walk. When you tip, slide the OTHER way to swing the pole and pull back. Cross 20 m without falling.', need: 1 }],
-  2: [{ id: 'wind', title: 'WIND', how: 'When the flags stream and WIND shows, stop walking (thumb to the middle) and lean into it, then go on. Cross 25 m in the wind.', need: 1 }],
-  3: [{ id: 'star', title: 'REACH FOR IT', how: 'A star hangs beside the wire. As you reach it, lean out towards it (just enough), then pull back. Grab two.', need: 2 }],
+  1: [{ id: 'walk', title: 'WALK AND LEAN', say: 'PUSH UP, SLIDE TO LEAN', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Thumb down, push UP to walk. When you tip, slide the OTHER way to swing the pole and pull back. Cross 20 m without falling.', need: 1 }],
+  2: [{ id: 'wind', title: 'WIND', say: 'STOP, LEAN INTO IT', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'When the flags stream and WIND shows, stop walking (thumb to the middle) and lean into it, then go on. Cross 25 m in the wind.', need: 1 }],
+  3: [{ id: 'star', title: 'REACH FOR IT', say: 'LEAN TO THE STAR', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'A star hangs beside the wire. As you reach it, lean out towards it (just enough), then pull back. Grab two.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -102,9 +102,9 @@ function finish(G, win, why, o = {}) { if (G.over) return; G.over = win ? 'won' 
 
 // ---------- LESSONS: centre, pull, shape ----------
 const LESSONS = {
-  1: [{ id: 'center', title: 'CENTRE THE CLAY', how: 'Hold your thumb on the clay and drag down a little to press. Keep the pressure needle in the green until the wobble stops. Twice.', need: 2 }],
-  2: [{ id: 'pull', title: 'PULL THE WALLS UP', how: 'Drag upwards along the wall, from the bottom to the top, steadily (the trail turns red if too fast). Make three good pulls.', need: 3 }],
-  3: [{ id: 'shape', title: 'SHAPE TO THE ORDER', how: 'Tap SHAPE, then touch the pot and move in or out to follow the dotted outline. Tap DONE when it matches (70% or more), glaze, and fire it.', need: 1 }],
+  1: [{ id: 'center', title: 'CENTRE THE CLAY', say: 'HOLD, PRESS DOWN', do: 'drag', dir: 'down', how: 'Hold your thumb on the clay and drag down a little to press. Keep the pressure needle in the green until the wobble stops. Twice.', need: 2 }],
+  2: [{ id: 'pull', title: 'PULL THE WALLS UP', say: 'DRAG UP SLOWLY', do: 'drag', dir: 'up', how: 'Drag upwards along the wall, from the bottom to the top, steadily (the trail turns red if too fast). Make three good pulls.', need: 3 }],
+  3: [{ id: 'shape', title: 'SHAPE TO THE ORDER', say: 'MOVE IN AND OUT', do: 'drag', dir: 'lr', how: 'Tap SHAPE, then touch the pot and move in or out to follow the dotted outline. Tap DONE when it matches (70% or more), glaze, and fire it.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true });
   if (st.id !== 'center') { G.phase = 'pull'; G.wob = 0; } if (st.id === 'shape') { for (let k2 = 0; k2 < 3; k2++) { G.phase = 'pull'; pullStart(G); pullMove(G, G.h, 10); pullEnd(G); } G.phase = 'pull'; } }

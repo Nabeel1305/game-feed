@@ -206,10 +206,10 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pass', title: 'PASS', how: 'Skate with your LEFT thumb. Point at a team-mate and tap PASS. Two passes.', need: 2 },
-    { id: 'goal', title: 'SHOOT', how: 'Skate at the net and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
-  2: [{ id: 'poke', title: 'POKE CHECK', how: 'Without the puck: skate at the man with it and tap POKE when you are close, facing the puck. Steal it three times.', need: 3 }],
-  3: [{ id: 'slap', title: 'SLAP SHOT', how: 'HOLD SHOOT to wind up, let go to fire. Harder and faster: score once with one.', need: 1 }],
+  1: [{ id: 'pass', title: 'PASS', say: 'SKATE, TAP PASS', do: 'tap', how: 'Skate with your LEFT thumb. Point at a team-mate and tap PASS. Two passes.', need: 2 },
+    { id: 'goal', title: 'SHOOT', say: 'TAP SHOOT', do: 'tap', how: 'Skate at the net and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
+  2: [{ id: 'poke', title: 'POKE CHECK', say: 'TAP POKE', do: 'tap', how: 'Without the puck: skate at the man with it and tap POKE when you are close, facing the puck. Steal it three times.', need: 3 }],
+  3: [{ id: 'slap', title: 'SLAP SHOT', say: 'HOLD SHOOT, LET GO', do: 'hold', how: 'HOLD SHOOT to wind up, let go to fire. Harder and faster: score once with one.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

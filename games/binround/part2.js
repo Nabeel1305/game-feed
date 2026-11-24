@@ -113,9 +113,9 @@ function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lo
   G.ev.push({ k: win ? 'won' : 'rest' }); }
 // ---------- LESSONS: the first three levels each start with one ----------
 const LESSONS = {
-  1: [{ id: 'empty', title: 'EMPTY A BIN', how: 'Tap the bin: you fetch it. HOLD COLLECT. Let go when the ring reaches the GREEN. Two bins.', need: 2 }],
-  2: [{ id: 'pickout', title: 'KEEP THE RECYCLING CLEAN', how: 'A bin bag is on top of the recycling. Fetch it, tap PICK OUT, then empty the box.', need: 1 }],
-  3: [{ id: 'house', title: 'FINISH THE HOUSE', how: 'Empty the bag and the garden bin, then tap NEXT HOUSE.', need: 1 }],
+  1: [{ id: 'empty', title: 'EMPTY A BIN', say: 'TAP THE BIN, HOLD', do: 'tap', how: 'Tap the bin: you fetch it. HOLD COLLECT. Let go when the ring reaches the GREEN. Two bins.', need: 2 }],
+  2: [{ id: 'pickout', title: 'KEEP THE RECYCLING CLEAN', say: 'TAP THE BAG OUT', do: 'tap', how: 'A bin bag is on top of the recycling. Fetch it, tap PICK OUT, then empty the box.', need: 1 }],
+  3: [{ id: 'house', title: 'FINISH THE HOUSE', say: 'EMPTY THEM, THEN NEXT', do: 'tap', how: 'Empty the bag and the garden bin, then tap NEXT HOUSE.', need: 1 }],
 };
 function lessonStart(G) { const st0 = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0 };
   G.stops = [makeStop(G, 0, st0.id === 'empty' ? ['bin', 'bin', 'bin'] : st0.id === 'pickout' ? ['recycle', 'bag'] : ['bag', 'garden'])]; G.stops[0].note = -1;

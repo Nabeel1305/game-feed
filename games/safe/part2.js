@@ -78,9 +78,9 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
   while (G.wave.length && G.t - G.wave[0].t > 3) G.wave.shift(); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'feel', title: 'FEEL THE CLICK', how: 'Drag round the dial, slowly. When it CLICKS, a chalk mark appears. Turn back until the mark is under the pointer, then tap SET.', need: 1 }],
-  2: [{ id: 'quiet', title: 'SOFTLY', how: 'Too fast and you miss the click, and you make noise. Open both bolts without the noise bar filling up.', need: 1 }],
-  3: [{ id: 'freeze', title: 'KEEP STILL', how: 'Footsteps! When the torch comes, lift your thumb and keep perfectly still until it has gone.', need: 1 }],
+  1: [{ id: 'feel', title: 'FEEL THE CLICK', say: 'TURN SLOWLY… TAP SET', do: 'drag', dir: 'lr', how: 'Drag round the dial, slowly. When it CLICKS, a chalk mark appears. Turn back until the mark is under the pointer, then tap SET.', need: 1 }],
+  2: [{ id: 'quiet', title: 'SOFTLY', say: 'SLOWLY!', do: 'drag', dir: 'lr', how: 'Too fast and you miss the click, and you make noise. Open both bolts without the noise bar filling up.', need: 1 }],
+  3: [{ id: 'freeze', title: 'KEEP STILL', say: 'LET GO! KEEP STILL', do: 'release', at: G => [W / 2, H * 0.7], how: 'Footsteps! When the torch comes, lift your thumb and keep perfectly still until it has gone.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

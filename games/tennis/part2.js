@@ -171,12 +171,12 @@ function practiceFeed(G) { const d = DRILLS[G.drill].id, b = G.ball, m = G.me, o
 function setDrill(G, i) { if (!G.cfg.practice) return; G.drill = (i + DRILLS.length) % DRILLS.length; G.wait = 0.3; G.next = () => practiceFeed(G); G.ball.live = false; G.ev.push({ k: 'drill', name: DRILLS[G.drill].name }); }
 // ---------- LESSONS (and later, short practice challenges for new shots) ----------
 const LESSONS = {
-  1: [{ id: 'rally', title: 'RALLY', how: 'Move under the ball with your LEFT thumb. As it reaches you, SWIPE UP with your right thumb. Hit 4 back over the net.', need: 4 }],
-  2: [{ id: 'serve', title: 'SERVE', how: 'TAP to toss the ball. SWIPE UP when the ring turns green, at the top. Land 4 good serves in the box (swipe while the ring is green).', need: 4 }],
-  3: [{ id: 'open', title: 'THE OPEN COURT', how: 'Swipe a little LEFT or RIGHT to aim. Hit 2 balls into the glowing corner, away from them.', need: 2 }],
-  5: [{ id: 'lob', title: 'NEW SHOT: THE LOB', how: 'They come to the net. A very LONG swipe up (until it says LOB) lifts it over their head. 2 lobs that land in.', need: 2 }],
-  7: [{ id: 'slice', title: 'NEW SHOT: THE SLICE', how: 'SWIPE DOWN (toward you) to slice: low and skidding. 2 slices that land in.', need: 2 }],
-  9: [{ id: 'volley', title: 'NEW SHOT: THE VOLLEY', how: 'At the net, swipe before the ball bounces. 3 volleys that land in.', need: 3 }],
+  1: [{ id: 'rally', title: 'RALLY', say: 'SWIPE UP', do: 'swipe', dir: 'up', how: 'Move under the ball with your LEFT thumb. As it reaches you, SWIPE UP with your right thumb. Hit 4 back over the net.', need: 4 }],
+  2: [{ id: 'serve', title: 'SERVE', say: 'TAP, THEN SWIPE UP', do: 'swipe', dir: 'up', how: 'TAP to toss the ball. SWIPE UP when the ring turns green, at the top. Land 4 good serves in the box (swipe while the ring is green).', need: 4 }],
+  3: [{ id: 'open', title: 'THE OPEN COURT', say: 'SWIPE TO THE CORNER', do: 'swipe', dir: 'up', how: 'Swipe a little LEFT or RIGHT to aim. Hit 2 balls into the glowing corner, away from them.', need: 2 }],
+  5: [{ id: 'lob', title: 'NEW SHOT: THE LOB', say: 'LONG SWIPE UP', do: 'swipe', dir: 'up', how: 'They come to the net. A very LONG swipe up (until it says LOB) lifts it over their head. 2 lobs that land in.', need: 2 }],
+  7: [{ id: 'slice', title: 'NEW SHOT: THE SLICE', say: 'SWIPE DOWN', do: 'swipe', dir: 'down', how: 'SWIPE DOWN (toward you) to slice: low and skidding. 2 slices that land in.', need: 2 }],
+  9: [{ id: 'volley', title: 'NEW SHOT: THE VOLLEY', say: 'SWIPE BEFORE IT BOUNCES', do: 'swipe', dir: 'up', how: 'At the net, swipe before the ball bounces. 3 volleys that land in.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonFeed(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

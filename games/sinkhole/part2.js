@@ -193,9 +193,9 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.you) return; const r
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.ate = G.total; if (G.mark) G.mark.alive = false; finish(G, true); }
 // ---------- LESSONS: little yards ----------
 const LESSONS = {
-  1: [{ id: 'swallow', title: 'SLIDE AND SWALLOW', how: 'Slide your thumb to glide the hole. Swallow 12 cones and bins. Never a RED barrel: it blows up.', need: 12 }],
-  2: [{ id: 'grow', title: 'GROW, THEN EAT THE CAR', how: 'Swallow the little things to grow. When the hole is bigger than the car, swallow the car! Mind the red barrels.', need: 1 }],
-  3: [{ id: 'rival', title: 'BIGGER EATS SMALLER', how: 'You are bigger than GULP. Catch it and swallow it! (A bigger hole could do that to you.) Mind the barrels.', need: 1 }],
+  1: [{ id: 'swallow', title: 'SLIDE AND SWALLOW', say: 'SLIDE TO SWALLOW', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Slide your thumb to glide the hole. Swallow 12 cones and bins. Never a RED barrel: it blows up.', need: 12 }],
+  2: [{ id: 'grow', title: 'GROW, THEN EAT THE CAR', say: 'GROW, EAT THE CAR', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Swallow the little things to grow. When the hole is bigger than the car, swallow the car! Mind the red barrels.', need: 1 }],
+  3: [{ id: 'rival', title: 'BIGGER EATS SMALLER', say: 'SWALLOW GULP!', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'You are bigger than GULP. Catch it and swallow it! (A bigger hole could do that to you.) Mind the barrels.', need: 1 }],
 };
 function yard(G, id) { const R = G.rnd; G.TW = 20; G.TD = 26; G.objs = []; G.blocks = [];
   G.holes.push(hole(G, 0, 10, 22, id === 'rival' ? 3 : 0));

@@ -112,10 +112,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'throw', title: 'ROW, THEN THROW', how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
-      { id: 'haul', title: 'HAUL WHEN SHE IS CALM', how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],
-  2: [{ id: 'bow', title: 'SHE SWERVES', how: 'She swerves and runs: your crew keeps the bow on her. Hold to haul, let go when her flukes rise. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
-  3: [{ id: 'lead', title: 'LEAD HER', how: 'This one is quicker. The harpoon takes a moment to fly: throw a little ahead of where she is going.', need: 1, ok: w => w === 'caught' }],
+  1: [{ id: 'throw', title: 'ROW, THEN THROW', say: 'HOLD TO ROW, LET GO TO THROW', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
+      { id: 'haul', title: 'HAUL WHEN SHE IS CALM', say: 'HOLD… LET GO WHEN SHE FIGHTS', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],
+  2: [{ id: 'bow', title: 'SHE SWERVES', say: 'HOLD, LET GO', do: 'hold', at: G => [W / 2, H * 0.7], how: 'She swerves and runs: your crew keeps the bow on her. Hold to haul, let go when her flukes rise. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
+  3: [{ id: 'lead', title: 'LEAD HER', say: 'THROW AHEAD OF HER', do: 'release', at: G => [W / 2, H * 0.7], how: 'This one is quicker. The harpoon takes a moment to fly: throw a little ahead of where she is going.', need: 1, ok: w => w === 'caught' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

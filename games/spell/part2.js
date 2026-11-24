@@ -169,9 +169,9 @@ function step(G, dt) { if (G.over) return; G.t += dt; if (G.wait > 0) { G.wait -
   if (G.phase === 'seal') G.sealT += dt; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'read', title: 'READ THE STORY', how: 'Their words point to the jar: "love" is 🌹, "sleep" is 🌙... Pick it, BREW, stir round, then tap the rune for what it acts on (♥ heart, 👁 mind, ✋ body). Three spells in a row that are just right.', need: 3 }],
-  2: [{ id: 'dose', title: 'IN OR OUT, AND HOW MUCH', how: 'Stir clockwise to draw it IN, anticlockwise to drive it OUT. Hold to pour: one line for "a little", two for usual, three for "strong". Two good spells in a row.', need: 2 }],
-  3: [{ id: 'seal', title: 'SEAL IT', how: 'Last of all, tap SEAL when the brew glows the colour of the ring round it. Two good spells in a row.', need: 2 }],
+  1: [{ id: 'read', title: 'READ THE STORY', say: 'PICK, BREW, STIR', do: 'drag', dir: 'right', how: 'Their words point to the jar: "love" is 🌹, "sleep" is 🌙... Pick it, BREW, stir round, then tap the rune for what it acts on (♥ heart, 👁 mind, ✋ body). Three spells in a row that are just right.', need: 3 }],
+  2: [{ id: 'dose', title: 'IN OR OUT, AND HOW MUCH', say: 'STIR, THEN HOLD', do: 'hold', how: 'Stir clockwise to draw it IN, anticlockwise to drive it OUT. Hold to pour: one line for "a little", two for usual, three for "strong". Two good spells in a row.', need: 2 }],
+  3: [{ id: 'seal', title: 'SEAL IT', say: 'TAP SEAL WHEN IT GLOWS', do: 'tap', how: 'Last of all, tap SEAL when the brew glows the colour of the ring round it. Two good spells in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonNext(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

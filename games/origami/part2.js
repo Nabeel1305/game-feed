@@ -93,9 +93,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'fold', title: 'YOUR FIRST FOX', how: 'Put your thumb on the glowing corner and drag it onto the dot: the paper follows your thumb. Let go on the dot. Three folds make a fox.', need: 1 }],
-  2: [{ id: 'ghost', title: 'MATCH THE OUTLINE', how: 'Drag the glowing corner until the paper fits the dashed outline, then let go. Make a whole puppy.', need: 1 }],
-  3: [{ id: 'neat', title: 'NEAT AND PERFECT', how: 'Land a fold right on the outline for a PERFECT. Make two perfect folds.', need: 2 }],
+  1: [{ id: 'fold', title: 'YOUR FIRST FOX', say: 'DRAG THE CORNER TO THE DOT', do: 'drag', dir: 'up', how: 'Put your thumb on the glowing corner and drag it onto the dot: the paper follows your thumb. Let go on the dot. Three folds make a fox.', need: 1 }],
+  2: [{ id: 'ghost', title: 'MATCH THE OUTLINE', say: 'MATCH THE LINES', do: 'drag', dir: 'up', how: 'Drag the glowing corner until the paper fits the dashed outline, then let go. Make a whole puppy.', need: 1 }],
+  3: [{ id: 'neat', title: 'NEAT AND PERFECT', say: 'RIGHT ON THE LINE', do: 'drag', dir: 'up', how: 'Land a fold right on the outline for a PERFECT. Make two perfect folds.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

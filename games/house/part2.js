@@ -112,9 +112,9 @@ function finish(G) { const c = G.cfg, wish = G.list.filter(q => q.star), within 
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'walls', title: 'FLOOR AND WALLS', how: 'Pick FLOOR and drag over 4 squares. Then pick WALL and drag along the grid lines all round it. Then DOOR: tap one of the walls. Tap MOVE IN.', need: 1 }],
-  2: [{ id: 'roof', title: 'WINDOWS AND A ROOF', how: 'Turn two walls into WINDOWS (tap them), then tap ROOF. Then MOVE IN.', need: 1 }],
-  3: [{ id: 'room', title: 'FURNISH IT', how: 'Put a bed, a stove and a table on the floor: pick one, tap a square (tap again to turn it). Then MOVE IN.', need: 1 }],
+  1: [{ id: 'walls', title: 'FLOOR AND WALLS', say: 'DRAG: FLOOR, WALLS', do: 'drag', dir: 'right', how: 'Pick FLOOR and drag over 4 squares. Then pick WALL and drag along the grid lines all round it. Then DOOR: tap one of the walls. Tap MOVE IN.', need: 1 }],
+  2: [{ id: 'roof', title: 'WINDOWS AND A ROOF', say: 'TAP A WALL: WINDOW', do: 'tap', how: 'Turn two walls into WINDOWS (tap them), then tap ROOF. Then MOVE IN.', need: 1 }],
+  3: [{ id: 'room', title: 'FURNISH IT', say: 'PICK, THEN TAP A SQUARE', do: 'tap', how: 'Put a bed, a stove and a table on the floor: pick one, tap a square (tap again to turn it). Then MOVE IN.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

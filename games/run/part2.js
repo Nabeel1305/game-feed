@@ -221,12 +221,12 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'steer', title: 'FOLLOW THE GREEN ARROWS', how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow the green arrows round 3 corners.', need: 3, ok: w => w === 'corner' },
-      { id: 'nitro', title: 'NITRO', how: 'Press the blue NITRO button for a burst of speed: it leaves the cops behind. Try it.', need: 1, ok: w => w === 'nitro' }],
-  2: [{ id: 'dodge', title: 'THE RAM', how: 'A police car pulls alongside and FLASHES: steer AWAY from it before it rams. Dodge two.', need: 2, ok: w => w === 'dodge', cops: 1 }],
-  3: [{ id: 'block', title: 'ROADBLOCKS', how: 'A roadblock leaves ONE gap: the arrow shows it. Slow down and steer through the gap. Two of them.', need: 2, ok: w => w === 'through', blocks: true },
-      { id: 'corner', title: 'CORNERS', how: 'When the alley turns, swipe LEFT or RIGHT: the way the yellow arrow points. Take two corners.', need: 2, ok: w => w === 'corner', foot: true },
-      { id: 'run', title: 'ON FOOT', how: 'Swipe left and right round crates, UP over fences, DOWN under pipes. Clear six.', need: 6, ok: w => w === 'cleared', foot: true }],
+  1: [{ id: 'steer', title: 'FOLLOW THE GREEN ARROWS', say: 'STEER, HOLD GAS', do: 'hold', how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow the green arrows round 3 corners.', need: 3, ok: w => w === 'corner' },
+      { id: 'nitro', title: 'NITRO', say: 'TAP NITRO', do: 'tap', at: G => { const b = nitroBtn(); return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Press the blue NITRO button for a burst of speed: it leaves the cops behind. Try it.', need: 1, ok: w => w === 'nitro' }],
+  2: [{ id: 'dodge', title: 'THE RAM', say: 'STEER AWAY!', do: 'drag', dir: 'lr', how: 'A police car pulls alongside and FLASHES: steer AWAY from it before it rams. Dodge two.', need: 2, ok: w => w === 'dodge', cops: 1 }],
+  3: [{ id: 'block', title: 'ROADBLOCKS', say: 'THROUGH THE GAP', do: 'drag', dir: 'lr', how: 'A roadblock leaves ONE gap: the arrow shows it. Slow down and steer through the gap. Two of them.', need: 2, ok: w => w === 'through', blocks: true },
+      { id: 'corner', title: 'CORNERS', say: 'SWIPE THE ARROW WAY', do: 'swipe', dir: 'lr', how: 'When the alley turns, swipe LEFT or RIGHT: the way the yellow arrow points. Take two corners.', need: 2, ok: w => w === 'corner', foot: true },
+      { id: 'run', title: 'ON FOOT', say: 'SWIPE ROUND, UP, DOWN', do: 'swipe', dir: 'lr', how: 'Swipe left and right round crates, UP over fences, DOWN under pipes. Clear six.', need: 6, ok: w => w === 'cleared', foot: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; lessonSet(G); G.ev.push({ k: 'lessonnext', first: true }); }
 function resetDrive(G) { G.ph = 'drive'; G.ph_t = 0; Object.assign(G.me, { x: LANE, s: 12, h: 0, v: 12, w: 0, imm: 0 }); Object.assign(G.in, { sx: 0, gas: false, brake: false }); G.cops.length = 0; G.traffic.length = 0; G.heli = null; makeRoute(G); G.ev.push({ k: 'drive' }); }

@@ -87,9 +87,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: rigged boards; every placement must clear a line, or the lesson starts again ----------
 const LESSONS = {
-  1: [{ id: 'line', title: 'FILL A LINE', how: 'Drag a piece from the tray into the gap: a full row or column clears! Clear three times in a row.', need: 3 }],
-  2: [{ id: 'two', title: 'TWO AT ONCE', how: 'Place the piece where it fills a row AND a column: both clear, for far more points. Do it twice.', need: 2 }],
-  3: [{ id: 'gem', title: 'GEMS', how: 'Clear the rows and columns with gems 💎 in them to collect the gems. Collect three.', need: 3 }],
+  1: [{ id: 'line', title: 'FILL A LINE', say: 'DRAG TO THE GAP', do: 'drag', dir: 'up', how: 'Drag a piece from the tray into the gap: a full row or column clears! Clear three times in a row.', need: 3 }],
+  2: [{ id: 'two', title: 'TWO AT ONCE', say: 'FILL A ROW AND A COLUMN', do: 'drag', dir: 'up', how: 'Place the piece where it fills a row AND a column: both clear, for far more points. Do it twice.', need: 2 }],
+  3: [{ id: 'gem', title: 'GEMS', say: 'CLEAR THE 💎', do: 'drag', dir: 'up', how: 'Clear the rows and columns with gems 💎 in them to collect the gems. Collect three.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

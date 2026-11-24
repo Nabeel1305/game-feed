@@ -185,10 +185,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
-      { id: 'throw', title: 'THROW AT THE CHEST', how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
-  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
-  3: [{ id: 'lion', title: 'A LION!', how: 'Tap the side the growl comes from to face it. When it leaps, SWIPE to dodge. Then TAP, TAP, TAP to spear it. It comes again until it is dead.', need: 1, ok: w => w === 'lion', lion: 1 }],
+  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', say: 'CREEP… FREEZE!', do: 'drag', dir: 'up', how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
+      { id: 'throw', title: 'THROW AT THE CHEST', say: 'AIM, TAP THROW', do: 'tap', at: G => { const b = layout().fire; return [b.x, b.y]; }, how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
+  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', say: 'CLOSER, THEN THROW', do: 'tap', at: G => { const b = layout().fire; return [b.x, b.y]; }, how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
+  3: [{ id: 'lion', title: 'A LION!', say: 'SWIPE! THEN TAP TAP TAP', do: 'swipe', dir: 'lr', how: 'Tap the side the growl comes from to face it. When it leaps, SWIPE to dodge. Then TAP, TAP, TAP to spear it. It comes again until it is dead.', need: 1, ok: w => w === 'lion', lion: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); if (lessonNow(G).near) newAnimal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

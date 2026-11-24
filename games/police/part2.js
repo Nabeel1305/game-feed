@@ -187,12 +187,12 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'steer', ph: 'drive', title: 'FOLLOW THE RED ARROW', how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow him round 2 corners.', need: 2, ok: w => w === 'corner' },
-      { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', how: 'Catch him up and drive into his SIDE or back corner. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],
-  2: [{ id: 'corner', ph: 'foot', title: 'FOLLOW HIM ROUND THE CORNER', how: 'When the alley turns, swipe LEFT or RIGHT: the way he went.', need: 2, ok: w => w === 'corner' },
-      { id: 'dodge', ph: 'foot', title: 'DODGE, JUMP, SLIDE', how: 'Swipe left or right round crates, UP over fences, DOWN under pipes.', need: 4, ok: w => w === 'cleared' },
-      { id: 'tackle', ph: 'foot', title: 'ARREST HIM', how: 'Run until you are right behind him. The ARREST button lights up: press it.', need: 1, ok: w => w === 'tackle' }],
-  3: [{ id: 'hold', ph: 'cuff', title: 'TAP FASTER THAN HE FIGHTS', how: 'Tap anywhere, fast: every tap pulls the bar towards CUFFED. When he fights back, tap faster.', need: 1, ok: w => w === 'cuffed' }],
+  1: [{ id: 'steer', ph: 'drive', title: 'FOLLOW THE RED ARROW', say: 'STEER, HOLD GAS', do: 'hold', how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow him round 2 corners.', need: 2, ok: w => w === 'corner' },
+      { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', say: 'HIT HIS BACK CORNER', do: 'hold', how: 'Catch him up and drive into his SIDE or back corner. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],
+  2: [{ id: 'corner', ph: 'foot', title: 'FOLLOW HIM ROUND THE CORNER', say: 'SWIPE HIS WAY', do: 'swipe', dir: 'lr', how: 'When the alley turns, swipe LEFT or RIGHT: the way he went.', need: 2, ok: w => w === 'corner' },
+      { id: 'dodge', ph: 'foot', title: 'DODGE, JUMP, SLIDE', say: 'SWIPE ROUND, UP, DOWN', do: 'swipe', dir: 'lr', how: 'Swipe left or right round crates, UP over fences, DOWN under pipes.', need: 4, ok: w => w === 'cleared' },
+      { id: 'tackle', ph: 'foot', title: 'ARREST HIM', say: 'TAP ARREST', do: 'tap', at: G => { const b = arrestBtn(); return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Run until you are right behind him. The ARREST button lights up: press it.', need: 1, ok: w => w === 'tackle' }],
+  3: [{ id: 'hold', ph: 'cuff', title: 'TAP FASTER THAN HE FIGHTS', say: 'TAP TAP TAP!', do: 'tap', how: 'Tap anywhere, fast: every tap pulls the bar towards CUFFED. When he fights back, tap faster.', need: 1, ok: w => w === 'cuffed' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonPhase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

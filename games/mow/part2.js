@@ -104,9 +104,9 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS: a small lawn each ----------
 const LESSONS = {
-  1: [{ id: 'mow', title: 'MOW IN STRIPES', how: 'Slide your thumb: the mower goes that way; lift it to stop. Mow this lawn in long straight lines, up and down: 2 STRIPES and most of the grass.', need: 1, lawn: { w: 6, h: 9, beds: 0, trees: 0, gnomes: 0, nodog: true } }],
-  2: [{ id: 'flowers', title: 'MIND THE FLOWERS', how: 'Mow round the flower bed without touching it. Drive over it and the lesson starts again.', need: 1, lawn: { w: 6, h: 8, beds: 1, bed: [1.5, 1.2], trees: 0, gnomes: 0, nodog: true } }],
-  3: [{ id: 'bin', title: 'EMPTY THE BAG', how: 'The bag is full: drive to the compost bin (top right) to empty it, then mow the rest.', need: 1, lawn: { w: 6, h: 8, beds: 0, trees: 1, gnomes: 0, nodog: true }, full: true }],
+  1: [{ id: 'mow', title: 'MOW IN STRIPES', say: 'SLIDE UP AND DOWN', do: 'drag', dir: 'ud', at: G => [W / 2, H * 0.7], how: 'Slide your thumb: the mower goes that way; lift it to stop. Mow this lawn in long straight lines, up and down: 2 STRIPES and most of the grass.', need: 1, lawn: { w: 6, h: 9, beds: 0, trees: 0, gnomes: 0, nodog: true } }],
+  2: [{ id: 'flowers', title: 'MIND THE FLOWERS', say: 'MISS THE FLOWERS', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Mow round the flower bed without touching it. Drive over it and the lesson starts again.', need: 1, lawn: { w: 6, h: 8, beds: 1, bed: [1.5, 1.2], trees: 0, gnomes: 0, nodog: true } }],
+  3: [{ id: 'bin', title: 'EMPTY THE BAG', say: 'GO TO THE BIN', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'The bag is full: drive to the compost bin (top right) to empty it, then mow the rest.', need: 1, lawn: { w: 6, h: 8, beds: 0, trees: 1, gnomes: 0, nodog: true }, full: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

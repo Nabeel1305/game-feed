@@ -160,9 +160,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: steer and ping, depth charges, guard the convoy ----------
 const LESSONS = {
-  1: [{ id: 'find', title: 'FIND THE SUBMARINE', how: 'Steer towards the marker and PING. A ring shows where he may be; ping again and it tightens to a sure contact (red). Then steer right over the red ring. Twice.', need: 2 }],
-  2: [{ id: 'charge', title: 'DEPTH CHARGES', how: 'Ping to find him, steer over the ring, set the depth the report gives (he is at MEDIUM), and DROP. Hit him twice.', need: 2 }],
-  3: [{ id: 'intercept', title: 'GUARD THE CONVOY', how: 'A submarine is closing on the merchant. Get close to it (ping to see where) before it can fire: it will go deep and run. Scare it off twice.', need: 2 }],
+  1: [{ id: 'find', title: 'FIND THE SUBMARINE', say: 'STEER TO IT, PING', do: 'tap', how: 'Steer towards the marker and PING. A ring shows where he may be; ping again and it tightens to a sure contact (red). Then steer right over the red ring. Twice.', need: 2 }],
+  2: [{ id: 'charge', title: 'DEPTH CHARGES', say: 'PING, THEN DROP', do: 'tap', how: 'Ping to find him, steer over the ring, set the depth the report gives (he is at MEDIUM), and DROP. Hit him twice.', need: 2 }],
+  3: [{ id: 'intercept', title: 'GUARD THE CONVOY', say: 'GET CLOSE TO IT', do: 'drag', dir: 'up', how: 'A submarine is closing on the merchant. Get close to it (ping to see where) before it can fire: it will go deep and run. Scare it off twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 function lessonSetup(G) { const D = G.lesson, me = G.me, R = G.rnd; G.torps = []; G.subs.forEach(s => s.gone = true); G.contacts = []; G.lessonNoFire = true;

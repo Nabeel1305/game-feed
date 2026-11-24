@@ -150,9 +150,9 @@ function think(G, d, dt, noise) { const K = KINDS[d.k], c = G.cfg, m = G.me, dd 
     if (R() < dt * 0.3) d.wh = R() * TAU; moveTo(dist(d, SPOTS.nest) > 10 ? angTo(d, SPOTS.nest) : d.wh || d.h, 1); } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'creep', title: 'CREEP AND BITE', how: 'A runner is grazing ahead. Walk to it (don\'t charge: it hears you), and BITE when it is in front of your jaws. Twice.', need: 2 }],
-  2: [{ id: 'roar', title: 'ROAR', how: 'A runner darts off as you come. ROAR when you are close to freeze it, then BITE. Twice.', need: 2 }],
-  3: [{ id: 'dodge', title: 'STEP ASIDE', how: 'The rival rears up before it lunges. Step out of its line, then BITE it while it recovers. Land three bites.', need: 3 }],
+  1: [{ id: 'creep', title: 'CREEP AND BITE', say: 'WALK UP, TAP BITE', do: 'tap', at: G => { const b = btnRects().bite; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A runner is grazing ahead. Walk to it (don\'t charge: it hears you), and BITE when it is in front of your jaws. Twice.', need: 2 }],
+  2: [{ id: 'roar', title: 'ROAR', say: 'TAP ROAR, THEN BITE', do: 'tap', at: G => { const b = btnRects().roar; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A runner darts off as you come. ROAR when you are close to freeze it, then BITE. Twice.', need: 2 }],
+  3: [{ id: 'dodge', title: 'STEP ASIDE', say: 'STEP ASIDE, TAP BITE', do: 'tap', at: G => { const b = btnRects().bite; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'The rival rears up before it lunges. Step out of its line, then BITE it while it recovers. Land three bites.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
