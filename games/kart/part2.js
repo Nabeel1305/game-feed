@@ -8,8 +8,8 @@
 // World: metres on a flat plane; x across, z (screen-down) the other way; a heading h points along (cos h, sin h).
 const RULES = [
   'The kart drives itself. <b>Left thumb</b>: put it down and slide to <b>steer</b>, further for a harder turn.',
-  '<b>Hold a hard turn</b> at speed to <b>drift</b>. Sparks go blue, orange, purple: straighten up for a <b>boost</b>.',
-  'Drive through a <b>?</b> box for an item. <b>Tap the right side</b> to use it.',
+  '<b>Hold DRIFT</b> (right thumb) and steer to <b>drift</b>. Sparks go blue, orange, purple: let go for a <b>boost</b>.',
+  'Drive through a <b>?</b> box for an item. <b>Tap the item button</b> to use it.',
   'Items: <b>Turbo</b>, <b>Oil slick</b> (drops behind), <b>Zap orb</b> (hits the kart ahead), <b>Bubble</b> (blocks one hit).',
   'Grass slows you, barriers bump you. Finish in the place the race asks for.',
 ];
@@ -52,7 +52,7 @@ function locate(T, x, z, hint) { const S = T.S, n = S.length; let bi = hint == n
 function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
   return { N, f, help: !!help, track: placeOf(N), place: 1 /* his words (24 Nov 2026): "If you don't win first place, you shouldn't be able to progress to the next level" */, laps: N <= 2 ? 2 : 3,
-    skill: x(0.8, 1.14, 30) * (1 - 0.03 * e) * (help ? 0.96 : 1), aiItems: x(0.5, 1, 30), corner: x(0.45, 0.22, 30),
+    skill: x(0.84, 1.27, 30) * (1 - 0.03 * e) * (help ? 0.96 : 1), aiItems: x(0.5, 1, 30), corner: x(0.45, 0.22, 30),
     vmax: VMAX * (1 + 0.025 * upLv('engine')), grass: 0.45 + 0.12 * upLv('tyres'), spark: 1 + 0.25 * upLv('spark') };
 }
 function newGame(N, o = {}) {
@@ -73,6 +73,7 @@ function newKart(G, s, who, me, q) { const R = G.rnd; return { me, who, x: s.x, 
 function placeBoxes(G) { const S = G.T.S, n = S.length; G.boxes = []; for (const f of [0.18, 0.5, 0.8]) { const i = Math.floor(f * n), p = S[i]; for (const c of [-3.6, -1.2, 1.2, 3.6]) G.boxes.push({ x: p.x - Math.sin(p.h) * c, z: p.z + Math.cos(p.h) * c, t: 0 }); } }
 // ---------- your thumbs ----------
 function setSteer(G, s) { G.steer = clamp(s, -1, 1); }
+function setDrift(G, on) { G.driftHeld = !!on; }      // the DRIFT button, held or let go
 function useItem(G, k = G.me) { if (G.over || !k.item || k.done || G.count > 0) return false; const it = k.item; k.item = null; G.items += k.me ? 1 : 0; const S = G.T.S;
   if (it === 'turbo') { k.boost = Math.max(k.boost, 1.3); }
   if (it === 'shield') k.shield = 7;
@@ -109,13 +110,16 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   k.boost = Math.max(0, k.boost - dt); k.shield = Math.max(0, k.shield - dt); k.spin = Math.max(0, k.spin - dt);
   const loc = locate(T, k.x, k.z, k.i), off = Math.abs(loc.lat) > TW / 2, top = (k.me ? c.vmax : VMAX * c.skill * k.skill * (k.rubber || 1)) * (k.boost > 0 ? 1.35 : 1) * (off && k.boost <= 0 ? (k.me ? c.grass : 0.5) : 1) * (k.spin > 0 ? 0.25 : 1) * (go ? 1 : 0.6);
   k.v += (top - k.v) * Math.min(1, dt * (k.v < top ? 0.9 : 2.5));
-  // the drift: a hard turn held at speed; sparks build while it is held; straightening up releases a boost
-  if (k.me) { if (Math.abs(st) > 0.72 && k.v > 14 && !k.spin) k.hardT += dt; else k.hardT = 0;
-    if (!k.drift && k.hardT > 0.22) { k.drift = Math.sign(st); k.charge = 0; G.ev.push({ k: 'drift' }); }
-    if (k.drift) { k.charge += dt * c.spark * (Math.sign(st) === k.drift && Math.abs(st) > 0.3 ? 1 : 0.35); const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
-      if (Math.abs(st) < 0.3 || Math.sign(st) === -k.drift && Math.abs(st) > 0.5 || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.55, 1.05, 1.6][k.tier]); G.boosts++; if (k.tier >= 2) { G.bigBoosts++; G.coins++; } G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } k.drift = 0; k.charge = 0; k.tier = 0; } } }
+  // THE DRIFT (25 Nov 2026, his words: "Make is like the mechanics of how to drift easier like holding one part then using the joystick"). It used to start
+  // by itself when a hard turn had been held for a moment, and ended when you straightened up: you never knew when you were in one. Now it is a button, the
+  // way racing games do it: HOLD DRIFT with the right thumb and steer with the left. The kart slides the way you are steering when you press; while you hold,
+  // the stick only makes the slide tighter (towards the bend) or wider (away), it never flips it; sparks build blue, orange, purple; LET GO for the boost.
+  if (k.me) { const held = !!G.driftHeld && !k.spin && go;
+    if (!k.drift && held && k.v > 12 && Math.abs(st) > 0.2) { k.drift = Math.sign(st); k.charge = 0; k.tier = 0; G.ev.push({ k: 'drift' }); lessonSee(G, 'drift'); }
+    if (k.drift) { k.charge += dt * c.spark * (st * k.drift > -0.3 ? 1 : 0.6);      /* only steering hard AWAY from the slide slows the sparks */ const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
+      if (!held || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.55, 1.05, 1.6][k.tier]); G.boosts++; if (k.tier >= 2) { G.bigBoosts++; G.coins++; } G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } else if (!k.spin) lessonSee(G, 'early'); k.drift = 0; k.charge = 0; k.tier = 0; } } }
   // grip: without a drift a hard turn at speed runs wide and scrubs speed off; a drift turns hard and keeps it
-  const sp = Math.min(1, k.v / 12); let yaw; if (k.drift) { const u = clamp((st * k.drift - 0.3) / 0.7, 0, 1); yaw = k.drift * (0.42 + 0.95 * u) * sp; } else { const want = st * 1.75 * sp, lim = GRIP / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
+  const sp = Math.min(1, k.v / 12); let yaw; if (k.drift) { const u = clamp((st * k.drift + 0.6) / 1.6, 0, 1); yaw = k.drift * (0.5 + 0.9 * u) * sp; } else { const want = st * 1.75 * sp, lim = GRIP / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
   const slip = k.drift ? -k.drift * 0.32 : 0; k.slip = (k.slip || 0) + (slip - (k.slip || 0)) * Math.min(1, dt * 6); const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
@@ -147,35 +151,37 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'boost', title: 'STEER AND DRIFT', say: 'SLIDE TO STEER', do: 'drag', dir: 'lr', how: 'Left thumb: slide to steer. In a corner hold a HARD turn: the kart drifts and sparks. Straighten up for a boost. Twice.', need: 2 }],
-  2: [{ id: 'item', title: 'ITEMS', say: 'TAP TO USE IT', do: 'tap', how: 'Drive through a ? box, then tap the right side of the screen to use what you got. Use 2 items.', need: 2 }],
-  3: [{ id: 'big', title: 'BIG BOOST', say: 'WAIT FOR ORANGE', do: 'drag', dir: 'lr', how: 'Hold the drift longer: wait for ORANGE sparks before you straighten up. Twice.', need: 2 }],
+  1: [{ id: 'steer', title: 'STEER', say: 'SLIDE TO STEER', do: 'drag', dir: 'lr', how: 'Left thumb: slide to steer round the bends.', need: 1 },
+    { id: 'boost', title: 'DRIFT', say: 'HOLD DRIFT + STEER', do: 'hold', at: G => { const b = btnRects().drift; return [b.x, b.y]; }, how: 'In a bend HOLD the DRIFT button and steer: the kart slides and sparks. When the sparks come, let go: a boost. Twice.', need: 2 }],
+  2: [{ id: 'item', title: 'ITEMS', say: 'TAP TO USE IT', do: 'tap', at: G => { const b = btnRects().item; return [b.x, b.y]; }, how: 'Drive through a ? box, then tap the item button to use what you got. Use 2 items.', need: 2 }],
+  3: [{ id: 'big', title: 'BIG BOOST', say: 'HOLD TILL ORANGE', do: 'hold', at: G => { const b = btnRects().drift; return [b.x, b.y]; }, how: 'Hold DRIFT longer: wait for ORANGE sparks before you let go. Twice.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
-function lessonTick(G, dt) {}
+function lessonTick(G, dt) { const st = lessonNow(G), k = G.me, L = G.lesson; if (st && st.id === 'steer') { if (L.p0 == null || k.off || (k.wob || 0) > 0.5 || k.spin > 0) { if (L.p0 != null && k.prog - L.p0 > 25) G.ev.push({ k: 'lessonmiss', how: 'Keep it on the road: slide your left thumb to steer round the bend.' }); L.p0 = k.prog; } if (k.prog - L.p0 > 110) lessonSee(G, 'steered'); } }      /* 110 m of road without touching the grass or a rail */
 function lessonSee(G, what, tier) { const st = lessonNow(G); if (!st) return; let ok = false;
-  if (st.id === 'boost' && what === 'boost') ok = true; if (st.id === 'item' && what === 'item') ok = true;
-  if (st.id === 'big' && what === 'boost') { if (tier < 2) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'That was a blue boost. Hold the drift until the sparks turn ORANGE.' }); return; } ok = true; }
+  if (st.id === 'steer' && what === 'steered') ok = true; if (st.id === 'boost' && what === 'boost') ok = true; if (st.id === 'item' && what === 'item') ok = true;
+  if (st.id === 'boost' && what === 'early') { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'Hold DRIFT until the sparks come, then let go.' }); return; }
+  if (st.id === 'big' && what === 'boost') { if (tier < 2) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: 'That was a blue boost. Hold DRIFT until the sparks turn ORANGE.' }); return; } ok = true; }
   if (!ok) return; G.lesson.n++; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
   G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.lessonEnd = true; G.wait = 1.4; } }
 function lessonMiss(G) {}
 // ---------- for the robots ----------
 // BLIND: thumbs that do not look: steer some way and hold it (or let go), or tap for the item
-const BLIND = { s: G => { const R = Math.random; setSteer(G, R() < 0.25 ? 0 : (R() * 2 - 1) * (R() < 0.5 ? 1 : 0.6)); }, t: G => { useItem(G); } };
+const BLIND = { s: G => { const R = Math.random; setSteer(G, R() < 0.25 ? 0 : (R() * 2 - 1) * (R() < 0.5 ? 1 : 0.6)); if (R() < 0.35) setDrift(G, !G.driftHeld); }, t: G => { useItem(G); } };      /* the thumbs that do not look also press and let go of DRIFT (in the same move as the steering, so the test's list of blind strings stays the size it was) */
 // a driver who looks: follows a line through the corners, drifts the long bends (holds it to orange, more if it lasts),
 // uses items sensibly; a person's hands: a beat late (react) and now and then a wobble (acc)
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, k = G.me, T = G.T, S = T.S, n = S.length;
-  if (G.over || G.wait > 0 || G.count > 0) { setSteer(G, 0); return; }
+  if (G.over || G.wait > 0 || G.count > 0) { setSteer(G, 0); setDrift(G, false); return; }
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.05 + react * 0.15;
   const look = Math.round(8 + k.v * 0.3), p = S[(k.i + look) % n]; let bend = 0; for (let q = 4; q < 26; q += 2) bend += S[(k.i + q) % n].curve; bend /= 11;
   const want = clamp(-Math.sign(bend) * Math.min(2.5, Math.abs(bend) * 5), -3, 3), tx = p.x - Math.sin(p.h) * want, tz = p.z + Math.cos(p.h) * want;
   let dh = Math.atan2(tz - k.z, tx - k.x) - (k.h + (k.slip || 0)); dh = Math.atan2(Math.sin(dh), Math.cos(dh)); let s = clamp(dh * 2.6, -1, 1);
   // a long bend coming: drift it (hold hard), let go when it straightens (or the sparks are orange and it is ending)
   const long = Math.abs(bend) > 0.2;
-  if (!k.drift && long && k.v > 16 && Math.sign(dh) === Math.sign(bend)) s = Math.sign(bend);
-  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - 0.5; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = (need - 0.42) / 0.95; s = end ? 0 : k.drift * clamp(0.3 + 0.7 * u, 0.34, 1); }
+  if (!k.drift) setDrift(G, long && k.v > 16 && Math.sign(dh) === Math.sign(bend)); if (!k.drift && G.driftHeld) s = Math.sign(bend) * Math.max(0.4, Math.abs(s));
+  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - 0.5; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = clamp((need - 0.5) / 0.9, 0, 1); s = k.drift * (u * 1.6 - 0.6); if (end) setDrift(G, false); }
   if (R() > acc) s += (R() - 0.5) * 0.8;
   setSteer(G, s);
   if (k.item) { mem.it = (mem.it || 0) + 0.1; const ahead = G.karts.some(q => q !== k && race(q) > race(k) && race(q) - race(k) < 70), behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20);

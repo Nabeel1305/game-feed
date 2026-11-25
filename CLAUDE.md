@@ -58,6 +58,13 @@ One action at a time; a hand never points at a wrong place (no `at` = a small pi
 made Pilot worse... You need to pay very close attention... anytime I try to click the side button that'll take it up, it just takes me to the
 joystick... You don't need the joystick"): a word or an arrow drawn at a fixed place is a button and is pressed; a stick, if there is one, stays in one
 place. After changing a control, press what the picture shows.
+**The review page's lists** (his words, 25 Nov 2026: "I can click that and you show only those games that you just fixed... all the games that I have
+not yet reviewed... the ones that I clicked good and didn't put any comment... all games"): All, Fixed (his notes acted on in the latest round:
+`round` on the entry in `specs/reviews-fixed.json`), To fix, Not reviewed, Fine. Give every entry of a sitting the same `round` (the date); mark an
+entry that fits fifteen games or more `general: true`; an answer with nothing changed is `answer: true`. **Good and okay are left alone**, even where
+a general point would fit (only what he asks for in every game by name, like its own music, reaches them): say which were left. **Each game has its own music**: its score is in `tools/scores.py` (run it, then build); measured,
+never listened to. **Left and right, and anything about what is seen, are measured with the camera or looked at in a sharp still**
+(`window.__fullGL = true`), never worked out on paper (LESSONS, "His review of 25 Nov 2026").
 The page is built by `python3 tools/review_page.py` and proved by `python3 tools/test_review_page.py` (what he types reaches the
 store, comes back on a phone that has forgotten everything, survives no signal). `python3 tools/small_screen.py` opens every
 card of every game on a 360 x 640 phone and reports buttons that cannot be reached.

@@ -17,6 +17,7 @@ const sfx = {
   dash() { if (!gate('dash', 350)) return; noise(0.35, 900, 0.06, 'bandpass', 0.8); tone(180, 0.3, 0.03, 'sine', 0, 320); },
   sting() { tone(1600, 0.12, 0.05, 'sawtooth', 0, 900, 4000); noise(0.12, 5000, 0.04, 'highpass'); },
   spike() { tone(700, 0.08, 0.06, 'square', 0, 400, 2400); },
+  frenzy() { [0, 4, 7, 12, 16].forEach((q, j) => tone(note(330, q), 0.22, 0.09, 'sawtooth', j * 0.06, 0, 2400)); noise(0.5, 1800, 0.06, 'bandpass', 0.8); },
   caught() { noise(0.18, 600, 0.16, 'lowpass', 1); tone(90, 0.4, 0.16, 'sawtooth', 0, 50, 500); tone(60, 0.6, 0.12, 'sine', 0.1, 40); },
   bubble() { const f = 500 + Math.random() * 600; tone(f, 0.06, 0.012, 'sine', 0, f * 1.8); },
   no() { if (!gate('no', 300)) return; tone(260, 0.14, 0.06, 'triangle', 0, 200, 900); },

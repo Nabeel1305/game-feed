@@ -40,7 +40,7 @@ function makeCfg(N, help) {
   return { N, f, help: !!help, boss: N % 10 === 0,
     // them: the better the team, the quicker, sharper and braver
     oSpd: x(6.4, 8.6, 25) * (help ? 0.95 : 1) * (1 - e2 * 0.07),      /* 22 Nov 2026: the first levels are easier to score in (an ordinary player drew 0-0 one match in three; a clumsy one won one in three) */ oSkill: x(0.25, 0.9, 25), oThink: x(0.65, 0.2, 25), oPass: x(0.65, 0.97, 25), oShot: x(0.4, 0.9, 30), oKeep: x(0.46, 0.93, 34) * (1 - e2 * 0.1), oPress: x(1.0, 1.7, 25),
-    oRange: x(18, 26, 30), oTackle: x(1.0, 3.0, 25) * (1 - e2 * 0.35),
+    oRange: x(18, 26, 30), oTackle: x(1.6, 3.0, 25) * (1 - e2 * 0.5),      /* 25 Nov 2026, his words: "the opposition doesnt try to take the ball off me": on the first levels the nearest of them came at seven tenths of a jog (slower than your man jogging) and stood in once in a while; now he closes you down at full pace and stands in */
     // us
     uSpd: 7.4 + 0.25 * upLv('pace') + (help ? 0.3 : 0) + e * 0.3, uShot: 0.55 + 0.08 * upLv('finish') + (help ? 0.06 : 0) + e2 * 0.16,      /* an aimed shot is surer in the first levels: it helps the player who looks, not the one who taps blind */ uPass: 0.8 + 0.05 * upLv('vision'), uKeep: 0.45 + 0.1 * upLv('keeper') + e * 0.1 + (help ? 0.08 : 0), uTackle: 0.62 + 0.08 * upLv('steel'), uAiTackle: 0.22,
     len: MATCH };
@@ -87,6 +87,12 @@ function bestTarget(G, p, dir, lofted) {
     if (sc > bs) { bs = sc; best = q; } }
   return best;
 }
+// where a man can meet the moving ball soonest: a ball in the air, where it comes down; a ball along the ground, the first place on its path he can
+// be at before it is (it slows as it rolls); ok = he can get there
+function meet(G, p, spd) { const b = G.ball;
+  if (b.y > 0.5 || b.vy > 1) { const T = (b.vy + Math.sqrt(b.vy * b.vy + 19.6 * Math.max(0, b.y))) / 9.81, x = clamp(b.x + b.vx * T, -HL + 0.5, HL - 0.5), z = clamp(b.z + b.vz * T, -HW + 0.5, HW - 0.5); return { t: T, x, z, ok: Math.hypot(x - p.x, z - p.z) < spd * T + 1.5 }; }
+  for (let t = 0.05; t <= 3.2; t += 0.1) { const u = (1 - Math.exp(-0.6 * t)) / 0.6, x = b.x + b.vx * u, z = b.z + b.vz * u; if (Math.abs(x) > HL || Math.abs(z) > HW) break; if (Math.hypot(x - p.x, z - p.z) <= spd * 0.88 * Math.max(0, t - 0.12) + 0.9) return { t, x, z, ok: true }; }
+  const u = (1 - Math.exp(-0.6 * 3.2)) / 0.6; return { t: 9, x: clamp(b.x + b.vx * u, -HL + 1, HL - 1), z: clamp(b.z + b.vz * u, -HW + 1, HW - 1), ok: false }; }
 function openness(G, q) { let m = 99; for (const o of team(G, 1 - q.t)) m = Math.min(m, dist(o, q)); return m; }
 function lineRisk(G, p, q) { let r = 0; const dx = q.x - p.x, dz = q.z - p.z, L2 = dx * dx + dz * dz || 1; for (const o of team(G, 1 - p.t)) { const u = clamp(((o.x - p.x) * dx + (o.z - p.z) * dz) / L2, 0, 1), d = Math.hypot(p.x + dx * u - o.x, p.z + dz * u - o.z); if (d < 3) r += (3 - d); } return r; }
 function release(G, p) { p.kick = 0.32; const b = G.ball; b.x = clamp(p.x + Math.cos(p.face) * 0.5, -HL + 0.3, HL - 0.3); b.z = p.z + Math.sin(p.face) * 0.5; b.own = null; b.last = p; b.from = p; p.cd = 0.35; b.air = 0; }
@@ -155,9 +161,14 @@ function step(G, dt) {
   for (const p of G.P) { if (p.down > 0) p.down -= dt; if (p.cd > 0) p.cd -= dt; if (p.tk > 0) p.tk -= dt; if (p.kick > 0) p.kick -= dt; }
   // movement: you, then everybody else
   G.think -= dt; const thinkNow = G.think <= 0; if (thinkNow) { G.think = 0.1; const o = b.own || b; for (let t = 0; t < 2; t++) { const L = G.rank[t]; L.length = 0; for (const q of G.T[t]) if (q.role !== 'gk' && !(q.t === 0 && q.i === G.ctrl)) L.push(q); L.sort((a, q) => ((a.x - o.x) ** 2 + (a.z - o.z) ** 2) - ((q.x - o.x) ** 2 + (q.z - o.z) ** 2)); } }
+  if (thinkNow) autoPick(G);
   for (const p of G.P) { let tx, tz, sp, sprint = false; const top = p.t ? c.oSpd : c.uSpd, jog = top * 0.66;
     if (p.t === 0 && p.i === G.ctrl) { const s2 = G.stick, L = Math.hypot(s2.x, s2.z); tx = p.x + s2.x * 5; tz = p.z + s2.z * 5;
-      if (L < 0.1) { if (!b.own && b.to === p) { [tx, tz, sp] = brain(G, p); sprint = G.sprint; } else sp = 0; } else { sprint = G.sprint; sp = sprint ? top : jog * Math.min(1, L * 1.25); } }      // thumb off: he runs on to a ball meant for him
+      // 25 Nov 2026, his words: "If I pass a ball a player in that area should run to catch it". The pass switched you to the receiver, and your thumb,
+      // still pushed the way you had been running, ran him AWAY from the ball. Now a man the ball is coming to goes and meets it by himself (the way these
+      // games lock the receiver on to the pass); he is yours again the moment it is at his feet.
+      if (!b.own && b.to === p && b.air < 3.2) { [tx, tz, sp] = brain(G, p); sprint = Math.hypot(tx - p.x, tz - p.z) > 2.5; if (sprint) sp = top; }
+      else if (L < 0.1) sp = 0; else { sprint = G.sprint; sp = sprint ? top : jog * Math.min(1, L * 1.25); } }
     else { if (thinkNow || !p.plan) p.plan = brain(G, p); [tx, tz, sp] = p.plan; sprint = sp > top * 0.84; if (!sprint) sp = Math.min(sp, jog); }
     move(G, p, tx, tz, sp, sprint, jog, top, dt); }
   // bodies do not pass through each other: two men closer than a shoulder's width are eased apart
@@ -181,6 +192,18 @@ function step(G, dt) {
   else if (Math.abs(b.own.x) > HL + 0.5) b.own.x = Math.sign(b.own.x) * HL;
   if (G.lesson) lessonTick(G, dt);
 }
+// WHO GOES FOR IT (25 Nov 2026, his words: "the players don't move into position. If I pass a ball a player in that area should run to catch it. the
+// switchimng of players should be automatic to whoever is closest to the ball when the ball is with the oppostition"). Ten times a second:
+// - a pass or lob on its way: if the man it was meant for cannot get to it and a team-mate can (or can a good half second sooner), it is his ball now;
+// - their ball, or a loose one that is nobody's: you become whichever of your men is nearest it (he must be clearly nearer than the one you have, so
+//   it does not flicker between two), at most twice a second, and never in the middle of a tackle. SWITCH still works by hand.
+function autoPick(G) { const b = G.ball, c = G.cfg; if (G.over || G.pause > 0) return;
+  if (!b.own && b.to && (b.kind === 'pass' || b.kind === 'lob') && b.air > 0.25) { const t = b.to.t, spd = t ? c.oSpd : c.uSpd, cur = meet(G, b.to, spd); let best = null, bt = cur.ok ? cur.t - 0.5 : 8;
+    for (const q of team(G, t)) { if (q === b.to || q.role === 'gk' || q.down > 0 || q === b.from) continue; const m = meet(G, q, spd); if (m.ok && m.t < bt) { bt = m.t; best = q; } }
+    if (best) { b.to = best; if (t === 0 && G.ctrl !== best.i) { G.ctrl = best.i; G.ev.push({ k: 'switch', auto: true }); } } return; }
+  if ((b.own && b.own.t === 1) || (!b.own && !(b.to && b.to.t === 0))) { if (G.lesson && lessonNow(G) && lessonNow(G).id === 'tackle') return; const cur = G.P[G.ctrl]; if (cur.tk > 0 && cur.down <= 0) return; if (G.t - (G.autoAt || -9) < 0.5 && cur.down <= 0) return;
+    let best = null, bd = 1e9; for (const q of team(G, 0)) { if (q.role === 'gk' || q.down > 0) continue; const d = Math.hypot(q.x - b.x, q.z - b.z) + (b.own ? Math.max(0, (q.x - b.own.x)) * 0.25 : 0); if (d < bd) { bd = d; best = q; } }      // a man goal-side of the ball counts as a little nearer than one it has gone past
+    if (best && best !== cur && (cur.down > 0 || Math.hypot(cur.x - b.x, cur.z - b.z) - bd > 2.5)) { G.ctrl = best.i; G.autoAt = G.t; G.ev.push({ k: 'switch', auto: true }); } } }
 // someone takes control of a loose ball
 function pickup(G) {
   const b = G.ball; if (b.y > 2.0) return; let best = null, bd = 1e9;
@@ -198,9 +221,12 @@ function keeperWatch(G) {
   const zAt = b.z + b.vz * toLine, yAt = Math.max(0, b.y + b.vy * toLine - 4.9 * toLine * toLine), onTarget = Math.abs(zAt) < GW2 && yAt < GH && yAt > -0.5;
   if (!onTarget) return;
   const skill = (s.t === 0 ? G.cfg.oKeep : G.cfg.uKeep) * (G.lesson ? 0.2 : 1), reach = 1.2 + skill * 1.6 - (b.kind === 'chip' ? clamp(Math.abs(kp.x - gx) - 3, 0, 4) : 0), gap = Math.abs(zAt - kp.z) - (yAt > 1.6 ? 0.3 : 0), sp = Math.hypot(b.vx, b.vz);
-  if (s.dg > 30) { kp.x = gx - Math.sign(gx) * 0.6; kp.z = zAt; kp.face = gx > 0 ? Math.PI : 0; G.ev.push({ k: 'save', t: kp.t, hold: true }); give(G, kp); kp.dec = 0.8; return; }      // from that far, an easy catch
+  // what the view draws of the save: where he stood, where he went, where the ball was (25 Nov 2026: he used to be MOVED to the ball in one frame)
+  const dv = (saved, hold) => { kp.dive = { t0: G.t, x0: kp.x, z0: kp.z, z1: saved ? zAt : kp.z + clamp(zAt - kp.z, -(reach + 0.6), reach + 0.6), y: yAt, bx: b.x, by: b.y, bz: b.z, hold: !!hold, saved, far: Math.abs(zAt - kp.z) }; };
+  if (s.dg > 30) { dv(true, true); kp.x = gx - Math.sign(gx) * 0.6; kp.z = zAt; kp.face = gx > 0 ? Math.PI : 0; G.ev.push({ k: 'save', t: kp.t, hold: true }); give(G, kp); kp.dec = 0.8; return; }      // from that far, an easy catch
   const far = clamp((s.dg - 12) * 0.045, 0, 0.7), p = gap < reach + far * 2 ? clamp(0.55 + skill * 0.45 - gap / (reach + far * 2) * 0.45 - (sp - 24) * 0.015 + far, 0.1, 0.98) : 0.03;      // a shot from far gives him time
-  if (s.saveRoll < p) { const hold = sp < 22 || s.saveRoll < p * 0.5; kp.x = gx - Math.sign(gx) * 0.6; kp.z = zAt; G.ev.push({ k: 'save', t: kp.t, hold });
+  if (s.saveRoll >= p) dv(false, false);
+  if (s.saveRoll < p) { const hold = sp < 22 || s.saveRoll < p * 0.5; dv(true, hold); kp.x = gx - Math.sign(gx) * 0.6; kp.z = zAt; G.ev.push({ k: 'save', t: kp.t, hold });
     if (hold) { kp.face = gx > 0 ? Math.PI : 0; give(G, kp); kp.dec = 0.8; } else { b.x = gx - Math.sign(gx) * 0.8; b.z = zAt; b.vx = -Math.sign(gx) * 6; b.vz = Math.sign(zAt || 1) * 8; b.vy = 3; b.shot = null; b.last = kp; b.kind = null; } }
 }
 function goal(G, t) {
@@ -225,7 +251,7 @@ function brain(G, p) {
   if (p.role === 'gk') { const gx = -goalX(p.t), danger = own && own.t !== p.t && Math.hypot(own.x - gx, own.z) < 16; if (danger && Math.hypot(own.x - gx, own.z) < 11) return [gx * 0.97 + (own.x - gx) * 0.35, own.z * 0.5, spd * 0.9];
     return [gx - Math.sign(gx) * 1.2, clamp(b.z * 0.18, -2.5, 2.5), spd * 0.6]; }
   // a ball in flight meant for me: go and meet it
-  if (!own && b.to === p) { const T = b.y > 0.3 || b.vy > 0 ? (b.vy + Math.sqrt(b.vy * b.vy + 19.6 * b.y)) / 9.81 : 0.3; return [b.x + b.vx * T, b.z + b.vz * T, spd]; }      // run to where it will come down
+  if (!own && b.to === p) { const m = meet(G, p, spd); return [m.x, m.z, spd]; }      // run to where it will come down, or cut across the path of a ball along the ground
   // a loose ball: the nearest of each team goes for it
   if (!own) { const near = G.rank[p.t][0];
     if (near === p && (b.kind !== 'pass' || b.last.t !== p.t)) return [b.x + b.vx * 0.3, b.z + b.vz * 0.3, Math.hypot(b.x - p.x, b.z - p.z) > 4 ? spd : spd * 0.8]; }
@@ -234,8 +260,9 @@ function brain(G, p) {
   if (att) return [h[0], h[1], spd * 0.75];
   // defending: the nearest closes the ball down (them: as hard as their level presses), the next covers, the rest hold the shape
   if (own) { const rank = G.rank[p.t].indexOf(p);
-    if (rank === 0) return [own.x + own.vx * 0.2 + (p.t ? 0 : -3), own.z + own.vz * 0.2, p.t ? (dist(p, own) > 6 && c.oPress > 1.1 ? spd : spd * 0.7) : spd * 0.6];      // your team-mates only shadow: winning it is your job
-    if (rank === 1 && p.t === 1 && c.oPress > 1.2) return [own.x + own.vx * 0.3 + s * -3, own.z, spd * 0.85];
+    if (rank === 0) { if (p.t === 0) return [own.x + own.vx * 0.2 - 3, own.z + own.vz * 0.2, spd * 0.6];      // your team-mates only shadow: winning it is your job
+      const dd = dist(p, own), ease = 1 - clamp((18 - c.N) / 17, 0, 1) * 0.17; return [own.x + own.vx * (dd > 3 ? 0.35 : 0.12), own.z + own.vz * (dd > 3 ? 0.35 : 0.12), (dd > 2.2 ? spd : spd * 0.86) * ease]; }      /* (a little short of full pace on the first levels) */      // theirs: straight at you, at full pace until he is on you
+    if (rank === 1 && p.t === 1) { const gx = -goalX(1), first = G.rank[1][0], beaten = c.N >= 7 && (!first || first.down > 0 || (first.x - own.x) * Math.sign(gx - own.x) < -1.5); if (beaten || c.oPress > 1.2) return [own.x + own.vx * 0.3 + Math.sign(gx - own.x) * (beaten ? 0.5 : 3), own.z + own.vz * 0.2, spd * (beaten ? 1 : 0.85)]; return [own.x + Math.sign(gx - own.x) * 5, own.z * 0.8 + own.vz * 0.3, spd * 0.85]; }      // the next: goal-side of you, and at you himself the moment the first is beaten
     if (rank === 1) { const gx = -goalX(p.t); return [own.x + (gx - own.x) * 0.25, own.z * 0.75, spd * 0.8]; } }
   return [h[0], h[1], spd * 0.7];
 }

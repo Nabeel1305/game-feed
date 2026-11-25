@@ -73,8 +73,16 @@ function buildWorld() {
   const trings = new T.InstancedMesh(new T.RingGeometry(0.62, 0.9, 20), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, depthWrite: false }), 22); trings.frustumCulled = false; S.add(trings);
   const tgt = new T.Mesh(new T.RingGeometry(1.1, 1.4, 28), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false })); tgt.rotation.x = -Math.PI / 2; tgt.visible = false; S.add(tgt);
   const ring = new T.Mesh(new T.RingGeometry(0.75, 0.95, 24), new T.MeshBasicMaterial({ color: 0xffe060, transparent: true, opacity: 0.95, depthWrite: false })); ring.rotation.x = -Math.PI / 2; S.add(ring);
-  const ball = new T.Mesh(new T.SphereGeometry(0.2, 14, 10), M(0xffffff, { roughness: 0.4, emissive: 0x404040 })); ball.castShadow = true; S.add(ball);
-  V3 = { T, S, nets, crowdG, flood, lamps, men, blob, trings, tgt, dB, ring, ball, kit: null, sky: null, M: [new T.Matrix4(), new T.Matrix4(), new T.Matrix4(), new T.Matrix4()], col: new T.Color() };
+  // 25 Nov 2026, his words: "The ball animation is horrible". It was a plain white ball (so you could not see it roll), it jumped from place to place
+  // when it changed feet or was saved, and a keeper who had it kept it on the grass. Now: a football with dark patches, turning about the right axis as
+  // fast as it travels; it moves smoothly from where it was to where it is; a streak behind a hard shot; a shadow that shrinks as it rises.
+  const ballT = (() => { const c2 = document.createElement('canvas'); c2.width = 256; c2.height = 128; const x2 = c2.getContext('2d'); x2.fillStyle = '#fbfbf8'; x2.fillRect(0, 0, 256, 128); x2.fillStyle = '#15171c'; const pent = (cx, cy, r, rot) => { x2.beginPath(); for (let q = 0; q < 5; q++) { const a = rot + q / 5 * TAU; q ? x2.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.9) : x2.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.9); } x2.closePath(); x2.fill(); };
+    for (let q = 0; q < 6; q++) { pent(21 + q * 43, 40, 12, q); pent(42 + q * 43, 88, 12, q + 0.6); } pent(64, 8, 10, 0); pent(192, 8, 10, 1); pent(64, 122, 10, 2); pent(192, 122, 10, 3); x2.strokeStyle = 'rgba(0,0,0,.25)'; x2.lineWidth = 1.5; for (let q = 0; q < 6; q++) { x2.beginPath(); x2.moveTo(21 + q * 43, 40); x2.lineTo(42 + q * 43, 88); x2.lineTo(64 + q * 43, 40); x2.stroke(); } const tx = new T.CanvasTexture(c2); tx.colorSpace = T.SRGBColorSpace; return tx; })();
+  const ball = new T.Mesh(new T.SphereGeometry(0.23, 20, 14), M(0xffffff, { roughness: 0.35, emissive: 0x303030, map: ballT })); ball.castShadow = true; S.add(ball);
+  const trail = new T.Mesh(new T.PlaneGeometry(1, 0.34), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false, side: T.DoubleSide })); trail.visible = false; S.add(trail);
+  // the keepers' gloves
+  const glove = new T.InstancedMesh(new T.SphereGeometry(0.095, 10, 8), new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.6 }), 4); glove.instanceMatrix.setUsage(T.DynamicDrawUsage); glove.frustumCulled = false; for (let q = 0; q < 4; q++) glove.setColorAt(q, new T.Color(q < 2 ? 0xff7a1a : 0xf4f4f4)); S.add(glove);
+  V3 = { T, S, nets, crowdG, flood, lamps, men, blob, trings, tgt, dB, ring, ball, trail, glove, bp: null, kit: null, sky: null, M: [new T.Matrix4(), new T.Matrix4(), new T.Matrix4(), new T.Matrix4()], col: new T.Color() };
   W3.scene.traverse(o => { if (o.isInstancedMesh) o.frustumCulled = false; });      /* 23 Nov 2026: copies that are re-placed as you go must never be culled by where they first were (Police Chase's vanishing skyscrapers; tools/stale_bounds.py) */
   W3.setQuality(stepN); return V3;
 }
@@ -131,10 +139,17 @@ function animate(g, t, dt) {
     const stride = 0.9 + 1.5 * f; a.ph += sp * dt / stride * Math.PI; const ph = a.ph, acc = (sp - a.v) / Math.max(dt, 1e-3); a.v = sp;
     a.lean += ((0.04 + 0.22 * f * f + clamp(acc * 0.03, -0.1, 0.15)) - a.lean) * Math.min(1, dt * 6); a.roll += ((-(p.turnRate || 0) * f * 0.12) - a.roll) * Math.min(1, dt * 6);
     const sw = Math.min(1, f * 1.6), down = p.down > 0, slide = down && p.tk > 0.3, bob = Math.abs(Math.sin(ph)) * 0.05 * sw - (sp < 0.3 ? 0.03 : 0.0);
-    // the whole man: position, facing, lean
-    tf(M0, null, p.x, 0, p.z, 0, Math.PI / 2 - p.face, 0, 1.3, 1.3, 1.3);      // (a third bigger than life: they must be readable on a phone)
-    if (down) tf(HIP, M0, 0, slide ? 0.3 : 0.25, 0, slide ? -1.15 : 1.25, 0, 0);
-    else tf(HIP, M0, 0, 0.93 + bob - (sp < 0.3 ? 0.04 : 0), 0, a.lean, 0, a.roll);
+    // the keeper (25 Nov 2026, his words: "the keeper graphics"): he watches the ball, on his toes with his hands out; for a save he DIVES from where he
+    // stood (flat out, arms at full stretch, to the ball: he used to be moved there in one frame), lands, and gets up; when he has the ball it is in his
+    // gloves at his chest, not on the grass
+    const gk = p.role === 'gk', bl = g.ball, dvr = gk && p.dive && g.t - p.dive.t0 < 1.0 ? p.dive : null, du = dvr ? (g.t - dvr.t0) : 0, fly = dvr && dvr.far > 0.8 ? clamp(du / 0.26, 0, 1) : 0, lie = dvr && dvr.far > 0.8 ? (du < 0.62 ? 1 : clamp(1 - (du - 0.62) / 0.3, 0, 1)) : 0, holds = gk && bl.own === p;
+    let px = p.x, pz = p.z, face = p.face; if (gk && !holds && !dvr && Math.abs(bl.x - p.x) > 1) face = Math.atan2(bl.z - p.z, bl.x - p.x); if (gk && (dvr || holds)) face = p.t ? Math.PI : 0;
+    if (dvr) { const e = fly * fly * (3 - 2 * fly); pz = dvr.saved ? dvr.z0 + (dvr.z1 - dvr.z0) * e : (du < 0.62 ? dvr.z0 + (dvr.z1 - dvr.z0) * e : dvr.z1 + (p.z - dvr.z1) * (1 - lie)); px = dvr.saved && !dvr.hold ? p.x : dvr.x0 + (p.x - dvr.x0) * e; }
+    const side = dvr ? -Math.sign(dvr.z1 - dvr.z0 || 1) * Math.cos(face) : 0;      // which way he goes, in his own left and right
+    tf(M0, null, px, 0, pz, 0, Math.PI / 2 - face, 0, 1.3, 1.3, 1.3);      // (a third bigger than life: they must be readable on a phone)
+    if (lie > 0) tf(HIP, M0, 0, (0.93 - 0.55 * lie) + Math.sin(fly * Math.PI) * (0.25 + Math.min(1.6, dvr.y) * 0.45) * (du < 0.3 ? 1 : 0), 0, 0, 0, -side * 1.45 * lie);
+    else if (down) tf(HIP, M0, 0, slide ? 0.3 : 0.25, 0, slide ? -1.15 : 1.25, 0, 0);
+    else tf(HIP, M0, 0, 0.93 + bob - (sp < 0.3 ? 0.04 : 0) - (gk && !holds ? 0.07 : 0), 0, a.lean + (gk && !holds && sp < 2 ? 0.16 : 0), 0, a.roll);
     put(Mn.shorts, j, tf(TMP, HIP, 0, 0.0, 0)); put(Mn.torso, j, tf(TMP, HIP, 0, 0.36, 0, 0, Math.sin(ph) * 0.12 * sw, 0, 1.12, 1, 0.78));
     tf(CH, HIP, 0, 0, 0, 0, Math.sin(ph) * 0.12 * sw, 0);
     put(Mn.head, j, tf(TMP, CH, 0, 0.83, 0.01, -a.lean * 0.6)); put(Mn.hair, j, tf(TMP, CH, 0, 0.85, -0.005, -a.lean * 0.6 - 0.25));
@@ -149,13 +164,22 @@ function animate(g, t, dt) {
       tf(SH, TH, 0, -0.44, 0, knee, 0, 0); put(Mn.shin, j * 2 + q, SH); put(Mn.boot, j * 2 + q, tf(TMP, SH, 0, -0.46, 0.06, -knee * 0.3)); }
     // arms: opposite to the legs, elbows bent more at a sprint
     for (const q of [0, 1]) { const sgn = q ? -1 : 1, s1 = Math.sin(ph + (q ? 0 : Math.PI)); let sh = s1 * (0.2 + 0.7 * sw) * sw, el = -(0.35 + 1.05 * f), out = sgn * 0.12;
-      if (sp < 0.3) { sh = 0.05; el = -0.25; } if (p.role === 'gk' && sp < 2) { sh = -0.5; el = -0.9; out = sgn * 0.5; } if (slide) { sh = -0.6; el = -0.4; out = sgn * 0.9; }
-      tf(TH, CH, sgn * 0.27, 0.6, 0, sh, 0, out); put(Mn.upper, j * 2 + q, TH); put(Mn.fore, j * 2 + q, tf(SH, TH, 0, -0.33, 0, el, 0, 0)); }
+      if (sp < 0.3) { sh = 0.05; el = -0.25; } if (gk && sp < 2) { sh = -0.5; el = -0.9; out = sgn * 0.5; } if (slide) { sh = -0.6; el = -0.4; out = sgn * 0.9; }
+      if (holds && lie <= 0) { sh = -1.15; el = -0.75; out = sgn * -0.12; } if (lie > 0) { sh = -0.2; el = -0.05; out = sgn * (2.9 - 0.25 * (sgn * side > 0 ? 0 : 1)); }      // holding it to his chest; at full stretch above his head
+      tf(TH, CH, sgn * 0.27, 0.6, 0, sh, 0, out); put(Mn.upper, j * 2 + q, TH); put(Mn.fore, j * 2 + q, tf(SH, TH, 0, -0.33, 0, el, 0, 0));
+      if (gk) { tf(TMP, SH, 0, -0.34, 0); put(V.glove, (p.t ? 2 : 0) + q, TMP); if (q === 0) { a.hx = TMP.elements[12]; a.hy = TMP.elements[13]; a.hz = TMP.elements[14]; } else { a.hx = (a.hx + TMP.elements[12]) / 2; a.hy = (a.hy + TMP.elements[13]) / 2; a.hz = (a.hz + TMP.elements[14]) / 2; } } }
     V.dB.position.set(p.x, 0.02, p.z); V.dB.rotation.set(-Math.PI / 2, 0, 0); V.dB.scale.setScalar(1.25); V.dB.updateMatrix(); V.blob.setMatrixAt(j, V.dB.matrix); V.dB.position.y = 0.035; V.dB.scale.setScalar(1.15); V.dB.updateMatrix(); V.trings.setMatrixAt(j, V.dB.matrix); });
   V.trings.instanceMatrix.needsUpdate = true;
   for (const k3 in Mn) Mn[k3].instanceMatrix.needsUpdate = true;
-  const b = g.ball; V.ball.position.set(b.x, b.y + 0.2, b.z); V.ball.rotation.z -= b.vx * dt * 3; V.ball.rotation.x += b.vz * dt * 3;
-  V.dB.position.set(b.x, 0.02, b.z); V.dB.scale.setScalar(0.45); V.dB.updateMatrix(); V.blob.setMatrixAt(22, V.dB.matrix); V.blob.instanceMatrix.needsUpdate = true;
+  V.glove.instanceMatrix.needsUpdate = true;
+  // the ball: where the rules have it, or in the gloves of a keeper who holds it; it never jumps (it runs to its new place); it rolls
+  { const b = g.ball, own = b.own, kpH = own && own.role === 'gk' && own.anim && own.anim.hx != null ? own.anim : null; let wx = b.x, wy = b.y + 0.23, wz = b.z;
+    if (kpH) { wx = kpH.hx + Math.cos(own.t ? Math.PI : 0) * 0.16; wy = kpH.hy; wz = kpH.hz; }
+    const bp = V.bp || (V.bp = { x: wx, y: wy, z: wz }), jump = Math.hypot(wx - bp.x, wy - bp.y, wz - bp.z), ox = bp.x, oz = bp.z;
+    if (jump > 12 || g.pause > 0.4) { bp.x = wx; bp.y = wy; bp.z = wz; } else { const sp2 = Math.max(26, Math.hypot(b.vx, b.vz) * 1.6), stepMax = sp2 * dt, f2 = jump > stepMax ? stepMax / jump : 1; bp.x += (wx - bp.x) * f2; bp.y += (wy - bp.y) * f2; bp.z += (wz - bp.z) * f2; }
+    V.ball.position.set(bp.x, bp.y, bp.z); const mx = bp.x - ox, mz = bp.z - oz, ml = Math.hypot(mx, mz); if (ml > 1e-4) { V.ax = V.ax || new THREE.Vector3(); V.ax.set(mz / ml, 0, -mx / ml); V.ball.rotateOnWorldAxis(V.ax, ml / 0.23); }
+    const v = ml / Math.max(dt, 1e-3), tr = V.trail; tr.visible = v > 17 && !own; if (tr.visible) { const L = Math.min(3.2, v * 0.09); tr.position.set(bp.x - mx / ml * L / 2, bp.y, bp.z - mz / ml * L / 2); tr.rotation.set(-Math.PI / 2, 0, -Math.atan2(mz, mx), 'YXZ'); tr.rotation.set(-Math.PI / 2, 0, -Math.atan2(mz, mx)); tr.scale.set(L, 1, 1); tr.material.opacity = Math.min(0.38, (v - 17) * 0.03); }
+    V.dB.position.set(bp.x, 0.02, bp.z); V.dB.scale.setScalar(Math.max(0.16, 0.5 - (bp.y - 0.23) * 0.07)); V.dB.updateMatrix(); V.blob.setMatrixAt(22, V.dB.matrix); V.blob.instanceMatrix.needsUpdate = true; }
   const c = me(g); V.ring.visible = !!G && !g.over; V.ring.position.set(c.x, 0.05, c.z); V.ring.scale.setScalar(1.5);
   { const q = G && !g.over && g.ball.own === c ? bestTarget(g, c, g.stick, false) : null; V.tgt.visible = !!q; if (q) { V.tgt.position.set(q.x, 0.06, q.z); V.tgt.scale.setScalar(1 + 0.12 * Math.sin(performance.now() / 110)); } } V.ring.material.color.setHex(g.ball.own === c ? 0xffe060 : 0x9ad8ff);
   const goalNet = g.pause > 1 && g.score; V.nets.forEach((n, i) => n.position.x = 0);

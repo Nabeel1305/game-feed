@@ -78,7 +78,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; driftId = null; if (G) setDrift(G, false); $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -88,11 +88,14 @@ window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contai
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 function tapAt() {}
 // input (two thumbs): the left half steers (put it down and slide); a tap on the right half uses the item
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; if (e.clientX > W / 2) { if (useItem(G)) vibe(HAP.light); else if (!G.me.item) sfx.no(); return; }
+let driftId = null;
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const B = btnRects(), x = e.clientX, y = e.clientY;
+  if (Math.hypot(x - B.item.x, y - B.item.y) < B.item.r + 12) { if (useItem(G)) vibe(HAP.light); else if (!G.me.item) sfx.no(); return; }      // the item button: a tap
+  if (x > W / 2) { if (driftId == null) { driftId = e.pointerId; setDrift(G, true); vibe(HAP.light); try { cv.setPointerCapture(e.pointerId); } catch (err) {} } return; }      // DRIFT (and the rest of the right side, for a thumb that lands wide): held
   if (ui.stick) return; ui.stick = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId) return; s2.x = e.clientX; s2.y = e.clientY; stickToGame(); });
 function stickToGame() { const s2 = ui.stick; if (!G) return; if (!s2) { setSteer(G, 0); return; } const dx = s2.x - s2.x0, R = 60 * k; setSteer(G, Math.abs(dx) < 4 * k ? 0 : clamp(dx / R, -1, 1)); }
-function endStick(e) { const s2 = ui.stick; if (s2 && s2.id === e.pointerId) { ui.stick = null; stickToGame(); } }
+function endStick(e) { if (e.pointerId === driftId) { driftId = null; if (G) setDrift(G, false); } const s2 = ui.stick; if (s2 && s2.id === e.pointerId) { ui.stick = null; stickToGame(); } }
 cv.addEventListener('pointerup', endStick); cv.addEventListener('pointercancel', endStick);
 // the garage: karts unlocked with stars; tap one to drive it
 function starsAll() { return Object.values(stars).reduce((a, b) => a + b, 0); }
@@ -147,7 +150,7 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  steer(s) { setSteer(G, s); }, item() { return useItem(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
+  steer(s) { setSteer(G, s); }, drift(on) { setDrift(G, on); }, btnRects, item() { return useItem(G); }, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

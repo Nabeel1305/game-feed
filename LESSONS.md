@@ -180,6 +180,43 @@ genius, and that's what you forget." What that changed, for every game from now 
 - **A name in the kit can clash with a game's own**: Kart Kingdom had its own `const music`; the kit's `function music` broke
   the page only when the kit grew. Kart Kingdom's is now `trackMusic`.
 
+## His review of 25 Nov 2026 (what it taught; the record is `specs/review-2026-11-25.md`)
+
+- **Left and right are measured with the camera, never worked out on paper.** Rex's stick was mirrored for two days and its test passed, because the
+  test turned world angles into "left" itself. A view that looks along +z has +x on the LEFT of the screen. A test of a stick or a look-drag takes the
+  camera's own right and forward vectors (`new THREE.Vector3(1,0,0).applyQuaternion(cam.quaternion)`) and measures how far the player went along each
+  (`games/rex/test_touch.py`). Swept the other 3D games with a stick the same way: crew, roach, sinkhole, splash, stunt, spy, santa, shark, eleven,
+  kart go the way pushed.
+- **A tube can be inside out and still look nearly right.** Rex's head, neck, arms and legs were: every tube that ran forwards or downwards had its
+  faces pointing inwards, so the near wall was not drawn and you saw the far wall's inside (lit plausibly). The giveaway is things inside showing
+  through (the teeth) and caps that look like boards. A lofted tube must check which way its faces point and turn them (`sweep()` in
+  `games/rex/part25_trex.js`). To judge a face, look at it: a still, close, at full sharpness (`window.__fullGL = true`), from three sides.
+- **What is planted in the world stays in the world.** `W3.pines()` and `W3.terrain()` add to the scene itself. In a game that rebuilds its place
+  (a track, a field), put what they return into that place's own group (`H.add(W3.pines(...))`) or the last place's trees stand on the new road
+  (Drift Kings, Stunt; in War they piled up).
+- **Each game has its own music** (his words: "can each game have its own music instaed of reusing the same old music tailor each song to the
+  game"). `tools/scores.py` holds one score a game (style, speed, key, lead and backing instruments, chords, a written tune, drums) and writes it
+  into the game's `bandStyle(...)` call; a new game gets a score there. Measured (it steps and renders without error, level in range), never
+  listened to: say so.
+- **Nothing teaches outside the tutorial, in any game** (his words again, on Rodeo). The kit's `tip()` box is shown only while `G.lesson` is on, in
+  every game from 9 on; so is every line that says what to do. What happened (MISSED, STUCK!) stays.
+- **Easier to live, harder to win blind.** When a complaint is "too quick/too hard" (Deep Bite's hunger), the fast clock was often what stopped a
+  thumb that does not look from winning. Slowing it must come with something a looking player handles and a blind one does not (Deep Bite: fish
+  that dart aside once, jellyfish to steer round). Measure the blind players before and after; do not ship a game that plays itself.
+- **A drift is a button** (his words on Drift Kings: "holding one part then using the joystick"). A state the player has to be in is entered by
+  something he presses and holds, not by a threshold he cannot see.
+- **A receiver locks on to the pass; control follows the ball** (Eleven, from EA's and First Touch's own guides): the man a pass is going to runs on
+  to it by himself whatever the thumb is doing; without the ball you are your nearest man automatically. An opponent who never reaches you is not a
+  defender: the nearest closes down at full pace, the next covers.
+- **A save is a dive you see.** Never move a figure to where the rules need him in one frame: record where he was and draw him getting there
+  (Eleven's keeper; Rex's meal). The same for a ball that changes hands: it runs to its new place.
+- **Good = left alone.** A game he rated good is not changed, even where a general point would fit it (the no-teaching sweep left vine, hunter,
+  police, pilot, castle, critters, cairn as they were). The one exception this round was the thing he asked for in every game by name: its own
+  music. Say which were left and which were touched.
+- The Game Review page has four lists besides All: Fixed (his notes that were acted on in the latest round), To fix (a note or a "bad" still
+  waiting), Not reviewed, Fine (good or okay, no note). Entries whose words are on 15 games or more are general: they are shown on the card but do
+  not put the game on the Fixed list.
+
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.
 1. **Spamming cannot win. On any level, the first included.** (15 Nov 2026, of Plunder's first build: "Spamming cannot win... Just repeatedly doing something cannot win. There needs to be a little bit of skill. This is why I love the boxing game.") Any repeated move, **at any speed**, must lose on **every** level: mashing, a slow steady beat of one move, a short string of moves on a beat, a control held over or wiggled, a button pressed on a count. "Early levels are for learning" (rule 0) means generous windows and soft punishment for someone who is trying to do the right thing; it never means a rhythm works. How to get there (all of it learned the hard way on Plunder, see its notes):

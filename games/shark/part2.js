@@ -45,36 +45,47 @@ const UPGRADES = [
 ];
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Pup'], [40, 'Reef shark'], [130, 'Hunter'], [320, 'Great white'], [700, 'Apex'], [1500, 'Legend of the deep']];
-const R_BAY = 28;
+const R_BAY = 28, LOCAL = 18;
 
 function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
   return { N, f, help: !!help, place: placeOf(N),
     goal: Math.min(6, 3 + Math.floor(N / 8)),      // the size to reach: 3 at level 1 ... up to the biggest
-    hunters: x(0, 3.6, 30), huntSpd: x(0.72, 0.86, 30), notice: x(1.1, 0.6, 30), hunger: x(0.057, 0.046, 30) * (1 - 0.2 * upLv('belly')) * (help ? 0.8 : 1),
-    prey: x(80, 70, 40), flee: x(1.0, 1.25, 30), dodge: x(4.5, 5.2, 30), jelly: N >= 3 ? x(2, 5, 30) : 0, gold: 2,
+    hunters: x(0, 3.6, 30), huntSpd: x(0.72, 0.86, 30), notice: x(1.1, 0.6, 30), hunger: x(0.024, 0.03, 30) * (1 - 0.2 * upLv('belly')) * (help ? 0.8 : 1),      /* 25 Nov 2026, his words: "The shark gets hungry too quickly": full to empty took 17 s (a fish every 2 s just to stand still); now about 40 s */
+    prey: x(80, 70, 40), flee: x(1.0, 1.25, 30), dodge: x(4.5, 5.2, 30), jelly: N >= 3 ? x(2, 5, 30) : 0, jellyNear: x(7, 9, 30), sting: x(0.17, 0.2, 30), biteCost: x(0.34, 0.46, 30), gold: 2,
     spd: 1 + 0.08 * upLv('fins') + (help ? 0.05 : 0), dashCost: 0.16 * (1 - 0.15 * upLv('gills')), reach: 1 + 0.15 * upLv('jaws'), sense: 1 + 0.25 * upLv('sense') + e * 0.3 };
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null,
-    place: cfg.place, me: { x: 0, z: 0, vx: 0, vz: 2, face: Math.PI / 2, tier: 0, fill: 0, hunger: 0.5, dash: 1, mouth: 0, stung: 0, dashing: false }, fish: [], stick: { x: 0, z: 0 },
-    eaten: {}, eatenN: 0, coins: 0, near: 0, starve: 0, hunted: 0, escapes: 0, best: 0 };
+    place: cfg.place, me: { x: 0, z: 0, vx: 0, vz: 2, face: Math.PI / 2, tier: 0, fill: 0, hunger: 0.85, dash: 1, mouth: 0, stung: 0, dashing: false, inv: 0 }, fish: [], stick: { x: 0, z: 0 },
+    eaten: {}, eatenN: 0, coins: 0, near: 0, starve: 0, hunted: 0, escapes: 0, best: 0, combo: 0, comboT: 0, frenzy: 0, frenzies: 0, bitten: 0 };
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else { G.ev.push({ k: 'start' }); populate(G); }
   return G;
 }
-const sizeOf = G => SIZES[G.me.tier], needOf = G => 8 + 4 * G.me.tier;
+// 25 Nov 2026, his words: "when the shark eats make it physically bigger". He grew only when the bar filled (a step every 8 to 30 fish). Now every
+// bite makes him a little longer: his length runs smoothly from this size to the next as the bar fills, and what he can eat grows with it.
+const needOf = G => 12 + 5 * G.me.tier, sizeOf = G => { const t = G.me.tier, a = SIZES[t], b = SIZES[Math.min(SIZES.length - 1, t + 1)]; return a + (b - a) * Math.min(1, G.me.fill / needOf(G)); };
+// A FEEDING FRENZY (25 Nov 2026, "this game is not engaging"): fish eaten one soon after another make a chain (CHAIN_T seconds to the next; a jellyfish's sting breaks it, and ends a frenzy); CHAIN_N in
+// a chain and the frenzy starts: FRENZY seconds in which he is faster, dashing costs nothing, the fish cannot dart aside, every fish counts double
+// and the hunters keep clear. So a school is worth going after whole, and a hunter's patch is worth a raid.
+const CHAIN_T = 2.5, CHAIN_N = 6, FRENZY = 6;
+// how much sea the screen shows across (it was 5 + 2.6 x his length: he was a tenth of the screen and the fish were specks; now he is about a fifth of it at every size)
+const viewOf = G => 1.0 + 3.6 * sizeOf(G);
+// the next kind he is not yet big enough to eat: a near goal always on the screen
+function nextPrey(G) { const s = sizeOf(G); let best = null; for (const k of ORDER) { const sp = SPECIES[k]; if (!(sp.val > 0) || sp.gold) continue; if (sp.size * 1.1 >= s * 0.85 && (!best || sp.size < SPECIES[best].size)) best = k; } return best; }
 // which kinds swim here: those near your size, a few smaller, hunters a size or two above
 function pool(G) { const s = sizeOf(G), N = G.N; return ORDER.filter(k => { const sp = SPECIES[k]; if (sp.kind === 'jelly') return false; if (sp.gold) return false; if (sp.kind === 'hunter') return sp.size > s * 0.6 && sp.size < s * 3.2 && N >= 2; return sp.size > s * 0.15 && sp.size < s * 2.2; }); }
 function spawn(G, kind, near) {
   const R = G.rnd, sp = SPECIES[kind], m = G.me; let x, z, tries = 0;
-  do { const a = R() * TAU, r = near ? 12 + R() * 10 : 5 + R() * (R_BAY - 7); x = (near ? m.x : 0) + Math.cos(a) * r; z = (near ? m.z : 0) + Math.sin(a) * r; } while ((Math.hypot(x, z) > R_BAY - 4 || Math.hypot(x - m.x, z - m.z) < (kind === 'jelly' || sp.kind === 'hunter' ? 12 : 4)) && tries++ < 30);
+  const vw = viewOf(G); do { const a = R() * TAU, r = near ? (near === 3 ? vw * (0.4 + R() * 0.75) : near === 2 ? vw * (1.25 + R() * 0.5) : Math.max(12, vw * 1.4) + R() * 10) : 5 + R() * (R_BAY - 7); x = (near ? m.x : 0) + Math.cos(a) * r; z = (near ? m.z : 0) + Math.sin(a) * r; } while ((Math.hypot(x, z) > R_BAY - 4 || Math.hypot(x - m.x, z - m.z) < (sp.kind === 'hunter' ? Math.max(12, vw * 1.3) : kind === 'jelly' ? Math.min(12, vw * (near === 3 ? 0.45 : 1.2)) : Math.min(4, vw * 0.9))) && tries++ < 30);
   const f = { kind, sp, x, z, h: R() * TAU, v: sp.spd * 0.5, wob: R() * 10, state: 'calm', t: 0, puff: 0, size: sp.size * (0.9 + R() * 0.2), id: G.fishId = (G.fishId || 0) + 1 };
   G.fish.push(f); return f;
 }
 function populate(G) {
   const c = G.cfg, R = G.rnd, pl = pool(G).filter(k => SPECIES[k].kind !== 'hunter');
   G.fish.length = 0; for (let i = 0; i < c.prey; i++) { const k = pl[(R() * pl.length) | 0]; if (SPECIES[k].kind === 'school') { const f = spawn(G, k); for (let j = 0; j < 5; j++) { const g = spawn(G, k); g.x = f.x + (R() - 0.5) * 3; g.z = f.z + (R() - 0.5) * 3; g.leader = f; } } else spawn(G, k); }
+  { const s = sizeOf(G), near = pl.filter(k => SPECIES[k].size * 1.1 < s * 0.85); if (near.length) for (let i = 0; i < 8; i++) spawn(G, near[(R() * near.length) | 0], 3); for (let i = 0; i < Math.round(c.jellyNear) - 1; i++) { const j = spawn(G, 'jelly', 3); j.size = 0.42 + 0.3 * s; } }      /* something to chase from the first second */
   for (let i = 0; i < huntersNow(G); i++) spawnHunter(G); for (let i = 0; i < Math.round(c.jelly); i++) spawn(G, 'jelly'); for (let i = 0; i < c.gold; i++) spawnGold(G);
 }
 const huntersNow = G => Math.round(G.cfg.hunters * Math.min(1, (G.me.tier + 1) / 3));      // fewer hunters while you are small
@@ -87,43 +98,49 @@ function setStick(G, x, z) { const L = Math.hypot(x, z); G.stick = L > 1 ? { x: 
 // ---------- the sea, step by step ----------
 function step(G, dt) {
   if (G.over) return; G.t += dt; const c = G.cfg, m = G.me, R = G.rnd, s = sizeOf(G);
-  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0 && G.lessonEnd) { G.lessonEnd = false; Object.assign(m, { x: 0, z: 0, vx: 0, vz: 2, tier: 0, fill: 0, hunger: 0.5, dash: 1 }); G.eaten = {}; G.eatenN = 0; G.coins = 0; populate(G); G.ev.push({ k: 'start' }); } return; }
+  if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0 && G.lessonEnd) { G.lessonEnd = false; Object.assign(m, { x: 0, z: 0, vx: 0, vz: 2, tier: 0, fill: 0, hunger: 0.85, dash: 1 }); G.eaten = {}; G.eatenN = 0; G.coins = 0; populate(G); G.ev.push({ k: 'start' }); } return; }
   // the shark: cruise or dash, turning with weight
-  const st = G.stick, L = Math.hypot(st.x, st.z), dashing = L > 0.92 && m.dash > 0.05 && m.stung <= 0, base = (3.2 + 1.6 * Math.sqrt(s)) * c.spd, starving = m.hunger <= 0;
+  if (G.comboT > 0) { G.comboT -= dt; if (G.comboT <= 0) G.combo = 0; } const fz = G.frenzy > 0; if (fz) { G.frenzy -= dt; if (G.frenzy <= 0) { G.frenzy = 0; G.ev.push({ k: 'frenzyend' }); } } if (m.inv > 0) m.inv -= dt;
+  const st = G.stick, L = Math.hypot(st.x, st.z), dashing = L > 0.92 && m.dash > 0.05 && m.stung <= 0, base = (3.2 + 1.6 * Math.sqrt(s)) * c.spd * (fz ? 1.22 : 1), starving = m.hunger <= 0;
   let vd = L < 0.12 ? base * 0.35 : base * (dashing ? 1.75 : Math.min(1, L * 1.15)) * (starving ? 0.6 : 1) * (m.stung > 0 ? 0.4 : 1);
   let v = Math.hypot(m.vx, m.vz), h = v > 0.1 ? Math.atan2(m.vz, m.vx) : m.face; const hd = L > 0.12 ? Math.atan2(st.z, st.x) : h, da = Math.atan2(Math.sin(hd - h), Math.cos(hd - h));
   const turn = 5.5 / (1 + 0.15 * v); h += clamp(da, -turn * dt, turn * dt); v += clamp(vd - v, -8 * dt, (dashing ? 14 : 7) * dt);
   m.vx = Math.cos(h) * v; m.vz = Math.sin(h) * v; m.x += m.vx * dt; m.z += m.vz * dt; m.face = h; m.turn = clamp(da, -1, 1); m.dashing = dashing;
   const rr = Math.hypot(m.x, m.z); if (rr > R_BAY) { m.x *= R_BAY / rr; m.z *= R_BAY / rr; }
-  m.dash = clamp(m.dash + (dashing ? -c.dashCost : 0.09) * dt, 0, 1); if (m.stung > 0) m.stung -= dt; if (m.mouth > 0) m.mouth -= dt;
+  m.dash = clamp(m.dash + (dashing ? (fz ? 0 : -c.dashCost) : 0.09) * dt, 0, 1); if (m.stung > 0) m.stung -= dt; if (m.mouth > 0) m.mouth -= dt;
   if (!G.lesson || G.lesson.hungry) { m.hunger = clamp(m.hunger - c.hunger * (dashing ? 1.25 : 1) * dt, 0, 1); }
-  if (starving) { G.starve += dt; if (G.starve > 6) return finish(G, false, 'starved'); } else G.starve = 0;
+  if (starving) { G.starve += dt; if (G.starve > 8) return finish(G, false, 'starved'); } else G.starve = 0;
   // the fish
-  const mx = m.x + Math.cos(h) * s * 0.5, mz = m.z + Math.sin(h) * s * 0.5, reach = (0.5 + 0.34 * s) * c.reach;
-  let hunted = 0;
+  const mx = m.x + Math.cos(h) * s * 0.5, mz = m.z + Math.sin(h) * s * 0.5, reach = (0.26 + 0.27 * s) * c.reach;      /* the bite: what is right at his jaws (it was a metre-wide scoop: with fish all round him he fed without aiming) */
+  let hunted = 0; const vwS = viewOf(G);
   for (let i = G.fish.length - 1; i >= 0; i--) { const f = G.fish[i], sp = f.sp, dx = m.x - f.x, dz = m.z - f.z, d = Math.hypot(dx, dz); f.t += dt; f.wob += dt;
     let th = f.h, sv = sp.spd * 0.45;
     if (sp.kind === 'hunter' && danger(G, f)) {
       const sense = 8 + f.size * 1.5 + s * 1.5;      // a little shark is hard to spot
       if (f.rest > 0) f.rest -= dt;
-      if (f.state === 'calm' && d < sense && !(f.rest > 0) && !G.lessonNoHunt) { f.state = 'notice'; f.t = 0; G.ev.push({ k: 'notice', id: f.id }); }
+      if (fz && f.state !== 'calm') { f.state = 'calm'; f.t = 0; f.h = Math.atan2(-dz, -dx); f.rest = 3; }      /* in a frenzy the hunters keep clear */
+      if (f.state === 'calm' && d < sense && !(f.rest > 0) && !G.lessonNoHunt && !fz) { f.state = 'notice'; f.t = 0; G.ev.push({ k: 'notice', id: f.id }); }
       if (f.state === 'notice') { th = Math.atan2(dz, dx); sv = 0.6; if (f.t > c.notice) { f.state = 'hunt'; f.t = 0; G.ev.push({ k: 'hunt' }); } }
       else if (f.state === 'hunt') { const lead = Math.min(0.6, d / 12); th = Math.atan2(m.z + m.vz * lead - f.z, m.x + m.vx * lead - f.x); sv = base * 1.75 * c.huntSpd * clamp(0.8 + 0.2 * (f.size / s - 1), 0.8, 1);      // one only a little bigger than you is a little slower hunted++;
         if (f.t > 4.5 || d > sense * 2.2) { f.state = 'calm'; f.t = 0; f.h += Math.PI; f.rest = 6; G.escapes++; G.ev.push({ k: 'escaped' }); lessonSee(G, 'escape'); }
-        const bx = f.x + Math.cos(f.h) * f.size * 0.5, bz = f.z + Math.sin(f.h) * f.size * 0.5; if (Math.hypot(bx - m.x, bz - m.z) < 0.35 + f.size * 0.18 + s * 0.15) { if (G.lesson) { G.ev.push({ k: 'caught', lesson: true }); lessonMiss(G); return; } G.ev.push({ k: 'caught' }); return finish(G, false, 'eaten', f.kind); } }
+        const bx = f.x + Math.cos(f.h) * f.size * 0.5, bz = f.z + Math.sin(f.h) * f.size * 0.5; if (Math.hypot(bx - m.x, bz - m.z) < 0.35 + f.size * 0.18 + s * 0.15) { if (G.lesson) { G.ev.push({ k: 'caught', lesson: true }); lessonMiss(G); return; }
+          // 25 Nov 2026: a hunter's bite was the end at once. Now it takes a bite OUT of him (a big piece of the food bar, a knock, a moment when nothing
+          // can touch him) and swims off to come round again; it is the end only when the bar is empty
+          if (!(m.inv > 0)) { m.hunger -= c.biteCost; G.bitten++; m.inv = 1.8; m.stung = 0.35; m.vx += Math.cos(f.h) * 7; m.vz += Math.sin(f.h) * 7; f.state = 'calm'; f.t = 0; f.h += Math.PI; f.rest = 3.5; G.combo = 0; G.comboT = 0;
+            if (m.hunger <= 0) { m.hunger = 0; G.ev.push({ k: 'caught' }); return finish(G, false, 'eaten', f.kind); } G.ev.push({ k: 'bitten', by: f.kind }); } } }
       else { if (f.home) {} th = f.h + Math.sin(f.wob * 0.7) * 0.6 * dt * 10; }
-    } else if (sp.kind === 'jelly') { th = f.h + Math.sin(f.wob * 0.3) * 0.3; sv = sp.spd; if (d < 0.4 + s * 0.35 && m.stung <= 0) { m.stung = 0.8; m.hunger = Math.max(0, m.hunger - 0.08); G.ev.push({ k: 'sting' }); lessonSee(G, 'sting'); } }
+    } else if (sp.kind === 'jelly') { th = f.h + Math.sin(f.wob * 0.3) * 0.3; sv = sp.spd; if (!G.lesson && d < vwS * 1.0) { th = Math.atan2(dz, dx) + Math.sin(f.wob * 0.7 + f.id) * 0.5; sv = 0.55 + 0.32 * Math.sqrt(s); }      /* a jellyfish near him drifts his way, slowly: a shark that stays where it is gets stung; one that swims leaves them behind */ if (d < f.size * 0.55 + s * 0.3 && m.stung <= 0 && !(m.inv > 0)) { if (fz) { G.frenzy = 0; G.ev.push({ k: 'frenzyend' }); }      /* even in a frenzy: and it ends the frenzy */ m.stung = 0.8; m.inv = 1.3; m.hunger = Math.max(0, m.hunger - c.sting); m.fill = Math.max(0, m.fill - needOf(G) * 0.25); G.combo = 0; G.comboT = 0; G.stings = (G.stings || 0) + 1; G.ev.push({ k: 'sting' });      /* a sting costs food and a little of what he has grown: every bite makes him bigger, every sting a little smaller */ lessonSee(G, 'sting'); } }
     else {      // prey: wander, school, dart; flee a shark that is bigger
       if (sp.kind === 'school' && f.leader && G.fish.includes(f.leader)) { th = Math.atan2(f.leader.z + Math.sin(f.id) * 1.2 - f.z, f.leader.x + Math.cos(f.id) * 1.2 - f.x); sv = f.leader.v * 1.1 + Math.max(0, Math.hypot(f.leader.x - f.x, f.leader.z - f.z) - 2); }
       else th = f.h + Math.sin(f.wob * 0.9 + f.id) * 0.9 * dt * 6;
       if (f.home && G.fish.includes(f.home)) { const hx = f.home.x - f.x, hz = f.home.z - f.z; if (Math.hypot(hx, hz) > 6) th = Math.atan2(hz, hx); }
-      if (sp.kind === 'school' && d < 6 + s * 1.5) { const ld = f.leader && G.fish.includes(f.leader) ? f.leader : f; if (!ld.fleeing && R() < 3 * dt) { ld.fleeing = true; } }      // a school feels you coming and turns as one
+      if (sp.kind === 'school' && d < Math.min(6 + s * 1.5, vwS * 1.0)) { const ld = f.leader && G.fish.includes(f.leader) ? f.leader : f; if (!ld.fleeing && R() < 3 * dt) { ld.fleeing = true; } }      // a school feels you coming and turns as one
       if (sp.kind === 'puffer') f.puff = clamp(f.puff + (d < 4 + s ? 2 : -1) * dt, 0, 1);
-      if (edible(G, f) && d < 5 + s * 1.5 && (sp.gold || R() < c.flee * 2 * dt + (f.fleeing ? 1 : 0))) { f.fleeing = true; }      // a golden fish always runs: you have to want it
+      if (edible(G, f) && d < Math.min(5 + s * 1.5, vwS * 0.85) && (sp.gold || R() < c.flee * 2 * dt + (f.fleeing ? 1 : 0))) { f.fleeing = true; }      /* 25 Nov 2026: they ran from 6 m, before they were even on the screen; now they run when you can see them go */      // a golden fish always runs: you have to want it
       // a fish you swim straight at darts aside at the last moment: steer after it (a straight line misses)
-      if (edible(G, f) && !f.dodge && d < 2.4 + s * 1.2 && d > 0.3) { const dot = -(dx * Math.cos(h) + dz * Math.sin(h)) / d; if ((dot > 0.75 || sp.kind === 'school') && R() < c.dodge * (sp.kind === 'school' ? 1.6 : 1) * dt) { f.dodge = 0.45; f.dh = Math.atan2(-dz, -dx) + (R() < 0.5 ? 1.3 : -1.3); G.ev.push({ k: 'dodge' }); } }
+      if (edible(G, f) && !f.dodge && !fz && d < Math.min(2.4 + s * 1.2, vwS * 0.5) && d > 0.3) { const dot = -(dx * Math.cos(h) + dz * Math.sin(h)) / d; if ((dot > 0.75 || sp.kind === 'school') && R() < (G.lesson ? c.dodge * (sp.kind === 'school' ? 1.6 : 1) : 30) * dt) {      /* outside the lesson every fish you swim straight at darts aside, once: turn after it and it is yours (it cannot dart again for a moment). In a frenzy none of them can. */ f.dodge = 0.45; f.dh = Math.atan2(-dz, -dx) + (R() < 0.5 ? 1.3 : -1.3); G.ev.push({ k: 'dodge' }); } }
       if (f.dodge > 0) { f.dodge -= dt; th = f.dh; sv = sp.spd * 1.6; if (f.dodge <= 0) f.dodge = -1.2; } else if (f.dodge < 0) f.dodge = Math.min(0, f.dodge + dt);
-      if (f.fleeing && !(f.dodge > 0)) { th = Math.atan2(-dz, -dx) + Math.sin(f.wob * 3) * 0.5; sv = sp.spd * (sp.kind === 'dart' ? 1 : 0.8); if (d > 12 + s * 2) f.fleeing = false; }
+      if (f.fleeing && !(f.dodge > 0)) { const side = Math.sin(Math.atan2(-dz, -dx) - h) >= 0 ? 1 : -1; th = Math.atan2(-dz, -dx) + side * 0.95 + Math.sin(f.wob * 3) * 0.3; sv = sp.spd * (sp.kind === 'dart' ? 1 : 0.8);      /* they run OUT of his path, to the side they are already on (straight away from a faster shark is straight into his mouth): he has to steer after them */ if (d > Math.min(12 + s * 2, vwS * 2)) f.fleeing = false; }
       if (sp.gold) sv *= 1.0;
     }
     // stay in the bay
@@ -135,16 +152,25 @@ function step(G, dt) {
   }
   G.hunted = hunted;
   // the sea fills up again out of sight
-  if (!G.lesson) { const prey = G.fish.filter(f => f.sp.kind !== 'hunter' && f.sp.kind !== 'jelly' && !f.sp.gold).length; if (prey < c.prey * 0.8 && R() < dt * 4) { const pl = pool(G).filter(k => SPECIES[k].kind !== 'hunter'); spawn(G, pl[(R() * pl.length) | 0], true); }
+  if (!G.lesson) { const isPrey = f => f.sp.kind !== 'hunter' && f.sp.kind !== 'jelly' && !f.sp.gold, prey = G.fish.filter(isPrey).length; if (prey < c.prey * 0.8 && R() < dt * 4) { const pl = pool(G).filter(k => SPECIES[k].kind !== 'hunter'); spawn(G, pl[(R() * pl.length) | 0], true); }
+    // 25 Nov 2026 ("not engaging": most of the time there was nothing on the screen to eat): there is always something to chase round him. Fewer than
+    // LOCAL fish he can eat within two screens: one more swims in from just off the screen; the sea's far side gives one up so the count holds
+    { const vw = viewOf(G); let nearN = 0, far = -1, fd = 0; for (let i = 0; i < G.fish.length; i++) { const f = G.fish[i]; if (!isPrey(f)) continue; const d = Math.hypot(f.x - m.x, f.z - m.z); if (d < vw * 1.9 && edible(G, f)) nearN++; else if (d > fd && d > vw * 3) { fd = d; far = i; } }
+      // 25 Nov 2026: with fish all round him, a thumb that did not look fed and won. Jellyfish drift among the fish now (their size keeps pace with
+      // his): each one touched stings (a piece of the food bar, a slow second, the chain broken). Looking, you weave round them; not looking, you starve.
+      { let jn = 0, jfar = -1, jd = 0; for (let i = 0; i < G.fish.length; i++) { const f = G.fish[i]; if (f.sp.kind !== 'jelly') continue; const d = Math.hypot(f.x - m.x, f.z - m.z); if (d < vw * 1.9) jn++; else if (d > jd && d > vw * 3) { jd = d; jfar = i; } }
+        if (jn < Math.round(c.jellyNear) && R() < dt * 3) { if (jfar >= 0) G.fish.splice(jfar, 1); const j = spawn(G, 'jelly', 2); j.size = 0.42 + 0.3 * s; } }
+      if (nearN < LOCAL && R() < dt * 5) { const pl = pool(G).filter(k => SPECIES[k].kind !== 'hunter' && SPECIES[k].size * 1.1 < s * 0.85); if (pl.length) { if (prey >= c.prey && far >= 0) G.fish.splice(far, 1); const k = pl[(R() * pl.length) | 0], f = spawn(G, k, 2); if (SPECIES[k].kind === 'school') for (let j = 0; j < 4; j++) { const g = spawn(G, k, 2); g.x = f.x + (R() - 0.5) * 2.5; g.z = f.z + (R() - 0.5) * 2.5; g.leader = f; } } } }
     const hn = G.fish.filter(f => danger(G, f)).length; if (hn < huntersNow(G) && R() < dt * 0.3) spawnHunter(G);
     if (!G.fish.some(f => f.sp.gold) && R() < dt * 0.05) spawnGold(G); }
   if (G.lesson) lessonTick(G, dt);
 }
 function eat(G, f) {
-  const m = G.me, v = f.sp.val; m.mouth = 0.25; m.fill += v; m.hunger = clamp(m.hunger + v * 0.12, 0, 1); G.coins += f.sp.gold ? 5 : Math.ceil(v / 2);
+  const m = G.me, v = f.sp.val, fz = G.frenzy > 0; m.mouth = 0.25; m.fill += v * (fz ? 2 : 1); m.hunger = clamp(m.hunger + v * 0.12, 0, 1); G.coins += f.sp.gold ? 5 : Math.ceil(v / 2);
+  if (!G.lesson && !fz) { G.combo = (G.comboT > 0 ? G.combo : 0) + 1; G.comboT = CHAIN_T; if (G.combo >= CHAIN_N) { G.combo = 0; G.comboT = 0; G.frenzy = FRENZY; G.frenzies++; G.ev.push({ k: 'frenzy' }); } }
   for (const q of G.fish) if (q !== f && q.kind === f.kind && Math.hypot(q.x - f.x, q.z - f.z) < 5) { q.dodge = 0.6; q.dh = Math.atan2(q.z - m.z, q.x - m.x) + (G.rnd() - 0.5) * 1.2; q.fleeing = true; }      // the rest of the school scatters
   const isNew = !G.eaten[f.kind]; G.eaten[f.kind] = (G.eaten[f.kind] || 0) + 1; G.eatenN++;
-  G.ev.push({ k: 'eat', kind: f.kind, val: v, gold: !!f.sp.gold, x: f.x, z: f.z, isNew, wasHunter: f.sp.kind === 'hunter' }); lessonSee(G, f.sp.gold ? 'gold' : 'eat');
+  G.ev.push({ k: 'eat', kind: f.kind, val: v, gold: !!f.sp.gold, x: f.x, z: f.z, isNew, wasHunter: f.sp.kind === 'hunter', chain: G.combo, frenzy: fz }); lessonSee(G, f.sp.gold ? 'gold' : 'eat');
   while (m.fill >= needOf(G) && m.tier < SIZES.length - 1) { m.fill -= needOf(G); m.tier++; G.best = Math.max(G.best, m.tier); G.ev.push({ k: 'grow', tier: m.tier }); if (!G.lesson && m.tier + 1 >= G.cfg.goal) return finish(G, true); }
 }
 function finish(G, win, why, by) {
@@ -179,12 +205,13 @@ function honest(G, o, mem) {
   if (G.over || G.wait > 0) { setStick(G, 0, 0); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.05 + react * 0.35;
   let fx = 0, fz = 0, threat = 0;
-  for (const f of G.fish) { if (!danger(G, f) && !(f.sp.kind === 'jelly')) continue; const dx = m.x - f.x, dz = m.z - f.z, d = Math.hypot(dx, dz) || 1, w = f.sp.kind === 'jelly' ? (d < 4 ? 1 / d : 0) : f.state !== 'calm' ? 14 / d : d < 10 ? 4 / d : 0; fx += dx / d * w; fz += dz / d * w; if (f.sp.kind !== 'jelly' && f.state !== 'calm' && d < 18) threat = Math.max(threat, 1); }
+  for (const f of G.fish) { if (!danger(G, f) && !(f.sp.kind === 'jelly')) continue; const dx = m.x - f.x, dz = m.z - f.z, d = Math.hypot(dx, dz) || 1, w = f.sp.kind === 'jelly' ? (d < 1.4 + f.size + s * 0.7 ? 3.2 / d : 0) : f.state !== 'calm' ? 14 / d : d < 10 ? 4 / d : 0; fx += dx / d * w; fz += dz / d * w; if (f.sp.kind !== 'jelly' && f.state !== 'calm' && d < 18) threat = Math.max(threat, 1); }
   if (R() > acc && threat) { fx *= 0.3; fz *= 0.3; }      // a moment of panic: a thumb is not perfect
   const rr = Math.hypot(m.x, m.z); if (rr > R_BAY - 12) { fx -= m.x / rr * 0.8; fz -= m.z / rr * 0.8; }
   if (threat) { setStick(G, fx * 3, fz * 3); const L = Math.hypot(G.stick.x, G.stick.z); if (L > 0.01) setStick(G, G.stick.x / L, G.stick.z / L); return; }
   let best = null, bs = -1e9;
   for (const f of G.fish) { if (!edible(G, f)) continue; const d = Math.hypot(f.x - m.x, f.z - m.z); let risk = 0; for (const h of G.fish) if (danger(G, h)) { const dh = Math.hypot(h.x - f.x, h.z - f.z); if (dh < 10) risk += (10 - dh) * (h.state === 'calm' ? 0.3 : 1.5); }
+    for (const j of G.fish) if (j.sp.kind === 'jelly') { const dj = Math.hypot(j.x - f.x, j.z - f.z); if (dj < 1 + j.size + s * 0.5) risk += 4; else { const ax = f.x - m.x, az = f.z - m.z, al = Math.hypot(ax, az) || 1, t = clamp(((j.x - m.x) * ax + (j.z - m.z) * az) / (al * al), 0, 1), pd = Math.hypot(m.x + ax * t - j.x, m.z + az * t - j.z); if (pd < 0.5 + j.size * 0.6 + s * 0.35) risk += 3; } }      /* a jellyfish beside it or on the way to it: not that one */
     const sc = f.sp.val * 3 / (d + 4) - risk * 0.15 - (f.sp.kind === 'dart' && d > 8 ? 0.2 : 0) - (f.kind === 'puffer' && m.dash < 0.4 ? 0.5 : 0); if (sc > bs) { bs = sc; best = f; } }
   if (!best) { setStick(G, -m.x / (rr || 1) * 0.6 + fx, -m.z / (rr || 1) * 0.6 + fz); return; }
   const d = Math.hypot(best.x - m.x, best.z - m.z), lead = Math.min(0.5, d / 10), tx = best.x + Math.cos(best.h) * best.v * lead - m.x, tz = best.z + Math.sin(best.h) * best.v * lead - m.z, L = Math.hypot(tx, tz) || 1;

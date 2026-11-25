@@ -222,7 +222,8 @@
     "top half of the screen is empty and dark, the food is small; white glare at the bottom."
    ],
    "changes": [
-    "On a phone the camera looks nearly straight down: the hob, the board and the food fill the lower two thirds of the screen (it was a dark wall above, small food, glare and a black strip below)."
+    "On a phone the camera looks nearly straight down: the hob, the board and the food fill the lower two thirds of the screen (it was a dark wall above, small food, glare and a black strip below).",
+    "25 Nov, 0.2.0 (his review): a tap on the board or any stroke is a chop; the ticket numbers and ticks the layers; tap the plate to take the top off; +1 tip built in order."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
@@ -478,13 +479,15 @@
    "changes": [
     "Team-mates get open for a pass (support): clear of markers, a clear line, a sensible distance, onside. Team rings, a white ring on the pass target, players a third bigger, a closer camera, no SPRINT button (a full push sprints).",
     "third pass, 22 Nov evening: the first ten levels are easier for a player who looks: softer tackles from the other team and a surer aimed shot, easing off level by level. (Easing their keeper as well let random tapping fluke a goal, so that was taken back.)",
-    "23 Nov: the team rings are never culled (stale_bounds found them 3 m outside their sphere); cards fit a 360-wide phone."
+    "23 Nov: the team rings are never culled (stale_bounds found them 3 m outside their sphere); cards fit a 360-wide phone.",
+    "25 Nov, 0.4.0 (his review; research: EA FIFA Mobile guides, Dream League Soccer help): the receiver runs on to a pass by himself; the pass goes to whoever can reach it; automatic switching to the nearest man when they have the ball; their nearest man presses at full pace and tackles, the next covers; a patterned ball that rolls and never jumps; the keeper has gloves, dives and holds the ball."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (14 checks passed, 0 failed.).",
     "test_touch 14 pass; quick robot matches: ordinary won 3 of 4 on levels 1, 3 and 10.",
     "Robot matches, 20 a level: ordinary wins 95%, 90%, 95% of levels 1-3 (it was 69-75%), clumsy 75% of level 1 (it was 31%), sharp still wins 40% of level 40; random tapping wins 0 of 480; touch test 14 pass; controls test passes; a win at an odd moment is clean.",
-    "Full test_play on this build (36 minutes): 16 of 16 pass, including no blind string of up to four moves winning and random tapping winning nothing."
+    "Full test_play on this build (36 minutes): 16 of 16 pass, including no blind string of up to four moves winning and random tapping winning nothing.",
+    "25 Nov: honest players compared with the old build (L1-3 0.9/0.9/0.8); the dive SEEN in one still on a computer (it is towards or away from the camera, so foreshortened); not played on a phone."
    ],
    "remaining": [
     "Levels 5 to 9 are uneven in the robot's hands (38% to 75% over 16 matches each): his to judge whether the middle levels feel fair."
@@ -493,9 +496,12 @@
   "shark": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov, 0.2.0 (his review): hunger less than half as fast; every bite makes him bigger; closer view, fish always round him; feeding frenzy from a chain of six; jellyfish to steer round; a hunter's bite costs food instead of ending it; new shark, fish and reef."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).",
+    "25 Nov: blind players measured before and after the redesign (70% wins with fish everywhere and no jellyfish; 0 of 448 strings after); SEEN in stills on a computer."
    ],
    "remaining": [],
    "note": "fine; shark a bit small."
@@ -543,7 +549,9 @@
   "bowling": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov, 0.2.0 (his review): two rivals on the lanes beside you, scored like you; win = ahead of both; harder from level 4."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 passed, 0 failed).",
     "third pass: its controls read through against his rule (obvious to a first-timer): pull back and let go, with the line drawn. Judged plain enough; nothing changed."
@@ -554,7 +562,9 @@
   "bonsai": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov (his review): its own calm koto music; the tutorial's hand points at the bud, the branch, the caterpillar."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).",
     "third pass: its controls read through against his rule (obvious to a first-timer): taps. Judged plain enough; nothing changed."
@@ -589,9 +599,12 @@
   "kart": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov, 0.2.0 (his review): DRIFT is a button to hold while you steer; the item has its own button; last track's trees no longer stand on the next track (W3.pines into the track's group; same in stunt and war); new kart, hills, gantry, grandstand, boards, tyre marks, speed."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (kart rc=1 fails=1 7 checks passed, 1 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (kart rc=1 fails=1 7 checks passed, 1 failed.).",
+    "25 Nov: quick checks and tutorial pass; rivals re-tuned (0.84-1.27) against the old build's results; SEEN in stills on a computer."
    ],
    "remaining": [],
    "note": "good."
@@ -626,7 +639,8 @@
     "dark field, soldiers are specks."
    ],
    "changes": [
-    "third pass, 22 Nov evening: the camera frames the two armies and eases as they move, instead of showing the whole valley: soldiers are about twice the size."
+    "third pass, 22 Nov evening: the camera frames the two armies and eases as they move, instead of showing the whole valley: soldiers are about twice the size.",
+    "25 Nov: each place's trees go with it (they piled up); soldiers stand on the drawn ground (groundY)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
@@ -651,7 +665,8 @@
    ],
    "changes": [
     "third pass, 22 Nov evening: the bike is half as big again and sits lower on the screen.",
-    "third pass, 22 Nov evening: the ground has bands of rock, stones and scrub (it was one flat colour)."
+    "third pass, 22 Nov evening: the ground has bands of rock, stones and scrub (it was one flat colour).",
+    "25 Nov (his review): holes drawn from the track's own shape, a crash to land in; its own music."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).",
@@ -679,12 +694,14 @@
     "third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen).",
     "23 Nov, 0.1.4 (from Vine: nothing vanishes): the moving cut-away near the camera (up to 7 m) removed; a tree between the camera and the rex is a see-through screen (W3.seeThrough).",
     "23 Nov, 0.1.5 (his words: \"the movements are not accurate at all... I go left it goes somewhere else\"): the stick says the way to go as seen on the screen (it turned him like a tank); the view holds its heading while the thumb is down; harder far on to match (prey hear you sooner and run faster, shorter warnings, a shorter hunger clock).",
-    "23 Nov, 0.2.0 (his words at 17:08: \"make the joystick in one place... see around the area just by clicking the screen and moving around... you still haven't fixed the joystick problem... make him look like an actual T-Rex\"): measured with real touch events: the view drifted up to 30 degrees while walking (camera trailed, aim led). The stick is fixed bottom left; the view turns only by dragging elsewhere (yaw and tilt), set from one followed point so it cannot drift. New T-Rex model (part25_trex.js, specs/rex-v2-2026-11-23.md)."
+    "23 Nov, 0.2.0 (his words at 17:08: \"make the joystick in one place... see around the area just by clicking the screen and moving around... you still haven't fixed the joystick problem... make him look like an actual T-Rex\"): measured with real touch events: the view drifted up to 30 degrees while walking (camera trailed, aim led). The stick is fixed bottom left; the view turns only by dragging elsewhere (yaw and tilt), set from one followed point so it cannot drift. New T-Rex model (part25_trex.js, specs/rex-v2-2026-11-23.md).",
+    "25 Nov, 0.3.0 (his review): the stick was mirrored (measured with the camera: right walked him left) and so was the look-drag: both fixed in the input, test_touch now asks the camera; the T-Rex's head, neck, arms and legs were inside out (faces pointing inwards): sweep() turns them, the head rebuilt; eating animated (a 2.3 s meal, the view comes round); its own horn theme; 'NOW! BITE IT' only in lessons."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
     "touch test 7 pass; pictures of a rainy level looked at: rex and prey both in sight.",
-    "23 Nov, 0.1.5: test_touch 11 (new: pushed left, right, down, up, he faces within 15 degrees and walks that way on the screen); test_play 15/15: ordinary {1-10: 1, 20: 0.6, 40: 0.9}, sharp {40: 0.9, 80: 0.1}, blind 0 of 5,696; controls 33. NOT judged by me: how it feels under a thumb."
+    "23 Nov, 0.1.5: test_touch 11 (new: pushed left, right, down, up, he faces within 15 degrees and walks that way on the screen); test_play 15/15: ordinary {1-10: 1, 20: 0.6, 40: 0.9}, sharp {40: 0.9, 80: 0.1}, blind 0 of 5,696; controls 33. NOT judged by me: how it feels under a thumb.",
+    "25 Nov: quick checks, tutorial pass; face and meal SEEN in sharp stills on a computer (not on a phone); music measured, not listened to."
    ],
    "remaining": []
   },
@@ -855,7 +872,8 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "23 Nov, 0.1.4 (from Vine: no impossible physics): no steering a kart in the air; the glider still steers."
+    "23 Nov, 0.1.4 (from Vine: no impossible physics): no steering a kart in the air; the glider still steers.",
+    "25 Nov: the last track's trees no longer stay on the next track (same fault as Drift Kings)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (10 checks passed, 0 failed.)."
@@ -1429,11 +1447,13 @@
     "the village is a bare lilac plain with a few boxes; the room is dark blocks."
    ],
    "changes": [
-    "third pass, 22 Nov evening: the village has many more trees of all sizes, snowdrifts, and cottages with lit windows."
+    "third pass, 22 Nov evening: the village has many more trees of all sizes, snowdrifts, and cottages with lit windows.",
+    "25 Nov, 0.2.0 (his review): a brake (the sleigh follows the stick; letting go hovers); the look rebuilt outdoors and in."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (41 passed, 0 failed).",
-    "touch test 41 pass; pictures looked at."
+    "touch test 41 pass; pictures looked at.",
+    "25 Nov: quick checks, tutorial, speed pass; SEEN in stills on a computer."
    ],
    "remaining": []
   },
