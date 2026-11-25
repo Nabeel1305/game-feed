@@ -5247,7 +5247,7 @@ const RULES = [
   'Eat fish <b>smaller</b> than you (they glow green). Fill the bar and you <b>grow</b>.',
   'Fish <b>bigger</b> than you glow red. Hunters come for you: a red mark at the edge warns you first. Dash away!',
   'You get hungry all the time. A <b>golden fish</b> is worth three, but it likes to swim near hunters.',
-  'Grow to the size the level asks for. Every kind you eat goes in your <b>aquarium</b>.',
+  'Grow to the size the level asks for, then catch <b>the big one</b> (the gold crown). Every kind you eat goes in your <b>aquarium</b>.',
 ];
 const SIZES = [0.9, 1.3, 1.8, 2.5, 3.4, 4.6, 6.0, 7.8, 10];      // the shark's length at each size
 const SPECIES = {
@@ -5326,6 +5326,11 @@ function populate(G) {
 const huntersNow = G => Math.round(G.cfg.hunters * Math.min(1, (G.me.tier + 1) / 3));      // fewer hunters while you are small
 function spawnHunter(G) { const s = sizeOf(G), list = ORDER.filter(k => SPECIES[k].kind === 'hunter' && SPECIES[k].size > s * 1.05); if (!list.length) return null; return spawn(G, list[0], true); }
 function spawnGold(G) { const f = spawn(G, 'gold'), h = G.fish.find(q => q.sp.kind === 'hunter'); if (h && G.rnd() < 0.7) { f.x = h.x + 4; f.z = h.z + 3; f.home = h; } return f; }      // the golden fish keeps company with a hunter
+// THE BIG ONE (25 Nov 2026): growing to the size the level asks for does not end it. A big fish swims in, the biggest he can now eat, marked in gold;
+// it keeps out of his way and darts aside like the rest. Catch it and the level is won. (A level has an end you play for; and a thumb that does not
+// look, however lucky with its feeding, does not run down a fish that runs.)
+function spawnPrize(G) { const s = sizeOf(G), m = G.me; let k = null; for (const q of ORDER) { const sp = SPECIES[q]; if (!(sp.val > 0) || sp.gold || sp.kind === 'school' || sp.kind === 'puffer') continue; if (sp.size * 1.08 < s * 0.85 && (!k || sp.size > SPECIES[k].size)) k = q; } if (!k) k = 'tang';
+  const f = spawn(G, k, 2); f.prize = true; f.size = Math.min(SPECIES[k].size * 1.08, s * 0.84); f.sp = Object.assign({}, f.sp, { spd: (3.2 + 1.6 * Math.sqrt(s)) * G.cfg.spd * 0.62, kind: 'dart', val: Math.max(3, f.sp.val) }); f.leader = null; return f; }
 const edible = (G, f) => f.sp.val > 0 && f.size < sizeOf(G) * 0.85 && !(f.kind === 'puffer' && f.puff > 0.5);
 const danger = (G, f) => f.sp.kind === 'hunter' && f.size > sizeOf(G) * 1.05;
 // ---------- your thumb ----------
@@ -5376,7 +5381,7 @@ function step(G, dt) {
       if (edible(G, f) && !f.dodge && !fz && d < Math.min(2.4 + s * 1.2, vwS * 0.5) && d > 0.3) { const dot = -(dx * Math.cos(h) + dz * Math.sin(h)) / d; if ((dot > 0.75 || sp.kind === 'school') && R() < (G.lesson ? c.dodge * (sp.kind === 'school' ? 1.6 : 1) : 30) * dt) {      /* outside the lesson every fish you swim straight at darts aside, once: turn after it and it is yours (it cannot dart again for a moment). In a frenzy none of them can. */ f.dodge = 0.45; f.dh = Math.atan2(-dz, -dx) + (R() < 0.5 ? 1.3 : -1.3); G.ev.push({ k: 'dodge' }); } }
       if (f.dodge > 0) { f.dodge -= dt; th = f.dh; sv = sp.spd * 1.6; if (f.dodge <= 0) f.dodge = -1.2; } else if (f.dodge < 0) f.dodge = Math.min(0, f.dodge + dt);
       if (f.fleeing && !(f.dodge > 0)) { const side = Math.sin(Math.atan2(-dz, -dx) - h) >= 0 ? 1 : -1; th = Math.atan2(-dz, -dx) + side * 0.95 + Math.sin(f.wob * 3) * 0.3; sv = sp.spd * (sp.kind === 'dart' ? 1 : 0.8);      /* they run OUT of his path, to the side they are already on (straight away from a faster shark is straight into his mouth): he has to steer after them */ if (d > Math.min(12 + s * 2, vwS * 2)) f.fleeing = false; }
-      if (sp.gold) sv *= 1.0;
+      if (f.prize && !f.fleeing && !(f.dodge > 0) && d > vwS * 1.3) { th = Math.atan2(dz, dx); sv = sp.spd * 0.6; }      /* the big one never goes far: it comes back to where he can see it */
     }
     // stay in the bay
     const fr = Math.hypot(f.x, f.z); if (fr > R_BAY - 3) th = Math.atan2(-f.z, -f.x);
@@ -5390,7 +5395,7 @@ function step(G, dt) {
   if (!G.lesson) { const isPrey = f => f.sp.kind !== 'hunter' && f.sp.kind !== 'jelly' && !f.sp.gold, prey = G.fish.filter(isPrey).length; if (prey < c.prey * 0.8 && R() < dt * 4) { const pl = pool(G).filter(k => SPECIES[k].kind !== 'hunter'); spawn(G, pl[(R() * pl.length) | 0], true); }
     // 25 Nov 2026 ("not engaging": most of the time there was nothing on the screen to eat): there is always something to chase round him. Fewer than
     // LOCAL fish he can eat within two screens: one more swims in from just off the screen; the sea's far side gives one up so the count holds
-    { const vw = viewOf(G); let nearN = 0, far = -1, fd = 0; for (let i = 0; i < G.fish.length; i++) { const f = G.fish[i]; if (!isPrey(f)) continue; const d = Math.hypot(f.x - m.x, f.z - m.z); if (d < vw * 1.9 && edible(G, f)) nearN++; else if (d > fd && d > vw * 3) { fd = d; far = i; } }
+    { const vw = viewOf(G); let nearN = 0, far = -1, fd = 0; for (let i = 0; i < G.fish.length; i++) { const f = G.fish[i]; if (!isPrey(f)) continue; const d = Math.hypot(f.x - m.x, f.z - m.z); if (d < vw * 1.9 && edible(G, f)) nearN++; else if (d > fd && d > vw * 3 && !f.prize) { fd = d; far = i; } }
       // 25 Nov 2026: with fish all round him, a thumb that did not look fed and won. Jellyfish drift among the fish now (their size keeps pace with
       // his): each one touched stings (a piece of the food bar, a slow second, the chain broken). Looking, you weave round them; not looking, you starve.
       { let jn = 0, jfar = -1, jd = 0; for (let i = 0; i < G.fish.length; i++) { const f = G.fish[i]; if (f.sp.kind !== 'jelly') continue; const d = Math.hypot(f.x - m.x, f.z - m.z); if (d < vw * 1.9) jn++; else if (d > jd && d > vw * 3) { jd = d; jfar = i; } }
@@ -5406,7 +5411,8 @@ function eat(G, f) {
   for (const q of G.fish) if (q !== f && q.kind === f.kind && Math.hypot(q.x - f.x, q.z - f.z) < 5) { q.dodge = 0.6; q.dh = Math.atan2(q.z - m.z, q.x - m.x) + (G.rnd() - 0.5) * 1.2; q.fleeing = true; }      // the rest of the school scatters
   const isNew = !G.eaten[f.kind]; G.eaten[f.kind] = (G.eaten[f.kind] || 0) + 1; G.eatenN++;
   G.ev.push({ k: 'eat', kind: f.kind, val: v, gold: !!f.sp.gold, x: f.x, z: f.z, isNew, wasHunter: f.sp.kind === 'hunter', chain: G.combo, frenzy: fz }); lessonSee(G, f.sp.gold ? 'gold' : 'eat');
-  while (m.fill >= needOf(G) && m.tier < SIZES.length - 1) { m.fill -= needOf(G); m.tier++; G.best = Math.max(G.best, m.tier); G.ev.push({ k: 'grow', tier: m.tier }); if (!G.lesson && m.tier + 1 >= G.cfg.goal) return finish(G, true); }
+  while (m.fill >= needOf(G) && m.tier < SIZES.length - 1) { m.fill -= needOf(G); m.tier++; G.best = Math.max(G.best, m.tier); G.ev.push({ k: 'grow', tier: m.tier }); if (!G.lesson && m.tier + 1 >= G.cfg.goal && !G.ready) { G.ready = true; spawnPrize(G); G.ev.push({ k: 'ready' }); } }
+  if (f.prize) { G.ev.push({ k: 'prize' }); return finish(G, true); }
 }
 function finish(G, win, why, by) {
   const m = G.me; G.over = win ? 'won' : 'lost'; const stars = win ? (G.t < 70 + G.N * 4 && m.hunger > 0.5 ? 3 : G.t < 110 + G.N * 6 ? 2 : 1) : 0;
@@ -5445,7 +5451,7 @@ function honest(G, o, mem) {
   const rr = Math.hypot(m.x, m.z); if (rr > R_BAY - 12) { fx -= m.x / rr * 0.8; fz -= m.z / rr * 0.8; }
   if (threat) { setStick(G, fx * 3, fz * 3); const L = Math.hypot(G.stick.x, G.stick.z); if (L > 0.01) setStick(G, G.stick.x / L, G.stick.z / L); return; }
   let best = null, bs = -1e9;
-  for (const f of G.fish) { if (!edible(G, f)) continue; const d = Math.hypot(f.x - m.x, f.z - m.z); let risk = 0; for (const h of G.fish) if (danger(G, h)) { const dh = Math.hypot(h.x - f.x, h.z - f.z); if (dh < 10) risk += (10 - dh) * (h.state === 'calm' ? 0.3 : 1.5); }
+  for (const f of G.fish) { if (!edible(G, f)) continue; if (G.ready && f.prize) { best = f; bs = 1e9; break; } const d = Math.hypot(f.x - m.x, f.z - m.z); let risk = 0; for (const h of G.fish) if (danger(G, h)) { const dh = Math.hypot(h.x - f.x, h.z - f.z); if (dh < 10) risk += (10 - dh) * (h.state === 'calm' ? 0.3 : 1.5); }
     for (const j of G.fish) if (j.sp.kind === 'jelly') { const dj = Math.hypot(j.x - f.x, j.z - f.z); if (dj < 1 + j.size + s * 0.5) risk += 4; else { const ax = f.x - m.x, az = f.z - m.z, al = Math.hypot(ax, az) || 1, t = clamp(((j.x - m.x) * ax + (j.z - m.z) * az) / (al * al), 0, 1), pd = Math.hypot(m.x + ax * t - j.x, m.z + az * t - j.z); if (pd < 0.5 + j.size * 0.6 + s * 0.35) risk += 3; } }      /* a jellyfish beside it or on the way to it: not that one */
     const sc = f.sp.val * 3 / (d + 4) - risk * 0.15 - (f.sp.kind === 'dart' && d > 8 ? 0.2 : 0) - (f.kind === 'puffer' && m.dash < 0.4 ? 0.5 : 0); if (sc > bs) { bs = sc; best = f; } }
   if (!best) { setStick(G, -m.x / (rr || 1) * 0.6 + fx, -m.z / (rr || 1) * 0.6 + fz); return; }
@@ -5453,7 +5459,7 @@ function honest(G, o, mem) {
   const dash = (best.fleeing && d < 8 && m.dash > 0.35) || (best.kind === 'puffer' && d < 7 && m.dash > 0.2) || (best.sp.gold && d < 10 && m.dash > 0.3);
   setStick(G, tx / L * (dash ? 1 : 0.8) + fx * 0.6, tz / L * (dash ? 1 : 0.8) + fz * 0.6);
 }
-function winNow(G) { if (!G || G.over) return; G.lesson = null; G.me.tier = G.cfg.goal - 1; finish(G, true); }
+function winNow(G) { if (!G || G.over) return; G.lesson = null; G.me.tier = G.cfg.goal - 1; G.ready = true; finish(G, true); }
 // ===================== THE VIEW: Deep Bite in 3D (three.js through tools/world3d.js) =====================
 // Looking down through clear water at a young shark: sand far below with light rippling over it, coral and rocks, kelp that
 // sways, shafts of sunlight and drifting specks, reef walls round the bay. The camera lifts as the shark grows, so the sea
@@ -5628,7 +5634,7 @@ function placeCam(g, dt) {
 function onEvent(G, e) {
   const m = G.me, sp = scr(m.x, 0, m.z), cx = W / 2;
   switch (e.k) {
-    case 'start': say(PLACES[G.place].name.toUpperCase(), cx, H * 0.3, '#bfe8ff', 24); say(`GROW TO SIZE ${G.cfg.goal}`, cx, H * 0.36, '#ffe08a', 28); sfx.ding(); if (G.N <= 2) tip('drag', 'Put your thumb down anywhere and drag: the shark swims that way', 3.2); break;
+    case 'start': say(PLACES[G.place].name.toUpperCase(), cx, H * 0.3, '#bfe8ff', 24); say(`GROW TO SIZE ${G.cfg.goal}, EAT THE BIG ONE`, cx, H * 0.36, '#ffe08a', 22); sfx.ding(); if (G.N <= 2) tip('drag', 'Put your thumb down anywhere and drag: the shark swims that way', 3.2); break;
     case 'eat': { const p = scr(e.x, 0, e.z); ui.combo = e.frenzy ? (ui.combo | 0) + 1 : e.chain; ui.comboT = 1.6; ui.pop = Math.min(0.3, (ui.pop || 0) + 0.12 + e.val * 0.02); burst(p.x, p.y, hex(SPECIES[e.kind].col), e.val > 2 ? 18 : 10); burst(p.x, p.y, '#ffffff', 4); burst(p.x, p.y, '#c0202a', 5, 60); sfx.bite(ui.combo, e.val >= 4); vibe(e.val >= 4 ? HAP.thud : HAP.light);
       if (e.gold) { sfx.gold(); say('GOLDEN! +3', p.x, p.y - 30 * k, '#ffd040', 28); burst(p.x, p.y, '#ffd040', 24, 200); FX.flash = 0.35; }
       else say('+' + e.val * (e.frenzy ? 2 : 1), p.x, p.y - 24 * k, e.frenzy ? '#ffb83a' : '#bff5c8', 18 + Math.min(10, e.val * 2));
@@ -5650,7 +5656,8 @@ function onEvent(G, e) {
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.4, '#9be3b5', 24); sfx.coin(e.n); break;
     case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('NOW THE REAL HUNT!', cx, H * 0.36, '#ffe08a', 26); sfx.win(); ui.snap = true; if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
-    case 'won': sfx.win(); vibe(HAP.best); say('BIG ENOUGH!', cx, H * 0.3, '#ffe08a', 38); break;
+    case 'ready': FX.flash = 0.6; sfx.ding(); vibe(HAP.best); say('BIG ENOUGH!', cx, H * 0.3, '#ffe08a', 34); say('NOW EAT THE BIG ONE 👑', cx, H * 0.37, '#ffd040', 24); break;
+    case 'won': sfx.win(); vibe(HAP.best); say('GOT THE BIG ONE!', cx, H * 0.3, '#ffe08a', 36); break;
     case 'lost': sfx.lose(); say(e.why === 'starved' ? 'TOO HUNGRY...' : 'EATEN!', cx, H * 0.3, '#ffb4a8', 32); break;
   }
 }
@@ -5706,7 +5713,12 @@ function draw(now, dt) {
 // a red mark at the edge of the screen for a hunter you cannot see that is near or coming
 function rings(G, t) {
   const m = G.me, c = ui.cam, sense = G.cfg.sense;
-  for (const f of G.fish) { const d = Math.hypot(f.x - m.x, f.z - m.z); if (d > c.span * 1.3 && !(danger(G, f) && f.state !== 'calm')) continue; const p = scr(f.x, 0, f.z), r = Math.max(6 * k, f.size * W / c.span * 0.55);
+  for (const f of G.fish) { const d = Math.hypot(f.x - m.x, f.z - m.z);
+    if (f.prize) { const p = scr(f.x, 0, f.z), r = Math.max(10 * k, f.size * W / c.span * 0.6), on = p.x > 12 && p.x < W - 12 && p.y > 70 * k && p.y < H - 12;      // the big one: two gold rings and a crown; a gold arrow at the screen's edge when it is out of sight
+      if (on) { ctx.strokeStyle = `rgba(255,208,64,${0.75 + 0.25 * Math.sin(t * 9)})`; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.5 * k; ctx.beginPath(); ctx.arc(p.x, p.y, r + 6 * k + 3 * k * Math.sin(t * 9), 0, TAU); ctx.stroke(); ctx.font = `${Math.round(18 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, p.y - r - 12 * k); }
+      else { const cx = W / 2, cy = H / 2, dx = p.x - cx, dy = p.y - cy, s2 = Math.min((W / 2 - 24 * k) / Math.abs(dx || 1e-6), (H / 2 - 34 * k) / Math.abs(dy || 1e-6)), x = cx + dx * s2, y = cy + dy * s2, z = (1.25 + 0.15 * Math.sin(t * 10)) * k; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(dy, dx)); ctx.fillStyle = '#ffd040'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(18 * z, 0); ctx.lineTo(-9 * z, -13 * z); ctx.lineTo(-9 * z, 13 * z); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); ctx.font = `${Math.round(15 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('👑', x - dx / Math.hypot(dx, dy) * 26 * k, y - dy / Math.hypot(dx, dy) * 26 * k); }
+      continue; }
+    if (d > c.span * 1.3 && !(danger(G, f) && f.state !== 'calm')) continue; const p = scr(f.x, 0, f.z), r = Math.max(6 * k, f.size * W / c.span * 0.55);
     const on = p.x > -10 && p.x < W + 10 && p.y > -10 && p.y < H + 10;
     if (danger(G, f)) { const hot = f.state !== 'calm'; if (on) { ctx.strokeStyle = hot ? `rgba(255,60,50,${0.65 + 0.35 * Math.sin(t * 12)})` : 'rgba(255,80,70,.45)'; ctx.lineWidth = (hot ? 3 : 2) * k; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke();
         if (f.state === 'notice') { ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; ctx.fillStyle = '#ff5a4a'; ctx.textAlign = 'center'; ctx.fillText('!', p.x, p.y - r - 14 * k); } }
@@ -5732,7 +5744,7 @@ function hud(G, t) {
     ui.fillShow += (m.fill / need - ui.fillShow) * 0.15; const bx = x + 12, bw = w - 24, by2 = y + 44 * k, bh = 10 * k;
     ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(bx, by2, bw, bh, bh / 2); ctx.fill(); ctx.fillStyle = '#7ef0a0'; if (ui.fillShow > 0.01) { rrect(bx, by2, Math.max(bh, bw * clamp(ui.fillShow, 0, 1)), bh, bh / 2); ctx.fill(); }
     ctx.font = `800 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#fff'; const left = Math.max(0, Math.ceil(need - m.fill)), np = nextPrey(G);
-    ctx.textAlign = 'left'; ctx.fillText(m.tier + 1 >= goal ? 'YOU MADE IT!' : `${left} to size ${m.tier + 2}`, bx, by2 + bh + 9 * k);
+    ctx.textAlign = 'left'; ctx.fillText(G.ready ? 'EAT THE BIG ONE 👑' : `${left} to size ${m.tier + 2}`, bx, by2 + bh + 9 * k);
     if (np) { ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.7)'; const nm = SPECIES[np].name.toUpperCase(); ctx.fillText(nm, x + w - 12, by2 + bh + 9 * k); const tw = ctx.measureText(nm).width; ctx.fillStyle = '#ff9a8a'; ctx.fillText('STILL TOO BIG: ', x + w - 12 - tw, by2 + bh + 9 * k); }
     // hunger
     const hy = y + h + 8 * k; ui.hungerShow += (m.hunger - ui.hungerShow) * 0.2; ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(x, hy, w * 0.5, 9 * k, 4.5 * k); ctx.fill(); const low = m.hunger < 0.3;

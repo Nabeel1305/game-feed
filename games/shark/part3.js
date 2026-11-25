@@ -172,7 +172,7 @@ function placeCam(g, dt) {
 function onEvent(G, e) {
   const m = G.me, sp = scr(m.x, 0, m.z), cx = W / 2;
   switch (e.k) {
-    case 'start': say(PLACES[G.place].name.toUpperCase(), cx, H * 0.3, '#bfe8ff', 24); say(`GROW TO SIZE ${G.cfg.goal}`, cx, H * 0.36, '#ffe08a', 28); sfx.ding(); if (G.N <= 2) tip('drag', 'Put your thumb down anywhere and drag: the shark swims that way', 3.2); break;
+    case 'start': say(PLACES[G.place].name.toUpperCase(), cx, H * 0.3, '#bfe8ff', 24); say(`GROW TO SIZE ${G.cfg.goal}, EAT THE BIG ONE`, cx, H * 0.36, '#ffe08a', 22); sfx.ding(); if (G.N <= 2) tip('drag', 'Put your thumb down anywhere and drag: the shark swims that way', 3.2); break;
     case 'eat': { const p = scr(e.x, 0, e.z); ui.combo = e.frenzy ? (ui.combo | 0) + 1 : e.chain; ui.comboT = 1.6; ui.pop = Math.min(0.3, (ui.pop || 0) + 0.12 + e.val * 0.02); burst(p.x, p.y, hex(SPECIES[e.kind].col), e.val > 2 ? 18 : 10); burst(p.x, p.y, '#ffffff', 4); burst(p.x, p.y, '#c0202a', 5, 60); sfx.bite(ui.combo, e.val >= 4); vibe(e.val >= 4 ? HAP.thud : HAP.light);
       if (e.gold) { sfx.gold(); say('GOLDEN! +3', p.x, p.y - 30 * k, '#ffd040', 28); burst(p.x, p.y, '#ffd040', 24, 200); FX.flash = 0.35; }
       else say('+' + e.val * (e.frenzy ? 2 : 1), p.x, p.y - 24 * k, e.frenzy ? '#ffb83a' : '#bff5c8', 18 + Math.min(10, e.val * 2));
@@ -194,7 +194,8 @@ function onEvent(G, e) {
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.4, '#9be3b5', 24); sfx.coin(e.n); break;
     case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('NOW THE REAL HUNT!', cx, H * 0.36, '#ffe08a', 26); sfx.win(); ui.snap = true; if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
-    case 'won': sfx.win(); vibe(HAP.best); say('BIG ENOUGH!', cx, H * 0.3, '#ffe08a', 38); break;
+    case 'ready': FX.flash = 0.6; sfx.ding(); vibe(HAP.best); say('BIG ENOUGH!', cx, H * 0.3, '#ffe08a', 34); say('NOW EAT THE BIG ONE 👑', cx, H * 0.37, '#ffd040', 24); break;
+    case 'won': sfx.win(); vibe(HAP.best); say('GOT THE BIG ONE!', cx, H * 0.3, '#ffe08a', 36); break;
     case 'lost': sfx.lose(); say(e.why === 'starved' ? 'TOO HUNGRY...' : 'EATEN!', cx, H * 0.3, '#ffb4a8', 32); break;
   }
 }
@@ -250,7 +251,12 @@ function draw(now, dt) {
 // a red mark at the edge of the screen for a hunter you cannot see that is near or coming
 function rings(G, t) {
   const m = G.me, c = ui.cam, sense = G.cfg.sense;
-  for (const f of G.fish) { const d = Math.hypot(f.x - m.x, f.z - m.z); if (d > c.span * 1.3 && !(danger(G, f) && f.state !== 'calm')) continue; const p = scr(f.x, 0, f.z), r = Math.max(6 * k, f.size * W / c.span * 0.55);
+  for (const f of G.fish) { const d = Math.hypot(f.x - m.x, f.z - m.z);
+    if (f.prize) { const p = scr(f.x, 0, f.z), r = Math.max(10 * k, f.size * W / c.span * 0.6), on = p.x > 12 && p.x < W - 12 && p.y > 70 * k && p.y < H - 12;      // the big one: two gold rings and a crown; a gold arrow at the screen's edge when it is out of sight
+      if (on) { ctx.strokeStyle = `rgba(255,208,64,${0.75 + 0.25 * Math.sin(t * 9)})`; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.5 * k; ctx.beginPath(); ctx.arc(p.x, p.y, r + 6 * k + 3 * k * Math.sin(t * 9), 0, TAU); ctx.stroke(); ctx.font = `${Math.round(18 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('👑', p.x, p.y - r - 12 * k); }
+      else { const cx = W / 2, cy = H / 2, dx = p.x - cx, dy = p.y - cy, s2 = Math.min((W / 2 - 24 * k) / Math.abs(dx || 1e-6), (H / 2 - 34 * k) / Math.abs(dy || 1e-6)), x = cx + dx * s2, y = cy + dy * s2, z = (1.25 + 0.15 * Math.sin(t * 10)) * k; ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(dy, dx)); ctx.fillStyle = '#ffd040'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(18 * z, 0); ctx.lineTo(-9 * z, -13 * z); ctx.lineTo(-9 * z, 13 * z); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); ctx.font = `${Math.round(15 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('👑', x - dx / Math.hypot(dx, dy) * 26 * k, y - dy / Math.hypot(dx, dy) * 26 * k); }
+      continue; }
+    if (d > c.span * 1.3 && !(danger(G, f) && f.state !== 'calm')) continue; const p = scr(f.x, 0, f.z), r = Math.max(6 * k, f.size * W / c.span * 0.55);
     const on = p.x > -10 && p.x < W + 10 && p.y > -10 && p.y < H + 10;
     if (danger(G, f)) { const hot = f.state !== 'calm'; if (on) { ctx.strokeStyle = hot ? `rgba(255,60,50,${0.65 + 0.35 * Math.sin(t * 12)})` : 'rgba(255,80,70,.45)'; ctx.lineWidth = (hot ? 3 : 2) * k; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke();
         if (f.state === 'notice') { ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; ctx.fillStyle = '#ff5a4a'; ctx.textAlign = 'center'; ctx.fillText('!', p.x, p.y - r - 14 * k); } }
@@ -276,7 +282,7 @@ function hud(G, t) {
     ui.fillShow += (m.fill / need - ui.fillShow) * 0.15; const bx = x + 12, bw = w - 24, by2 = y + 44 * k, bh = 10 * k;
     ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(bx, by2, bw, bh, bh / 2); ctx.fill(); ctx.fillStyle = '#7ef0a0'; if (ui.fillShow > 0.01) { rrect(bx, by2, Math.max(bh, bw * clamp(ui.fillShow, 0, 1)), bh, bh / 2); ctx.fill(); }
     ctx.font = `800 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#fff'; const left = Math.max(0, Math.ceil(need - m.fill)), np = nextPrey(G);
-    ctx.textAlign = 'left'; ctx.fillText(m.tier + 1 >= goal ? 'YOU MADE IT!' : `${left} to size ${m.tier + 2}`, bx, by2 + bh + 9 * k);
+    ctx.textAlign = 'left'; ctx.fillText(G.ready ? 'EAT THE BIG ONE 👑' : `${left} to size ${m.tier + 2}`, bx, by2 + bh + 9 * k);
     if (np) { ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.7)'; const nm = SPECIES[np].name.toUpperCase(); ctx.fillText(nm, x + w - 12, by2 + bh + 9 * k); const tw = ctx.measureText(nm).width; ctx.fillStyle = '#ff9a8a'; ctx.fillText('STILL TOO BIG: ', x + w - 12 - tw, by2 + bh + 9 * k); }
     // hunger
     const hy = y + h + 8 * k; ui.hungerShow += (m.hunger - ui.hungerShow) * 0.2; ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(x, hy, w * 0.5, 9 * k, 4.5 * k); ctx.fill(); const low = m.hunger < 0.3;
