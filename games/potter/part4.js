@@ -24,4 +24,4 @@ function soundStep(G, dt) {
   const g = G; AM.wet && AM.wet.set(g && g.touching ? 0.05 : 0, 0.05); AM.rain && AM.rain.set((W3 && W3.S ? W3.S.rain : 0) * 0.02, 1);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 20, key: -1, bpm: 74 });
+bandStyle('calm', { seed: 20, key: -1, bpm: 72, lead: { i: 'harp' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['0...4...7...4...', '3...5...7...5...', '4...6...8...6...'], d: { q: '..x...x...x...x.' } });

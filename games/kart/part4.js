@@ -36,4 +36,4 @@ function soundStep(G, dt) {
   if (AM.crowd) AM.crowd.set(quiet ? 0 : G.count > 0 ? 0.01 : 0.003, 0.5);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('race', { seed: 44, key: 0, bpm: 131 });
+bandStyle('race', { seed: 44, key: 0, bpm: 134, lead: { i: 'square' }, A: [0, 3, 0, 4], tune: ['0...4...7...4...', '3...7...a...7...', '4...8...6...4...'], sc: 'mix', comp: { i: 'saw', p: 'a.a.a.a.a.a.a.a.' } });

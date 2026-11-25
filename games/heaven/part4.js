@@ -22,4 +22,4 @@ const sfx = {
 };
 function soundStep(G, dt) {}
 // the band (tools/juice-kit.js): this game's music
-bandStyle('waltz', { seed: 27, key: -1, bpm: 131 });
+bandStyle('waltz', { seed: 27, key: -1, bpm: 120, lead: { i: 'bell' }, comp: { i: 'harp', p: 'a.a.a.a.a.a.' }, A: [0, 3, 0, 4], tune: ['7...4...2...', '7...5...3...', '6...4...1...'], rev: 0.7 });

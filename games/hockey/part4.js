@@ -30,4 +30,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const live = G 
   music(() => { const quiet = live ? 0.35 : 1; if (i % 4 === 0) tone(note(55, ch[0]), 0.22, 0.09 * quiet, 'square', 0, null, 500); if (i % 2 === 1) noise(0.04, 7000, 0.02 * quiet, 'highpass', 0.7); if (i % 8 === 4) noise(0.1, 1200, 0.05 * quiet, 'bandpass', 1);
     if (!live && i % 2 === 0) tone(note(220, ch[(i / 2) % 3 | 0] + (i % 16 > 7 ? 5 : 0)), 0.18, 0.03, 'sawtooth', 0, null, 1800); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 92, key: 2, bpm: 120 });
+bandStyle('sport', { seed: 92, key: 2, bpm: 122, lead: { i: 'organ' }, comp: { i: 'organ' }, A: [0, 3, 0, 4], tune: ['0.2.4.7...4...2.', '3.5.7.a...7...5.', '4.6.8.b...8...6.'] });

@@ -58,4 +58,4 @@ function soundStep(G, dt) {
   if (g.ph === 'foot') { AM.breath -= dt; if (AM.breath <= 0) { AM.breath = 0.33; tone(110, 0.05, 0.06, 'sine', 0, 70); noise(0.12, 1100, 0.025, 'bandpass', 1, 0.05); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('race', { seed: 24, key: -2, bpm: 142 });
+bandStyle('race', { seed: 24, key: -2, bpm: 142, lead: { i: 'saw' }, comp: { i: 'pad', p: 'P' }, A: [0, 5, 0, 4], tune: ['0.4.2.4.0.4.2.4.', '5.0.2.0.5.0.2.0.', '4.1.6.1.4.1.6.1.'] });

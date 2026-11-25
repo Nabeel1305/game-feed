@@ -30,4 +30,4 @@ function soundStep(G, dt) {
   if (AM.crowd) AM.crowd.set(quiet ? 0 : 0.004, 0.5);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('funk', { seed: 40, key: 1, bpm: 105 });
+bandStyle('funk', { seed: 40, key: 1, bpm: 104, lead: { i: 'organ' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0.2.4..2.0..2.4.', '3.5.7..5.3..5.7.', '4.6.8..6.4..2.1.'], d: { k: 'x..x......x..x..', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.' } });

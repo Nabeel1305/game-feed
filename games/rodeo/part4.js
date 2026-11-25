@@ -27,4 +27,4 @@ function soundStep(G, dt) {
   const quiet = MUTE || paused || !G || G.over, tense = G && G.ph === 'ride'; if (AM.crowd) AM.crowd.set(quiet ? 0 : tense ? 0.03 : 0.018, 0.4); if (AM.low) AM.low.set(quiet ? 0 : 0.015, 0.5);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('western', { seed: 33, key: 1, bpm: 106 });
+bandStyle('western', { seed: 33, key: 1, bpm: 108, lead: { i: 'harmonica' }, comp: { i: 'banjo', p: 'a.a.a.a.a.a.a.a.' }, A: [0, 3, 0, 4], tune: ['4...4...2...0...', '3...3...5...3...', '4...6...4...2...'] });

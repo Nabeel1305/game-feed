@@ -22,4 +22,4 @@ function soundStep(G, dt) {
   if (!G.lesson && G.clock < 5 && G.clock > 0) { AM.tick -= dt; if (AM.tick <= 0) { AM.tick = 1; sfx.tick(); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('synth', { seed: 21, key: -3, bpm: 112 });
+bandStyle('synth', { seed: 21, key: -3, bpm: 112, lead: { i: 'square' }, comp: { i: 'pad', p: 'P' }, A: [0, 5, 0, 4], tune: ['4...7...4...2...', '5...9...7...5...', '4...8...6...4...'], sc: 'maj' });

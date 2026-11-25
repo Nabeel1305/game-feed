@@ -82,20 +82,22 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (made for cooking): drag things where they go; tap a pan to flip; swipe across the board to chop.
+// input (made for cooking): drag things where they go; tap a pan to flip; tap the board (or rub it) to chop; tap the plate to take the top thing off.
 function hitAt(x, y) { const sp = spots(G), d = (s, r) => { const p = scr(s.x, s.z, s.y); return Math.hypot(p.x - x, p.y - y) < r * k; };
   for (let i = 0; i < sp.tray.length; i++) if (d(sp.tray[i], 34)) return { kind: 'tray', i, food: sp.tray[i].food };
   for (let i = 0; i < G.pans.length; i++) if (d(sp.pans[i], 46)) return { kind: 'pan', i };
-  if (d(sp.board, 50)) return { kind: 'board' }; if (d(sp.plate, 50)) return { kind: 'plate' }; if (d(sp.bin, 40)) return { kind: 'bin' };
+  if (d(sp.board, 62)) return { kind: 'board' }; if (d(sp.plate, 50)) return { kind: 'plate' }; if (d(sp.bin, 40)) return { kind: 'bin' };
   const pass = scr(0, -0.72, TOP + 0.22); if (y < pass.y + 30 * k && Math.abs(x - pass.x) < W * 0.45) return { kind: 'pass' }; return null; }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const h = hitAt(LAND.x(e), LAND.y(e)); if (!h) return;
   ui.drag = { id: e.pointerId, from: h, x0: LAND.x(e), y0: LAND.y(e), x: LAND.x(e), y: LAND.y(e), moved: false, t0: performance.now(), lastDir: 0, label: h.kind === 'tray' ? FOOD[h.food].name : h.kind === 'pan' && G.pans[h.i] ? FOOD[G.pans[h.i].food].name : h.kind === 'board' && G.board ? FOOD[G.board.food].name : h.kind === 'plate' && G.plate.length ? 'Plate' : null };
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = LAND.x(e); d.y = LAND.y(e); if (Math.hypot(d.x - d.x0, d.y - d.y0) > 12 * k) d.moved = true;
-  // chopping: each sweep across the board, back or forth, is one chop
-  if (d.from.kind === 'board' && G.board && G.board.chops < FOOD[G.board.food].chops) { const dx = LAND.x(e) - (d.lx == null ? d.x0 : d.lx); if (Math.abs(dx) > 26 * k) { const dir = Math.sign(dx); if (dir !== d.lastDir) { chop(G); d.lastDir = dir; d.chopped = true; } d.lx = LAND.x(e); } } });
+  // chopping (25 Nov 2026, his review: "Whenever I try to chop the vegetables, it doesn't work. Make chopping vegetables work all the time;
+  // make it simple"). It took a sideways sweep that started on the board and turned round between chops; a tap, an up-and-down stroke
+  // or two strokes the same way did nothing. Now a TAP on the board is a chop, and so is every thumb's width of movement on it, any way.
+  if (d.from.kind === 'board' && G.board && G.board.chops < FOOD[G.board.food].chops) { const lx = d.lx == null ? d.x0 : d.lx, ly = d.ly == null ? d.y0 : d.ly; if (Math.hypot(d.x - lx, d.y - ly) > 24 * k) { chop(G); d.chopped = true; d.lx = d.x; d.ly = d.y; } } });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (!G || G.over || paused) return; const to = hitAt(LAND.x(e), LAND.y(e)), f = d.from;
-  if (!d.moved) { if (f.kind === 'pan') flip(G, f.i); return; }
+  if (!d.moved) { if (f.kind === 'pan') flip(G, f.i); else if (f.kind === 'board') { if (G.board && G.board.chops < FOOD[G.board.food].chops) chop(G); } else if (f.kind === 'plate') unplate(G); return; }
   if (d.chopped) return; if (!to) return;
   if (f.kind === 'tray') { if (to.kind === 'pan') take(G, f.food, 'pan', G.pans[to.i] ? null : to.i); else if (to.kind === 'board') take(G, f.food, 'board'); else if (to.kind === 'plate') take(G, f.food, 'plate'); }
   else if (f.kind === 'pan') { if (to.kind === 'plate') panToPlate(G, f.i); else if (to.kind === 'bin') trash(G, 'pan', f.i); }

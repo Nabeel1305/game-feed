@@ -26,4 +26,4 @@ const sfx = {
   lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
 };
 // the band (tools/juice-kit.js): this game's music
-bandStyle('island', { seed: 64, key: 2, bpm: 102 });
+bandStyle('island', { seed: 64, key: 2, bpm: 100, lead: { i: 'steel' }, comp: { i: 'guitar' }, A: [0, 3, 0, 4], tune: ['0...0...4...2...', '3...3...7...5...', '4...4...8...6...'] });

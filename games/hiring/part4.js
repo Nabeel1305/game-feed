@@ -15,4 +15,4 @@ const sfx = {
   lose() { tone(294, 0.5, 0.1, 'triangle', 0, 262); tone(220, 0.8, 0.1, 'triangle', 0.3, 196); },
 };
 // the band (tools/juice-kit.js): this game's music
-bandStyle('jazz', { seed: 19, key: 1, bpm: 105 });
+bandStyle('jazz', { seed: 19, key: 1, bpm: 104, lead: { i: 'piano' }, comp: { i: 'keys' }, A: [1, 4, 0, 5], tune: ['3...5...3...1...', '4...6...8...6...', '7...4...2...0...', '5...7...5.......'] });

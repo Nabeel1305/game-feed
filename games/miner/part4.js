@@ -33,4 +33,4 @@ function soundStep(G, dt) {
   if (AM.drone) AM.drone.set(quiet ? 0 : 0.012, 0.5); if (AM.eng) AM.eng.set(quiet ? 0 : 0.004 + st * 0.02, 0.1); if (AM.las) AM.las.set(quiet || !G.beam ? 0 : 0.012, 0.05);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('synth', { seed: 42, key: -3, bpm: 108 });
+bandStyle('synth', { seed: 42, key: -3, bpm: 104, lead: { i: 'bell' }, comp: { i: 'pad', p: 'P' }, A: [0, 5, 0, 4], tune: ['0...4...7...9...', '5...7...9...7...', '4...6...8...6...'] });

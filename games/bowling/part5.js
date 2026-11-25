@@ -18,7 +18,7 @@ function showHome() {
   $('hLvl').textContent = level;
   const bt = best[level], bank = store.get('bank', 0), tot = store.get('earned', 0);
   const cf = makeCfg(level); setTarget({ cfg: cf, N: level }); const bs = (store.get('bestScore', {}) || {})[level];
-  const goal = cf.kind === 'spares' ? `spare challenge: <b>${cf.target}</b> spares in ${cf.frames}` : cf.kind === 'strikeout' ? `strike-out: <b>${cf.target}</b> strikes in ${cf.frames}` : `${cf.frames} frames · score <b>${cf.target}</b>`;
+  const goal = cf.kind === 'spares' ? `spare challenge: <b>${cf.target}</b> spares in ${cf.frames}` : cf.kind === 'strikeout' ? `strike-out: <b>${cf.target}</b> strikes in ${cf.frames}` : `${cf.frames} frames · beat the bowler on each side`;
   $('hStat').innerHTML = [`🪙 <b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[placeOf(level)].name} · ${goal}`, bs != null && cf.kind === 'game' ? `Your best here: <b>${bs}</b>` : '', `Balls: <b>${boardsOpen()}</b> of ${BALLS.length} 🎳 · bowling with <b>${myBall().name}</b>`, bt ? `Your best here: <b>${'★'.repeat(bt)}</b>` : '', helpOn() ? '<span class="help">Help is on for this level: a steadier hand.</span>' : ''].filter(Boolean).join('<br>');
   show('ovHome');
 }
@@ -45,9 +45,9 @@ function showEnd() {
   $('eTitle').textContent = r.win ? (r.strikes >= 3 ? 'TURKEY TIME!' : 'NICE GAME!') : 'SO CLOSE'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
   const unit = r.kind === 'spares' ? ' spares' : r.kind === 'strikeout' ? ' strikes' : ' points';
-  $('eSub').innerHTML = `<b>${r.score}</b>${unit} · needed ${r.target}` + (!r.win ? ` · <b>${r.target - r.score} short</b>` : '') + (r.newHigh ? ' · <b class="nb">NEW BEST</b>' : r.prevBest != null && r.kind === 'game' ? ` · best ${Math.max(r.prevBest, r.score)}` : '')
+  $('eSub').innerHTML = (r.rivals ? `YOU <b>${r.score}</b> · ${r.rivals.map(q => `${q.name} <b>${q.tot}</b>`).join(' · ')}` + (!r.win ? ` · <b>${r.target - r.score} behind</b>` : '') : `<b>${r.score}</b>${unit} · needed ${r.target}` + (!r.win ? ` · <b>${r.target - r.score} short</b>` : '')) + (r.newHigh ? ' · <b class="nb">NEW BEST</b>' : r.prevBest != null && r.kind === 'game' ? ` · best ${Math.max(r.prevBest, r.score)}` : '')
     + `<br>${r.strikes} strikes · ${r.spares} spares · best run ${r.bestRun} · <b>+${r.coins} 🪙</b>` + (r.newBoards && r.newBoards.length ? `<br><b class="nb">NEW BALL: ${r.newBoards.join(', ')}!</b>` : '')
-    + (r.win ? (r.stars < 3 ? '<br>Beat it by more for three stars.' : '') : '<br>Aim just beside the front pin: the pocket.')
+    + (r.win ? (r.stars < 3 ? '<br>Beat them by more for three stars.' : '') : '<br>Aim just beside the front pin: the pocket.')
     + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: a steadier hand.</span>' : '');
   renderShop();
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';

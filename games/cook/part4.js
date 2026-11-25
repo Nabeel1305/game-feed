@@ -32,4 +32,4 @@ function soundStep(G, dt) {
   AM.fry && AM.fry.set(fry, 0.2); AM.burn && AM.burn.set(burn, 0.2); AM.rain && AM.rain.set((W3 && W3.S ? W3.S.rain : 0) * 0.025, 1);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('funk', { seed: 16, key: 0, bpm: 108 });
+bandStyle('funk', { seed: 16, key: 0, bpm: 108, lead: { i: 'pizz' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0..2.0..4..2.0..', '3..5.3..0..5.3..', '4..6.4..1..6.4..'], d: { k: 'x..x......x..x..', s: '....x.......x...', m: 'x...x...x...x...', h: 'x.x.x.x.x.x.x.x.' } });

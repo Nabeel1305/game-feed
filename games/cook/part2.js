@@ -8,7 +8,8 @@
 const RULES = [
   '<b>Drag food from the trays:</b> meat, fish, eggs and batter into a pan; vegetables onto the board; bread and buns onto the plate.',
   '<b>In the pan, the side underneath browns.</b> Tap the pan to flip it when it is golden. Pale is raw; black is burnt.',
-  '<b>Swipe across the board</b> to chop what is on it.',
+  '<b>Tap the board</b> (or swipe on it) to chop what is on it.',
+  'A dish is <b>built from the bottom up</b>, in the order on its ticket (1, 2, 3...). Built in that order: an extra tip. <b>Tap the plate</b> to take the top thing off.',
   '<b>Golden both sides</b> (an egg: just its underside)? Drag it to the plate. Chopped? Drag it to the plate.',
   '<b>Drag the plate to the pass</b> to serve the oldest ticket: everything on it, nothing else.',
   'Burnt or wrong food: drag it to the bin. Three customers walk out and the shift is over.',
@@ -19,7 +20,7 @@ function weatherOf(N) { if (N <= 2) return ['morning', 'golden'][N - 1]; const R
 const FOOD = {
   patty: { name: 'Patty', to: 'pan', cook: 6, sides: 2 }, steak: { name: 'Steak', to: 'pan', cook: 7, sides: 2 }, salmon: { name: 'Salmon', to: 'pan', cook: 6.5, sides: 2 },
   egg: { name: 'Egg', to: 'pan', cook: 5, sides: 1 }, pancake: { name: 'Pancake', to: 'pan', cook: 4.5, sides: 2 },
-  lettuce: { name: 'Lettuce', to: 'board', chops: 4 }, tomato: { name: 'Tomato', to: 'board', chops: 4 }, onion: { name: 'Onion', to: 'board', chops: 5 },
+  lettuce: { name: 'Lettuce', to: 'board', chops: 3 }, tomato: { name: 'Tomato', to: 'board', chops: 3 }, onion: { name: 'Onion', to: 'board', chops: 4 },      // (25 Nov 2026: one chop fewer each; a tap chops)
   bun: { name: 'Bun', to: 'plate' }, toast: { name: 'Toast', to: 'plate' },
 };
 const DISHES = [
@@ -79,6 +80,10 @@ function panToPlate(G, i) { const p = G.pans[i]; if (G.over || !p) return false;
   const q = burnt ? 'burnt' : raw ? 'raw' : cookedOk(G, p) ? (p.sides.every((s, j) => F.sides === 1 && j === 1 || (s >= 0.85 && s <= 1.02)) ? 'perfect' : 'good') : 'over';
   G.plate.push({ food: p.food, q }); G.pans[i] = null; G.ev.push({ k: 'plated', food: p.food, q }); return true; }
 function boardToPlate(G) { const b = G.board; if (G.over || !b) return false; if (b.chops < FOOD[b.food].chops) return refuse(G, 'notchopped'); G.plate.push({ food: b.food, q: 'good' }); G.board = null; G.ev.push({ k: 'plated', food: b.food, q: 'good' }); return true; }
+// 25 Nov 2026 (his review: "with complex things that require multiple ingredients, you need to make a way that i can structure it, like what
+// comes first the bun or the patty"): the ticket numbers the layers from the bottom up, the plate stacks them in the order you put them
+// on, a dish built in the ticket's order earns one tip more (out of order is still served), and a tap on the plate takes the top one off.
+function unplate(G) { if (G.over || !G.plate.length) return false; const p = G.plate.pop(); G.ev.push({ k: 'unplate', food: p.food }); return true; }
 function trash(G, what, i) { if (G.over) return; if (what === 'pan' && G.pans[i]) { G.pans[i] = null; G.wasted++; } else if (what === 'board' && G.board) { G.board = null; G.wasted++; } else if (what === 'plate' && G.plate.length) { G.plate = []; G.wasted++; } else return; G.ev.push({ k: 'bin' }); }
 // serve: the plate must be exactly the oldest ticket's dish, cooked right
 function serve(G) {
@@ -87,8 +92,9 @@ function serve(G) {
   // a plate sent back is a mark against you, like a walkout
   if (want !== have || bad) { G.ev.push({ k: 'sendback', why: want !== have ? 'wrong' : bad.q }); G.plate = []; tk.wait += 10; G.streak = 0; if (G.lesson) { lessonMiss(G, want !== have ? 'wrong' : bad.q); return; } G.lives--; if (G.lives <= 0) finish(G, false, 'sentback'); return; }
   const perfect = G.plate.every(p => p.q !== 'over') && G.plate.filter(p => FOOD[p.food].to === 'pan').every(p => p.q === 'perfect'), fast = tk.wait < tk.max * 0.5;
-  G.tickets.shift(); G.plate = []; G.served++; if (perfect) G.perfect++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); G.tips += (perfect ? 3 : 1) + (fast ? 2 : 0);
-  G.ev.push({ k: 'served', name: tk.dish.name, perfect, fast, n: G.served }); lessonSee(G, 'served');
+  const neat = new Set(tk.dish.items).size > 1 && G.plate.map(p => p.food).join() === tk.dish.items.join();
+  G.tickets.shift(); G.plate = []; G.served++; if (perfect) G.perfect++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); G.tips += (perfect ? 3 : 1) + (fast ? 2 : 0) + (neat ? 1 : 0);
+  G.ev.push({ k: 'served', name: tk.dish.name, perfect, fast, neat, n: G.served }); lessonSee(G, 'served');
   if (!G.lesson && G.served + G.lost >= G.cfg.orders) finish(G, true);
 }
 // ---------- every frame ----------
@@ -113,7 +119,7 @@ function finish(G, win, why) {
 const LESSONS = {
   1: [{ id: 'flip', title: 'GOLDEN, THEN FLIP', say: 'DRAG IT TO A PAN, TAP TO FLIP', do: 'drag', dir: 'up', how: 'Drag a pancake into a pan. When the underside turns golden, tap the pan to flip it. Do it twice.', need: 2, ok: (w, s) => w === 'flip' && s >= GOLD[0] - 0.06 && s <= GOLD[1] + 0.06 },
       { id: 'serve', title: 'PLATE IT AND SERVE', say: 'DRAG TO THE PLATE, THEN UP', do: 'drag', dir: 'up', how: 'Golden both sides? Drag it to the plate, then drag the plate up to the pass.', need: 1, ok: w => w === 'served', dish: 'pancakes' }],
-  2: [{ id: 'chop', title: 'CHOP', say: 'SWIPE TO CHOP', do: 'swipe', dir: 'lr', how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
+  2: [{ id: 'chop', title: 'CHOP', say: 'TAP TO CHOP', do: 'tap', how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
       { id: 'burger', title: 'A WHOLE BURGER', say: 'MAKE THE BURGER', do: 'none', how: 'Patty in the pan (flip when golden), chop lettuce and tomato, a bun on the plate, everything on, then serve.', need: 1, ok: w => w === 'served', dish: 'burger' }],
   3: [{ id: 'two', title: 'TWO AT ONCE', say: 'TWO AT ONCE', do: 'none', how: 'While one thing cooks, chop or start the next. Serve two orders.', need: 2, ok: w => w === 'served', dish: null, two: true }],
 };

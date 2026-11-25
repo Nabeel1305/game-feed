@@ -25,4 +25,4 @@ function soundStep(G, dt) {
   AM.pad -= dt; if (AM.pad <= 0) { AM.pad = 5 + Math.random() * 5; const roots = [130.8, 146.8, 110, 164.8], r = roots[(Math.random() * roots.length) | 0]; [1, 1.5, 2, 2.52].forEach((m, j) => tone(r * m, 4.5, 0.018, 'sine', j * 0.25)); }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 11, key: 3, bpm: 72 });
+bandStyle('calm', { seed: 11, key: 3, bpm: 70, lead: { i: 'flute', oct: 1 }, comp: { i: 'strings', p: 'P' }, A: [0, 1, 0, 4], tune: ['4.......7.......', '5.......3...1...', '4.......6...4...'], sc: 'lyd', d: {}, rev: 0.7 });

@@ -35,4 +35,4 @@ const sfx = {
 let shuffleT = 0;
 function soundStep(G, dt) { if (!G || G.over || HEADLESS || MUTE || paused || G.choice) return; shuffleT -= dt; if (shuffleT <= 0 && G.foes.length) { shuffleT = 0.4; noise(0.12, 260, 0.02 + Math.min(0.05, G.foes.length / 2000), 'lowpass', 1); } }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('epic', { seed: 29, key: 2, bpm: 93 });
+bandStyle('epic', { seed: 29, key: 2, bpm: 96, lead: { i: 'brass' }, comp: { i: 'strings', p: 'P' }, A: [0, 5, 0, 4], tune: ['0...0...0...2...', '5...5...5...4...', '4...4...4...6...'], d: { d: 'x..x..x.x..x..x.', u: 'x.......x.......', s: '............x...' } });

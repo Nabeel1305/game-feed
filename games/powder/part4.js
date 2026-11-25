@@ -30,4 +30,4 @@ function soundStep(G, dt) {
   if (AM.edge) AM.edge.set(quiet || m.air || m.crashT > 0 ? 0 : clamp(Math.abs(G.lean) * m.v / 14, 0, 1) * 0.03, 0.08);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 36, key: 2, bpm: 115 });
+bandStyle('sport', { seed: 36, key: 2, bpm: 116, lead: { i: 'saw' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['7...4...2...4...', '7...5...3...5...', '8...6...4...6...'], sc: 'maj' });

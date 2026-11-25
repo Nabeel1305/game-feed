@@ -28,4 +28,4 @@ function soundStep(G, dt) { if (!actx) return; if (!wind) wind = bed(500, 0.4, 0
   if (MUTE || paused) return; mus.t += dt; const beat = 0.3; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, bar = Math.floor(i / 16) % 4, vol = (home ? 1 : 0.7) * (0.5 + 0.5 * day);
   music(() => { const n = TUNE[i % 16]; if (n > -2 && (i % 2 === 0 || day > 0.5)) pluck(note(392, n + [0, 5, -3, 0][bar]), 0.9, 0.035 * vol); if (i % 8 === 0) tone(note(98, [0, 5, -3, 0][bar]), 2.6, 0.022 * vol, 'sine'); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('pastoral', { seed: 86, key: 0, bpm: 86 });
+bandStyle('pastoral', { seed: 86, key: 0, bpm: 88, lead: { i: 'whistle' }, comp: { i: 'banjo', p: 'a.a.a.a.a.a.a.a.' }, A: [0, 3, 0, 4], tune: ['4...5...4...2...', '5...7...5...3...', '4...2...1...z...'] });

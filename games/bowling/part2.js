@@ -11,7 +11,8 @@ const RULES = [
   '<b>Touch</b> to line the ball up. <b>Pull back</b> and <b>let go</b> to roll: further is faster. Tilt the pull to angle it.',
   'Aim for the <b>pocket</b>: just beside the front pin. That is where strikes come from.',
   'Your ball decides how much it <b>curls</b>; the dry wood at the far end of the lane decides where. Watch the arrow.',
-  'Two rolls a frame. Spare: +5. Strike: +10, and strikes in a row build a run. Beat the score the level asks for.',
+  'Two rolls a frame. Spare: +5. Strike: +10, and strikes in a row build a run.',
+  'A <b>rival bowls on each lane beside you</b>, frame for frame. Finish ahead of <b>both</b> to win.',
   'Some levels are <b>spare challenges</b> (a split already standing) or <b>strike-outs</b>. A <b>golden pin</b> is worth coins.',
 ];
 const LANE_W = 1.05, LANE_L = 18.29, BR = 0.109, PR = 0.06, HEAD_Z = 18.29 - 0.9;
@@ -45,11 +46,28 @@ function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place,
     ball: o.ball || myBall(), frame: 0, roll: 0, score: 0, frames: [], run: 0, bestRun: 0, strikes: 0, spares: 0, coins: 0, phase: 'aim', b: null, pins: [], aim: { x: 0, a: 0, p: 0 }, wait: 0 };
-  setTarget(G); rack(G, true);
+  setTarget(G); setRivals(G); rack(G, true);
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G;
 }
 function setTarget(G) { const c = G.cfg, f = c.frames, N = G.N, per = c.kind === 'spares' ? 0 : Math.min(25, 15.6 + N * 0.35); c.target = c.kind === 'spares' ? Math.max(2, Math.min(5, 1 + Math.floor((N + 1) / 6))) : c.kind === 'strikeout' ? Math.min(3, 1 + Math.floor(N / 10)) : Math.round(per * f); }
+// 25 Nov 2026 (his review: "Should be playing against both players in this bowling plus it's honestly not challenging enough to be engaging").
+// The two lanes either side were scenery. Now a rival bowls on each, frame for frame with you, and a game is won by finishing ahead of
+// BOTH. Their frames are dealt when the level starts (from its seed) and scored exactly as yours are (the pins, +5 for a spare, +10 for
+// a strike, runs multiply). One lands a little under what the level used to ask for and one over it: from level 4 on, the better of the
+// two scores more than the old target did (2% to 10% more), so there is more to beat; on the first three levels a little less.
+const RIVALS = ['Dee', 'Marco', 'Big Al', 'Yuki', 'Rosa', 'Tank', 'Lola', 'Vince', 'Ada', 'Kofi'];
+function dealRival(seed, frames, want) { const play = sk => { const R = rng(seed); let run = 0, tot = 0; const out = [], mult = () => Math.min(3, 1 + 0.5 * (run - 1));
+    for (let f = 0; f < frames; f++) { const a = R(), b = R(), c2 = R(), d = R(), ps = 0.06 + 0.66 * sk, pp = 0.22 + 0.6 * sk; let marks, pts;
+      if (a < ps) { run++; pts = Math.round(20 * mult()); marks = ['X']; }
+      else { const n1 = Math.min(9, 3 + Math.floor(c2 * 4 + sk * 3.5)); if (b < pp) { run++; pts = n1 + Math.round((10 - n1 + 5) * mult()); marks = [n1, '/']; } else { run = 0; const n2 = Math.min(9 - n1, Math.floor(d * (10 - n1))); pts = n1 + n2; marks = [n1, n2]; } }
+      out.push({ marks, pts, tot: tot += pts }); } return out; };
+  let lo = 0, hi = 1; for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (play(mid)[frames - 1].tot < want) lo = mid; else hi = mid; } return play(hi); }
+function setRivals(G) { const c = G.cfg; G.rivals = null; if (c.kind !== 'game') return; const R = rng(G.seed * 7 + 31), top = c.target * (G.N <= 3 ? 0.87 + 0.07 * R() : 1.02 + 0.08 * R()), low = top * (0.8 + 0.12 * R()), names = RIVALS.slice().sort(() => R() - 0.5), left = R() < 0.5;
+  G.rivals = [{ name: names[0], frames: dealRival(G.seed + 11, c.frames, left ? top : low) }, { name: names[1], frames: dealRival(G.seed + 23, c.frames, left ? low : top) }];
+  c.target = Math.max(G.rivals[0].frames[c.frames - 1].tot, G.rivals[1].frames[c.frames - 1].tot); }
+// a rival's score after the frames you have finished (they bowl each frame while you do)
+const rivalNow = (G, i) => { const k2 = Math.min(G.cfg.frames, G.frames.length); return k2 > 0 ? G.rivals[i].frames[k2 - 1].tot : 0; };
 // a fresh rack (or, in a spare challenge, a leave)
 function rack(G, fresh) { const R = G.rnd, c = G.cfg; G.pins = PINPOS.map(p => ({ n: p.n, x: p.x, z: p.z, vx: 0, vz: 0, up: true, gone: false, fall: 0, gold: false }));
   if (c.kind === 'spares' && !G.lesson) { const LEAVES = [[7, 10], [4, 6], [6, 7, 10], [2, 7], [3, 10], [5, 7], [4, 7, 10], [8, 10], [1, 2, 4, 7], [3, 6, 10], [2, 4, 5, 8]], L = LEAVES[(R() * LEAVES.length) | 0]; for (const p of G.pins) if (!L.includes(p.n)) { p.up = false; p.gone = true; } G.roll = 1; G.leave = true; }
@@ -111,7 +129,7 @@ function mustLose(G) { const c = G.cfg, left = c.frames - G.frame; if (c.kind ==
 function isSplit(G) { const up = G.pins.filter(p => p.up); if (up.length < 2 || G.pins.find(p => p.n === 1).up) return false; up.sort((a, b) => a.x - b.x); for (let i = 1; i < up.length; i++) if (up[i].x - up[i - 1].x > 0.4) return true; return false; }
 function finish(G) { const c = G.cfg, win = G.score >= c.target; G.over = win ? 'won' : 'lost';
   const stars = win ? (G.score >= c.target * 1.4 || (c.kind !== 'game' && G.score >= c.target + 1) ? 3 : G.score >= c.target * 1.15 ? 2 : 1) : 0;
-  G.res = { win, stars, score: G.score, target: c.target, kind: c.kind, strikes: G.strikes, spares: G.spares, bestRun: G.bestRun, frames: G.frames, coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) : 0) };
+  G.res = { win, stars, score: G.score, target: c.target, kind: c.kind, rivals: G.rivals ? G.rivals.map(r => ({ name: r.name, tot: r.frames[c.frames - 1].tot })) : null, strikes: G.strikes, spares: G.spares, bestRun: G.bestRun, frames: G.frames, coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) : 0) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {

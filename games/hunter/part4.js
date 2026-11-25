@@ -35,4 +35,4 @@ function soundStep(G, dt) {
   if (g.me.creep) { AM.crunch -= dt; if (AM.crunch <= 0) { AM.crunch = 0.35 + Math.random() * 0.2; noise(0.09, 2200 * vary(0.2), 0.035, 'bandpass', 1.4); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('tense', { seed: 13, key: -1, bpm: 99 });
+bandStyle('tense', { seed: 13, key: -1, bpm: 98, lead: { i: 'panflute' }, comp: { i: 'pad', p: 'P' }, A: [0, 5, 0, 4], tune: ['0.....1...0.....', '2.....1...0.....', '3.....2...1.....'], pen: 1, d: { d: 'x.......x.x.....', b: '..x..x....x..x..' } });

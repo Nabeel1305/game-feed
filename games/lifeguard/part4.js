@@ -31,4 +31,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   music(() => { const pat = [0, 2, 1, 2, 0, 2, 1, 2]; pluck(semi(ch[pat[i % 8]]), 0.7, i % 2 ? 0.02 : 0.032); if (i % 8 === 0) pluck(semi(ch[0] - 12), 1.2, 0.04); if (i % 16 === 6) pluck(semi(ch[2] + 12), 0.8, 0.02, 0.1);
     if (trouble && i % 2 === 0) tone(semi(ch[0] - 24), 0.25, 0.022, 'sine'); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('island', { seed: 96, key: 1, bpm: 109 });
+bandStyle('island', { seed: 96, key: 1, bpm: 110, lead: { i: 'guitar' }, comp: { i: 'steel' }, A: [0, 3, 0, 4], tune: ['4...7...9...7...', '5...7...a...7...', '6...8...b...8...'] });

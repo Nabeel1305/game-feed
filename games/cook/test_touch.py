@@ -36,8 +36,14 @@ with sync_playwright() as p:
     for j in range(8): touch('touchMove', [(1, x, y + (40 if j % 2 == 0 else -40))] if land else [(1, x + (40 if j % 2 == 0 else -40), y)])      # across the board, as the game sees it
     touch('touchEnd', [])
     ch = pg.evaluate("__sim.G.board.chops"); ok(ch >= 3, 'sweeping back and forth across the board chops it', str(ch))
+    # 25 Nov 2026: a tap on the board is a chop too, and so is a stroke the other way of the screen
+    pg.evaluate("__sim.G.board.chops = 0"); tap(board); tap(board); ch = pg.evaluate("__sim.G.board.chops"); ok(ch == 2, 'two taps on the board are two chops', str(ch))
+    pg.evaluate("__sim.G.board.chops = 0"); touch('touchStart', [(1, x, y)])
+    for j in range(4): touch('touchMove', [(1, x + 34 * (j + 1), y)] if land else [(1, x, y + 34 * (j + 1))])
+    touch('touchEnd', []); ch = pg.evaluate("__sim.G.board.chops"); ok(ch >= 2, 'a stroke the other way chops as well', str(ch))
     pg.evaluate("__sim.G.board.chops = 99"); drag(board, plate); ok(pg.evaluate("__sim.G.plate.map(p => p.food).join()") == 'tomato', 'drag the chopped tomato onto the plate')
     pg.evaluate("__sim.G.pans[0].sides = [0.95, 0.95]"); drag(pan0, plate); ok('patty' in pg.evaluate("__sim.G.plate.map(p => p.food).join()"), 'drag the cooked patty off the pan onto the plate')
+    n0 = pg.evaluate("__sim.G.plate.length"); tap(plate); ok(pg.evaluate("__sim.G.plate.length") == n0 - 1, 'a tap on the plate takes the top thing off'); pg.evaluate("__sim.G.plate.push({ food: 'patty', q: 'good' })")
     pg.evaluate("__sim.G.plate.length = 0; __sim.G.tickets.length = 0;"); pg.evaluate("(() => { const G = __sim.G; G.next = 0; __sim.step(0.05); G.next = 999; const tk = G.tickets[0]; G.plate = tk.dish.items.map(f => ({ food: f, q: 'perfect' })); })()")
     served = pg.evaluate("__sim.G.served"); pas = at("({ x: 0, z: -0.72, y: 1.12 })")
     drag(plate, (pas[0], pas[1]) if pg.evaluate('LAND.on()') else (plate[0], max(40, pas[1] - 10)), 10); ok(pg.evaluate("__sim.G.served") == served + 1, 'drag the plate up to the pass: served', str([served, pg.evaluate("__sim.G.served")]))

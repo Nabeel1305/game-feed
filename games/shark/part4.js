@@ -36,4 +36,4 @@ function soundStep(G, dt) {
   if (G.hunted) sfx.beat();
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('tense', { seed: 35, key: -3, bpm: 99 });
+bandStyle('tense', { seed: 35, key: -3, bpm: 92, lead: { i: 'horn', oct: 0 }, comp: { i: 'strings', p: 'P' }, A: [0, 5, 0, 4], tune: ['0.......4...2...', '5.......4...2...', '4.......6...4...'], d: { u: 'x.......x.......', r: '............x...' }, rev: 0.65 });

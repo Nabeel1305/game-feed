@@ -25,4 +25,4 @@ const sfx = {
 let birdT = 2;
 function soundStep(G, dt) { if (!G || G.over || HEADLESS || MUTE || paused) return; birdT -= dt; if (birdT <= 0) { birdT = 3 + Math.random() * 6; const b = 2200 + Math.random() * 900; tone(b, 0.07, 0.012, 'sine', 0, b * 1.25); tone(b * 1.1, 0.07, 0.01, 'sine', 0.09, b * 1.4); } }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('island', { seed: 30, key: 0, bpm: 109 });
+bandStyle('island', { seed: 30, key: 0, bpm: 100, lead: { i: 'marimba' }, comp: { i: 'guitar' }, A: [0, 3, 0, 4], tune: ['4...2...4...7...', '5...3...5...7...', '4...2...1...z...'] });

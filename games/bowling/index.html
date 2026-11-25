@@ -4839,7 +4839,7 @@ const BSTY = {
   fest:    { bpm: 108, sw: 0.4, sc: 'maj', root: 60, A: [0, 3, 4, 0], B: [5, 3, 1, 4], d: { j: 'x.x.x.x.x.x.x.x.', k: 'x.......x.......', r: '....x.......x...' }, bass: '1.......5.......', comp: { i: 'keys', p: 'x...x...x...x...' }, lead: { i: 'bell', dens: 0.55, oct: 1 }, rev: 0.5 },
   waltz:   { bpm: 126, sw: 0, three: 1, sc: 'maj', root: 60, A: [0, 4, 5, 3], B: [1, 4, 0, 0], d: { k: 'x...........', r: '....x...x...' }, bass: '1...........', comp: { i: 'keys', p: '....x...x...' }, lead: { i: 'vibes', dens: 0.5, oct: 1 }, rev: 0.5 },
 };
-function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S = Object.assign({}, b, o); S.name = name; if (o.key) S.root = b.root + o.key; S.steps = S.three ? 12 : 16; BAND.S = S; BAND.seed = (o.seed || 1) * 7919 + name.length; BAND.A = null; BAND.n = 0; BAND.t0 = 0; }
+function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S = Object.assign({}, b, o); S.name = name; for (const k2 of ['lead', 'comp']) if (o[k2]) S[k2] = Object.assign({}, b[k2], o[k2]);      /* a game's own score changes part of the style: its lead, its chords, its drums, its tune */ if (o.key) S.root = b.root + o.key; S.steps = S.three ? 12 : 16; BAND.S = S; BAND.seed = (o.seed || 1) * 7919 + name.length; BAND.A = null; BAND.n = 0; BAND.t0 = 0; }
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
@@ -4884,11 +4884,47 @@ const BDR = {
   t(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(85, t + 0.2); g.gain.setValueAtTime(v * 1.2, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.32); o.connect(g); g.connect(BAND.out); const w = actx.createGain(); w.gain.value = 0.25; g.connect(w); w.connect(BAND.rev); o.start(t); o.stop(t + 0.35); },
   j(t, v) { [3900, 5100, 6300].forEach((f, i) => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f * (0.98 + Math.random() * 0.04); g.gain.setValueAtTime(0, t); g.gain.setValueAtTime(v * 0.1, t + i * 0.004); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.09); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.1); }); },
 };
+// more instruments and drums (25 Nov 2026), so that a game's music can be its own
+function bHold(g, t, v, att, d, rel) { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.setValueAtTime(v, t + Math.max(att + 0.03, d * 0.9)); g.gain.linearRampToValueAtTime(0.0001, t + d + rel); }
+function bPluck(f, t, v, rv, dur, lpf, hpf, k2) { const s2 = actx.createBufferSource(); s2.buffer = bKS(f, dur); let n = s2; if (hpf) { const hp = actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = hpf; n.connect(hp); n = hp; } const lp = bLP(lpf); n.connect(lp); const g = actx.createGain(); g.gain.value = v * k2; lp.connect(g); g.connect(BAND.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(BAND.rev); } s2.start(t); }
+Object.assign(BINS, {
+  piano(f, t, d, v, rv) { const end = t + d + 0.9, c = bOsc('triangle', f, t, end), h = bOsc('sine', f * 2, t, end, 3), h3 = bOsc('sine', f * 3, t, end), hg = actx.createGain(), h3g = actx.createGain(); hg.gain.setValueAtTime(0.35, t); hg.gain.exponentialRampToValueAtTime(0.04, t + 0.5); h3g.gain.setValueAtTime(0.16, t); h3g.gain.exponentialRampToValueAtTime(0.005, t + 0.25); h.connect(hg); h3.connect(h3g); const mix = actx.createGain(); c.connect(mix); hg.connect(mix); h3g.connect(mix); bEnv(mix, t, v * 0.9, 0.004, d + 0.25, 0.5, rv); },
+  musicbox(f, t, d, v, rv) { const end = t + 1.5, c = bOsc('sine', f * 2, t, end), h = bOsc('sine', f * 6.01, t, end), hg = actx.createGain(); hg.gain.setValueAtTime(0.3, t); hg.gain.exponentialRampToValueAtTime(0.001, t + 0.2); h.connect(hg); const mix = actx.createGain(); c.connect(mix); hg.connect(mix); bEnv(mix, t, v * 0.7, 0.002, 0.45, 0.8, rv); },
+  xylo(f, t, d, v, rv) { BINS.marimba(f * 2, t, d, v * 0.85, rv); },
+  steel(f, t, d, v, rv) { const end = t + 1.0, c = bOsc('sine', f, t, end), h = bOsc('sine', f * 2, t, end, 6), h2 = bOsc('sine', f * 3.01, t, end), hg = actx.createGain(), h2g = actx.createGain(); hg.gain.value = 0.45; h2g.gain.setValueAtTime(0.3, t); h2g.gain.exponentialRampToValueAtTime(0.01, t + 0.3); c.frequency.setValueAtTime(f * 1.012, t); c.frequency.exponentialRampToValueAtTime(f, t + 0.08); h.connect(hg); h2.connect(h2g); const mix = actx.createGain(); c.connect(mix); hg.connect(mix); h2g.connect(mix); bEnv(mix, t, v * 0.8, 0.004, 0.45, 0.4, rv); },
+  horn(f, t, d, v, rv) { const end = t + d + 0.4, a = bOsc('sawtooth', f, t, end, -4), b = bOsc('sawtooth', f, t, end, 5), c = bOsc('sine', f, t, end), lp = bLP(350, 0.7); lp.frequency.setValueAtTime(350, t); lp.frequency.linearRampToValueAtTime(1250, t + 0.12); lp.frequency.exponentialRampToValueAtTime(800, t + 0.5); a.connect(lp); b.connect(lp); c.connect(lp); bHold(bEnv(lp, t, v * 0.5, 0.07, d, 0.25, rv), t, v * 0.5, 0.07, d, 0.3); },
+  choir(f, t, d, v, rv) { const end = t + d + 0.9, a = bOsc('sawtooth', f, t, end, -9), b = bOsc('sawtooth', f, t, end, 9), f1 = actx.createBiquadFilter(), f2 = actx.createBiquadFilter(); f1.type = f2.type = 'bandpass'; f1.frequency.value = 650; f1.Q.value = 2.2; f2.frequency.value = 1150; f2.Q.value = 2.5; a.connect(f1); b.connect(f1); a.connect(f2); b.connect(f2); const mix = actx.createGain(); f1.connect(mix); f2.connect(mix); bHold(bEnv(mix, t, v * 0.6, 0.22, d, 0.6, rv), t, v * 0.6, 0.22, Math.max(0.3, d), 0.7); },
+  harp(f, t, d, v, rv) { bPluck(f, t, v, rv * 1.3, 1.8, 5200, 0, 1.4); },
+  banjo(f, t, d, v, rv) { bPluck(f, t, v, rv, 0.5, 7000, 500, 1.9); },
+  pizz(f, t, d, v, rv) { const end = t + 0.4, a = bOsc('sawtooth', f, t, end), b = bOsc('triangle', f, t, end), lp = bLP(600, 1); lp.frequency.setValueAtTime(2200, t); lp.frequency.exponentialRampToValueAtTime(450, t + 0.14); a.connect(lp); b.connect(lp); bEnv(lp, t, v * 0.55, 0.004, 0.14, 0.12, rv); },
+  accordion(f, t, d, v, rv) { const end = t + d + 0.3, a = bOsc('square', f, t, end, -7), b = bOsc('square', f, t, end, 8), c = bOsc('sawtooth', f * 2, t, end), cg = actx.createGain(); cg.gain.value = 0.25; c.connect(cg); const lp = bLP(2400); a.connect(lp); b.connect(lp); cg.connect(lp); bHold(bEnv(lp, t, v * 0.2, 0.04, d, 0.1, rv), t, v * 0.2, 0.04, d, 0.1); },
+  harmonica(f, t, d, v, rv) { const end = t + d + 0.3, a = bOsc('square', f, t, end), b = bOsc('sawtooth', f, t, end, 10), bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(3000, f * 3); bp.Q.value = 0.9; const vb = bOsc('sine', 5.6, t, end), vg = actx.createGain(); vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.012, t + 0.2); vb.connect(vg); vg.connect(a.frequency); vg.connect(b.frequency); a.connect(bp); b.connect(bp); bHold(bEnv(bp, t, v * 0.5, 0.03, d, 0.1, rv), t, v * 0.5, 0.03, d, 0.12); },
+  panflute(f, t, d, v, rv) { BINS.flute(f, t, d, v, rv); bNoise(t, 0.09, 'bandpass', Math.min(6000, f * 3), 1.5, v * 0.25, rv); },
+});
+Object.assign(BDR, {
+  u(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(96, t); o.frequency.exponentialRampToValueAtTime(68, t + 0.4); g.gain.setValueAtTime(v * 1.5, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.95); o.connect(g); g.connect(BAND.out); const w = actx.createGain(); w.gain.value = 0.35; g.connect(w); w.connect(BAND.rev); o.start(t); o.stop(t + 1); bNoise(t, 0.05, 'lowpass', 700, 0.7, v * 0.5); },      // timpani
+  d(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.22); g.gain.setValueAtTime(v * 1.6, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.5); o.connect(g); g.connect(BAND.out); const w = actx.createGain(); w.gain.value = 0.25; g.connect(w); w.connect(BAND.rev); o.start(t); o.stop(t + 0.55); bNoise(t, 0.07, 'lowpass', 1000, 0.7, v * 0.8, 0.2); },      // taiko
+  w(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1150, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.04); g.gain.setValueAtTime(v * 0.9, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.07); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.09); },      // woodblock
+  b(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(360, t); o.frequency.exponentialRampToValueAtTime(250, t + 0.08); g.gain.setValueAtTime(v * 1.1, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.16); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.18); },      // bongo
+  m(t, v) { [562, 845].forEach(f => { const o = actx.createOscillator(), g = actx.createGain(), bp = actx.createBiquadFilter(); o.type = 'square'; o.frequency.value = f; bp.type = 'bandpass'; bp.frequency.value = 800; bp.Q.value = 1.2; g.gain.setValueAtTime(v * 0.35, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.14); o.connect(bp); bp.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.16); }); },      // cowbell
+  i(t, v) { [4200, 6130].forEach(f => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; g.gain.setValueAtTime(v * 0.22, t); g.gain.exponentialRampToValueAtTime(0.0003, t + 0.6); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.62); }); },      // triangle
+  a(t, v) { bNoise(t, 0.1, 'highpass', 6200, 0.8, v * 0.42); bNoise(t + 0.03, 0.08, 'bandpass', 9000, 2, v * 0.25); },      // tambourine
+});
 // scale step -> MIDI note (step may be below 0 or above the octave)
 function bDeg(S, i, pen) { const sc = pen ? (BSC[S.sc][2] === 3 ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9]) : BSC[S.sc], n = sc.length, k = ((i % n) + n) % n; return S.root + sc[k] + 12 * Math.floor(i / n); }
 // the tune: two-bar ideas made of small steps; A comes back so it can be remembered, B is made new each time round
 function bIdea(S) { const L = S.lead, T = BRH, bars = []; let p = [0, 2, 4][(bandRnd() * 3) | 0]; for (let b = 0; b < 2; b++) { const rh = T[(bandRnd() * T.length) | 0], ev = []; for (let s = 0; s < S.steps; s++) if (rh[s] === 'x' && bandRnd() < L.dens + (s % 8 === 0 ? 0.35 : 0)) { p += [-1, 1, -1, 1, -2, 2, 0, 1, -1][(bandRnd() * 9) | 0]; p = Math.max(-2, Math.min(8, p)); ev.push({ s, p }); } if (!ev.length) ev.push({ s: 0, p }); bars.push(ev); } return bars; }
-function bandForm() { const B = BAND, S = B.S; if (!B.A) B.A = bIdea(S); const A = B.A, Bp = bIdea(S), end = a => { const e = a.map(q => Object.assign({}, q)); const l = e[e.length - 1]; l.p = [0, 2, 4, 7][(bandRnd() * 4) | 0]; l.home = true; return e.filter(q => q.s <= 10 || q === l); };
+// 25 Nov 2026 (his review: "can each game have its own music instaed of reusing the same old music tailor each song to the game").
+// Sixteen styles shared by a hundred games sounded like the same few songs. Each game now brings its own SCORE (tools/scores.py writes
+// it into the game's bandStyle call): its own tune, written out (S.tune: bars of sixteenths, a digit = a step of the scale above the
+// tonic, w x y z = four to one steps below it, a b c = steps 10 11 12, a dot = nothing), its own lead and chord instruments, speed,
+// key, chords and drums. Three bars a, b, c are played a b a c. The middle part is still made new each time round.
+function bTune(S, bars) { const N = S.steps, val = c => c >= '0' && c <= '9' ? +c : 'wxyz'.indexOf(c) >= 0 ? 'wxyz'.indexOf(c) - 4 : c >= 'a' && c <= 'f' ? 10 + c.charCodeAt(0) - 97 : null;
+  const one = b => { const ev = []; for (let s2 = 0; s2 < N && s2 < b.length; s2++) { const p = val(b[s2]); if (p != null) ev.push({ s: s2, p, own: true }); } if (!ev.length) ev.push({ s: 0, p: 0, own: true }); return ev; }, T = bars.map(one);
+  return T.length >= 4 ? T.slice(0, 4) : T.length === 3 ? [T[0], T[1], T[0], T[2]] : [T[0], T[1] || T[0], T[0], T[1] || T[0]]; }
+function bandForm() { const B = BAND, S = B.S; if (S.tune) { if (!B.A) B.A = bTune(S, S.tune); const T = B.A, Bq = bIdea(S), endq = a => { const e = a.map(q => Object.assign({}, q)); const l = e[e.length - 1]; l.p = [0, 2, 4, 7][(bandRnd() * 4) | 0]; l.home = true; return e.filter(q => q.s <= 10 || q === l); };
+    B.mel = [T[0], T[1], T[2], T[3], T[0], T[1], T[2], T[3], Bq[0], Bq[1], Bq[0], endq(Bq[1]), T[0], T[1], T[2], T[3]]; B.cyc = (B.cyc || 0) + 1; return; }
+  if (!B.A) B.A = bIdea(S); const A = B.A, Bp = bIdea(S), end = a => { const e = a.map(q => Object.assign({}, q)); const l = e[e.length - 1]; l.p = [0, 2, 4, 7][(bandRnd() * 4) | 0]; l.home = true; return e.filter(q => q.s <= 10 || q === l); };
   B.mel = [A[0], A[1], A[0], end(A[1]), A[0], A[1], A[0], end(A[1]), Bp[0], Bp[1], Bp[0], end(Bp[1]), A[0], A[1], A[0], end(A[1])]; B.cyc = (B.cyc || 0) + 1; }
 function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar = Math.floor(n / N), b16 = bar % 16; if (s === 0 && b16 === 0) bandForm(); if (!B.mel) bandForm();
   const prog = b16 >= 8 && b16 < 12 ? S.B : S.A, ch = prog[b16 % 4], nx = (b16 % 4 === 3 ? (b16 === 7 ? S.B : S.A)[0] : prog[b16 % 4 + 1]), first = B.cyc === 1, hum = () => 0.82 + Math.random() * 0.3, late = () => (Math.random() - 0.5) * 0.012, spb = 60 / S.bpm / 4, rv = S.rev || 0.3;
@@ -4904,8 +4940,8 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
     else { const c = C.p[s]; if (c === 'x') tones.forEach((m, i) => BINS[C.i](bfr(m), t + late() + i * 0.008, spb * 2.2, 0.075 * hum(), rv)); else if (c === 'a') { const k2 = [0, 1, 2, 1, 0, 2, 1, 2][(s / 2 | 0) % 8] % tones.length; BINS[C.i](bfr(tones.slice().sort((a, b) => a - b)[k2] + (k2 === 2 && (s / 2 | 0) % 4 === 3 ? 12 : 0)), t + late(), spb * 2, 0.085 * hum(), rv); } } }
   // the lead: rests for the first four bars, snaps to the chord on strong beats, breathes at the end of each phrase
   if (!(first && b16 < 4)) { const ev = B.mel[b16], L = S.lead; for (let i = 0; i < ev.length; i++) if (ev[i].s === s) { const e = ev[i], nxt = ev[i + 1]; let p = e.p; const tn = [ch, ch + 2, ch + 4];
-      if (!S.pen && (s % 8 === 0 || e.home)) { let best = p, bd = 99; for (const c of tn) for (const o of [-7, 0, 7]) { const d = Math.abs(c + o - p); if (d < bd) { bd = d; best = c + o; } } p = best; }
-      const m = (S.pen ? bDeg(S, p, true) : bDeg(S, p)) + 12 * (L.oct || 0), len = e.home ? 6 : Math.min(6, (nxt ? nxt.s : N) - s); BINS[L.i](bfr(m), t + late(), spb * len * 0.92, 0.12 * hum() * lvl, rv); } } }
+      if (!S.pen && !e.own && (s % 8 === 0 || e.home)) { let best = p, bd = 99; for (const c of tn) for (const o of [-7, 0, 7]) { const d = Math.abs(c + o - p); if (d < bd) { bd = d; best = c + o; } } p = best; }
+      const m = (S.pen ? bDeg(S, p, true) : bDeg(S, p)) + 12 * (L.oct || 0), len = e.home ? 6 : Math.min(e.own ? 12 : 6, (nxt ? nxt.s : N) - s); BINS[L.i](bfr(m), t + late(), spb * len * 0.92, 0.12 * hum() * lvl, rv); } } }
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
@@ -5210,7 +5246,8 @@ const RULES = [
   '<b>Touch</b> to line the ball up. <b>Pull back</b> and <b>let go</b> to roll: further is faster. Tilt the pull to angle it.',
   'Aim for the <b>pocket</b>: just beside the front pin. That is where strikes come from.',
   'Your ball decides how much it <b>curls</b>; the dry wood at the far end of the lane decides where. Watch the arrow.',
-  'Two rolls a frame. Spare: +5. Strike: +10, and strikes in a row build a run. Beat the score the level asks for.',
+  'Two rolls a frame. Spare: +5. Strike: +10, and strikes in a row build a run.',
+  'A <b>rival bowls on each lane beside you</b>, frame for frame. Finish ahead of <b>both</b> to win.',
   'Some levels are <b>spare challenges</b> (a split already standing) or <b>strike-outs</b>. A <b>golden pin</b> is worth coins.',
 ];
 const LANE_W = 1.05, LANE_L = 18.29, BR = 0.109, PR = 0.06, HEAD_Z = 18.29 - 0.9;
@@ -5244,11 +5281,28 @@ function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place,
     ball: o.ball || myBall(), frame: 0, roll: 0, score: 0, frames: [], run: 0, bestRun: 0, strikes: 0, spares: 0, coins: 0, phase: 'aim', b: null, pins: [], aim: { x: 0, a: 0, p: 0 }, wait: 0 };
-  setTarget(G); rack(G, true);
+  setTarget(G); setRivals(G); rack(G, true);
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G;
 }
 function setTarget(G) { const c = G.cfg, f = c.frames, N = G.N, per = c.kind === 'spares' ? 0 : Math.min(25, 15.6 + N * 0.35); c.target = c.kind === 'spares' ? Math.max(2, Math.min(5, 1 + Math.floor((N + 1) / 6))) : c.kind === 'strikeout' ? Math.min(3, 1 + Math.floor(N / 10)) : Math.round(per * f); }
+// 25 Nov 2026 (his review: "Should be playing against both players in this bowling plus it's honestly not challenging enough to be engaging").
+// The two lanes either side were scenery. Now a rival bowls on each, frame for frame with you, and a game is won by finishing ahead of
+// BOTH. Their frames are dealt when the level starts (from its seed) and scored exactly as yours are (the pins, +5 for a spare, +10 for
+// a strike, runs multiply). One lands a little under what the level used to ask for and one over it: from level 4 on, the better of the
+// two scores more than the old target did (2% to 10% more), so there is more to beat; on the first three levels a little less.
+const RIVALS = ['Dee', 'Marco', 'Big Al', 'Yuki', 'Rosa', 'Tank', 'Lola', 'Vince', 'Ada', 'Kofi'];
+function dealRival(seed, frames, want) { const play = sk => { const R = rng(seed); let run = 0, tot = 0; const out = [], mult = () => Math.min(3, 1 + 0.5 * (run - 1));
+    for (let f = 0; f < frames; f++) { const a = R(), b = R(), c2 = R(), d = R(), ps = 0.06 + 0.66 * sk, pp = 0.22 + 0.6 * sk; let marks, pts;
+      if (a < ps) { run++; pts = Math.round(20 * mult()); marks = ['X']; }
+      else { const n1 = Math.min(9, 3 + Math.floor(c2 * 4 + sk * 3.5)); if (b < pp) { run++; pts = n1 + Math.round((10 - n1 + 5) * mult()); marks = [n1, '/']; } else { run = 0; const n2 = Math.min(9 - n1, Math.floor(d * (10 - n1))); pts = n1 + n2; marks = [n1, n2]; } }
+      out.push({ marks, pts, tot: tot += pts }); } return out; };
+  let lo = 0, hi = 1; for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (play(mid)[frames - 1].tot < want) lo = mid; else hi = mid; } return play(hi); }
+function setRivals(G) { const c = G.cfg; G.rivals = null; if (c.kind !== 'game') return; const R = rng(G.seed * 7 + 31), top = c.target * (G.N <= 3 ? 0.87 + 0.07 * R() : 1.02 + 0.08 * R()), low = top * (0.8 + 0.12 * R()), names = RIVALS.slice().sort(() => R() - 0.5), left = R() < 0.5;
+  G.rivals = [{ name: names[0], frames: dealRival(G.seed + 11, c.frames, left ? top : low) }, { name: names[1], frames: dealRival(G.seed + 23, c.frames, left ? low : top) }];
+  c.target = Math.max(G.rivals[0].frames[c.frames - 1].tot, G.rivals[1].frames[c.frames - 1].tot); }
+// a rival's score after the frames you have finished (they bowl each frame while you do)
+const rivalNow = (G, i) => { const k2 = Math.min(G.cfg.frames, G.frames.length); return k2 > 0 ? G.rivals[i].frames[k2 - 1].tot : 0; };
 // a fresh rack (or, in a spare challenge, a leave)
 function rack(G, fresh) { const R = G.rnd, c = G.cfg; G.pins = PINPOS.map(p => ({ n: p.n, x: p.x, z: p.z, vx: 0, vz: 0, up: true, gone: false, fall: 0, gold: false }));
   if (c.kind === 'spares' && !G.lesson) { const LEAVES = [[7, 10], [4, 6], [6, 7, 10], [2, 7], [3, 10], [5, 7], [4, 7, 10], [8, 10], [1, 2, 4, 7], [3, 6, 10], [2, 4, 5, 8]], L = LEAVES[(R() * LEAVES.length) | 0]; for (const p of G.pins) if (!L.includes(p.n)) { p.up = false; p.gone = true; } G.roll = 1; G.leave = true; }
@@ -5310,7 +5364,7 @@ function mustLose(G) { const c = G.cfg, left = c.frames - G.frame; if (c.kind ==
 function isSplit(G) { const up = G.pins.filter(p => p.up); if (up.length < 2 || G.pins.find(p => p.n === 1).up) return false; up.sort((a, b) => a.x - b.x); for (let i = 1; i < up.length; i++) if (up[i].x - up[i - 1].x > 0.4) return true; return false; }
 function finish(G) { const c = G.cfg, win = G.score >= c.target; G.over = win ? 'won' : 'lost';
   const stars = win ? (G.score >= c.target * 1.4 || (c.kind !== 'game' && G.score >= c.target + 1) ? 3 : G.score >= c.target * 1.15 ? 2 : 1) : 0;
-  G.res = { win, stars, score: G.score, target: c.target, kind: c.kind, strikes: G.strikes, spares: G.spares, bestRun: G.bestRun, frames: G.frames, coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) : 0) };
+  G.res = { win, stars, score: G.score, target: c.target, kind: c.kind, rivals: G.rivals ? G.rivals.map(r => ({ name: r.name, tot: r.frames[c.frames - 1].tot })) : null, strikes: G.strikes, spares: G.spares, bestRun: G.bestRun, frames: G.frames, coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) : 0) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
@@ -5405,6 +5459,8 @@ function buildWorld() {
     if (!mine) { const deco = []; for (const p of PINPOS) { const m = new T.Mesh(pinG, pinM); m.position.set(cx + p.x, 0, -p.z); S.add(m); deco.push(m); } V.lanesN.push(deco); }
   }
   for (const cx of [-2.4, -1.2, 0, 1.2, 2.4]) oneLane(cx, cx === 0);
+  // the rivals' lanes are the two beside yours (25 Nov 2026): a ball for each
+  V.rivalBalls = [-1.2, 1.2].map((cx, i) => { const m = new T.Mesh(new T.SphereGeometry(BR, 20, 14), new T.MeshStandardMaterial({ color: i ? 0xff8a2a : 0x7a3aff, roughness: 0.25, metalness: 0.1 })); m.position.set(cx, BR, 0); m.visible = false; S.add(m); return m; });
   // dividers between the lanes, with a neon edge
   for (const cx of [-1.8, -0.6, 0.6, 1.8]) { const dv = new T.Mesh(new T.BoxGeometry(0.1, 0.12, L + 1.4), darkM); dv.position.set(cx, 0.03, -(L + 1.4) / 2); S.add(dv); const n = new T.Mesh(new T.BoxGeometry(0.02, 0.02, L + 1.4), new T.MeshBasicMaterial({ color: 0x3ae0ff })); n.position.set(cx, 0.1, -(L + 1.4) / 2); S.add(n); V.neon.push(n.material); }
   // the room: floor, a long back wall with a glowing sign, a ceiling with lights
@@ -5442,7 +5498,7 @@ function onEvent(G, e) {
   const bp = ballPos(G), p = scr(bp.x, bp.y, bp.z), pins = scr(0, 0.3, -HEAD_Z - 0.3), cx = W / 2;
   switch (e.k) {
     case 'start': ui.pinDir = {}; ui.swept = {};
-      say(G.cfg.kind === 'spares' ? `MAKE ${G.cfg.target} SPARES` : G.cfg.kind === 'strikeout' ? `${G.cfg.target} STRIKE${G.cfg.target > 1 ? 'S' : ''} IN ${G.cfg.frames} BALLS` : `SCORE ${G.cfg.target}`, cx, H * 0.4, '#bff4ff', 26); sfx.go();
+      say(G.cfg.kind === 'spares' ? `MAKE ${G.cfg.target} SPARES` : G.cfg.kind === 'strikeout' ? `${G.cfg.target} STRIKE${G.cfg.target > 1 ? 'S' : ''} IN ${G.cfg.frames} BALLS` : G.rivals ? `BEAT ${G.rivals[0].name.toUpperCase()} AND ${G.rivals[1].name.toUpperCase()}` : `SCORE ${G.cfg.target}`, cx, H * 0.4, '#bff4ff', 24); sfx.go();
       if (G.N <= 2) tip('roll', 'Touch to line the ball up. Pull your thumb down toward you and let go to roll.', 3.4); if (G.cfg.kind === 'spares') tip('spares', 'Spare challenge: pins are already standing. Knock them all down with one ball.', 3.2); if (G.cfg.kind === 'strikeout') tip('so', 'Strike-out: every ball is a fresh rack. Only strikes count.', 3); break;
     case 'bowl': sfx.release(); break;
     case 'pin': ui.pinHits = (ui.pinHits || 0) + 1; sfx.pin(e.v, ui.pinHits); if (e.gold) { sfx.gold(); say('🪙 +5', pins.x, pins.y - 40 * k, '#ffd040', 22); } if (ui.pinHits === 4) { FX.shake = 4; } break;
@@ -5463,14 +5519,28 @@ function onEvent(G, e) {
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.44, '#9be3b5', 24); sfx.spare(e.n); break;
     case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('NOW THE REAL GAME!', cx, H * 0.36, '#ffe08a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
-    case 'won': sfx.win(); vibe(HAP.best); say(G.cfg.kind === 'game' ? 'TARGET BEATEN!' : 'CHALLENGE DONE!', cx, H * 0.3, '#ffd040', 32); break;
+    case 'won': sfx.win(); vibe(HAP.best); say(G.cfg.kind === 'game' ? 'YOU BEAT THEM BOTH!' : 'CHALLENGE DONE!', cx, H * 0.3, '#ffd040', 30); break;
     case 'lost': sfx.lose(); say('NOT THIS TIME', cx, H * 0.3, '#ffb4a8', 30); break;
   }
 }
+// ---------- the rivals bowl beside you ----------
+// Each frame of yours, each rival bowls theirs on the lane beside you: a ball down the lane, the pins of their first roll go over, then
+// (unless it was a strike) a second ball for the rest. What falls is what was dealt to them (G.rivals[i].frames), so the card is true.
+const RV = [{ f: -1 }, { f: -1 }];
+function rivalsAnim(V, g, dt) { if (!V.rivalBalls) return; const lanes = [V.lanesN[1], V.lanesN[2]], cxs = [-1.2, 1.2];
+  for (let i = 0; i < 2; i++) { const st = RV[i], ball = V.rivalBalls[i], pins = lanes[i], fr = g.rivals && !g.lesson && g.frame < g.cfg.frames ? g.rivals[i].frames[g.frame] : null;
+    if (!fr) { ball.visible = false; if (st.f !== -1) { st.f = -1; pins.forEach(m => { m.visible = true; m.rotation.set(0, 0, 0); }); } continue; }
+    if (st.f !== g.frame || st.game !== g.rivals) { st.f = g.frame; st.game = g.rivals; st.t = -(0.6 + Math.random() * 2.2) - i * 0.8; st.roll = 0; st.down = []; pins.forEach(m => { m.visible = true; m.rotation.set(0, 0, 0); m.userData.f = 0; }); }
+    st.t += dt; const marks = fr.marks, n1 = marks[0] === 'X' ? 10 : marks[0], n2 = marks[0] === 'X' ? 0 : marks[1] === '/' ? 10 - n1 : marks[1], T = 2.3;
+    const roll = k2 => { const t0 = k2 * 4.2, u = (st.t - t0) / T; if (u >= 0 && u < 1.08) { ball.visible = true; ball.position.set(cxs[i] + Math.sin(u * 2.4 + i) * 0.12, BR, -u * (LANE_L - 0.6)); ball.rotation.x -= dt * 22; }
+      if (st.roll === k2 && u >= 0.93) { st.roll = k2 + 1; const want = k2 === 0 ? n1 : n2, up = pins.map((m, j) => j).filter(j => !st.down.includes(j)); for (let q = 0; q < want && up.length; q++) { const j = k2 === 0 && q === 0 && want > 3 ? up.splice(0, 1)[0] : up.splice((Math.random() * up.length) | 0, 1)[0]; st.down.push(j); pins[j].userData.f = 0.001; pins[j].userData.d = Math.random() * 6.28; } } };
+    ball.visible = false; roll(0); if (n1 < 10) roll(1);
+    pins.forEach(m => { const f = m.userData.f; if (f > 0) { m.userData.f = Math.min(1, f + dt * 4); const a = m.userData.f * Math.PI / 2, d = m.userData.d; m.rotation.set(Math.cos(d) * a, 0, Math.sin(d) * a); if (m.userData.f >= 1 && st.t > 9.4) m.visible = false; } }); } }
 // ---------- every frame in 3D ----------
 const _ax = new (window.THREE ? THREE.Vector3 : Object)(), _q = new (window.THREE ? THREE.Quaternion : Object)();
 function animate(g, t, dt) {
   const V = V3;
+  rivalsAnim(V, g, dt);
   // pins: standing ones where the game has them; fallen ones tip over the way they were going and slide; swept ones vanish
   g.pins.forEach((p, i) => { const m = V.pins[i]; m.visible = !p.gone || (!p.up && !ui.swept[p.n] && g.phase !== 'aim'); if (!m.visible) return; m.material = p.gold ? V.goldM : V.pinM;
     if (p.up) { const w = Math.min(0.25, Math.hypot(p.vx, p.vz) * 0.4); m.position.set(p.x, 0, -p.z); m.rotation.set(-p.vz * 0.15 * (w > 0.01 ? 1 : 0), 0, -p.vx * 0.15 * (w > 0.01 ? 1 : 0)); return; }
@@ -5520,8 +5590,9 @@ function hud(G, t) {
   const c = G.cfg; ctx.textBaseline = 'middle';
   if (!G.lesson) {
     const x = 12, y = 48 * k, w = W - 24, h = 70 * k; panel(x, y, w, h);
-    ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; const reach = G.score >= c.target; ctx.fillStyle = reach ? '#7af0a0' : '#fff'; const sTxt = String(G.score); ctx.fillText(sTxt, x + 12, y + 20 * k);
-    const tw = ctx.measureText(sTxt).width; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText(c.kind === 'spares' ? `/ ${c.target} spares` : c.kind === 'strikeout' ? `/ ${c.target} strikes` : `/ ${c.target}`, x + 18 + tw, y + 22 * k);
+    ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; const rv = G.rivals && c.kind === 'game' ? [0, 1].map(i => ({ name: G.rivals[i].name, tot: rivalNow(G, i) })) : null, lead = rv ? Math.max(rv[0].tot, rv[1].tot) : c.target, reach = G.score >= lead; ctx.fillStyle = reach ? '#7af0a0' : '#fff'; const sTxt = String(G.score); ctx.fillText(sTxt, x + 12, y + 20 * k);
+    const tw = ctx.measureText(sTxt).width; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; if (rv) { let rx = x + 20 + tw; ctx.font = `800 ${Math.round(11.5 * k)}px ${BC}`; for (const r of rv) { const tx = `${r.name.toUpperCase()} ${r.tot}`; ctx.fillStyle = r.tot > G.score ? '#ff9a8a' : 'rgba(255,255,255,.8)'; ctx.fillText(tx, rx, y + 22 * k); rx += ctx.measureText(tx).width + 10 * k; } }
+    else ctx.fillText(c.kind === 'spares' ? `/ ${c.target} spares` : c.kind === 'strikeout' ? `/ ${c.target} strikes` : `/ ${c.target}`, x + 18 + tw, y + 22 * k);
     ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(13 * k)}px ${BC}`; ctx.fillText(c.kind === 'strikeout' ? `ball ${Math.min(c.frames, G.frame + 1)} of ${c.frames}` : `frame ${Math.min(c.frames, G.frame + 1)} of ${c.frames}`, x + w - 12, y + 14 * k);
     ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = G.run >= 2 ? '#ffd040' : 'rgba(255,255,255,.8)'; ctx.fillText((G.run >= 1 && c.kind === 'game' ? `run ×${Math.min(3, 1 + 0.5 * G.run)} next · ` : '') + `🪙 ${G.coins}`, x + w - 12, y + 29 * k);
     // the card: one box a frame, X for a strike, / for a spare
@@ -5530,7 +5601,7 @@ function hud(G, t) {
       ctx.fillStyle = i === G.frame && !G.over ? 'rgba(58,224,255,.25)' : 'rgba(255,255,255,.08)'; rrect(bx, by, bw, 18 * k, 4); ctx.fill();
       if (f && f.length) { ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(11 * k)}px ${BC}`; const s = f.map(v => v === 0 ? '–' : v).join(' '); ctx.fillStyle = f.includes('X') ? '#ffd040' : f.includes('/') ? '#8fe0ff' : '#fff'; ctx.fillText(s, bx + bw / 2, by + 9.5 * k); } }
     // how close the target is (the near goal, L4)
-    if (c.kind === 'game') { const fy = y + h - 4 * k; ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(x + 12, fy, w - 24, 2.5 * k); ctx.fillStyle = reach ? '#7af0a0' : '#3ae0ff'; ctx.fillRect(x + 12, fy, (w - 24) * clamp(G.score / c.target, 0, 1), 2.5 * k); }
+    if (c.kind === 'game') { const fy = y + h - 4 * k; ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(x + 12, fy, w - 24, 2.5 * k); ctx.fillStyle = reach ? '#7af0a0' : '#3ae0ff'; ctx.fillRect(x + 12, fy, (w - 24) * clamp(rv ? (lead > 0 ? G.score / lead : 1) : G.score / c.target, 0, 1), 2.5 * k); }
   } else lessonPanel(G);
   pinMap(G);
   // aiming: the line your roll will take, and how hard you are pulling
@@ -5581,7 +5652,7 @@ function soundStep(G, dt) {
   if (AM.crowd) AM.crowd.set(quiet ? 0 : 0.004, 0.5);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('funk', { seed: 40, key: 1, bpm: 105 });
+bandStyle('funk', { seed: 40, key: 1, bpm: 104, lead: { i: 'organ' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0.2.4..2.0..2.4.', '3.5.7..5.3..5.7.', '4.6.8..6.4..2.1.'], d: { k: 'x..x......x..x..', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.' } });
 
 // ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
 // What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
@@ -5602,7 +5673,7 @@ function showHome() {
   $('hLvl').textContent = level;
   const bt = best[level], bank = store.get('bank', 0), tot = store.get('earned', 0);
   const cf = makeCfg(level); setTarget({ cfg: cf, N: level }); const bs = (store.get('bestScore', {}) || {})[level];
-  const goal = cf.kind === 'spares' ? `spare challenge: <b>${cf.target}</b> spares in ${cf.frames}` : cf.kind === 'strikeout' ? `strike-out: <b>${cf.target}</b> strikes in ${cf.frames}` : `${cf.frames} frames · score <b>${cf.target}</b>`;
+  const goal = cf.kind === 'spares' ? `spare challenge: <b>${cf.target}</b> spares in ${cf.frames}` : cf.kind === 'strikeout' ? `strike-out: <b>${cf.target}</b> strikes in ${cf.frames}` : `${cf.frames} frames · beat the bowler on each side`;
   $('hStat').innerHTML = [`🪙 <b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[placeOf(level)].name} · ${goal}`, bs != null && cf.kind === 'game' ? `Your best here: <b>${bs}</b>` : '', `Balls: <b>${boardsOpen()}</b> of ${BALLS.length} 🎳 · bowling with <b>${myBall().name}</b>`, bt ? `Your best here: <b>${'★'.repeat(bt)}</b>` : '', helpOn() ? '<span class="help">Help is on for this level: a steadier hand.</span>' : ''].filter(Boolean).join('<br>');
   show('ovHome');
 }
@@ -5629,9 +5700,9 @@ function showEnd() {
   $('eTitle').textContent = r.win ? (r.strikes >= 3 ? 'TURKEY TIME!' : 'NICE GAME!') : 'SO CLOSE'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
   const unit = r.kind === 'spares' ? ' spares' : r.kind === 'strikeout' ? ' strikes' : ' points';
-  $('eSub').innerHTML = `<b>${r.score}</b>${unit} · needed ${r.target}` + (!r.win ? ` · <b>${r.target - r.score} short</b>` : '') + (r.newHigh ? ' · <b class="nb">NEW BEST</b>' : r.prevBest != null && r.kind === 'game' ? ` · best ${Math.max(r.prevBest, r.score)}` : '')
+  $('eSub').innerHTML = (r.rivals ? `YOU <b>${r.score}</b> · ${r.rivals.map(q => `${q.name} <b>${q.tot}</b>`).join(' · ')}` + (!r.win ? ` · <b>${r.target - r.score} behind</b>` : '') : `<b>${r.score}</b>${unit} · needed ${r.target}` + (!r.win ? ` · <b>${r.target - r.score} short</b>` : '')) + (r.newHigh ? ' · <b class="nb">NEW BEST</b>' : r.prevBest != null && r.kind === 'game' ? ` · best ${Math.max(r.prevBest, r.score)}` : '')
     + `<br>${r.strikes} strikes · ${r.spares} spares · best run ${r.bestRun} · <b>+${r.coins} 🪙</b>` + (r.newBoards && r.newBoards.length ? `<br><b class="nb">NEW BALL: ${r.newBoards.join(', ')}!</b>` : '')
-    + (r.win ? (r.stars < 3 ? '<br>Beat it by more for three stars.' : '') : '<br>Aim just beside the front pin: the pocket.')
+    + (r.win ? (r.stars < 3 ? '<br>Beat them by more for three stars.' : '') : '<br>Aim just beside the front pin: the pocket.')
     + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: a steadier hand.</span>' : '');
   renderShop();
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';

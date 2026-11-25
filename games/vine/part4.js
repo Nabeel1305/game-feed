@@ -27,4 +27,4 @@ function soundStep(G, dt) {
   AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 1.5 + Math.random() * 4; if (!wet) { const b = 1600 + Math.random() * 2400, n = 2 + (Math.random() * 4 | 0); for (let i = 0; i < n; i++) tone(b * vary(0.1), 0.09, 0.012, 'sine', i * 0.13, b * (0.7 + Math.random() * 0.8)); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('island', { seed: 12, key: 1, bpm: 103 });
+bandStyle('island', { seed: 12, key: 1, bpm: 104, lead: { i: 'steel' }, comp: { i: 'marimba' }, A: [0, 3, 0, 4], tune: ['4...4...2...0...', '5...5...3...0...', '4...6...4...1...'], d: { b: 'x..x..x...x.x...', w: '....x.......x...', q: 'x.x.x.x.x.x.x.x.' } });

@@ -31,4 +31,4 @@ const sfx = {
 let birdT = 2;
 function soundStep(G, dt) { if (!G || G.over || HEADLESS || MUTE || paused) return; birdT -= dt; if (birdT <= 0) { birdT = 3 + Math.random() * 5; if (!G.raining) { const b = 2000 + Math.random() * 800; tone(b, 0.08, 0.015, 'sine', 0, b * 1.3); tone(b * 1.1, 0.08, 0.012, 'sine', 0.1, b * 1.4); } } }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('pastoral', { seed: 28, key: -3, bpm: 85 });
+bandStyle('pastoral', { seed: 28, key: -3, bpm: 86, lead: { i: 'accordion' }, comp: { i: 'guitar' }, A: [0, 3, 0, 4], tune: ['0...2...4...7...', '5...3...5...7...', '6...4...2...1...'] });

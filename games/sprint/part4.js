@@ -42,4 +42,4 @@ function soundStep(G, dt) { if (!actx) return; if (!crowdLo) { crowdLo = bed(700
   if (paused) { lo = hi = 0; }
   crowdLo.set(lo, 0.25); crowdHi.set(hi, 0.25); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 77, key: -3, bpm: 114 });
+bandStyle('sport', { seed: 77, key: -3, bpm: 126, lead: { i: 'brass' }, comp: { i: 'brass' }, A: [0, 3, 0, 4], tune: ['0...0...0...4...', '3...3...3...5...', '4...4...4...8...'], d: { k: 'x...x...x...x...', s: '....x.......x...', h: 'xxxxxxxxxxxxxxxx' } });

@@ -38,4 +38,4 @@ function soundStep(G, dt) { if (!actx) return; engine(); if (!city) { city = bed
     if (i % 8 === 4 || i % 8 === 7) CH[bar].forEach((q, j) => tone(note(220, q), 0.35, 0.012 * vol, 'sine', j * 0.01));
     if (i % 4 === 2) noise(0.05, 2000, 0.02 * vol, 'bandpass', 1.4); if (i % 2 === 1) noise(0.02, 8000, 0.008 * vol, 'highpass', 0.7); if (i % 8 === 0) tone(60, 0.18, 0.05 * vol, 'sine', 0, 40); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('funk', { seed: 83, key: -1, bpm: 101 });
+bandStyle('funk', { seed: 83, key: -1, bpm: 102, lead: { i: 'brass' }, comp: { i: 'organ' }, A: [0, 3, 0, 4], tune: ['0...4...2...0...', '3...7...5...3...', '4...8...6...4...'] });

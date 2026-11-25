@@ -40,4 +40,4 @@ function soundStep(G, dt) {
   if (tramp <= 0 && G.foes.length) { tramp = 0.5; const n = Math.min(1, G.foes.length / 12); noise(0.08, 220, 0.03 + n * 0.05, 'lowpass', 1); }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('epic', { seed: 25, key: 3, bpm: 88 });
+bandStyle('epic', { seed: 25, key: 3, bpm: 88, lead: { i: 'horn', oct: 1 }, comp: { i: 'strings', p: 'P' }, A: [0, 3, 0, 4], tune: ['0.......4...2...', '3.......5...3...', '4.......2...1...'], sc: 'dor', d: { d: 'x.....x...x.....', u: 'x...............', r: '....x.......x...' } });

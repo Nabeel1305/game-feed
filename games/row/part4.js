@@ -19,4 +19,4 @@ const AM = { on: false };
 function soundStep(G, dt) { if (!actx || MUTE || HEADLESS) return; if (!AM.on) { AM.on = true; AM.water = bed(600, 0.5, 0.02, 0.4, 'lowpass'); AM.wind = bed(1200, 0.6, 0.006, 0.2, 'bandpass'); }
   if (AM.water) AM.water.set(!G || G.over || paused ? 0.008 : 0.012 + Math.min(0.025, (G.me.v || 0) * 0.004), 0.3); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 56, key: -3, bpm: 119 });
+bandStyle('sport', { seed: 56, key: -3, bpm: 112, lead: { i: 'horn', oct: 1 }, comp: { i: 'brass' }, A: [0, 3, 0, 4], tune: ['0...4...0...4...', '3...5...3...5...', '4...6...4...1...'] });

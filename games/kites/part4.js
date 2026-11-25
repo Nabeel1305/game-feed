@@ -30,4 +30,4 @@ function soundStep(G, dt) { if (!actx || MUTE) return; if (!windB) { windB = bed
     if ([0, 6, 8, 11].includes(i) || (busy && i % 2 === 1)) tone(i % 8 === 0 ? 70 : 95, 0.18, v * (i % 8 === 0 ? 1.4 : 1), 'sine', 0, 50);
     if ([4, 12].includes(i) || (busy && i % 4 === 2)) noise(0.06, 2200, v * 0.6, 'bandpass', 1.5); } }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('island', { seed: 81, key: 3, bpm: 104 });
+bandStyle('east', { seed: 81, key: 3, bpm: 100, lead: { i: 'flute' }, comp: { i: 'koto' }, A: [0, 3, 0, 4], tune: ['2...3...4...3...', '2...1...0...1...', '3...2...1...0...'], sc: 'maj', pen: 1, d: { q: 'x.x.x.x.x.x.x.x.', t: 'x.......x.......' } });

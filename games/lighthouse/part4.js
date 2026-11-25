@@ -27,4 +27,4 @@ function soundStep(G, dt) {
   AM.rain && AM.rain.set(rain * 0.028, 1); AM.wind && AM.wind.set(0.012 + storm * 0.02, 1);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('waltz', { seed: 18, key: 3, bpm: 127 });
+bandStyle('waltz', { seed: 18, key: 3, bpm: 124, lead: { i: 'musicbox' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0...2...4...', '3...5...7...', '4...2...1...'] });

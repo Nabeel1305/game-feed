@@ -25,4 +25,4 @@ const sfx = {
 };
 function soundStep(G, dt) {}
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 72, key: 0, bpm: 74 });
+bandStyle('calm', { seed: 72, key: 0, bpm: 72, lead: { i: 'piano' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['4...2...0.......', '5...3...0.......', '4...2...1.......'], d: {} });

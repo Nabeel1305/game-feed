@@ -33,4 +33,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   const dg = G && danger(G), beat = dg ? 0.42 : 0.7; mus.t += dt; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CH[Math.floor(i / 8) % CH.length], D = 146.8, semi = q => D * Math.pow(2, q / 12);
   music(() => { if (i % 8 === 0) ch.forEach((q, j) => tone(semi(q), beat * 8, 0.008, 'sawtooth', j * 0.02, null, 700)); if (dg && i % 2 === 0) noise(0.12, 120, 0.04, 'lowpass', 1); if (dg && i % 4 === 3) tone(semi(ch[2] + 12), beat * 1.5, 0.01, 'triangle', 0, null, 1500); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('epic', { seed: 105, key: -3, bpm: 89 });
+bandStyle('epic', { seed: 105, key: -3, bpm: 92, lead: { i: 'horn', oct: 1 }, comp: { i: 'strings', p: 'P' }, A: [0, 5, 0, 4], tune: ['0...4...2...0...', '5...2...0...5...', '4...1...6...4...'], d: { k: 'x.......x.......', s: '....x.x.....x.xx', h: 'x.x.x.x.x.x.x.x.' } });

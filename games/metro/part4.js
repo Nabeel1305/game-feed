@@ -31,4 +31,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   music(() => { if (i % 8 === 0) ch.forEach((q, j) => ep(semi(q), 3.6, 0.018, j * 0.03)); if (i % 2 === 1) ep(semi(ch[(i >> 1) % 4] + 12), 0.8, 0.012);
     if (busyCity > 0.4 && i % 4 === 2) tone(semi(ch[0] - 12), 0.4, 0.02, 'triangle'); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 94, key: -2, bpm: 74 });
+bandStyle('calm', { seed: 94, key: -2, bpm: 80, lead: { i: 'marimba' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['2...4...2...7...', '3...5...3...7...', '1...4...1...6...'] });

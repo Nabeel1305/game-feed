@@ -32,4 +32,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   music(() => { pluck(semi(BASS[i % 8]), 0.5, 0.03); if (i % 4 === 1) ch.forEach((q, j) => tone(semi(q + 12), 0.4, 0.006, 'triangle', j * 0.01, null, 1400)); if (i % 2 === 0) noise(0.12, 4000, 0.004, 'highpass', 0.5);
     if (lift > 0) pluck(semi(ch[i % 4] + 24), 0.6, 0.014); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('jazz', { seed: 104, key: -1, bpm: 104 });
+bandStyle('jazz', { seed: 104, key: -1, bpm: 88, lead: { i: 'brass' }, comp: { i: 'piano' }, tune: ['0.......2...4...', '5.......4...2...', '4.......6...4...'], sc: 'min', A: [0, 5, 0, 4], d: { y: 'x...x.x.x...x.x.', r: '....x.......x...' } });

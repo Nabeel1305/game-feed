@@ -28,4 +28,4 @@ function soundStep(G, dt) {
   const v = quiet ? 0 : tense ? 0.012 : 0.03; if (AM.crowd) AM.crowd.set(v, 0.3); if (AM.low) AM.low.set(quiet ? 0 : 0.02, 0.5); if (AM.rain) AM.rain.set(!quiet && g && g.weather === 'rain' ? 0.02 : 0, 0.8);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 31, key: -2, bpm: 118 });
+bandStyle('sport', { seed: 31, key: -2, bpm: 118, lead: { i: 'brass' }, comp: { i: 'brass' }, A: [0, 3, 0, 4], tune: ['0...0...4...0...', '3...3...5...3...', '4...4...6...8...'] });

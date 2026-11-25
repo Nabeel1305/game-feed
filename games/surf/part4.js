@@ -29,4 +29,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   mus.t += dt; const beat = 0.32; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { pluck(note(392, TUNE[i % TUNE.length]), 0.6, 0.012); if (i % 4 === 0) pluck(note(98, [0, 5, 7, 5][(i >> 2) % 4]), 0.9, 0.02); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('island', { seed: 109, key: 3, bpm: 106 });
+bandStyle('island', { seed: 109, key: 3, bpm: 128, lead: { i: 'guitar' }, comp: { i: 'guitar' }, A: [0, 3, 0, 4], tune: ['0.7.6.4.2.0.2.4.', '3.7.a.9.7.5.3.7.', '4.8.b.a.8.6.4.2.'], sc: 'mix', d: { k: 'x.....x.x.......', s: '....x.......x...', y: 'x.x.x.x.x.x.x.x.' } });

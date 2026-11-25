@@ -46,4 +46,4 @@ function soundStep(G, dt) {
     else if (w !== 'storm' && w !== 'rain') { const b = 2200 + Math.random() * 1400, n = 2 + (Math.random() * 4 | 0); for (let i = 0; i < n; i++) tone(b * vary(0.08), 0.07, 0.014, 'sine', i * 0.11, b * (1.2 + Math.random() * 0.3)); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('pastoral', { seed: 9, key: 0, bpm: 86 });
+bandStyle('pastoral', { seed: 9, key: 0, bpm: 84, lead: { i: 'harmonica' }, comp: { i: 'guitar' }, A: [0, 3, 0, 4], tune: ['4...2...0...2...', '3...5...7...5...', '4...2...1.......'] });

@@ -25,4 +25,4 @@ const sfx = {
   lose() { tone(294, 0.5, 0.08, 'triangle', 0, 262); tone(247, 0.8, 0.08, 'triangle', 0.3, 220); },
 };
 // the band (tools/juice-kit.js): this game's music
-bandStyle('funk', { seed: 57, key: 2, bpm: 107 });
+bandStyle('funk', { seed: 57, key: 2, bpm: 100, lead: { i: 'pizz' }, comp: { i: 'keys' }, A: [0, 5, 0, 4], tune: ['0..2..0...z.0...', '5..7..5...4.5...', '4..6..4...2.1...'], sc: 'min', d: { k: 'x.........x.....', r: '....x..x....x...', h: 'x.x.x.x.x.x.x.x.' } });

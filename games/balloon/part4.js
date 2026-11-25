@@ -33,4 +33,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   mus.t += dt; const beat = 0.5; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 3) % CHORDS.length], semi = q => 261.6 * Math.pow(2, q / 12);
   music(() => { if (i % 3 === 0) pluck(semi(ch[0] - 12), 1.2, 0.03); else pluck(semi(ch[i % 3]), 0.6, 0.016); if (i % 12 === 7) pluck(semi(ch[2] + 12), 0.9, 0.014, 0.1); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('pastoral', { seed: 101, key: -2, bpm: 91 });
+bandStyle('pastoral', { seed: 101, key: -2, bpm: 80, lead: { i: 'flute' }, comp: { i: 'harp', p: 'a.a.a.a.a.a.a.a.' }, A: [0, 3, 0, 4], tune: ['4.......7...9...', 'a.......7...5...', '8.......6...4...'], rev: 0.6 });

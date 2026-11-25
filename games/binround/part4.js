@@ -37,4 +37,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   const semi = q => 196 * Math.pow(2, q / 12);
   music(() => { const pat = [0, 1, 2, 1, 0, 2, 1, 2]; pluck(semi(ch[pat[i % 8]] + (i % 8 === 0 ? -12 : 0)), 1.4, i % 8 === 0 ? 0.045 : 0.028); if (i % 8 === 0) ch.forEach(q => tone(semi(q), 3.8, 0.008, 'sine', 0, null, 1200)); if (i % 16 === 11) pluck(semi(ch[2] + 12), 1.0, 0.02, 0.25); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('pastoral', { seed: 95, key: 3, bpm: 89 });
+bandStyle('pastoral', { seed: 95, key: 3, bpm: 96, lead: { i: 'horn', oct: 1 }, comp: { i: 'guitar' }, A: [0, 3, 0, 4], tune: ['0...4...2...4...', '3...5...3...0...', '4...6...4...1...'], d: { k: 'x.......x.......', r: '....x.......x...' } });

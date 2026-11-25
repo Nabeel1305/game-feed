@@ -32,4 +32,4 @@ function soundStep(G, dt) {
   const near = !quiet && G.ghosts.some(g => !g.hid && g.lit < 0.3 && Math.hypot(g.x - m.x, g.z - m.z) < 3); if (near) { AM.beat -= dt; if (AM.beat <= 0) { AM.beat = 0.75; sfx.beat(); } } else AM.beat = 0;
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('spooky', { seed: 43, key: 2, bpm: 73 });
+bandStyle('spooky', { seed: 43, key: 2, bpm: 76, lead: { i: 'musicbox' }, comp: { i: 'pad', p: 'P' }, A: [0, 5, 0, 4], tune: ['0...2...4...2...', '5...4...2...0...', '4...6...4...1...'] });

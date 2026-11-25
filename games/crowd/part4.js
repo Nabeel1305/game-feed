@@ -26,4 +26,4 @@ const sfx = {
 };
 function soundStep(G, dt) {}
 // the band (tools/juice-kit.js): this game's music
-bandStyle('arcade', { seed: 71, key: 2, bpm: 137 });
+bandStyle('arcade', { seed: 71, key: 2, bpm: 136, lead: { i: 'brass' }, comp: { i: 'square' }, A: [0, 3, 0, 4], tune: ['4...4...7...4...', '5...5...7...5...', '6...6...8...6...'], d: { k: 'x...x...x...x...', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.' } });

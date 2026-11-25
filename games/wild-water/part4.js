@@ -29,4 +29,4 @@ function soundStep(G, dt) {
   AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 3 + Math.random() * 6; if (foam < 0.3 && wet === 0) { const b = 2400 + Math.random() * 1200, n = 2 + (Math.random() * 3 | 0); for (let i = 0; i < n; i++) tone(b * vary(0.08), 0.07, 0.012, 'sine', i * 0.12, b * 1.25); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('western', { seed: 10, key: -2, bpm: 114 });
+bandStyle('western', { seed: 10, key: -2, bpm: 118, lead: { i: 'banjo' }, comp: { i: 'guitar' }, A: [0, 3, 0, 4], tune: ['0.2.4.2.0...4...', '3.5.7.5.3...5...', '4.6.4.2.1.......'] });

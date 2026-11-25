@@ -23,4 +23,4 @@ const sfx = {
   lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
 };
 // the band (tools/juice-kit.js): this game's music
-bandStyle('western', { seed: 67, key: 3, bpm: 111 });
+bandStyle('western', { seed: 67, key: 3, bpm: 100, lead: { i: 'whistle' }, comp: { i: 'guitar' }, A: [0, 5, 0, 4], tune: ['4.......0...2...', '5.......2...0...', '4.......6...4...'], sc: 'min' });

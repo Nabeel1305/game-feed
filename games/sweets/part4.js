@@ -30,4 +30,4 @@ const sfx = {
   lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
 };
 // the band (tools/juice-kit.js): this game's music
-bandStyle('arcade', { seed: 60, key: 3, bpm: 137 });
+bandStyle('arcade', { seed: 60, key: 3, bpm: 128, lead: { i: 'musicbox' }, comp: { i: 'marimba' }, A: [0, 3, 0, 4], tune: ['7...4...7...9...', '7...5...7...a...', '8...6...4...6...'] });

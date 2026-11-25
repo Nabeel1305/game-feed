@@ -32,4 +32,4 @@ function soundStep(G, dt) {
   if (quiet) return; birdT -= dt; if (birdT <= 0) { birdT = 2.5 + Math.random() * 5; const b = 2300 + Math.random() * 900; tone(b, 0.07, 0.01, 'sine', 0, b * 1.25); tone(b * 1.1, 0.07, 0.008, 'sine', 0.09, b * 1.4); }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('arcade', { seed: 32, key: 3, bpm: 135 });
+bandStyle('arcade', { seed: 32, key: 3, bpm: 132, lead: { i: 'square' }, comp: { i: 'marimba' }, A: [0, 3, 0, 4], tune: ['0.2.4.2.0.z.0...', '3...0...3...5...', '4...1...4...6...'], d: { b: 'x..x..x...x.x...', w: '....x.......x...', q: 'x.x.x.x.x.x.x.x.' } });

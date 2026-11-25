@@ -31,4 +31,4 @@ function soundStep(G, dt) {
   if (G.ph === 'ride') { AM.creak -= dt; if (AM.creak <= 0) { AM.creak = 0.5 - G.T * 0.3; if (G.T > 0.3) tone(150 + G.T * 260, 0.12, 0.02 + G.T * 0.03, 'sawtooth', 0, 140 + G.T * 220, 1200); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('epic', { seed: 22, key: 2, bpm: 87 });
+bandStyle('epic', { seed: 22, key: 2, bpm: 88, lead: { i: 'accordion' }, comp: { i: 'strings', p: 'P' }, A: [0, 6, 0, 4], tune: ['0...0...2...4...', '6...6...8...6...', '4...4...2...1...'], sc: 'dor', d: { d: 'x.......x.......', c: '....x.......x...' } });

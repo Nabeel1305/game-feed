@@ -44,4 +44,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
     if (i % 2 === 0) noise(0.08, 180, 0.03, 'lowpass', 1); else if (sp > 0.3) noise(0.05, 900, 0.012, 'bandpass', 1.5);
     if (sp > 0.45 && i % 2 === 0) { const m = MEL[(i / 2) % MEL.length]; tone(semi(m + 12), beat * 1.8, 0.012 + sp * 0.01, 'triangle', 0, null, 1800); } }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('epic', { seed: 102, key: 3, bpm: 88 });
+bandStyle('epic', { seed: 102, key: 3, bpm: 90, lead: { i: 'horn', oct: 1 }, comp: { i: 'choir', p: 'P' }, A: [0, 3, 0, 4], tune: ['0...1...0...4...', '3...5...3...1...', '4...6...4...1...'], sc: 'phr', d: { d: 'x.....x...x.....', u: 'x...............', r: '....x.......x...' } });

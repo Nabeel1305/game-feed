@@ -30,4 +30,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   mus.t += dt; const beat = 0.3; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { pluck(note(294, TUNE[i % TUNE.length]), 0.5, 0.014); if (i % 4 === 0) pluck(note(147, TUNE[i % TUNE.length] % 12), 0.9, 0.02); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('epic', { seed: 107, key: 0, bpm: 97 });
+bandStyle('epic', { seed: 107, key: 0, bpm: 100, lead: { i: 'brass' }, comp: { i: 'strings', p: 'P' }, A: [0, 3, 0, 4], tune: ['0...0...4...7...', '7...7...5...3...', '4...4...6...8...'], sc: 'mix', d: { u: 'x.......x.......', s: '....x.x.....x.xx' } });

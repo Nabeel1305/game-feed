@@ -102,6 +102,7 @@ function onEvent(G, e) {
     case 'ticket': sfx.ticket(); break;
     case 'sizzle': sfx.drop(); break;
     case 'onboard': sfx.thunk(); break;
+    case 'unplate': sfx.thunk(); say(`${FOOD[e.food].name.toUpperCase()} OFF`, cx, cy, '#ffd0c4', 16); break;
     case 'plated': sfx.plate(); if (e.q === 'perfect') say('PERFECT!', cx, cy, '#ffe08a', 22); else if (e.q === 'raw') say('STILL RAW!', cx, cy, '#ffb4a8', 22); else if (e.q === 'burnt') say('BURNT!', cx, cy, '#ffb4a8', 22); break;
     case 'flip': sfx.flip(); vibe(HAP.tick); if (e.side < G.cfg.gold[0]) say('FLIPPED TOO SOON', cx, cy, '#ffd0c4', 18); break;
     case 'noflip': say('EGGS STAY SUNNY SIDE UP', cx, cy, '#ffd0c4', 18); break;
@@ -110,7 +111,7 @@ function onEvent(G, e) {
     case 'burnt': sfx.burn(); FX.red = 0.3; tip('burnt', 'Flip when it turns golden, before it goes black', 2.6); break;
     case 'refuse': sfx.no(); say({ notpan: 'THAT DOES NOT GO IN A PAN', panfull: 'THAT PAN IS BUSY', notboard: 'NOTHING TO CHOP THERE', boardfull: 'CLEAR THE BOARD FIRST', notplate: 'COOK OR CHOP IT FIRST', notchopped: 'CHOP IT FIRST', noorder: 'NO ORDER YET' }[e.why] || 'NO', cx, cy, '#ffd0c4', 18); break;
     case 'bin': sfx.bin(); break;
-    case 'served': sfx.bell(); FX.flash = 0.4; vibe(HAP.best); say(e.perfect ? `${e.name.toUpperCase()}: PERFECT!` : `${e.name.toUpperCase()} SERVED`, cx, H * 0.3, e.perfect ? '#ffe08a' : '#9be3b5', 24); if (e.fast) say('+ QUICK TIP', cx, H * 0.3 + 30 * k, '#9be3b5', 18); break;
+    case 'served': sfx.bell(); FX.flash = 0.4; vibe(HAP.best); say(e.perfect ? `${e.name.toUpperCase()}: PERFECT!` : `${e.name.toUpperCase()} SERVED`, cx, H * 0.3, e.perfect ? '#ffe08a' : '#9be3b5', 24); if (e.fast) say('+ QUICK TIP', cx, H * 0.3 + 30 * k, '#9be3b5', 18); if (e.neat) say('+ BUILT IN ORDER', cx, H * 0.3 + (e.fast ? 54 : 30) * k, '#ffe08a', 18); break;
     case 'sendback': sfx.no(); FX.red = 0.4; say(e.why === 'wrong' ? 'WRONG ORDER: SENT BACK' : e.why === 'raw' ? 'RAW: SENT BACK' : 'BURNT: SENT BACK', cx, H * 0.3, '#ffb4a8', 22); tip('send_' + e.why, e.why === 'wrong' ? 'Serve the OLDEST ticket (on the left): everything on it, nothing else' : 'Golden both sides before it goes on the plate', 3); break;
     case 'walkout': sfx.walk(); FX.red = 0.5; say('A CUSTOMER WALKED OUT', cx, H * 0.3, '#ffb4a8', 22); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
@@ -162,10 +163,11 @@ function hud(G, sp) {
   if (G.lesson) lessonPanel(G);
   // tickets: paper slips along the top, oldest first, each with what goes on it and how long they have waited
   const ty = G.lesson ? H * 0.235 : 42 * k, tw = Math.min(124 * k, (W - 28) / Math.max(3, G.tickets.length) - 6);
-  G.tickets.forEach((tk, i) => { const x = 14 + i * (tw + 8), h = (36 + 11 * new Set(tk.dish.items).size) * k; ctx.save(); ctx.translate(x, ty); ctx.rotate((i % 2 ? 1 : -1) * 0.015);
+  G.tickets.forEach((tk, i) => { const x = 14 + i * (tw + 8), h = (36 + 11 * tk.dish.items.length) * k; ctx.save(); ctx.translate(x, ty); ctx.rotate((i % 2 ? 1 : -1) * 0.015);
     ctx.fillStyle = '#fbf6e8'; ctx.fillRect(0, 0, tw, h); ctx.fillStyle = i === 0 ? '#e0533a' : '#b9b3a2'; ctx.fillRect(0, 0, tw, 5 * k);
     ctx.fillStyle = '#2b2b2b'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(tk.dish.name, 6, 9 * k);
-    ctx.font = `600 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = '#555'; const items = {}; tk.dish.items.forEach(f => items[f] = (items[f] || 0) + 1); Object.entries(items).forEach(([f, n], j) => ctx.fillText(`${n > 1 ? n + '× ' : ''}${FOOD[f].name}`, 6, 25 * k + j * 11 * k));
+    // the layers, numbered from the bottom of the dish up; on the ticket you are cooking, the ones already on the plate are ticked
+    ctx.font = `600 ${Math.round(10 * k)}px ${BC}`; { const on = i === 0 ? G.plate.map(p => p.food) : [], left = on.slice(); tk.dish.items.forEach((f, j) => { const q = left.indexOf(f), have = q >= 0; if (have) left.splice(q, 1); ctx.fillStyle = have ? '#2e8b57' : '#555'; ctx.fillText(`${j + 1}  ${FOOD[f].name}${have ? '  ✓' : ''}`, 6, 25 * k + j * 11 * k); }); }
     const u = 1 - tk.wait / tk.max; ctx.fillStyle = '#ddd5c2'; ctx.fillRect(0, h - 5 * k, tw, 5 * k); ctx.fillStyle = u > 0.5 ? '#5cb85c' : u > 0.25 ? '#f0ad4e' : '#d9534f'; ctx.fillRect(0, h - 5 * k, tw * u, 5 * k); ctx.restore(); });
   if (!G.lesson) { ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s = `${G.served} / ${c.orders} served`; ctx.strokeText(s, W - 14, ty + 88 * k); ctx.fillText(s, W - 14, ty + 88 * k);
     for (let i = 0; i < c.lives; i++) { ctx.beginPath(); ctx.arc(W - 20 - i * 16 * k, ty + 110 * k, 5 * k, 0, TAU); ctx.fillStyle = i < G.lives ? '#ffd36a' : 'rgba(255,255,255,.25)'; ctx.fill(); } }
@@ -175,7 +177,7 @@ function hud(G, sp) {
     ctx.strokeStyle = 'rgba(255,200,80,.55)'; ctx.beginPath(); ctx.arc(s.x, s.y - 40 * k, r, A(gold[0]), A(gold[1])); ctx.stroke();
     ctx.strokeStyle = v > BURNT ? '#222' : v >= gold[0] && v <= gold[1] ? '#ffcf4a' : v > gold[1] ? '#a0522d' : '#f2e6c8'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.arc(s.x, s.y - 40 * k, r, a0, A(v)); ctx.stroke();
     const done = FOOD[p.food].sides === 1 ? 1 : p.sides[1 - p.down] >= gold[0] ? 2 : 1; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(FOOD[p.food].sides === 1 ? 'NO FLIP' : `SIDE ${p.down === 0 && p.sides[1] === 0 ? 1 : done}`, s.x, s.y - 40 * k); });
-  if (G.board) { const s = scr(sp.board.x, sp.board.z), F = FOOD[G.board.food]; if (G.board.chops < F.chops) { ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s2 = `SWIPE TO CHOP ${G.board.chops}/${F.chops}`; ctx.strokeText(s2, s.x, s.y - 34 * k); ctx.fillText(s2, s.x, s.y - 34 * k); } }
+  if (G.board) { const s = scr(sp.board.x, sp.board.z), F = FOOD[G.board.food]; if (G.board.chops < F.chops) { ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s2 = G.lesson ? `TAP TO CHOP ${G.board.chops}/${F.chops}` : '●'.repeat(G.board.chops) + '○'.repeat(F.chops - G.board.chops); ctx.strokeText(s2, s.x, s.y - 34 * k); ctx.fillText(s2, s.x, s.y - 34 * k); } }
   // what is being dragged
   if (ui.drag && ui.drag.moved && ui.drag.label) { const d = ui.drag; ctx.globalAlpha = 0.9; ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const w = ctx.measureText(d.label).width + 18; rrect(d.x - w / 2, d.y - 44 * k, w, 24 * k, 10); ctx.fill(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.label, d.x, d.y - 32 * k); ctx.globalAlpha = 1; }
   if ((G && G.lesson) && G.N <= 2 && !G.lesson && G.t < 8) { ctx.globalAlpha = 0.8; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; const p = scr(0, -0.72, TOP + 0.24); ctx.fillText('THE PASS: DRAG THE PLATE HERE', p.x, p.y); ctx.globalAlpha = 1; }

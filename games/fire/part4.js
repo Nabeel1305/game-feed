@@ -26,4 +26,4 @@ function soundStep(G, dt) { if (!actx || MUTE || HEADLESS) return; if (!AM.on) {
   const live = G && !G.over && !paused, fs = live ? G.w.reduce((a, w) => a + w.f, 0) : 0;
   if (AM.fire) AM.fire.set(Math.min(0.05, fs * 0.008), 0.4); if (AM.hose) AM.hose.set(live && G.on && G.tank > 0 ? 0.03 : 0, 0.08); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 58, key: 0, bpm: 115 });
+bandStyle('sport', { seed: 58, key: 0, bpm: 124, lead: { i: 'brass' }, comp: { i: 'saw' }, A: [0, 5, 0, 4], tune: ['4...0...4...7...', '5...2...5...7...', '4...1...4...6...'], sc: 'min' });

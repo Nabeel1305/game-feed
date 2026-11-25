@@ -19,4 +19,4 @@ const sfx = {
   lose() { tone(392, 0.4, 0.06, 'triangle', 0, 349); tone(330, 0.7, 0.06, 'triangle', 0.3, 294); },
 };
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 63, key: -3, bpm: 80 });
+bandStyle('calm', { seed: 63, key: -3, bpm: 76, lead: { i: 'marimba' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['2...0...2...4...', '5...3...5...7...', '6...4...6...8...'] });

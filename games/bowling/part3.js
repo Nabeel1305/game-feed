@@ -56,6 +56,8 @@ function buildWorld() {
     if (!mine) { const deco = []; for (const p of PINPOS) { const m = new T.Mesh(pinG, pinM); m.position.set(cx + p.x, 0, -p.z); S.add(m); deco.push(m); } V.lanesN.push(deco); }
   }
   for (const cx of [-2.4, -1.2, 0, 1.2, 2.4]) oneLane(cx, cx === 0);
+  // the rivals' lanes are the two beside yours (25 Nov 2026): a ball for each
+  V.rivalBalls = [-1.2, 1.2].map((cx, i) => { const m = new T.Mesh(new T.SphereGeometry(BR, 20, 14), new T.MeshStandardMaterial({ color: i ? 0xff8a2a : 0x7a3aff, roughness: 0.25, metalness: 0.1 })); m.position.set(cx, BR, 0); m.visible = false; S.add(m); return m; });
   // dividers between the lanes, with a neon edge
   for (const cx of [-1.8, -0.6, 0.6, 1.8]) { const dv = new T.Mesh(new T.BoxGeometry(0.1, 0.12, L + 1.4), darkM); dv.position.set(cx, 0.03, -(L + 1.4) / 2); S.add(dv); const n = new T.Mesh(new T.BoxGeometry(0.02, 0.02, L + 1.4), new T.MeshBasicMaterial({ color: 0x3ae0ff })); n.position.set(cx, 0.1, -(L + 1.4) / 2); S.add(n); V.neon.push(n.material); }
   // the room: floor, a long back wall with a glowing sign, a ceiling with lights
@@ -93,7 +95,7 @@ function onEvent(G, e) {
   const bp = ballPos(G), p = scr(bp.x, bp.y, bp.z), pins = scr(0, 0.3, -HEAD_Z - 0.3), cx = W / 2;
   switch (e.k) {
     case 'start': ui.pinDir = {}; ui.swept = {};
-      say(G.cfg.kind === 'spares' ? `MAKE ${G.cfg.target} SPARES` : G.cfg.kind === 'strikeout' ? `${G.cfg.target} STRIKE${G.cfg.target > 1 ? 'S' : ''} IN ${G.cfg.frames} BALLS` : `SCORE ${G.cfg.target}`, cx, H * 0.4, '#bff4ff', 26); sfx.go();
+      say(G.cfg.kind === 'spares' ? `MAKE ${G.cfg.target} SPARES` : G.cfg.kind === 'strikeout' ? `${G.cfg.target} STRIKE${G.cfg.target > 1 ? 'S' : ''} IN ${G.cfg.frames} BALLS` : G.rivals ? `BEAT ${G.rivals[0].name.toUpperCase()} AND ${G.rivals[1].name.toUpperCase()}` : `SCORE ${G.cfg.target}`, cx, H * 0.4, '#bff4ff', 24); sfx.go();
       if (G.N <= 2) tip('roll', 'Touch to line the ball up. Pull your thumb down toward you and let go to roll.', 3.4); if (G.cfg.kind === 'spares') tip('spares', 'Spare challenge: pins are already standing. Knock them all down with one ball.', 3.2); if (G.cfg.kind === 'strikeout') tip('so', 'Strike-out: every ball is a fresh rack. Only strikes count.', 3); break;
     case 'bowl': sfx.release(); break;
     case 'pin': ui.pinHits = (ui.pinHits || 0) + 1; sfx.pin(e.v, ui.pinHits); if (e.gold) { sfx.gold(); say('🪙 +5', pins.x, pins.y - 40 * k, '#ffd040', 22); } if (ui.pinHits === 4) { FX.shake = 4; } break;
@@ -114,14 +116,28 @@ function onEvent(G, e) {
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.44, '#9be3b5', 24); sfx.spare(e.n); break;
     case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('NOW THE REAL GAME!', cx, H * 0.36, '#ffe08a', 26); sfx.win(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
-    case 'won': sfx.win(); vibe(HAP.best); say(G.cfg.kind === 'game' ? 'TARGET BEATEN!' : 'CHALLENGE DONE!', cx, H * 0.3, '#ffd040', 32); break;
+    case 'won': sfx.win(); vibe(HAP.best); say(G.cfg.kind === 'game' ? 'YOU BEAT THEM BOTH!' : 'CHALLENGE DONE!', cx, H * 0.3, '#ffd040', 30); break;
     case 'lost': sfx.lose(); say('NOT THIS TIME', cx, H * 0.3, '#ffb4a8', 30); break;
   }
 }
+// ---------- the rivals bowl beside you ----------
+// Each frame of yours, each rival bowls theirs on the lane beside you: a ball down the lane, the pins of their first roll go over, then
+// (unless it was a strike) a second ball for the rest. What falls is what was dealt to them (G.rivals[i].frames), so the card is true.
+const RV = [{ f: -1 }, { f: -1 }];
+function rivalsAnim(V, g, dt) { if (!V.rivalBalls) return; const lanes = [V.lanesN[1], V.lanesN[2]], cxs = [-1.2, 1.2];
+  for (let i = 0; i < 2; i++) { const st = RV[i], ball = V.rivalBalls[i], pins = lanes[i], fr = g.rivals && !g.lesson && g.frame < g.cfg.frames ? g.rivals[i].frames[g.frame] : null;
+    if (!fr) { ball.visible = false; if (st.f !== -1) { st.f = -1; pins.forEach(m => { m.visible = true; m.rotation.set(0, 0, 0); }); } continue; }
+    if (st.f !== g.frame || st.game !== g.rivals) { st.f = g.frame; st.game = g.rivals; st.t = -(0.6 + Math.random() * 2.2) - i * 0.8; st.roll = 0; st.down = []; pins.forEach(m => { m.visible = true; m.rotation.set(0, 0, 0); m.userData.f = 0; }); }
+    st.t += dt; const marks = fr.marks, n1 = marks[0] === 'X' ? 10 : marks[0], n2 = marks[0] === 'X' ? 0 : marks[1] === '/' ? 10 - n1 : marks[1], T = 2.3;
+    const roll = k2 => { const t0 = k2 * 4.2, u = (st.t - t0) / T; if (u >= 0 && u < 1.08) { ball.visible = true; ball.position.set(cxs[i] + Math.sin(u * 2.4 + i) * 0.12, BR, -u * (LANE_L - 0.6)); ball.rotation.x -= dt * 22; }
+      if (st.roll === k2 && u >= 0.93) { st.roll = k2 + 1; const want = k2 === 0 ? n1 : n2, up = pins.map((m, j) => j).filter(j => !st.down.includes(j)); for (let q = 0; q < want && up.length; q++) { const j = k2 === 0 && q === 0 && want > 3 ? up.splice(0, 1)[0] : up.splice((Math.random() * up.length) | 0, 1)[0]; st.down.push(j); pins[j].userData.f = 0.001; pins[j].userData.d = Math.random() * 6.28; } } };
+    ball.visible = false; roll(0); if (n1 < 10) roll(1);
+    pins.forEach(m => { const f = m.userData.f; if (f > 0) { m.userData.f = Math.min(1, f + dt * 4); const a = m.userData.f * Math.PI / 2, d = m.userData.d; m.rotation.set(Math.cos(d) * a, 0, Math.sin(d) * a); if (m.userData.f >= 1 && st.t > 9.4) m.visible = false; } }); } }
 // ---------- every frame in 3D ----------
 const _ax = new (window.THREE ? THREE.Vector3 : Object)(), _q = new (window.THREE ? THREE.Quaternion : Object)();
 function animate(g, t, dt) {
   const V = V3;
+  rivalsAnim(V, g, dt);
   // pins: standing ones where the game has them; fallen ones tip over the way they were going and slide; swept ones vanish
   g.pins.forEach((p, i) => { const m = V.pins[i]; m.visible = !p.gone || (!p.up && !ui.swept[p.n] && g.phase !== 'aim'); if (!m.visible) return; m.material = p.gold ? V.goldM : V.pinM;
     if (p.up) { const w = Math.min(0.25, Math.hypot(p.vx, p.vz) * 0.4); m.position.set(p.x, 0, -p.z); m.rotation.set(-p.vz * 0.15 * (w > 0.01 ? 1 : 0), 0, -p.vx * 0.15 * (w > 0.01 ? 1 : 0)); return; }
@@ -171,8 +187,9 @@ function hud(G, t) {
   const c = G.cfg; ctx.textBaseline = 'middle';
   if (!G.lesson) {
     const x = 12, y = 48 * k, w = W - 24, h = 70 * k; panel(x, y, w, h);
-    ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; const reach = G.score >= c.target; ctx.fillStyle = reach ? '#7af0a0' : '#fff'; const sTxt = String(G.score); ctx.fillText(sTxt, x + 12, y + 20 * k);
-    const tw = ctx.measureText(sTxt).width; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText(c.kind === 'spares' ? `/ ${c.target} spares` : c.kind === 'strikeout' ? `/ ${c.target} strikes` : `/ ${c.target}`, x + 18 + tw, y + 22 * k);
+    ctx.textAlign = 'left'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; const rv = G.rivals && c.kind === 'game' ? [0, 1].map(i => ({ name: G.rivals[i].name, tot: rivalNow(G, i) })) : null, lead = rv ? Math.max(rv[0].tot, rv[1].tot) : c.target, reach = G.score >= lead; ctx.fillStyle = reach ? '#7af0a0' : '#fff'; const sTxt = String(G.score); ctx.fillText(sTxt, x + 12, y + 20 * k);
+    const tw = ctx.measureText(sTxt).width; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; if (rv) { let rx = x + 20 + tw; ctx.font = `800 ${Math.round(11.5 * k)}px ${BC}`; for (const r of rv) { const tx = `${r.name.toUpperCase()} ${r.tot}`; ctx.fillStyle = r.tot > G.score ? '#ff9a8a' : 'rgba(255,255,255,.8)'; ctx.fillText(tx, rx, y + 22 * k); rx += ctx.measureText(tx).width + 10 * k; } }
+    else ctx.fillText(c.kind === 'spares' ? `/ ${c.target} spares` : c.kind === 'strikeout' ? `/ ${c.target} strikes` : `/ ${c.target}`, x + 18 + tw, y + 22 * k);
     ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.font = `800 ${Math.round(13 * k)}px ${BC}`; ctx.fillText(c.kind === 'strikeout' ? `ball ${Math.min(c.frames, G.frame + 1)} of ${c.frames}` : `frame ${Math.min(c.frames, G.frame + 1)} of ${c.frames}`, x + w - 12, y + 14 * k);
     ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = G.run >= 2 ? '#ffd040' : 'rgba(255,255,255,.8)'; ctx.fillText((G.run >= 1 && c.kind === 'game' ? `run ×${Math.min(3, 1 + 0.5 * G.run)} next · ` : '') + `🪙 ${G.coins}`, x + w - 12, y + 29 * k);
     // the card: one box a frame, X for a strike, / for a spare
@@ -181,7 +198,7 @@ function hud(G, t) {
       ctx.fillStyle = i === G.frame && !G.over ? 'rgba(58,224,255,.25)' : 'rgba(255,255,255,.08)'; rrect(bx, by, bw, 18 * k, 4); ctx.fill();
       if (f && f.length) { ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(11 * k)}px ${BC}`; const s = f.map(v => v === 0 ? '–' : v).join(' '); ctx.fillStyle = f.includes('X') ? '#ffd040' : f.includes('/') ? '#8fe0ff' : '#fff'; ctx.fillText(s, bx + bw / 2, by + 9.5 * k); } }
     // how close the target is (the near goal, L4)
-    if (c.kind === 'game') { const fy = y + h - 4 * k; ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(x + 12, fy, w - 24, 2.5 * k); ctx.fillStyle = reach ? '#7af0a0' : '#3ae0ff'; ctx.fillRect(x + 12, fy, (w - 24) * clamp(G.score / c.target, 0, 1), 2.5 * k); }
+    if (c.kind === 'game') { const fy = y + h - 4 * k; ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.fillRect(x + 12, fy, w - 24, 2.5 * k); ctx.fillStyle = reach ? '#7af0a0' : '#3ae0ff'; ctx.fillRect(x + 12, fy, (w - 24) * clamp(rv ? (lead > 0 ? G.score / lead : 1) : G.score / c.target, 0, 1), 2.5 * k); }
   } else lessonPanel(G);
   pinMap(G);
   // aiming: the line your roll will take, and how hard you are pulling

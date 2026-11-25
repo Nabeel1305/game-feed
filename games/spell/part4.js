@@ -23,4 +23,4 @@ const sfx = {
   lose() { tone(294, 0.5, 0.08, 'triangle', 0, 262); tone(247, 0.8, 0.08, 'triangle', 0.3, 220); },
 };
 // the band (tools/juice-kit.js): this game's music
-bandStyle('waltz', { seed: 50, key: 2, bpm: 122 });
+bandStyle('waltz', { seed: 50, key: 2, bpm: 118, lead: { i: 'musicbox' }, comp: { i: 'harp', p: 'a.a.a.a.a.a.' }, A: [0, 1, 0, 4], tune: ['0...4...7...', '1...3...5...', '4...6...8...'], sc: 'lyd', rev: 0.65 });

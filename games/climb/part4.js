@@ -38,4 +38,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   mus.t += dt; const beat = 0.6; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % CHORDS.length], semi = q => 220 * Math.pow(2, q / 12);
   music(() => { if (i % 2 === 0) pluck(semi(ch[(i / 2) % 3 | 0] + 12), 1.6, 0.018); if (i % 8 === 0) tone(semi(ch[0] - 12), 3.5, 0.02, 'sine'); if (i % 16 === 11) pluck(semi(ch[2] + 19), 1.2, 0.012); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 99, key: 2, bpm: 72 });
+bandStyle('calm', { seed: 99, key: 2, bpm: 74, lead: { i: 'flute' }, comp: { i: 'guitar', p: 'a.a.a.a.a.a.a.a.' }, A: [0, 3, 0, 4], tune: ['0.......2...4...', '5.......3...0...', '4.......2...1...'], d: {} });

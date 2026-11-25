@@ -32,4 +32,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return;
   mus.t += dt; const beat = 0.22; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++;
   music(() => { pluck(note(392, TUNE[i % TUNE.length]), 0.35, 0.013); if (i % 2 === 0) pluck(note(98, [0, 0, 5, 7][(i >> 3) % 4]), 0.5, 0.022); if (i % 4 === 2) noise(0.05, 5000, 0.006, 'highpass', 1); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('island', { seed: 108, key: -2, bpm: 102 });
+bandStyle('island', { seed: 108, key: -2, bpm: 104, lead: { i: 'whistle' }, comp: { i: 'marimba' }, A: [0, 3, 0, 4], tune: ['0.2.4.2...0...4.', '3.5.7.5...3...7.', '4.6.8.6...4...1.'] });

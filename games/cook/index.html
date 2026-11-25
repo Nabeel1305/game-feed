@@ -4839,7 +4839,7 @@ const BSTY = {
   fest:    { bpm: 108, sw: 0.4, sc: 'maj', root: 60, A: [0, 3, 4, 0], B: [5, 3, 1, 4], d: { j: 'x.x.x.x.x.x.x.x.', k: 'x.......x.......', r: '....x.......x...' }, bass: '1.......5.......', comp: { i: 'keys', p: 'x...x...x...x...' }, lead: { i: 'bell', dens: 0.55, oct: 1 }, rev: 0.5 },
   waltz:   { bpm: 126, sw: 0, three: 1, sc: 'maj', root: 60, A: [0, 4, 5, 3], B: [1, 4, 0, 0], d: { k: 'x...........', r: '....x...x...' }, bass: '1...........', comp: { i: 'keys', p: '....x...x...' }, lead: { i: 'vibes', dens: 0.5, oct: 1 }, rev: 0.5 },
 };
-function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S = Object.assign({}, b, o); S.name = name; if (o.key) S.root = b.root + o.key; S.steps = S.three ? 12 : 16; BAND.S = S; BAND.seed = (o.seed || 1) * 7919 + name.length; BAND.A = null; BAND.n = 0; BAND.t0 = 0; }
+function bandStyle(name, o = {}) { const b = BSTY[name]; if (!b) return; const S = Object.assign({}, b, o); S.name = name; for (const k2 of ['lead', 'comp']) if (o[k2]) S[k2] = Object.assign({}, b[k2], o[k2]);      /* a game's own score changes part of the style: its lead, its chords, its drums, its tune */ if (o.key) S.root = b.root + o.key; S.steps = S.three ? 12 : 16; BAND.S = S; BAND.seed = (o.seed || 1) * 7919 + name.length; BAND.A = null; BAND.n = 0; BAND.t0 = 0; }
 function bandRnd() { let s = BAND.seed = (BAND.seed * 1664525 + 1013904223) | 0; return ((s >>> 8) & 0xffff) / 65536; }
 function bandSetup() { const B = BAND; if (B.ctx === actx) return true; if (!actx || !MUSB || (!B.force && (!(window.AudioContext || window.webkitAudioContext) || !(actx instanceof (window.AudioContext || window.webkitAudioContext))))) return false;      // (not while a test renders the sound effects offline)
   try { B.ctx = actx; B.out = actx.createGain(); B.out.gain.value = 0.075; B.out.connect(MUSB); B.ks.clear();
@@ -4884,11 +4884,47 @@ const BDR = {
   t(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(85, t + 0.2); g.gain.setValueAtTime(v * 1.2, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.32); o.connect(g); g.connect(BAND.out); const w = actx.createGain(); w.gain.value = 0.25; g.connect(w); w.connect(BAND.rev); o.start(t); o.stop(t + 0.35); },
   j(t, v) { [3900, 5100, 6300].forEach((f, i) => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f * (0.98 + Math.random() * 0.04); g.gain.setValueAtTime(0, t); g.gain.setValueAtTime(v * 0.1, t + i * 0.004); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.09); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.1); }); },
 };
+// more instruments and drums (25 Nov 2026), so that a game's music can be its own
+function bHold(g, t, v, att, d, rel) { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + att); g.gain.setValueAtTime(v, t + Math.max(att + 0.03, d * 0.9)); g.gain.linearRampToValueAtTime(0.0001, t + d + rel); }
+function bPluck(f, t, v, rv, dur, lpf, hpf, k2) { const s2 = actx.createBufferSource(); s2.buffer = bKS(f, dur); let n = s2; if (hpf) { const hp = actx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = hpf; n.connect(hp); n = hp; } const lp = bLP(lpf); n.connect(lp); const g = actx.createGain(); g.gain.value = v * k2; lp.connect(g); g.connect(BAND.out); if (rv > 0) { const w = actx.createGain(); w.gain.value = rv; g.connect(w); w.connect(BAND.rev); } s2.start(t); }
+Object.assign(BINS, {
+  piano(f, t, d, v, rv) { const end = t + d + 0.9, c = bOsc('triangle', f, t, end), h = bOsc('sine', f * 2, t, end, 3), h3 = bOsc('sine', f * 3, t, end), hg = actx.createGain(), h3g = actx.createGain(); hg.gain.setValueAtTime(0.35, t); hg.gain.exponentialRampToValueAtTime(0.04, t + 0.5); h3g.gain.setValueAtTime(0.16, t); h3g.gain.exponentialRampToValueAtTime(0.005, t + 0.25); h.connect(hg); h3.connect(h3g); const mix = actx.createGain(); c.connect(mix); hg.connect(mix); h3g.connect(mix); bEnv(mix, t, v * 0.9, 0.004, d + 0.25, 0.5, rv); },
+  musicbox(f, t, d, v, rv) { const end = t + 1.5, c = bOsc('sine', f * 2, t, end), h = bOsc('sine', f * 6.01, t, end), hg = actx.createGain(); hg.gain.setValueAtTime(0.3, t); hg.gain.exponentialRampToValueAtTime(0.001, t + 0.2); h.connect(hg); const mix = actx.createGain(); c.connect(mix); hg.connect(mix); bEnv(mix, t, v * 0.7, 0.002, 0.45, 0.8, rv); },
+  xylo(f, t, d, v, rv) { BINS.marimba(f * 2, t, d, v * 0.85, rv); },
+  steel(f, t, d, v, rv) { const end = t + 1.0, c = bOsc('sine', f, t, end), h = bOsc('sine', f * 2, t, end, 6), h2 = bOsc('sine', f * 3.01, t, end), hg = actx.createGain(), h2g = actx.createGain(); hg.gain.value = 0.45; h2g.gain.setValueAtTime(0.3, t); h2g.gain.exponentialRampToValueAtTime(0.01, t + 0.3); c.frequency.setValueAtTime(f * 1.012, t); c.frequency.exponentialRampToValueAtTime(f, t + 0.08); h.connect(hg); h2.connect(h2g); const mix = actx.createGain(); c.connect(mix); hg.connect(mix); h2g.connect(mix); bEnv(mix, t, v * 0.8, 0.004, 0.45, 0.4, rv); },
+  horn(f, t, d, v, rv) { const end = t + d + 0.4, a = bOsc('sawtooth', f, t, end, -4), b = bOsc('sawtooth', f, t, end, 5), c = bOsc('sine', f, t, end), lp = bLP(350, 0.7); lp.frequency.setValueAtTime(350, t); lp.frequency.linearRampToValueAtTime(1250, t + 0.12); lp.frequency.exponentialRampToValueAtTime(800, t + 0.5); a.connect(lp); b.connect(lp); c.connect(lp); bHold(bEnv(lp, t, v * 0.5, 0.07, d, 0.25, rv), t, v * 0.5, 0.07, d, 0.3); },
+  choir(f, t, d, v, rv) { const end = t + d + 0.9, a = bOsc('sawtooth', f, t, end, -9), b = bOsc('sawtooth', f, t, end, 9), f1 = actx.createBiquadFilter(), f2 = actx.createBiquadFilter(); f1.type = f2.type = 'bandpass'; f1.frequency.value = 650; f1.Q.value = 2.2; f2.frequency.value = 1150; f2.Q.value = 2.5; a.connect(f1); b.connect(f1); a.connect(f2); b.connect(f2); const mix = actx.createGain(); f1.connect(mix); f2.connect(mix); bHold(bEnv(mix, t, v * 0.6, 0.22, d, 0.6, rv), t, v * 0.6, 0.22, Math.max(0.3, d), 0.7); },
+  harp(f, t, d, v, rv) { bPluck(f, t, v, rv * 1.3, 1.8, 5200, 0, 1.4); },
+  banjo(f, t, d, v, rv) { bPluck(f, t, v, rv, 0.5, 7000, 500, 1.9); },
+  pizz(f, t, d, v, rv) { const end = t + 0.4, a = bOsc('sawtooth', f, t, end), b = bOsc('triangle', f, t, end), lp = bLP(600, 1); lp.frequency.setValueAtTime(2200, t); lp.frequency.exponentialRampToValueAtTime(450, t + 0.14); a.connect(lp); b.connect(lp); bEnv(lp, t, v * 0.55, 0.004, 0.14, 0.12, rv); },
+  accordion(f, t, d, v, rv) { const end = t + d + 0.3, a = bOsc('square', f, t, end, -7), b = bOsc('square', f, t, end, 8), c = bOsc('sawtooth', f * 2, t, end), cg = actx.createGain(); cg.gain.value = 0.25; c.connect(cg); const lp = bLP(2400); a.connect(lp); b.connect(lp); cg.connect(lp); bHold(bEnv(lp, t, v * 0.2, 0.04, d, 0.1, rv), t, v * 0.2, 0.04, d, 0.1); },
+  harmonica(f, t, d, v, rv) { const end = t + d + 0.3, a = bOsc('square', f, t, end), b = bOsc('sawtooth', f, t, end, 10), bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(3000, f * 3); bp.Q.value = 0.9; const vb = bOsc('sine', 5.6, t, end), vg = actx.createGain(); vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.012, t + 0.2); vb.connect(vg); vg.connect(a.frequency); vg.connect(b.frequency); a.connect(bp); b.connect(bp); bHold(bEnv(bp, t, v * 0.5, 0.03, d, 0.1, rv), t, v * 0.5, 0.03, d, 0.12); },
+  panflute(f, t, d, v, rv) { BINS.flute(f, t, d, v, rv); bNoise(t, 0.09, 'bandpass', Math.min(6000, f * 3), 1.5, v * 0.25, rv); },
+});
+Object.assign(BDR, {
+  u(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(96, t); o.frequency.exponentialRampToValueAtTime(68, t + 0.4); g.gain.setValueAtTime(v * 1.5, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.95); o.connect(g); g.connect(BAND.out); const w = actx.createGain(); w.gain.value = 0.35; g.connect(w); w.connect(BAND.rev); o.start(t); o.stop(t + 1); bNoise(t, 0.05, 'lowpass', 700, 0.7, v * 0.5); },      // timpani
+  d(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(52, t + 0.22); g.gain.setValueAtTime(v * 1.6, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.5); o.connect(g); g.connect(BAND.out); const w = actx.createGain(); w.gain.value = 0.25; g.connect(w); w.connect(BAND.rev); o.start(t); o.stop(t + 0.55); bNoise(t, 0.07, 'lowpass', 1000, 0.7, v * 0.8, 0.2); },      // taiko
+  w(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(1150, t); o.frequency.exponentialRampToValueAtTime(900, t + 0.04); g.gain.setValueAtTime(v * 0.9, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.07); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.09); },      // woodblock
+  b(t, v) { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.setValueAtTime(360, t); o.frequency.exponentialRampToValueAtTime(250, t + 0.08); g.gain.setValueAtTime(v * 1.1, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.16); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.18); },      // bongo
+  m(t, v) { [562, 845].forEach(f => { const o = actx.createOscillator(), g = actx.createGain(), bp = actx.createBiquadFilter(); o.type = 'square'; o.frequency.value = f; bp.type = 'bandpass'; bp.frequency.value = 800; bp.Q.value = 1.2; g.gain.setValueAtTime(v * 0.35, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.14); o.connect(bp); bp.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.16); }); },      // cowbell
+  i(t, v) { [4200, 6130].forEach(f => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = f; g.gain.setValueAtTime(v * 0.22, t); g.gain.exponentialRampToValueAtTime(0.0003, t + 0.6); o.connect(g); g.connect(BAND.out); o.start(t); o.stop(t + 0.62); }); },      // triangle
+  a(t, v) { bNoise(t, 0.1, 'highpass', 6200, 0.8, v * 0.42); bNoise(t + 0.03, 0.08, 'bandpass', 9000, 2, v * 0.25); },      // tambourine
+});
 // scale step -> MIDI note (step may be below 0 or above the octave)
 function bDeg(S, i, pen) { const sc = pen ? (BSC[S.sc][2] === 3 ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9]) : BSC[S.sc], n = sc.length, k = ((i % n) + n) % n; return S.root + sc[k] + 12 * Math.floor(i / n); }
 // the tune: two-bar ideas made of small steps; A comes back so it can be remembered, B is made new each time round
 function bIdea(S) { const L = S.lead, T = BRH, bars = []; let p = [0, 2, 4][(bandRnd() * 3) | 0]; for (let b = 0; b < 2; b++) { const rh = T[(bandRnd() * T.length) | 0], ev = []; for (let s = 0; s < S.steps; s++) if (rh[s] === 'x' && bandRnd() < L.dens + (s % 8 === 0 ? 0.35 : 0)) { p += [-1, 1, -1, 1, -2, 2, 0, 1, -1][(bandRnd() * 9) | 0]; p = Math.max(-2, Math.min(8, p)); ev.push({ s, p }); } if (!ev.length) ev.push({ s: 0, p }); bars.push(ev); } return bars; }
-function bandForm() { const B = BAND, S = B.S; if (!B.A) B.A = bIdea(S); const A = B.A, Bp = bIdea(S), end = a => { const e = a.map(q => Object.assign({}, q)); const l = e[e.length - 1]; l.p = [0, 2, 4, 7][(bandRnd() * 4) | 0]; l.home = true; return e.filter(q => q.s <= 10 || q === l); };
+// 25 Nov 2026 (his review: "can each game have its own music instaed of reusing the same old music tailor each song to the game").
+// Sixteen styles shared by a hundred games sounded like the same few songs. Each game now brings its own SCORE (tools/scores.py writes
+// it into the game's bandStyle call): its own tune, written out (S.tune: bars of sixteenths, a digit = a step of the scale above the
+// tonic, w x y z = four to one steps below it, a b c = steps 10 11 12, a dot = nothing), its own lead and chord instruments, speed,
+// key, chords and drums. Three bars a, b, c are played a b a c. The middle part is still made new each time round.
+function bTune(S, bars) { const N = S.steps, val = c => c >= '0' && c <= '9' ? +c : 'wxyz'.indexOf(c) >= 0 ? 'wxyz'.indexOf(c) - 4 : c >= 'a' && c <= 'f' ? 10 + c.charCodeAt(0) - 97 : null;
+  const one = b => { const ev = []; for (let s2 = 0; s2 < N && s2 < b.length; s2++) { const p = val(b[s2]); if (p != null) ev.push({ s: s2, p, own: true }); } if (!ev.length) ev.push({ s: 0, p: 0, own: true }); return ev; }, T = bars.map(one);
+  return T.length >= 4 ? T.slice(0, 4) : T.length === 3 ? [T[0], T[1], T[0], T[2]] : [T[0], T[1] || T[0], T[0], T[1] || T[0]]; }
+function bandForm() { const B = BAND, S = B.S; if (S.tune) { if (!B.A) B.A = bTune(S, S.tune); const T = B.A, Bq = bIdea(S), endq = a => { const e = a.map(q => Object.assign({}, q)); const l = e[e.length - 1]; l.p = [0, 2, 4, 7][(bandRnd() * 4) | 0]; l.home = true; return e.filter(q => q.s <= 10 || q === l); };
+    B.mel = [T[0], T[1], T[2], T[3], T[0], T[1], T[2], T[3], Bq[0], Bq[1], Bq[0], endq(Bq[1]), T[0], T[1], T[2], T[3]]; B.cyc = (B.cyc || 0) + 1; return; }
+  if (!B.A) B.A = bIdea(S); const A = B.A, Bp = bIdea(S), end = a => { const e = a.map(q => Object.assign({}, q)); const l = e[e.length - 1]; l.p = [0, 2, 4, 7][(bandRnd() * 4) | 0]; l.home = true; return e.filter(q => q.s <= 10 || q === l); };
   B.mel = [A[0], A[1], A[0], end(A[1]), A[0], A[1], A[0], end(A[1]), Bp[0], Bp[1], Bp[0], end(Bp[1]), A[0], A[1], A[0], end(A[1])]; B.cyc = (B.cyc || 0) + 1; }
 function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar = Math.floor(n / N), b16 = bar % 16; if (s === 0 && b16 === 0) bandForm(); if (!B.mel) bandForm();
   const prog = b16 >= 8 && b16 < 12 ? S.B : S.A, ch = prog[b16 % 4], nx = (b16 % 4 === 3 ? (b16 === 7 ? S.B : S.A)[0] : prog[b16 % 4 + 1]), first = B.cyc === 1, hum = () => 0.82 + Math.random() * 0.3, late = () => (Math.random() - 0.5) * 0.012, spb = 60 / S.bpm / 4, rv = S.rev || 0.3;
@@ -4904,8 +4940,8 @@ function bandStepAt(n, t) { const B = BAND, S = B.S, N = S.steps, s = n % N, bar
     else { const c = C.p[s]; if (c === 'x') tones.forEach((m, i) => BINS[C.i](bfr(m), t + late() + i * 0.008, spb * 2.2, 0.075 * hum(), rv)); else if (c === 'a') { const k2 = [0, 1, 2, 1, 0, 2, 1, 2][(s / 2 | 0) % 8] % tones.length; BINS[C.i](bfr(tones.slice().sort((a, b) => a - b)[k2] + (k2 === 2 && (s / 2 | 0) % 4 === 3 ? 12 : 0)), t + late(), spb * 2, 0.085 * hum(), rv); } } }
   // the lead: rests for the first four bars, snaps to the chord on strong beats, breathes at the end of each phrase
   if (!(first && b16 < 4)) { const ev = B.mel[b16], L = S.lead; for (let i = 0; i < ev.length; i++) if (ev[i].s === s) { const e = ev[i], nxt = ev[i + 1]; let p = e.p; const tn = [ch, ch + 2, ch + 4];
-      if (!S.pen && (s % 8 === 0 || e.home)) { let best = p, bd = 99; for (const c of tn) for (const o of [-7, 0, 7]) { const d = Math.abs(c + o - p); if (d < bd) { bd = d; best = c + o; } } p = best; }
-      const m = (S.pen ? bDeg(S, p, true) : bDeg(S, p)) + 12 * (L.oct || 0), len = e.home ? 6 : Math.min(6, (nxt ? nxt.s : N) - s); BINS[L.i](bfr(m), t + late(), spb * len * 0.92, 0.12 * hum() * lvl, rv); } } }
+      if (!S.pen && !e.own && (s % 8 === 0 || e.home)) { let best = p, bd = 99; for (const c of tn) for (const o of [-7, 0, 7]) { const d = Math.abs(c + o - p); if (d < bd) { bd = d; best = c + o; } } p = best; }
+      const m = (S.pen ? bDeg(S, p, true) : bDeg(S, p)) + 12 * (L.oct || 0), len = e.home ? 6 : Math.min(e.own ? 12 : 6, (nxt ? nxt.s : N) - s); BINS[L.i](bfr(m), t + late(), spb * len * 0.92, 0.12 * hum() * lvl, rv); } } }
 function bandTick() { const B = BAND, S = B.S; if (!S || !actx || MUTE || !SET.mus || document.hidden || (typeof paused !== 'undefined' && paused) || !bandSetup()) { B.t0 = 0; return; }
   const ct = actx.currentTime, spb = 60 / S.bpm / 4; if (!B.t0 || B.next < ct - 0.4) { B.t0 = ct + 0.1 - B.n * spb; }
   for (let i = 0; i < 12; i++) { const n = B.n, s = n % S.steps, sw = S.sw16 ? (s % 2 === 1 ? S.sw * spb : 0) : (s % 4 === 2 ? S.sw * spb : 0), t = B.t0 + n * spb + sw; B.next = t; if (t > ct + 0.24) break; try { bandStepAt(n, Math.max(t, ct + 0.005)); } catch (e) {} B.n++; } }
@@ -5207,7 +5243,8 @@ const W3 = (() => {
 const RULES = [
   '<b>Drag food from the trays:</b> meat, fish, eggs and batter into a pan; vegetables onto the board; bread and buns onto the plate.',
   '<b>In the pan, the side underneath browns.</b> Tap the pan to flip it when it is golden. Pale is raw; black is burnt.',
-  '<b>Swipe across the board</b> to chop what is on it.',
+  '<b>Tap the board</b> (or swipe on it) to chop what is on it.',
+  'A dish is <b>built from the bottom up</b>, in the order on its ticket (1, 2, 3...). Built in that order: an extra tip. <b>Tap the plate</b> to take the top thing off.',
   '<b>Golden both sides</b> (an egg: just its underside)? Drag it to the plate. Chopped? Drag it to the plate.',
   '<b>Drag the plate to the pass</b> to serve the oldest ticket: everything on it, nothing else.',
   'Burnt or wrong food: drag it to the bin. Three customers walk out and the shift is over.',
@@ -5218,7 +5255,7 @@ function weatherOf(N) { if (N <= 2) return ['morning', 'golden'][N - 1]; const R
 const FOOD = {
   patty: { name: 'Patty', to: 'pan', cook: 6, sides: 2 }, steak: { name: 'Steak', to: 'pan', cook: 7, sides: 2 }, salmon: { name: 'Salmon', to: 'pan', cook: 6.5, sides: 2 },
   egg: { name: 'Egg', to: 'pan', cook: 5, sides: 1 }, pancake: { name: 'Pancake', to: 'pan', cook: 4.5, sides: 2 },
-  lettuce: { name: 'Lettuce', to: 'board', chops: 4 }, tomato: { name: 'Tomato', to: 'board', chops: 4 }, onion: { name: 'Onion', to: 'board', chops: 5 },
+  lettuce: { name: 'Lettuce', to: 'board', chops: 3 }, tomato: { name: 'Tomato', to: 'board', chops: 3 }, onion: { name: 'Onion', to: 'board', chops: 4 },      // (25 Nov 2026: one chop fewer each; a tap chops)
   bun: { name: 'Bun', to: 'plate' }, toast: { name: 'Toast', to: 'plate' },
 };
 const DISHES = [
@@ -5278,6 +5315,10 @@ function panToPlate(G, i) { const p = G.pans[i]; if (G.over || !p) return false;
   const q = burnt ? 'burnt' : raw ? 'raw' : cookedOk(G, p) ? (p.sides.every((s, j) => F.sides === 1 && j === 1 || (s >= 0.85 && s <= 1.02)) ? 'perfect' : 'good') : 'over';
   G.plate.push({ food: p.food, q }); G.pans[i] = null; G.ev.push({ k: 'plated', food: p.food, q }); return true; }
 function boardToPlate(G) { const b = G.board; if (G.over || !b) return false; if (b.chops < FOOD[b.food].chops) return refuse(G, 'notchopped'); G.plate.push({ food: b.food, q: 'good' }); G.board = null; G.ev.push({ k: 'plated', food: b.food, q: 'good' }); return true; }
+// 25 Nov 2026 (his review: "with complex things that require multiple ingredients, you need to make a way that i can structure it, like what
+// comes first the bun or the patty"): the ticket numbers the layers from the bottom up, the plate stacks them in the order you put them
+// on, a dish built in the ticket's order earns one tip more (out of order is still served), and a tap on the plate takes the top one off.
+function unplate(G) { if (G.over || !G.plate.length) return false; const p = G.plate.pop(); G.ev.push({ k: 'unplate', food: p.food }); return true; }
 function trash(G, what, i) { if (G.over) return; if (what === 'pan' && G.pans[i]) { G.pans[i] = null; G.wasted++; } else if (what === 'board' && G.board) { G.board = null; G.wasted++; } else if (what === 'plate' && G.plate.length) { G.plate = []; G.wasted++; } else return; G.ev.push({ k: 'bin' }); }
 // serve: the plate must be exactly the oldest ticket's dish, cooked right
 function serve(G) {
@@ -5286,8 +5327,9 @@ function serve(G) {
   // a plate sent back is a mark against you, like a walkout
   if (want !== have || bad) { G.ev.push({ k: 'sendback', why: want !== have ? 'wrong' : bad.q }); G.plate = []; tk.wait += 10; G.streak = 0; if (G.lesson) { lessonMiss(G, want !== have ? 'wrong' : bad.q); return; } G.lives--; if (G.lives <= 0) finish(G, false, 'sentback'); return; }
   const perfect = G.plate.every(p => p.q !== 'over') && G.plate.filter(p => FOOD[p.food].to === 'pan').every(p => p.q === 'perfect'), fast = tk.wait < tk.max * 0.5;
-  G.tickets.shift(); G.plate = []; G.served++; if (perfect) G.perfect++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); G.tips += (perfect ? 3 : 1) + (fast ? 2 : 0);
-  G.ev.push({ k: 'served', name: tk.dish.name, perfect, fast, n: G.served }); lessonSee(G, 'served');
+  const neat = new Set(tk.dish.items).size > 1 && G.plate.map(p => p.food).join() === tk.dish.items.join();
+  G.tickets.shift(); G.plate = []; G.served++; if (perfect) G.perfect++; G.streak++; G.bestStreak = Math.max(G.bestStreak, G.streak); G.tips += (perfect ? 3 : 1) + (fast ? 2 : 0) + (neat ? 1 : 0);
+  G.ev.push({ k: 'served', name: tk.dish.name, perfect, fast, neat, n: G.served }); lessonSee(G, 'served');
   if (!G.lesson && G.served + G.lost >= G.cfg.orders) finish(G, true);
 }
 // ---------- every frame ----------
@@ -5312,7 +5354,7 @@ function finish(G, win, why) {
 const LESSONS = {
   1: [{ id: 'flip', title: 'GOLDEN, THEN FLIP', say: 'DRAG IT TO A PAN, TAP TO FLIP', do: 'drag', dir: 'up', how: 'Drag a pancake into a pan. When the underside turns golden, tap the pan to flip it. Do it twice.', need: 2, ok: (w, s) => w === 'flip' && s >= GOLD[0] - 0.06 && s <= GOLD[1] + 0.06 },
       { id: 'serve', title: 'PLATE IT AND SERVE', say: 'DRAG TO THE PLATE, THEN UP', do: 'drag', dir: 'up', how: 'Golden both sides? Drag it to the plate, then drag the plate up to the pass.', need: 1, ok: w => w === 'served', dish: 'pancakes' }],
-  2: [{ id: 'chop', title: 'CHOP', say: 'SWIPE TO CHOP', do: 'swipe', dir: 'lr', how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
+  2: [{ id: 'chop', title: 'CHOP', say: 'TAP TO CHOP', do: 'tap', how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
       { id: 'burger', title: 'A WHOLE BURGER', say: 'MAKE THE BURGER', do: 'none', how: 'Patty in the pan (flip when golden), chop lettuce and tomato, a bun on the plate, everything on, then serve.', need: 1, ok: w => w === 'served', dish: 'burger' }],
   3: [{ id: 'two', title: 'TWO AT ONCE', say: 'TWO AT ONCE', do: 'none', how: 'While one thing cooks, chop or start the next. Serve two orders.', need: 2, ok: w => w === 'served', dish: null, two: true }],
 };
@@ -5464,6 +5506,7 @@ function onEvent(G, e) {
     case 'ticket': sfx.ticket(); break;
     case 'sizzle': sfx.drop(); break;
     case 'onboard': sfx.thunk(); break;
+    case 'unplate': sfx.thunk(); say(`${FOOD[e.food].name.toUpperCase()} OFF`, cx, cy, '#ffd0c4', 16); break;
     case 'plated': sfx.plate(); if (e.q === 'perfect') say('PERFECT!', cx, cy, '#ffe08a', 22); else if (e.q === 'raw') say('STILL RAW!', cx, cy, '#ffb4a8', 22); else if (e.q === 'burnt') say('BURNT!', cx, cy, '#ffb4a8', 22); break;
     case 'flip': sfx.flip(); vibe(HAP.tick); if (e.side < G.cfg.gold[0]) say('FLIPPED TOO SOON', cx, cy, '#ffd0c4', 18); break;
     case 'noflip': say('EGGS STAY SUNNY SIDE UP', cx, cy, '#ffd0c4', 18); break;
@@ -5472,7 +5515,7 @@ function onEvent(G, e) {
     case 'burnt': sfx.burn(); FX.red = 0.3; tip('burnt', 'Flip when it turns golden, before it goes black', 2.6); break;
     case 'refuse': sfx.no(); say({ notpan: 'THAT DOES NOT GO IN A PAN', panfull: 'THAT PAN IS BUSY', notboard: 'NOTHING TO CHOP THERE', boardfull: 'CLEAR THE BOARD FIRST', notplate: 'COOK OR CHOP IT FIRST', notchopped: 'CHOP IT FIRST', noorder: 'NO ORDER YET' }[e.why] || 'NO', cx, cy, '#ffd0c4', 18); break;
     case 'bin': sfx.bin(); break;
-    case 'served': sfx.bell(); FX.flash = 0.4; vibe(HAP.best); say(e.perfect ? `${e.name.toUpperCase()}: PERFECT!` : `${e.name.toUpperCase()} SERVED`, cx, H * 0.3, e.perfect ? '#ffe08a' : '#9be3b5', 24); if (e.fast) say('+ QUICK TIP', cx, H * 0.3 + 30 * k, '#9be3b5', 18); break;
+    case 'served': sfx.bell(); FX.flash = 0.4; vibe(HAP.best); say(e.perfect ? `${e.name.toUpperCase()}: PERFECT!` : `${e.name.toUpperCase()} SERVED`, cx, H * 0.3, e.perfect ? '#ffe08a' : '#9be3b5', 24); if (e.fast) say('+ QUICK TIP', cx, H * 0.3 + 30 * k, '#9be3b5', 18); if (e.neat) say('+ BUILT IN ORDER', cx, H * 0.3 + (e.fast ? 54 : 30) * k, '#ffe08a', 18); break;
     case 'sendback': sfx.no(); FX.red = 0.4; say(e.why === 'wrong' ? 'WRONG ORDER: SENT BACK' : e.why === 'raw' ? 'RAW: SENT BACK' : 'BURNT: SENT BACK', cx, H * 0.3, '#ffb4a8', 22); tip('send_' + e.why, e.why === 'wrong' ? 'Serve the OLDEST ticket (on the left): everything on it, nothing else' : 'Golden both sides before it goes on the plate', 3); break;
     case 'walkout': sfx.walk(); FX.red = 0.5; say('A CUSTOMER WALKED OUT', cx, H * 0.3, '#ffb4a8', 22); break;
     case 'lessonnext': if (e.first) hint = null; say(e.first ? 'FIRST, A LESSON' : 'NEXT LESSON', cx, H * 0.5, '#ffd36a', 26); sfx.ding(); break;
@@ -5524,10 +5567,11 @@ function hud(G, sp) {
   if (G.lesson) lessonPanel(G);
   // tickets: paper slips along the top, oldest first, each with what goes on it and how long they have waited
   const ty = G.lesson ? H * 0.235 : 42 * k, tw = Math.min(124 * k, (W - 28) / Math.max(3, G.tickets.length) - 6);
-  G.tickets.forEach((tk, i) => { const x = 14 + i * (tw + 8), h = (36 + 11 * new Set(tk.dish.items).size) * k; ctx.save(); ctx.translate(x, ty); ctx.rotate((i % 2 ? 1 : -1) * 0.015);
+  G.tickets.forEach((tk, i) => { const x = 14 + i * (tw + 8), h = (36 + 11 * tk.dish.items.length) * k; ctx.save(); ctx.translate(x, ty); ctx.rotate((i % 2 ? 1 : -1) * 0.015);
     ctx.fillStyle = '#fbf6e8'; ctx.fillRect(0, 0, tw, h); ctx.fillStyle = i === 0 ? '#e0533a' : '#b9b3a2'; ctx.fillRect(0, 0, tw, 5 * k);
     ctx.fillStyle = '#2b2b2b'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(tk.dish.name, 6, 9 * k);
-    ctx.font = `600 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = '#555'; const items = {}; tk.dish.items.forEach(f => items[f] = (items[f] || 0) + 1); Object.entries(items).forEach(([f, n], j) => ctx.fillText(`${n > 1 ? n + '× ' : ''}${FOOD[f].name}`, 6, 25 * k + j * 11 * k));
+    // the layers, numbered from the bottom of the dish up; on the ticket you are cooking, the ones already on the plate are ticked
+    ctx.font = `600 ${Math.round(10 * k)}px ${BC}`; { const on = i === 0 ? G.plate.map(p => p.food) : [], left = on.slice(); tk.dish.items.forEach((f, j) => { const q = left.indexOf(f), have = q >= 0; if (have) left.splice(q, 1); ctx.fillStyle = have ? '#2e8b57' : '#555'; ctx.fillText(`${j + 1}  ${FOOD[f].name}${have ? '  ✓' : ''}`, 6, 25 * k + j * 11 * k); }); }
     const u = 1 - tk.wait / tk.max; ctx.fillStyle = '#ddd5c2'; ctx.fillRect(0, h - 5 * k, tw, 5 * k); ctx.fillStyle = u > 0.5 ? '#5cb85c' : u > 0.25 ? '#f0ad4e' : '#d9534f'; ctx.fillRect(0, h - 5 * k, tw * u, 5 * k); ctx.restore(); });
   if (!G.lesson) { ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s = `${G.served} / ${c.orders} served`; ctx.strokeText(s, W - 14, ty + 88 * k); ctx.fillText(s, W - 14, ty + 88 * k);
     for (let i = 0; i < c.lives; i++) { ctx.beginPath(); ctx.arc(W - 20 - i * 16 * k, ty + 110 * k, 5 * k, 0, TAU); ctx.fillStyle = i < G.lives ? '#ffd36a' : 'rgba(255,255,255,.25)'; ctx.fill(); } }
@@ -5537,7 +5581,7 @@ function hud(G, sp) {
     ctx.strokeStyle = 'rgba(255,200,80,.55)'; ctx.beginPath(); ctx.arc(s.x, s.y - 40 * k, r, A(gold[0]), A(gold[1])); ctx.stroke();
     ctx.strokeStyle = v > BURNT ? '#222' : v >= gold[0] && v <= gold[1] ? '#ffcf4a' : v > gold[1] ? '#a0522d' : '#f2e6c8'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.arc(s.x, s.y - 40 * k, r, a0, A(v)); ctx.stroke();
     const done = FOOD[p.food].sides === 1 ? 1 : p.sides[1 - p.down] >= gold[0] ? 2 : 1; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(FOOD[p.food].sides === 1 ? 'NO FLIP' : `SIDE ${p.down === 0 && p.sides[1] === 0 ? 1 : done}`, s.x, s.y - 40 * k); });
-  if (G.board) { const s = scr(sp.board.x, sp.board.z), F = FOOD[G.board.food]; if (G.board.chops < F.chops) { ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s2 = `SWIPE TO CHOP ${G.board.chops}/${F.chops}`; ctx.strokeText(s2, s.x, s.y - 34 * k); ctx.fillText(s2, s.x, s.y - 34 * k); } }
+  if (G.board) { const s = scr(sp.board.x, sp.board.z), F = FOOD[G.board.food]; if (G.board.chops < F.chops) { ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s2 = G.lesson ? `TAP TO CHOP ${G.board.chops}/${F.chops}` : '●'.repeat(G.board.chops) + '○'.repeat(F.chops - G.board.chops); ctx.strokeText(s2, s.x, s.y - 34 * k); ctx.fillText(s2, s.x, s.y - 34 * k); } }
   // what is being dragged
   if (ui.drag && ui.drag.moved && ui.drag.label) { const d = ui.drag; ctx.globalAlpha = 0.9; ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; const w = ctx.measureText(d.label).width + 18; rrect(d.x - w / 2, d.y - 44 * k, w, 24 * k, 10); ctx.fill(); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(d.label, d.x, d.y - 32 * k); ctx.globalAlpha = 1; }
   if ((G && G.lesson) && G.N <= 2 && !G.lesson && G.t < 8) { ctx.globalAlpha = 0.8; ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; const p = scr(0, -0.72, TOP + 0.24); ctx.fillText('THE PASS: DRAG THE PLATE HERE', p.x, p.y); ctx.globalAlpha = 1; }
@@ -5578,7 +5622,7 @@ function soundStep(G, dt) {
   AM.fry && AM.fry.set(fry, 0.2); AM.burn && AM.burn.set(burn, 0.2); AM.rain && AM.rain.set((W3 && W3.S ? W3.S.rain : 0) * 0.025, 1);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('funk', { seed: 16, key: 0, bpm: 108 });
+bandStyle('funk', { seed: 16, key: 0, bpm: 108, lead: { i: 'pizz' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0..2.0..4..2.0..', '3..5.3..0..5.3..', '4..6.4..1..6.4..'], d: { k: 'x..x......x..x..', s: '....x.......x...', m: 'x...x...x...x...', h: 'x.x.x.x.x.x.x.x.' } });
 
 // ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
 // What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
@@ -5663,20 +5707,22 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (made for cooking): drag things where they go; tap a pan to flip; swipe across the board to chop.
+// input (made for cooking): drag things where they go; tap a pan to flip; tap the board (or rub it) to chop; tap the plate to take the top thing off.
 function hitAt(x, y) { const sp = spots(G), d = (s, r) => { const p = scr(s.x, s.z, s.y); return Math.hypot(p.x - x, p.y - y) < r * k; };
   for (let i = 0; i < sp.tray.length; i++) if (d(sp.tray[i], 34)) return { kind: 'tray', i, food: sp.tray[i].food };
   for (let i = 0; i < G.pans.length; i++) if (d(sp.pans[i], 46)) return { kind: 'pan', i };
-  if (d(sp.board, 50)) return { kind: 'board' }; if (d(sp.plate, 50)) return { kind: 'plate' }; if (d(sp.bin, 40)) return { kind: 'bin' };
+  if (d(sp.board, 62)) return { kind: 'board' }; if (d(sp.plate, 50)) return { kind: 'plate' }; if (d(sp.bin, 40)) return { kind: 'bin' };
   const pass = scr(0, -0.72, TOP + 0.22); if (y < pass.y + 30 * k && Math.abs(x - pass.x) < W * 0.45) return { kind: 'pass' }; return null; }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; const h = hitAt(LAND.x(e), LAND.y(e)); if (!h) return;
   ui.drag = { id: e.pointerId, from: h, x0: LAND.x(e), y0: LAND.y(e), x: LAND.x(e), y: LAND.y(e), moved: false, t0: performance.now(), lastDir: 0, label: h.kind === 'tray' ? FOOD[h.food].name : h.kind === 'pan' && G.pans[h.i] ? FOOD[G.pans[h.i].food].name : h.kind === 'board' && G.board ? FOOD[G.board.food].name : h.kind === 'plate' && G.plate.length ? 'Plate' : null };
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = LAND.x(e); d.y = LAND.y(e); if (Math.hypot(d.x - d.x0, d.y - d.y0) > 12 * k) d.moved = true;
-  // chopping: each sweep across the board, back or forth, is one chop
-  if (d.from.kind === 'board' && G.board && G.board.chops < FOOD[G.board.food].chops) { const dx = LAND.x(e) - (d.lx == null ? d.x0 : d.lx); if (Math.abs(dx) > 26 * k) { const dir = Math.sign(dx); if (dir !== d.lastDir) { chop(G); d.lastDir = dir; d.chopped = true; } d.lx = LAND.x(e); } } });
+  // chopping (25 Nov 2026, his review: "Whenever I try to chop the vegetables, it doesn't work. Make chopping vegetables work all the time;
+  // make it simple"). It took a sideways sweep that started on the board and turned round between chops; a tap, an up-and-down stroke
+  // or two strokes the same way did nothing. Now a TAP on the board is a chop, and so is every thumb's width of movement on it, any way.
+  if (d.from.kind === 'board' && G.board && G.board.chops < FOOD[G.board.food].chops) { const lx = d.lx == null ? d.x0 : d.lx, ly = d.ly == null ? d.y0 : d.ly; if (Math.hypot(d.x - lx, d.y - ly) > 24 * k) { chop(G); d.chopped = true; d.lx = d.x; d.ly = d.y; } } });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (!G || G.over || paused) return; const to = hitAt(LAND.x(e), LAND.y(e)), f = d.from;
-  if (!d.moved) { if (f.kind === 'pan') flip(G, f.i); return; }
+  if (!d.moved) { if (f.kind === 'pan') flip(G, f.i); else if (f.kind === 'board') { if (G.board && G.board.chops < FOOD[G.board.food].chops) chop(G); } else if (f.kind === 'plate') unplate(G); return; }
   if (d.chopped) return; if (!to) return;
   if (f.kind === 'tray') { if (to.kind === 'pan') take(G, f.food, 'pan', G.pans[to.i] ? null : to.i); else if (to.kind === 'board') take(G, f.food, 'board'); else if (to.kind === 'plate') take(G, f.food, 'plate'); }
   else if (f.kind === 'pan') { if (to.kind === 'plate') panToPlate(G, f.i); else if (to.kind === 'bin') trash(G, 'pan', f.i); }

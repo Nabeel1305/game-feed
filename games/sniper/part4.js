@@ -25,4 +25,4 @@ const sfx = {
 // the square murmurs (a soft noise bed), louder when it scatters; the clock ticks in its last five seconds
 let tickLast = 99; function soundStep(G, dt) { if (!G || G.over || paused) return; if (!G.lesson) { const s = Math.ceil(G.left); if (s <= 5 && s !== tickLast && s > 0) { tickLast = s; sfx.tick(); } if (s > 5) tickLast = 99; } }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('tense', { seed: 73, key: -2, bpm: 97 });
+bandStyle('tense', { seed: 73, key: -2, bpm: 96, lead: { i: 'pizz' }, comp: { i: 'pad', p: 'P' }, A: [0, 5, 0, 4], tune: ['0.......0...2...', '5.......5...4...', '4.......4...6...'], d: { w: 'x...x...x...x...', k: 'x...............' } });

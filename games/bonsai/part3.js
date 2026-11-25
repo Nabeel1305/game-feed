@@ -164,3 +164,8 @@ function hud(G, t) {
 }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
+// 25 Nov 2026 (his review: "instructions unclear"): the lesson's hand now points at the very thing to tap: a bud whose branch would grow
+// into the shape, the branch that grew wild, the caterpillar.
+LESSONS[1][0].at = G => { const b = G.buds.find(q => inShape(G, q.x + Math.cos(q.ang) * SEG, q.y + Math.sin(q.ang) * SEG)) || G.buds[0]; if (!b) return null; const p = scr(budX(b), budY(b), 0.03); return [p.x, p.y]; };
+LESSONS[2][0].at = G => { const n = G.nodes.find(q => q.wild); if (!n) return null; const p = scr((n.x0 + n.x) / 2, (n.y0 + n.y) / 2, 0.03); return [p.x, p.y]; };
+LESSONS[3][0].at = G => { const c = G.pests.find(Boolean); if (!c) return null; const p = scr(c.x, c.y, 0.16); return [p.x, p.y]; };

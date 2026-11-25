@@ -26,4 +26,4 @@ function soundStep(G, dt) {
   const quiet = MUTE || paused || !G || G.over, near = G && Math.abs(G.ball.x) > 30; if (AM.crowd) AM.crowd.set(quiet ? 0 : near ? 0.045 : 0.03, 0.4); if (AM.low) AM.low.set(quiet ? 0 : 0.02, 0.5);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 34, key: -1, bpm: 119 });
+bandStyle('sport', { seed: 34, key: -1, bpm: 122, lead: { i: 'brass' }, comp: { i: 'organ' }, A: [0, 3, 0, 4], tune: ['0...2...4...4...', '5...5...3...0...', '4...4...6...4...'] });

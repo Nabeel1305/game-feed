@@ -34,4 +34,4 @@ function soundStep(G, dt) {
   beatT -= dt; if (d < 4 && beatT <= 0) { beatT = 0.25 + d * 0.12; tone(60, 0.12, 0.12 * (1 - d / 4), 'sine', 0, 45); }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('arcade', { seed: 26, key: 1, bpm: 132 });
+bandStyle('arcade', { seed: 26, key: 1, bpm: 136, lead: { i: 'xylo' }, comp: { i: 'square' }, A: [0, 3, 0, 4], tune: ['0...4...2...4...', '3...7...5...7...', '4...8...6...4...'] });

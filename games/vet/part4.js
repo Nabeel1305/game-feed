@@ -45,4 +45,4 @@ function soundStep(G, dt) {
   AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 4 + Math.random() * 7; if (!rain && !(W3 && W3.S && W3.S.night)) sfx.bird(); }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('pastoral', { seed: 17, key: -2, bpm: 85 });
+bandStyle('pastoral', { seed: 17, key: -2, bpm: 84, lead: { i: 'whistle' }, comp: { i: 'guitar' }, A: [0, 5, 0, 4], tune: ['2...4...2...0...', '5...7...9...7...', '4...6...4...1...'] });

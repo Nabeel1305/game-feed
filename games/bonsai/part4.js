@@ -28,4 +28,4 @@ function soundStep(G, dt) {
   if (!quiet && G.season < 3) { AM.bird -= dt; if (AM.bird <= 0) { AM.bird = 4 + Math.random() * 7; const b = 2200 + Math.random() * 900; for (let i = 0; i < 3; i++) tone(b * (1 + i * 0.08), 0.07, 0.012, 'sine', i * 0.09, b * 1.25); } }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('east', { seed: 41, key: -1, bpm: 88 });
+bandStyle('east', { seed: 41, key: -1, bpm: 60, lead: { i: 'koto' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['0.......2.......', '1.......0.......', '2.......1.......'], pen: 1, d: {}, rev: 0.75, bass: '1...............' });

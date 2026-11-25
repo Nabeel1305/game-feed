@@ -28,4 +28,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const live = G 
   mus.t += dt; const beat = 0.5; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % 4];
   music(() => { const q = live ? 0.35 : 1; if (i % 8 === 0) ch.forEach((x, j) => tone(note(196, x), 3.6, 0.012 * q, 'sine', j * 0.04, null, 1500)); if (i % 2 === 0) pluck(note(392, ch[(i / 2) % 3 | 0]), 0.8, 0.025 * q); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('sport', { seed: 93, key: 0, bpm: 125 });
+bandStyle('sport', { seed: 93, key: 0, bpm: 118, lead: { i: 'pizz' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['4...0...2...4...', '5...0...3...5...', '6...1...4...6...'], d: { k: 'x.......x.......', c: '....x.......x...', q: 'x.x.x.x.x.x.x.x.' } });

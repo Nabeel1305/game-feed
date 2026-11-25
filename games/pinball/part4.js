@@ -37,4 +37,4 @@ function soundStep(G, dt) {
   if (AM.roll) AM.roll.set(quiet ? 0 : Math.min(1, sp / 20) * 0.05, 0.05); if (AM.hum) AM.hum.set(quiet ? 0 : 0.008, 0.5);
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('synth', { seed: 38, key: -2, bpm: 114 });
+bandStyle('synth', { seed: 38, key: -2, bpm: 116, lead: { i: 'bell' }, comp: { i: 'saw' }, A: [0, 3, 0, 4], tune: ['7...4...0...4...', '7...5...3...5...', '6...4...1...4...'], sc: 'dor' });

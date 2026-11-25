@@ -26,4 +26,4 @@ const sfx = {
 // the last ten seconds tick
 let tickLast = 99; function soundStep(G, dt) { if (!G || G.over || G.lesson || paused) return; const s = Math.ceil(G.left); if (s <= 10 && s !== tickLast && s > 0) { tickLast = s; sfx.tick(); } if (s > 10) tickLast = 99; }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('funk', { seed: 70, key: -3, bpm: 104 });
+bandStyle('funk', { seed: 70, key: -3, bpm: 100, lead: { i: 'saw', oct: 0 }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0..0..2.4..2.0..', '3..3..5.7..5.3..', '4..4..6.4..2.1..'] });

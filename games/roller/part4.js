@@ -26,4 +26,4 @@ function soundStep(G, dt) { if (!actx || MUTE) return; if (!rollB) rollB = bed(1
   mus.t += dt; if (mus.t >= 0.36) { mus.t -= 0.36; const n = TUNE[mus.i % TUNE.length], bar = Math.floor(mus.i / 16) % 4; mus.i++; if (n >= 0 && (mus.i % 2 === 1 || Math.random() < 0.5)) pluck(note(330, n + [0, 3, 1, 4][bar]), 0.7, home ? 0.025 : 0.016);
     if (mus.i % 8 === 1) pluck(note(110, [0, 3, 1, 4][bar]), 1.6, home ? 0.03 : 0.022); } }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 80, key: -2, bpm: 73 });
+bandStyle('calm', { seed: 80, key: -2, bpm: 72, lead: { i: 'guitar' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['0...2...4...7...', '3...5...7...a...', '4...6...8...6...'], d: {} });

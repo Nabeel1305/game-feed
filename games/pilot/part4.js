@@ -26,4 +26,4 @@ function soundStep(G, dt) {
   if (air && G) { const h = a.y * 3.28; for (const c of [100, 50, 30, 20, 10]) if (h < c && AM.lastCall > c) { sfx.call(c); } AM.lastCall = h; }
 }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('tense', { seed: 15, key: 2, bpm: 96 });
+bandStyle('epic', { seed: 15, key: 2, bpm: 96, lead: { i: 'horn', oct: 1 }, comp: { i: 'strings', p: 'P' }, A: [0, 3, 0, 4], tune: ['0...4...4...7...', '5...3...3...5...', '4...6...8.......'], sc: 'mix', d: { k: 'x.......x.......', s: '....x.x.....x.xx', h: 'x.x.x.x.x.x.x.x.' } });

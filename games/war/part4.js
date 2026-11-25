@@ -25,4 +25,4 @@ function soundStep(G, dt) { if (HEADLESS || !actx) return; if (!AM.on) { AM.on =
   if (AM.clash) AM.clash.set(quiet ? 0 : Math.min(0.03, fights * 0.004), 0.2); if (AM.wind) AM.wind.set(quiet ? 0 : 0.006, 0.6);
   if (!quiet && (marching || (G && G.phase === 'deploy'))) { AM.beat -= dt; if (AM.beat <= 0) { AM.beat = G.phase === 'deploy' ? 1.2 : 0.5; sfx.drum(); } } }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('epic', { seed: 47, key: 1, bpm: 88 });
+bandStyle('epic', { seed: 47, key: 1, bpm: 90, lead: { i: 'horn', oct: 1 }, comp: { i: 'strings', p: 'P' }, A: [0, 5, 0, 4], tune: ['0...0...4...4...', '5...5...4...2...', '4...4...6...4...'], d: { k: 'x.......x.......', s: '....x.x.....x.xx', h: 'x.x.x.x.x.x.x.x.' } });

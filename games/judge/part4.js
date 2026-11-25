@@ -21,4 +21,4 @@ const sfx = {
 };
 function soundStep() {}
 // the band (tools/juice-kit.js): this game's music
-bandStyle('jazz', { seed: 45, key: -2, bpm: 99 });
+bandStyle('jazz', { seed: 45, key: -2, bpm: 92, lead: { i: 'piano' }, comp: { i: 'keys' }, A: [1, 4, 0, 5], tune: ['1.......3...5...', '4.......6...4...', '0.......2...4...', '5.......2...0...'], d: { y: 'x...x.x.x...x.x.', r: '....x.......x...' } });

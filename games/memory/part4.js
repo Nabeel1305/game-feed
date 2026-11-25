@@ -29,4 +29,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; mus.t += dt; co
   const i = mus.i++, busy = G && G.round && (G.round.phase === 'show' || G.round.phase === 'ask'), vol = busy ? 0.4 : 1, n = BOX[i % 16], ch = [0, -3, -5, -1][Math.floor(i / 16) % 4];
   music(() => { if (n >= 0) tone(note(523, n + ch), 0.6, 0.022 * vol, 'sine', 0, null, 3000); if (i % 8 === 0) tone(note(131, ch), 1.2, 0.03 * vol, 'triangle', 0, null, 600); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('calm', { seed: 88, key: 3, bpm: 72 });
+bandStyle('calm', { seed: 88, key: 3, bpm: 70, lead: { i: 'musicbox' }, comp: { i: 'pad', p: 'P' }, A: [0, 3, 0, 4], tune: ['7.......4...2...', '5.......7...5...', '4.......6...4...'], d: {} });

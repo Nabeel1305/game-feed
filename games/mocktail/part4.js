@@ -33,4 +33,4 @@ function soundStep(G, dt) { if (!actx) return; const D = G && G.drink;
   if (MUTE || paused) return; mus.t += dt; const beat = 0.36; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % 4];
   music(() => { if (i % 8 === 0) ch.forEach((q, j) => tone(note(196, q), 2.6, 0.012, 'sine', j * 0.03, null, 1600)); if (i % 2 === 0) noise(0.05, 6000, 0.008, 'highpass', 0.7); if (i % 4 === 2) tone(note(98, ch[0]), 0.3, 0.03, 'triangle', 0, null, 400); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('jazz', { seed: 90, key: -1, bpm: 103 });
+bandStyle('jazz', { seed: 90, key: -1, bpm: 108, lead: { i: 'steel' }, comp: { i: 'guitar' }, A: [1, 4, 0, 5], tune: ['5...3...5...8...', '6...4...6...8...', '4...2...4...7...', '5...2...0...2...'], sw: 0.15, d: { q: 'x.x.x.x.x.x.x.x.', r: '...x..x...x.x...', k: 'x.....x...x.....' } });

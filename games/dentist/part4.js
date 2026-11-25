@@ -40,4 +40,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; if (G && SET.sf
   mus.t += dt; const beat = 0.42; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, ch = CHORDS[Math.floor(i / 8) % CHORDS.length], semi = q => 293.7 * Math.pow(2, q / 12);
   music(() => { const pat2 = [0, 1, 2, 1, 0, 2, 1, 2]; pluck(semi(ch[pat2[i % 8]]), 0.6, i % 2 ? 0.014 : 0.022); if (i % 8 === 0) pluck(semi(ch[0] - 12), 1.2, 0.03); if (i % 16 === 13) pluck(semi(ch[2] + 12), 0.8, 0.014, 0.1); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('waltz', { seed: 100, key: 0, bpm: 125 });
+bandStyle('waltz', { seed: 100, key: 0, bpm: 118, lead: { i: 'pizz' }, comp: { i: 'musicbox' }, A: [0, 3, 0, 4], tune: ['0...2...0...', '3...5...3...', '4...6...4...'] });
