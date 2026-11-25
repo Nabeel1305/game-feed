@@ -60,16 +60,27 @@ joystick... You don't need the joystick"): a word or an arrow drawn at a fixed p
 place. After changing a control, press what the picture shows.
 **The review page's lists** (his words, 25 Nov 2026: "I can click that and you show only those games that you just fixed... all the games that I have
 not yet reviewed... the ones that I clicked good and didn't put any comment... all games"): All, Fixed (his notes acted on in the latest round:
-`round` on the entry in `specs/reviews-fixed.json`), To fix, Not reviewed, Fine. Give every entry of a sitting the same `round` (the date); mark an
+`round` on the entry in `specs/reviews-fixed.json`), Not reviewed, Okay, Final fix, To fix. Give every entry of a sitting the same `round` (the date); mark an
 entry that fits fifteen games or more `general: true`; an answer with nothing changed is `answer: true`. **Good and okay are left alone**, even where
 a general point would fit (only what he asks for in every game by name, like its own music, reaches them): say which were left. **Each game has its own music**: its score is in `tools/scores.py` (run it, then build); measured,
 never listened to. **Left and right, and anything about what is seen, are measured with the camera or looked at in a sharp still**
 (`window.__fullGL = true`), never worked out on paper (LESSONS, "His review of 25 Nov 2026").
-**Two buttons move a game between the lists** (his words, 25 Nov 2026, 09:03: "I click this game is completely okay, and... it can take it to the
-list that the game is good, the game doesn't need any more fixing... The fixed games and the games that I haven't reviewed, I can take it to the games
-that need to be fixed"): every card has **GAME IS OKAY** (the store's `rating: 'good'`; the Okay list; no changes) and **NEEDS FIXING** (`rating:
-'bad'`; the To fix list; with nothing written it still means find what to change myself), in place of Good / Okay / Bad (an `'ok'` from an older
-review counts as okay). The game leaves the list he is looking at at once, with UNDO. GAME IS OKAY never hides a note he wrote.
+**Three buttons move a game between the lists, at once** (his words, 25 Nov 2026, 09:03: "I click this game is completely okay, and... it can
+take it to the list that the game is good, the game doesn't need any more fixing... The fixed games and the games that I haven't reviewed, I can take it
+to the games that need to be fixed"; and 11:44: "immediately I say a game is okay, take it out of that folder and put it in the game is okay... if I
+say a game needs fixing, take it out of that folder... create another button, which is final fix, which is, I've played the game and the game is fine.
+There's just one thing that I want you to make sure of, just like a final polish. And after that, I may not necessarily even check it... even if I left
+the game here, it would be good... immediately I click final fix, take it to the final fix"). Under the boxes of every card (write, then press):
+**GAME IS OKAY** (the store's `rating: 'good'`; the Okay list; no changes; an `'ok'` from an older review counts as okay), **FINAL FIX** (`rating:
+'final'`; the Final fix list) and **NEEDS FIXING** (`rating: 'bad'`; the To fix list; with nothing written it still means find what to change myself).
+The button he pressed decides the list; with no button pressed a note means To fix. A note on a game he then pressed GAME IS OKAY on is kept on its
+card and is NOT acted on (more written there afterwards takes the okay off). **A final fix is one small thing**: do the one thing he wrote (in `flaw`)
+and nothing else, no rework; if he wrote nothing, find one small polish. When it is done: its entry in `specs/reviews-fixed.json` has `"final": true`,
+and the store gets `{ rating: 'good', critical: '', flaw: '', at }`, so the game goes to Okay by itself marked FINAL FIX DONE (he does not have to
+check it; tell him which were done, with their links). **A press takes the card out of the list he is looking at, always**: the page goes by where
+the card is drawn (`data-in`), not by whether the press changed anything (the fault of 25 Nov: a note typed first had already moved the game to To
+fix without moving its card, so NEEDS FIXING "did nothing"). ALL shows every game grouped by its list. UNDO, and WRITE IT when a game was sent with
+nothing written, are in the line at the bottom.
 The page is built by `python3 tools/review_page.py` and proved by `python3 tools/test_review_page.py` (what he types reaches the
 store, comes back on a phone that has forgotten everything, survives no signal). `python3 tools/small_screen.py` opens every
 card of every game on a 360 x 640 phone and reports buttons that cannot be reached.

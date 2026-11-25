@@ -181,6 +181,12 @@ genius, and that's what you forget." What that changed, for every game from now 
   the page only when the kit grew. Kart Kingdom's is now `trackMusic`.
 
 ## His review of 25 Nov 2026 (what it taught; the record is `specs/review-2026-11-25.md`)
+**The Game Review page, 11:44 the same day ("immediately I say a game is okay, take it out of that folder"):** what he met was found by reading the
+store, not by guessing: he had typed a note on Short Order in the Fixed list and THEN pressed NEEDS FIXING. The note alone had already put the game in
+To fix (without moving its card), so the press changed nothing and the page, which only moved a card when the press changed its list, left it where it
+was. A page that sorts things into lists must go by **where the thing is drawn**, not by what the last press changed; and after any change to a
+control on that page, do what he does in his order (write, then press), not only the order the test was written in. Refusing a press ("delete the
+note first") is also a press that does nothing: the button he presses wins, and what he wrote is kept and shown.
 
 - **Left and right are measured with the camera, never worked out on paper.** Rex's stick was mirrored for two days and its test passed, because the
   test turned world angles into "left" itself. A view that looks along +z has +x on the LEFT of the screen. A test of a stick or a look-drag takes the
