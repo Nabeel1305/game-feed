@@ -5,7 +5,7 @@
 // furniture, creaky boards, a curious cat. If someone wakes, that house starts again; earlier houses stay delivered.
 // Deliver every house before dawn. Flight: x, z on the ground (metres), y up. Inside a house: a grid of 1 m cells.
 const RULES = [
-  '<b>Fly:</b> the left thumb steers the sleigh. Hold LAND over a house\'s glowing marker to slow down and land on its roof.',
+  '<b>Fly:</b> push the left thumb the way you want to go: the harder you push, the faster. <b>Let go to brake</b>: the sleigh stops and hovers. Hold LAND over a house\'s glowing marker to settle on its roof.',
   '<b>Inside:</b> push gently to tiptoe; a full push runs, and running is noisy. Bumping furniture and creaky boards are noisy too.',
   '<b>Presents:</b> read the wish list (top left). Tap a present in your sack to hold it, then ACT by the tree to put it down. ACT by the tree with empty hands picks the last one back up.',
   'ACT by each stocking to fill it. ACT by the fireplace to go back up when the house is done.',
@@ -79,10 +79,13 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
   if (G.blind.lr != null) { G.blind.lr -= dt; if (G.blind.lr <= 0) { G.blind.lr = null; landOn(G, false); } }
   if (G.phase === 'fly') flyStep(G, dt); else if (G.phase === 'roof') roofStep(G, dt); else if (G.phase === 'in') inStep(G, dt); else if (G.phase === 'up') { G.upT -= dt; if (G.upT <= 0) { G.phase = 'fly'; G.s.y = G.s.y + 0.5; G.s.v = SLOW; } }
   if (!G.over && !G.lesson && !G.free && G.clock > G.dawn) finish(G, false, 'dawn'); }
+const overNext = G => { const s = G.s; return G.V.some(h => !G.done.includes(h.i) && Math.hypot(h.mx - s.x, h.mz - s.z) < G.cfg.marker * 1.3); };
 function flyStep(G, dt) { const s = G.s, m = Math.hypot(G.stick.x, G.stick.y), sp = FLY * (1 + 0.06 * upLv('reindeer'));
   // the stick: the direction to fly, as seen from behind the sleigh (up is ahead)
   if (m > 0.2) { const want = s.yaw + Math.atan2(G.stick.x, G.stick.y), d = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)); s.yaw += clamp(d, -2.0 * dt, 2.0 * dt); }
-  s.v += ((G.landHeld ? SLOW : sp) - s.v) * Math.min(1, dt * 2.5);
+  // 25 Nov 2026 (his review: "No breaks??"): the sleigh flew flat out whatever you did; only LAND slowed it. Now it flies as hard as you
+  // push the stick, and letting go is the brake: it slows to a hover and waits for you.
+  { const push = m > 0.15 ? 0.35 + 0.65 * Math.min(1, m) : 0, tv = G.landHeld ? Math.min(SLOW, sp * push) : sp * push; s.v += (tv - s.v) * Math.min(1, dt * (tv < s.v ? 3.4 : 2.5)); }
   s.x += Math.sin(s.yaw) * s.v * dt; s.z += Math.cos(s.yaw) * s.v * dt;
   const H = houseUnder(G, s.x, s.z), floor = H ? H.top : 2.5;
   if (G.landHeld) s.y = Math.max(floor, s.y - 6 * dt); else s.y = Math.min(CRUISE, s.y + 5 * dt);
@@ -144,7 +147,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.done = G.V.map(h => h.i); finish(G, true, 'all'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: 'STEER, HOLD LAND', do: 'hold', at: G => { const b = layout(G).btn; return [b.x, b.y]; }, how: 'Steer with your left thumb towards the glowing house. Over its marker, hold LAND: the sleigh slows and settles on the roof. Land once.', need: 1 }],
+  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => overNext(G) ? 'LET GO, HOLD LAND' : 'PUSH TO FLY THERE', do: G => overNext(G) ? 'hold' : 'drag', dir: 'up', at: G => { if (!overNext(G)) return null; const b = layout(G).btn; return [b.x, b.y]; }, how: 'Steer with your left thumb towards the glowing house. Over its marker, hold LAND: the sleigh slows and settles on the roof. Land once.', need: 1 }],
   2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', say: 'TAP A PRESENT, ACT', do: 'tap', how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],
   3: [{ id: 'sneak', title: 'TIPTOE', say: 'PUSH GENTLY', do: 'drag', dir: 'up', how: 'Push gently to tiptoe. Go round furniture and the dark creaky boards; watch the noise meter. Deliver one house without waking anyone.', need: 1 }],
 };
