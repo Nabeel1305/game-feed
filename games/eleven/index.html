@@ -5354,9 +5354,11 @@ function shoot(G, p, aimZ, chip) {
   // the corner: where the stick points, else the side away from the keeper
   let tz = Math.abs(aimZ) > 0.3 ? Math.sign(aimZ) * (GW2 - 0.6) : clamp(keeper.z * 0.7, -1.5, 1.5);      // no aim: it goes where the keeper is
   const skill = p.t ? c.oShot : c.uShot, press = Math.max(0, 3 - nearestFoe(G, p)) / 3, sdev = (0.04 + dg * 0.0055) * (1.4 - skill) * (1 + press * 0.8) * (G.t - (p.gotAt || 0) < 0.8 ? 2.2 : 1);      // a shot snatched the moment it arrives flies wild: take a touch
-  const a = Math.atan2(tz - p.z, gx - p.x) + gauss(G.rnd) * sdev; release(G, p);
+  // a shot hit with his back or his side to the goal is a poor one (25 Nov 2026: with the receiver now meeting every pass, a thumb that never looked had a few more shots; one in 480 such matches was won)
+  let off = Math.atan2(tz - p.z, gx - p.x) - p.face; off = Math.abs(Math.atan2(Math.sin(off), Math.cos(off))); const turn = off > 1.25 ? 1 + (off - 1.25) * 1.5 : 1, weak = off > 1.9 ? 0.72 : 1;
+  const a = Math.atan2(tz - p.z, gx - p.x) + gauss(G.rnd) * sdev * turn; release(G, p);
   if (chip) { const T = clamp(dg / 16, 0.8, 1.6), dx = (gx - p.x) * 1.04; b.vx = dx / T; b.vz = Math.tan(a) * dx / T; b.vy = (2.0 + 4.9 * T * T) / T; b.y = 0.2; b.kind = 'chip'; }
-  else { const sp = 25 + skill * 5; b.vx = Math.cos(a) * sp; b.vz = Math.sin(a) * sp; b.vy = 1.5 + G.rnd() * 3 + dg * 0.04; b.y = 0.2; b.kind = 'shot'; }
+  else { const sp = (25 + skill * 5) * weak; b.vx = Math.cos(a) * sp; b.vz = Math.sin(a) * sp; b.vy = 1.5 + G.rnd() * 3 + dg * 0.04; b.y = 0.2; b.kind = 'shot'; }
   b.shot = { t: p.t, from: p, saveRoll: G.rnd(), dg }; G.shots[p.t]++; G.ev.push({ k: 'shoot', t: p.t, chip: !!chip }); lessonSee(G, 'shoot'); return true;
 }
 function gauss(R) { return Math.sqrt(-2 * Math.log(1 - R() * 0.9999)) * Math.cos(TAU * R()); }
