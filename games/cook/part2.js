@@ -22,6 +22,8 @@ const FOOD = {
   egg: { name: 'Egg', to: 'pan', cook: 5, sides: 1 }, pancake: { name: 'Pancake', to: 'pan', cook: 4.5, sides: 2 },
   lettuce: { name: 'Lettuce', to: 'board', chops: 3 }, tomato: { name: 'Tomato', to: 'board', chops: 3 }, onion: { name: 'Onion', to: 'board', chops: 4 },      // (25 Nov 2026: one chop fewer each; a tap chops)
   bun: { name: 'Bun', to: 'plate' }, toast: { name: 'Toast', to: 'plate' },
+  // 25 Nov 2026 (his final fix: "make as many combos as possible and add more items in the later levels"): four more things, each coming in at its own level
+  cheese: { name: 'Cheese', to: 'plate', from: 5 }, bacon: { name: 'Bacon', to: 'pan', cook: 4.5, sides: 2, from: 8 }, mushroom: { name: 'Mushroom', to: 'board', chops: 3, from: 12 }, sausage: { name: 'Sausage', to: 'pan', cook: 6.5, sides: 2, from: 14 },
 };
 const DISHES = [
   { id: 'pancakes', name: 'Pancakes', items: ['pancake'], from: 1 },
@@ -39,8 +41,30 @@ const DISHES = [
   { id: 'double', name: 'Double deluxe', items: ['bun', 'patty', 'patty', 'lettuce', 'tomato', 'onion'], from: 16 },
   { id: 'tower', name: 'Pancake tower', items: ['pancake', 'pancake', 'pancake'], from: 18 },
   { id: 'feast', name: 'The works', items: ['steak', 'egg', 'toast', 'tomato', 'onion'], from: 22 },
+  // 25 Nov 2026 ("as many combos as possible"): twenty more dishes, from the ten things there were and the four new ones
+  { id: 'salad', name: 'Garden salad', items: ['lettuce', 'tomato', 'onion'], from: 3 },
+  { id: 'steakeggs', name: 'Steak & eggs', items: ['steak', 'egg'], from: 4 },
+  { id: 'cheeseburger', name: 'Cheeseburger', items: ['bun', 'patty', 'cheese'], from: 5 },
+  { id: 'cheesetoast', name: 'Cheese & tomato toast', items: ['toast', 'cheese', 'tomato'], from: 5 },
+  { id: 'eggburger', name: 'Egg burger', items: ['bun', 'patty', 'egg'], from: 6 },
+  { id: 'fishburger', name: 'Fish burger', items: ['bun', 'salmon', 'lettuce'], from: 7 },
+  { id: 'steaksand', name: 'Steak sandwich', items: ['toast', 'steak', 'onion'], from: 7 },
+  { id: 'baconeggs', name: 'Bacon & eggs', items: ['toast', 'bacon', 'egg'], from: 8 },
+  { id: 'blt', name: 'B.L.T.', items: ['toast', 'bacon', 'lettuce', 'tomato'], from: 8 },
+  { id: 'salmonbun', name: 'Salmon bun', items: ['bun', 'salmon', 'onion'], from: 9 },
+  { id: 'baconburger', name: 'Bacon cheeseburger', items: ['bun', 'patty', 'cheese', 'bacon'], from: 10 },
+  { id: 'cakesbacon', name: 'Pancakes & bacon', items: ['pancake', 'pancake', 'bacon'], from: 10 },
+  { id: 'deluxe', name: 'Deluxe', items: ['bun', 'patty', 'cheese', 'lettuce', 'tomato'], from: 12 },
+  { id: 'mushsteak', name: 'Steak & mushrooms', items: ['steak', 'mushroom'], from: 12 },
+  { id: 'mushtoast', name: 'Mushrooms on toast', items: ['toast', 'mushroom', 'egg'], from: 12 },
+  { id: 'veggie', name: 'Veggie burger', items: ['bun', 'mushroom', 'cheese', 'lettuce', 'tomato'], from: 13 },
+  { id: 'bangers', name: 'Sausage & onions', items: ['sausage', 'onion'], from: 14 },
+  { id: 'sausagebun', name: 'Sausage bun', items: ['bun', 'sausage', 'onion'], from: 14 },
+  { id: 'fry', name: 'The full fry-up', items: ['toast', 'egg', 'bacon', 'sausage', 'tomato', 'mushroom'], from: 17 },
+  { id: 'kingtower', name: 'The king tower', items: ['bun', 'patty', 'cheese', 'patty', 'cheese', 'bacon'], from: 20 },
 ];
-const TRAY = ['patty', 'steak', 'salmon', 'egg', 'pancake', 'lettuce', 'tomato', 'onion', 'bun', 'toast'];
+const TRAY = ['patty', 'steak', 'salmon', 'egg', 'pancake', 'lettuce', 'tomato', 'onion', 'bun', 'toast', 'cheese', 'bacon', 'mushroom', 'sausage'];
+const trayOf = N => TRAY.filter(f => !(FOOD[f].from > N));      // the trays out at level N (the new things come in later)
 const GOLD = [0.78, 1.12], BURNT = 1.3;
 
 function makeCfg(N, help) {
@@ -138,7 +162,7 @@ function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev
 // BLIND: tap a pan, swipe the board, drag a random tray item somewhere, pan or board to plate, serve, bin.
 const BLIND = {
   f: G => flip(G, (Math.random() * G.pans.length) | 0), c: G => chop(G),
-  t: G => { const fd = TRAY[(Math.random() * TRAY.length) | 0]; take(G, fd, FOOD[fd].to); },
+  t: G => { const T2 = trayOf(G.N), fd = T2[(Math.random() * T2.length) | 0]; take(G, fd, FOOD[fd].to); },
   p: G => panToPlate(G, (Math.random() * G.pans.length) | 0), b: G => boardToPlate(G), s: G => serve(G), x: G => trash(G, 'plate'),
 };
 // HONEST: a cook who reads the oldest ticket and works it, flipping and plating by eye (late by react, sometimes wrong by acc)
@@ -162,7 +186,7 @@ function honest(G, o, mem) {
   if (!need.length) { serve(G); return; }
   if (G.board) { if (G.board.chops < FOOD[G.board.food].chops) { chop(G); return; } if (need.includes(G.board.food)) { boardToPlate(G); return; } trash(G, 'board'); return; }
   for (const fd of need) { const F = FOOD[fd], inPan = G.pans.filter(p => p && p.food === fd).length, wanted = need.filter(q => q === fd).length;
-    if (F.to === 'pan' && inPan < wanted && G.pans.some(p => !p)) { take(G, Math.random() < acc * 1.05 ? fd : TRAY[(Math.random() * TRAY.length) | 0], 'pan'); return; }
+    if (F.to === 'pan' && inPan < wanted && G.pans.some(p => !p)) { take(G, Math.random() < acc * 1.05 ? fd : trayOf(G.N)[(Math.random() * trayOf(G.N).length) | 0], 'pan'); return; }
     if (F.to === 'board') { take(G, fd, 'board'); return; }
     if (F.to === 'plate') { take(G, fd, 'plate'); return; } }
 }

@@ -5339,6 +5339,7 @@ function pickItem(G, k) { const R = G.rnd(), back = (k.place || 3) / G.karts.len
 function hit(G, k, why, by) { if (k.shield > 0) { k.shield = 0; G.ev.push({ k: 'pop', me: k.me, x: k.x, z: k.z }); return; } if (k.spin > 0) return;
   k.spin = 1.1; k.drift = 0; k.charge = 0; k.boost = 0; G.ev.push({ k: 'spin', me: k.me, why, x: k.x, z: k.z }); if (k.me) { G.hits++; lessonMiss(G); } if (by && by.me && !k.me) { G.zaps++; G.coins++; G.ev.push({ k: 'gotem', x: k.x, z: k.z, why }); } }
 // one kart: speed, steering, the drift and its sparks, grass and barriers, laps
+const TURBO = 2.1;      // the turbo meter is full after this much sliding (at the level's spark rate)
 const KW = 0.9;      // half a kart's width (its wheels): where its side meets the rail
 function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const st = k.me ? G.steer : k.steer, go = !k.done || !k.me;
@@ -5349,14 +5350,22 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   // by itself when a hard turn had been held for a moment, and ended when you straightened up: you never knew when you were in one. Now it is a button, the
   // way racing games do it: HOLD DRIFT with the right thumb and steer with the left. The kart slides the way you are steering when you press; while you hold,
   // the stick only makes the slide tighter (towards the bend) or wider (away), it never flips it; sparks build blue, orange, purple; LET GO for the boost.
+  // 25 Nov 2026, later (his words): "Steering during drifts: allow manoeuvring throughout a drift, including switching from drifting left to
+  // drifting right without being locked into the initial direction. Drift earns turbo: build turbo while drifting. Longer successful drifts should
+  // earn more turbo, with a clearly visible meter." So: while DRIFT is held the kart turns as the stick says, all the way from hard left to hard
+  // right; crossing to the other side swings the tail across and the slide carries on (the turbo is kept). The turbo METER (k.charge, full at
+  // TURBO) fills all the time he slides, faster the harder he steers; letting go spends it: the fuller the meter, the longer the boost.
+  // (Looked up, not played: KartRider fills a boost gauge by drifting and links drifts to keep filling it; Crash Team Racing shows a turbo
+  // meter that fills through a power slide.)
   if (k.me) { const held = !!G.driftHeld && !k.spin && go;
     if (!k.drift && held && k.v > 12 && Math.abs(st) > 0.2) { k.drift = Math.sign(st); k.charge = 0; k.tier = 0; G.ev.push({ k: 'drift' }); lessonSee(G, 'drift'); }
-    if (k.drift) { k.charge += dt * c.spark * (st * k.drift > -0.3 ? 1 : 0.6);      /* only steering hard AWAY from the slide slows the sparks */ const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
-      if (!held || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.55, 1.05, 1.6][k.tier]); G.boosts++; if (k.tier >= 2) { G.bigBoosts++; G.coins++; } G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } else if (!k.spin) lessonSee(G, 'early'); k.drift = 0; k.charge = 0; k.tier = 0; } } }
+    if (k.drift) { if (st * k.drift < -0.25) { k.drift = -k.drift; G.ev.push({ k: 'swap', dir: k.drift }); }      /* steered across: the slide changes side, nothing is lost */
+      k.charge = Math.min(TURBO, k.charge + dt * c.spark * (Math.abs(st) > 0.3 ? 1 : 0.6)); const tier = k.charge >= TURBO ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
+      if (!held || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, 0.2 + 1.4 * k.charge / TURBO); k.boost0 = k.boost; G.boosts++; if (k.tier >= 2) { G.bigBoosts++; G.coins++; } G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } else if (!k.spin) lessonSee(G, 'early'); k.drift = 0; k.charge = 0; k.tier = 0; } } }
   // grip: without a drift a hard turn at speed runs wide and scrubs speed off; a drift turns hard and keeps it
-  const sp = Math.min(1, k.v / 12); let yaw; if (k.drift) { const u = clamp((st * k.drift + 0.6) / 1.6, 0, 1); yaw = k.drift * (0.5 + 0.9 * u) * sp; } else { const want = st * 1.75 * sp, lim = GRIP / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
+  const sp = Math.min(1, k.v / 12); let yaw; if (k.drift) { yaw = (st * 1.25 + k.drift * 0.15) * sp; } else {      /* in a drift the stick turns him, either way; the slide itself pulls a little */ const want = st * 1.75 * sp, lim = GRIP / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
-  const slip = k.drift ? -k.drift * 0.32 : 0; k.slip = (k.slip || 0) + (slip - (k.slip || 0)) * Math.min(1, dt * 6); const mh = k.h + k.slip;
+  const slip = k.drift ? -(k.drift * 0.14 + st * 0.2) : 0; k.slip = (k.slip || 0) + (slip - (k.slip || 0)) * Math.min(1, dt * 5);      /* the tail swings out as far as he steers, and across when he changes side */ const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
   // the barriers, just off the grass
   // the rail (his review of Kart Kingdom, 24 Nov 2026, the same fault here: "I shouldn't be phasing against the rail I should clearly hit it"):
@@ -5416,7 +5425,7 @@ function honest(G, o, mem) {
   // a long bend coming: drift it (hold hard), let go when it straightens (or the sparks are orange and it is ending)
   const long = Math.abs(bend) > 0.2;
   if (!k.drift) setDrift(G, long && k.v > 16 && Math.sign(dh) === Math.sign(bend)); if (!k.drift && G.driftHeld) s = Math.sign(bend) * Math.max(0.4, Math.abs(s));
-  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - 0.5; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = clamp((need - 0.5) / 0.9, 0, 1); s = k.drift * (u * 1.6 - 0.6); if (end) setDrift(G, false); }
+  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - 0.5; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)); s = k.drift * clamp((need - 0.15) / 1.25, -0.2, 1); if (end) setDrift(G, false); }
   if (R() > acc) s += (R() - 0.5) * 0.8;
   setSteer(G, s);
   if (k.item) { mem.it = (mem.it || 0) + 0.1; const ahead = G.karts.some(q => q !== k && race(q) > race(k) && race(q) - race(k) < 70), behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20);
@@ -5538,9 +5547,9 @@ function buildTrack(V, g) { const T = THREE, TR = g.T, S = TR.S, n = S.length; i
   for (const [, m] of V.karts) V.S.remove(m); V.karts.clear(); }
 function sync(V, g, t, dt) {
   for (const k of g.karts) { let m = V.karts.get(k); if (!m) { m = kartModel(k.me ? g.kart.col : k.who.col, k.me ? g.kart.col2 : 0xffffff, k.me ? 1 : 2 + g.karts.indexOf(k)); V.S.add(m); V.karts.set(k, m); }
-    m.position.set(k.x, 0, k.z); m.rotation.y = -(k.h); const u = m.userData; u.body.rotation.x = (k.slip || 0) * 0.4 + (k.wob || 0) * Math.sin(t * 26) * 0.28; u.body.rotation.z = Math.sin(t * 30) * 0.004 * k.v + (k.wob || 0) * Math.sin(t * 23) * 0.1; u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.3 : 0;
-    { const st = k.me ? g.steer : (k.steer || 0); k.stV = (k.stV || 0) + (st - (k.stV || 0)) * Math.min(1, dt * 10); for (const w of u.wheels) { if (w.front) w.piv.rotation.y = -k.stV * 0.5; w.spn.rotation.z -= k.v * dt / w.r; } if (u.sw) u.sw.rotation.x = k.stV * 1.2; }
-    u.flame.visible = k.boost > 0; u.flame.scale.set(1, 0.8 + Math.random() * 0.6 + k.boost * 0.4, 1); u.flame.material.color.setHex(k.tierBoost === 3 ? 0xd060ff : k.boost > 1 ? 0xff9a20 : 0x60c0ff); u.bub.visible = k.shield > 0;
+    m.position.set(k.x, 0, k.z); m.rotation.y = -(k.h); const u = m.userData; u.body.rotation.x = (k.slip || 0) * 0.4 + (k.wob || 0) * Math.sin(t * 26) * 0.28; u.body.rotation.z = (k.wob || 0) * Math.sin(t * 23) * 0.1;      /* 25 Nov 2026 ("fix the vibrating or jittery appearance"): the body used to rock five times a second, more the faster it went (7 degrees at speed): my 'engine rumble'. Gone: it only rocks after hitting the rail. */ u.body.position.y = k.spin ? Math.abs(Math.sin(t * 12)) * 0.3 : 0;
+    { const st = k.me ? g.steer : (k.steer || 0); k.stV = (k.stV || 0) + (st - (k.stV || 0)) * Math.min(1, dt * 10); for (const w of u.wheels) { if (w.front) w.piv.rotation.y = -k.stV * 0.5; w.spn.rotation.z -= Math.min(k.v / w.r, 24) * dt; }      /* a wheel turning faster than the picture can show flickers: it tops out at a smooth blur */ if (u.sw) u.sw.rotation.x = k.stV * 1.2; }
+    u.flame.visible = k.boost > 0; u.flame.scale.set(1, 1.05 + Math.sin(t * 41) * 0.16 + Math.sin(t * 67) * 0.1 + k.boost * 0.4, 1); u.flame.material.color.setHex(k.tierBoost === 3 ? 0xd060ff : k.boost > 1 ? 0xff9a20 : 0x60c0ff); u.bub.visible = k.shield > 0;
     // tyre marks and smoke while it slides
     if (k.drift && V.skid) { k.skT = (k.skT || 0) - dt; if (k.skT <= 0) { k.skT = 0.045; for (const s of [-1, 1]) { SKD.position.set(k.x - Math.cos(k.h) * 0.8 + Math.sin(k.h) * 0.8 * s, 0.034, k.z - Math.sin(k.h) * 0.8 - Math.cos(k.h) * 0.8 * s); SKD.rotation.set(-Math.PI / 2, 0, -(k.h + (k.slip || 0)), 'YXZ'); SKD.rotation.set(-Math.PI / 2, 0, -(k.h + (k.slip || 0))); SKD.updateMatrix(); V.skid.setMatrixAt(V.skidI % 360, SKD.matrix); V.skidI++; } V.skid.count = Math.min(360, V.skidI); V.skid.instanceMatrix.needsUpdate = true; }
       if (Math.random() < 0.7) V.sparkP.push({ x: k.x - Math.cos(k.h) * 1.0 + (Math.random() - 0.5) * 1.6, y: 0.3, z: k.z - Math.sin(k.h) * 1.0 + (Math.random() - 0.5) * 1.6, vx: (Math.random() - 0.5) * 1.5, vy: 1.2 + Math.random(), vz: (Math.random() - 0.5) * 1.5, t: 0, c: 0x5a5a60 }); }
@@ -5569,7 +5578,7 @@ function onEvent(G, e) {
     case 'start': say(TRACKS[G.cfg.track].name.toUpperCase(), cx, H * 0.26, '#ffffff', 22); say(G.cfg.place === 1 ? 'WIN THE RACE' : `FINISH TOP ${G.cfg.place}`, cx, H * 0.32, '#ffd080', 18); if (G.N <= 2) tip('steer', 'Left thumb: slide to steer. Hold a hard turn in a bend to drift, then straighten up to boost.', 3.6); break;
     case 'light': sfx.light(e.n); break;
     case 'go': sfx.light(0); say('GO!', cx, H * 0.36, '#7af0a0', 46); FX.flash = 0.2; break;
-    case 'drift': break;
+    case 'drift': break; case 'swap': if (sfx.swap) sfx.swap(); vibe(HAP.light); break;
     case 'spark': sfx.spark(e.tier); break;
     case 'boost': sfx.boost(e.tier); if (G.me) G.me.tierBoost = e.tier; FX.shake = 2 + e.tier; say(['', 'BOOST', 'BIG BOOST!', 'ULTRA BOOST!'][e.tier], cx, H * 0.62, hex(TIERC[e.tier]), 16 + e.tier * 4); vibe(e.tier >= 2 ? HAP.sharp : HAP.light); break;
     case 'item': sfx.item(); say(ITEMS[e.it].icon + ' ' + ITEMS[e.it].name.toUpperCase(), cx, H * 0.4, '#ffffff', 18); if (G.N <= 4) tip('item', 'Tap the right side of the screen to use your item.', 2.6); break;
@@ -5632,6 +5641,15 @@ function hud(G, t) {
   // the speed, and streaks at the screen's edges on a boost
   { ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(24 * k)}px ${TF}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.55)'; const kmh = String(Math.round(me.v * 4.6)); ctx.strokeText(kmh, W / 2, H - 46 * k); ctx.fillStyle = me.boost > 0 ? '#ffd040' : '#fff'; ctx.fillText(kmh, W / 2, H - 46 * k); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText('km/h', W / 2, H - 28 * k);
     if (me.boost > 0) { ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2 * k; for (let q = 0; q < 16; q++) { const a = q / 16 * TAU + (t * 3 % 1) * 0.4, r0 = Math.max(W, H) * (0.42 + ((q * 37 + Math.floor(t * 30) * 13) % 10) * 0.012), r1 = r0 + Math.max(W, H) * 0.14; ctx.beginPath(); ctx.moveTo(W / 2 + Math.cos(a) * r0, H / 2 + Math.sin(a) * r0 * 0.7); ctx.lineTo(W / 2 + Math.cos(a) * r1, H / 2 + Math.sin(a) * r1 * 0.7); ctx.stroke(); } } }
+  // THE TURBO METER (25 Nov 2026, his words: "Build turbo while drifting. Longer successful drifts should earn more turbo, with a clearly visible
+  // meter"). It was a thin ring round the DRIFT button, under the very thumb that holds it. Now a wide bar in the middle of the screen, under the
+  // kart: it fills while he slides (blue, then orange, then purple, with a mark where each begins), and on letting go it burns down as the boost runs.
+  { const bw = Math.min(210 * k, W * 0.54), bh = 16 * k, bx = W / 2 - bw / 2, by = H * 0.8, u = me.drift ? Math.min(1, me.charge / TURBO) : 0, bo = me.boost > 0 ? Math.min(1, me.boost / Math.max(0.3, me.boost0 || 1.6)) * Math.min(1, (me.boost0 || 1.6) / 1.6) : 0, tc = hex(TIERC[me.drift ? (me.tier || 0) : 0]);
+    ctx.fillStyle = 'rgba(10,14,26,.78)'; rrect(bx - 4 * k, by - 4 * k, bw + 8 * k, bh + 8 * k, 9 * k); ctx.fill(); ctx.strokeStyle = me.drift ? tc : me.boost > 0 ? '#ffd040' : 'rgba(255,255,255,.3)'; ctx.lineWidth = 2 * k; rrect(bx - 4 * k, by - 4 * k, bw + 8 * k, bh + 8 * k, 9 * k); ctx.stroke();
+    if (me.drift && u > 0) { ctx.fillStyle = tc; rrect(bx, by, Math.max(bh * 0.6, bw * u), bh, 5 * k); ctx.fill(); if (me.tier >= 1) { ctx.globalAlpha = 0.35 + 0.3 * Math.sin(t * 18); ctx.fillStyle = '#fff'; rrect(bx, by, bw * u, bh * 0.4, 4 * k); ctx.fill(); ctx.globalAlpha = 1; } }
+    else if (bo > 0) { ctx.fillStyle = Math.sin(t * 30) > 0 ? '#ffd040' : '#ff9a20'; rrect(bx, by, Math.max(bh * 0.6, bw * bo), bh, 5 * k); ctx.fill(); }
+    for (const [q, tr] of [[0.55 / TURBO, 1], [1.25 / TURBO, 2], [1, 3]]) { ctx.fillStyle = u >= q ? '#fff' : hex(TIERC[tr]); ctx.fillRect(bx + bw * q - (q === 1 ? 3 * k : 1.5 * k), by - 3 * k, 3 * k, bh + 6 * k); }
+    ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)'; const lab = me.boost > 0 && !me.drift ? 'TURBO!' : 'TURBO'; ctx.strokeText(lab, W / 2, by - 13 * k); ctx.fillStyle = me.drift ? tc : me.boost > 0 ? '#ffd040' : 'rgba(255,255,255,.8)'; ctx.fillText(lab, W / 2, by - 13 * k); }
   // the two buttons of the right thumb (25 Nov 2026): DRIFT, big, to hold; the item above it, to tap. Each is drawn where it is pressed.
   { const B = btnRects(), d = B.drift, it = B.item, held = !!G.driftHeld, tc = me.drift ? hex(TIERC[me.tier || 0]) : null;
     ctx.fillStyle = held ? 'rgba(255,154,32,.55)' : 'rgba(16,24,40,.7)'; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, TAU); ctx.fill(); ctx.strokeStyle = tc || (held ? '#ffb040' : 'rgba(255,255,255,.55)'); ctx.lineWidth = (held ? 5 : 3) * k; ctx.stroke();
@@ -5659,6 +5677,7 @@ function lessonPanel(G) { coachPanel(G); }
 // spin; three beeps and a high one at the start; a bell for each lap and a fanfare at the line.
 const sfx = {
   click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  swap() { noise(0.16, 1800, 0.05, 'bandpass', 2); tone(520, 0.1, 0.03, 'sawtooth', 0, 760, 2600); },      // the tyres squeal across as the slide changes side
   go() { tone(660, 0.2, 0.06, 'square', 0, 660, 2400); },
   light(n) { tone(n ? 440 : 880, n ? 0.18 : 0.4, 0.06, 'square', 0, n ? 440 : 880, 2400); },
   spark(t = 1) { tone(note(659, t * 3), 0.12, 0.05, 'triangle'); tone(note(659, t * 3 + 2), 0.1, 0.03, 'sine', 0.05); },

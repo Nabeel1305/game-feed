@@ -100,21 +100,25 @@ function buildWorld() {
   const S = W3.scene, R0 = W3.rng(35);
   S.traverse(o => { if (o.material && o.material.uniforms && o.material.uniforms.sunPosition) o.visible = false; });      // no sky under the sea
   // the sea floor: rolling sand, rising to the reef walls round the bay
-  const hgt = (x, z) => { const r = Math.hypot(x, z); return FLOOR + Math.sin(x * 0.11) * Math.cos(z * 0.09) * 0.9 + Math.sin(x * 0.37 + z * 0.21) * 0.25 + Math.max(0, r - R_BAY - 2) * 0.55; };
+  const spot = q => SPOTS0.find(o => o.k === q), near = (q, x, z, soft = 6) => { const o = spot(q); return clamp((o.r + soft * 0.4 - Math.hypot(x - o.x, z - o.z)) / soft, 0, 1); }, sm = u => u * u * (3 - 2 * u);
+  const hgt = (x, z) => { const r = Math.hypot(x, z); return FLOOR + Math.sin(x * 0.11) * Math.cos(z * 0.09) * 0.9 + Math.sin(x * 0.37 + z * 0.21) * 0.25 + Math.max(0, r - R_BAY - 2) * 0.55 - sm(near('deep', x, z, 9)) * 4.2; };      /* the drop: a hollow in the floor */
   const sandMap = W3.grainTex(256, 8, 205, 40, 6); sandMap.repeat.set(26, 26);
-  const floor = W3.terrain({ size: 200, seg: 120, height: hgt, colour: (x, z, h) => { const r = Math.hypot(x, z), u = clamp((r - R_BAY) / 10, 0, 1); return [0.62 - u * 0.3, 0.6 - u * 0.3, 0.5 - u * 0.2]; }, map: sandMap });
+  const floor = W3.terrain({ size: 200, seg: 120, height: hgt, colour: (x, z, h) => { const r = Math.hypot(x, z), u = clamp((r - R_BAY) / 10, 0, 1); let c = [0.62 - u * 0.3, 0.6 - u * 0.3, 0.5 - u * 0.2];
+      const mix = (w, t) => { c = [c[0] + (t[0] - c[0]) * w, c[1] + (t[1] - c[1]) * w, c[2] + (t[2] - c[2]) * w]; };      /* each place colours its own sand, so it is seen from far off */
+      mix(sm(near('deep', x, z, 9)) * 0.9, [0.05, 0.1, 0.2]); mix(sm(near('jelly', x, z)) * 0.55, [0.62, 0.36, 0.78]); mix(sm(near('kelp', x, z)) * 0.6, [0.18, 0.34, 0.16]); mix(sm(near('wreck', x, z)) * 0.4, [0.36, 0.3, 0.24]); mix(sm(near('reef', x, z)) * 0.3, [0.86, 0.66, 0.5]); return c; }, map: sandMap });
   const caus = causticTex(); caus.repeat.set(26, 26); const caus2 = caus.clone(); caus2.needsUpdate = true; caus2.repeat.set(19, 19);
   const cm = (t, o) => new T.MeshBasicMaterial({ map: t, transparent: true, opacity: o, blending: T.AdditiveBlending, depthWrite: false, fog: true });
   const cg = floor.geometry.clone(); const cMesh1 = new T.Mesh(cg, cm(caus, 0.16)), cMesh2 = new T.Mesh(cg, cm(caus2, 0.1)); cMesh1.position.y = 0.04; cMesh2.position.y = 0.06; S.add(cMesh1, cMesh2);
   // the reef walls: big rocks in a ring, tall enough to be seen from above
   const rockM = new T.MeshStandardMaterial({ color: 0x6a6a62, roughness: 0.95, flatShading: true }), wall = new T.InstancedMesh(new T.DodecahedronGeometry(1, 1), rockM, 150), d = new T.Object3D(), col = new T.Color();
-  for (let i = 0; i < 150; i++) { const a = i / 150 * TAU + R0() * 0.05, r = R_BAY + 3 + R0() * 7, s = 2.5 + R0() * 4; d.position.set(Math.cos(a) * r, FLOOR + s * 0.3 + R0() * 2, Math.sin(a) * r); d.rotation.set(R0() * 3, R0() * 3, R0() * 3); d.scale.set(s, s * (0.8 + R0() * 1.1), s); d.updateMatrix(); wall.setMatrixAt(i, d.matrix); wall.setColorAt(i, col.setHSL(0.08 + R0() * 0.05, 0.12, 0.3 + R0() * 0.2)); } S.add(wall);
+  for (let i = 0; i < 150; i++) { const a = i / 150 * TAU + R0() * 0.05, r = R_BAY + 3 + R0() * 8, s = 4.5 + R0() * 6; d.position.set(Math.cos(a) * r, FLOOR + s * 0.3 + R0() * 2, Math.sin(a) * r); d.rotation.set(R0() * 3, R0() * 3, R0() * 3); d.scale.set(s, s * (0.8 + R0() * 1.1), s); d.updateMatrix(); wall.setMatrixAt(i, d.matrix); wall.setColorAt(i, col.setHSL(0.08 + R0() * 0.05, 0.12, 0.3 + R0() * 0.2)); } S.add(wall);
   // coral and rocks on the floor
   const coralCols = [0xc85a62, 0xd08a52, 0x9a6ab8, 0xc8b05a, 0x5aa8a0, 0xc86a9a];
   const coralA = new T.InstancedMesh(new T.IcosahedronGeometry(0.6, 3), new T.MeshStandardMaterial({ roughness: 0.85, bumpMap: W3.grainTex(128, 5, 128, 120, 3), bumpScale: 2.5 }), 110), coralB = new T.InstancedMesh(new T.ConeGeometry(0.25, 1.6, 6), new T.MeshStandardMaterial({ roughness: 0.7 }), 110);
   const stones = new T.InstancedMesh(new T.DodecahedronGeometry(0.6, 0), rockM, 30);
   const place = [], put = (m, i, x, z, s, sy, c) => { d.position.set(x, hgt(x, z) + s * 0.3, z); d.rotation.set(R0() * 0.4, R0() * 6, R0() * 0.4); d.scale.set(s, s * (sy || 1), s); d.updateMatrix(); m.setMatrixAt(i, d.matrix); if (c != null) m.setColorAt(i, col.setHex(c)); };
-  for (let i = 0; i < 110; i++) { const a = R0() * TAU, r = Math.sqrt(R0()) * (R_BAY - 2); const x = Math.cos(a) * r, z = Math.sin(a) * r, c = coralCols[(R0() * coralCols.length) | 0]; put(coralA, i, x, z, 0.3 + R0() * 0.7, 0.45, c); const a2 = a + 0.3 * R0(); put(coralB, i, x + Math.cos(a2) * 1.2, z + Math.sin(a2) * 1.2, 0.5 + R0() * 0.9, 1, coralCols[(R0() * coralCols.length) | 0]); }
+  const scat = (R, core = 0.6) => { const a = R() * TAU, inC = R() < core, r = inC ? Math.sqrt(R()) * 16 : 10 + Math.sqrt(R()) * (R_BAY - 13); let x = Math.cos(a) * r, z = Math.sin(a) * r; const dp = spot('deep'); if (Math.hypot(x - dp.x, z - dp.z) < dp.r) { x = -x; z = -z; } return [x, z]; };      /* (nothing grows in the drop) */
+  for (let i = 0; i < 110; i++) { const [x, z] = scat(R0), a = R0() * TAU, c = coralCols[(R0() * coralCols.length) | 0]; put(coralA, i, x, z, 0.3 + R0() * 0.7, 0.45, c); const a2 = a + 0.3 * R0(); put(coralB, i, x + Math.cos(a2) * 1.2, z + Math.sin(a2) * 1.2, 0.5 + R0() * 0.9, 1, coralCols[(R0() * coralCols.length) | 0]); }
   for (let i = 0; i < 30; i++) { const a = R0() * TAU, r = Math.sqrt(R0()) * R_BAY; put(stones, i, Math.cos(a) * r, Math.sin(a) * r, 0.6 + R0() * 1.6, 0.6, null); }
   S.add(coralA, coralB, stones);
   // 25 Nov 2026 ("improve the graphics"): the reef was balls and cones. Added: staghorn coral (a bush of branches), sea fans (flat lace fans that
@@ -130,10 +134,30 @@ function buildWorld() {
       [merge(anem), new T.MeshStandardMaterial({ roughness: 0.6 }), 45, [0xf06a8a, 0xb07af0, 0x60d0b0, 0xf0a040], 0.7, 1.3], [starG, new T.MeshStandardMaterial({ roughness: 0.8 }), 30, [0xe8603a, 0xf0a030, 0xb04a8a], 0.5, 1.0],
       [fanG, new T.MeshStandardMaterial({ map: fanT, alphaMap: fanT, transparent: true, alphaTest: 0.35, side: T.DoubleSide, roughness: 0.8 }), 45, [0xc060d0, 0xf07048, 0xf0b040, 0xe04a7a], 0.8, 2.0]];
     const lift = mt => { mt.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n #ifdef USE_COLOR\n totalEmissiveRadiance += vColor.rgb * 0.3;\n #endif'); }; }; lift(coralA.material); lift(coralB.material);
-    V3deco = []; for (const [geo, mat, n, cols, s0, s1] of sets) { lift(mat); const im = new T.InstancedMesh(geo, mat, n); for (let i = 0; i < n; i++) { const a = R1() * TAU, r = 2 + Math.sqrt(R1()) * (R_BAY - 3), x = Math.cos(a) * r, z = Math.sin(a) * r, sc = s0 + R1() * (s1 - s0); d.position.set(x, hgt(x, z) - 0.02, z); d.rotation.set(0, R1() * TAU, 0); d.scale.setScalar(sc); d.updateMatrix(); im.setMatrixAt(i, d.matrix); im.setColorAt(i, col.setHex(cols[(R1() * cols.length) | 0])); } S.add(im); V3deco.push(im); } }
+    V3deco = []; for (const [geo, mat, n, cols, s0, s1] of sets) { lift(mat); const im = new T.InstancedMesh(geo, mat, n); for (let i = 0; i < n; i++) { const [x, z] = scat(R1, 0.55), sc = s0 + R1() * (s1 - s0); d.position.set(x, hgt(x, z) - 0.02, z); d.rotation.set(0, R1() * TAU, 0); d.scale.setScalar(sc); d.updateMatrix(); im.setMatrixAt(i, d.matrix); im.setColorAt(i, col.setHex(cols[(R1() * cols.length) | 0])); } S.add(im); V3deco.push(im); } }
   // kelp: tall ribbons that sway (the forest has many)
   const kelpG = new T.PlaneGeometry(0.5, 1, 1, 6); kelpG.translate(0, 0.5, 0); const kelpM = new T.MeshStandardMaterial({ color: 0x4a7a2a, emissive: 0x1c3a10, roughness: 0.8, side: T.DoubleSide, transparent: true, opacity: 0.92 });
-  const kelp = new T.InstancedMesh(kelpG, kelpM, 220), kelpL = []; for (let i = 0; i < 220; i++) { const a = R0() * TAU, r = 4 + Math.sqrt(R0()) * (R_BAY - 4), x = Math.cos(a) * r, z = Math.sin(a) * r; kelpL.push({ x, z, y: hgt(x, z), h: 5 + R0() * 7, ph: R0() * 6, rot: R0() * 6 }); } S.add(kelp);
+  const kelp = new T.InstancedMesh(kelpG, kelpM, 220), kelpL = []; for (let i = 0; i < 220; i++) { const kb = spot('kelp'), a = R0() * TAU, inK = i < 170, r = inK ? Math.sqrt(R0()) * (kb.r + 2) : 6 + Math.sqrt(R0()) * (R_BAY - 8), x = (inK ? kb.x : 0) + Math.cos(a) * r, z = (inK ? kb.z : 0) + Math.sin(a) * r; kelpL.push({ x, z, y: hgt(x, z), h: 5 + R0() * 7, ph: R0() * 6, rot: R0() * 6 }); } S.add(kelp);
+  // THE PLACES (25 Nov 2026: "make the field of play bigger... more challenging and engaging"): the wreck, the jelly garden's sea whips, the rocks
+  // round the drop, and a treasure chest at each of the three
+  const chests = {}, M2 = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85, flatShading: true }, o || {}));
+  { const w = spot('wreck'), g = new T.Group(), wood = M2(0xa8743c, { emissive: 0x3a240e, emissiveIntensity: 0.9 }), dark = M2(0x6a4624, { emissive: 0x24160a, emissiveIntensity: 0.9 }), deck = M2(0xc89a5c, { emissive: 0x40280e, emissiveIntensity: 0.8 });
+    const half = (len, bow) => { const h2 = new T.Group(), body = new T.Mesh(new T.CylinderGeometry(1.5, 1.2, len, 7, 1, false, 0, Math.PI), wood); body.rotation.z = Math.PI / 2; body.rotation.y = 0; body.scale.set(1, 1, 1.05); h2.add(body);
+      const dk = new T.Mesh(new T.BoxGeometry(len, 0.14, 2.7), deck); dk.position.y = 0.02; h2.add(dk); for (let i = 0; i < 4; i++) { const pl = new T.Mesh(new T.BoxGeometry(0.08, 0.16, 2.72), dark); pl.position.set(-len / 2 + (i + 0.5) * len / 4, 0.03, 0); h2.add(pl); }
+      if (bow) { const b2 = new T.Mesh(new T.ConeGeometry(1.45, 2.6, 7, 1, false, 0, Math.PI), wood); b2.rotation.z = -Math.PI / 2; b2.position.x = len / 2 + 1.3; h2.add(b2); } else { const st = new T.Mesh(new T.BoxGeometry(0.5, 1.5, 2.6), dark); st.position.set(-len / 2 - 0.1, 0.6, 0); h2.add(st); const cab = new T.Mesh(new T.BoxGeometry(2.2, 1.1, 2.0), wood); cab.position.set(-len / 2 + 1.3, 0.6, 0); h2.add(cab); }
+      return h2; };
+    const a2 = half(6, true); a2.position.set(3.9, 1.0, 0.3); a2.rotation.set(0.5, 0.12, 0.1); const b2 = half(5, false); b2.position.set(-3.4, 0.9, -0.4); b2.rotation.set(-0.35, -0.2, -0.08); g.add(a2, b2);
+    for (let i = 0; i < 5; i++) { const rb = new T.Mesh(new T.TorusGeometry(1.25, 0.09, 5, 10, Math.PI), dark); rb.position.set(-0.9 + i * 0.5, 0.2, 0); rb.rotation.set(0.2 * (i - 2), Math.PI / 2, 0); g.add(rb); }
+    const mast = new T.Mesh(new T.CylinderGeometry(0.13, 0.2, 9, 6), dark); mast.position.set(1.5, 0.5, 3.6); mast.rotation.set(Math.PI / 2 - 0.12, 0, 0.9); g.add(mast);
+    const sail = new T.Mesh(new T.PlaneGeometry(3.4, 2.2, 3, 2), new T.MeshStandardMaterial({ color: 0xd8d0b8, roughness: 1, side: T.DoubleSide, transparent: true, opacity: 0.85 })); sail.position.set(2.6, 0.5, 4.6); sail.rotation.set(-Math.PI / 2 + 0.2, 0, 0.9); g.add(sail);
+    g.position.set(w.x, hgt(w.x, w.z) - 0.25, w.z); g.rotation.y = 0.55; g.scale.setScalar(1.25); S.add(g); }
+  { const jg = spot('jelly'), whip = new T.InstancedMesh(new T.ConeGeometry(0.28, 2.6, 6), new T.MeshStandardMaterial({ roughness: 0.6, emissive: 0x7030a0, emissiveIntensity: 0.5 }), 46); for (let i = 0; i < 46; i++) { const a = R0() * TAU, r = (i < 30 ? 0.75 + R0() * 0.35 : R0() * 0.7) * jg.r, x = jg.x + Math.cos(a) * r, z = jg.z + Math.sin(a) * r, sc = 0.6 + R0() * 1.1; d.position.set(x, hgt(x, z) + 1.2 * sc, z); d.rotation.set((R0() - 0.5) * 0.3, R0() * 6, (R0() - 0.5) * 0.3); d.scale.set(sc * 0.8, sc, sc * 0.8); d.updateMatrix(); whip.setMatrixAt(i, d.matrix); whip.setColorAt(i, col.setHex([0xe070ff, 0xff7ac8, 0xa070ff, 0xff9ae0][i % 4])); } S.add(whip); }
+  { const dp = spot('deep'), rim = new T.InstancedMesh(new T.DodecahedronGeometry(1, 0), rockM, 26); for (let i = 0; i < 26; i++) { const a = i / 26 * TAU + R0() * 0.2, r = dp.r * (0.95 + R0() * 0.2), x = dp.x + Math.cos(a) * r, z = dp.z + Math.sin(a) * r, sc = 1.2 + R0() * 2.2; d.position.set(x, hgt(x, z) + sc * 0.35, z); d.rotation.set(R0() * 3, R0() * 3, R0() * 3); d.scale.set(sc, sc * (0.7 + R0() * 0.8), sc); d.updateMatrix(); rim.setMatrixAt(i, d.matrix); rim.setColorAt(i, col.setHSL(0.6, 0.15, 0.22 + R0() * 0.15)); } S.add(rim); }
+  for (const q of SPOTS0) { if (q.cx == null) continue; const g = new T.Group(), x = q.x + q.cx, z = q.z + q.cz, gold = new T.MeshStandardMaterial({ color: 0xffc830, emissive: 0xc88a10, emissiveIntensity: 0.7, roughness: 0.35, metalness: 0.6 });
+    const base = new T.Mesh(new T.BoxGeometry(1.3, 0.7, 0.85), M2(0xa06a30, { emissive: 0x4a2a0c, emissiveIntensity: 0.9 })); base.position.y = 0.35; const lid = new T.Mesh(new T.CylinderGeometry(0.43, 0.43, 1.32, 8, 1, false, 0, Math.PI), M2(0xb47a38, { emissive: 0x4a2a0c, emissiveIntensity: 0.9 })); lid.rotation.z = Math.PI / 2; lid.rotation.y = 0; lid.position.set(0, 0.72, -0.2); lid.rotation.x = -0.9;
+    const pile = new T.Mesh(new T.SphereGeometry(0.5, 10, 6, 0, TAU, 0, Math.PI / 2), gold); pile.scale.set(1.15, 0.6, 0.75); pile.position.y = 0.66; g.add(base, lid, pile); for (const sx of [-0.42, 0.42]) { const bd = new T.Mesh(new T.BoxGeometry(0.12, 0.74, 0.9), gold); bd.position.set(sx, 0.36, 0); g.add(bd); }
+    const halo = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: null, color: 0xffd040, transparent: true, opacity: 0.5, blending: T.AdditiveBlending, depthWrite: false })); halo.rotation.x = -Math.PI / 2; halo.position.y = 1.4; g.add(halo);
+    g.position.set(x, hgt(x, z), z); g.rotation.y = R0() * 6; g.scale.setScalar(1.5); S.add(g); chests[q.k] = { g, halo }; }
   // light from above: soft shafts that drift, and specks of sea snow
   const rayT = gradTex([[0, 'rgba(255,255,255,0.9)'], [0.6, 'rgba(255,255,255,0.25)'], [1, 'rgba(255,255,255,0)']]), rays = [];
   for (let i = 0; i < 7; i++) { const m = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: rayT, transparent: true, opacity: 0.07, blending: T.AdditiveBlending, depthWrite: false, fog: false, side: T.DoubleSide })); S.add(m); rays.push({ m, ox: (R0() - 0.5) * 2, oz: (R0() - 0.5) * 2, ph: R0() * 6, w: 0.6 + R0() * 0.8 }); }
@@ -153,7 +177,8 @@ function buildWorld() {
   const glowT = (() => { const c2 = document.createElement('canvas'); c2.width = c2.height = 64; const g = c2.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new T.CanvasTexture(c2); })();
   const goldGlow = new T.InstancedMesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: glowT, color: 0xffd040, transparent: true, opacity: 0.55, blending: T.AdditiveBlending, depthWrite: false }), 8); goldGlow.count = 0; goldGlow.frustumCulled = false; S.add(goldGlow);
   const lamp = new T.PointLight(0xbfe8ff, 0, 30, 1.2); S.add(lamp);      // in the deep: a little light of your own
-  V3 = { T, S, floor, cMesh1, cMesh2, caus, caus2, kelp, kelpL, kelpM, coralA, rays, snow, inst, shark, goldGlow, lamp, place: -1, sandM: floor.material, rockM };
+  for (const q in chests) chests[q].halo.material.map = glowT;
+  V3 = { T, S, chests, floor, cMesh1, cMesh2, caus, caus2, kelp, kelpL, kelpM, coralA, rays, snow, inst, shark, goldGlow, lamp, place: -1, sandM: floor.material, rockM };
   W3.setQuality(stepN); return V3;
 }
 const SV = new (window.THREE ? THREE.Vector3 : Object)();
@@ -188,13 +213,18 @@ function onEvent(G, e) {
     case 'bitten': sfx.caught(); FX.red = 0.9; FX.shake = 7; FX.stop = 0.07; vibe(HAP.thud); say('BITTEN!', sp.x, sp.y - 50 * k, '#ff8a7a', 26); burst(sp.x, sp.y, '#c0202a', 22, 170); bubbles(sp.x, sp.y, 10); break;
     case 'frenzy': sfx.frenzy(); FX.flash = 0.8; vibe(HAP.best); say('FEEDING FRENZY!', cx, H * 0.3, '#ffb83a', 36); say('EVERYTHING COUNTS DOUBLE', cx, H * 0.36, '#ffe08a', 18); ui.combo = 0; break;
     case 'frenzyend': sfx.ding(); break;
+    case 'found': say(SPOT[e.spot].name, cx, H * 0.3, SPOT[e.spot].col, 30); say('A NEW PLACE  +2 🪙', cx, H * 0.36, '#ffe08a', 16); sfx.ding(); vibe(HAP.light); break;
+    case 'fishedout': say('FISHED OUT', cx, H * 0.3, '#ffd0a0', 26); sfx.ding(); break;
+    case 'chest': { const p = scr(e.x, 0, e.z); burst(p.x, p.y, '#ffd040', 30, 190); burst(p.x, p.y, '#ffffff', 10, 120); bubbles(p.x, p.y, 14); say(`TREASURE! ${e.n} OF 3`, cx, H * 0.3, '#ffd040', 30); sfx.coin(4); if (sfx.gold) sfx.gold(); FX.flash = 0.5; vibe(HAP.best); break; }
+    case 'treasure': say('ALL THE TREASURE!', cx, H * 0.24, '#ffd040', 26); break;
     case 'sting': sfx.sting(); say('OUCH! JELLYFISH', sp.x, sp.y - 40 * k, '#f0a0ff', 20); FX.shake = 3; tip('jelly', 'Jellyfish sting and slow you: swim round them', 2.8); break;
     case 'spike': sfx.spike(); say('SPIKY!', sp.x, sp.y - 40 * k, '#e8d070', 18); tip('puffer', 'Pufferfish puff up when you come near: dash at them to catch one before it puffs', 3.2); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', cx, H * 0.36, '#ffe08a', 26); sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, H * 0.4, '#9be3b5', 24); sfx.coin(e.n); break;
     case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('NOW THE REAL HUNT!', cx, H * 0.36, '#ffe08a', 26); sfx.win(); ui.snap = true; if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
-    case 'ready': FX.flash = 0.6; sfx.ding(); vibe(HAP.best); say('BIG ENOUGH!', cx, H * 0.3, '#ffe08a', 34); say('NOW EAT THE BIG ONE 👑', cx, H * 0.37, '#ffd040', 24); break;
+    case 'ready': FX.flash = 0.6; sfx.ding(); vibe(HAP.best); say('BIG ENOUGH!', cx, H * 0.3, '#ffe08a', 34); say(e.spot && SPOT[e.spot] ? `THE BIG ONE 👑 · ${SPOT[e.spot].name}` : 'THE BIG ONE 👑', cx, H * 0.37, '#ffd040', 22); break;
+    case 'met': FX.flash = Math.max(FX.flash || 0, 0.3); sfx.ding(); vibe(HAP.tap || 12); say('THE BIG ONE! 👑', cx, H * 0.3, '#ffd040', 30); break;
     case 'won': sfx.win(); vibe(HAP.best); say('GOT THE BIG ONE!', cx, H * 0.3, '#ffe08a', 36); break;
     case 'lost': sfx.lose(); say(e.why === 'starved' ? 'TOO HUNGRY...' : 'EATEN!', cx, H * 0.3, '#ffb4a8', 32); break;
   }
@@ -211,6 +241,7 @@ function animate(g, t, dt) {
   u.M.emissive.setHex(m.stung > 0 ? 0x803060 : g.frenzy > 0 ? 0x6a3200 : m.hunger <= 0 ? 0x401010 : 0x000000);
   // the fish, kind by kind
   for (const q in V.inst) V.inst[q].count = 0; V.goldGlow.count = 0;
+  if (V.chests) for (const q of (g.spots || [])) { const c = V.chests[q.k]; if (!c) continue; c.g.visible = !!(q.chest && !q.chest.got) && !g.lesson; const z = 2.6 + Math.sin(t * 3 + q.x) * 0.5; c.halo.scale.set(z, z, 1); c.halo.material.opacity = 0.4 + 0.2 * Math.sin(t * 3 + q.x); }
   for (const f of g.fish) { const I = V.inst[f.kind]; if (!I || I.count >= I.instanceMatrix.count) continue; const sw = f.sp.kind === 'jelly' ? 0 : Math.sin(f.wob * (6 + f.v * 1.5) + f.id) * 0.14, by = Math.sin(f.wob * 0.8 + f.id) * 0.15 + (f.sp.kind === 'jelly' ? 0.4 : 0);
     DUMMY.position.set(f.x, by, f.z); DUMMY.rotation.set(0, -f.h + sw, f.sp.kind === 'jelly' ? 0 : 0, 'YXZ'); let sc = f.size; if (f.kind === 'puffer') sc *= 1 + f.puff * 0.7;
     if (f.kind === 'jelly') { const pu = 1 + Math.sin(f.wob * 2.2) * 0.1; DUMMY.scale.set(sc * pu, sc / pu, sc * pu); } else DUMMY.scale.setScalar(sc); DUMMY.updateMatrix(); I.setMatrixAt(I.count++, DUMMY.matrix);
@@ -289,6 +320,22 @@ function hud(G, t) {
     ctx.fillStyle = low ? (Math.sin(t * 8) > 0 ? '#ff5a4a' : '#ff9a4a') : '#ffb83a'; if (ui.hungerShow > 0.01) { rrect(x, hy, Math.max(9 * k, w * 0.5 * ui.hungerShow), 9 * k, 4.5 * k); ctx.fill(); }
     ctx.textAlign = 'left'; ctx.font = `800 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = low ? '#ffb4a8' : 'rgba(255,255,255,.8)'; ctx.fillText(m.hunger <= 0 ? 'STARVING!' : low ? 'HUNGRY!' : 'food', x + w * 0.5 + 8, hy + 4.5 * k);
     ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText(`🪙 ${G.coins}`, x + w, hy + 4.5 * k);
+    // THE MAP (25 Nov 2026): the whole sea in a ring: each place by its sign (dim while it is fished out, ringed until he has been there), the chests
+    // still to find in gold, the big one's crown, and him. And when there is little to eat where he is, a marker at the edge of the screen points to
+    // the nearest place that still has fish.
+    { const R = 36 * k, cx2 = W - 14 - R, cy2 = hy + 22 * k + R, sc = R / (R_BAY + 4), here = spotAt(G, m.x, m.z);
+      ctx.fillStyle = 'rgba(4,20,32,.72)'; ctx.beginPath(); ctx.arc(cx2, cy2, R + 4 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1.5; ctx.stroke();
+      for (const q of G.spots) { const px = cx2 + q.x * sc, py = cy2 + q.z * sc, out = q.out > 0; ctx.globalAlpha = out ? 0.3 : 1; ctx.fillStyle = SPOT[q.k].col; ctx.beginPath(); ctx.arc(px, py, 6.5 * k, 0, TAU); ctx.fill();
+        if (!q.found) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(px, py, (8.5 + Math.sin(t * 4) * 1.2) * k, 0, TAU); ctx.stroke(); }
+        if (q.chest && !q.chest.got) { ctx.globalAlpha = 1; ctx.fillStyle = '#ffd040'; ctx.fillRect(px + 4 * k, py - 9 * k, 5 * k, 5 * k); ctx.strokeStyle = '#3a2a04'; ctx.lineWidth = 1; ctx.strokeRect(px + 4 * k, py - 9 * k, 5 * k, 5 * k); } ctx.globalAlpha = 1; }
+      const pz = G.fish.find(f => f.prize); if (pz) { ctx.font = `${Math.round(11 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('👑', cx2 + pz.x * sc, cy2 + pz.z * sc); }
+      ctx.save(); ctx.translate(cx2 + m.x * sc, cy2 + m.z * sc); ctx.rotate(m.face); ctx.fillStyle = '#fff'; ctx.strokeStyle = '#04141e'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(6 * k, 0); ctx.lineTo(-4 * k, -4 * k); ctx.lineTo(-4 * k, 4 * k); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+      // ...and once he is big enough, to the big one, in gold, wherever it waits
+      if (G.ready ? !!pz : !(here && !(here.out > 0))) { let to = null, bd = 1e9; if (G.ready) { to = { x: pz.x, z: pz.z, k: 'prize' }; bd = Math.hypot(pz.x - m.x, pz.z - m.z); } else for (const q of G.spots) { if (q.out > 0 || q === here) continue; const d = Math.hypot(q.x - m.x, q.z - m.z); if (d < bd) { bd = d; to = q; } }
+        const SP1 = to && (to.k === 'prize' ? { col: '#ffd040', icon: '👑' } : SPOT[to.k]);
+        if (to) { const p1 = scr(to.x, 0, to.z), on = p1.front !== false && p1.x > 30 && p1.x < W - 30 && p1.y > 150 * k && p1.y < H - 60; if (!on) { const p0 = scr(m.x, 0, m.z), dx = (to.x - m.x), dz = (to.z - m.z), a = Math.atan2(p1.y - p0.y, p1.x - p0.x), ccx = W / 2, ccy = H * 0.52, mx = W / 2 - 34 * k, my = H * 0.3, q2 = Math.min(mx / Math.abs(Math.cos(a) || 1e-6), my / Math.abs(Math.sin(a) || 1e-6)), bx2 = ccx + Math.cos(a) * q2, by3 = ccy + Math.sin(a) * q2, z2 = 1 + 0.08 * Math.sin(t * 6);
+            ctx.save(); ctx.translate(bx2, by3); ctx.fillStyle = 'rgba(4,20,32,.8)'; ctx.beginPath(); ctx.arc(0, 0, 19 * k * z2, 0, TAU); ctx.fill(); ctx.strokeStyle = SP1.col; ctx.lineWidth = 3 * k; ctx.stroke(); ctx.font = `${Math.round(17 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(SP1.icon, 0, 1); ctx.rotate(a); ctx.fillStyle = SP1.col; ctx.beginPath(); ctx.moveTo(31 * k, 0); ctx.lineTo(22 * k, -7 * k); ctx.lineTo(22 * k, 7 * k); ctx.closePath(); ctx.fill(); ctx.restore();
+            ctx.font = `800 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(`${Math.round(bd)} m`, bx2, by3 + 30 * k); } } } }
     // the chain: five lights over him, one for each fish eaten soon after the last, and a ring that runs down until the chain breaks; then the frenzy's own bar
     { const p0 = scr(m.x, 0, m.z), ry = p0.y - Math.max(34 * k, sizeOf(G) * W / ui.cam.span * 0.42);
       if (G.frenzy > 0) { const fw = 120 * k, a = G.frenzy / FRENZY; ctx.fillStyle = 'rgba(0,0,0,.5)'; rrect(p0.x - fw / 2, ry - 5 * k, fw, 10 * k, 5 * k); ctx.fill(); ctx.fillStyle = Math.sin(t * 16) > 0 ? '#ffb83a' : '#ff7a2a'; rrect(p0.x - fw / 2, ry - 5 * k, Math.max(10 * k, fw * a), 10 * k, 5 * k); ctx.fill(); ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(14 * k)}px ${TF}`; ctx.fillStyle = '#ffe08a'; ctx.fillText('FRENZY ×2', p0.x, ry - 16 * k); }

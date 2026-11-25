@@ -15,7 +15,7 @@ function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Mat
   for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
   for (const t of TXT) { t.t += dt; t.y -= dt * 20; } while (TXT.length && TXT[0].t > 1.5) TXT.shift(); if (hint) { hint.t += dt; if (hint.t > hint.secs) hint = null; } }
 const PPM = () => Math.min(W, H * 0.62) / 390 * 29;      // pixels per metre (22 Nov 2026: 20 made the bike a speck on an empty screen)
-const toS = (x, y) => ({ x: (x - camX) * PPM() + W * 0.3, y: H * 0.56 - (y - camY) * PPM() });
+const toS = (x, y) => ({ x: (x - camX) * PPM() + W * 0.3, y: H * 0.47 - (y - camY) * PPM() });      /* 25 Nov 2026: the bike rides higher on the screen, so the ground it will land on shows above the two rows of buttons */
 function lay() { const s = S1(); return { s, left: { x: 0, y: H * 0.62, w: W / 2, h: H * 0.38 }, right: { x: W / 2, y: H * 0.62, w: W / 2, h: H * 0.38 } }; }
 function drawBike(x, y, a, s, lean, alpha = 1, col = '#ff3a2a') { const c = ctx, m = PPM(); c.save(); c.globalAlpha = alpha; c.translate(x, y); c.rotate(-a); const r = 0.42 * m, wb = 0.78 * m;
   for (const wx of [-wb, wb]) { c.strokeStyle = '#111'; c.lineWidth = 0.14 * m; c.beginPath(); c.arc(wx, -r, r, 0, TAU); c.stroke(); c.strokeStyle = 'rgba(200,200,200,.7)'; c.lineWidth = 1; for (let i = 0; i < 4; i++) { const q = i * Math.PI / 4 + x * 0.05; c.beginPath(); c.moveTo(wx + Math.cos(q) * r * 0.85, -r + Math.sin(q) * r * 0.85); c.lineTo(wx - Math.cos(q) * r * 0.85, -r - Math.sin(q) * r * 0.85); c.stroke(); } }
@@ -60,7 +60,7 @@ function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, s = S1
     const th = slopeAt(g, x), p = toS(x, groundY(g, x)), d = Math.abs(wrap(b.a - th)), okc = d < g.cfg.tol * 0.6 ? '#4aff8a' : d < g.cfg.tol ? '#ffd020' : '#ff5a4a'; ctx.strokeStyle = okc; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(p.x - Math.cos(th) * 1.4 * m, p.y + Math.sin(th) * 1.4 * m); ctx.lineTo(p.x + Math.cos(th) * 1.4 * m, p.y - Math.sin(th) * 1.4 * m); ctx.stroke();
     const bp = toS(b.x, b.y); ctx.strokeStyle = okc; ctx.globalAlpha = 0.5; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(bp.x, bp.y - 0.8 * m, 1.6 * m, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
   // the bike
-  if (!(g.wait > 0 && g.crashed)) { const p = toS(b.x, b.y), L = leanNow(g); if (b.boost > 0) { for (let i = 1; i < 6; i++) { ctx.fillStyle = `rgba(255,${150 + i * 15},40,${0.35 - i * 0.05})`; ctx.beginPath(); ctx.arc(p.x - i * 0.5 * m * Math.cos(b.a), p.y - 0.5 * m + i * 0.5 * m * Math.sin(b.a), (0.5 - i * 0.06) * m, 0, TAU); ctx.fill(); } } drawBike(p.x, p.y, b.a, s, L === 'brake' ? 0 : L); }
+  if (!(g.wait > 0 && g.crashed)) { const p = toS(b.x, b.y), L0 = leanNow(g), L = b.air && flipNow(g) ? flipNow(g) : L0; if (b.boost > 0) { for (let i = 1; i < 6; i++) { ctx.fillStyle = `rgba(255,${150 + i * 15},40,${0.35 - i * 0.05})`; ctx.beginPath(); ctx.arc(p.x - i * 0.5 * m * Math.cos(b.a), p.y - 0.5 * m + i * 0.5 * m * Math.sin(b.a), (0.5 - i * 0.06) * m, 0, TAU); ctx.fill(); } } drawBike(p.x, p.y, b.a, s, L === 'brake' ? 0 : L); }
   for (const p of PT) { ctx.globalAlpha = Math.max(0, 1 - p.t / p.life); ctx.fillStyle = p.col; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1; ctx.restore();
   hud(g, s);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; for (const q of TXT) { const a = q.t < 1.1 ? 1 : 1 - (q.t - 1.1) / 0.4; ctx.globalAlpha = Math.max(0, a); ctx.font = `${Math.round(q.size * s)}px ${TF}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(q.txt, q.x, q.y); ctx.fillStyle = q.col; ctx.fillText(q.txt, q.x, q.y); } ctx.globalAlpha = 1;
@@ -68,10 +68,15 @@ function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, s = S1
     ctx.fillStyle = 'rgba(10,16,24,.9)'; rrect(W / 2 - ww / 2, H * 0.3 - hh / 2, ww, hh, 10); ctx.fill(); ctx.fillStyle = '#ffe3a0'; lines.forEach((l, i) => ctx.fillText(l, W / 2, H * 0.3 - hh / 2 + 7 + lh * (i + 0.5))); ctx.globalAlpha = 1; }
   if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.25})`; ctx.fillRect(0, 0, W, H); } if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,220,${FX.flash * 0.35})`; ctx.fillRect(0, 0, W, H); } }
 // the top: the clock against the time to beat, the track as a line with you (and your ghost) on it; the bottom: the two thumbs
+// where the four buttons are (drawn in hud(), pressed in part5): the LEAN pair along the bottom, the FLIP pair above it
+function padRects() { const s = S1(), w = W / 2 - 21, h = 56 * s, y1 = H - 16 * s - h, y0 = y1 - h - 10 * s; return { l: { x: 14, y: y0, w, h }, r: { x: W / 2 + 7, y: y0, w, h }, bl: { x: 14, y: y1, w, h }, br: { x: W / 2 + 7, y: y1, w, h } }; }
 function hud(G, s) { const c = G.cfg, L = leanNow(G);
-  // the two thumb pads
-  for (const [side, on, lab] of [['l', G.hold.l || G.tl > 0, '⟲ LEAN BACK'], ['r', G.hold.r || G.tr > 0, 'LEAN FWD ⟳']]) { const x = side === 'l' ? 14 : W / 2 + 7, w = W / 2 - 21, y = H - 74 * s, h = 58 * s;
-    ctx.fillStyle = on ? 'rgba(255,176,32,.55)' : 'rgba(0,0,0,.22)'; rrect(x, y, w, h, 16); ctx.fill(); ctx.fillStyle = on ? '#fff' : 'rgba(255,255,255,.75)'; ctx.font = `${Math.round(13 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, x + w / 2, y + h / 2); }
+  // the four buttons (25 Nov 2026): each is drawn where it is pressed and does one thing. The FLIP pair is gold and lights up in the air, where it works.
+  { const P = padRects(), air = !!G.b.air;
+    for (const [id, on, lab, flip] of [['l', G.hold.l || G.tl > 0, '⟲ BACK FLIP', 1], ['r', G.hold.r || G.tr > 0, 'FRONT FLIP ⟳', 1], ['bl', G.hold.bl || G.tbl > 0, 'LEAN BACK', 0], ['br', G.hold.br || G.tbr > 0, 'LEAN FWD', 0]]) { const q = P[id];
+      ctx.fillStyle = on ? (flip ? 'rgba(255,196,40,.8)' : 'rgba(255,255,255,.42)') : flip ? (air ? 'rgba(60,34,6,.62)' : 'rgba(40,24,6,.34)') : 'rgba(0,0,0,.3)'; rrect(q.x, q.y, q.w, q.h, 16); ctx.fill();
+      ctx.strokeStyle = flip ? (air ? '#ffd040' : 'rgba(255,208,64,.4)') : 'rgba(255,255,255,.45)'; ctx.lineWidth = (flip && air ? 3 : 2) * s; rrect(q.x, q.y, q.w, q.h, 16); ctx.stroke();
+      ctx.fillStyle = on ? (flip ? '#2a1802' : '#fff') : flip ? (air ? '#ffd870' : 'rgba(255,216,112,.55)') : 'rgba(255,255,255,.85)'; ctx.font = `${Math.round((flip ? 15 : 13) * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(lab, q.x + q.w / 2, q.y + q.h / 2 + 1); } }
   if (G.lesson) { lessonPanel(G); return; }
   const y = 44 * s; ctx.fillStyle = 'rgba(0,0,0,.45)'; rrect(8, y, W - 16, 44 * s, 10); ctx.fill();
   ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.font = `${Math.round(17 * s)}px ${TF}`; ctx.fillStyle = G.clock > c.par ? '#ff8a7a' : G.clock > c.par * 0.85 ? '#ffd020' : '#fff'; ctx.fillText(G.clock.toFixed(1), 18, y + 15 * s);
@@ -84,7 +89,7 @@ function hud(G, s) { const c = G.cfg, L = leanNow(G);
 // how the game reacts
 function onEvent(G, e) { const s = S1(), b = G.b, p = toS(b.x, b.y);
   switch (e.k) {
-    case 'start': say(PLACES[G.place].name.toUpperCase(), W / 2, H * 0.24, '#fff', 18); say(`BEAT ${G.cfg.par}s`, W / 2, H * 0.29, '#ffd020', 26); sfx.go(); if (G.N <= 2) tip('lean', 'Hold the RIGHT side in the air to tip the nose down, the LEFT to lift it. Land along the slope.', 3.6); break;
+    case 'start': say(PLACES[G.place].name.toUpperCase(), W / 2, H * 0.24, '#fff', 18); say(`BEAT ${G.cfg.par}s`, W / 2, H * 0.29, '#ffd020', 26); sfx.go(); if (G.N <= 2) tip('lean', 'In the air LEAN FWD tips the nose down and LEAN BACK lifts it; the FLIP buttons spin it. Land along the slope.', 3.6); break;
     case 'air': sfx.whoosh(); break;
     case 'land': { const m = PPM(); for (let i = 0; i < (e.perfect ? 16 : 8); i++) PT.push({ x: p.x + (Math.random() - 0.5) * m, y: p.y, vx: (Math.random() - 0.5) * 160, vy: -Math.random() * 160, life: 0.5, t: 0, col: 'rgba(220,200,170,.8)', r: 2 + Math.random() * 3 });
       FX.shake = Math.min(8, 2 + e.air * 4); sfx.land(e.air);

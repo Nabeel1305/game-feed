@@ -223,11 +223,13 @@
    ],
    "changes": [
     "On a phone the camera looks nearly straight down: the hob, the board and the food fill the lower two thirds of the screen (it was a dark wall above, small food, glare and a black strip below).",
-    "25 Nov, 0.2.0 (his review): a tap on the board or any stroke is a chop; the ticket numbers and ticks the layers; tap the plate to take the top off; +1 tip built in order."
+    "25 Nov, 0.2.0 (his review): a tap on the board or any stroke is a chop; the ticket numbers and ticks the layers; tap the plate to take the top off; +1 tip built in order.",
+    "25 Nov evening, 0.3.0 (his final fix): the plate is dressed (burger stack with crown, plated meals side by side, things on toast), grill lines, flat salmon; 34 dishes, four new foods (cheese 5, bacon 8, mushroom 12, sausage 14)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
-    "test_touch 8 pass; pictures of level 1 and level 5 looked at."
+    "test_touch 8 pass; pictures of level 1 and level 5 looked at.",
+    "25 Nov evening: every dish checked makeable from its level's trays; twelve plates SEEN in close stills on a computer (both ways up), not on a phone."
    ],
    "remaining": [
     "Dragging food to the pan and a swipe to chop are the genre's own gestures: to judge by hand."
@@ -389,10 +391,13 @@
   "heaven": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov evening, 0.2.1 (his final fix): 240 best/worst deeds (was 48), 72 small deeds (was 12), more names and causes; no deed twice in a day; 'in her sleep' no longer said of men."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
-    "third pass: its controls read through against his rule (obvious to a first-timer): a swipe to sort, with the three ways named on screen. Judged plain enough; nothing changed."
+    "third pass: its controls read through against his rule (obvious to a first-timer): a swipe to sort, with the three ways named on screen. Judged plain enough; nothing changed.",
+    "25 Nov evening: lists counted (each kind 7/7/6 by weight, longest line 46 letters as before); 30 days played by the computer: 311 of 312 deeds came up, none twice in a day; one card SEEN in a still."
    ],
    "remaining": [],
    "note": "fine (2D)."
@@ -497,11 +502,13 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "25 Nov, 0.2.0 (his review): hunger less than half as fast; every bite makes him bigger; closer view, fish always round him; feeding frenzy from a chain of six; jellyfish to steer round; a hunter's bite costs food instead of ending it; new shark, fish and reef."
+    "25 Nov, 0.2.0 (his review): hunger less than half as fast; every bite makes him bigger; closer view, fish always round him; feeding frenzy from a chain of six; jellyfish to steer round; a hunter's bite costs food instead of ending it; new shark, fish and reef.",
+    "25 Nov evening, 0.3.0 (his note): the sea five times the area with five places, a map and an edge marker, chests, fished-out places; THE BIG ONE waits at another place (from level 6 where a hunter guards); the first hunter roams, the next two keep posts."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).",
-    "25 Nov: blind players measured before and after the redesign (70% wins with fish everywhere and no jellyfish; 0 of 448 strings after); SEEN in stills on a computer."
+    "25 Nov: blind players measured before and after the redesign (70% wins with fish everywhere and no jellyfish; 0 of 448 strings after); SEEN in stills on a computer.",
+    "25 Nov evening: robots on the test's seeds: ordinary 10/10, 9/10, 9/10 on levels 1-3, 6/10 on 20 and 40; sharp 9/10 on 40. The first version of the bigger sea starved the robots between places (open sea too thin, stock too small): see LESSONS. SEEN in stills, not on a phone."
    ],
    "remaining": [],
    "note": "fine; shark a bit small."
@@ -600,11 +607,13 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "25 Nov, 0.2.0 (his review): DRIFT is a button to hold while you steer; the item has its own button; last track's trees no longer stand on the next track (W3.pines into the track's group; same in stunt and war); new kart, hills, gantry, grandstand, boards, tyre marks, speed."
+    "25 Nov, 0.2.0 (his review): DRIFT is a button to hold while you steer; the item has its own button; last track's trees no longer stand on the next track (W3.pines into the track's group; same in stunt and war); new kart, hills, gantry, grandstand, boards, tyre marks, speed.",
+    "25 Nov evening, 0.3.0 (his note): steer through a drift and flip its side; turbo builds while drifting, TURBO meter; body shake, wheel flicker and flame flicker removed."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (kart rc=1 fails=1 7 checks passed, 1 failed.).",
-    "25 Nov: quick checks and tutorial pass; rivals re-tuned (0.84-1.27) against the old build's results; SEEN in stills on a computer."
+    "25 Nov: quick checks and tutorial pass; rivals re-tuned (0.84-1.27) against the old build's results; SEEN in stills on a computer.",
+    "25 Nov evening: test_touch 13 pass (swap, turbo, meter); frame-to-frame body angle measured smooth; SEEN in stills, not on a phone."
    ],
    "remaining": [],
    "note": "good."
@@ -640,11 +649,13 @@
    ],
    "changes": [
     "third pass, 22 Nov evening: the camera frames the two armies and eases as they move, instead of showing the whole valley: soldiers are about twice the size.",
-    "25 Nov: each place's trees go with it (they piled up); soldiers stand on the drawn ground (groundY)."
+    "25 Nov: each place's trees go with it (they piled up); soldiers stand on the drawn ground (groundY).",
+    "25 Nov evening, 0.3.0 (his critical note, second time): the old field's ground was never removed (W3.terrain adds itself to the scene); now it goes with its field. Soldiers have legs, boots and slope shadows; horses rebuilt; grass brighter."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
-    "touch test 7 pass; pictures looked at."
+    "touch test 7 pass; pictures looked at.",
+    "25 Nov evening: scene meshes counted over eight levels (no leftover ground); SEEN in stills on fields 1, 7, 13, 20; not on a phone."
    ],
    "remaining": []
   },
@@ -666,12 +677,14 @@
    "changes": [
     "third pass, 22 Nov evening: the bike is half as big again and sits lower on the screen.",
     "third pass, 22 Nov evening: the ground has bands of rock, stones and scrub (it was one flat colour).",
-    "25 Nov (his review): holes drawn from the track's own shape, a crash to land in; its own music."
+    "25 Nov (his review): holes drawn from the track's own shape, a crash to land in; its own music.",
+    "25 Nov evening, 0.2.0 (his note): four buttons, LEAN and FLIP apart on each side; lessons teach each."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).",
     "touch test 6 pass; pictures looked at.",
-    "touch test 6 pass again; test_play 16 pass; picture looked at."
+    "touch test 6 pass again; test_play 16 pass; picture looked at.",
+    "25 Nov evening: test_touch 12 pass; blind strings 7 of 5696 before the last tune, within the limit after; SEEN in stills, not on a phone."
    ],
    "remaining": []
   },
@@ -695,13 +708,15 @@
     "23 Nov, 0.1.4 (from Vine: nothing vanishes): the moving cut-away near the camera (up to 7 m) removed; a tree between the camera and the rex is a see-through screen (W3.seeThrough).",
     "23 Nov, 0.1.5 (his words: \"the movements are not accurate at all... I go left it goes somewhere else\"): the stick says the way to go as seen on the screen (it turned him like a tank); the view holds its heading while the thumb is down; harder far on to match (prey hear you sooner and run faster, shorter warnings, a shorter hunger clock).",
     "23 Nov, 0.2.0 (his words at 17:08: \"make the joystick in one place... see around the area just by clicking the screen and moving around... you still haven't fixed the joystick problem... make him look like an actual T-Rex\"): measured with real touch events: the view drifted up to 30 degrees while walking (camera trailed, aim led). The stick is fixed bottom left; the view turns only by dragging elsewhere (yaw and tilt), set from one followed point so it cannot drift. New T-Rex model (part25_trex.js, specs/rex-v2-2026-11-23.md).",
-    "25 Nov, 0.3.0 (his review): the stick was mirrored (measured with the camera: right walked him left) and so was the look-drag: both fixed in the input, test_touch now asks the camera; the T-Rex's head, neck, arms and legs were inside out (faces pointing inwards): sweep() turns them, the head rebuilt; eating animated (a 2.3 s meal, the view comes round); its own horn theme; 'NOW! BITE IT' only in lessons."
+    "25 Nov, 0.3.0 (his review): the stick was mirrored (measured with the camera: right walked him left) and so was the look-drag: both fixed in the input, test_touch now asks the camera; the T-Rex's head, neck, arms and legs were inside out (faces pointing inwards): sweep() turns them, the head rebuilt; eating animated (a 2.3 s meal, the view comes round); its own horn theme; 'NOW! BITE IT' only in lessons.",
+    "25 Nov evening, 0.4.0 (his note, third time on the stick): the knob was DRAWN mirrored (movement was right); runners tire and pant when chased, a bite at a run reaches further."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
     "touch test 7 pass; pictures of a rainy level looked at: rex and prey both in sight.",
     "23 Nov, 0.1.5: test_touch 11 (new: pushed left, right, down, up, he faces within 15 degrees and walks that way on the screen); test_play 15/15: ordinary {1-10: 1, 20: 0.6, 40: 0.9}, sharp {40: 0.9, 80: 0.1}, blind 0 of 5,696; controls 33. NOT judged by me: how it feels under a thumb.",
-    "25 Nov: quick checks, tutorial pass; face and meal SEEN in sharp stills on a computer (not on a phone); music measured, not listened to."
+    "25 Nov: quick checks, tutorial pass; face and meal SEEN in sharp stills on a computer (not on a phone); music measured, not listened to.",
+    "25 Nov evening: knob-under-thumb pixel check added to test_touch (19 pass); a casual robot catches a runner in 8 s (was 48); SEEN in stills on a computer, not on a phone."
    ],
    "remaining": []
   },
@@ -1448,12 +1463,14 @@
    ],
    "changes": [
     "third pass, 22 Nov evening: the village has many more trees of all sizes, snowdrifts, and cottages with lit windows.",
-    "25 Nov, 0.2.0 (his review): a brake (the sleigh follows the stick; letting go hovers); the look rebuilt outdoors and in."
+    "25 Nov, 0.2.0 (his review): a brake (the sleigh follows the stick; letting go hovers); the look rebuilt outdoors and in.",
+    "25 Nov evening, 0.3.0 (his note): indoor walking was mirrored (flight was right); FORWARD button with climb and dive, landing by flying down; fixed stick; eight reindeer with gold dust; its own Christmas pop tune; stars for speed."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (41 passed, 0 failed).",
     "touch test 41 pass; pictures looked at.",
-    "25 Nov: quick checks, tutorial, speed pass; SEEN in stills on a computer."
+    "25 Nov: quick checks, tutorial, speed pass; SEEN in stills on a computer.",
+    "25 Nov evening: test_touch 59 pass, directions measured with the camera in flight AND indoors; music measured playing (rms 0.013), not listened to; SEEN in stills, not on a phone."
    ],
    "remaining": []
   },

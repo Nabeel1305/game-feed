@@ -223,6 +223,20 @@ note first") is also a press that does nothing: the button he presses wins, and 
   waiting), Not reviewed, Fine (good or okay, no note). Entries whose words are on 15 games or more are general: they are shown on the card but do
   not put the game on the Fixed list.
 
+### The evening of 25 Nov: eight notes, and what they taught
+- **Look at the picture, not only the numbers.** Rex's stick was "still inverted" the third time because I had measured which way the dinosaur
+  turned (right) and never looked at where the knob was drawn (mirrored: it used the negated steering value). A control is right when the still
+  shows the knob under the thumb AND the camera shows the turn.
+- **Test a second place.** Battle Lines' soldiers stood "inside the ground" because the old field's ground stayed in the scene
+  (`W3.terrain()` adds itself); field 1 never showed it. Anything that changes with the level is looked at on a later level too.
+- **Measure every mode.** Santa flew the right way and walked indoors mirrored. A game with two ways of moving has two measurements.
+- **A bigger world must not be a hungrier one.** Deep Bite's first bigger sea had rich places and a thin open sea: the robots starved on the
+  way between them, and he had already said the shark gets hungry too quickly. Compare the robots with the game as it was (`git show
+  HEAD:games/<id>/index.html` into a folder, same seeds) before publishing a change to how much there is to eat, earn or find. And give the
+  space a job in every level (the big one waits across the sea), or it is scenery.
+- **Food on a plate is arranged, not dropped.** Short Order: a thing has a board shape and a plate shape (`form`), and the plate lays them out
+  (`plateLayout`): a stack for a burger, side by side for a meal.
+
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.
 1. **Spamming cannot win. On any level, the first included.** (15 Nov 2026, of Plunder's first build: "Spamming cannot win... Just repeatedly doing something cannot win. There needs to be a little bit of skill. This is why I love the boxing game.") Any repeated move, **at any speed**, must lose on **every** level: mashing, a slow steady beat of one move, a short string of moves on a beat, a control held over or wiggled, a button pressed on a count. "Early levels are for learning" (rule 0) means generous windows and soft punishment for someone who is trying to do the right thing; it never means a rhythm works. How to get there (all of it learned the hard way on Plunder, see its notes):

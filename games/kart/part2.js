@@ -104,6 +104,7 @@ function pickItem(G, k) { const R = G.rnd(), back = (k.place || 3) / G.karts.len
 function hit(G, k, why, by) { if (k.shield > 0) { k.shield = 0; G.ev.push({ k: 'pop', me: k.me, x: k.x, z: k.z }); return; } if (k.spin > 0) return;
   k.spin = 1.1; k.drift = 0; k.charge = 0; k.boost = 0; G.ev.push({ k: 'spin', me: k.me, why, x: k.x, z: k.z }); if (k.me) { G.hits++; lessonMiss(G); } if (by && by.me && !k.me) { G.zaps++; G.coins++; G.ev.push({ k: 'gotem', x: k.x, z: k.z, why }); } }
 // one kart: speed, steering, the drift and its sparks, grass and barriers, laps
+const TURBO = 2.1;      // the turbo meter is full after this much sliding (at the level's spark rate)
 const KW = 0.9;      // half a kart's width (its wheels): where its side meets the rail
 function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   const st = k.me ? G.steer : k.steer, go = !k.done || !k.me;
@@ -114,14 +115,22 @@ function drive(G, k, dt) { const c = G.cfg, T = G.T, S = T.S, n = S.length;
   // by itself when a hard turn had been held for a moment, and ended when you straightened up: you never knew when you were in one. Now it is a button, the
   // way racing games do it: HOLD DRIFT with the right thumb and steer with the left. The kart slides the way you are steering when you press; while you hold,
   // the stick only makes the slide tighter (towards the bend) or wider (away), it never flips it; sparks build blue, orange, purple; LET GO for the boost.
+  // 25 Nov 2026, later (his words): "Steering during drifts: allow manoeuvring throughout a drift, including switching from drifting left to
+  // drifting right without being locked into the initial direction. Drift earns turbo: build turbo while drifting. Longer successful drifts should
+  // earn more turbo, with a clearly visible meter." So: while DRIFT is held the kart turns as the stick says, all the way from hard left to hard
+  // right; crossing to the other side swings the tail across and the slide carries on (the turbo is kept). The turbo METER (k.charge, full at
+  // TURBO) fills all the time he slides, faster the harder he steers; letting go spends it: the fuller the meter, the longer the boost.
+  // (Looked up, not played: KartRider fills a boost gauge by drifting and links drifts to keep filling it; Crash Team Racing shows a turbo
+  // meter that fills through a power slide.)
   if (k.me) { const held = !!G.driftHeld && !k.spin && go;
     if (!k.drift && held && k.v > 12 && Math.abs(st) > 0.2) { k.drift = Math.sign(st); k.charge = 0; k.tier = 0; G.ev.push({ k: 'drift' }); lessonSee(G, 'drift'); }
-    if (k.drift) { k.charge += dt * c.spark * (st * k.drift > -0.3 ? 1 : 0.6);      /* only steering hard AWAY from the slide slows the sparks */ const tier = k.charge > 2.1 ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
-      if (!held || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, [0, 0.55, 1.05, 1.6][k.tier]); G.boosts++; if (k.tier >= 2) { G.bigBoosts++; G.coins++; } G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } else if (!k.spin) lessonSee(G, 'early'); k.drift = 0; k.charge = 0; k.tier = 0; } } }
+    if (k.drift) { if (st * k.drift < -0.25) { k.drift = -k.drift; G.ev.push({ k: 'swap', dir: k.drift }); }      /* steered across: the slide changes side, nothing is lost */
+      k.charge = Math.min(TURBO, k.charge + dt * c.spark * (Math.abs(st) > 0.3 ? 1 : 0.6)); const tier = k.charge >= TURBO ? 3 : k.charge > 1.25 ? 2 : k.charge > 0.55 ? 1 : 0; if (tier !== k.tier) { k.tier = tier; if (tier) G.ev.push({ k: 'spark', tier }); }
+      if (!held || k.v < 9 || k.spin) { if (k.tier && !k.spin) { k.boost = Math.max(k.boost, 0.2 + 1.4 * k.charge / TURBO); k.boost0 = k.boost; G.boosts++; if (k.tier >= 2) { G.bigBoosts++; G.coins++; } G.ev.push({ k: 'boost', tier: k.tier }); lessonSee(G, 'boost', k.tier); } else if (!k.spin) lessonSee(G, 'early'); k.drift = 0; k.charge = 0; k.tier = 0; } } }
   // grip: without a drift a hard turn at speed runs wide and scrubs speed off; a drift turns hard and keeps it
-  const sp = Math.min(1, k.v / 12); let yaw; if (k.drift) { const u = clamp((st * k.drift + 0.6) / 1.6, 0, 1); yaw = k.drift * (0.5 + 0.9 * u) * sp; } else { const want = st * 1.75 * sp, lim = GRIP / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
+  const sp = Math.min(1, k.v / 12); let yaw; if (k.drift) { yaw = (st * 1.25 + k.drift * 0.15) * sp; } else {      /* in a drift the stick turns him, either way; the slide itself pulls a little */ const want = st * 1.75 * sp, lim = GRIP / Math.max(6, k.v); yaw = clamp(want, -lim, lim); if (Math.abs(want) > lim) k.v -= (Math.abs(want) - lim) * k.v * 0.9 * dt; }
   k.h += yaw * dt * (k.spin ? 0 : 1) + (k.spin ? dt * 11 : 0);
-  const slip = k.drift ? -k.drift * 0.32 : 0; k.slip = (k.slip || 0) + (slip - (k.slip || 0)) * Math.min(1, dt * 6); const mh = k.h + k.slip;
+  const slip = k.drift ? -(k.drift * 0.14 + st * 0.2) : 0; k.slip = (k.slip || 0) + (slip - (k.slip || 0)) * Math.min(1, dt * 5);      /* the tail swings out as far as he steers, and across when he changes side */ const mh = k.h + k.slip;
   k.x += Math.cos(mh) * k.v * dt; k.z += Math.sin(mh) * k.v * dt;
   // the barriers, just off the grass
   // the rail (his review of Kart Kingdom, 24 Nov 2026, the same fault here: "I shouldn't be phasing against the rail I should clearly hit it"):
@@ -181,7 +190,7 @@ function honest(G, o, mem) {
   // a long bend coming: drift it (hold hard), let go when it straightens (or the sparks are orange and it is ending)
   const long = Math.abs(bend) > 0.2;
   if (!k.drift) setDrift(G, long && k.v > 16 && Math.sign(dh) === Math.sign(bend)); if (!k.drift && G.driftHeld) s = Math.sign(bend) * Math.max(0.4, Math.abs(s));
-  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - 0.5; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = clamp((need - 0.5) / 0.9, 0, 1); s = k.drift * (u * 1.6 - 0.6); if (end) setDrift(G, false); }
+  if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - 0.5; const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)); s = k.drift * clamp((need - 0.15) / 1.25, -0.2, 1); if (end) setDrift(G, false); }
   if (R() > acc) s += (R() - 0.5) * 0.8;
   setSteer(G, s);
   if (k.item) { mem.it = (mem.it || 0) + 0.1; const ahead = G.karts.some(q => q !== k && race(q) > race(k) && race(q) - race(k) < 70), behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20);

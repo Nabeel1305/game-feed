@@ -5255,7 +5255,7 @@ const W3 = (() => {
 // furniture, creaky boards, a curious cat. If someone wakes, that house starts again; earlier houses stay delivered.
 // Deliver every house before dawn. Flight: x, z on the ground (metres), y up. Inside a house: a grid of 1 m cells.
 const RULES = [
-  '<b>Fly:</b> push the left thumb the way you want to go: the harder you push, the faster. <b>Let go to brake</b>: the sleigh stops and hovers. Hold LAND over a house\'s glowing marker to settle on its roof.',
+  '<b>Fly:</b> hold <b>FORWARD</b> (right thumb) to fly ahead; let go and the sleigh slows to a hover. The stick (left thumb): left and right turn, <b>up climbs, down dives</b>. Fly down onto a house\'s glowing marker to land on its roof. Stars in the sky: a burst of speed.',
   '<b>Inside:</b> push gently to tiptoe; a full push runs, and running is noisy. Bumping furniture and creaky boards are noisy too.',
   '<b>Presents:</b> read the wish list (top left). Tap a present in your sack to hold it, then ACT by the tree to put it down. ACT by the tree with empty hands picks the last one back up.',
   'ACT by each stocking to fill it. ACT by the fireplace to go back up when the house is done.',
@@ -5312,8 +5312,8 @@ function roomOK(g, W, D, fire, tree, creak = []) { const seen = new Set([fire.x 
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, mini: !!o.mini, free: !!o.free, blind: {} };
-  G.V = makeVillage(cfg); G.done = []; G.wakes = 0; G.stick = { x: 0, y: 0 }; G.landHeld = false; G.act = false;
-  G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: FLY, state: 'fly', t: 0 }; G.phase = 'fly'; G.in = null;
+  G.V = makeVillage(cfg); G.done = []; G.wakes = 0; G.stick = { x: 0, y: 0 }; G.go = false; G.act = false; G.stars = makeStars(G); G.starN = 0;
+  G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: 0, vy: 0, boost: 0, state: 'fly', t: 0 }; G.phase = 'fly'; G.in = null;
   let d = 0, px = 0, pz = -20; const left = G.V.slice(); while (left.length) { left.sort((a, b) => Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz)); const h = left.shift(); d += Math.hypot(h.x - px, h.z - pz); px = h.x; pz = h.z; }
   G.par = d / FLY * 1.15 + G.V.reduce((a, h) => a + 5.2 + h.mem.length * 1.3 + (h.room.cat ? 1.5 : 0) + (h.narrow ? 1 : 0) + (h.slippery ? 1 : 0), 0); G.dawn = Math.round(G.par * cfg.night); G.clock = 0;
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
@@ -5321,30 +5321,41 @@ function newGame(N, o = {}) {
 }
 // ---------- the player's actions ----------
 function setStick(G, x, y) { const m = Math.hypot(x, y); G.stick = m > 1 ? { x: x / m, y: y / m } : { x, y }; }
-function landOn(G, on) { G.landHeld = !!on; }
+function goOn(G, on) { G.go = !!on; }      // the FORWARD button, held or let go
+// stars hang in the sky on the way from each house to the next, some high, some low: fly through one for a burst of speed (and a coin at the end)
+function makeStars(G) { const R = rng(G.seed * 7 + 99), out = []; let px = 0, pz = -20; const left = G.V.slice();
+  while (left.length) { left.sort((a, b) => Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz)); const h = left.shift(), n = Math.hypot(h.x - px, h.z - pz) > 30 ? 2 : 1;
+    for (let i = 1; i <= n; i++) { const u = i / (n + 1), sx = (R() - 0.5) * 10, sz = (R() - 0.5) * 10; out.push({ x: px + (h.mx - px) * u + sx, z: pz + (h.mz - pz) * u + sz, y: (out.length % 2 ? 7 : 16) + R() * 4, got: false }); } px = h.mx; pz = h.mz; }
+  return out; }
 function act(G) { if (G.over) return; if (G.phase === 'in') actInside(G); else if (G.phase === 'roof' && G.roof && G.roof.narrow) { G.roof.squeeze = (G.roof.squeeze || 0) + 1; } }
 function holdGift(G, id) { if (G.phase !== 'in') return; G.in.hold = id; G.ev.push({ k: 'hold', id }); }
 // ---------- every frame ----------
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt); if (!G.lesson && !G.free) G.clock += dt;
-  if (G.blind.lr != null) { G.blind.lr -= dt; if (G.blind.lr <= 0) { G.blind.lr = null; landOn(G, false); } }
-  if (G.phase === 'fly') flyStep(G, dt); else if (G.phase === 'roof') roofStep(G, dt); else if (G.phase === 'in') inStep(G, dt); else if (G.phase === 'up') { G.upT -= dt; if (G.upT <= 0) { G.phase = 'fly'; G.s.y = G.s.y + 0.5; G.s.v = SLOW; } }
+  if (G.blind.lr != null) { G.blind.lr -= dt; if (G.blind.lr <= 0) { G.blind.lr = null; goOn(G, false); } }
+  if (G.phase === 'fly') flyStep(G, dt); else if (G.phase === 'roof') roofStep(G, dt); else if (G.phase === 'in') inStep(G, dt); else if (G.phase === 'up') { G.upT -= dt; if (G.upT <= 0) { G.phase = 'fly'; G.s.y = G.s.y + 2.5; G.s.v = 0; G.s.vy = 3; G.s.bump = 0.8; } }
   if (!G.over && !G.lesson && !G.free && G.clock > G.dawn) finish(G, false, 'dawn'); }
 const overNext = G => { const s = G.s; return G.V.some(h => !G.done.includes(h.i) && Math.hypot(h.mx - s.x, h.mz - s.z) < G.cfg.marker * 1.3); };
-function flyStep(G, dt) { const s = G.s, m = Math.hypot(G.stick.x, G.stick.y), sp = FLY * (1 + 0.06 * upLv('reindeer'));
-  // the stick: the direction to fly, as seen from behind the sleigh (up is ahead)
-  if (m > 0.2) { const want = s.yaw + Math.atan2(G.stick.x, G.stick.y), d = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)); s.yaw += clamp(d, -2.0 * dt, 2.0 * dt); }
-  // 25 Nov 2026 (his review: "No breaks??"): the sleigh flew flat out whatever you did; only LAND slowed it. Now it flies as hard as you
-  // push the stick, and letting go is the brake: it slows to a hover and waits for you.
-  { const push = m > 0.15 ? 0.35 + 0.65 * Math.min(1, m) : 0, tv = G.landHeld ? Math.min(SLOW, sp * push) : sp * push; s.v += (tv - s.v) * Math.min(1, dt * (tv < s.v ? 3.4 : 2.5)); }
-  s.x += Math.sin(s.yaw) * s.v * dt; s.z += Math.cos(s.yaw) * s.v * dt;
-  const H = houseUnder(G, s.x, s.z), floor = H ? H.top : 2.5;
-  if (G.landHeld) s.y = Math.max(floor, s.y - 6 * dt); else s.y = Math.min(CRUISE, s.y + 5 * dt);
-  s.x = clamp(s.x, -90, 90); s.z = clamp(s.z, -40, 120);
-  if (G.landHeld && H && s.y <= H.top + 0.05) { const d = Math.hypot(s.x - H.mx, s.z - H.mz);
-    if (G.done.includes(H.i)) { s.y = H.top + 2; G.ev.push({ k: 'bounce', why: 'done' }); return; }
-    if (d <= G.cfg.marker) { G.phase = 'roof'; G.roof = { H, t: 0, narrow: H.narrow, slip: H.slippery ? 0 : null, squeeze: 0, hold: 0 }; s.v = 0; s.x = H.mx; s.z = H.mz; G.ev.push({ k: 'land', i: H.i, slippery: !!H.slippery, narrow: !!H.narrow }); lessonSee(G, 'land'); }
-    else { s.y = H.top + 2.2; s.v = SLOW; G.ev.push({ k: 'bounce', why: 'marker', d }); } }
-  else if (G.landHeld && !H && s.y <= 2.6) { s.y = 2.6; } }
+// 25 Nov 2026, later (his words: "Inverted joystick and put Christmas music... also create up and down and forward this one should be good make the
+// reindeers majestic"). REAL FLYING. Before, the stick was the way to go and its strength the speed, the height looked after itself, and a LAND
+// button brought the sleigh down. Now: the right thumb holds FORWARD (let go: the sleigh slows to a hover); the stick steers (left and right turn
+// it, UP climbs, DOWN dives: up is up); and you land by flying down onto the roof's glowing marker. A house in the way is a house in the way:
+// fly into its wall and the sleigh bumps back, so climb over. Stars in the sky give a burst of speed.
+const CLIMB = 8.5, TURN = 1.9, CEIL = 26;
+function flyStep(G, dt) { const s = G.s, sx = G.stick.x, sy = G.stick.y, sp = FLY * (1 + 0.06 * upLv('reindeer')) * (s.boost > 0 ? 1.35 : 1); s.boost = Math.max(0, (s.boost || 0) - dt); s.bump = Math.max(0, (s.bump || 0) - dt);
+  if (Math.abs(sx) > 0.12) s.yaw += clamp(sx * 1.15, -1, 1) * TURN * dt;
+  { const tv = G.go ? sp : 0; s.v += (tv - s.v) * Math.min(1, dt * (tv < s.v ? 2.6 : 2.2)); }
+  const px = s.x, pz = s.z; s.x = clamp(s.x + Math.sin(s.yaw) * s.v * dt, -90, 90); s.z = clamp(s.z + Math.cos(s.yaw) * s.v * dt, -40, 120);
+  { const tvy = Math.abs(sy) > 0.15 ? clamp(sy * 1.15, -1, 1) * CLIMB : 0; s.vy = (s.vy || 0) + (tvy - (s.vy || 0)) * Math.min(1, dt * 7); }
+  let H = houseUnder(G, s.x, s.z);
+  // into the side of a house, below its roof: bumped back (climb over it)
+  if (H && s.y < H.top - 0.25 && !houseUnder(G, px, pz)) { s.x = px; s.z = pz; s.v *= 0.15; s.vy = Math.max(s.vy, 4); H = null; if (!(s.bump > 0)) { s.bump = 0.5; G.ev.push({ k: 'bonk' }); } }
+  const floor = H ? H.top : 2.5; s.y = clamp(s.y + s.vy * dt, floor, CEIL);
+  for (const st of G.stars) if (!st.got && !G.lesson && Math.hypot(st.x - s.x, st.z - s.z, st.y - s.y) < 3.4) { st.got = true; G.starN++; s.boost = 2.6; G.ev.push({ k: 'star', n: G.starN }); }
+  // down onto a roof: on the marker it is a landing (and down the chimney), off it the sleigh bounces up again
+  if (H && s.y <= H.top + 0.05 && s.vy <= 0 && !(s.bump > 0)) { const d = Math.hypot(s.x - H.mx, s.z - H.mz);
+    if (G.done.includes(H.i)) { s.y = H.top + 2; s.vy = 3; s.bump = 0.6; G.ev.push({ k: 'bounce', why: 'done' }); return; }
+    if (d <= G.cfg.marker) { G.phase = 'roof'; G.roof = { H, t: 0, narrow: H.narrow, slip: H.slippery ? 0 : null, squeeze: 0, hold: 0 }; s.v = 0; s.vy = 0; s.x = H.mx; s.z = H.mz; G.ev.push({ k: 'land', i: H.i, slippery: !!H.slippery, narrow: !!H.narrow }); lessonSee(G, 'land'); }
+    else { s.y = H.top + 2.2; s.vy = 4; s.v = Math.min(s.v, SLOW); s.bump = 0.6; G.ev.push({ k: 'bounce', why: 'marker', d }); } } }
 function houseUnder(G, x, z) { return G.V.find(h => Math.abs(x - h.x) < h.w / 2 && Math.abs(z - h.z) < h.d / 2) || null; }
 function roofStep(G, dt) { const r = G.roof; r.t += dt;
   // an icy roof: the sleigh slides unless you push up the roof for a moment
@@ -5359,7 +5370,9 @@ function sackFor(G, H) { const R = rng(G.cfg.N * 91 + H.i * 7), ids = H.mem.map(
 const cellAt = (R, x, z) => { const cx = Math.floor(x + 0.5), cz = Math.floor(z + 0.5); return cz < 0 || cx < 0 || cz >= R.D || cx >= R.W ? 1 : R.g[cz][cx]; };
 function inStep(G, dt) { const I = G.in, R = I.H.room, m = Math.hypot(G.stick.x, G.stick.y), run = m > 0.7, sp = m < 0.15 ? 0 : run ? 3.2 : 1.7 * Math.min(1, m / 0.5 + 0.2), qk = G.cfg.quiet * (1 - 0.15 * upLv('boots')) * (G.free ? 0 : 1);
   I.bumpT -= dt;
-  if (sp > 0) { const dx = G.stick.x / m * sp * dt, dz = -G.stick.y / m * sp * dt; I.face = Math.atan2(dx, dz);
+  // 25 Nov 2026 ("Inverted joystick"): measured with the camera, the stick pushed RIGHT walked Santa to the LEFT of the screen (the room is drawn
+  // with x turned over, and the flying had been measured but never the walking). The stick's right is the screen's right now.
+  if (sp > 0) { const dx = -G.stick.x / m * sp * dt, dz = -G.stick.y / m * sp * dt; I.face = Math.atan2(dx, dz);
     const tryMove = (nx, nz) => { const c = [[0.3, 0.3], [-0.3, 0.3], [0.3, -0.3], [-0.3, -0.3]].some(([ox, oz]) => cellAt(R, nx + ox, nz + oz) !== 0); return !c; };
     let moved = false; if (tryMove(I.x + dx, I.z + dz)) { I.x += dx; I.z += dz; moved = true; } else if (tryMove(I.x + dx, I.z)) { I.x += dx; moved = true; } else if (tryMove(I.x, I.z + dz)) { I.z += dz; moved = true; }
     if (!moved || moved && !tryMove(I.x + dx * 2, I.z + dz * 2) && run) { if (I.bumpT <= 0) { I.bumpT = 0.6; const n = (run ? 0.32 : 0.12) * qk; I.noise += n; if (n > 0) G.ev.push({ k: 'bump', n }); } }
@@ -5397,7 +5410,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.done = G.V.map(h => h.i); finish(G, true, 'all'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => overNext(G) ? 'LET GO, HOLD LAND' : 'PUSH TO FLY THERE', do: G => overNext(G) ? 'hold' : 'drag', dir: 'up', at: G => { if (!overNext(G)) return null; const b = layout(G).btn; return [b.x, b.y]; }, how: 'Steer with your left thumb towards the glowing house. Over its marker, hold LAND: the sleigh slows and settles on the roof. Land once.', need: 1 }],
+  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => overNext(G) ? 'STICK DOWN: LAND' : 'HOLD FORWARD, STEER', do: G => overNext(G) ? 'drag' : 'hold', dir: 'down', at: G => { const L = layout(G); return overNext(G) ? [L.stick.x, L.stick.y] : [L.btn.x, L.btn.y]; }, how: 'Hold FORWARD and steer with the stick towards the glowing house. Over its marker, let go of FORWARD and push the stick down: the sleigh comes down onto the roof. Land once.', need: 1 }],
   2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', say: 'TAP A PRESENT, ACT', do: 'tap', how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],
   3: [{ id: 'sneak', title: 'TIPTOE', say: 'PUSH GENTLY', do: 'drag', dir: 'up', how: 'Push gently to tiptoe. Go round furniture and the dark creaky boards; watch the noise meter. Deliver one house without waking anyone.', need: 1 }],
 };
@@ -5407,29 +5420,33 @@ function lessonSee(G, what) { const D = G.lesson; if (!D || D.done) return; let 
   if ((D.id === 'gifts' || D.id === 'sneak') && what === 'delivered') good = true;
   if (what === 'wake') G.ev.push({ k: 'lessonmiss', how: 'Someone woke up! That house starts again: tiptoe (push gently) and keep away from creaky boards.' });
   if (good) { D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: D.need }); if (D.n >= D.need) { D.done = true; D.wait = 1.6; } } }
-function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.done = []; G.wakes = 0; G.clock = 0; G.phase = 'fly'; G.in = null; G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: FLY, state: 'fly', t: 0 }; G.ev.push({ k: 'lessondone', N: G.N }); }
+function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.done = []; G.wakes = 0; G.clock = 0; G.phase = 'fly'; G.in = null; G.go = false; G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: 0, vy: 0, boost: 0, state: 'fly', t: 0 }; G.ev.push({ k: 'lessondone', N: G.N }); }
 
 // ---------- for the robots: blind moves and an honest Santa ----------
 const BLIND = {
-  f: G => setStick(G, (Math.random() - 0.5) * 0.4, 1),                                       // push forward
-  a: G => { const a = Math.random() * TAU; setStick(G, Math.cos(a), Math.sin(a)); },           // push anywhere
+  f: G => { goOn(G, true); G.blind.lr = 0.4 + Math.random() * 2.6; },                         // hold FORWARD a while
+  a: G => { const a = Math.random() * TAU; setStick(G, Math.cos(a), Math.sin(a)); },           // push the stick anywhere
   t: G => { const a = Math.random() * TAU; setStick(G, Math.cos(a) * 0.45, Math.sin(a) * 0.45); },   // a gentle push anywhere
-  o: G => setStick(G, 0, 0),                                                                 // let go
-  l: G => { landOn(G, true); G.blind.lr = 0.3 + Math.random() * 2; },                         // hold LAND a while
+  o: G => setStick(G, 0, 0),                                                                 // let go of the stick
+  l: G => setStick(G, (Math.random() - 0.5) * 0.5, -1),                                       // push the stick down (dive)
   c: G => act(G),                                                                            // ACT
   p: G => { if (G.in) holdGift(G, G.in.sack[(Math.random() * G.in.sack.length) | 0]); },     // tap a present in the sack
 };
-// HONEST: a Santa who looks: flies to the nearest house left, holds LAND over its marker (a little off, by acc), wriggles down
+// HONEST: a Santa who looks: flies to the nearest house left (above the roofs), stops over its marker (a little off, by acc) and comes down, wriggles down
 // narrow chimneys, inside walks the quiet way round (furniture, creaky boards and the cat), reads the wish list (sometimes
 // picks a wrong present and puts it right), fills the stockings and goes back up.
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.phase === 'fly') { const s = G.s; if (mem.tgt == null || G.done.includes(mem.tgt)) { const left = G.V.filter(h => !G.done.includes(h.i)); left.sort((a, b) => Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z)); mem.tgt = left.length ? left[0].i : null; mem.off = { x: (R() - 0.5) * (1 - acc) * 9, z: (R() - 0.5) * (1 - acc) * 9 }; }
     if (mem.tgt == null) { setStick(G, 0, 0); return; } const H = G.V[mem.tgt], tx = H.mx + mem.off.x, tz = H.mz + mem.off.z, dx = tx - s.x, dz = tz - s.z, d = Math.hypot(dx, dz);
-    const want = Math.atan2(dx, dz), rel = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)); setStick(G, Math.sin(rel), Math.cos(rel) * (d > 3 ? 1 : 0.2));
-    landOn(G, d < 7 + react * 3); if (d < 0.6) mem.off = { x: 0, z: 0 }; return; }
-  if (G.phase === 'roof') { landOn(G, false); setStick(G, 0, 1); if (G.roof.narrow) act(G); return; }
-  if (G.phase !== 'in') { setStick(G, 0, 0); return; }
-  landOn(G, false); const I = G.in, Rm = I.H.room;
+    // turn to it, hold FORWARD until it is time to slow, keep above the roofs on the way, and over the marker come down
+    const want = Math.atan2(dx, dz), rel = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)), overR = Math.max(0.7, G.cfg.marker * 0.5), over = d < overR, near = d < 9, wantY = over ? H.top - 1 : near ? H.top + 3.2 : 13;
+    goOn(G, !over && Math.abs(rel) < 1.1 && d > Math.max(overR * 0.9, s.v * 0.44 + react * 1.2));      /* (from a stop he creeps on until he is over it: there is no gap between 'still coming' and 'over it') */
+    setStick(G, clamp(rel * 1.7, -1, 1) * (d < 1 ? 0.3 : 1), over && s.v < 2.6 ? -1 : over ? 0 : clamp((wantY - s.y) * 0.5, -1, 1));
+    if (d < 0.6 || (s.bump > 0 && d < 4)) mem.off = { x: 0, z: 0 };      /* bounced off the roof beside the marker: he looks again and aims at the marker itself */
+    return; }
+  if (G.phase === 'roof') { goOn(G, false); setStick(G, 0, 1); if (G.roof.narrow) act(G); return; }
+  if (G.phase !== 'in') { goOn(G, false); setStick(G, 0, 0); return; }
+  goOn(G, false); const I = G.in, Rm = I.H.room;
   // what next: a present in hand to the tree; else pick the next wanted present; else a stocking; else the fireplace
   if (mem.house !== I.H.i || mem.inT > G.t || mem.entered !== G.in) { mem.house = I.H.i; mem.entered = G.in; mem.path = null; mem.goal = null; mem.rush = R() < (1 - acc) * 0.9; mem.careless = R() < (1 - acc) * 1.2; } mem.inT = G.t;
   const left = wantsLeft(I), wrong = I.placed.length - (I.H.mem.length - left.length);
@@ -5447,7 +5464,7 @@ function honest(G, o, mem) { if (G.over) return; const react = o.react == null ?
   if (!mem.path || mem.goalKey !== goal.x + ',' + goal.z || !mem.path.length) { mem.goalKey = goal.x + ',' + goal.z; mem.path = findPath(Rm, I, goal, mem.careless); }
   if (!mem.path || !mem.path.length) { setStick(G, 0, 0); return; }
   const wp = mem.path[0], dx = wp.x - I.x, dz = wp.z - I.z, d = Math.hypot(dx, dz); if (d < 0.18) { mem.path.shift(); return; }
-  const sp = mem.rush ? 1 : 0.5; setStick(G, dx / d * sp, -dz / d * sp); }
+  const sp = mem.rush ? 1 : 0.5; setStick(G, -dx / d * sp, -dz / d * sp); }      /* (the stick's right is the screen's right: the rules' x runs the other way indoors) */
 function treeSpot(R, I) { return spotNear(R, I, R.tree.x, R.tree.z, 1.6); }
 // the nearest quiet cell you can walk to (no furniture, no creaky board) from which ACT reaches (tx, tz)
 function spotNear(R, I, tx, tz, r) { const sx = Math.round(I.x), sz = Math.round(I.z), key = (x, z) => x + ',' + z, seen = new Set([key(sx, sz)]), q = [[sx, sz]], bad = new Set(R.creak.map(c => key(c.x, c.z)));
@@ -5519,19 +5536,39 @@ function sleigh(V, sk) { const T = V.T, M = V.M, g = new T.Group(), gold = M(0xe
   for (const x of [-1, 1]) { const arm = sa(V.cylG, coat, x * 0.45, 0.22, 0.32, 0.11, 0.6, 0.11); arm.rotation.set(1.15, 0, x * -0.25); sa(V.sphG, M(0x1a1a1a), x * 0.4, 0.14, 0.62, 0.1, 0.1, 0.1); }
   // the sack, with presents poking out
   add(V.sphG, M(0x8a5a2a), 0, 1.45, -1.55).scale.set(0.62, 0.66, 0.6); [[0xd83a3a, -0.2, 2.0, -1.5], [0x3a8ad8, 0.22, 1.95, -1.65], [0x3ab85a, 0.02, 2.12, -1.72], [0xe8c040, -0.05, 1.9, -1.3]].forEach(([c, x, y, z], q) => { const b = add(V.boxG, M(c), x, y, z, 0.3 * q, 0.5 * q, 0.2); b.scale.setScalar(0.3); const r = add(V.boxG, white, x, y, z, 0.3 * q, 0.5 * q, 0.2); r.scale.set(0.31, 0.06, 0.31); });
-  // four reindeer, in pairs: body, neck, head, antlers, legs that gallop, a red harness with a bell; the leader's nose glows
-  const deer = [], fur = M(0x8a5a32), fur2 = M(0x6a4224), horn = M(0xd8c8a0), hoof = M(0x2a1a10);
-  for (let r = 0; r < 2; r++) for (const x of [-0.52, 0.52]) { const d = new T.Group(); d.position.set(x, 0.95, 3.0 + r * 2.1); const da = (geo, mat, px, py, pz, sx, sy, sz, rx) => { const m = new T.Mesh(geo, mat); m.position.set(px, py, pz); if (sx) m.scale.set(sx, sy, sz); if (rx) m.rotation.x = rx; d.add(m); return m; };
-    da(new T.CapsuleGeometry(0.24, 0.72, 4, 10), fur, 0, 0, 0, 1, 1, 1, Math.PI / 2); da(V.cylG, fur, 0, 0.3, 0.52, 0.12, 0.5, 0.12, 0.6); da(V.sphG, fur, 0, 0.55, 0.72, 0.15, 0.15, 0.24); da(V.sphG, fur2, 0, 0.5, 0.92, 0.09, 0.08, 0.1); da(V.sphG, new T.MeshStandardMaterial({ color: 0xffffff }), 0, 0.08, -0.6, 0.09, 0.09, 0.09);
-    for (const sx of [-1, 1]) { da(V.coneG, fur2, sx * 0.13, 0.7, 0.66, 0.05, 0.14, 0.03); const a1 = da(V.cylG, horn, sx * 0.13, 0.9, 0.68, 0.022, 0.4, 0.022); a1.rotation.z = -sx * 0.45; const a2 = da(V.cylG, horn, sx * 0.24, 1.0, 0.74, 0.018, 0.2, 0.018); a2.rotation.set(0.7, 0, -sx * 0.9); const a3 = da(V.cylG, horn, sx * 0.2, 0.92, 0.6, 0.018, 0.18, 0.018); a3.rotation.set(-0.7, 0, -sx * 0.7); }
-    d.userData.legs = []; for (const [lx, lz] of [[-0.13, 0.36], [0.13, 0.36], [-0.13, -0.36], [0.13, -0.36]]) { const hip = new T.Group(); hip.position.set(lx, -0.12, lz); const leg = new T.Mesh(V.cylG, fur2); leg.scale.set(0.05, 0.62, 0.05); leg.position.y = -0.31; hip.add(leg); const hf = new T.Mesh(V.boxG, hoof); hf.scale.set(0.09, 0.08, 0.11); hf.position.y = -0.64; hip.add(hf); d.add(hip); d.userData.legs.push(hip); }
-    const band = da(new T.TorusGeometry(0.26, 0.035, 6, 16), M(0xc8202a), 0, 0.02, 0.2); da(V.sphG, gold, 0, -0.24, 0.2, 0.06, 0.06, 0.06);
-    if (r === 1 && x < 0) { da(V.sphG, new T.MeshBasicMaterial({ color: 0xff2a1a }), 0, 0.5, 1.02, 0.07, 0.07, 0.07); const gl = new T.Sprite(new T.SpriteMaterial({ map: V.glowT, color: 0xff4a2a, blending: T.AdditiveBlending, depthWrite: false, transparent: true })); gl.scale.setScalar(1.5); gl.position.set(0, 0.5, 1.05); d.add(gl); }
-    d.userData.y0 = 0.95; g.add(d); deer.push(d); }
-  // the traces from the dash to the deer
-  for (const x of [-0.52, 0.52]) add(new T.BoxGeometry(0.03, 0.03, 4.2), M(0x5a3a20), x, 0.98, 3.4);
-  g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return { g, santa, deer }; }
-function sleighAnim(sl, t, moving) { sl.deer.forEach((d, q) => { const ph = t * (moving ? 11 : 3) + q * 1.3 + (q < 2 ? 0 : 1.6), amp = moving ? 1 : 0.15; d.position.y = d.userData.y0 + Math.abs(Math.sin(ph)) * 0.2 * amp; d.rotation.x = Math.sin(ph) * 0.08 * amp; d.userData.legs.forEach((hip, k2) => { hip.rotation.x = Math.sin(ph + (k2 < 2 ? 0 : Math.PI) + (k2 % 2) * 0.5) * 0.75 * amp; }); }); sl.santa.rotation.z = Math.sin(t * 2.2) * 0.04; }
+  // 25 Nov 2026 (his words: "make the reindeers majestic"). There were four small ones, stiff, with twigs for antlers. Now EIGHT, in four pairs,
+  // a quarter bigger: a deep chest with a pale ruff, an arched neck, a long head, tall branching antlers that catch the light, a red saddle cloth
+  // and collar with gold bells, long two-jointed legs in a flying gallop that ripples down the team, and gold dust streaming from their hooves.
+  // (Each deer's body is ONE drawing, its legs eight more: fewer pieces than the four old ones had.)
+  const deer = [], QE = new T.Euler(), QQ2 = new T.Quaternion(), MM2 = new T.Matrix4(), CC2 = new T.Color();
+  const part = (geo, c, px, py, pz, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) => { const q = geo.clone(); QE.set(rx, ry, rz); QQ2.setFromEuler(QE); MM2.compose(new T.Vector3(px, py, pz), QQ2, new T.Vector3(sx, sy, sz)); q.applyMatrix4(MM2); const n = q.attributes.position.count, col = new Float32Array(n * 3); CC2.setHex(c); for (let i = 0; i < n; i++) col.set([CC2.r, CC2.g, CC2.b], i * 3); q.setAttribute('color', new T.BufferAttribute(col, 3)); return q; };
+  const FUR = 0xa06c3a, FUR2 = 0x6e4626, CREAM = 0xf0e4c8, HORN = 0xfff0c8, REDC = 0xc8202a, GOLDC = 0xf0c040, BLK = 0x1a1210, cap = new T.CapsuleGeometry(0.27, 0.78, 4, 12), tor = new T.TorusGeometry(0.3, 0.04, 6, 18);
+  const body = [part(cap, FUR, 0, 0, 0, 1, 1, 1, Math.PI / 2), part(V.sphG, FUR, 0, 0.02, -0.38, 0.27, 0.27, 0.3), part(V.sphG, CREAM, 0, -0.05, 0.36, 0.3, 0.36, 0.3), part(V.cylG, FUR, 0, 0.36, 0.56, 0.13, 0.66, 0.13, 0.6), part(V.sphG, CREAM, 0, 0.2, 0.62, 0.16, 0.3, 0.12, 0.6),
+    part(V.sphG, FUR, 0, 0.7, 0.82, 0.15, 0.16, 0.25), part(V.sphG, FUR2, 0, 0.64, 1.03, 0.09, 0.085, 0.11), part(V.sphG, BLK, 0, 0.66, 1.13, 0.035, 0.03, 0.03), part(V.sphG, CREAM, 0, 0.14, -0.68, 0.08, 0.1, 0.08),
+    part(tor, REDC, 0, 0.02, 0.3), part(V.sphG, REDC, 0, 0.25, -0.06, 0.3, 0.1, 0.44), part(V.boxG, GOLDC, 0, 0.27, 0.36, 0.5, 0.03, 0.05), part(V.boxG, GOLDC, 0, 0.27, -0.48, 0.5, 0.03, 0.05), part(V.sphG, GOLDC, 0, -0.31, 0.3, 0.06, 0.06, 0.06)];
+  for (const sx of [-1, 1]) { body.push(part(V.coneG, FUR2, sx * 0.16, 0.84, 0.72, 0.05, 0.17, 0.03, 0, 0, -sx * 0.7), part(V.sphG, BLK, sx * 0.115, 0.74, 0.94, 0.026, 0.026, 0.026), part(V.sphG, GOLDC, sx * 0.21, -0.22, 0.3, 0.05, 0.05, 0.05),
+      part(V.cylG, HORN, sx * 0.2, 1.06, 0.72, 0.032, 0.52, 0.032, -0.15, 0, -sx * 0.5), part(V.cylG, HORN, sx * 0.4, 1.46, 0.62, 0.026, 0.52, 0.026, -0.35, 0, -sx * 0.18), part(V.cylG, HORN, sx * 0.13, 0.98, 0.92, 0.02, 0.32, 0.02, 1.0, 0, 0),
+      part(V.cylG, HORN, sx * 0.34, 1.26, 0.8, 0.02, 0.3, 0.02, 0.9, 0, -sx * 0.3), part(V.cylG, HORN, sx * 0.54, 1.62, 0.54, 0.02, 0.28, 0.02, 0, 0, -sx * 0.85), part(V.cylG, HORN, sx * 0.4, 1.76, 0.5, 0.02, 0.26, 0.02, -0.5, 0, sx * 0.2), part(V.cylG, HORN, sx * 0.3, 1.5, 0.48, 0.018, 0.24, 0.018, -0.9, 0, sx * 0.1)); }
+  const bodyG = T.mergeGeometries(body), deerM = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.65, emissive: 0xffffff, emissiveIntensity: 0 });
+  deerM.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n #ifdef USE_COLOR\n totalEmissiveRadiance += vColor.rgb * 0.24;\n #endif'); };      // they carry a little light of their own in the night sky
+  const upG = T.mergeGeometries([part(V.cylG, FUR2, 0, -0.21, 0, 0.065, 0.42, 0.065)]), lowG = T.mergeGeometries([part(V.cylG, FUR2, 0, -0.2, 0, 0.045, 0.4, 0.045), part(V.boxG, BLK, 0, -0.43, 0.02, 0.1, 0.09, 0.14)]);
+  for (let r = 0; r < 4; r++) for (const x of [-0.62, 0.62]) { const d = new T.Group(); d.position.set(x, 1.15, 3.1 + r * 1.85); d.scale.setScalar(1.22); d.add(new T.Mesh(bodyG, deerM));
+    d.userData.legs = []; for (const [lx, lz] of [[-0.15, 0.38], [0.15, 0.38], [-0.15, -0.38], [0.15, -0.38]]) { const hip = new T.Group(); hip.position.set(lx, -0.16, lz); hip.add(new T.Mesh(upG, deerM)); const knee = new T.Group(); knee.position.y = -0.42; knee.add(new T.Mesh(lowG, deerM)); hip.add(knee); hip.userData.knee = knee; d.add(hip); d.userData.legs.push(hip); }
+    d.userData.y0 = 1.15; d.userData.r = r; g.add(d); deer.push(d); }
+  // the traces from the dash to the lead pair, and gold dust from the hooves
+  for (const x of [-0.62, 0.62]) add(new T.BoxGeometry(0.03, 0.03, 8.2), M(0x5a3a20), x, 1.2, 4.9);
+  const DN = 150, dp = new Float32Array(DN * 3), dc = new Float32Array(DN * 3), dg = new T.BufferGeometry(); dg.setAttribute('position', new T.BufferAttribute(dp, 3)); dg.setAttribute('color', new T.BufferAttribute(dc, 3));
+  const dust = new T.Points(dg, new T.PointsMaterial({ map: V.glowT, size: 0.55, vertexColors: true, transparent: true, blending: T.AdditiveBlending, depthWrite: false, sizeAttenuation: true })); dust.frustumCulled = false; V.S.add(dust);
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; }); return { g, santa, deer, dust, dustL: Array.from({ length: DN }, () => ({ t: 9, life: 1, x: 0, y: -99, z: 0, vx: 0, vy: 0, vz: 0 })), dustI: 0 }; }
+const DV = new (window.THREE ? THREE.Vector3 : Object)();
+function sleighAnim(sl, t, moving, dt = 1 / 60) { sl.deer.forEach((d, q) => { const r = d.userData.r, ph = t * (moving ? 9.5 : 2.4) + r * 0.85 + (q % 2) * 0.35, amp = moving ? 1 : 0.16;
+    d.position.y = d.userData.y0 + Math.sin(ph) * 0.17 * amp + Math.sin(t * 1.7 + r) * 0.05; d.rotation.x = -Math.cos(ph) * 0.11 * amp;
+    d.userData.legs.forEach((hip, k2) => { const front = k2 < 2, a = ph + (k2 % 2) * 0.45 + (front ? 0 : Math.PI * 0.9); hip.rotation.x = Math.sin(a) * 0.95 * amp + (front ? -0.12 : 0.12) * amp; hip.userData.knee.rotation.x = (front ? 1 : 1) * Math.max(0, Math.cos(a)) * 1.15 * amp + 0.08; }); });
+  sl.santa.rotation.z = Math.sin(t * 2.2) * 0.04;
+  // gold dust: a few motes a frame from the hooves of a galloping team, drifting back and down, fading
+  const L = sl.dustL, P = sl.dust.geometry.attributes.position, C = sl.dust.geometry.attributes.color; sl.dust.visible = sl.g.visible;
+  if (moving && sl.g.visible) for (let n = 0; n < 3; n++) { const d = sl.deer[(Math.random() * sl.deer.length) | 0], q = L[sl.dustI++ % L.length]; DV.set((Math.random() - 0.5) * 0.4, -0.75, (Math.random() - 0.5) * 0.9); d.localToWorld(DV); q.x = DV.x; q.y = DV.y; q.z = DV.z; q.t = 0; q.life = 0.7 + Math.random() * 0.8; q.vx = (Math.random() - 0.5) * 0.8; q.vy = -0.4 - Math.random() * 0.8; q.vz = (Math.random() - 0.5) * 0.8; }
+  for (let i = 0; i < L.length; i++) { const q = L[i]; q.t += dt; if (q.t < q.life) { q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; const u = 1 - q.t / q.life, tw = 0.6 + 0.4 * Math.sin(t * 30 + i); P.setXYZ(i, q.x, q.y, q.z); C.setXYZ(i, 1.0 * u * tw, 0.85 * u * tw, 0.45 * u * tw); } else { P.setXYZ(i, 0, -99, 0); C.setXYZ(i, 0, 0, 0); } } P.needsUpdate = true; C.needsUpdate = true; }
 // the village for this level
 function buildVillage(V, G) { const T = V.T, M = V.M; if (V.vg) { V.S.remove(V.vg); V.vg.traverse(o => { if (o.geometry && o.geometry !== V.boxG && o.geometry !== V.sphG && o.geometry !== V.coneG && o.geometry !== V.cylG) o.geometry.dispose(); }); } const vg = new T.Group(); V.vg = vg; V.S.add(vg); V.hx = []; V.smoke = [];
   const wins = new T.MeshBasicMaterial({ color: 0xffd27a }), frame = M(0x3a2a22), white = M(0xc4d0ee, { roughness: 0.9 }), slate = M(0x4a3a36), stone = M(0x7a7a84), lightsC = [0xff4040, 0x40ff60, 0x4a8aff, 0xffd040], wallC = [0xb5543c, 0xd9c7a0, 0x7d94b5, 0x8a6a4c], doorC = [0x1f5a3a, 0x8a2a22, 0x2a4a7a, 0x6a2a4a];
@@ -5601,7 +5638,7 @@ function buildRoom(V, H) { const T = V.T, M = V.M; if (V.room) V.S.remove(V.room
   const gifts = new T.Group(); g.add(gifts);
   V.room = { g, H, P, me, cat, sleeper, stockM, gifts, n: -1 }; V.roomFor = H; }
 function sync(V, G, dt) { V.t += dt; const T = V.T, s = G.s;
-  if (V.for !== G.N) { V.for = G.N; W3.setSky('night'); buildVillage(V, G); const sk = mySkin(); V.S.remove(V.sleigh.g); V.sleigh = sleigh(V, sk); V.S.add(V.sleigh.g); ui.cam = null; V.room = null; V.roomFor = null; }
+  if (V.for !== G.N) { V.for = G.N; W3.setSky('night'); buildVillage(V, G); const sk = mySkin(); V.S.remove(V.sleigh.g); V.S.remove(V.sleigh.dust); V.sleigh.dust.geometry.dispose(); V.sleigh = sleigh(V, sk); V.S.add(V.sleigh.g); ui.cam = null; V.room = null; V.roomFor = null; }
   const inside = G.phase === 'in' && G.in;
   // snow and the aurora drift
   { const p = V.snow.geometry.attributes.position.array, cx = inside ? ROOMX : -s.x, cz = inside ? 0 : s.z; for (let i = 0; i < p.length; i += 3) { p[i + 1] -= dt * 2.2; p[i] += Math.sin(V.t + i) * dt * 0.3; if (p[i + 1] < 0) { p[i + 1] = 30 + Math.random() * 10; p[i] = cx + (Math.random() - 0.5) * 100; p[i + 2] = cz + (Math.random() - 0.5) * 100; } } V.snow.geometry.attributes.position.needsUpdate = true; V.snow.visible = !inside; }
@@ -5609,9 +5646,13 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, s = G.s;
   for (const q of V.hx) q.glow.material.opacity = G.done.includes(q.H.i) ? 0.6 + Math.sin(V.t * 3) * 0.2 : 0;
   // the next house: a glowing marker on its roof, a soft beam of light above it
   const next = G.V.filter(h => !G.done.includes(h.i)); let tgt = null, best = 1e9; for (const h of next) { const d = Math.hypot(h.x - s.x, h.z - s.z); if (d < best) { best = d; tgt = h; } } ui.tgt = tgt;
-  V.ring.visible = V.beam.visible = !!tgt && !inside; if (tgt) { const r = G.cfg.marker; V.ring.scale.setScalar(r); V.ring.position.set(-tgt.mx, tgt.top + 0.05, tgt.mz); V.beam.position.set(-tgt.mx, tgt.top + 15, tgt.mz); V.ring.material.color.setHex(G.landHeld ? 0xffd36a : 0x8affc0); }
+  V.ring.visible = V.beam.visible = !!tgt && !inside; if (tgt) { const r = G.cfg.marker; V.ring.scale.setScalar(r); V.ring.position.set(-tgt.mx, tgt.top + 0.05, tgt.mz); V.beam.position.set(-tgt.mx, tgt.top + 15, tgt.mz); V.ring.material.color.setHex(Math.hypot(s.x - tgt.mx, s.z - tgt.mz) <= r ? 0xffd36a : 0x8affc0); }      /* gold when the sleigh is right over it: come down */
   // the sleigh
-  const sl = V.sleigh; sl.g.visible = !inside; sl.g.position.set(-s.x, s.y + (G.phase === 'fly' ? Math.sin(V.t * 3) * 0.1 : 0), s.z); sl.g.rotation.set(G.landHeld && G.phase === 'fly' ? 0.12 : 0, -s.yaw, 0); sleighAnim(sl, V.t, G.phase === 'fly' && s.v > 1.2);
+  const sl = V.sleigh; sl.g.visible = !inside; sl.g.position.set(-s.x, s.y + (G.phase === 'fly' ? Math.sin(V.t * 3) * 0.1 : 0), s.z); { const fly = G.phase === 'fly', wp = fly ? clamp(-(s.vy || 0) * 0.035, -0.3, 0.3) : 0, wr = fly ? clamp(G.stick.x, -1, 1) * 0.22 * Math.min(1, s.v / 5 + 0.3) : 0; ui.pit = (ui.pit || 0) + (wp - (ui.pit || 0)) * Math.min(1, dt * 5); ui.rol = (ui.rol || 0) + (wr - (ui.rol || 0)) * Math.min(1, dt * 4); sl.g.rotation.set(ui.pit, -s.yaw, ui.rol, 'YXZ'); }      /* the team noses up into a climb, down into a dive, and banks into a turn */
+  sleighAnim(sl, V.t, G.phase === 'fly' && (s.v > 1.2 || Math.abs(s.vy || 0) > 1.5), dt);
+  // the stars to fly through
+  { if (!V.starS) { V.starS = []; const tx = texS(64, 64, (g2) => { g2.translate(32, 32); g2.fillStyle = '#fff'; g2.shadowColor = '#fff'; g2.shadowBlur = 8; g2.beginPath(); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - Math.PI / 2, rr = i % 2 ? 9 : 24; g2.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } g2.closePath(); g2.fill(); }); for (let i = 0; i < 24; i++) { const sp2 = new V.T.Sprite(new V.T.SpriteMaterial({ map: tx, color: 0xffd23a, transparent: true, depthWrite: false })); sp2.visible = false; V.S.add(sp2); V.starS.push(sp2); } }
+    V.starS.forEach((sp2, i) => { const st = (G.stars || [])[i], on = !!st && !st.got && !inside && !G.lesson; sp2.visible = on; if (on) { sp2.position.set(-st.x, st.y + Math.sin(V.t * 2 + i) * 0.3, st.z); const z = 2.6 + Math.sin(V.t * 5 + i * 2) * 0.35; sp2.scale.set(z, z, 1); sp2.material.rotation = V.t * 0.8 + i; } }); }
   for (const q of V.smoke || []) { const u = (V.t * 0.22 + q.ph) % 1; q.sm.position.set(q.x + Math.sin(u * 5 + q.ph * 9) * 0.5 * u + u * 1.2, q.y0 + u * 5.5, u * 0.6); q.sm.scale.setScalar(0.8 + u * 2.6); q.sm.material.opacity = 0.42 * (1 - u) * Math.min(1, u * 6); }
   if (V.moon) { V.moon.visible = V.stars.visible = !inside; V.stars.position.set(-s.x, 0, s.z); V.moon.position.set(-s.x + 110, 120, s.z + 330); }
   if (G.phase === 'roof' && G.roof) { const r = G.roof; if (r.slip != null && r.slip < 0.8) sl.g.position.y -= Math.min(1.5, r.t * 0.4); }
@@ -5626,7 +5667,7 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, s = G.s;
   // the camera
   let want; if (inside) { const I = G.in, [mx, mz] = V.room.P(I.x, I.z); want = { pos: [ROOMX - mx * 0.3, 8.5, mz * 0.3 + 5.6], at: [ROOMX - mx * 0.2, 0, mz * 0.2 + 0.4] }; }
   else if (G.phase === 'roof') want = { pos: [-s.x + 3, s.y + 4, s.z - 7], at: [-s.x, s.y, s.z] };
-  else { const bx = Math.sin(s.yaw), bz = Math.cos(s.yaw); want = { pos: [-(s.x - bx * 11), s.y + 6.5, s.z - bz * 11], at: [-(s.x + bx * 8), s.y - 3, s.z + bz * 8] }; }
+  else { const bx = Math.sin(s.yaw), bz = Math.cos(s.yaw); want = { pos: [-(s.x - bx * 12.5), s.y + 8.6, s.z - bz * 12.5], at: [-(s.x + bx * 9.5), s.y - 2.4, s.z + bz * 9.5] }; }      /* a little higher and further back: the whole team is seen, and the roofs below */
   if (!ui.cam || ui.snap || ui.wasIn !== !!inside) { ui.cam = { pos: want.pos.slice(), at: want.at.slice() }; ui.snap = false; } else { const a = Math.min(1, dt * 3.5); for (let i = 0; i < 3; i++) { ui.cam.pos[i] += (want.pos[i] - ui.cam.pos[i]) * a; ui.cam.at[i] += (want.at[i] - ui.cam.at[i]) * a; } }
   ui.wasIn = !!inside;
   const sk = FX.shake > 0 && optShake() ? (Math.random() - 0.5) * FX.shake * 0.02 : 0, cam = W3.cam; cam.position.set(ui.cam.pos[0] + sk, ui.cam.pos[1] + sk, ui.cam.pos[2]); cam.lookAt(ui.cam.at[0], ui.cam.at[1], ui.cam.at[2]); cam.updateMatrixWorld();
@@ -5636,7 +5677,9 @@ function scrOf(x, y, z) { if (!V3 || V3.none) return null; return W3.screen(new 
 function onEvent(G, e) {
   switch (e.k) {
     case 'land': sfx.land(); vibe(HAP.light); ui.banner = { txt: `THE ${G.V[e.i].fam.toUpperCase()}S`, sub: e.slippery ? 'Icy roof! Push up to hold the sleigh' : e.narrow ? 'A narrow chimney: tap ACT to wriggle down' : 'Down the chimney…', t: 0, secs: 1.6, small: true }; break;
-    case 'bounce': sfx.no(); hint = { txt: e.why === 'done' ? 'Already delivered there: on to the next one!' : 'Missed the marker: come round and hold LAND right over the glowing ring.', t: 0, secs: 2.4 }; vibe(HAP.light); break;
+    case 'bounce': sfx.no(); hint = { txt: e.why === 'done' ? 'Already delivered there: on to the next one!' : 'Missed the marker: come down right over the glowing ring.', t: 0, secs: 2.4 }; ui.banner = { txt: e.why === 'done' ? 'ALREADY DELIVERED' : 'MISSED THE MARKER', small: true, t: 0, secs: 1.2 }; vibe(HAP.light); break;
+    case 'bonk': sfx.no(); FX.shake = 6; vibe(HAP.thud); ui.banner = { txt: 'BUMP!', small: true, t: 0, secs: 0.8 }; break;
+    case 'star': if (sfx.star) sfx.star(e.n); else sfx.delivered(); burst(W / 2, H * 0.5, '#ffe07a', 22); FX.flash = Math.max(FX.flash || 0, 0.25); vibe(HAP.light); ui.banner = { txt: '★ STAR SPEED!', small: true, t: 0, secs: 1.1 }; break;
     case 'slid': sfx.slip(); hint = { txt: 'The sleigh slid off the icy roof! Push up as soon as you land.', t: 0, secs: 2.6 }; break;
     case 'squeeze': sfx.thump(); vibe(HAP.light); break;
     case 'enter': sfx.chimney(); ui.snap = true; tip2('inside', 'Tiptoe: push gently. Read the wish list, tap a present in your sack, then ACT by the tree.', 4); break;
@@ -5674,7 +5717,7 @@ function draw(now, dt) {
     ctx.fillStyle = 'rgba(10,20,50,.92)'; rrect(W / 2 - w / 2, hy - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the HUD ----------
-function layout(G) { return { btn: { x: W - 86 * k, y: H - 88 * k, r: 60 * k } }; }
+function layout(G) { return { btn: { x: W - 86 * k, y: H - 88 * k, r: 60 * k }, stick: { x: 104 * k, y: H - 100 * k, r: 62 * k, zone: 118 * k } }; }      // the stick has its own fixed place (bottom left); FORWARD / ACT is the right thumb's
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,20,50,.75)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
 function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G);
@@ -5698,12 +5741,17 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G);
     ctx.fillStyle = 'rgba(10,20,50,.6)'; rrect(sx - 8 * k, sy - 26 * k, sack.length * bw + 16 * k, 52 * k, 12); ctx.fill();
     sack.forEach((id, i) => { const x = sx + i * bw + bw / 2, held = I.hold === id; if (held) { ctx.fillStyle = 'rgba(255,211,106,.45)'; rrect(x - bw / 2 + 2, sy - 22 * k, bw - 4, 44 * k, 8); ctx.fill(); } ctx.font = `${Math.round(26 * k)}px sans-serif`; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(GIFT(id).icon, x, sy); ui.sackR.push({ id, x, y: sy, r: bw / 2 }); });
     if (I.hold || G.lesson) txt(I.hold ? `holding: ${GIFT(I.hold).name}` : 'tap a present to hold it', W / 2, sy - 36 * k, '#fff', `700 ${Math.round(12 * k)}px ${BC}`); }
-  // the stick
-  if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); const dx = s2.x - s2.x0, dy = s2.y - s2.y0, m = Math.hypot(dx, dy), c = m > R ? R / m : 1; ctx.strokeStyle = 'rgba(255,214,110,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R * 0.7, 0, TAU); ctx.stroke(); ctx.fillStyle = G.phase === 'in' && m / R > 0.7 ? '#ff8a6a' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(s2.x0 + dx * c, s2.y0 + dy * c, 22 * k, 0, TAU); ctx.fill(); if (G.phase === 'in') txt(m / R > 0.7 ? 'RUNNING (noisy)' : 'tiptoe', s2.x0, s2.y0 - R - 12 * k, m / R > 0.7 ? '#ff8a6a' : '#8fe0ab', `700 ${Math.round(11 * k)}px ${BC}`); }
-  else if (G.t < 8 || G.lesson) txt(G.phase === 'in' ? 'WALK ◀▶' : 'STEER ◀▶', 110 * k, H - 70 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(13 * k)}px ${BC}`);
-  // LAND (outside) / ACT (inside, and in a narrow chimney)
-  { const B = L.btn, inside = G.phase === 'in', lab = inside || G.phase === 'roof' && G.roof && G.roof.narrow ? 'ACT' : 'LAND', on = !inside && G.landHeld; ctx.globalAlpha = 0.92; ctx.fillStyle = on ? '#c8202a' : 'rgba(10,20,50,.6)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.stroke();
-    txt(lab, B.x, B.y - 4 * k, '#fff', `700 ${Math.round(22 * k)}px ${TF}`); if (G.lesson) txt(lab === 'LAND' ? 'hold' : 'tap', B.x, B.y + 18 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`); ctx.globalAlpha = 1; }
+  // the stick: always in the same place (25 Nov 2026; it used to appear wherever the thumb landed, with STEER written where it was not). In flight
+  // its ring carries four small arrows: left and right turn, up climbs, down dives. The knob is under the thumb.
+  { const S2 = L.stick, s2 = ui.stick, fly = G.phase === 'fly', run = s2 && G.phase === 'in' && Math.hypot(s2.x - S2.x, s2.y - S2.y) / S2.r > 0.7; ctx.fillStyle = 'rgba(10,20,50,.38)'; ctx.beginPath(); ctx.arc(S2.x, S2.y, S2.r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,214,110,.75)'; ctx.lineWidth = 3 * k; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.8)'; for (const [ax, ay, on] of [[1, 0, true], [-1, 0, true], [0, -1, fly || G.phase === 'in' || G.phase === 'roof'], [0, 1, fly || G.phase === 'in']]) { if (!on) continue; const px = S2.x + ax * S2.r * 0.76, py = S2.y + ay * S2.r * 0.76, z = 7 * k; ctx.beginPath(); ctx.moveTo(px + ax * z, py + ay * z); ctx.lineTo(px - ax * z * 0.5 + ay * z * 0.8, py - ay * z * 0.5 + ax * z * 0.8); ctx.lineTo(px - ax * z * 0.5 - ay * z * 0.8, py - ay * z * 0.5 - ax * z * 0.8); ctx.closePath(); ctx.fill(); }
+    let kx = S2.x, ky = S2.y; if (s2) { const dx = s2.x - S2.x, dy = s2.y - S2.y, m = Math.hypot(dx, dy), c = m > S2.r ? S2.r / m : 1; kx += dx * c; ky += dy * c; }
+    ctx.fillStyle = run ? '#ff8a6a' : s2 ? 'rgba(255,255,255,.92)' : 'rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(kx, ky, 24 * k, 0, TAU); ctx.fill();
+    if (s2 && G.phase === 'in') txt(run ? 'RUNNING (noisy)' : 'tiptoe', S2.x, S2.y - S2.r - 12 * k, run ? '#ff8a6a' : '#8fe0ab', `700 ${Math.round(11 * k)}px ${BC}`); }
+  // FORWARD (flying: hold) / ACT (inside, and in a narrow chimney: tap)
+  { const B = L.btn, inside = G.phase === 'in', lab = inside || G.phase === 'roof' && G.roof && G.roof.narrow ? 'ACT' : 'FORWARD', on = lab === 'FORWARD' && G.go; ctx.globalAlpha = 0.92; ctx.fillStyle = on ? '#c8202a' : 'rgba(10,20,50,.6)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.stroke();
+    txt(lab, B.x, B.y - (lab === 'ACT' ? 4 : 0) * k, '#fff', `700 ${Math.round((lab === 'ACT' ? 22 : 17) * k)}px ${TF}`); ctx.globalAlpha = 1;
+    if (G.phase === 'fly' && G.s.boost > 0) { ctx.strokeStyle = '#ffe07a'; ctx.lineWidth = 5 * k; ctx.beginPath(); ctx.arc(B.x, B.y, B.r + 7 * k, -Math.PI / 2, -Math.PI / 2 + TAU * Math.min(1, G.s.boost / 2.6)); ctx.stroke(); } }
   if (G.lesson) lessonPanel(G);
   if (ui.banner) { const b = ui.banner, a = Math.min(1, b.t / 0.2, ((b.secs || 1.6) - b.t) / 0.4); ctx.globalAlpha = Math.max(0, a); txt(b.txt, W / 2, H * 0.24, '#ffd36a', `700 ${Math.round((b.small ? 26 : 34) * k)}px ${TF}`); if (b.sub) txt(b.sub, W / 2, H * 0.24 + 28 * k, '#fff', `700 ${Math.round(14 * k)}px ${BC}`); ctx.globalAlpha = 1; } }
 function lessonPanel(G) { coachPanel(G); }
@@ -5745,7 +5793,7 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const inside = 
   mus.t += dt; const beat = 0.3; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, q = TUNE[i % TUNE.length];
   music(() => { if (q >= 0) pluck(note(523, q), 0.5, inside ? 0.005 : 0.013); if (i % 4 === 0) pluck(note(131, [0, 5, 7, 0][(i >> 2) % 4]), 0.9, inside ? 0.008 : 0.02); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('fest', { seed: 110, key: 1, bpm: 104, lead: { i: 'musicbox' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0...2...4...7...', '5...7...5...3...', '4...6...4...1...'] });
+bandStyle('fest', { seed: 110, key: -5, bpm: 146, lead: { i: 'bell', oct: 1 }, comp: { i: 'piano', p: 'x...x...x...x...' }, A: [0, 5, 3, 4], tune: ['0.24.7.47.9.7.4.', '5.57.5.32.3.5...', '3.57.a.75.7.5.3.', '4.6.8.6.4.2.1...'], d: { j: 'x...x...x...x...', q: 'x.x.x.x.x.x.x.x.', k: 'x.....x.x.....x.', s: '....x.......x...', c: '....x.......x...' }, bass: 'w...w...w...w...', B: [3, 4, 2, 5], sw: 0.45, rev: 0.4 });
 
 // ===================== SHARED: screens, levels, pause, the feed, the frame loop, the test hook (rarely touched) =====================
 // What every game must have (CLAUDE.md, LESSONS rules 4, 7, 11, 12) is all here, working off part2's newGame / step / finish:
@@ -5831,7 +5879,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; ui.stick = null; ui.btn = {}; if (G) { setStick(G, 0, 0); landOn(G, false); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; ui.stick = null; ui.btn = {}; if (G) { setStick(G, 0, 0); goOn(G, false); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -5839,17 +5887,17 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (two thumbs, sideways): the left thumb is a floating stick (fly: the way to steer, up is ahead; inside: walk, a gentle
-// push tiptoes); the right thumb holds LAND in flight and taps ACT inside; inside, a tap on a present in the sack holds it.
-function stickTo(dx, dy) { const R = 56 * k, m = Math.hypot(dx, dy); if (m < R * 0.12) return setStick(G, 0, 0); setStick(G, dx / Math.max(R, m), -dy / Math.max(R, m)); }
+// input (two thumbs, sideways). The left thumb's stick has its own fixed place: in flight left and right turn the sleigh, UP climbs, DOWN dives;
+// inside it walks Santa the way it is pushed (a gentle push tiptoes). The right thumb HOLDS FORWARD in flight and taps ACT inside; inside, a tap on
+// a present in the sack holds it. (25 Nov 2026: it was a stick that appeared wherever the thumb landed, and a LAND button.)
+function stickTo(x, y) { const S2 = layout(G).stick, dx = x - S2.x, dy = y - S2.y, m = Math.hypot(dx, dy); if (m < S2.r * 0.14) return setStick(G, 0, 0); setStick(G, dx / Math.max(S2.r, m), -dy / Math.max(S2.r, m)); }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
   if (G.phase === 'in') { const s = ui.sackR.find(q => Math.hypot(x - q.x, y - q.y) < q.r + 4 * k); if (s) { holdGift(G, s.id); return; } }
-  if (Math.hypot(x - L.btn.x, y - L.btn.y) < L.btn.r + 16 * k) { if (G.phase === 'fly') { ui.landId = e.pointerId; landOn(G, true); } else act(G); return; }
-  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-  if (x < W * 0.5 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; stickTo(0, 0); } });
+  if (Math.hypot(x - L.btn.x, y - L.btn.y) < L.btn.r + 16 * k) { if (G.phase === 'in' || (G.phase === 'roof' && G.roof && G.roof.narrow)) act(G); else { ui.landId = e.pointerId; goOn(G, true); try { cv.setPointerCapture(e.pointerId); } catch (err) {} } return; }
+  if (!ui.stick && Math.hypot(x - L.stick.x, y - L.stick.y) < L.stick.zone) { try { cv.setPointerCapture(e.pointerId); } catch (err) {} ui.stick = { id: e.pointerId, x, y }; stickTo(x, y); } });
 cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
-  if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; stickTo(x - s2.x0, y - s2.y0); } });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.landId === e.pointerId) { ui.landId = null; if (G) landOn(G, false); } }
+  if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; stickTo(x, y); } });
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.landId === e.pointerId) { ui.landId = null; if (G) goOn(G, false); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'red');
@@ -5914,7 +5962,7 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  x() { return { k, layout, setStick, landOn, act, holdGift, wantsLeft, houseUnder, scrOf, CRUISE }; }, layout() { return layout(G); }, ui, store,
+  x() { return { k, layout, setStick, goOn, act, holdGift, wantsLeft, houseUnder, scrOf, CRUISE }; }, layout() { return layout(G); }, ui, store,
   practice(on) { practiceOn = on; }, showAqua, mySkin, SKINS, renderShop, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },

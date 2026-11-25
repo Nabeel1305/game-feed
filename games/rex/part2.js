@@ -50,13 +50,13 @@ function goalsOf(N) { const boss = N % 10 === 0;
   return out; }
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
   return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), goals: goalsOf(N), hungerT: x(140, 122, 30) * (help ? 1.25 : 1), alertK: x(0.85, 1.3, 30), preySp: x(0.92, 1.15, 30), tell: x(1.15, 0.7, 30) * (help ? 1.25 : 1),
-    rivalHp: x(5, 7, 30), rivalDmg: x(18, 25, 30) * (1 - 0.15 * upLv('hide')), dmgK: 1 - 0.15 * upLv('hide'), bite: 1 + 0.25 * upLv('jaws'), stam: 3.4 * (1 + 0.25 * upLv('legs')), roarCD: 10 / (1 + 0.25 * upLv('lungs')), roarR: 20 * (1 + 0.15 * upLv('lungs')), extra: Math.round(x(4, 9, 30)) }; }
+    rivalHp: x(5, 7, 30), rivalDmg: x(18, 25, 30) * (1 - 0.15 * upLv('hide')), dmgK: 1 - 0.15 * upLv('hide'), bite: 1 + 0.25 * upLv('jaws'), stam: 4.2 * (1 + 0.25 * upLv('legs')), wind: x(2.6, 4.4, 30), puffT: x(2.6, 1.5, 30) * (help ? 1.25 : 1), puffK: x(0.5, 0.68, 30), roarCD: 10 / (1 + 0.25 * upLv('lungs')), roarR: 20 * (1 + 0.15 * upLv('lungs')), extra: Math.round(x(4, 9, 30)) }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, weather: cfg.weather, wait: 0, nid: 1,
     me: { x: 0, z: -20, h: 0, v: 0, hp: 100, hunger: 100, stam: cfg.stam, bite: 0, bcd: 0, roarCD: 0, hit: 0, eatT: 0, eatId: 0 }, in: { sx: 0, sy: 0, ref: 0, run: false }, dinos: [], got: {}, eaten: 0, bites: 0, hits: 0, wins: 0 };
   spawnAll(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G; }
-function mk(G, k, x, z, o = {}) { const K = KINDS[k], d = Object.assign({ id: G.nid++, k, x, z, h: G.rnd() * TAU, v: 0, hp: K.hp * (k === 'rival' ? G.cfg.rivalHp / 6 : 1), max: 0, state: 'idle', t: 0, alerted: false, zig: 0, tell: 0, tired: 0, lunge: 0, freeze: 0, dead: false, eat: 0, hx: x, hz: z }, o); if (k === 'rival' && o.big) d.hp *= 1.4; d.max = d.hp; G.dinos.push(d); return d; }
+function mk(G, k, x, z, o = {}) { const K = KINDS[k], d = Object.assign({ id: G.nid++, k, x, z, h: G.rnd() * TAU, v: 0, hp: K.hp * (k === 'rival' ? G.cfg.rivalHp / 6 : 1), max: 0, state: 'idle', t: 0, alerted: false, zig: 0, tell: 0, tired: 0, lunge: 0, freeze: 0, wind: null, puff: 0, dead: false, eat: 0, hx: x, hz: z }, o); if (k === 'rival' && o.big) d.hp *= 1.4; d.max = d.hp; G.dinos.push(d); return d; }
 // the valley's animals: the goal's prey where they live, and others about
 function spawnAll(G) { const R = G.rnd, c = G.cfg, near = (s, r) => { const a = R() * TAU, q = Math.sqrt(R()) * r; return [s.x + Math.cos(a) * q, s.z + Math.sin(a) * q]; };
   const home = { runner: SPOTS.ferns, duck: SPOTS.water, spike: { x: 70, z: 110, r: 20 }, horns: { x: -60, z: 140, r: 22 }, rival: SPOTS.nest };
@@ -76,7 +76,7 @@ const goalLeft = G => G.cfg.goals.map(g => ({ k: g.k, left: g.n - (G.got[g.k] ||
 // came down); the rex turns towards the stick's way (a heavy beast: a moment to turn round) and walks when he faces it.
 function stick(G, sx, sy, ref) { G.in.sx = clamp(sx, -1, 1); G.in.sy = clamp(sy, -1, 1); if (ref != null) G.in.ref = ref; }
 function go(G, h, p) { const m = G.me; stick(G, Math.sin(h - m.h) * p, Math.cos(h - m.h) * p, m.h); }      // the robots: walk on heading h, push p
-function bite(G) { const m = G.me; if (G.over || G.wait > 0 || m.bcd > 0 || m.hp <= 0 || m.eatT > 0) return false; m.bite = 0.35; m.bcd = 0.75; G.bites++; G.ev.push({ k: 'snap' });
+function bite(G) { const m = G.me; if (G.over || G.wait > 0 || m.bcd > 0 || m.hp <= 0 || m.eatT > 0) return false; m.bite = 0.35; m.bcd = 0.75; m.lunge = m.v > 8; G.bites++;      /* a bite at a run is a lunge: he does not slow down to snap */ G.ev.push({ k: 'snap' });
   // what is in front of the jaws
   let best = null, bd = 9; for (const d of G.dinos) { if (d.dead) continue; const r = 4.8 + KINDS[d.k].size * 1.6, dd = dist(m, d), da = Math.abs(wrapA(angTo(m, d) - m.h)); if (dd < r && da < 0.85 && dd < bd) { best = d; bd = dd; } }
   if (!best) { lessonSee(G, 'miss'); return true; }
@@ -111,9 +111,9 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; for (const d 
   // you
   m.bcd = Math.max(0, m.bcd - dt); m.bite = Math.max(0, m.bite - dt); m.roarCD = Math.max(0, m.roarCD - dt); m.hit = Math.max(0, m.hit - dt);
   const push = m.eatT > 0 ? 0 : Math.min(1, Math.hypot(I.sx, I.sy)); let face = 0, run = false;
-  if (push > 0.12) { const dh = wrapA((I.ref || 0) + Math.atan2(I.sx, I.sy) - m.h); face = Math.max(0, Math.cos(dh)); run = push > 0.85 && face > 0.75 && m.stam > 0.2; const rate = run ? 1.8 : m.v < 3 ? 3.6 : 2.8; m.h += clamp(dh, -rate * dt, rate * dt); }      // a gentle push (under 0.3) only turns him to look
-  const want = m.bite > 0 ? 7 : run ? 11.5 : 5.5 * clamp((push - 0.3) / 0.55, 0, 1) * face; m.v += (want - m.v) * Math.min(1, dt * (want > m.v ? 4.2 : 5));
-  m.stam = run ? Math.max(0, m.stam - dt) : Math.min(c.stam, m.stam + dt * 0.45); m.run = run;
+  if (push > 0.12) { const dh = wrapA((I.ref || 0) + Math.atan2(I.sx, I.sy) - m.h); face = Math.max(0, Math.cos(dh)); if (m.stam <= 0.05) m.gasp = true; else if (m.stam >= 1.2) m.gasp = false; run = push > 0.85 && face > 0.75 && !m.gasp; const rate = run ? 2.3 : m.v < 3 ? 3.6 : 2.8; m.h += clamp(dh, -rate * dt, rate * dt); }      // a gentle push (under 0.3) only turns him to look
+  const want = m.bite > 0 ? (m.lunge ? 13 : 7) : run ? 11.5 : 5.5 * clamp((push - 0.3) / 0.55, 0, 1) * face; m.v += (want - m.v) * Math.min(1, dt * (want > m.v ? 4.2 : 5));
+  m.stam = run ? Math.max(0, m.stam - dt) : Math.min(c.stam, m.stam + dt * 0.7); m.run = run;
   m.x = clamp(m.x + Math.sin(m.h) * m.v * dt, -BOUND, BOUND); m.z = clamp(m.z + Math.cos(m.h) * m.v * dt, -BOUND + 40, BOUND + 60);
   if (!G.lesson) { m.hunger -= dt * 100 / c.hungerT; if (m.hunger <= 0) { m.hunger = 0; m.hp -= dt * 4; if (m.hp <= 0) return finish(G, false); } }
   // how loud you are: a charge carries, a creep does not
@@ -126,11 +126,14 @@ function think(G, d, dt, noise) { const K = KINDS[d.k], c = G.cfg, m = G.me, dd 
   const hears = dd < K.alert * c.alertK * noise * (d.cave ? 0.7 : 1);
   if (K.flee) {
     if (hears || (d.state === 'flee' && dd < 48)) { if (d.state !== 'flee') { d.state = 'flee'; G.ev.push({ k: 'bolt', kind: d.k, x: d.x, z: d.z }); if (K.herd) for (const o of G.dinos) if (!o.dead && o.k === d.k && dist(o, d) < 20) o.state = 'flee'; } }
-    else if (d.state === 'flee' && dd >= 48) d.state = 'graze';
-    if (d.state === 'flee') { let h = angTo(m, d); if (K.zig) { d.zig -= dt; if (d.zig <= 0) { d.zig = 0.6 + R() * 0.7; d.zs = (R() < 0.5 ? -1 : 1) * (0.5 + R() * 0.5); } h += d.zs || 0; }
+    else if (d.state === 'flee' && dd >= 48) { d.state = 'graze'; d.wind = null; d.puff = 0; }
+    if (d.state === 'flee') {
+      // prey cannot sprint for ever: after a burst it is winded and slows (a chase that keeps on it ends in a catch), then gets its wind back
+      if (d.puff > 0) { d.puff -= dt; if (d.puff <= 0) d.wind = c.wind * (0.8 + R() * 0.4); } else { d.wind = (d.wind == null ? c.wind : d.wind) - dt; if (d.wind <= 0) { d.puff = c.puffT; G.ev.push({ k: 'winded', kind: d.k, x: d.x, z: d.z }); } }
+      let h = angTo(m, d); if (K.zig && !(d.puff > 0)) { d.zig -= dt; if (d.zig <= 0) { d.zig = 0.6 + R() * 0.7; d.zs = (R() < 0.5 ? -1 : 1) * (0.5 + R() * 0.5); } h += d.zs || 0; }
       // steer back from the edge of the valley
       if (Math.abs(d.x) > BOUND - 15 || d.z > BOUND + 45 || d.z < -BOUND + 55) h = angTo(d, { x: 0, z: 60 }) + (R() - 0.5);
-      moveTo(h, K.sp * c.preySp * (d.k === 'duck' ? Math.max(0.7, 1 - d.t * 0) : 1)); return; }
+      moveTo(h, K.sp * c.preySp * (d.puff > 0 ? c.puffK : 1)); return; }
     // grazing: a slow wander about home
     if (dist(d, { x: d.hx, z: d.hz }) > 12) moveTo(angTo(d, { x: d.hx, z: d.hz }), 1.2); else { if (R() < dt * 0.4) d.wh = R() * TAU; moveTo(d.wh || d.h, R() < 0.5 ? 0.6 : 0); } return; }
   if (K.armour) { // a spikeback turns its tail to you and swings it

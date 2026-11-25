@@ -83,7 +83,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; ui.stick = null; ui.btn = {}; if (G) { setStick(G, 0, 0); landOn(G, false); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; ui.stick = null; ui.btn = {}; if (G) { setStick(G, 0, 0); goOn(G, false); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -91,17 +91,17 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (two thumbs, sideways): the left thumb is a floating stick (fly: the way to steer, up is ahead; inside: walk, a gentle
-// push tiptoes); the right thumb holds LAND in flight and taps ACT inside; inside, a tap on a present in the sack holds it.
-function stickTo(dx, dy) { const R = 56 * k, m = Math.hypot(dx, dy); if (m < R * 0.12) return setStick(G, 0, 0); setStick(G, dx / Math.max(R, m), -dy / Math.max(R, m)); }
+// input (two thumbs, sideways). The left thumb's stick has its own fixed place: in flight left and right turn the sleigh, UP climbs, DOWN dives;
+// inside it walks Santa the way it is pushed (a gentle push tiptoes). The right thumb HOLDS FORWARD in flight and taps ACT inside; inside, a tap on
+// a present in the sack holds it. (25 Nov 2026: it was a stick that appeared wherever the thumb landed, and a LAND button.)
+function stickTo(x, y) { const S2 = layout(G).stick, dx = x - S2.x, dy = y - S2.y, m = Math.hypot(dx, dy); if (m < S2.r * 0.14) return setStick(G, 0, 0); setStick(G, dx / Math.max(S2.r, m), -dy / Math.max(S2.r, m)); }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
   if (G.phase === 'in') { const s = ui.sackR.find(q => Math.hypot(x - q.x, y - q.y) < q.r + 4 * k); if (s) { holdGift(G, s.id); return; } }
-  if (Math.hypot(x - L.btn.x, y - L.btn.y) < L.btn.r + 16 * k) { if (G.phase === 'fly') { ui.landId = e.pointerId; landOn(G, true); } else act(G); return; }
-  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-  if (x < W * 0.5 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; stickTo(0, 0); } });
+  if (Math.hypot(x - L.btn.x, y - L.btn.y) < L.btn.r + 16 * k) { if (G.phase === 'in' || (G.phase === 'roof' && G.roof && G.roof.narrow)) act(G); else { ui.landId = e.pointerId; goOn(G, true); try { cv.setPointerCapture(e.pointerId); } catch (err) {} } return; }
+  if (!ui.stick && Math.hypot(x - L.stick.x, y - L.stick.y) < L.stick.zone) { try { cv.setPointerCapture(e.pointerId); } catch (err) {} ui.stick = { id: e.pointerId, x, y }; stickTo(x, y); } });
 cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
-  if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; stickTo(x - s2.x0, y - s2.y0); } });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.landId === e.pointerId) { ui.landId = null; if (G) landOn(G, false); } }
+  if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; stickTo(x, y); } });
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.landId === e.pointerId) { ui.landId = null; if (G) goOn(G, false); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'red');
@@ -153,7 +153,7 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  x() { return { k, layout, setStick, landOn, act, holdGift, wantsLeft, houseUnder, scrOf, CRUISE }; }, layout() { return layout(G); }, ui, store,
+  x() { return { k, layout, setStick, goOn, act, holdGift, wantsLeft, houseUnder, scrOf, CRUISE }; }, layout() { return layout(G); }, ui, store,
   practice(on) { practiceOn = on; }, showAqua, mySkin, SKINS, renderShop, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },

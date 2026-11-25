@@ -36,4 +36,4 @@ function soundStep(G, dt) { if (!actx || MUTE || paused) return; const inside = 
   mus.t += dt; const beat = 0.3; if (mus.t < beat) return; mus.t -= beat; const i = mus.i++, q = TUNE[i % TUNE.length];
   music(() => { if (q >= 0) pluck(note(523, q), 0.5, inside ? 0.005 : 0.013); if (i % 4 === 0) pluck(note(131, [0, 5, 7, 0][(i >> 2) % 4]), 0.9, inside ? 0.008 : 0.02); }); }
 // the band (tools/juice-kit.js): this game's music
-bandStyle('fest', { seed: 110, key: 1, bpm: 104, lead: { i: 'musicbox' }, comp: { i: 'keys' }, A: [0, 3, 0, 4], tune: ['0...2...4...7...', '5...7...5...3...', '4...6...4...1...'] });
+bandStyle('fest', { seed: 110, key: -5, bpm: 146, lead: { i: 'bell', oct: 1 }, comp: { i: 'piano', p: 'x...x...x...x...' }, A: [0, 5, 3, 4], tune: ['0.24.7.47.9.7.4.', '5.57.5.32.3.5...', '3.57.a.75.7.5.3.', '4.6.8.6.4.2.1...'], d: { j: 'x...x...x...x...', q: 'x.x.x.x.x.x.x.x.', k: 'x.....x.x.....x.', s: '....x.......x...', c: '....x.......x...' }, bass: 'w...w...w...w...', B: [3, 4, 2, 5], sw: 0.45, rev: 0.4 });

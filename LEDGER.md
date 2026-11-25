@@ -23,7 +23,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 13 | **Hunter** | testing | not yet (he has not said so) | 0.4.3 | [play](https://claude.ai/artifact/FDNPgUpKVfXTbhBc7yRUmS) | `games/hunter/index.html` |
 | 14 | **Police Chase** | testing | not yet (he has not said so) | 0.3.4 | [play](https://claude.ai/artifact/6tsbsTgrcUfmamvSMVuyJy) | `games/police/index.html` |
 | 15 | **Pilot** | testing | not yet (he has not said so) | 0.3.2 | [play](https://claude.ai/artifact/673SzKv3kg9inkqwy1KHXc) | `games/pilot/index.html` |
-| 16 | **Short Order** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV) | `games/cook/index.html` |
+| 16 | **Short Order** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/8UWHT5ZFpYfYQxhfATK4hV) | `games/cook/index.html` |
 | 17 | **Country Vet** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/CECaaPJZ5BQ2tkjLCSPYgG) | `games/vet/index.html` |
 | 18 | **Lighthouse** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/AeoxCPmBDorzB9RTscyEZx) | `games/lighthouse/index.html` |
 | 19 | **Hiring** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/YM4XMqenX8UECK8UibNm4Z) | `games/hiring/index.html` |
@@ -34,7 +34,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 24 | **On the Run** | testing | not yet (he has not said so) | 0.2.3 | [play](https://claude.ai/artifact/UZr6TDdzjWrktMqFxmbiC1) | `games/run/index.html` |
 | 25 | **Castle Siege** | testing | not yet (he has not said so) | 0.1.7 | [play](https://claude.ai/artifact/E8f3Rn1gvEYJF1XXhMo9YQ) | `games/castle/index.html` |
 | 26 | **Tag** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/GGtwM2ML7gysoGR62LuQsf) | `games/tag/index.html` |
-| 27 | **Heaven or Hell** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/2TE4VTw2C7bskSt1ioR3rU) | `games/heaven/index.html` |
+| 27 | **Heaven or Hell** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/2TE4VTw2C7bskSt1ioR3rU) | `games/heaven/index.html` |
 | 28 | **Harvest Valley** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/5WA6HWrcvqJUi3qFxDUEBr) | `games/harvest/index.html` |
 | 29 | **Horde** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/K8oHpP4m8x2ewCbCm6VJDP) | `games/horde/index.html` |
 | 30 | **Mini Golf** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/8Hp1ZUv44KnZAHAx8PKa7L) | `games/golf/index.html` |
@@ -42,7 +42,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 32 | **Critter Clash** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/TuMVzQoZa1mLvdrTfXb1iH) | `games/critters/index.html` |
 | 33 | **Rodeo** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/J9F7dBh1m2F7ygUHNic8mQ) | `games/rodeo/index.html` |
 | 34 | **Eleven** | testing | not yet (he has not said so) | 0.4.0 | [play](https://claude.ai/artifact/1DRGKnNMJY4GBMnoYjB4Wi) | `games/eleven/index.html` |
-| 35 | **Deep Bite** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/4yJgakuRwnPQBBTQJFYNxh) | `games/shark/index.html` |
+| 35 | **Deep Bite** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/4yJgakuRwnPQBBTQJFYNxh) | `games/shark/index.html` |
 | 36 | **Powder** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/7HWkUnZpkWQD1iTpZTTn9D) | `games/powder/index.html` |
 | 37 | **Cairn** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/BpPcd8qSV16eTFHjbge8VZ) | `games/cairn/index.html` |
 | 38 | **Pinball** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/N9X2SHnhm9vdDWEz766jnS) | `games/pinball/index.html` |
@@ -51,14 +51,14 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 41 | **Bonsai** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/FRzkTn7ah218Nz3tL5ZZ3Y) | `games/bonsai/index.html` |
 | 42 | **Star Miner** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/1brYRfNx8etgzvfCvpxfyF) | `games/miner/index.html` |
 | 43 | **Ghost Lantern** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/PwJQKnzTmyULwZCjM9TWmD) | `games/lantern/index.html` |
-| 44 | **Drift Kings** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy) | `games/kart/index.html` |
+| 44 | **Drift Kings** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy) | `games/kart/index.html` |
 | 45 | **The Bench** | testing | not yet (he has not said so) | 0.2.2 | [play](https://claude.ai/artifact/YCgzobKcQ8zkpCULKaBShb) | `games/judge/index.html` |
 | 46 | **Haggle** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5) | `games/haggle/index.html` |
-| 47 | **Battle Lines** | testing | not yet (he has not said so) | 0.2.4 | [play](https://claude.ai/artifact/Dxurc2KCKBwA5BaEWBBjXj) | `games/war/index.html` |
+| 47 | **Battle Lines** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/Dxurc2KCKBwA5BaEWBBjXj) | `games/war/index.html` |
 | 48 | **Grand Hotel** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/5F7Hwjcmx4qek6qvs3rzfA) | `games/hotel/index.html` |
-| 49 | **Ramp Riders** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/4c5jxbbj1PNPSZCDFaQQxm) | `games/ramp/index.html` |
+| 49 | **Ramp Riders** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/4c5jxbbj1PNPSZCDFaQQxm) | `games/ramp/index.html` |
 | 50 | **Spellshop** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/YHmHT3EMvkRMWDZYKEw7kp) | `games/spell/index.html` |
-| 51 | **Rex** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ) | `games/rex/index.html` |
+| 51 | **Rex** | testing | not yet (he has not said so) | 0.4.0 | [play](https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ) | `games/rex/index.html` |
 | 52 | **High Wire** | testing | not yet (he has not said so) | 0.1.7 | [play](https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7) | `games/rope/index.html` |
 | 53 | **Homemaker** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK) | `games/house/index.html` |
 | 54 | **Fruit Fight** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/AaN4KXLpYKSDUmjRGaYycM) | `games/fruit/index.html` |
@@ -117,7 +117,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 107 | **Joust** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/7YEdDKBqpVbzBNgsC4ygxX) | `games/joust/index.html` |
 | 108 | **Splash Course** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/QYpVghGPM1iKKzFaMdMQYw) | `games/splash/index.html` |
 | 109 | **Surf** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/NyEELwRWLiPUnb9XnCDeRp) | `games/surf/index.html` |
-| 110 | **Santa's Round** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/NKLGt6chz6GnG6W3EWL4vk) | `games/santa/index.html` |
+| 110 | **Santa's Round** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/NKLGt6chz6GnG6W3EWL4vk) | `games/santa/index.html` |
 | 111 | **Skimming Stones** | testing | not yet (he has not said so) | 0.1.3 | [play](https://claude.ai/artifact/7zZyEJgJmUfjxZtGyAgY37) | `games/skim/index.html` |
 
 ## What each game is

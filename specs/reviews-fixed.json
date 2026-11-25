@@ -483,6 +483,13 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "said": "I can't seam to ever catch the runners make it medium even it out and the joystick is still inverted ",
+   "did": "The stick: the dinosaur was already turning the right way, but the knob on the screen was DRAWN on the opposite side from your thumb, so it looked and felt inverted. I had only measured the movement; this time I looked at the picture. The knob now sits under your thumb. Catching runners: a runner now tires after a few seconds of being chased, slows down panting (IT IS WINDED!), and a bite at full run reaches further. A casual player in my test caught a runner in 8 seconds (it was 48)."
   }
  ],
  "kingdom": [
@@ -839,6 +846,14 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "final": true,
+   "said": "Ok completely fine, just  add more combinations add lots more combinations so a person can play this game daily for years and still be stimulated each time. the game is fine just add much more combos of good and bad deeds  ",
+   "did": "240 best and worst deeds now (it was 48): 14,400 pairs instead of 576. 72 small deeds in the Book of Life (it was 12), 40 first names each for women and men, 45 family names, 24 ways to have died. No deed comes twice in one day. Nothing else was changed."
   }
  ],
  "vet": [
@@ -970,6 +985,14 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "final": true,
+   "said": "I enjoyed playing this game immensely, but the burger doesn't look like a burger so make the food look like its supposed to let the individual and food combinations look more  good a burger should look like how a burger should acually look from above put the food items next to each over not on top of each other phasing into each other. also make as many combos as possible and add more items in the later levels. With that, I know it may be hard, but find a way to make the food look acceptable on a plate. you dont need to change much in how the game works though ",
+   "did": "The plate is dressed now. A burger: bun base, patty with grill lines, cheese with its corners hanging over, a frilly lettuce leaf, tomato slices, and the seeded top beside it until the order is complete, then on top. A plated meal has each thing in its own place (steak here, onion rings there, tomato slices fanned out); nothing sits inside anything else. Things on toast are built on the toast. Salmon is a flat fillet, not a log. 34 dishes (it was 14), and four new foods in later levels: cheese (level 5), bacon (8), mushrooms (12), sausages (14). How the game plays is unchanged."
   }
  ],
  "haggle": [
@@ -1130,6 +1153,13 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "said": "Not engaging enough perphaps make the field of play bigger. Make it more challenging and engaging ",
+   "did": "The sea is five times bigger and has five places to find: the Coral, the Kelp Beds (big schools), the Wreck (a treasure chest), the Jelly Garden (golden fish among the jellyfish, and a chest) and the Drop (a chest in deep water). A map in the corner shows them, with a marker at the edge of the screen pointing the way. A place that is fished out empties for a while, so you move on. More challenging: once you are big enough, THE BIG ONE no longer swims in beside you; it waits at another place, so every level ends with a crossing of the sea while the food bar runs down. From the middle levels one hunter follows you and others guard the Wreck and the Drop, where the big one waits."
   }
  ],
  "ramp": [
@@ -1161,6 +1191,13 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "said": "The problem is the controls flipping and just leaning back is confusing make it so you actually have to click the button to leaning back so the buttons for flipping will be clear",
+   "did": "Leaning and flipping are separate buttons now. Each side of the screen has two: LEAN (a gentle tilt) and FLIP (a full spin), back on the left and forward on the right. You only lean back when you press LEAN BACK; the flip buttons only flip. The tutorial teaches each one with a picture."
   }
  ],
  "sumo": [
@@ -1415,6 +1452,13 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "said": "You still have not fixed the problem. The soldiers are inside the ground create a clear line between the ground and the soldiers so soldiers walk on the ground rather than seeam to be inside it",
+   "did": "Found the real cause this time: when the battlefield changed, the OLD ground was never taken away, so from the second field on, a piece of the last field's hills stood in the middle of the new one and the soldiers walked into it. The old ground now goes with its field. I also gave every soldier legs and boots that stand on the ground under him, a shadow that lies on the slope, horses with legs to their own ground, and brighter grass so the men stand out against it. Checked in pictures on several fields, not just the first."
   }
  ],
  "harvest": [
@@ -1674,6 +1718,13 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "said": "Drift Kings — fixes needed\n\n- Steering during drifts: Allow manoeuvring throughout a drift, including switching from drifting left to drifting right without being locked into the initial direction.\n- Drift earns turbo: Build turbo while drifting. Longer successful drifts should earn more turbo, with a clearly visible meter.\n- Smooth car animation: Fix the vibrating or jittery appearance. Cars should move, turn and slide smoothly during driving and drifting.",
+   "did": "All three. Steering in a drift: you can tighten, widen and steer through the whole drift, and pushing the other way flips it from a left drift to a right drift without letting go. Turbo: it builds all the time you drift, shown on a TURBO meter at the bottom; the longer the drift, the bigger the boost when you let go. Smoothness: the car's body was being rocked by a fast shake and its wheels and flame flickered; all removed, so cars now move, turn and slide smoothly."
   }
  ],
  "helix": [
@@ -2344,6 +2395,13 @@
    "said": "After the tutorial you don't tell the player you don't put instructions on the screen not in this game or anyone for that matter",
    "did": "Every hint box and every line that says what to do is shown only in the tutorial now.",
    "round": "2026-11-25"
+  },
+  {
+   "kind": "yours",
+   "when": "25 Nov, written on this page",
+   "round": "2026-11-25b",
+   "said": "Inverted joystick and put Christmas music like something similar to missle toe or all i want for Christmas also create up and down and forward this one should be good make the reindeers majestic ✨️ ",
+   "did": "The stick: flying was right, but walking inside the houses was mirrored (push left, he went right); found by measuring every part of the game with the camera, and fixed. Up, down and forward: hold FORWARD to fly, stick up and down to climb and dive, left and right to steer; you land by flying down onto the roof, and stars in the sky give a burst of speed. The stick stays in one place. The reindeer: eight of them, two by two, with antlers, galloping legs and gold dust behind. Music: a bright sleigh-bell Christmas pop tune of its own (I cannot copy the real songs; measured, not listened to)."
   }
  ],
  "penalty": [

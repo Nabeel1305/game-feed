@@ -85,11 +85,13 @@ $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (one thumb): tap a bubble to take that job (tap it again to let it go); tap a job at the bottom to let it go
-// input (two thumbs): hold the left half to lean back, the right half to lean forward; both together brake
+// input (two thumbs): four buttons, each held: BACK FLIP and FRONT FLIP (in the air), LEAN BACK and LEAN FWD (both together brake).
+// Only the buttons answer (what looks like a button is a button); a thumb that slides from one to its neighbour takes the neighbour.
 const downs = new Map();
-function setHold() { if (!G) return; let l = false, r = false; for (const x of downs.values()) { if (x < W / 2) l = true; else r = true; } G.hold.l = l; G.hold.r = r; }
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; downs.set(e.pointerId, e.clientX); try { cv.setPointerCapture(e.pointerId); } catch (er) {} setHold(); });
-cv.addEventListener('pointermove', e => { if (downs.has(e.pointerId)) { downs.set(e.pointerId, e.clientX); setHold(); } });
+function padAt(x, y) { const P = padRects(), m = 6; for (const id of ['l', 'r', 'bl', 'br']) { const q = P[id]; if (x >= q.x - m && x <= q.x + q.w + m && y >= q.y - m / 2 && y <= q.y + q.h + (id[0] === 'b' ? 30 : m / 2)) return id; } return null; }
+function setHold() { if (!G) return; const h = { l: false, r: false, bl: false, br: false }; for (const [x, y] of downs.values()) { const id = padAt(x, y); if (id) h[id] = true; } Object.assign(G.hold, h); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; downs.set(e.pointerId, [e.clientX, e.clientY]); try { cv.setPointerCapture(e.pointerId); } catch (er) {} setHold(); });
+cv.addEventListener('pointermove', e => { if (downs.has(e.pointerId)) { downs.set(e.pointerId, [e.clientX, e.clientY]); setHold(); } });
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(k2 => cv.addEventListener(k2, e => { downs.delete(e.pointerId); setHold(); }));
 const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
 function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE GARAGE</span><span>£ ${bank}</span></h3><div class="grid">`;
@@ -131,6 +133,7 @@ window.__sim = {
   start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
   step(dt) { step(G, dt); G.ev.length = 0; },
   press(side, t) { press(G, side, t); }, lay, renderShop, groundY(x) { return groundY(G, x); },
+  padRects, leanNow() { return leanNow(G); }, flipNow() { return flipNow(G); },
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

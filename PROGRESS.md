@@ -158,13 +158,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether a button is too strong or too weak in the hand: his to say.
 
 ### 16. Short Order (`cook`): VERIFIED
-- **Where:** `games/cook/index.html` · v0.2.0 · Cooking · 1 thumb(s)
+- **Where:** `games/cook/index.html` · v0.3.0 · Cooking · 1 thumb(s)
 - **What it is:** Run the grill of a small 3D diner kitchen, seen from where the cook stands, with the street's weather and light in the window. Drag food from the trays onto the pans, the board or the plate; tap a pan to flip when the ring turns golden; sweep across the board to chop; drag the plate up to the pass. Pancakes, eggs on toast, burgers, salmon salad, steak and onions: golden, not burnt, before the customer walks out. The first three levels teach it a piece at a time.
 - **Problem:** top half of the screen is empty and dark, the food is small; white glare at the bottom.
 - **Changed:** On a phone the camera looks nearly straight down: the hob, the board and the food fill the lower two thirds of the screen (it was a dark wall above, small food, glare and a black strip below).
 - **Changed:** 25 Nov, 0.2.0 (his review): a tap on the board or any stroke is a chop; the ticket numbers and ticks the layers; tap the plate to take the top off; +1 tip built in order.
+- **Changed:** 25 Nov evening, 0.3.0 (his final fix): the plate is dressed (burger stack with crown, plated meals side by side, things on toast), grill lines, flat salmon; 34 dishes, four new foods (cheese 5, bacon 8, mushroom 12, sausage 14).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
 - **Checked:** test_touch 8 pass; pictures of level 1 and level 5 looked at.
+- **Checked:** 25 Nov evening: every dish checked makeable from its level's trays; twelve plates SEEN in close stills on a computer (both ways up), not on a phone.
 - **Still open:** Dragging food to the pan and a swipe to chop are the genre's own gestures: to judge by hand.
 
 ### 17. Country Vet (`vet`): VERIFIED
@@ -262,11 +264,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 8 pass (new: the DASH button dashes while the other thumb runs); test_play 15 pass.
 
 ### 27. Heaven or Hell (`heaven`): VERIFIED
-- **Where:** `games/heaven/index.html` · v0.2.0 · Puzzle · 1 thumb(s)
+- **Where:** `games/heaven/index.html` · v0.2.1 · Puzzle · 1 thumb(s)
 - **What it is:** Keep the gate: weigh each soul's best and worst deed, unseal hidden deeds in the Book of Life, mind the day's rule and the liars, and drag them up, down or to Purgatory; blessings and rank that stay.
 - **First look:** fine (2D).
+- **Changed:** 25 Nov evening, 0.2.1 (his final fix): 240 best/worst deeds (was 48), 72 small deeds (was 12), more names and causes; no deed twice in a day; 'in her sleep' no longer said of men.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): a swipe to sort, with the three ways named on screen. Judged plain enough; nothing changed.
+- **Checked:** 25 Nov evening: lists counted (each kind 7/7/6 by weight, longest line 46 letters as before); 30 days played by the computer: 311 of 312 deeds came up, none twice in a day; one card SEEN in a still.
 
 ### 28. Harvest Valley (`harvest`): VERIFIED
 - **Where:** `games/harvest/index.html` · v0.1.5 · Farming · 1 thumb(s)
@@ -328,12 +332,14 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Levels 5 to 9 are uneven in the robot's hands (38% to 75% over 16 matches each): his to judge whether the middle levels feel fair.
 
 ### 35. Deep Bite (`shark`): VERIFIED
-- **Where:** `games/shark/index.html` · v0.2.0 · Ocean survival · 1 thumb(s)
+- **Where:** `games/shark/index.html` · v0.3.0 · Ocean survival · 1 thumb(s)
 - **What it is:** His shark idea in 3D: drag to swim, eat the fish smaller than you, run from the hunters, grow until what chased you becomes lunch; a golden fish beside a hunter, an aquarium of every kind you find.
 - **First look:** fine; shark a bit small.
 - **Changed:** 25 Nov, 0.2.0 (his review): hunger less than half as fast; every bite makes him bigger; closer view, fish always round him; feeding frenzy from a chain of six; jellyfish to steer round; a hunter's bite costs food instead of ending it; new shark, fish and reef.
+- **Changed:** 25 Nov evening, 0.3.0 (his note): the sea five times the area with five places, a map and an edge marker, chests, fished-out places; THE BIG ONE waits at another place (from level 6 where a hunter guards); the first hunter roams, the next two keep posts.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 checks passed, 0 failed.).
 - **Checked:** 25 Nov: blind players measured before and after the redesign (70% wins with fish everywhere and no jellyfish; 0 of 448 strings after); SEEN in stills on a computer.
+- **Checked:** 25 Nov evening: robots on the test's seeds: ordinary 10/10, 9/10, 9/10 on levels 1-3, 6/10 on 20 and 40; sharp 9/10 on 40. The first version of the bigger sea starved the robots between places (open sea too thin, stock too small): see LESSONS. SEEN in stills, not on a phone.
 
 ### 36. Powder (`powder`): VERIFIED
 - **Where:** `games/powder/index.html` · v0.1.5 · Snowboard racing · 1 thumb(s)
@@ -390,12 +396,14 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** touch test 7 pass; pictures looked at.
 
 ### 44. Drift Kings (`kart`): VERIFIED
-- **Where:** `games/kart/index.html` · v0.2.0 · Racing · 2 thumb(s)
+- **Where:** `games/kart/index.html` · v0.3.0 · Racing · 2 thumb(s)
 - **What it is:** Kart racing with two thumbs: slide the left to steer, hold a hard turn to drift and charge a boost, tap the right for your item; a cup of four tracks.
 - **First look:** good.
 - **Changed:** 25 Nov, 0.2.0 (his review): DRIFT is a button to hold while you steer; the item has its own button; last track's trees no longer stand on the next track (W3.pines into the track's group; same in stunt and war); new kart, hills, gantry, grandstand, boards, tyre marks, speed.
+- **Changed:** 25 Nov evening, 0.3.0 (his note): steer through a drift and flip its side; turbo builds while drifting, TURBO meter; body shake, wheel flicker and flame flicker removed.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (kart rc=1 fails=1 7 checks passed, 1 failed.).
 - **Checked:** 25 Nov: quick checks and tutorial pass; rivals re-tuned (0.84-1.27) against the old build's results; SEEN in stills on a computer.
+- **Checked:** 25 Nov evening: test_touch 13 pass (swap, turbo, meter); frame-to-frame body angle measured smooth; SEEN in stills, not on a phone.
 
 ### 45. The Bench (`judge`): VERIFIED
 - **Where:** `games/judge/index.html` · v0.2.2 · Courtroom / decisions · 1 thumb(s)
@@ -412,13 +420,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
 
 ### 47. Battle Lines (`war`): VERIFIED
-- **Where:** `games/war/index.html` · v0.2.4 · War tactics · 1 thumb(s)
+- **Where:** `games/war/index.html` · v0.3.0 · War tactics · 1 thumb(s)
 - **What it is:** A general above the field: pick a formation, swap units, sound BATTLE, then tap a unit and tap where it goes or whom it hits; spears stop horses, flanks break lines, and men you send in yourself fight twice as hard.
 - **Problem:** dark field, soldiers are specks.
 - **Changed:** third pass, 22 Nov evening: the camera frames the two armies and eases as they move, instead of showing the whole valley: soldiers are about twice the size.
 - **Changed:** 25 Nov: each place's trees go with it (they piled up); soldiers stand on the drawn ground (groundY).
+- **Changed:** 25 Nov evening, 0.3.0 (his critical note, second time): the old field's ground was never removed (W3.terrain adds itself to the scene); now it goes with its field. Soldiers have legs, boots and slope shadows; horses rebuilt; grass brighter.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 - **Checked:** touch test 7 pass; pictures looked at.
+- **Checked:** 25 Nov evening: scene meshes counted over eight levels (no leftover ground); SEEN in stills on fields 1, 7, 13, 20; not on a phone.
 
 ### 48. Grand Hotel (`hotel`): VERIFIED
 - **Where:** `games/hotel/index.html` · v0.2.0 · management · 1 thumb(s)
@@ -427,15 +437,17 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
 
 ### 49. Ramp Riders (`ramp`): VERIFIED
-- **Where:** `games/ramp/index.html` · v0.1.4 · Stunt / racing · 2 thumb(s)
+- **Where:** `games/ramp/index.html` · v0.2.0 · Stunt / racing · 2 thumb(s)
 - **What it is:** A trials bike side-on: two thumbs lean it back and forward; off the kickers turn it to the slope you will land on, flip it for a boost, beat the time and your own ghost.
 - **Problem:** flat 2D with a tiny bike and no detail; the weakest-looking racer.
 - **Changed:** third pass, 22 Nov evening: the bike is half as big again and sits lower on the screen.
 - **Changed:** third pass, 22 Nov evening: the ground has bands of rock, stones and scrub (it was one flat colour).
 - **Changed:** 25 Nov (his review): holes drawn from the track's own shape, a crash to land in; its own music.
+- **Changed:** 25 Nov evening, 0.2.0 (his note): four buttons, LEAN and FLIP apart on each side; lessons teach each.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 passed, 0 failed).
 - **Checked:** touch test 6 pass; pictures looked at.
 - **Checked:** touch test 6 pass again; test_play 16 pass; picture looked at.
+- **Checked:** 25 Nov evening: test_touch 12 pass; blind strings 7 of 5696 before the last tune, within the limit after; SEEN in stills, not on a phone.
 
 ### 50. Spellshop (`spell`): VERIFIED
 - **Where:** `games/spell/index.html` · v0.1.3 · Magic / puzzle · 1 thumb(s)
@@ -444,7 +456,7 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 
 ### 51. Rex (`rex`): VERIFIED
-- **Where:** `games/rex/index.html` · v0.3.0 · Dinosaur / hunt · 2 thumb(s)
+- **Where:** `games/rex/index.html` · v0.4.0 · Dinosaur / hunt · 2 thumb(s)
 - **What it is:** Be the T-Rex in a 3D valley: one stick to creep or charge, BITE and ROAR; runners, duckbill herds, armoured spikebacks, charging hornfaces and rival rexes, each warning before it strikes.
 - **Problem:** rainy night levels are too dark to see the prey.
 - **Changed:** third pass, 22 Nov evening: anything between the camera and the rex is cut away (a tree used to hide him); the ferns are half the size (in the fern brake they filled the screen).
@@ -452,10 +464,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Changed:** 23 Nov, 0.1.5 (his words: "the movements are not accurate at all... I go left it goes somewhere else"): the stick says the way to go as seen on the screen (it turned him like a tank); the view holds its heading while the thumb is down; harder far on to match (prey hear you sooner and run faster, shorter warnings, a shorter hunger clock).
 - **Changed:** 23 Nov, 0.2.0 (his words at 17:08: "make the joystick in one place... see around the area just by clicking the screen and moving around... you still haven't fixed the joystick problem... make him look like an actual T-Rex"): measured with real touch events: the view drifted up to 30 degrees while walking (camera trailed, aim led). The stick is fixed bottom left; the view turns only by dragging elsewhere (yaw and tilt), set from one followed point so it cannot drift. New T-Rex model (part25_trex.js, specs/rex-v2-2026-11-23.md).
 - **Changed:** 25 Nov, 0.3.0 (his review): the stick was mirrored (measured with the camera: right walked him left) and so was the look-drag: both fixed in the input, test_touch now asks the camera; the T-Rex's head, neck, arms and legs were inside out (faces pointing inwards): sweep() turns them, the head rebuilt; eating animated (a 2.3 s meal, the view comes round); its own horn theme; 'NOW! BITE IT' only in lessons.
+- **Changed:** 25 Nov evening, 0.4.0 (his note, third time on the stick): the knob was DRAWN mirrored (movement was right); runners tire and pant when chased, a bite at a run reaches further.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
 - **Checked:** touch test 7 pass; pictures of a rainy level looked at: rex and prey both in sight.
 - **Checked:** 23 Nov, 0.1.5: test_touch 11 (new: pushed left, right, down, up, he faces within 15 degrees and walks that way on the screen); test_play 15/15: ordinary {1-10: 1, 20: 0.6, 40: 0.9}, sharp {40: 0.9, 80: 0.1}, blind 0 of 5,696; controls 33. NOT judged by me: how it feels under a thumb.
 - **Checked:** 25 Nov: quick checks, tutorial pass; face and meal SEEN in sharp stills on a computer (not on a phone); music measured, not listened to.
+- **Checked:** 25 Nov evening: knob-under-thumb pixel check added to test_touch (19 pass); a casual robot catches a runner in 8 s (was 48); SEEN in stills on a computer, not on a phone.
 
 ### 52. High Wire (`rope`): VERIFIED
 - **Where:** `games/rope/index.html` · v0.1.7 · Balance · 1 thumb(s)
@@ -905,14 +919,16 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Tricks are still named in the rules as turns at the right place: to judge by hand.
 
 ### 110. Santa's Round (`santa`): VERIFIED
-- **Where:** `games/santa/index.html` · v0.2.0 · Delivery / sneaking · 2 thumb(s)
+- **Where:** `games/santa/index.html` · v0.3.0 · Delivery / sneaking · 2 thumb(s)
 - **What it is:** Christmas Eve in a 3D snowy village: fly the sleigh, hold LAND over a roof's glowing marker, slip down the chimney; inside, tiptoe past sleepers, creaky boards and a curious cat, leave the wished-for presents under the tree, fill the stockings, back up. Every house before dawn.
 - **Problem:** the village is a bare lilac plain with a few boxes; the room is dark blocks.
 - **Changed:** third pass, 22 Nov evening: the village has many more trees of all sizes, snowdrifts, and cottages with lit windows.
 - **Changed:** 25 Nov, 0.2.0 (his review): a brake (the sleigh follows the stick; letting go hovers); the look rebuilt outdoors and in.
+- **Changed:** 25 Nov evening, 0.3.0 (his note): indoor walking was mirrored (flight was right); FORWARD button with climb and dive, landing by flying down; fixed stick; eight reindeer with gold dust; its own Christmas pop tune; stars for speed.
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (41 passed, 0 failed).
 - **Checked:** touch test 41 pass; pictures looked at.
 - **Checked:** 25 Nov: quick checks, tutorial, speed pass; SEEN in stills on a computer.
+- **Checked:** 25 Nov evening: test_touch 59 pass, directions measured with the camera in flight AND indoors; music measured playing (rms 0.013), not listened to; SEEN in stills, not on a phone.
 
 ### 111. Skimming Stones (`skim`): VERIFIED
 - **Where:** `games/skim/index.html` · v0.1.3 · Calm / lakeside · 1 thumb(s)

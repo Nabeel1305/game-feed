@@ -5257,6 +5257,8 @@ const FOOD = {
   egg: { name: 'Egg', to: 'pan', cook: 5, sides: 1 }, pancake: { name: 'Pancake', to: 'pan', cook: 4.5, sides: 2 },
   lettuce: { name: 'Lettuce', to: 'board', chops: 3 }, tomato: { name: 'Tomato', to: 'board', chops: 3 }, onion: { name: 'Onion', to: 'board', chops: 4 },      // (25 Nov 2026: one chop fewer each; a tap chops)
   bun: { name: 'Bun', to: 'plate' }, toast: { name: 'Toast', to: 'plate' },
+  // 25 Nov 2026 (his final fix: "make as many combos as possible and add more items in the later levels"): four more things, each coming in at its own level
+  cheese: { name: 'Cheese', to: 'plate', from: 5 }, bacon: { name: 'Bacon', to: 'pan', cook: 4.5, sides: 2, from: 8 }, mushroom: { name: 'Mushroom', to: 'board', chops: 3, from: 12 }, sausage: { name: 'Sausage', to: 'pan', cook: 6.5, sides: 2, from: 14 },
 };
 const DISHES = [
   { id: 'pancakes', name: 'Pancakes', items: ['pancake'], from: 1 },
@@ -5274,8 +5276,30 @@ const DISHES = [
   { id: 'double', name: 'Double deluxe', items: ['bun', 'patty', 'patty', 'lettuce', 'tomato', 'onion'], from: 16 },
   { id: 'tower', name: 'Pancake tower', items: ['pancake', 'pancake', 'pancake'], from: 18 },
   { id: 'feast', name: 'The works', items: ['steak', 'egg', 'toast', 'tomato', 'onion'], from: 22 },
+  // 25 Nov 2026 ("as many combos as possible"): twenty more dishes, from the ten things there were and the four new ones
+  { id: 'salad', name: 'Garden salad', items: ['lettuce', 'tomato', 'onion'], from: 3 },
+  { id: 'steakeggs', name: 'Steak & eggs', items: ['steak', 'egg'], from: 4 },
+  { id: 'cheeseburger', name: 'Cheeseburger', items: ['bun', 'patty', 'cheese'], from: 5 },
+  { id: 'cheesetoast', name: 'Cheese & tomato toast', items: ['toast', 'cheese', 'tomato'], from: 5 },
+  { id: 'eggburger', name: 'Egg burger', items: ['bun', 'patty', 'egg'], from: 6 },
+  { id: 'fishburger', name: 'Fish burger', items: ['bun', 'salmon', 'lettuce'], from: 7 },
+  { id: 'steaksand', name: 'Steak sandwich', items: ['toast', 'steak', 'onion'], from: 7 },
+  { id: 'baconeggs', name: 'Bacon & eggs', items: ['toast', 'bacon', 'egg'], from: 8 },
+  { id: 'blt', name: 'B.L.T.', items: ['toast', 'bacon', 'lettuce', 'tomato'], from: 8 },
+  { id: 'salmonbun', name: 'Salmon bun', items: ['bun', 'salmon', 'onion'], from: 9 },
+  { id: 'baconburger', name: 'Bacon cheeseburger', items: ['bun', 'patty', 'cheese', 'bacon'], from: 10 },
+  { id: 'cakesbacon', name: 'Pancakes & bacon', items: ['pancake', 'pancake', 'bacon'], from: 10 },
+  { id: 'deluxe', name: 'Deluxe', items: ['bun', 'patty', 'cheese', 'lettuce', 'tomato'], from: 12 },
+  { id: 'mushsteak', name: 'Steak & mushrooms', items: ['steak', 'mushroom'], from: 12 },
+  { id: 'mushtoast', name: 'Mushrooms on toast', items: ['toast', 'mushroom', 'egg'], from: 12 },
+  { id: 'veggie', name: 'Veggie burger', items: ['bun', 'mushroom', 'cheese', 'lettuce', 'tomato'], from: 13 },
+  { id: 'bangers', name: 'Sausage & onions', items: ['sausage', 'onion'], from: 14 },
+  { id: 'sausagebun', name: 'Sausage bun', items: ['bun', 'sausage', 'onion'], from: 14 },
+  { id: 'fry', name: 'The full fry-up', items: ['toast', 'egg', 'bacon', 'sausage', 'tomato', 'mushroom'], from: 17 },
+  { id: 'kingtower', name: 'The king tower', items: ['bun', 'patty', 'cheese', 'patty', 'cheese', 'bacon'], from: 20 },
 ];
-const TRAY = ['patty', 'steak', 'salmon', 'egg', 'pancake', 'lettuce', 'tomato', 'onion', 'bun', 'toast'];
+const TRAY = ['patty', 'steak', 'salmon', 'egg', 'pancake', 'lettuce', 'tomato', 'onion', 'bun', 'toast', 'cheese', 'bacon', 'mushroom', 'sausage'];
+const trayOf = N => TRAY.filter(f => !(FOOD[f].from > N));      // the trays out at level N (the new things come in later)
 const GOLD = [0.78, 1.12], BURNT = 1.3;
 
 function makeCfg(N, help) {
@@ -5373,7 +5397,7 @@ function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev
 // BLIND: tap a pan, swipe the board, drag a random tray item somewhere, pan or board to plate, serve, bin.
 const BLIND = {
   f: G => flip(G, (Math.random() * G.pans.length) | 0), c: G => chop(G),
-  t: G => { const fd = TRAY[(Math.random() * TRAY.length) | 0]; take(G, fd, FOOD[fd].to); },
+  t: G => { const T2 = trayOf(G.N), fd = T2[(Math.random() * T2.length) | 0]; take(G, fd, FOOD[fd].to); },
   p: G => panToPlate(G, (Math.random() * G.pans.length) | 0), b: G => boardToPlate(G), s: G => serve(G), x: G => trash(G, 'plate'),
 };
 // HONEST: a cook who reads the oldest ticket and works it, flipping and plating by eye (late by react, sometimes wrong by acc)
@@ -5397,7 +5421,7 @@ function honest(G, o, mem) {
   if (!need.length) { serve(G); return; }
   if (G.board) { if (G.board.chops < FOOD[G.board.food].chops) { chop(G); return; } if (need.includes(G.board.food)) { boardToPlate(G); return; } trash(G, 'board'); return; }
   for (const fd of need) { const F = FOOD[fd], inPan = G.pans.filter(p => p && p.food === fd).length, wanted = need.filter(q => q === fd).length;
-    if (F.to === 'pan' && inPan < wanted && G.pans.some(p => !p)) { take(G, Math.random() < acc * 1.05 ? fd : TRAY[(Math.random() * TRAY.length) | 0], 'pan'); return; }
+    if (F.to === 'pan' && inPan < wanted && G.pans.some(p => !p)) { take(G, Math.random() < acc * 1.05 ? fd : trayOf(G.N)[(Math.random() * trayOf(G.N).length) | 0], 'pan'); return; }
     if (F.to === 'board') { take(G, fd, 'board'); return; }
     if (F.to === 'plate') { take(G, fd, 'plate'); return; } }
 }
@@ -5420,10 +5444,10 @@ function fxStep(dt) {
 // the kitchen laid out wide (23 Nov 2026, sideways): the trays on the left, the hob in the middle at the back, the plate, the board and the
 // bin to the right, the pass behind
 function spots(G) { if (W > H) { const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: -0.02 + (i - (n - 1) / 2) * 0.28, z: -0.4 });
-    return { pans, plate: { x: 0.2, z: -0.06 }, board: { x: 0.5, z: -0.1 }, bin: { x: 0.79, z: -0.12 }, pass: { x: 0.1, z: -0.72 },
-      tray: TRAY.map((f, i) => ({ food: f, x: -0.86 + (i % 5) * 0.135, z: -0.2 + Math.floor(i / 5) * 0.16 })) }; }
+    const T2 = trayOf(G ? G.N : 1), rows = Math.ceil(T2.length / 5); return { pans, plate: { x: 0.2, z: -0.03 }, board: { x: 0.52, z: -0.1 }, bin: { x: 0.8, z: -0.12 }, pass: { x: 0.1, z: -0.72 },
+      tray: T2.map((f, i) => ({ food: f, x: -0.86 + (i % 5) * 0.135, z: (rows > 2 ? -0.27 : -0.2) + Math.floor(i / 5) * (rows > 2 ? 0.145 : 0.16) })) }; }
   const n = G ? G.pans.length : 2, pans = []; for (let i = 0; i < n; i++) pans.push({ x: (i - (n - 1) / 2) * 0.27, z: -0.42 }); return { pans, board: { x: 0.2, z: -0.13 }, plate: { x: -0.1, z: -0.13 }, bin: { x: -0.33, z: -0.15 }, pass: { x: 0, z: -0.72 },
-  tray: TRAY.map((f, i) => ({ food: f, x: ((i % 5) - 2) * 0.145, z: 0.08 + Math.floor(i / 5) * 0.125 })) }; }
+  tray: trayOf(G ? G.N : 1).map((f, i, a) => ({ food: f, x: ((i % 5) - 2) * 0.145, z: (a.length > 10 ? 0.045 : 0.08) + Math.floor(i / 5) * (a.length > 10 ? 0.112 : 0.125) })) }; }
 function buildWorld() {
   if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 60, far: 3000, near: 0.02 })) { V3 = { none: true }; return V3; }
   const S = W3.scene, R0 = W3.rng(8);
@@ -5463,8 +5487,8 @@ function buildWorld() {
   W3.setQuality(stepN); return V3;
 }
 // food: a little model for each kind; cooked things change colour with how done the side you can see is
-const RAWC = { patty: [0.62, 0.27, 0.27], steak: [0.55, 0.2, 0.2], salmon: [0.96, 0.55, 0.45], pancake: [0.96, 0.88, 0.66], egg: [0.98, 0.98, 0.95] };
-const GOLDC = { patty: [0.42, 0.24, 0.12], steak: [0.36, 0.2, 0.11], salmon: [0.86, 0.55, 0.28], pancake: [0.82, 0.55, 0.22], egg: [1, 0.97, 0.9] };
+const RAWC = { patty: [0.62, 0.27, 0.27], steak: [0.55, 0.2, 0.2], salmon: [0.96, 0.55, 0.45], pancake: [0.96, 0.88, 0.66], egg: [0.98, 0.98, 0.95], bacon: [0.92, 0.5, 0.48], sausage: [0.86, 0.58, 0.52] };
+const GOLDC = { patty: [0.42, 0.24, 0.12], steak: [0.36, 0.2, 0.11], salmon: [0.86, 0.55, 0.28], pancake: [0.82, 0.55, 0.22], egg: [1, 0.97, 0.9], bacon: [0.6, 0.2, 0.1], sausage: [0.5, 0.26, 0.12] };
 // 23 Nov 2026, his note: "impove the graphics with the food": painted surfaces (mince, marbling, the lines of a salmon fillet, pancake
 // bubbles, crumb and crust), sesame on the bun, a stalk on the tomato, a root on the onion, layered lettuce leaves
 const FOODTEX = {};
@@ -5476,12 +5500,31 @@ function foodTex(kind) { if (FOODTEX[kind]) return FOODTEX[kind]; const c = docu
   if (kind === 'batter') { g.fillStyle = '#f3e2b8'; g.fillRect(0, 0, 128, 128); for (let i = 0; i < 70; i++) { g.fillStyle = `rgba(160,110,50,${0.2 + R() * 0.3})`; g.beginPath(); g.arc(R() * 128, R() * 128, 0.8 + R() * 2.4, 0, 7); g.fill(); } }
   if (kind === 'crumb') for (let i = 0; i < 1400; i++) { const v = 200 + R() * 55; g.fillStyle = `rgb(${v},${v * 0.92},${v * 0.8})`; g.fillRect(R() * 128, R() * 128, 1 + R() * 2, 1 + R() * 2); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; return (FOODTEX[kind] = t); }
-function foodMesh(food, chopped) {
+// 25 Nov 2026 (his final fix, his words: "the burger doesn't look like a burger so make the food look like its supposed to... a burger should look
+// like how a burger should actually look from above put the food items next to each other not on top of each other phasing into each other...
+// find a way to make the food look acceptable on a plate"). Everything put on the plate used to be dropped on one spot, each thing a centimetre
+// above the last, in the shape it had on the board: a whole domed bun at the bottom with a patty half inside it and a bar of tomato through both.
+// Now the plate is DRESSED. form: 'base' the bottom of a bun; 'crown' its top; 'stack' a thing as it lies in a sandwich (a frilled leaf, two
+// slices of tomato, rings of onion, a square of cheese with its corners over the edge); 'side' a thing in its own neat place beside the others.
+function tomSlice(T, M) { const g = new T.Group(), rim = new T.Mesh(new T.CylinderGeometry(0.03, 0.03, 0.006, 20), M([0.86, 0.14, 0.08])), fl = new T.Mesh(new T.CylinderGeometry(0.024, 0.024, 0.0064, 20), M([0.95, 0.42, 0.3])); g.add(rim, fl); for (let i = 0; i < 5; i++) { const a = i * 1.257, sd = new T.Mesh(new T.CylinderGeometry(0.006, 0.006, 0.0068, 8), M([0.98, 0.78, 0.4])); sd.position.set(Math.cos(a) * 0.013, 0, Math.sin(a) * 0.013); sd.scale.set(1, 1, 1.6); sd.rotation.y = -a; g.add(sd); } return g; }
+function foodMesh(food, chopped, form) {
+  if (form) { const T = THREE, g = new T.Group(), M = (c, tex) => new T.MeshStandardMaterial({ color: new T.Color(...c), roughness: 0.55, map: tex ? foodTex(tex) : null }), add = (geo, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); return m; }, R0 = W3.rng(food.length * 13 + form.length);
+    if (food === 'bun' && form === 'base') { add(new T.CylinderGeometry(0.057, 0.052, 0.013, 24), M([0.84, 0.54, 0.24]), 0, 0.0065); add(new T.CylinderGeometry(0.053, 0.053, 0.002, 24), M([0.97, 0.88, 0.68], 'crumb'), 0, 0.0135); return g; }
+    if (food === 'bun' && form === 'crown') { add(new T.SphereGeometry(0.057, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), M([0.86, 0.54, 0.22]), 0, 0.003, 0, 1, 0.62, 1); add(new T.CylinderGeometry(0.056, 0.056, 0.004, 24), M([0.95, 0.85, 0.65], 'crumb'), 0, 0.002);
+      const sm = M([0.99, 0.96, 0.86]); for (let i = 0; i < 26; i++) { const a = R0() * 6.28, r = Math.sqrt(R0()) * 0.045, yy = 0.004 + 0.035 * Math.sqrt(Math.max(0, 1 - (r / 0.057) ** 2)); add(new T.SphereGeometry(0.0042, 6, 4), sm, Math.cos(a) * r, yy, Math.sin(a) * r, 1.7, 0.6, 1).rotation.y = a; } return g; }
+    if (food === 'lettuce' && form === 'stack') { const geo = new T.CylinderGeometry(0.064, 0.064, 0.004, 36, 1), p = geo.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), z = p.getZ(i), r = Math.hypot(x, z); if (r > 0.03) { const a = Math.atan2(z, x), w = Math.sin(a * 9) * 0.007, q = (r + w) / r; p.setX(i, x * q); p.setZ(i, z * q); p.setY(i, p.getY(i) + Math.cos(a * 9) * 0.003 - 0.001); } } geo.computeVertexNormals(); add(geo, M([0.46, 0.78, 0.3]), 0, 0.003); add(new T.CylinderGeometry(0.03, 0.03, 0.0046, 18), M([0.62, 0.86, 0.42]), 0, 0.003); return g; }
+    if (food === 'lettuce') { for (let i = 0; i < 7; i++) { const a = i * 0.9, r = i ? 0.018 : 0, l = add(new T.SphereGeometry(0.02, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.5), M([0.42 + R0() * 0.14, 0.72 + R0() * 0.12, 0.28]), Math.cos(a) * r, 0.004 + (i % 3) * 0.003, Math.sin(a) * r, 1.3, 0.5, 1); l.rotation.set((R0() - 0.5) * 0.7, R0() * 6, (R0() - 0.5) * 0.7); } return g; }
+    if (food === 'tomato') { const n = form === 'stack' ? 2 : 3; for (let i = 0; i < n; i++) { const t = tomSlice(T, M); if (form === 'stack') t.position.set((i - 0.5) * 0.042, 0.0035 + i * 0.001, (i - 0.5) * 0.012); else { t.position.set((i - 1) * 0.03, 0.0035 + i * 0.004, (i - 1) * 0.006); t.rotation.z = -0.22; } t.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.add(t); } return g; }
+    if (food === 'onion') { const n = form === 'stack' ? 3 : 4, mt = M([0.97, 0.9, 0.95]), mp = M([0.78, 0.5, 0.72]); for (let i = 0; i < n; i++) { const r = form === 'stack' ? [0.03, 0.022, 0.016][i] : 0.024 - i * 0.003, x = form === 'stack' ? [-0.012, 0.016, 0.0][i] : (i - 1.5) * 0.02, z = form === 'stack' ? [0.004, -0.008, 0.02][i] : 0; const o1 = add(new T.TorusGeometry(r, 0.0034, 6, 22), mt, x, 0.004 + i * 0.0012, z); o1.rotation.x = Math.PI / 2; const o2 = add(new T.TorusGeometry(r + 0.0026, 0.0014, 5, 22), mp, x, 0.0045 + i * 0.0012, z); o2.rotation.x = Math.PI / 2; } return g; }
+    if (food === 'cheese') { const c = add(new T.BoxGeometry(0.086, 0.004, 0.086), M([1.0, 0.72, 0.14]), 0, 0.002); c.rotation.y = Math.PI / 4; return g; }      /* a square slice, turned so its corners hang over the meat */
+    if (food === 'mushroom') { const n = 4; for (let i = 0; i < n; i++) { const x = (i - 1.5) * 0.024, cap = add(new T.CylinderGeometry(0.014, 0.014, 0.005, 14, 1, false, 0, Math.PI), M([0.9, 0.82, 0.7]), x, 0.003 + i * 0.001, -0.004); const st = add(new T.BoxGeometry(0.009, 0.005, 0.014), M([0.95, 0.9, 0.82]), x, 0.003 + i * 0.001, 0.006); cap.rotation.y = Math.PI / 2; const gl = add(new T.BoxGeometry(0.024, 0.0052, 0.003), M([0.5, 0.36, 0.26]), x, 0.003 + i * 0.001, -0.002); } if (form === 'stack') g.scale.setScalar(0.92); return g; }
+  }
   const T = THREE, g = new T.Group(), M = (c, tex) => new T.MeshStandardMaterial({ color: new T.Color(...(Array.isArray(c) ? c : [0, 0, 0])), roughness: 0.55, map: tex ? foodTex(tex) : null }), add = (geo, mat, x = 0, y = 0, z = 0, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; g.add(m); return m; };
   const R0 = Math.random;
-  if (food === 'patty') add(new T.CylinderGeometry(0.048, 0.05, 0.018, 20), M(RAWC.patty, 'mince'), 0, 0.009);
-  if (food === 'steak') { add(new T.SphereGeometry(0.06, 20, 10), M(RAWC.steak, 'marble'), 0, 0.012, 0, 1.15, 0.22, 0.8); add(new T.TorusGeometry(0.05, 0.006, 6, 24, 2.2), M([0.95, 0.9, 0.82]), 0, 0.016, 0, 1.15, 0.8, 1).rotation.x = Math.PI / 2; }      /* a rim of fat */
-  if (food === 'salmon') { add(new T.CylinderGeometry(0.03, 0.03, 0.11, 18, 1, false, 0, Math.PI), M(RAWC.salmon, 'fillet'), 0, 0.004, 0, 1, 1, 1).rotation.set(0, 0, Math.PI / 2); add(new T.BoxGeometry(0.11, 0.004, 0.058), M([0.55, 0.55, 0.58]), 0, 0.002); }      /* a fillet on its silver skin */
+  const grill = (n, len, y, gap, drop) => { for (let i = 0; i < n; i++) { const o = i - (n - 1) / 2, b = add(new T.BoxGeometry(len * (1 - Math.abs(o) * 0.14), 0.0018, 0.0055), M([0.16, 0.08, 0.04]), 0, y - Math.abs(o) * drop, o * gap); b.rotation.y = 0.5; b.position.set(Math.sin(0.5) * o * gap, y - Math.abs(o) * drop, Math.cos(0.5) * o * gap); b.userData.grill = true; b.visible = false; b.castShadow = false; } };      /* the lines the pan leaves: they show once it is cooking (shade) */
+  if (food === 'patty') { add(new T.CylinderGeometry(0.048, 0.05, 0.018, 20), M(RAWC.patty, 'mince'), 0, 0.009); grill(3, 0.078, 0.0186, 0.021, 0); }
+  if (food === 'steak') { add(new T.SphereGeometry(0.06, 20, 10), M(RAWC.steak, 'marble'), 0, 0.012, 0, 1.15, 0.22, 0.8); add(new T.TorusGeometry(0.05, 0.006, 6, 24, 2.2), M([0.95, 0.9, 0.82]), 0, 0.016, 0, 1.15, 0.8, 1).rotation.x = Math.PI / 2; grill(3, 0.092, 0.0252, 0.022, 0.0012); }      /* a rim of fat */
+  if (food === 'salmon') { add(new T.CylinderGeometry(0.03, 0.03, 0.11, 18, 1, false, 0, Math.PI), M(RAWC.salmon, 'fillet'), 0, 0.004, 0, 0.55, 1, 1).rotation.set(0, 0, Math.PI / 2); add(new T.BoxGeometry(0.11, 0.004, 0.058), M([0.55, 0.55, 0.58]), 0, 0.002); for (let i = 0; i < 5; i++) { const l = add(new T.BoxGeometry(0.0035, 0.002, 0.03), M([1, 0.86, 0.78]), -0.04 + i * 0.02, 0.0202, 0); l.rotation.y = 0.38; l.userData.keep = true; l.castShadow = false; } }      /* a fillet, flat, with its pale lines of fat (it was a round log: a sausage, not a fish) */      /* a fillet on its silver skin */
   if (food === 'pancake') add(new T.CylinderGeometry(0.058, 0.06, 0.012, 28), M(RAWC.pancake, 'batter'), 0, 0.006);
   if (food === 'egg') { add(new T.CylinderGeometry(0.052, 0.055, 0.006, 24), M(RAWC.egg), 0, 0.003, 0, 1, 1, 0.85); add(new T.SphereGeometry(0.018, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), new T.MeshStandardMaterial({ color: 0xffb21a, roughness: 0.2 }), 0.008, 0.005, 0.004); }
   if (food === 'bun') { add(new T.SphereGeometry(0.055, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), M([0.86, 0.56, 0.24]), 0, 0.012, 0, 1, 0.55, 1); add(new T.CylinderGeometry(0.055, 0.055, 0.014, 20), M([0.95, 0.85, 0.65], 'crumb'), 0, 0.007);
@@ -5489,10 +5532,37 @@ function foodMesh(food, chopped) {
   if (food === 'toast') { add(new T.BoxGeometry(0.09, 0.012, 0.09), M([0.62, 0.38, 0.16]), 0, 0.006); add(new T.BoxGeometry(0.078, 0.0125, 0.078), M([0.95, 0.82, 0.58], 'crumb'), 0, 0.0065); }      /* crust round a crumb */
   if (food === 'lettuce') { if (!chopped) for (let i = 0; i < 9; i++) { const l = add(new T.SphereGeometry(0.03, 12, 6, 0, Math.PI * 2, 0, Math.PI * 0.55), M([0.42 + R0() * 0.18, 0.72 + R0() * 0.12, 0.28]), (R0() - 0.5) * 0.04, 0.008 + i * 0.003, (R0() - 0.5) * 0.04, 1.35, 0.55, 1.1); l.rotation.set((R0() - 0.5) * 0.9, R0() * 6, (R0() - 0.5) * 0.9); }      /* a head of leaves */ else for (let i = 0; i < 14; i++) add(new T.BoxGeometry(0.03, 0.004, 0.008), M([0.4, 0.66, 0.24]), (R0() - 0.5) * 0.07, 0.004 + R0() * 0.008, (R0() - 0.5) * 0.06); }
   if (food === 'tomato') { if (!chopped) { add(new T.SphereGeometry(0.032, 18, 12), M([0.85, 0.12, 0.08]), 0, 0.03, 0, 1, 0.86, 1); for (let i = 0; i < 5; i++) add(new T.ConeGeometry(0.004, 0.022, 4), M([0.25, 0.5, 0.18]), Math.cos(i * 1.26) * 0.008, 0.058, Math.sin(i * 1.26) * 0.008).rotation.set(Math.sin(i * 1.26) * 1.3, 0, -Math.cos(i * 1.26) * 1.3); } else for (let i = 0; i < 4; i++) add(new T.CylinderGeometry(0.03, 0.03, 0.006, 16), M([0.88, 0.2, 0.12]), (i - 1.5) * 0.022, 0.004, 0); }
+  if (food === 'cheese') { for (let i = 0; i < 3; i++) add(new T.BoxGeometry(0.085, 0.004, 0.085), M([1.0, 0.76 - i * 0.02, 0.16]), i * 0.004 - 0.004, 0.003 + i * 0.0042, i * 0.003).rotation.y = i * 0.12; }      /* a little pile of slices */
+  if (food === 'bacon') { for (const z of [-0.016, 0.016]) for (let i = 0; i < 5; i++) { const b = add(new T.BoxGeometry(0.024, 0.004, 0.024), M(RAWC.bacon), (i - 2) * 0.022, 0.004 + (i % 2) * 0.003, z); b.rotation.z = (i % 2 ? -1 : 1) * 0.22; } for (const z of [-0.016, 0.016]) add(new T.BoxGeometry(0.108, 0.0042, 0.006), M([0.98, 0.9, 0.84]), 0, 0.0068, z - 0.007).userData.keep = true; }      /* two wavy rashers, a streak of fat along each */
+  if (food === 'sausage') { for (const z of [-0.014, 0.014]) { const b = add(new T.CapsuleGeometry(0.011, 0.07, 4, 10), M(RAWC.sausage), 0, 0.011, z); b.rotation.z = Math.PI / 2; } }
+  if (food === 'mushroom') { if (!chopped) { add(new T.SphereGeometry(0.03, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), M([0.88, 0.8, 0.68]), 0, 0.022, 0, 1, 0.75, 1); add(new T.CylinderGeometry(0.011, 0.013, 0.024, 10), M([0.95, 0.9, 0.82]), 0, 0.012); } else return foodMesh('mushroom', true, 'side'); }
   if (food === 'onion') { if (!chopped) { add(new T.SphereGeometry(0.03, 18, 12), M([0.72, 0.46, 0.62]), 0, 0.03); add(new T.ConeGeometry(0.008, 0.02, 8), M([0.82, 0.7, 0.55]), 0, 0.066); } else for (let i = 0; i < 4; i++) add(new T.TorusGeometry(0.022 - i * 0.004, 0.003, 6, 18), M([0.95, 0.9, 0.92]), (i - 1.5) * 0.015, 0.004, 0).rotation.x = Math.PI / 2; }
   return g;
 }
-function shade(m, food, s) { const a = RAWC[food], b = GOLDC[food]; if (!a) return; const c = s < 1 ? a.map((v, i) => v + (b[i] - v) * Math.min(1, s / 0.95)) : b.map(v => v * Math.max(0.12, 1 - (s - 1.05) * 2.4)); m.traverse(o => { if (o.isMesh && o.material.color && !(food === 'egg' && o.geometry.type === 'SphereGeometry')) o.material.color.setRGB(c[0], c[1], c[2]); }); }
+// where each thing on the plate lies (metres from the plate's middle; y above the plate). foods: in the order they went on; whole: the dish is complete.
+const THICK = { bun: 0.0145, toast: 0.012, patty: 0.018, steak: 0.02, salmon: 0.03, pancake: 0.012, egg: 0.008, cheese: 0.004, lettuce: 0.006, tomato: 0.007, onion: 0.006, bacon: 0.009, mushroom: 0.007, sausage: 0.022 };
+function plateLayout(foods, whole, ref) { const out = [], isMain = f => FOOD[f].to === 'pan', R2 = ref && ref.length ? ref : foods, onToast = R2.includes('toast') && R2.filter(isMain).length <= 1 && R2.filter(f => f !== 'toast').length <= 3;      /* egg on toast, a B.L.T., a steak sandwich: built on the toast. A fry-up, salmon and eggs: a plate, the toast at its side */
+  const bread = foods.findIndex(f => f === 'bun' || (f === 'toast' && onToast));
+  if (bread >= 0) {      // a sandwich: built up on its bread, each layer resting on the one below
+    const bun = foods[bread] === 'bun', cx = bun ? -0.024 : 0, cz = 0.004; let y = 0, n = 0;
+    out.push({ i: bread, food: foods[bread], form: bun ? 'base' : null, x: cx, z: cz, y: 0, rot: bun ? 0 : 0.2 }); y += THICK[foods[bread]];
+    const spare = [];
+    foods.forEach((f, i) => { if (i === bread) return; if (f === 'bun' || f === 'toast') { spare.push(i); return; } const k2 = n++, jx = [0, 0.004, -0.004, 0.003, -0.003][k2 % 5], jz = [0, -0.003, 0.004, 0.004, -0.004][k2 % 5];
+      out.push({ i, food: f, form: FOOD[f].to === 'board' || f === 'cheese' ? 'stack' : null, x: cx + jx, z: cz + jz, y, rot: f === 'cheese' ? 0 : f === 'salmon' || f === 'bacon' || f === 'sausage' ? 0.5 + k2 * 0.4 : k2 * 0.7, s: f === 'steak' ? 0.8 : f === 'salmon' ? 0.85 : f === 'pancake' ? 0.9 : f === 'bacon' ? 0.9 : 1 }); y += THICK[f]; });
+    // the top of the bun: beside the stack until the dish is whole, then on it, pushed back a little so the layers show
+    if (bun) out.push(whole ? { i: -1, food: 'bun', form: 'crown', x: cx + 0.004, z: cz - 0.012, y: y - 0.001, rx: -0.2, rot: 0.3 } : { i: -1, food: 'bun', form: 'crown', x: 0.068, z: -0.022, y: 0.001, rot: 0.6 });
+    spare.forEach((i, q) => out.push({ i, food: foods[i], form: foods[i] === 'bun' ? 'base' : null, x: 0.07, z: 0.045 - q * 0.02, y: q * 0.014, rot: 0.4 }));
+    return out; }
+  // a plated meal: the meat, fish, eggs or pancakes on one side (the same thing twice makes a stepped pile), each vegetable in its own place on the other
+  const mains = [], sides = []; foods.forEach((f, i) => { const L = isMain(f) ? mains : sides, same = L.find(q => q.food === f); if (same) same.is.push(i); else L.push({ food: f, is: [i] }); });
+  const only = !sides.length || !mains.length, MP = { 1: [[only ? 0 : -0.04, 0]], 2: [[-0.045, -0.038], [-0.03, 0.042]], 3: [[-0.05, -0.04], [-0.045, 0.045], [0.02, -0.06]], 4: [[-0.05, -0.04], [-0.045, 0.045], [0.02, -0.065], [0.03, 0.06]] }, SP = { 1: [[only ? 0 : 0.058, 0.004]], 2: [[only ? -0.035 : 0.056, -0.036], [only ? 0.04 : 0.06, 0.04]], 3: [[0.05, -0.056], [0.072, 0.002], [0.05, 0.058]], 4: [[0.05, -0.056], [0.072, 0.002], [0.05, 0.058], [-0.005, 0.07]] };
+  const put1 = (q, a, x, z, main, sc) => { let y = 0; q.is.forEach((i, b) => { const flat = main || q.food === 'toast' || q.food === 'bun'; out.push({ i, food: q.food, form: flat ? null : 'side', x: x + b * (flat ? 0.014 : 0.01), z: z + b * (flat ? -0.008 : 0.012), y, rot: main ? (q.food === 'salmon' || q.food === 'bacon' || q.food === 'sausage' ? 0.35 : 0.2 + a * 0.5) + b * 0.25 : q.food === 'toast' ? 0.5 : -0.3 + a * 0.5, s: sc }); y += flat ? THICK[q.food] : 0.004; }); };
+  const all = mains.concat(sides), n = all.length;
+  if (n >= 5) { const mid = n >= 6 ? 1 : 0, ring = n - mid, r = n >= 6 ? 0.072 : 0.064, sc = n >= 6 ? 0.72 : 0.8;      /* a full plate: everything in its own place round the plate (one in the middle when there are six) */
+    all.forEach((q, a) => { if (mid && a === 0) return put1(q, a, 0, 0, isMain(q.food), sc); const k2 = a - mid, an = Math.PI + k2 * Math.PI * 2 / ring; put1(q, a, Math.cos(an) * r, Math.sin(an) * r * 0.92, isMain(q.food), sc); }); return out; }
+  const lay = (L, P, main) => { const pos = P[Math.min(4, L.length)] || []; L.forEach((q, a) => { const [x, z] = pos[Math.min(a, pos.length - 1)]; put1(q, a, x, z, main, mains.length > 2 && main ? 0.85 : 1); }); };
+  lay(mains, MP, true); lay(sides, SP, false); return out; }
+function shade(m, food, s) { const a = RAWC[food], b = GOLDC[food]; if (!a) return; const c = s < 1 ? a.map((v, i) => v + (b[i] - v) * Math.min(1, s / 0.95)) : b.map(v => v * Math.max(0.12, 1 - (s - 1.05) * 2.4)); m.traverse(o => { if (!o.isMesh) return; if (o.userData.grill) { o.visible = s > 0.55; return; } if (o.userData.keep) return; if (o.material.color && !(food === 'egg' && o.geometry.type === 'SphereGeometry')) o.material.color.setRGB(c[0], c[1], c[2]); }); }
 function setWeather(G) {
   const V = buildWorld(); if (V.none || V.sky === G.weather) return; V.sky = G.weather;
   W3.setSky(G.weather, { azim: 180 }); W3.S.exposure *= 0.72; W3.scene.environmentIntensity = 0.45;      // indoors: the window is bright, the kitchen is not W3.scene.children.forEach(o => { if (o.isLineSegments) o.visible = false; });      // no rain falls indoors
@@ -5537,15 +5607,17 @@ function draw(now, dt) {
   if (FX.shake > 0) cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.002;
   // stations
   V.pans.forEach((p, i) => { const s = sp.pans[i]; p.visible = V.burners[i].visible = !!s; if (s) { place(p, s.x, s.z); place(V.burners[i], s.x, s.z, TOP + 0.013); V.burners[i].material.opacity = 0.6 + Math.sin(t * 7 + i) * 0.1; } });
-  place(V.board, sp.board.x, sp.board.z, TOP + 0.012); place(V.plate, sp.plate.x, sp.plate.z, TOP + 0.004); place(V.bin, sp.bin.x, sp.bin.z, TOP + 0.025);
+  place(V.board, sp.board.x, sp.board.z, TOP + 0.012); place(V.plate, sp.plate.x, sp.plate.z, TOP + 0.004); V.plate.scale.setScalar(1.2); place(V.bin, sp.bin.x, sp.bin.z, TOP + 0.025);
   V.chopA = Math.max(0, V.chopA - dt * 6); V.knife.position.set(sp.board.x + 0.05, TOP + 0.03 + V.chopA * 0.06, sp.board.z + 0.12 - V.chopA * 0.1); V.knife.rotation.set(0, 0.3, 0);
-  V.trays.forEach((m, i) => place(m, sp.tray[i].x, sp.tray[i].z, TOP + 0.015));
+  V.trays.forEach((m, i) => { m.visible = i < sp.tray.length; if (m.visible) place(m, sp.tray[i].x, sp.tray[i].z, TOP + 0.015); });
   // the food: what is where, with each piece kept as one model while it stays put
   const want = new Map(), key = (k2, food, ch) => k2 + ':' + food + ':' + (ch ? 1 : 0), put = (k2, food, ch, x, z, y) => { const id = key(k2, food, ch); let m = V.foods.get(id); if (!m) { m = foodMesh(food, ch); V.S.add(m); V.foods.set(id, m); } want.set(id, m); m.position.set(x, y, z); return m; };
   sp.tray.forEach((s2, i) => { const m = put('tray' + i, s2.food, false, s2.x, s2.z, TOP + 0.03); m.rotation.y = i; });
   g.pans.forEach((p, i) => { if (!p || !sp.pans[i]) return; const s = sp.pans[i], m = put('pan' + i, p.food, false, s.x, s.z, TOP + 0.012); const flipT = p.flipT = Math.max(0, (p.flipT || 0) - dt); shade(m, p.food, p.sides[1 - p.down]); m.rotation.x = 0; if (Math.random() < dt * 4) puff(s.x, s.z, 1); });
   if (g.board) { const m = put('board', g.board.food, g.board.chops >= FOOD[g.board.food].chops, sp.board.x, sp.board.z, TOP + 0.025); }
-  g.plate.forEach((p, i) => { const m = put('plate' + i, p.food, FOOD[p.food].to === 'board', sp.plate.x + Math.sin(i * 2.4) * 0.03 * (i ? 1 : 0), sp.plate.z + Math.cos(i * 2.4) * 0.03 * (i ? 1 : 0), TOP + 0.012 + i * 0.012); if (RAWC[p.food]) shade(m, p.food, p.q === 'burnt' ? 1.6 : p.q === 'raw' ? 0.4 : 0.95); });
+  { const tk = g.tickets && g.tickets[0], foods = g.plate.map(p => p.food), whole = !!tk && foods.length === tk.dish.items.length && foods.slice().sort().join() === tk.dish.items.slice().sort().join(), LY = plateLayout(foods, whole, tk ? tk.dish.items : null), PS = 1.2;
+    LY.forEach((q, j) => { const p = q.i >= 0 ? g.plate[q.i] : null, id = 'plate' + j + ':' + q.food + ':' + (q.form || '') , ch = FOOD[q.food].to === 'board'; let m = V.foods.get(id); if (!m) { m = foodMesh(q.food, ch, q.form); V.S.add(m); V.foods.set(id, m); } want.set(id, m);
+      m.position.set(sp.plate.x + q.x * PS, TOP + 0.02 + q.y * PS, sp.plate.z + q.z * PS); m.rotation.set(q.rx || 0, q.rot || 0, q.rz || 0); m.scale.setScalar(PS * (q.s || 1)); if (p && RAWC[q.food]) shade(m, q.food, p.q === 'burnt' ? 1.6 : p.q === 'raw' ? 0.4 : 0.95); }); }
   for (const [id, m] of V.foods) if (!want.has(id)) { V.S.remove(m); V.foods.delete(id); }
   const pa = V.steam.geometry.attributes.position, aa = V.steam.geometry.attributes.a; V.puffs.forEach((p, i) => { if (p.t < p.life) { p.t += dt; p.y += dt * 0.12; p.x += Math.sin(t + i) * dt * 0.02; } pa.setXYZ(i, p.x, p.t < p.life ? p.y : -9, p.z); aa.setX(i, p.t < p.life ? Math.sin(p.t / p.life * Math.PI) : 0); }); pa.needsUpdate = aa.needsUpdate = true; V.steam.material.uniforms.px.value = W3.R.getPixelRatio() * innerHeight / 844;
   W3.setFocus(0, TOP, -0.2, 0.8);

@@ -142,7 +142,7 @@ window.__sim = {
   frame() { draw(performance.now() / 1000, 1 / 60); },
   stick(x, z) { setStick(G, x, z); }, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  playing, makeCfg, LESSONS, BLIND, honest, edible, viewOf, sizeOf, needOf, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

@@ -29,6 +29,11 @@ with sync_playwright() as p:
     for name, dx, dy in [('left', -1, 0), ('right', 1, 0), ('down', 0, 1), ('up', 0, -1), ('up-left', -0.7, -0.7)]:
         e0 = pg.evaluate(AX)
         pg.mouse.move(sx0, sy0); pg.mouse.down(); pg.mouse.move(sx0 + dx * sr * 0.8, sy0 + dy * sr * 0.8, steps=4); pg.wait_for_timeout(1800)
+        # 25 Nov 2026 ("the joystick is still inverted"): he went the right way, but the KNOB was drawn from the rules' own number and slid the other way
+        # across. Look at the picture: the white knob is under the thumb, and not at the place mirrored across the stick.
+        tx, ty = sx0 + dx * sr * 0.8, sy0 + dy * sr * 0.8; KN = "(([x, y]) => { __sim.frame(); const c = document.getElementById('cv'), d = c.getContext('2d').getImageData(Math.round(x * c.width / innerWidth), Math.round(y * c.height / innerHeight), 1, 1).data; return d[3] > 150 && d[0] > 200 ? 1 : 0; })"
+        under, across = pg.evaluate(KN, [tx, ty]), pg.evaluate(KN, [2 * sx0 - tx, 2 * sy0 - ty])
+        ok(under == 1 and across == 0, f'the stick pushed {name}: the knob is drawn under the thumb, not across from it', str([under, across]))
         e1 = pg.evaluate(AX); pg.mouse.up(); pg.wait_for_timeout(900)
         mx, mz = e1[4] - e0[4], e1[5] - e0[5]; right = mx * e0[0] + mz * e0[1]; into = mx * e0[2] + mz * e0[3]; n = math.hypot(dx, dy); wr, wi = dx / n, -dy / n; d = math.hypot(right, into) or 1
         ok(d > 1.5 and (right / d) * wr + (into / d) * wi > 0.9 and abs(e1[6] - e0[6]) < 0.01, f'the stick pushed {name}: he walks {name} ON THE SCREEN (measured with the camera); the view holds still', str([round(right, 1), round(into, 1), round(math.degrees(e1[6] - e0[6]), 1)]))

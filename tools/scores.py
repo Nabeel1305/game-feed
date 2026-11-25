@@ -113,7 +113,11 @@ S = {
  'joust':     ('epic', 100, 0, 'brass', ('strings', 'P'), '0304', '0.0.4.7.|7.7.5.3.|4.4.6.8.', {'sc': 'mix', 'd': {'u': 'x.......x.......', 's': '....x.x.....x.xx'}}),
  'splash':    ('island', 104, -2, 'whistle', 'marimba', '0304', '0242.0.4|3575.3.7|4686.4.1', {}),
  'surf':      ('island', 128, 3, 'guitar', 'guitar', '0304', '07642024|37a97537|48ba8642', {'sc': 'mix', 'd': {'k': 'x.....x.x.......', 's': '....x.......x...', 'y': 'x.x.x.x.x.x.x.x.'}}),
- 'santa':     ('fest', 104, 1, 'musicbox', 'keys', '0304', '0.2.4.7.|5.7.5.3.|4.6.4.1.', {}),
+ # 25 Nov 2026 (his words: "put Christmas music like something similar to missle toe or all i want for Christmas"): it was a slow music box.
+ # Now a Christmas POP song of its own: quick and bouncing, sleigh bells on every beat, a piano pumping the chords four to the bar, a walking
+ # bass, hand claps on two and four, bells carrying a tune that leaps, over the old pop turn of chords (home, sixth, fourth, fifth).
+ # Written for this game; no note of it is taken from either song.
+ 'santa':     ('fest', 146, -5, ('bell', 1), ('piano', 'x...x...x...x...'), '0534', '0.24.7.47.9.7.4.|5.57.5.32.3.5...|3.57.a.75.7.5.3.|4.6.8.6.4.2.1...', {'d': {'j': 'x...x...x...x...', 'q': 'x.x.x.x.x.x.x.x.', 'k': 'x.....x.x.....x.', 's': '....x.......x...', 'c': '....x.......x...'}, 'bass': 'w...w...w...w...', 'B': [3, 4, 2, 5], 'sw': 0.45, 'rev': 0.4}),
  'skim':      ('calm', 72, -1, 'flute', ('guitar', 'a.a.a.a.a.a.a.a.'), '0304', '4...2...|5...3...|4...1...', {'d': NONE, 'rev': 0.6}),
 }
 def bar(b, three):

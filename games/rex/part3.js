@@ -109,6 +109,7 @@ function onEvent(G, e) { const cx = W / 2, cy = H * 0.3, V = V3 && !V3.none ? V3
     case 'roar': sfx.roar(1); FX.shake = 10; vibe(HAP.thud); break;
     case 'flinch': say('IT FLINCHES!', cx, cy, '#ffe08a', 20); break;
     case 'bolt': if (G.lesson || Math.random() < 0.5) sfx.squeal(); break;
+    case 'winded': if (Math.hypot(e.x - G.me.x, e.z - G.me.z) < 45) say('IT IS WINDED!', cx, cy, '#ffe08a', 20); break;
     case 'tell': sfx.warn(e.kind); if (e.kind === 'spike') tip('tail', 'The tail is lifting: get away from it!', 2.4); else if (e.kind === 'rival') tip('rear', 'It rears up before it lunges: step out of its line!', 2.6); else tip('horn', 'It paws and lowers its head: it will charge. Step aside!', 2.6); break;
     case 'charge': case 'lunge': sfx.stomp(); break;
     case 'swing': sfx.whoosh(); break;
@@ -141,7 +142,8 @@ function draw(now, dt) {
     { const s0 = mo.userData.s0 || (mo.userData.s0 = mo.scale.x); if (d.dead && eu >= 0 && d.id === m.eatId) {      // the meal: dragged to his jaws, jerked as he tugs, smaller with every piece torn off, gone when he swallows
         const kk = Math.min(1, eu / 0.13), e2 = kk * kk * (3 - 2 * kk), px = d.x + (mouth.x - d.x) * e2 - Math.sin(m.h) * ep.tug * 0.5, pz = d.z + (mouth.z - d.z) * e2 - Math.cos(m.h) * ep.tug * 0.5;
         mo.position.set(px, hgt(px, pz) - 0.3 + ep.tug * 0.7, pz); mo.rotation.y = d.h + ep.shake * 1.2; mo.scale.setScalar(s0 * (0.25 + 0.75 * ep.left)); mo.visible = ep.left > 0; } else if (mo.scale.x !== s0) mo.scale.setScalar(s0); }
-    gait(mo, d.dead ? 0 : d.v, dt, { rear: d.state === 'tell' && d.k === 'rival' ? 1 : 0, lower: d.state === 'tell' && d.k === 'horns' ? 1 : d.state === 'charge' ? 0.8 : 0, lift: d.state === 'tell' && d.k === 'spike' ? 1 : 0, swing: d.state === 'swing' ? Math.sin(t * 20) * 0.9 : 0, open: d.k === 'rival' && (d.state === 'tell' || d.state === 'lunge') ? 1 : 0 }); }
+    if (!d.dead && d.puff > 0 && Math.random() < dt * 7) puff(V, d.x + Math.sin(d.h) * 1.1, d.z + Math.cos(d.h) * 1.1, 1, 1.6);      /* winded: its head hangs and it pants */
+    gait(mo, d.dead ? 0 : d.v, dt, { rear: d.state === 'tell' && d.k === 'rival' ? 1 : 0, lower: d.state === 'tell' && d.k === 'horns' ? 1 : d.state === 'charge' ? 0.8 : d.puff > 0 ? 0.75 : 0, lift: d.state === 'tell' && d.k === 'spike' ? 1 : 0, swing: d.state === 'swing' ? Math.sin(t * 20) * 0.9 : 0, open: d.k === 'rival' && (d.state === 'tell' || d.state === 'lunge') ? 1 : 0 }); }
   for (const [id, mo] of V.models) if (!seen.has(id)) { V.S.remove(mo); V.models.delete(id); }
   // the goal's nearest, ringed
   const left = g.lesson ? g.dinos.filter(d => !d.dead).map(d => d.k) : goalLeft(g).map(q => q.k); let tg = null, bd = 1e9; for (const d of g.dinos) if (!d.dead && left.includes(d.k)) { const dd = dist(d, m); if (dd < bd) { bd = dd; tg = d; } }
@@ -190,7 +192,7 @@ function hud(G, t, tg) { const c = G.cfg, m = G.me;
   // the buttons and the stick
   const B = btnRects(); ctx.globalAlpha = m.bcd > 0 ? 0.55 : 0.92; ctx.fillStyle = 'rgba(160,40,20,.75)'; ctx.beginPath(); ctx.arc(B.bite.x + B.bite.w / 2, B.bite.y + B.bite.h / 2, B.bite.w / 2, 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffd0a0'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = `${Math.round(18 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('BITE', B.bite.x + B.bite.w / 2, B.bite.y + B.bite.h / 2);
   ctx.globalAlpha = m.roarCD > 0 ? 0.5 : 0.92; ctx.fillStyle = 'rgba(120,90,30,.8)'; const rc = { x: B.roar.x + B.roar.w / 2, y: B.roar.y + B.roar.h / 2, r: B.roar.w / 2 }; ctx.beginPath(); ctx.arc(rc.x, rc.y, rc.r, 0, TAU); ctx.fill(); if (m.roarCD > 0) { ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(rc.x, rc.y, rc.r - 3, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - m.roarCD / c.roarCD)); ctx.stroke(); } ctx.fillStyle = '#fff'; ctx.font = `${Math.round(12 * k)}px ${TF}`; ctx.fillText('ROAR', rc.x, rc.y);
-  ctx.globalAlpha = 1; { const sb = stickBase(), on = !!ui.drag, kx = sb.x + clamp(G.in.sx, -1, 1) * sb.r * (on ? 1 : 0), ky = sb.y - clamp(G.in.sy, -1, 1) * sb.r * (on ? 1 : 0);
+  ctx.globalAlpha = 1; { const sb = stickBase(), on = !!ui.drag; let kx = sb.x, ky = sb.y; if (on) { const dx = ui.drag.x - sb.x, dy = ui.drag.y - sb.y, dl = Math.hypot(dx, dy), q = dl > sb.r ? sb.r / dl : 1; kx += dx * q; ky += dy * q; }      /* the knob is drawn UNDER HIS THUMB (25 Nov 2026: it was drawn from the rules' own number, which runs the other way across, so it slid left when he pushed right) */
     ctx.fillStyle = on ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(sb.x, sb.y, sb.r, 0, TAU); ctx.fill(); ctx.strokeStyle = on ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,.5)'; for (let a = 0; a < 4; a++) { const ax = sb.x + Math.sin(a * Math.PI / 2) * sb.r * 0.78, ay = sb.y - Math.cos(a * Math.PI / 2) * sb.r * 0.78; ctx.beginPath(); ctx.arc(ax, ay, 3.5 * k, 0, TAU); ctx.fill(); }
     ctx.fillStyle = m.run ? '#ffb030' : on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(kx, ky, 24 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 2; ctx.stroke(); }

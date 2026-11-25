@@ -28,10 +28,21 @@ with sync_playwright() as p:
     h0 = pg.evaluate("__sim.G.me.h"); drag(120, 650, 60, 650, 500); st = pg.evaluate("[__sim.G.steer, __sim.G.me.h, __sim.G.me.drift]")
     ok(st[0] <= -0.95, 'slid well left: a hard left', str(st)); ok(st[2] == 0, 'a hard turn alone does not start a drift (25 Nov 2026: DRIFT is a button to hold)', str(st))
     # his words (25 Nov 2026): "holding one part then using the joystick": the right thumb holds DRIFT (a mouse here, beside the touch that steers)
-    touch('touchEnd', 0, 0); pg.wait_for_timeout(80); pg.evaluate("__sim.G.me.v = 22; __sim.G.me.spin = 0")      # (the hard turn above scrubbed his speed off: a drift needs some)
+    touch('touchEnd', 0, 0); pg.wait_for_timeout(80); STRAIGHT = "(() => { const G = __sim.G, S = G.T.S, n = S.length; let best = 0, bc = 1e9; for (let i = 0; i < n; i += 5) { let c = 0; for (let j = 0; j < 60; j++) c += Math.abs(S[(i + j) % n].curve); if (c < bc) { bc = c; best = i; } } const p = S[best], m = G.me; m.x = p.x + Math.sin(p.h) * 3; m.z = p.z - Math.cos(p.h) * 3; m.h = p.h + 0.5; m.i = best; m.last = best; m.v = 22; m.spin = 0; m.slip = 0; m.drift = 0; m.charge = 0; __sim.ui.snap = true; })()"
+    pg.evaluate(STRAIGHT)      # (the hard turn above scrubbed his speed off and ran him wide: put him on the longest straight, at speed, a little to the left and pointing a little right, so a slide to the left and then to the right stays on the road)
     B = pg.evaluate("__sim.btnRects()"); pg.mouse.move(B['drift']['x'], B['drift']['y']); pg.mouse.down(); drag(120, 650, 60, 650, 250); d = pg.evaluate("[__sim.G.driftHeld, __sim.G.me.drift, __sim.G.steer, __sim.G.me.v, __sim.G.me.spin, __sim.G.count]")
     ok(d[0] and d[1] == -1, 'DRIFT held while steering left: the kart drifts left', str(d))
-    pg.wait_for_timeout(900); tier = pg.evaluate("__sim.G.me.tier"); pg.mouse.up(); pg.wait_for_timeout(120); r = pg.evaluate("[__sim.G.me.drift, __sim.G.me.boost > 0, __sim.G.driftHeld]")
+    # 25 Nov 2026, later (his words): "allow manoeuvring throughout a drift, including switching from drifting left to drifting right without being
+    # locked into the initial direction... Build turbo while drifting... with a clearly visible meter"
+    pg.wait_for_timeout(120); pg.evaluate("__sim.G.me.v = 22; __sim.G.me.spin = 0"); c0 = pg.evaluate("__sim.G.me.charge"); h0 = pg.evaluate("__sim.G.me.h")
+    for i in range(1, 9): touch('touchMove', 60 + 120 * i / 8, 650); pg.wait_for_timeout(16)
+    pg.wait_for_timeout(200); sw = pg.evaluate("[__sim.G.me.drift, __sim.G.me.charge, __sim.G.steer, __sim.G.me.h]")
+    ok(sw[0] == 1 and sw[2] > 0.9, 'still holding DRIFT, the thumb slid across to the right: the slide changes side (it used to stay locked to the left)', str(sw))
+    ok(sw[1] >= c0 and sw[1] > 0, 'and the turbo that was built is kept, and goes on building', str([c0, sw[1]]))
+    pg.evaluate("__sim.G.me.v = 22"); pg.wait_for_timeout(200); h1 = pg.evaluate("__sim.G.me.h"); ok((h1 - sw[3]) * sw[2] > 0.05, 'in the drift the kart turns the way the stick is pushed', str([sw[3], h1]))
+    bar = pg.evaluate("(() => { __sim.frame(); const c = document.getElementById('cv'), g = c.getContext('2d'), k2 = c.width / innerWidth, y = Math.round((innerHeight * 0.8 + 8) * k2); let lit = 0; for (let x = Math.round(innerWidth * 0.3 * k2); x < innerWidth * 0.7 * k2; x += 4) { const d = g.getImageData(x, y, 1, 1).data; if (d[3] > 200 && d[0] + d[1] + d[2] > 330) lit++; } return lit; })()")
+    ok(bar >= 3, 'the turbo meter is drawn in the middle of the screen and is filling', str(bar))
+    pg.wait_for_timeout(250); tier = pg.evaluate("__sim.G.me.tier"); pg.mouse.up(); pg.wait_for_timeout(120); r = pg.evaluate("[__sim.G.me.drift, __sim.G.me.boost > 0, __sim.G.driftHeld]")
     ok(r[0] == 0 and not r[2] and (r[1] or not tier), 'DRIFT let go: the drift ends, with a boost if the sparks had come', str([r, tier]))
     touch('touchEnd', 0, 0); pg.wait_for_timeout(120)
     pg.evaluate("__sim.G.me.item = 'turbo'; __sim.G.me.boost = 0"); pg.touchscreen.tap(B['item']['x'], B['item']['y']); pg.wait_for_timeout(120); r = pg.evaluate("[__sim.G.me.item, __sim.G.me.boost > 0, __sim.G.steer]")

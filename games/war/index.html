@@ -5452,10 +5452,19 @@ function hillH(G, x, z) { let h = 0; for (const q of G.hills) { const d = Math.h
 function iconTex(txt, col) { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); g.fillStyle = col; g.beginPath(); g.arc(32, 32, 28, 0, TAU); g.fill(); g.strokeStyle = '#fff'; g.lineWidth = 4; g.stroke(); g.font = '34px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, 32, 35); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
 function buildWorld() { if (V3) return V3; const T = THREE; if (!W3 || !W3.init({ canvas: $('gl'), fov: 58, far: 3000, near: 0.5 })) { V3 = { none: true }; return V3; }
   const MAX = 900, V = { T, S: W3.scene, MAX, key: null, banners: new Map(), icons: {} }; V3 = V;
-  const mk = (geo, mat) => { const m = new T.InstancedMesh(geo, mat, MAX); m.instanceMatrix.setUsage(T.DynamicDrawUsage); m.count = 0; m.castShadow = true; m.frustumCulled = false; V.S.add(m); return m; };
-  V.body = mk(new T.BoxGeometry(0.75, 1.25, 0.5), new T.MeshStandardMaterial({ roughness: 0.6 })); V.head = mk(new T.SphereGeometry(0.27, 8, 6), new T.MeshStandardMaterial({ color: 0xe0b896, roughness: 0.7 }));
+  const mk = (geo, mat, cnt = MAX, shade = true) => { const m = new T.InstancedMesh(geo, mat, cnt); m.instanceMatrix.setUsage(T.DynamicDrawUsage); m.count = 0; m.castShadow = shade; m.frustumCulled = false; m.userData.max = cnt; V.S.add(m); return m; };
+  // 25 Nov 2026 (his second note, CRITICAL: "You still have not fixed the problem. The soldiers are inside the ground create a clear line between
+  // the ground and the soldiers so soldiers walk on the ground rather than seem to be inside it"). The morning's fix put their feet at the height of
+  // the drawn grass, and they still looked buried, because a man was ONE BLOCK from the ground to his shoulders: no legs, no feet, no shadow, on
+  // dark grass, he read as a post driven into the field. Seen at last in a sharp close-up. Now a man is a man: two pale legs that step when he
+  // marches, dark boots on the grass, a tunic in his colour, arms that swing, and a soft shadow under his feet; horses have four legs. The grass
+  // is lighter, so boots and shadows show against it.
+  V.body = mk(new T.BoxGeometry(0.4, 0.72, 0.56), new T.MeshStandardMaterial({ roughness: 0.6 })); V.leg = mk(new T.BoxGeometry(0.21, 0.74, 0.23), new T.MeshStandardMaterial({ color: 0xe2d4ae, roughness: 0.85 }), MAX * 2); V.boot = mk(new T.BoxGeometry(0.36, 0.17, 0.25), new T.MeshStandardMaterial({ color: 0x22150c, roughness: 0.9 }), MAX * 2);
+  V.arm = mk(new T.BoxGeometry(0.17, 0.6, 0.15), new T.MeshStandardMaterial({ roughness: 0.6 }), MAX * 2); V.hleg = mk(new T.BoxGeometry(0.17, 0.8, 0.17), new T.MeshStandardMaterial({ color: 0x3a2414, roughness: 0.85 }), 400);
+  { const sg = new T.CircleGeometry(0.62, 12); sg.rotateX(-Math.PI / 2); V.shadow = mk(sg, new T.MeshBasicMaterial({ color: 0x06100a, transparent: true, opacity: 0.36, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), MAX, false); V.shadow.renderOrder = 1; }
+  V.head = mk(new T.SphereGeometry(0.27, 8, 6), new T.MeshStandardMaterial({ color: 0xe0b896, roughness: 0.7 }));
   V.helm = mk(new T.SphereGeometry(0.3, 8, 6, 0, TAU, 0, 1.4), new T.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 0.6, roughness: 0.35 }));
-  V.horse = mk(new T.BoxGeometry(1.9, 0.9, 0.6), new T.MeshStandardMaterial({ color: 0x5a3a24, roughness: 0.8 })); V.hhead = mk(new T.BoxGeometry(0.7, 0.4, 0.35), new T.MeshStandardMaterial({ color: 0x4a2e1c, roughness: 0.8 }));
+  V.horse = mk(new T.BoxGeometry(1.9, 0.85, 0.62), new T.MeshStandardMaterial({ roughness: 0.8 })); V.hhead = mk(new T.BoxGeometry(0.7, 0.4, 0.35), new T.MeshStandardMaterial({ roughness: 0.8 }), MAX * 3);      /* hhead: the neck, the head and the tail of each horse; coats differ horse to horse */
   V.spear = mk(new T.CylinderGeometry(0.04, 0.04, 3.2, 4), new T.MeshStandardMaterial({ color: 0x8a6a4a })); V.shield = mk(new T.BoxGeometry(0.12, 0.8, 0.6), new T.MeshStandardMaterial({ roughness: 0.5 }));
   V.bow = mk(new T.TorusGeometry(0.45, 0.04, 4, 10, Math.PI), new T.MeshStandardMaterial({ color: 0x6a4424 }));
   V.ring = new T.Mesh(new T.TorusGeometry(1, 0.12, 6, 40), new T.MeshBasicMaterial({ color: 0xffe08a })); V.ring.rotation.x = -Math.PI / 2; V.S.add(V.ring);
@@ -5471,7 +5480,12 @@ function buildField(V, g) { const T = THREE, P = PLACES[g.place]; if (V.field) {
   const SEG = 120, SIZE = 900, hOf = (x, z) => { const out = Math.max(0, Math.max(Math.abs(x) - FW - 8, Math.abs(z) - FZ - 10)); return hillH(g, x, z) + N3.noise(x * 0.05, 0.3, z * 0.05) * 0.6 + Math.min(40, out * out * 0.02); };
   V.gh = new Float32Array((SEG + 1) * (SEG + 1)); for (let j = 0; j <= SEG; j++) for (let i = 0; i <= SEG; i++) V.gh[j * (SEG + 1) + i] = hOf(-SIZE / 2 + i * SIZE / SEG, -SIZE / 2 + j * SIZE / SEG); V.gseg = SEG; V.gsize = SIZE;
   const tr = W3.terrain({ size: SIZE, seg: SEG, x: 0, z: 0, height: hOf,
-    colour: (x, z, h) => { const n = N3.noise(x * 0.1, 1.3, z * 0.1) * 0.5 + 0.5; return [base.r * (0.85 + n * 0.25) + h * 0.01, base.g * (0.85 + n * 0.2) + h * 0.01, base.b * (0.85 + n * 0.2)]; }, map: W3.grainTex(256, 11, 200, 40, 6) });
+    colour: (x, z, h) => { const n = N3.noise(x * 0.1, 1.3, z * 0.1) * 0.5 + 0.5; const L = g.place === 2 ? 1 : 1.55; return [(base.r * (0.85 + n * 0.25) + h * 0.01) * L, (base.g * (0.85 + n * 0.2) + h * 0.01) * L, base.b * (0.85 + n * 0.2) * L]; }      /* lighter grass (not the snow): boots and shadows show against it */, map: W3.grainTex(256, 11, 200, 40, 6) });
+  // 25 Nov 2026, THE fault behind "the soldiers are inside the ground", found at last in a picture of a SECOND battle: W3.terrain() puts the ground
+  // in the scene itself, so the ground of the battle before (and of the battle that plays behind the menu) was never taken away. Its hills stood
+  // where the new field is flat, and the men, standing rightly on the new ground, were waist-deep or buried in the old. The ground now belongs to
+  // this field's own group and goes when the field goes.
+  F.add(tr);
   const trees = []; for (const w of g.woods) for (let i = 0; i < w.r * w.r * 0.9; i++) { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * w.r; trees.push({ x: w.x + Math.cos(a) * r, z: w.z + Math.sin(a) * r, y: hOf(w.x + Math.cos(a) * r, w.z + Math.sin(a) * r) - 0.3, s: 0.8 + Math.random() * 0.6, hue: Math.random(), shade: Math.random() * 0.5 }); }
   for (let i = 0; i < 300; i++) { const x = (Math.random() - 0.5) * 400, z = (Math.random() - 0.5) * 400; if (Math.abs(x) < FW + 14 && Math.abs(z) < FZ + 16) continue; trees.push({ x, z, y: 0, s: 1 + Math.random(), hue: Math.random(), shade: Math.random() * 0.5 }); } if (trees.length) F.add(W3.pines(trees, { layers: 3 }));      /* 25 Nov 2026: in the field's own group, so each place's trees go with it instead of piling up */
   // lines on the grass where each army stands at first (a faint chalk mark), and a field edge of hedges
@@ -5485,21 +5499,37 @@ function banner(V, u, g) { let b = V.banners.get(u.id); if (b) return b; const T
 // the height of the drawn ground at a point (the two flat triangles of the piece it is in, as the terrain is made)
 function groundY(V, g, x, z) { if (!V || !V.gh) return hillH(g, x, z); const N = V.gseg, cs = V.gsize / N, gx = clamp((x + V.gsize / 2) / cs, 0, N - 0.001), gz = clamp((z + V.gsize / 2) / cs, 0, N - 0.001), i = gx | 0, j = gz | 0, u = gx - i, v = gz - j, H = V.gh, a = H[j * (N + 1) + i], b = H[(j + 1) * (N + 1) + i], c = H[(j + 1) * (N + 1) + i + 1], d = H[j * (N + 1) + i + 1];
   return u + v <= 1 ? a + (d - a) * u + (b - a) * v : c + (b - c) * (1 - u) + (d - c) * (1 - v); }
-const MM = new (window.THREE ? THREE.Matrix4 : Object)(), QQ = new (window.THREE ? THREE.Quaternion : Object)(), PP = new (window.THREE ? THREE.Vector3 : Object)(), SC = new (window.THREE ? THREE.Vector3 : Object)(1, 1, 1), CC = new (window.THREE ? THREE.Color : Object)(), YAX = new (window.THREE ? THREE.Vector3 : Object)(0, 1, 0);
+const MM = new (window.THREE ? THREE.Matrix4 : Object)(), QQ = new (window.THREE ? THREE.Quaternion : Object)(), PP = new (window.THREE ? THREE.Vector3 : Object)(), SC = new (window.THREE ? THREE.Vector3 : Object)(1, 1, 1), CC = new (window.THREE ? THREE.Color : Object)(), YAX = new (window.THREE ? THREE.Vector3 : Object)(0, 1, 0), ZAX = new (window.THREE ? THREE.Vector3 : Object)(0, 0, 1), Q2 = new (window.THREE ? THREE.Quaternion : Object)(), NN = new (window.THREE ? THREE.Vector3 : Object)();
 // place every soldier of every unit in its ranks (or scattered, running)
-function syncUnits(V, g, t) { const n = { body: 0, head: 0, helm: 0, horse: 0, hhead: 0, spear: 0, shield: 0, bow: 0 };
-  const put = (m, x, y, z, rot, sx = 1, sy = 1, sz = 1, col) => { if (n[m] >= V.MAX) return; QQ.setFromAxisAngle(YAX, rot); PP.set(x, y, z); SC.set(sx, sy, sz); MM.compose(PP, QQ, SC); V[m].setMatrixAt(n[m], MM); if (col != null) { CC.setHex(col); V[m].setColorAt(n[m], CC); } n[m]++; };
+function syncUnits(V, g, t) { const n = { body: 0, leg: 0, boot: 0, arm: 0, hleg: 0, shadow: 0, head: 0, helm: 0, horse: 0, hhead: 0, spear: 0, shield: 0, bow: 0 }, MS = 1.2;
+  // sw: a swing about the man's own side-to-side line (a leg or an arm stepping forward)
+  const put = (m, x, y, z, rot, sx = 1, sy = 1, sz = 1, col, sw = 0) => { if (n[m] >= V[m].userData.max) return; QQ.setFromAxisAngle(YAX, rot); if (sw) { Q2.setFromAxisAngle(ZAX, sw); QQ.multiply(Q2); } PP.set(x, y, z); SC.set(sx, sy, sz); MM.compose(PP, QQ, SC); V[m].setMatrixAt(n[m], MM); if (col != null) { CC.setHex(col); V[m].setColorAt(n[m], CC); } n[m]++; };
+  // a limb hung from (hx, hy, hz), len long, swung by a: where its middle is, then (for a leg) the boot at its end
+  // the soft shadow under his feet lies ON the grass, tilted with the slope he stands on (laid flat it sank into a hillside on its upper half)
+  const shade = (x, z, rot, sx, sz) => { if (n.shadow >= V.shadow.userData.max) return; const e = 0.7, y0 = groundY(V, g, x, z), gx = (groundY(V, g, x + e, z) - groundY(V, g, x - e, z)) / (2 * e), gz = (groundY(V, g, x, z + e) - groundY(V, g, x, z - e)) / (2 * e);
+    NN.set(-gx, 1, -gz).normalize(); QQ.setFromUnitVectors(YAX, NN); Q2.setFromAxisAngle(YAX, rot); QQ.multiply(Q2); PP.set(x + NN.x * 0.08, y0 + 0.08, z + NN.z * 0.08); SC.set(sx, 1, sz); MM.compose(PP, QQ, SC); V.shadow.setMatrixAt(n.shadow++, MM); };
+  const limb = (m, hx, hy, hz, f1, f2, len, a, rot, sc, col) => put(m, hx + f1 * Math.sin(a) * len / 2, hy - Math.cos(a) * len / 2, hz + f2 * Math.sin(a) * len / 2, rot, sc, sc, sc, col, a);
   const seen = new Set();
   for (const u of g.units) { if (u.gone) continue; seen.add(u.id); const U = UT[u.type], horse = !!U.charge, sp = horse ? 1.9 : 1.25, cols = Math.max(2, Math.ceil(Math.sqrt(u.n0 * (horse ? 1 : 1.6)))), col = u.side === 0 ? g.banner.col : RED, rot = -u.face, fx = Math.cos(u.face), fz = Math.sin(u.face), rx = -fz, rz = fx, moving = u.order || u.tgt;
     for (let i = 0; i < u.n; i++) { const r = Math.floor(i / cols), c = i % cols, w = (Math.min(cols, u.n) - 1) / 2; let lx = (c - w) * sp, lz = -r * sp * 1.1;
       if (u.rout) { lx += Math.sin(i * 7.3 + t * 3) * 2.5; lz += Math.cos(i * 3.1) * 3; } else if (u.fight > 0) { lx += Math.sin(t * 9 + i) * 0.25; lz += Math.sin(t * 7 + i * 2) * 0.35; }
-      const x = u.x + rx * lx + fx * lz * 1, z = u.z + rz * lx + fz * lz, y = groundY(V, g, x, z), bob = moving || u.rout ? Math.abs(Math.sin(t * (horse ? 10 : 7) + i)) * 0.18 : 0, srot = u.rout ? rot + Math.PI : rot;
-      if (horse) { put('horse', x, y + 1.0 + bob, z, srot, 1, 1, 1); put('hhead', x + fx * 1.05 * (u.rout ? -1 : 1), y + 1.55 + bob, z + fz * 1.05 * (u.rout ? -1 : 1), srot); put('body', x, y + 1.95 + bob, z, srot, 0.85, 0.75, 0.85, col); put('head', x, y + 2.6 + bob, z, srot); put('helm', x, y + 2.66 + bob, z, srot);
-        if (u.type === 'knight') put('spear', x + fx * 0.8, y + 2.1 + bob, z + fz * 0.8, srot, 1, 1, 1); }
-      else { put('body', x, y + 0.65 + bob, z, srot, 1, 1, 1, col); put('head', x, y + 1.5 + bob, z, srot); if (u.type !== 'archer' && u.type !== 'xbow') put('helm', x, y + 1.56 + bob, z, srot);
-        if (u.type === 'spear') { put('spear', x + rx * 0.3 + fx * 0.6, y + 1.4 + bob, z + rz * 0.3 + fz * 0.6, srot, 1, 1, 1); put('shield', x + fx * 0.35, y + 0.75 + bob, z + fz * 0.35, srot, 1, 1, 1, col); }
-        if (u.type === 'sword') put('shield', x + fx * 0.35, y + 0.75 + bob, z + fz * 0.35, srot, 1, 1, 1, col);
-        if (u.type === 'archer' || u.type === 'xbow') put('bow', x + rx * 0.35, y + 1.0 + bob, z + rz * 0.35, srot + Math.PI / 2, 1, 1, 1); } }
+      const x = u.x + rx * lx + fx * lz * 1, z = u.z + rz * lx + fz * lz, y = groundY(V, g, x, z), go = moving || u.rout, ph = t * (horse ? 11 : u.rout ? 12 : 8) + i * 1.7, bob = go ? Math.abs(Math.sin(ph)) * (horse ? 0.14 : 0.05) : 0, srot = u.rout ? rot + Math.PI : rot, ff = u.rout ? -1 : 1, f1 = fx * ff, f2 = fz * ff;
+      const st = go ? Math.sin(ph) * (u.rout ? 0.8 : 0.6) : u.fight > 0 ? Math.sin(t * 9 + i) * 0.22 : 0;      // the step: one leg forward as the other goes back
+      if (horse) { shade(x, z, srot, 2.3, 1.25);
+        for (let q = 0; q < 4; q++) { const fo = (q < 2 ? 0.68 : -0.68), so = (q % 2 ? 0.2 : -0.2), a = go ? Math.sin(ph + (q === 0 || q === 3 ? 0 : Math.PI)) * 0.6 : 0, lx2 = x + f1 * fo + rx * so, lz2 = z + f2 * fo + rz * so, hipY = y + 0.9 + bob,
+            L = clamp(hipY - groundY(V, g, lx2, lz2) - 0.02 + (go ? Math.max(0, -Math.cos(ph + (q === 0 || q === 3 ? 0 : Math.PI))) * -0.12 : 0), 0.45, 1.3);      /* each hoof on the grass under it, on a slope too */
+          put('hleg', lx2 + f1 * Math.sin(a) * L / 2, hipY - Math.cos(a) * L / 2, lz2 + f2 * Math.sin(a) * L / 2, srot, 1, L / 0.8, 1, null, a); }
+        const coat = [0x8a5a34, 0x6e4426, 0x9a6a3e, 0x5a3a24, 0xa8a094][(u.id * 7 + i * 3) % 5];
+        put('horse', x, y + 1.3 + bob, z, srot, 1, 1, 1, coat); put('hhead', x + f1 * 0.95, y + 1.95 + bob, z + f2 * 0.95, srot, 1.15, 1.0, 0.9, coat, 0.95); put('hhead', x + f1 * 1.38, y + 2.3 + bob, z + f2 * 1.38, srot, 0.95, 0.85, 0.85, coat, -0.35); put('hhead', x - f1 * 1.05, y + 1.25 + bob, z - f2 * 1.05, srot, 0.9, 0.4, 0.4, 0x2a1a10, 1.15); put('body', x, y + 2.15 + bob, z, srot, 1, 0.95, 0.85, col); put('head', x, y + 2.78 + bob, z, srot); put('helm', x, y + 2.84 + bob, z, srot);
+        if (u.type === 'knight') put('spear', x + f1 * 0.8, y + 2.35 + bob, z + f2 * 0.8, srot, 1, 1, 1); }
+      else { const hip = y + 0.8 * MS + bob; shade(x, z, 0, MS, MS);
+        for (const sd of [-1, 1]) { const a = st * sd, hx2 = x + rx * 0.15 * MS * sd, hz2 = z + rz * 0.15 * MS * sd; limb('leg', hx2, hip, hz2, f1, f2, 0.74 * MS, a, srot, MS);
+          put('boot', hx2 + f1 * (Math.sin(a) * 0.72 + 0.07) * MS, hip - (Math.cos(a) * 0.72 - 0.02) * MS, hz2 + f2 * (Math.sin(a) * 0.72 + 0.07) * MS, srot, MS, MS, MS, null, a * 0.5);
+          limb('arm', x + rx * 0.36 * MS * sd, hip + 0.68 * MS, z + rz * 0.36 * MS * sd, f1, f2, 0.6 * MS, -a * 0.8, srot, MS, col); }
+        put('body', x, hip + 0.36 * MS, z, srot, MS, MS, MS, col); put('head', x, hip + 0.94 * MS, z, srot, MS, MS, MS); if (u.type !== 'archer' && u.type !== 'xbow') put('helm', x, hip + 1.0 * MS, z, srot, MS, MS, MS);
+        if (u.type === 'spear') { put('spear', x + rx * 0.5 + f1 * 0.3, hip + 0.75, z + rz * 0.5 + f2 * 0.3, srot, 1, 1, 1); put('shield', x + f1 * 0.3 - rx * 0.3, hip + 0.3 * MS, z + f2 * 0.3 - rz * 0.3, srot, 1, 1, 1, col); }
+        if (u.type === 'sword') put('shield', x + f1 * 0.3 - rx * 0.3, hip + 0.3 * MS, z + f2 * 0.3 - rz * 0.3, srot, 1, 1, 1, col);
+        if (u.type === 'archer' || u.type === 'xbow') put('bow', x + rx * 0.5 + f1 * 0.2, hip + 0.45 * MS, z + rz * 0.5 + f2 * 0.2, srot + Math.PI / 2, 1, 1, 1); } }
     const b = banner(V, u, g); b.visible = !u.rout; { const bx = u.x - fx * (Math.ceil(u.n / cols) * sp * 0.6), bz = u.z - fz * (Math.ceil(u.n / cols) * sp * 0.6); b.position.set(bx, groundY(V, g, bx, bz), bz); } b.userData.flag.rotation.y = Math.sin(t * 2 + u.id) * 0.3; }
   for (const [id, b] of V.banners) if (!seen.has(id)) { V.S.remove(b); V.banners.delete(id); }
   for (const m in n) { V[m].count = n[m]; V[m].instanceMatrix.needsUpdate = true; if (V[m].instanceColor) V[m].instanceColor.needsUpdate = true; }

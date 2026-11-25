@@ -5,6 +5,7 @@
 // spin; three beeps and a high one at the start; a bell for each lap and a fanfare at the line.
 const sfx = {
   click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
+  swap() { noise(0.16, 1800, 0.05, 'bandpass', 2); tone(520, 0.1, 0.03, 'sawtooth', 0, 760, 2600); },      // the tyres squeal across as the slide changes side
   go() { tone(660, 0.2, 0.06, 'square', 0, 660, 2400); },
   light(n) { tone(n ? 440 : 880, n ? 0.18 : 0.4, 0.06, 'square', 0, n ? 440 : 880, 2400); },
   spark(t = 1) { tone(note(659, t * 3), 0.12, 0.05, 'triangle'); tone(note(659, t * 3 + 2), 0.1, 0.03, 'sine', 0.05); },

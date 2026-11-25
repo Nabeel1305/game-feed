@@ -5,7 +5,7 @@
 // furniture, creaky boards, a curious cat. If someone wakes, that house starts again; earlier houses stay delivered.
 // Deliver every house before dawn. Flight: x, z on the ground (metres), y up. Inside a house: a grid of 1 m cells.
 const RULES = [
-  '<b>Fly:</b> push the left thumb the way you want to go: the harder you push, the faster. <b>Let go to brake</b>: the sleigh stops and hovers. Hold LAND over a house\'s glowing marker to settle on its roof.',
+  '<b>Fly:</b> hold <b>FORWARD</b> (right thumb) to fly ahead; let go and the sleigh slows to a hover. The stick (left thumb): left and right turn, <b>up climbs, down dives</b>. Fly down onto a house\'s glowing marker to land on its roof. Stars in the sky: a burst of speed.',
   '<b>Inside:</b> push gently to tiptoe; a full push runs, and running is noisy. Bumping furniture and creaky boards are noisy too.',
   '<b>Presents:</b> read the wish list (top left). Tap a present in your sack to hold it, then ACT by the tree to put it down. ACT by the tree with empty hands picks the last one back up.',
   'ACT by each stocking to fill it. ACT by the fireplace to go back up when the house is done.',
@@ -62,8 +62,8 @@ function roomOK(g, W, D, fire, tree, creak = []) { const seen = new Set([fire.x 
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, mini: !!o.mini, free: !!o.free, blind: {} };
-  G.V = makeVillage(cfg); G.done = []; G.wakes = 0; G.stick = { x: 0, y: 0 }; G.landHeld = false; G.act = false;
-  G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: FLY, state: 'fly', t: 0 }; G.phase = 'fly'; G.in = null;
+  G.V = makeVillage(cfg); G.done = []; G.wakes = 0; G.stick = { x: 0, y: 0 }; G.go = false; G.act = false; G.stars = makeStars(G); G.starN = 0;
+  G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: 0, vy: 0, boost: 0, state: 'fly', t: 0 }; G.phase = 'fly'; G.in = null;
   let d = 0, px = 0, pz = -20; const left = G.V.slice(); while (left.length) { left.sort((a, b) => Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz)); const h = left.shift(); d += Math.hypot(h.x - px, h.z - pz); px = h.x; pz = h.z; }
   G.par = d / FLY * 1.15 + G.V.reduce((a, h) => a + 5.2 + h.mem.length * 1.3 + (h.room.cat ? 1.5 : 0) + (h.narrow ? 1 : 0) + (h.slippery ? 1 : 0), 0); G.dawn = Math.round(G.par * cfg.night); G.clock = 0;
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
@@ -71,30 +71,41 @@ function newGame(N, o = {}) {
 }
 // ---------- the player's actions ----------
 function setStick(G, x, y) { const m = Math.hypot(x, y); G.stick = m > 1 ? { x: x / m, y: y / m } : { x, y }; }
-function landOn(G, on) { G.landHeld = !!on; }
+function goOn(G, on) { G.go = !!on; }      // the FORWARD button, held or let go
+// stars hang in the sky on the way from each house to the next, some high, some low: fly through one for a burst of speed (and a coin at the end)
+function makeStars(G) { const R = rng(G.seed * 7 + 99), out = []; let px = 0, pz = -20; const left = G.V.slice();
+  while (left.length) { left.sort((a, b) => Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz)); const h = left.shift(), n = Math.hypot(h.x - px, h.z - pz) > 30 ? 2 : 1;
+    for (let i = 1; i <= n; i++) { const u = i / (n + 1), sx = (R() - 0.5) * 10, sz = (R() - 0.5) * 10; out.push({ x: px + (h.mx - px) * u + sx, z: pz + (h.mz - pz) * u + sz, y: (out.length % 2 ? 7 : 16) + R() * 4, got: false }); } px = h.mx; pz = h.mz; }
+  return out; }
 function act(G) { if (G.over) return; if (G.phase === 'in') actInside(G); else if (G.phase === 'roof' && G.roof && G.roof.narrow) { G.roof.squeeze = (G.roof.squeeze || 0) + 1; } }
 function holdGift(G, id) { if (G.phase !== 'in') return; G.in.hold = id; G.ev.push({ k: 'hold', id }); }
 // ---------- every frame ----------
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt); if (!G.lesson && !G.free) G.clock += dt;
-  if (G.blind.lr != null) { G.blind.lr -= dt; if (G.blind.lr <= 0) { G.blind.lr = null; landOn(G, false); } }
-  if (G.phase === 'fly') flyStep(G, dt); else if (G.phase === 'roof') roofStep(G, dt); else if (G.phase === 'in') inStep(G, dt); else if (G.phase === 'up') { G.upT -= dt; if (G.upT <= 0) { G.phase = 'fly'; G.s.y = G.s.y + 0.5; G.s.v = SLOW; } }
+  if (G.blind.lr != null) { G.blind.lr -= dt; if (G.blind.lr <= 0) { G.blind.lr = null; goOn(G, false); } }
+  if (G.phase === 'fly') flyStep(G, dt); else if (G.phase === 'roof') roofStep(G, dt); else if (G.phase === 'in') inStep(G, dt); else if (G.phase === 'up') { G.upT -= dt; if (G.upT <= 0) { G.phase = 'fly'; G.s.y = G.s.y + 2.5; G.s.v = 0; G.s.vy = 3; G.s.bump = 0.8; } }
   if (!G.over && !G.lesson && !G.free && G.clock > G.dawn) finish(G, false, 'dawn'); }
 const overNext = G => { const s = G.s; return G.V.some(h => !G.done.includes(h.i) && Math.hypot(h.mx - s.x, h.mz - s.z) < G.cfg.marker * 1.3); };
-function flyStep(G, dt) { const s = G.s, m = Math.hypot(G.stick.x, G.stick.y), sp = FLY * (1 + 0.06 * upLv('reindeer'));
-  // the stick: the direction to fly, as seen from behind the sleigh (up is ahead)
-  if (m > 0.2) { const want = s.yaw + Math.atan2(G.stick.x, G.stick.y), d = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)); s.yaw += clamp(d, -2.0 * dt, 2.0 * dt); }
-  // 25 Nov 2026 (his review: "No breaks??"): the sleigh flew flat out whatever you did; only LAND slowed it. Now it flies as hard as you
-  // push the stick, and letting go is the brake: it slows to a hover and waits for you.
-  { const push = m > 0.15 ? 0.35 + 0.65 * Math.min(1, m) : 0, tv = G.landHeld ? Math.min(SLOW, sp * push) : sp * push; s.v += (tv - s.v) * Math.min(1, dt * (tv < s.v ? 3.4 : 2.5)); }
-  s.x += Math.sin(s.yaw) * s.v * dt; s.z += Math.cos(s.yaw) * s.v * dt;
-  const H = houseUnder(G, s.x, s.z), floor = H ? H.top : 2.5;
-  if (G.landHeld) s.y = Math.max(floor, s.y - 6 * dt); else s.y = Math.min(CRUISE, s.y + 5 * dt);
-  s.x = clamp(s.x, -90, 90); s.z = clamp(s.z, -40, 120);
-  if (G.landHeld && H && s.y <= H.top + 0.05) { const d = Math.hypot(s.x - H.mx, s.z - H.mz);
-    if (G.done.includes(H.i)) { s.y = H.top + 2; G.ev.push({ k: 'bounce', why: 'done' }); return; }
-    if (d <= G.cfg.marker) { G.phase = 'roof'; G.roof = { H, t: 0, narrow: H.narrow, slip: H.slippery ? 0 : null, squeeze: 0, hold: 0 }; s.v = 0; s.x = H.mx; s.z = H.mz; G.ev.push({ k: 'land', i: H.i, slippery: !!H.slippery, narrow: !!H.narrow }); lessonSee(G, 'land'); }
-    else { s.y = H.top + 2.2; s.v = SLOW; G.ev.push({ k: 'bounce', why: 'marker', d }); } }
-  else if (G.landHeld && !H && s.y <= 2.6) { s.y = 2.6; } }
+// 25 Nov 2026, later (his words: "Inverted joystick and put Christmas music... also create up and down and forward this one should be good make the
+// reindeers majestic"). REAL FLYING. Before, the stick was the way to go and its strength the speed, the height looked after itself, and a LAND
+// button brought the sleigh down. Now: the right thumb holds FORWARD (let go: the sleigh slows to a hover); the stick steers (left and right turn
+// it, UP climbs, DOWN dives: up is up); and you land by flying down onto the roof's glowing marker. A house in the way is a house in the way:
+// fly into its wall and the sleigh bumps back, so climb over. Stars in the sky give a burst of speed.
+const CLIMB = 8.5, TURN = 1.9, CEIL = 26;
+function flyStep(G, dt) { const s = G.s, sx = G.stick.x, sy = G.stick.y, sp = FLY * (1 + 0.06 * upLv('reindeer')) * (s.boost > 0 ? 1.35 : 1); s.boost = Math.max(0, (s.boost || 0) - dt); s.bump = Math.max(0, (s.bump || 0) - dt);
+  if (Math.abs(sx) > 0.12) s.yaw += clamp(sx * 1.15, -1, 1) * TURN * dt;
+  { const tv = G.go ? sp : 0; s.v += (tv - s.v) * Math.min(1, dt * (tv < s.v ? 2.6 : 2.2)); }
+  const px = s.x, pz = s.z; s.x = clamp(s.x + Math.sin(s.yaw) * s.v * dt, -90, 90); s.z = clamp(s.z + Math.cos(s.yaw) * s.v * dt, -40, 120);
+  { const tvy = Math.abs(sy) > 0.15 ? clamp(sy * 1.15, -1, 1) * CLIMB : 0; s.vy = (s.vy || 0) + (tvy - (s.vy || 0)) * Math.min(1, dt * 7); }
+  let H = houseUnder(G, s.x, s.z);
+  // into the side of a house, below its roof: bumped back (climb over it)
+  if (H && s.y < H.top - 0.25 && !houseUnder(G, px, pz)) { s.x = px; s.z = pz; s.v *= 0.15; s.vy = Math.max(s.vy, 4); H = null; if (!(s.bump > 0)) { s.bump = 0.5; G.ev.push({ k: 'bonk' }); } }
+  const floor = H ? H.top : 2.5; s.y = clamp(s.y + s.vy * dt, floor, CEIL);
+  for (const st of G.stars) if (!st.got && !G.lesson && Math.hypot(st.x - s.x, st.z - s.z, st.y - s.y) < 3.4) { st.got = true; G.starN++; s.boost = 2.6; G.ev.push({ k: 'star', n: G.starN }); }
+  // down onto a roof: on the marker it is a landing (and down the chimney), off it the sleigh bounces up again
+  if (H && s.y <= H.top + 0.05 && s.vy <= 0 && !(s.bump > 0)) { const d = Math.hypot(s.x - H.mx, s.z - H.mz);
+    if (G.done.includes(H.i)) { s.y = H.top + 2; s.vy = 3; s.bump = 0.6; G.ev.push({ k: 'bounce', why: 'done' }); return; }
+    if (d <= G.cfg.marker) { G.phase = 'roof'; G.roof = { H, t: 0, narrow: H.narrow, slip: H.slippery ? 0 : null, squeeze: 0, hold: 0 }; s.v = 0; s.vy = 0; s.x = H.mx; s.z = H.mz; G.ev.push({ k: 'land', i: H.i, slippery: !!H.slippery, narrow: !!H.narrow }); lessonSee(G, 'land'); }
+    else { s.y = H.top + 2.2; s.vy = 4; s.v = Math.min(s.v, SLOW); s.bump = 0.6; G.ev.push({ k: 'bounce', why: 'marker', d }); } } }
 function houseUnder(G, x, z) { return G.V.find(h => Math.abs(x - h.x) < h.w / 2 && Math.abs(z - h.z) < h.d / 2) || null; }
 function roofStep(G, dt) { const r = G.roof; r.t += dt;
   // an icy roof: the sleigh slides unless you push up the roof for a moment
@@ -109,7 +120,9 @@ function sackFor(G, H) { const R = rng(G.cfg.N * 91 + H.i * 7), ids = H.mem.map(
 const cellAt = (R, x, z) => { const cx = Math.floor(x + 0.5), cz = Math.floor(z + 0.5); return cz < 0 || cx < 0 || cz >= R.D || cx >= R.W ? 1 : R.g[cz][cx]; };
 function inStep(G, dt) { const I = G.in, R = I.H.room, m = Math.hypot(G.stick.x, G.stick.y), run = m > 0.7, sp = m < 0.15 ? 0 : run ? 3.2 : 1.7 * Math.min(1, m / 0.5 + 0.2), qk = G.cfg.quiet * (1 - 0.15 * upLv('boots')) * (G.free ? 0 : 1);
   I.bumpT -= dt;
-  if (sp > 0) { const dx = G.stick.x / m * sp * dt, dz = -G.stick.y / m * sp * dt; I.face = Math.atan2(dx, dz);
+  // 25 Nov 2026 ("Inverted joystick"): measured with the camera, the stick pushed RIGHT walked Santa to the LEFT of the screen (the room is drawn
+  // with x turned over, and the flying had been measured but never the walking). The stick's right is the screen's right now.
+  if (sp > 0) { const dx = -G.stick.x / m * sp * dt, dz = -G.stick.y / m * sp * dt; I.face = Math.atan2(dx, dz);
     const tryMove = (nx, nz) => { const c = [[0.3, 0.3], [-0.3, 0.3], [0.3, -0.3], [-0.3, -0.3]].some(([ox, oz]) => cellAt(R, nx + ox, nz + oz) !== 0); return !c; };
     let moved = false; if (tryMove(I.x + dx, I.z + dz)) { I.x += dx; I.z += dz; moved = true; } else if (tryMove(I.x + dx, I.z)) { I.x += dx; moved = true; } else if (tryMove(I.x, I.z + dz)) { I.z += dz; moved = true; }
     if (!moved || moved && !tryMove(I.x + dx * 2, I.z + dz * 2) && run) { if (I.bumpT <= 0) { I.bumpT = 0.6; const n = (run ? 0.32 : 0.12) * qk; I.noise += n; if (n > 0) G.ev.push({ k: 'bump', n }); } }
@@ -147,7 +160,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.done = G.V.map(h => h.i); finish(G, true, 'all'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => overNext(G) ? 'LET GO, HOLD LAND' : 'PUSH TO FLY THERE', do: G => overNext(G) ? 'hold' : 'drag', dir: 'up', at: G => { if (!overNext(G)) return null; const b = layout(G).btn; return [b.x, b.y]; }, how: 'Steer with your left thumb towards the glowing house. Over its marker, hold LAND: the sleigh slows and settles on the roof. Land once.', need: 1 }],
+  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => overNext(G) ? 'STICK DOWN: LAND' : 'HOLD FORWARD, STEER', do: G => overNext(G) ? 'drag' : 'hold', dir: 'down', at: G => { const L = layout(G); return overNext(G) ? [L.stick.x, L.stick.y] : [L.btn.x, L.btn.y]; }, how: 'Hold FORWARD and steer with the stick towards the glowing house. Over its marker, let go of FORWARD and push the stick down: the sleigh comes down onto the roof. Land once.', need: 1 }],
   2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', say: 'TAP A PRESENT, ACT', do: 'tap', how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],
   3: [{ id: 'sneak', title: 'TIPTOE', say: 'PUSH GENTLY', do: 'drag', dir: 'up', how: 'Push gently to tiptoe. Go round furniture and the dark creaky boards; watch the noise meter. Deliver one house without waking anyone.', need: 1 }],
 };
@@ -157,29 +170,33 @@ function lessonSee(G, what) { const D = G.lesson; if (!D || D.done) return; let 
   if ((D.id === 'gifts' || D.id === 'sneak') && what === 'delivered') good = true;
   if (what === 'wake') G.ev.push({ k: 'lessonmiss', how: 'Someone woke up! That house starts again: tiptoe (push gently) and keep away from creaky boards.' });
   if (good) { D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: D.need }); if (D.n >= D.need) { D.done = true; D.wait = 1.6; } } }
-function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.done = []; G.wakes = 0; G.clock = 0; G.phase = 'fly'; G.in = null; G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: FLY, state: 'fly', t: 0 }; G.ev.push({ k: 'lessondone', N: G.N }); }
+function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.done = []; G.wakes = 0; G.clock = 0; G.phase = 'fly'; G.in = null; G.go = false; G.s = { x: 0, z: -20, y: CRUISE, yaw: 0, v: 0, vy: 0, boost: 0, state: 'fly', t: 0 }; G.ev.push({ k: 'lessondone', N: G.N }); }
 
 // ---------- for the robots: blind moves and an honest Santa ----------
 const BLIND = {
-  f: G => setStick(G, (Math.random() - 0.5) * 0.4, 1),                                       // push forward
-  a: G => { const a = Math.random() * TAU; setStick(G, Math.cos(a), Math.sin(a)); },           // push anywhere
+  f: G => { goOn(G, true); G.blind.lr = 0.4 + Math.random() * 2.6; },                         // hold FORWARD a while
+  a: G => { const a = Math.random() * TAU; setStick(G, Math.cos(a), Math.sin(a)); },           // push the stick anywhere
   t: G => { const a = Math.random() * TAU; setStick(G, Math.cos(a) * 0.45, Math.sin(a) * 0.45); },   // a gentle push anywhere
-  o: G => setStick(G, 0, 0),                                                                 // let go
-  l: G => { landOn(G, true); G.blind.lr = 0.3 + Math.random() * 2; },                         // hold LAND a while
+  o: G => setStick(G, 0, 0),                                                                 // let go of the stick
+  l: G => setStick(G, (Math.random() - 0.5) * 0.5, -1),                                       // push the stick down (dive)
   c: G => act(G),                                                                            // ACT
   p: G => { if (G.in) holdGift(G, G.in.sack[(Math.random() * G.in.sack.length) | 0]); },     // tap a present in the sack
 };
-// HONEST: a Santa who looks: flies to the nearest house left, holds LAND over its marker (a little off, by acc), wriggles down
+// HONEST: a Santa who looks: flies to the nearest house left (above the roofs), stops over its marker (a little off, by acc) and comes down, wriggles down
 // narrow chimneys, inside walks the quiet way round (furniture, creaky boards and the cat), reads the wish list (sometimes
 // picks a wrong present and puts it right), fills the stockings and goes back up.
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.phase === 'fly') { const s = G.s; if (mem.tgt == null || G.done.includes(mem.tgt)) { const left = G.V.filter(h => !G.done.includes(h.i)); left.sort((a, b) => Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z)); mem.tgt = left.length ? left[0].i : null; mem.off = { x: (R() - 0.5) * (1 - acc) * 9, z: (R() - 0.5) * (1 - acc) * 9 }; }
     if (mem.tgt == null) { setStick(G, 0, 0); return; } const H = G.V[mem.tgt], tx = H.mx + mem.off.x, tz = H.mz + mem.off.z, dx = tx - s.x, dz = tz - s.z, d = Math.hypot(dx, dz);
-    const want = Math.atan2(dx, dz), rel = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)); setStick(G, Math.sin(rel), Math.cos(rel) * (d > 3 ? 1 : 0.2));
-    landOn(G, d < 7 + react * 3); if (d < 0.6) mem.off = { x: 0, z: 0 }; return; }
-  if (G.phase === 'roof') { landOn(G, false); setStick(G, 0, 1); if (G.roof.narrow) act(G); return; }
-  if (G.phase !== 'in') { setStick(G, 0, 0); return; }
-  landOn(G, false); const I = G.in, Rm = I.H.room;
+    // turn to it, hold FORWARD until it is time to slow, keep above the roofs on the way, and over the marker come down
+    const want = Math.atan2(dx, dz), rel = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)), overR = Math.max(0.7, G.cfg.marker * 0.5), over = d < overR, near = d < 9, wantY = over ? H.top - 1 : near ? H.top + 3.2 : 13;
+    goOn(G, !over && Math.abs(rel) < 1.1 && d > Math.max(overR * 0.9, s.v * 0.44 + react * 1.2));      /* (from a stop he creeps on until he is over it: there is no gap between 'still coming' and 'over it') */
+    setStick(G, clamp(rel * 1.7, -1, 1) * (d < 1 ? 0.3 : 1), over && s.v < 2.6 ? -1 : over ? 0 : clamp((wantY - s.y) * 0.5, -1, 1));
+    if (d < 0.6 || (s.bump > 0 && d < 4)) mem.off = { x: 0, z: 0 };      /* bounced off the roof beside the marker: he looks again and aims at the marker itself */
+    return; }
+  if (G.phase === 'roof') { goOn(G, false); setStick(G, 0, 1); if (G.roof.narrow) act(G); return; }
+  if (G.phase !== 'in') { goOn(G, false); setStick(G, 0, 0); return; }
+  goOn(G, false); const I = G.in, Rm = I.H.room;
   // what next: a present in hand to the tree; else pick the next wanted present; else a stocking; else the fireplace
   if (mem.house !== I.H.i || mem.inT > G.t || mem.entered !== G.in) { mem.house = I.H.i; mem.entered = G.in; mem.path = null; mem.goal = null; mem.rush = R() < (1 - acc) * 0.9; mem.careless = R() < (1 - acc) * 1.2; } mem.inT = G.t;
   const left = wantsLeft(I), wrong = I.placed.length - (I.H.mem.length - left.length);
@@ -197,7 +214,7 @@ function honest(G, o, mem) { if (G.over) return; const react = o.react == null ?
   if (!mem.path || mem.goalKey !== goal.x + ',' + goal.z || !mem.path.length) { mem.goalKey = goal.x + ',' + goal.z; mem.path = findPath(Rm, I, goal, mem.careless); }
   if (!mem.path || !mem.path.length) { setStick(G, 0, 0); return; }
   const wp = mem.path[0], dx = wp.x - I.x, dz = wp.z - I.z, d = Math.hypot(dx, dz); if (d < 0.18) { mem.path.shift(); return; }
-  const sp = mem.rush ? 1 : 0.5; setStick(G, dx / d * sp, -dz / d * sp); }
+  const sp = mem.rush ? 1 : 0.5; setStick(G, -dx / d * sp, -dz / d * sp); }      /* (the stick's right is the screen's right: the rules' x runs the other way indoors) */
 function treeSpot(R, I) { return spotNear(R, I, R.tree.x, R.tree.z, 1.6); }
 // the nearest quiet cell you can walk to (no furniture, no creaky board) from which ACT reaches (tx, tz)
 function spotNear(R, I, tx, tz, r) { const sx = Math.round(I.x), sz = Math.round(I.z), key = (x, z) => x + ',' + z, seen = new Set([key(sx, sz)]), q = [[sx, sz]], bad = new Set(R.creak.map(c => key(c.x, c.z)));
