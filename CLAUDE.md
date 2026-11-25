@@ -65,6 +65,11 @@ entry that fits fifteen games or more `general: true`; an answer with nothing ch
 a general point would fit (only what he asks for in every game by name, like its own music, reaches them): say which were left. **Each game has its own music**: its score is in `tools/scores.py` (run it, then build); measured,
 never listened to. **Left and right, and anything about what is seen, are measured with the camera or looked at in a sharp still**
 (`window.__fullGL = true`), never worked out on paper (LESSONS, "His review of 25 Nov 2026").
+**Two buttons move a game between the lists** (his words, 25 Nov 2026, 09:03: "I click this game is completely okay, and... it can take it to the
+list that the game is good, the game doesn't need any more fixing... The fixed games and the games that I haven't reviewed, I can take it to the games
+that need to be fixed"): every card has **GAME IS OKAY** (the store's `rating: 'good'`; the Okay list; no changes) and **NEEDS FIXING** (`rating:
+'bad'`; the To fix list; with nothing written it still means find what to change myself), in place of Good / Okay / Bad (an `'ok'` from an older
+review counts as okay). The game leaves the list he is looking at at once, with UNDO. GAME IS OKAY never hides a note he wrote.
 The page is built by `python3 tools/review_page.py` and proved by `python3 tools/test_review_page.py` (what he types reaches the
 store, comes back on a phone that has forgotten everything, survives no signal). `python3 tools/small_screen.py` opens every
 card of every game on a 360 x 640 phone and reports buttons that cannot be reached.

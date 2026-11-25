@@ -62,7 +62,14 @@ DONE = {k: v for k, v in json.load(open(os.path.join(R, 'specs', 'reviews-fixed.
 #   YOUR NOTES          he has written something (or pressed Bad) that is not fixed yet
 #   YOU SAID FINE       Good or Okay, and nothing written
 #   NOT REVIEWED        nothing from him and nothing fixed for him
-# A fix empties his boxes, which is what moves the game from YOUR NOTES to FIXED; his next rating moves it on. An entry with "general": true
+# 25 Nov 2026, 09:03, his words: "why don't you make a button that when I click a game and I think the game is completely okay, then I click this
+# game is completely okay, and... it can take it to the list that the game is good, the game doesn't need any more fixing... The fixed games and the
+# games that I haven't reviewed, I can take it to the games that need to be fixed". So each card has TWO buttons in place of Good / Okay / Bad:
+#   GAME IS OKAY   -> rating 'good' -> the OKAY list (an 'ok' from an older review counts as okay too)
+#   NEEDS FIXING   -> rating 'bad'  -> the TO FIX list (with nothing written it still means "find what to change yourself")
+# The game goes to its list at once (it leaves the list he is looking at), a line at the bottom says where it went, with UNDO. A game with a note
+# in its boxes is already in TO FIX; GAME IS OKAY will not hide a note he wrote (it says to delete the note first).
+# A fix empties his boxes, which is what moves the game from YOUR NOTES to FIXED; his next press of a button moves it on. An entry with "general": true
 # (something done to every game, like the music) shows in the green box but does not put the game in his list to check.
 def round_of(d):
     if d.get('round'): return d['round']
@@ -99,7 +106,10 @@ main{padding:12px 12px 120px;max-width:720px;margin:0 auto}
 .tag{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:2px 7px;margin:8px 6px 0 0;letter-spacing:.3px}.t-fix{background:#1e4a34;color:var(--ok)}.t-all{background:#26304a;color:#a8c0ff}.t-todo{background:#4a2a26;color:#ffb0a0}.t-done{background:#7be0a0;color:#08240f}
 .done{margin-top:10px;border:1px solid #2f6a48;background:#15301f;border-radius:12px;padding:10px 12px}.done .h{font-weight:800;color:var(--ok);font-size:14px;letter-spacing:.2px}.done .h small{font-weight:400;color:#9fcfb2}.done .said{margin-top:6px;font-size:13px;color:#b9c7bf;font-style:italic}.done .did{margin-top:6px;font-size:14px;color:#eaf6ee}.done .did b{color:var(--ok)}.again{margin-top:12px;font-size:13px;color:var(--dim)}details.old{margin-top:10px}details.old summary{font-size:13px;color:var(--dim);padding:6px 0}
 p.w{margin:6px 0 0;font-size:14px;color:#d8dcea}p.w b{color:var(--ink)}
-.rate{display:flex;gap:8px;margin-top:12px}.rate button{flex:1;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:9px 4px;font:inherit;font-size:14px}.rate button.on{background:#2c3a5a;border-color:#6a86d8;font-weight:700}
+.rate{display:flex;gap:8px;margin-top:12px}.rate button{flex:1;border:2px solid var(--line);background:transparent;color:var(--ink);border-radius:12px;padding:11px 4px 9px;font:inherit;font-size:15px;font-weight:800;line-height:1.15}.rate button small{display:block;font-size:11px;font-weight:400;color:var(--dim);margin-top:3px;pointer-events:none}
+.rate button[data-r="good"]{border-color:#2f6a48}.rate button[data-r="bad"]{border-color:#7a5a20}.rate button[data-r="good"].on{background:#7be0a0;border-color:#7be0a0;color:#08240f}.rate button[data-r="bad"].on{background:#ffc94a;border-color:#ffc94a;color:#1d1204}.rate button.on small{color:inherit;opacity:.8}
+.g.gone{opacity:0;transform:translateX(40px);transition:opacity .35s,transform .35s}
+#toast{position:fixed;left:10px;right:10px;bottom:74px;z-index:40;background:#f2f4fa;color:#12141c;border-radius:12px;padding:11px 12px;display:none;align-items:center;gap:10px;font-size:14px;font-weight:700;box-shadow:0 6px 24px rgba(0,0,0,.5)}#toast.on{display:flex}#toast span{flex:1}#toast button{flex:none;border:0;border-radius:9px;background:#12141c;color:#fff;font:inherit;font-weight:800;padding:9px 13px}
 label{display:block;font-size:12px;font-weight:800;margin:12px 0 4px;letter-spacing:.3px}label.c{color:var(--bad)}label.f{color:var(--acc)}label small{font-weight:400;color:var(--dim)}
 textarea{width:100%;min-height:58px;border-radius:10px;border:1px solid var(--line);background:#12141c;color:var(--ink);font:inherit;font-size:16px;padding:9px;resize:vertical}
 footer{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(18,20,28,.97);border-top:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;align-items:center}
@@ -113,12 +123,13 @@ footer .cnt{flex:1;font-size:12px;color:var(--dim);min-width:0}footer .cnt b{dis
 #out{position:fixed;inset:0;z-index:40;background:rgba(10,12,18,.97);display:none;flex-direction:column;padding:16px}#out.on{display:flex}#out textarea{flex:1;margin:10px 0}#out button{border:0;border-radius:12px;background:var(--acc);color:#1d1204;font:inherit;font-weight:800;padding:13px}
 .hide{display:none}
 </style></head><body>
-<header><h1>Game Review</h1><div class="sub">Tap PLAY, rate it, write what is wrong. It saves by itself.</div>
-<div class="bar"><button class="chip" data-f="all">All <i id="n-all"></i></button><button class="chip c-check" data-f="check">✔ Fixed <i id="n-check"></i></button><button class="chip c-wait" data-f="wait">✎ To fix <i id="n-wait"></i></button><button class="chip c-new" data-f="new">○ Not reviewed <i id="n-new"></i></button><button class="chip c-fine" data-f="fine">👍 Fine <i id="n-fine"></i></button></div><div class="what" id="what"></div></header>
+<header><h1>Game Review</h1><div class="sub">Tap PLAY. Then press GAME IS OKAY or NEEDS FIXING, and write what is wrong. It saves by itself.</div>
+<div class="bar"><button class="chip" data-f="all">All <i id="n-all"></i></button><button class="chip c-check" data-f="check">✔ Fixed <i id="n-check"></i></button><button class="chip c-wait" data-f="wait">✎ To fix <i id="n-wait"></i></button><button class="chip c-new" data-f="new">○ Not reviewed <i id="n-new"></i></button><button class="chip c-fine" data-f="fine">👍 Okay <i id="n-fine"></i></button></div><div class="what" id="what"></div></header>
 <main id="list"></main>
 <footer><div class="cnt"><b id="svAll">Checking…</b><span id="cnt"></span></div><button id="save">SAVE</button><button id="submit">SUBMIT REVIEW</button></footer>
 <div id="player"><div id="pbar"><button id="pback">‹ Games</button><div class="pn" id="pname"></div><button id="pnotes">✎ Notes</button></div><iframe id="frame" title="game" allow="autoplay; fullscreen"></iframe></div>
 <div id="sheet"></div>
+<div id="toast"><span id="toastMsg"></span><button id="undo">UNDO</button></div>
 <div id="out"><b>Your review</b><div id="outMsg"></div><div class="sub">Everything you have written so far is below. You can submit again whenever you have done more.</div><textarea id="outText" readonly></textarea><div class="row"><button id="copy">COPY</button><button id="outClose">Done</button></div></div>
 <script>
 const GAMES = __DATA__, LATEST = '__LATEST__';
@@ -128,32 +139,44 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 let filter = get('filter') || 'all', cur = null;
 // which of the four lists a game is in (see the top of tools/review_page.py)
 function stateOf(g) { const r = get(g.id + '.r'), noted = (get(g.id + '.c') + get(g.id + '.f')).trim(); return noted || r === 'bad' ? 'wait' : r ? 'fine' : g.check ? 'check' : 'new'; }
-const STATE = { check: '✔ FIXED: PLAY IT, THEN RATE IT', wait: '✎ YOUR NOTE IS SAVED: NOT FIXED YET', fine: '👍 YOU SAID IT IS FINE', new: '○ NOT REVIEWED YET' };
-const WHAT = { all: 'ALL: every game.', check: 'FIXED: only the games I fixed from what you wrote, newest first. Play one and rate it, and it leaves this list.', wait: 'TO FIX: games where you wrote something (or pressed Bad) that I have not fixed yet.', new: 'NOT REVIEWED: games you have not rated or written about yet.', fine: 'FINE: games you rated Good or Okay with nothing written. Nothing to do here.' };
+const STATE = { check: '✔ FIXED: PLAY IT, THEN PRESS OKAY OR NEEDS FIXING', wait: '✎ YOUR NOTE IS SAVED: NOT FIXED YET', fine: '👍 OKAY: NO MORE FIXING', new: '○ NOT REVIEWED YET' }, LIST = { check: 'FIXED', wait: 'TO FIX', fine: 'OKAY', new: 'NOT REVIEWED' };
+const noted = id => (get(id + '.c') + get(id + '.f')).trim(), isOn = (k, r) => k === r || (k === 'good' && r === 'ok');      // an Okay from an older review counts as okay
+const stLabel = (g, st) => st === 'wait' && !noted(g.id) ? '✎ NEEDS FIXING: NOT FIXED YET' : STATE[st];
+const WHAT = { all: 'ALL: every game.', check: 'FIXED: only the games I fixed from what you wrote, newest first. Play one, then press GAME IS OKAY or NEEDS FIXING, and it goes to that list.', wait: 'TO FIX: games where you pressed NEEDS FIXING or wrote something that I have not fixed yet.', new: 'NOT REVIEWED: games you have not judged yet. Press GAME IS OKAY or NEEDS FIXING and it goes to that list.', fine: 'OKAY: games you said are okay. No more fixing. (Press NEEDS FIXING on one to send it back.)' };
 const ORD = ['', 'FIRST', 'SECOND', 'THIRD', 'FOURTH', 'FIFTH'];
 function doneHtml(g) { if (!g.done || !g.done.length) return ''; let n = 0; const box = d => { const mine = d.kind === 'yours'; if (mine) n++; return `<div class="done"><div class="h">✔ ${mine ? `YOUR ${ORD[n] || n + 'TH'} REVIEW: ${d.answer ? 'CHECKED' : 'FIXED'}` : d.general ? 'DONE TO EVERY GAME' : 'FIXED HERE TOO'} <small>(${esc(d.when)})</small></div><div class="said">You said: “${esc(d.said.trim())}”</div><div class="did"><b>What I did:</b> ${esc(d.did)}</div></div>`; };
   const now = [], old = []; for (const d of g.done) (d.kind === 'yours' || d.round === LATEST ? now : old).push(box(d)); const mine = g.done.some(d => d.kind === 'yours' && !d.answer);
   return now.join('') + (old.length ? `<details class="old"><summary>Earlier changes to this game (${old.length})</summary>${old.join('')}</details>` : '') + (mine ? `<div class="again">Your old note is cleared from the boxes below. Play it again and write your next review there if anything is still wrong.</div>` : ''); }
-function notesHtml(g) { const r = get(g.id + '.r'); return `<div class="rate" data-id="${g.id}">${[['good', '👍 Good'], ['ok', '😐 Okay'], ['bad', '👎 Bad']].map(([k, t]) => `<button data-r="${k}" class="${r === k ? 'on' : ''}">${t}</button>`).join('')}</div>
+function notesHtml(g) { const r = get(g.id + '.r'); return `<div class="rate" data-id="${g.id}">${[['good', '👍 GAME IS OKAY', 'no more fixing'], ['bad', '✎ NEEDS FIXING', 'send it to be fixed']].map(([k, t, sm]) => `<button data-r="${k}" class="${isOn(k, r) ? 'on' : ''}">${t}<small>${sm}</small></button>`).join('')}</div>
 <label class="c">CRITICAL FLAWS <small>(makes it almost unplayable)</small></label><textarea data-k="${g.id}.c" placeholder="e.g. I can't tell what to do">${esc(get(g.id + '.c'))}</textarea>
 <label class="f">FLAWS <small>(fixing this would make it much better)</small></label><textarea data-k="${g.id}.f" placeholder="e.g. the character is too small">${esc(get(g.id + '.f'))}</textarea><div class="sv" data-sv="${g.id}"></div>`; }
 function show(g) { return filter === 'all' || stateOf(g) === filter; }
 function render() { const L = document.getElementById('list'), list = GAMES.filter(show); if (filter === 'check') list.sort((a, b) => (b.day || '').localeCompare(a.day || '') || a.n - b.n);
   document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.f === filter)); document.getElementById('what').textContent = WHAT[filter] || '';
-  L.innerHTML = list.map(g => { const st = stateOf(g); return `<section class="g s-${st}" id="g-${g.id}"><span class="st ${st}" data-st="${g.id}">${STATE[st]}</span><div class="top" style="margin-top:10px"><div class="num">#${g.n}</div><div class="nm">${esc(g.name)}<div class="gen">${esc(g.genre)} · ${g.thumbs === 2 ? 'two thumbs' : 'one thumb'}</div></div><button class="play" data-play="${g.id}">PLAY</button></div>
+  L.innerHTML = list.map(g => { const st = stateOf(g); return `<section class="g s-${st}" id="g-${g.id}"><span class="st ${st}" data-st="${g.id}">${stLabel(g, st)}</span><div class="top" style="margin-top:10px"><div class="num">#${g.n}</div><div class="nm">${esc(g.name)}<div class="gen">${esc(g.genre)} · ${g.thumbs === 2 ? 'two thumbs' : 'one thumb'}</div></div><button class="play" data-play="${g.id}">PLAY</button></div>
 ${doneHtml(g)}${g.fixed ? `<p class="w"><b>What I changed:</b> ${esc(g.fixed)}</p>` : ''}${g.todo ? `<p class="w"><b>Still open, or yours to judge:</b> ${esc(g.todo)}</p>` : ''}${notesHtml(g)}</section>`; }).join('') || '<p class="sub">Nothing here.</p>'; count(); }
-function count() { let r = 0, n = 0; const by = { all: GAMES.length, check: 0, wait: 0, fine: 0, new: 0 }; for (const g of GAMES) { if (get(g.id + '.r')) r++; if (get(g.id + '.c') || get(g.id + '.f')) n++; const st = stateOf(g); by[st]++; const el = document.querySelector(`[data-st="${g.id}"]`); if (el) { el.textContent = STATE[st]; el.className = 'st ' + st; } }
+function count() { let r = 0, n = 0; const by = { all: GAMES.length, check: 0, wait: 0, fine: 0, new: 0 }; for (const g of GAMES) { if (get(g.id + '.r')) r++; if (get(g.id + '.c') || get(g.id + '.f')) n++; const st = stateOf(g); by[st]++; const el = document.querySelector(`[data-st="${g.id}"]`); if (el) { el.textContent = stLabel(g, st); el.className = 'st ' + st; } }
   for (const k in by) { const el = document.getElementById('n-' + k); if (el) el.textContent = by[k]; } document.getElementById('cnt').textContent = `${r} of ${GAMES.length} rated · ${n} with notes`; return [r, n]; }
 document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.k; if (k) { set(k, e.target.value); count(); touch(k.slice(0, k.lastIndexOf('.'))); } });
 document.addEventListener('click', e => { const t = e.target;
   const chip = t.closest && t.closest('.chip'); if (chip) { filter = chip.dataset.f; set('filter', filter); render(); scrollTo(0, 0); return; }
-  if (t.dataset.r) { const id = t.parentNode.dataset.id, was = get(id + '.r'); set(id + '.r', was === t.dataset.r ? '' : t.dataset.r); t.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t && was !== t.dataset.r)); count(); touch(id); return; }
+  const rb = t.closest && t.closest('.rate button[data-r]');
+  if (rb) { const id = rb.parentNode.dataset.id, was = get(id + '.r'), want = rb.dataset.r, g = GAMES.find(q => q.id === id), before = stateOf(g);
+    if (want === 'good' && !isOn('good', was) && noted(id)) { toast('You wrote a note on this game. Delete the note first if the game is okay now.'); return; }      // never hide a note he wrote
+    setRating(id, isOn(want, was) ? '' : want); const after = stateOf(g);
+    if (after !== before) { toast(`#${g.n} ${g.name}: moved to ${LIST[after]}`, () => { setRating(id, was); render(); });
+      if (filter !== 'all' && after !== filter && !document.getElementById('player').classList.contains('on')) { const el = document.getElementById('g-' + id); if (el) el.classList.add('gone'); setTimeout(render, 420); } }      // it leaves the list he is looking at
+    return; }
   if (t.dataset.play) { play(t.dataset.play); return; } });
+function setRating(id, v) { set(id + '.r', v); document.querySelectorAll(`.rate[data-id="${id}"]`).forEach(r => r.querySelectorAll('button').forEach(b => b.classList.toggle('on', isOn(b.dataset.r, v)))); count(); touch(id); }
+let toastT = 0, undoFn = null;
+function toast(msg, undo) { const el = document.getElementById('toast'); document.getElementById('toastMsg').textContent = msg; undoFn = undo || null; document.getElementById('undo').style.display = undo ? '' : 'none'; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), undo ? 6000 : 4000); }
+document.getElementById('undo').onclick = () => { const f = undoFn; undoFn = null; document.getElementById('toast').classList.remove('on'); if (f) f(); };
 function play(id) { cur = GAMES.find(g => g.id === id); document.getElementById('pname').textContent = `#${cur.n} ${cur.name}`; document.getElementById('frame').src = 'games/' + id + '/index.html'; document.getElementById('player').classList.add('on'); }
 function closeSheet() { const s = document.getElementById('sheet'); s.classList.remove('on'); s.innerHTML = ''; }
 document.getElementById('pback').onclick = () => { closeSheet(); document.getElementById('player').classList.remove('on'); document.getElementById('frame').src = 'about:blank'; render(); if (cur) { const el = document.getElementById('g-' + cur.id); if (el) el.scrollIntoView({ block: 'center' }); } };
 document.getElementById('pnotes').onclick = () => { const s = document.getElementById('sheet'); if (s.classList.contains('on')) { closeSheet(); return; } s.innerHTML = `<b>#${cur.n} ${esc(cur.name)}</b>` + doneHtml(cur) + notesHtml(cur) + '<div style="height:10px"></div><button class="play" id="sdone" style="width:100%">Back to the game</button>'; s.classList.add('on'); document.getElementById('sdone').onclick = closeSheet; status(); };
-function allNotes() { const L = ['GAME REVIEW NOTES']; for (const g of GAMES) { const r = get(g.id + '.r'), c = get(g.id + '.c').trim(), f = get(g.id + '.f').trim(); if (!r && !c && !f) continue; L.push('', `#${g.n} ${g.name}${r ? ' [' + r.toUpperCase() + ']' : ''}`); if (c) L.push('CRITICAL: ' + c); if (f) L.push('FLAWS: ' + f); } if (L.length === 1) L.push('', '(no notes yet)'); return L.join('\n'); }
+function allNotes() { const L = ['GAME REVIEW NOTES']; for (const g of GAMES) { const r = get(g.id + '.r'), c = get(g.id + '.c').trim(), f = get(g.id + '.f').trim(); if (!r && !c && !f) continue; L.push('', `#${g.n} ${g.name}${r ? ' [' + (r === 'bad' ? 'NEEDS FIXING' : 'OKAY') + ']' : ''}`); if (c) L.push('CRITICAL: ' + c); if (f) L.push('FLAWS: ' + f); } if (L.length === 1) L.push('', '(no notes yet)'); return L.join('\n'); }
 document.getElementById('copy').onclick = () => { const txt = document.getElementById('outText').value, b = document.getElementById('copy');
   try { navigator.clipboard.writeText(txt).then(() => { b.textContent = 'COPIED ✓'; setTimeout(() => b.textContent = 'COPY', 2500); }, () => { document.getElementById('outText').select(); }); } catch (e) { document.getElementById('outText').select(); } };
 // ---------- SAVING (23 Nov 2026, his words: "I don't want to come back to it tomorrow and not see it there") ----------
@@ -174,7 +197,7 @@ function status() { const all = document.getElementById('svAll'); let txt, cls;
   else if (dirty.size) { txt = busy.size ? 'Saving…' : `${dirty.size} not saved yet: tap SAVE`; cls = busy.size ? '' : 'no'; } else { txt = 'All saved ✓'; cls = 'ok'; }
   all.textContent = txt; all.className = cls;
   document.querySelectorAll('[data-sv]').forEach(el => { const id = el.dataset.sv; if (dirty.has(id)) { const w = busy.has(id) || dbState === 'wait'; el.textContent = w ? 'Saving…' : dbState === 'off' ? 'Kept on this phone only' : 'Not saved yet: tap SAVE'; el.className = 'sv' + (w ? '' : ' no'); } else if (has(id) && dbState === 'on') { el.textContent = 'Saved ✓'; el.className = 'sv ok'; } else { el.textContent = ''; el.className = 'sv'; } }); }
-function refreshFields() { const act = document.activeElement; document.querySelectorAll('textarea[data-k]').forEach(t => { if (t !== act) t.value = get(t.dataset.k); }); document.querySelectorAll('.rate').forEach(r => { const v = get(r.dataset.id + '.r'); r.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.r === v)); }); count(); }
+function refreshFields() { const act = document.activeElement; document.querySelectorAll('textarea[data-k]').forEach(t => { if (t !== act) t.value = get(t.dataset.k); }); document.querySelectorAll('.rate').forEach(r => { const v = get(r.dataset.id + '.r'); r.querySelectorAll('button').forEach(b => b.classList.toggle('on', isOn(b.dataset.r, v))); }); count(); }
 async function connect() { const t0 = Date.now(); while (!(window.claude && window.claude.use) && Date.now() - t0 < 10000) await new Promise(r => setTimeout(r, 200));
   try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
   if (!db) { dbState = 'off'; status(); return; }
