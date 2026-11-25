@@ -21,6 +21,25 @@ const BODY = {
   sheep: { L: 0.95, leg: 0.4, ry: 0.3, rz: 0.27, neck: [0.18, 0.5, 0.09], head: 0.11, muzzle: [0.08, 0.07, 0.06], ears: 'side', tail: [0.14, 0.05, 1.2], coat: 0xe9e1cf, belly: 0xe9e1cf, wool: true, face: 0x2a2522, legC: 0x2a2522, foot: 'hoof' },
   horse: { L: 1.55, leg: 0.95, ry: 0.32, rz: 0.25, neck: [0.62, 0.95, 0.15], head: 0.24, muzzle: [0.2, 0.1, 0.09], ears: 'up', tail: [0.75, 0.06, 0.55], coat: 0x7b3f1d, belly: 0x7b3f1d, mane: 0x2a1a10, foot: 'hoof', blaze: true },
   pig: { L: 1.05, leg: 0.28, ry: 0.3, rz: 0.27, neck: [0.1, 0.1, 0.2], head: 0.17, muzzle: [0.1, 0.08, 0.08], ears: 'flop', tail: [0.12, 0.02, -0.4], coat: 0xeaa99a, belly: 0xf0b7a8, foot: 'hoof', snout: true },
+  // the sixteen that came on 25 Nov 2026: each is built as one of the six (base), with its own measures and coat
+  sheepdog: { base: 'dog', L: 0.8, leg: 0.36, ry: 0.16, rz: 0.13, neck: [0.22, 0.62, 0.075], head: 0.11, muzzle: [0.115, 0.05, 0.05], ears: 'side', tail: [0.4, 0.04, -0.3], coat: 0x1c1c1e, belly: 0xf4f1ea, legC: 0xf4f1ea, foot: 'paw' },
+  terrier: { base: 'dog', L: 0.5, leg: 0.22, ry: 0.115, rz: 0.095, neck: [0.14, 0.7, 0.055], head: 0.085, muzzle: [0.075, 0.04, 0.04], ears: 'up', tail: [0.16, 0.022, -1.2], coat: 0xf1ece0, belly: 0xf1ece0, legC: null, foot: 'paw' },
+  cat: { base: 'dog', L: 0.48, leg: 0.2, ry: 0.1, rz: 0.085, neck: [0.1, 0.55, 0.05], head: 0.085, muzzle: [0.035, 0.035, 0.04], ears: 'up', tail: [0.42, 0.02, -1.1], coat: 0xd9862f, belly: 0xf3e2c8, legC: null, foot: 'paw' },
+  calf: { base: 'cow', L: 1.0, leg: 0.56, ry: 0.24, rz: 0.2, neck: [0.3, 0.32, 0.11], head: 0.15, muzzle: [0.11, 0.085, 0.085], ears: 'side', tail: [0.5, 0.025, 1.35], coat: 0x8a5a36, belly: 0x8a5a36, patches: 0xf2efe8, foot: 'hoof', nose: 0xe6a2a0 },
+  bull: { base: 'cow', L: 1.75, leg: 0.74, ry: 0.42, rz: 0.36, neck: [0.44, 0.2, 0.21], head: 0.23, muzzle: [0.18, 0.13, 0.13], ears: 'side', tail: [0.8, 0.04, 1.35], coat: 0x2a2320, belly: 0x2a2320, foot: 'hoof', nose: 0x8a6a66, horns: true },
+  highland: { base: 'cow', L: 1.45, leg: 0.6, ry: 0.36, rz: 0.31, neck: [0.38, 0.25, 0.18], head: 0.2, muzzle: [0.15, 0.115, 0.115], ears: 'side', tail: [0.7, 0.045, 1.35], coat: 0xb5692c, belly: 0xb5692c, foot: 'hoof', nose: 0xc9958c, horns: true, wool: true, face: 0xb5692c, legC: 0x9a5524 },
+  lamb: { base: 'sheep', L: 0.58, leg: 0.3, ry: 0.19, rz: 0.17, neck: [0.13, 0.6, 0.06], head: 0.085, muzzle: [0.06, 0.05, 0.045], ears: 'side', tail: [0.16, 0.035, 1.0], coat: 0xf6f1e4, belly: 0xf6f1e4, wool: true, face: 0xf1e9da, legC: 0xf1e9da, foot: 'hoof' },
+  ram: { base: 'sheep', L: 1.05, leg: 0.42, ry: 0.33, rz: 0.3, neck: [0.2, 0.5, 0.11], head: 0.125, muzzle: [0.09, 0.075, 0.065], ears: 'side', tail: [0.14, 0.05, 1.2], coat: 0xd9cfb8, belly: 0xd9cfb8, wool: true, face: 0xe6dccb, legC: 0xcfc4ae, foot: 'hoof', horns: true },
+  blacksheep: { base: 'sheep', L: 0.95, leg: 0.4, ry: 0.3, rz: 0.27, neck: [0.18, 0.5, 0.09], head: 0.11, muzzle: [0.08, 0.07, 0.06], ears: 'side', tail: [0.14, 0.05, 1.2], coat: 0x3a3430, belly: 0x3a3430, wool: true, face: 0x16130f, legC: 0x16130f, foot: 'hoof' },
+  alpaca: { base: 'sheep', L: 0.95, leg: 0.62, ry: 0.27, rz: 0.23, neck: [0.62, 1.3, 0.1], head: 0.115, muzzle: [0.09, 0.062, 0.058], ears: 'up', tail: [0.12, 0.05, 0.9], coat: 0xc9a57a, belly: 0xc9a57a, wool: true, face: 0xd8b98f, legC: 0xb8946a, foot: 'hoof' },
+  pony: { base: 'horse', L: 1.15, leg: 0.62, ry: 0.29, rz: 0.23, neck: [0.44, 0.9, 0.13], head: 0.19, muzzle: [0.15, 0.085, 0.075], ears: 'up', tail: [0.6, 0.06, 0.55], coat: 0xd8c08a, belly: 0xd8c08a, mane: 0xf3ead0, foot: 'hoof' },
+  donkey: { base: 'horse', L: 1.25, leg: 0.68, ry: 0.3, rz: 0.24, neck: [0.44, 0.85, 0.135], head: 0.22, muzzle: [0.17, 0.1, 0.09], ears: 'up', tail: [0.55, 0.03, 0.75], coat: 0x8d8a85, belly: 0xcfcac2, mane: 0x3a3632, foot: 'hoof' },
+  foal: { base: 'horse', L: 0.95, leg: 0.72, ry: 0.2, rz: 0.16, neck: [0.4, 1.0, 0.09], head: 0.15, muzzle: [0.12, 0.065, 0.06], ears: 'up', tail: [0.34, 0.04, 0.6], coat: 0x9a5a2e, belly: 0x9a5a2e, mane: 0x2a1a10, foot: 'hoof', blaze: true },
+  carthorse: { base: 'horse', L: 1.75, leg: 1.02, ry: 0.38, rz: 0.31, neck: [0.66, 0.9, 0.19], head: 0.27, muzzle: [0.22, 0.115, 0.105], ears: 'up', tail: [0.85, 0.07, 0.5], coat: 0x3d3029, belly: 0x3d3029, mane: 0x141010, foot: 'hoof', blaze: true },
+  piglet: { base: 'pig', L: 0.6, leg: 0.17, ry: 0.17, rz: 0.155, neck: [0.06, 0.1, 0.11], head: 0.105, muzzle: [0.06, 0.05, 0.05], ears: 'flop', tail: [0.08, 0.014, -0.4], coat: 0xf2b8ac, belly: 0xf6c6bb, foot: 'hoof', snout: true },
+  spottedpig: { base: 'pig', L: 1.1, leg: 0.3, ry: 0.32, rz: 0.29, neck: [0.1, 0.1, 0.21], head: 0.18, muzzle: [0.105, 0.085, 0.085], ears: 'flop', tail: [0.12, 0.02, -0.4], coat: 0xe9b8a4, belly: 0xf0c4b4, patches: 0x2a2422, foot: 'hoof', snout: true },
+  kid: { base: 'goat', L: 0.55, leg: 0.34, ry: 0.13, rz: 0.11, neck: [0.2, 0.95, 0.05], head: 0.085, muzzle: [0.065, 0.04, 0.04], ears: 'side', tail: [0.1, 0.022, -1.0], coat: 0x8a6a4a, belly: 0xe8e0d2, foot: 'hoof' },
+  billy: { base: 'goat', L: 1.0, leg: 0.54, ry: 0.24, rz: 0.2, neck: [0.34, 0.9, 0.095], head: 0.135, muzzle: [0.11, 0.065, 0.06], ears: 'side', tail: [0.14, 0.03, -1.0], coat: 0x4a3a30, belly: 0x4a3a30, foot: 'hoof', horns: true, beard: true },
   goat: { L: 0.9, leg: 0.5, ry: 0.21, rz: 0.17, neck: [0.32, 0.9, 0.08], head: 0.12, muzzle: [0.1, 0.06, 0.055], ears: 'side', tail: [0.14, 0.03, -1.0], coat: 0xe8e0d2, belly: 0xe8e0d2, patches: 0x6b4428, foot: 'hoof', horns: true, beard: true },
 };
 function coatTex(base, spot, seed) {
@@ -32,7 +51,7 @@ function coatTex(base, spot, seed) {
   const tx = new T.CanvasTexture(cvs); tx.colorSpace = T.SRGBColorSpace; tx.wrapS = tx.wrapT = T.RepeatWrapping; return tx;
 }
 function buildAnimal(kind) {
-  const T = THREE, B = BODY[kind], g = new T.Group(), R = W3.rng(kind.length * 31);
+  const T = THREE, B = BODY[kind], g = new T.Group(), R = W3.rng(kind.length * 31); kind = B.base || kind;      /* the parts special to a kind (a horse's muzzle, a cow's udder, a sheep's legs) go by the animal it is built as */
   const fur = new T.MeshStandardMaterial({ color: 0xffffff, map: coatTex(B.coat, B.patches, kind.length * 7), roughness: 0.85 });
   const plain = c => new T.MeshStandardMaterial({ color: c, roughness: 0.8 });
   const legM = B.legC ? plain(B.legC) : fur, faceM = B.face ? plain(B.face) : fur, dark = new T.MeshStandardMaterial({ color: 0x141110, roughness: 0.35 });
@@ -236,7 +255,7 @@ function poseAnimal(G, p, A, t, dt) {
   // head: low when unwell, tossing when frightened, a shake for a sore ear; ears back when nervous
   const ill = p.probs.some(q => !q.done && q.kind === 'shot'), shake = p.shaking > 0 ? Math.sin(t * 38) * 0.5 * Math.min(1, p.shaking / 0.3) : 0;
   u.head.rotation.x = shake; u.head.rotation.y = Math.sin(t * 0.6) * 0.1 + (s > 0.55 ? Math.sin(t * 5) * (s - 0.55) * 0.5 : 0);
-  const baseZ = p.animal === 'horse' ? -0.9 : 0; u.head.rotation.z = baseZ + (ill ? -0.35 : 0) + Math.sin(t * 0.9) * 0.04 - (p.phase === 'out' && !p.bolted ? 0 : 0);
+  const baseZ = (BODY[p.animal].base || p.animal) === 'horse' ? -0.9 : 0; u.head.rotation.z = baseZ + (ill ? -0.35 : 0) + Math.sin(t * 0.9) * 0.04 - (p.phase === 'out' && !p.bolted ? 0 : 0);
   u.ears.forEach(e => { const back = clamp((s - 0.3) * 1.8, 0, 1); e.rotation.x = e.userData.base + e.userData.s * (back * 0.8 + Math.max(0, Math.sin(t * 2.3 + e.userData.s)) * 0.12 + (ill ? 0.3 : 0)); e.rotation.z = -back * 0.6; e.userData.inner.material.color.setHex(p.probs.some(q => !q.done && q.kind === 'ear') ? 0xd8302a : 0xd88f86); });
   u.tail.rotation.x = Math.sin(t * (1.5 + s * 6)) * (0.15 + s * 0.6);
   // the problems on her
@@ -276,7 +295,7 @@ function hud(G) {
   if (G.lesson) lessonPanel(G);
   // the card: her name, what the owner noticed (ticked when fixed); the calm bar under it
   const ty = G.lesson ? H * 0.235 : 40 * k;
-  if (p) { const A = ANIMALS[p.animal], w = Math.min(W - 28, 250 * k), x = 14, items = p.probs.map(q => [PROBS[q.kind].card, q.done]), h = (44 + 15 * items.length) * k;
+  if (p) { const A = ANIMALS[p.animal], w = Math.min(W - 28, 250 * k), x = 14, items = p.probs.map(q => [(SIGNS[q.kind] && SIGNS[q.kind][q.sign | 0]) || PROBS[q.kind].card, q.done]), h = (44 + 15 * items.length) * k;
     ctx.save(); ctx.translate(x, ty); ctx.rotate(-0.012); ctx.fillStyle = '#f6efdc'; rrect(0, 0, w, h, 6); ctx.fill(); ctx.fillStyle = '#5a8a4a'; ctx.fillRect(0, 0, w, 5 * k);
     ctx.fillStyle = '#2b2b2b'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.fillText(`${p.name} the ${A.name}`, 10, 10 * k);
     ctx.font = `600 ${Math.round(12.5 * k)}px ${BC}`; items.forEach(([s, d], j) => { ctx.fillStyle = d ? '#4a8a4a' : '#5a4a3a'; ctx.fillText(`${d ? '✓' : '•'} ${s}`, 12, 30 * k + j * 15 * k); });

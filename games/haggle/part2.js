@@ -14,6 +14,20 @@ const RULES = [
   'Every sale fills your <b>Price Book</b>: you learn what things are worth.',
 ];
 // the kinds of thing people bring, what a good one fetches, and three makers (cheap, middling, fine) for each
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const TYPES = [
   { id: 'watch', name: 'Wristwatch', base: 320, makers: ['Tikka', 'Marlowe', 'Kronos'], lux: true, n: 1 },
   { id: 'guitar', name: 'Electric guitar', base: 420, makers: ['Strum', 'Halcyon', 'Gibbard'], n: 1 },
@@ -51,6 +65,14 @@ const SELLERS = [
   { id: 'savvy', name: 'knows what it is worth', walk: [0.68, 0.82], ask: [1.1, 1.5], pat: 4, face: 2 },
   { id: 'shady', name: 'in a hurry, no questions', walk: [0.3, 0.5], ask: [1.0, 1.6], pat: 4, face: 3 },
 ];
+// 25 Nov 2026 (his words: "way more combinations... something novel each time"): each kind of seller had one line to say why they were selling. Ten each
+// now (the kind of seller it is has not changed: the line is how you tell). And forty-eight people at the counter, not twelve.
+const WHY = {
+  desperate: ['needs the money today', 'has rent due tomorrow', 'has a garage bill to pay', 'has a vet bill to pay', 'was laid off on Friday', 'has a wedding to pay for', 'owes a friend by tonight', 'needs the fare home', 'has a boiler to replace', 'has bailiffs due Monday'],
+  casual: ['clearing out the loft', 'is moving abroad', 'never used it', 'found it in a shed', 'has a baby on the way', 'won it in a raffle', 'is having a clear-out', 'says it gathers dust', 'inherited two of them', 'has given up the hobby'],
+  savvy: ['knows what it is worth', 'has looked it up online', 'had it valued last week', 'is a dealer on a day off', 'turned down two offers', 'has all the paperwork', 'collects these', 'follows the auctions', 'had a better offer', 'has sold three like it'],
+  shady: ['in a hurry, no questions', 'keeps eyeing the door', 'will not say where from', 'says it fell off a lorry', 'wants cash, no receipt', 'wears gloves in June', 'left the price tag on', 'gave two different names', 'left the engine running', 'is selling it for a mate'],
+};
 const PLACES = [{ name: 'Market Street' }, { name: 'The High Street' }, { name: 'Antiques Row' }, { name: 'Bond Street' }];
 const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
 const UPGRADES = [
@@ -64,7 +86,7 @@ function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (
   return { N, f, help: !!help, place: placeOf(N), people: Math.round(x(7, 9, 25)), target: 0, share: x(0.13, 0.25, 30), vs: x(1, 3.2, 30),
     fakes: N >= 3 ? x(0.12, 0.3, 30) : 0, claims: N >= 2 ? x(0.25, 0.5, 30) : 0, hot: N >= 4, types: TYPES.filter(t => t.n <= N), sell: 1 + 0.1 * upLv('window'), pat: upLv('charm') + (N <= 4 ? 1 : 0) }; }      // (two walk-outs now end the day: on the first four levels everyone has one more patience)
 // one customer and the thing they bring
-function makeVisit(G, opts = {}) { const R = G.rnd, c = G.cfg, T = opts.type ? TYPES.find(t => t.id === opts.type) : c.types[(R() * c.types.length) | 0];
+function makeVisit(G, opts = {}) { const R = G.rnd, c = G.cfg, T = opts.type ? TYPES.find(t => t.id === opts.type) : dealIf('thing', TYPES, t => c.types.includes(t), R);
   const dk = G.deck && G.deck[G.n % G.deck.length] || {}, tier = opts.tier != null ? opts.tier : dk.tier != null ? dk.tier : 1, cond = opts.cond != null ? opts.cond : dk.cond != null ? dk.cond : 1;
   const sl = SELLERS[opts.seller != null ? opts.seller : dk.seller != null ? dk.seller : (R() * SELLERS.length) | 0], fake = opts.fake != null ? opts.fake : !!(T.lux && tier === 2 && R() < c.fakes * (sl.id === 'shady' ? 2.4 : 0.7));
   const claim = opts.claim != null ? opts.claim : (R() < c.claims ? (T.sig ? 'signed' : T.ed ? 'a first edition' : 'one of a kind') : null), claimTrue = claim ? (opts.claimTrue != null ? opts.claimTrue : R() < 0.5) : false;
@@ -72,7 +94,7 @@ function makeVisit(G, opts = {}) { const R = G.rnd, c = G.cfg, T = opts.type ? T
   // what the seller believes and will take
   const believed = fake || (claim && !claimTrue) ? T.base * vs * TIER[tier] * COND[cond].m * (claim ? 1.7 : 1) : V, wl = sl.walk[0] + R() * (sl.walk[1] - sl.walk[0]);
   const walk = Math.round(believed * wl / 5) * 5, ask = Math.round(Math.max(walk * 1.3, believed * (sl.ask[0] + R() * (sl.ask[1] - sl.ask[0]))) / 5) * 5;
-  return { id: G.nid++, T, tier, maker: T.makers[tier], cond, sl, fake, claim, claimTrue, V, walk, ask, cur: ask, pat: sl.pat + c.pat, maxPat: sl.pat + c.pat, offers: 0, seen: {}, mood: 0, name: pick(R, ['Dave', 'Mrs Patel', 'Gary', 'Joyce', 'Kemi', 'Old Tom', 'Chantelle', 'Ivan', 'Bea', 'Mo', 'Lucy', 'Mr Grant']), lastOffer: 0 }; }
+  return { id: G.nid++, T, tier, maker: T.makers[tier], cond, sl, fake, claim, claimTrue, V, walk, ask, cur: ask, pat: sl.pat + c.pat, maxPat: sl.pat + c.pat, offers: 0, seen: {}, mood: 0, why: (typeof HEADLESS !== 'undefined' && HEADLESS) ? sl.name : WHY[sl.id][deal('why.' + sl.id, WHY[sl.id].length, R)],      /* (the robots' games take no dice for it: they stay as they were measured) */ name: dealOf('who', ['Dave', 'Mrs Patel', 'Gary', 'Joyce', 'Kemi', 'Old Tom', 'Chantelle', 'Ivan', 'Bea', 'Mo', 'Lucy', 'Mr Grant', 'Abdul', 'Mrs Okoro', 'Shaz', 'Big Phil', 'Nana Rose', 'Tariq', 'Miss Chen', 'Dotun', 'Wendy', 'Uncle Sola', 'Fliss', 'Mr Novak', 'Jaz', 'Mrs Bimpe', 'Rhys', 'Doreen', 'Segun', 'Mrs Rao', 'Callum', 'Mrs Ferry', 'Tobi', 'Marge', 'Kwesi', 'Lady Ann', 'Stan', 'Yetunde', 'Mr Singh', 'Pat', 'Emeka', 'Nan Pearl', 'Vince', 'Miss Mary', 'Lekan', 'Mrs Bailey', 'Dr Hart', 'Young Ade'], R), lastOffer: 0 }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, nid: 1, bought: [], passed: 0, walked: 0, visit: null, n: 0, wait: 0, hot: null };
   if (cfg.hot) { const h = cfg.types[(G.rnd() * cfg.types.length) | 0]; G.hot = h.id; }

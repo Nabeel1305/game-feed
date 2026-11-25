@@ -17,6 +17,20 @@ const RULES = [
 const WEATHERS = ['golden', 'rain', 'morning', 'night', 'overcast', 'sunset', 'storm', 'noon', 'dusk', 'mist'];
 function weatherOf(N) { if (N <= 2) return ['morning', 'golden'][N - 1]; const R = rng(N * 2203 + 9); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
 // the food: where it goes and how fast it cooks (seconds for one side to be golden)
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const FOOD = {
   patty: { name: 'Patty', to: 'pan', cook: 6, sides: 2 }, steak: { name: 'Steak', to: 'pan', cook: 7, sides: 2 }, salmon: { name: 'Salmon', to: 'pan', cook: 6.5, sides: 2 },
   egg: { name: 'Egg', to: 'pan', cook: 5, sides: 1 }, pancake: { name: 'Pancake', to: 'pan', cook: 4.5, sides: 2 },
@@ -84,7 +98,7 @@ function newGame(N, o = {}) {
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
   return G;
 }
-function newTicket(G) { const c = G.cfg, R = G.rnd, L = lessonNow(G), pool = DISHES.filter(d => d.from <= Math.max(G.N, 1)), wts = pool.map(q => 1 + Math.max(0, q.items.length - 1) * Math.min(1.5, G.N / 15) + (q.from > G.N - 4 ? 1 : 0)), tw = wts.reduce((a2, b2) => a2 + b2, 0); let r2 = R() * tw, pick = pool[0]; for (let i = 0; i < pool.length; i++) { r2 -= wts[i]; if (r2 <= 0) { pick = pool[i]; break; } }      /* bigger dishes, and the newest, come more often later */
+function newTicket(G) { const c = G.cfg, R = G.rnd, L = lessonNow(G), pool = DISHES.filter(d => d.from <= Math.max(G.N, 1)), wts = pool.map(q => 1 + Math.max(0, q.items.length - 1) * Math.min(1.5, G.N / 15) + (q.from > G.N - 4 ? 1 : 0)), tw = wts.reduce((a2, b2) => a2 + b2, 0); let r2 = R() * tw, pick = pool[0]; for (let i = 0; i < pool.length; i++) { r2 -= wts[i]; if (r2 <= 0) { pick = pool[i]; break; } } if (!L && !(typeof HEADLESS !== 'undefined' && HEADLESS) && pool.length > 6 && R() < 0.7) pick = dealIf('dish', DISHES, q => pool.includes(q), R);      /* 25 Nov: most orders come from the deck, so of 34 dishes none comes round again until the others he can cook have; the rest still lean to the newest and the biggest */      /* bigger dishes, and the newest, come more often later */
   const d = L && L.dish ? DISHES.find(q => q.id === L.dish) : pick;
   G.tickets.push({ dish: d, wait: 0, max: c.patience * (L ? 3 : 1), id: ++G.made }); G.ev.push({ k: 'ticket', name: d.name }); }
 // ---------- the moves ----------

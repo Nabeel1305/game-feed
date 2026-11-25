@@ -145,7 +145,7 @@ window.__sim = {
   frame() { draw(performance.now() / 1000, 1 / 60); },
   press(w) { press(G, w); }, move(w) { move(G, w); }, lift() { lift(G); }, sem(x, y) { return sem(x, y, G); }, coverage() { return coverage(G); }, topSpots(n) { return topSpots(G, n); }, showAqua, mySkin, SKINS, store, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

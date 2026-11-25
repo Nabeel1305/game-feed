@@ -1,6 +1,6 @@
 
 // ===================== DRAW (2 of 2): the phone, the street, the job card, the hands-on fixes, the top bar =====================
-const ICON = { drip: '💧', trap: '🪣', sinkclog: '🚰', wcclog: '🚽', wcrun: '🚽', burst: '💦', nowater: '🚱', lowpress: '🚿', nohot: '🥶', radcold: '🌡️', boiler: '🔥', bang: '💥', wmflood: '🌊', smell: '🤢', sewer: '🕳️', showerslow: '🛁', otap: '🌿', cartridge: '🚿', aerator: '🚰', wmdrain: '🧺', otapfrozen: '🧊' };
+const ICON = { drip: '💧', trap: '🪣', sinkclog: '🚰', wcclog: '🚽', wcrun: '🚽', burst: '💦', nowater: '🚱', lowpress: '🚿', nohot: '🥶', radcold: '🌡️', boiler: '🔥', bang: '💥', wmflood: '🌊', smell: '🤢', sewer: '🕳️', showerslow: '🛁', otap: '🌿', cartridge: '🚿', aerator: '🚰', wmdrain: '🧺', otapfrozen: '🧊', basinslow: '🚰', wcdeep: '🚽', toohot: '♨️', wmleak: '🧺', meterleak: '💧', radhot: '🌡️', ventcap: '🏠', gurgle: '🫧', allslow: '🕳️', bangheat: '💥', otapdrip: '🌿', coldshower: '🥶', kitchenweak: '🚰', bigfreeze: '🧊' };
 let lastPaid = null, ringT = 0, cashShow = 0, POP = [];
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2); ringT = Math.max(0, ringT - dt);
   for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += (p.g || 520) * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);

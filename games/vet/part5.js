@@ -144,7 +144,7 @@ window.__sim = {
   frame() { draw(performance.now() / 1000, 1 / 60); },
   pickTool(t) { pickTool(G, t); }, touch(sp) { return !!touch(G, sp); }, stroke(v) { stroke(G, v); }, pull(d, dt) { pull(G, d, dt); }, rasp(a) { rasp(G, a); }, wrap(s) { wrap(G, s); }, brush(d) { brush(G, d); }, drop() { drop(G); }, lift() { lift(G); }, spotScreen, headTail, toolAt, trayRect, ui, get V3() { return V3; }, W3, newPatient(o) { newPatient(G, o); },
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

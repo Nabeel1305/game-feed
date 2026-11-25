@@ -21,8 +21,26 @@ const RANKS = [[0, 'Beginner'], [60, 'Apprentice'], [200, 'Potter'], [500, 'Mast
 const PLACES = [{ name: 'Garden studio', sky: 'morning' }, { name: 'Village workshop', sky: 'golden' }, { name: 'Riverside kiln', sky: 'noon' }, { name: 'Mountain studio', sky: 'overcast' }];
 const placeOf = N => Math.floor((N - 1) / 5) % 4;
 const DZ = 0.5, NS = 60;      // half-centimetre slices, up to 30 cm tall
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const GLAZES = [{ id: 'celadon', name: 'Celadon green', col: 0x8ab8a0 }, { id: 'cobalt', name: 'Cobalt blue', col: 0x2a4a9a }, { id: 'honey', name: 'Honey amber', col: 0xc8862a },
-  { id: 'white', name: 'Milk white', col: 0xf0ece2 }, { id: 'rust', name: 'Rust red', col: 0x9a3a22 }, { id: 'ink', name: 'Ink black', col: 0x1e1c22 }];
+  { id: 'white', name: 'Milk white', col: 0xf0ece2 }, { id: 'rust', name: 'Rust red', col: 0x9a3a22 }, { id: 'ink', name: 'Ink black', col: 0x1e1c22 },
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): ten more glazes (six are on the bench for any one pot), sixteen more
+  // shapes and thirty-two more customers; from level 5 the shape is dealt from the deck, so no shape comes twice until the others have
+  { id: 'teal', name: 'Sea teal', col: 0x2a8a88 }, { id: 'oat', name: 'Oatmeal', col: 0xd8c8a0 }, { id: 'plum', name: 'Plum', col: 0x5a2a4a }, { id: 'sky', name: 'Sky blue', col: 0x8ab8e0 }, { id: 'moss', name: 'Moss green', col: 0x5a6a2a },
+  { id: 'shell', name: 'Shell pink', col: 0xe8b8b0 }, { id: 'mustard', name: 'Mustard', col: 0xd0a020 }, { id: 'slate', name: 'Slate grey', col: 0x5a6470 }, { id: 'copper', name: 'Copper', col: 0xb8623a }, { id: 'lilac', name: 'Lilac', col: 0xb8a0d8 }];
 // the orders: each a profile function of u (0 at the foot, 1 at the rim) giving the outside radius, and a height
 const SHAPES = [
   { id: 'bowl', name: 'a bowl', h: 8, f: u => 4 + 6 * Math.sin(u * Math.PI / 2) },
@@ -33,10 +51,26 @@ const SHAPES = [
   { id: 'plate', name: 'a wide dish', h: 5, f: u => 4.5 + 6 * Math.pow(u, 0.6) },
   { id: 'tall', name: 'a tall vase', h: 26, f: u => 3.4 + 1.6 * Math.sin(u * Math.PI * 1.6) * (1 - u * 0.4) + 0.8 * u },
   { id: 'moon', name: 'a moon jar', h: 20, f: u => 3 + 6 * Math.sin(Math.min(1, u * 1.05) * Math.PI) * 0.95 + (u > 0.9 ? 1.6 * (u - 0.9) * 10 : 0) },
+  { id: 'mug', name: 'a mug', h: 11, f: u => 4.2 + 0.3 * Math.sin(u * Math.PI) },
+  { id: 'teabowl', name: 'a tea bowl', h: 7, f: u => 3 + 3.2 * Math.pow(u, 0.5) },
+  { id: 'pitcher', name: 'a pitcher', h: 20, f: u => 3.6 + 2.4 * Math.sin(u * Math.PI * 0.8) + (u > 0.85 ? 1.4 * (u - 0.85) * 6.6 : 0) },
+  { id: 'planter', name: 'a plant pot', h: 12, f: u => 3.4 + 2.8 * u + 0.8 * Math.max(0, u - 0.85) * 6.6 },
+  { id: 'ginger', name: 'a ginger jar', h: 17, f: u => u < 0.85 ? 3.2 + 4.4 * Math.pow(Math.sin(u / 0.85 * Math.PI), 0.8) : 3.2 },
+  { id: 'tumbler', name: 'a tumbler', h: 12, f: u => 3.2 + 1.3 * u },
+  { id: 'pasta', name: 'a pasta bowl', h: 6, f: u => 4 + 5.2 * Math.pow(u, 0.62) },
+  { id: 'urn', name: 'an urn', h: 22, f: u => 2.8 + 4.4 * Math.sin(Math.pow(u, 0.88) * Math.PI) * (1 - 0.15 * u) + (u > 0.88 ? 2.2 * (u - 0.88) * 8.3 : 0) },
+  { id: 'carafe', name: 'a carafe', h: 21, f: u => u < 0.5 ? 3.6 + 2.6 * Math.sin(u / 0.5 * Math.PI / 2) : 6.2 - 3.6 * Math.sin(Math.min(1, (u - 0.5) / 0.25) * Math.PI / 2) + (u > 0.85 ? 1.6 * (u - 0.85) * 6.6 : 0) },
+  { id: 'beaker', name: 'a beaker', h: 13, f: u => 3.4 + 0.45 * Math.sin(u * Math.PI * 2) + 0.9 * u },
+  { id: 'saucer', name: 'a saucer', h: 4, f: u => 4 + 5 * u },
+  { id: 'amphora', name: 'an amphora', h: 25, f: u => 3 + 4.2 * Math.sin(Math.pow(u, 1.25) * Math.PI) + 0.4 * u },
+  { id: 'bud', name: 'a bud vase', h: 13, f: u => u < 0.6 ? 2.6 + 2.8 * Math.sin(u / 0.6 * Math.PI) : 2.6 },
+  { id: 'pail', name: 'a pail', h: 14, f: u => 3.8 + 2.2 * u },
+  { id: 'honeypot', name: 'a honey pot', h: 11, f: u => 3.7 + 2.8 * Math.sin(u * Math.PI * 0.85) },
+  { id: 'fruit', name: 'a fruit bowl', h: 9, f: u => 3.2 + 6.4 * Math.sin(u * Math.PI / 2) * (0.85 + 0.15 * u) },
 ];
 function makeCfg(N, help, o = {}) {
   const f = curve(N), e = easyOf(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
-  return { N, f, e, help: !!help, place: placeOf(N), shape: N <= 2 ? 0 : N <= 4 ? 1 : (N * 3) % SHAPES.length, goal: x(72, 91, 16) - (help ? 6 : 0), tear: x(75, 45, 20) * (1 + 0.15 * upLv('sponge')), clay: 1.0, slumpK: x(1, 1.25, 20), lives: 3 };
+  return { N, f, e, help: !!help, place: placeOf(N), shape: N <= 2 ? 0 : N <= 4 ? 1 : (N * 5 + 1) % SHAPES.length, goal: x(72, 91, 16) - (help ? 6 : 0), tear: x(75, 45, 20) * (1 + 0.15 * upLv('sponge')), clay: 1.0, slumpK: x(1, 1.25, 20), lives: 3 };
 }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -46,8 +80,10 @@ function newGame(N, o = {}) {
   return G;
 }
 // the order: a shape (stretched a little each time) and a glaze; a straight cylinder must never pass for it
-function order(G, R) { const c = G.cfg, S = SHAPES[c.shape]; const sw = 0.85 + R() * 0.3, sh = 0.9 + R() * 0.2;
-  G.ord = { shape: S, name: S.name, h: S.h * sh, f: u => S.f(u) * sw, glaze: (R() * GLAZES.length) | 0, from: pick(R, ['Mrs Okafor', 'the café on the corner', 'a flower shop', 'Mr Lindqvist', 'the tea house', 'a young couple', 'the old inn', 'a gallery']) };
+const FROM = ['Mrs Okafor', 'the café on the corner', 'a flower shop', 'Mr Lindqvist', 'the tea house', 'a young couple', 'the old inn', 'a gallery', 'the village school', 'a bride-to-be', 'the noodle bar', 'Dr Adeyemi', 'a beekeeper', 'the harbour hotel', 'two students', 'the bakery', 'Grandpa Joe', 'a market gardener', 'the museum shop', 'Ms Tanaka', 'a new neighbour', 'the allotment club', 'a painter', 'the ferry café', 'Auntie Bisi', 'a chef', 'the bookshop', 'a wedding planner', 'the farm shop', 'Mr Haddad', 'a candle maker', 'the yoga studio', 'the old lighthouse', 'a herbalist', 'the cider press', 'Madame Duval', 'a collector', 'the garden centre', 'a film crew', 'the choir'];
+function order(G, R) { const c = G.cfg, live = !(typeof HEADLESS !== 'undefined' && HEADLESS) && !G.lesson && G.N > 4, S = live ? dealOf('shape', SHAPES, R) : SHAPES[c.shape];      /* the first four levels teach the bowl and the cup; after that the shape comes from the deck */ const sw = 0.85 + R() * 0.3, sh = 0.9 + R() * 0.2;
+  G.ord = { shape: S, name: S.name, h: S.h * sh, f: u => S.f(u) * sw, glaze: deal('glaze', GLAZES.length, R), from: dealOf('from', FROM, R) };
+  { const six = [G.ord.glaze]; while (six.length < 6) { const j = (R() * GLAZES.length) | 0; if (!six.includes(j)) six.push(j); } for (let i = 5; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = six[i]; six[i] = six[j]; six[j] = t; } G.ord.bench = six; }      /* six glazes on the bench: the one asked for and five others */
   G.target = []; for (let i = 0; i < NS; i++) { const z = i * DZ; G.target.push(z <= G.ord.h ? G.ord.f(z / G.ord.h) : 0); } }
 function fresh(G) { G.phase = 'center'; G.wob = 1; G.press = 0; G.holding = false; G.okT = 0; G.r = []; for (let i = 0; i < NS; i++) G.r.push(0);
   G.h = 6; G.t0 = 2.6; G.wall = 2.6; G.base = 1.2; for (let i = 0; i < NS; i++) G.r[i] = i * DZ <= G.h ? 6.5 - Math.pow(i * DZ / G.h, 2) * 2.5 : 0;   // a squat lump
@@ -125,7 +161,7 @@ const BLIND = {
   t: G => trim(G, Math.random() * G.h),                                                              // trim anywhere
   p: G => setPhase(G, 'pull'),                                                                        // back to pulling
   d: G => done(G),                                                                                    // done
-  g: G => glaze(G, (Math.random() * GLAZES.length) | 0),                                             // any glaze
+  g: G => glaze(G, G.ord && G.ord.bench ? G.ord.bench[(Math.random() * 6) | 0] : (Math.random() * GLAZES.length) | 0),                                             // any glaze
 };
 // HONEST: a potter who looks: presses in the green (with a wobbly thumb), pulls steadily until the pot is the order's height,
 // then shapes slice by slice towards the dotted line (as accurately as acc), checks the match and the wall gauge, glazes
@@ -140,6 +176,6 @@ function honest(G, o, mem) {
     for (let k2 = 0; k2 < 6; k2++) { const i = mem.si % (n + 1), z = i * DZ, want = G.target[i] || G.r[i]; shapeTo(G, z + (R() - 0.5) * (1 - acc) * 3, want + (R() - 0.5) * (1 - acc) * 6 + mem.bias, 0.12); mem.si += 2; if (mem.si > n) { mem.si = 0; mem.passes++; } }
     if (G.h > G.ord.h + 0.4 && !mem.trimmed) { mem.trimmed = 1; trim(G, G.ord.h + (R() - 0.5) * (1 - acc) * 2); return; }
     const m = match(G); if (m >= Math.min(97, G.cfg.goal + 6 * acc) || mem.passes > 5) done(G); return; }
-  if (G.phase === 'glaze') { glaze(G, R() < acc ? G.ord.glaze : (R() * GLAZES.length) | 0); return; }
+  if (G.phase === 'glaze') { glaze(G, R() < acc ? G.ord.glaze : G.ord.bench[(R() * 6) | 0]); return; }
 }
 function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, null, { m: 90, gOk: true }); }

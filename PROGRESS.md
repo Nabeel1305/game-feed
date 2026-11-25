@@ -158,24 +158,28 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** Whether a button is too strong or too weak in the hand: his to say.
 
 ### 16. Short Order (`cook`): VERIFIED
-- **Where:** `games/cook/index.html` · v0.3.0 · Cooking · 1 thumb(s)
+- **Where:** `games/cook/index.html` · v0.3.1 · Cooking · 1 thumb(s)
 - **What it is:** Run the grill of a small 3D diner kitchen, seen from where the cook stands, with the street's weather and light in the window. Drag food from the trays onto the pans, the board or the plate; tap a pan to flip when the ring turns golden; sweep across the board to chop; drag the plate up to the pass. Pancakes, eggs on toast, burgers, salmon salad, steak and onions: golden, not burnt, before the customer walks out. The first three levels teach it a piece at a time.
 - **Problem:** top half of the screen is empty and dark, the food is small; white glare at the bottom.
 - **Changed:** On a phone the camera looks nearly straight down: the hob, the board and the food fill the lower two thirds of the screen (it was a dark wall above, small food, glare and a black strip below).
 - **Changed:** 25 Nov, 0.2.0 (his review): a tap on the board or any stroke is a chop; the ticket numbers and ticks the layers; tap the plate to take the top off; +1 tip built in order.
 - **Changed:** 25 Nov evening, 0.3.0 (his final fix): the plate is dressed (burger stack with crown, plated meals side by side, things on toast), grill lines, flat salmon; 34 dishes, four new foods (cheese 5, bacon 8, mushroom 12, sausage 14).
+- **Changed:** 25 Nov night, 0.3.1 (his general fix: way more combinations): dishes mostly from the deck; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).
 - **Checked:** test_touch 8 pass; pictures of level 1 and level 5 looked at.
 - **Checked:** 25 Nov evening: every dish checked makeable from its level's trays; twelve plates SEEN in close stills on a computer (both ways up), not on a phone.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 - **Still open:** Dragging food to the pan and a swipe to chop are the genre's own gestures: to judge by hand.
 
 ### 17. Country Vet (`vet`): VERIFIED
-- **Where:** `games/vet/index.html` · v0.1.6 · Animals · 1 thumb(s)
+- **Where:** `games/vet/index.html` · v0.2.0 · Animals · 1 thumb(s)
 - **What it is:** Be the vet in an old 3D barn, the farmyard's weather and light through the open door. Dogs, cows, sheep, horses, pigs and goats come in with a thorn, an overgrown hoof, a cut, a fever, caked mud or a sore ear. Read the owner's card, look at her to see where, pick the right tool and use it the way it is really used: pull a thorn out slowly, rasp a hoof to the line, spray and wrap a cut, hold the needle in and lift off when she shivers, brush with the hair, drop into a still ear. Rough handling frightens her: stroke her slowly to calm her. The first three levels teach every tool.
 - **Problem:** at level 1 the first animal is not on screen in the first seconds (empty barn floor); otherwise fine.
 - **Changed:** third pass, 22 Nov evening: the animal is in sight from the first instant (the barn stood empty for a second and a half).
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 22 animals (6), six signs for each trouble, more names; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (13 checks passed, 0 failed.).
 - **Checked:** touch test 13 pass; picture looked at.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 18. Lighthouse (`lighthouse`): VERIFIED
 - **Where:** `games/lighthouse/index.html` · v0.1.5 · Calm · 1 thumb(s)
@@ -187,10 +191,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Still open:** At night the sea is dark by design (you search with the lamp): his eye to judge.
 
 ### 19. Hiring (`hiring`): VERIFIED
-- **Where:** `games/hiring/index.html` · v0.1.4 · Office · 1 thumb(s)
+- **Where:** `games/hiring/index.html` · v0.2.0 · Office · 1 thumb(s)
 - **What it is:** Run the hiring desk of a busy town agency, flat 2D on a wooden desk so the papers read well. Three open jobs are pinned at the top with what each needs; CVs come one at a time (photo, age, where they live, experience, certificates with their dates, licence and points, languages, when they can work). Drag each onto the job it fits, or into the bin. Near misses grow: a year short, a certificate that ran out last month. Two wrong calls end the day. The first three levels teach it.
 - **First look:** fine (2D papers).
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 34 jobs (8), 28 lines of work, 19 certificates, 80 lines about themselves; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 checks passed, 0 failed.).
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 20. Potter's Wheel (`potter`): VERIFIED
 - **Where:** `games/potter/index.html` · v0.1.5 · Craft · 1 thumb(s)
@@ -264,13 +270,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 8 pass (new: the DASH button dashes while the other thumb runs); test_play 15 pass.
 
 ### 27. Heaven or Hell (`heaven`): VERIFIED
-- **Where:** `games/heaven/index.html` · v0.2.1 · Puzzle · 1 thumb(s)
+- **Where:** `games/heaven/index.html` · v0.2.2 · Puzzle · 1 thumb(s)
 - **What it is:** Keep the gate: weigh each soul's best and worst deed, unseal hidden deeds in the Book of Life, mind the day's rule and the liars, and drag them up, down or to Purgatory; blessings and rank that stay.
 - **First look:** fine (2D).
 - **Changed:** 25 Nov evening, 0.2.1 (his final fix): 240 best/worst deeds (was 48), 72 small deeds (was 12), more names and causes; no deed twice in a day; 'in her sleep' no longer said of men.
+- **Changed:** 25 Nov night, 0.2.2 (his general fix: way more combinations): the deeds are dealt from the deck; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): a swipe to sort, with the three ways named on screen. Judged plain enough; nothing changed.
 - **Checked:** 25 Nov evening: lists counted (each kind 7/7/6 by weight, longest line 46 letters as before); 30 days played by the computer: 311 of 312 deeds came up, none twice in a day; one card SEEN in a still.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 28. Harvest Valley (`harvest`): VERIFIED
 - **Where:** `games/harvest/index.html` · v0.1.5 · Farming · 1 thumb(s)
@@ -406,18 +414,22 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 25 Nov evening: test_touch 13 pass (swap, turbo, meter); frame-to-frame body angle measured smooth; SEEN in stills, not on a phone.
 
 ### 45. The Bench (`judge`): VERIFIED
-- **Where:** `games/judge/index.html` · v0.2.2 · Courtroom / decisions · 1 thumb(s)
+- **Where:** `games/judge/index.html` · v0.3.0 · Courtroom / decisions · 1 thumb(s)
 - **What it is:** You are the judge: read the case, write your own sentence in plain words; the clerk (an AI) reads it back; a council of three marks every five, or switch it off and sentence freely. PG or 18+.
 - **Problem:** it asks him to TYPE a sentence on a phone; should be dials/chips (prison, suspended, fine, community).
 - **Changed:** A sentence builder: tap + Prison, + Fine, + Compensation and so on, then − and + to change the amount; the words appear in the box as if written. Typing still works (his idea: a sentence in your own words).
+- **Changed:** 25 Nov night, 0.3.0 (his general fix: way more combinations): 58 offences (29), four tellings each, 45 factors (19), more names, jobs, shops, places; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 passed, 0 failed).
 - **Checked:** Built sentences read back correctly by the court's parser (prison, suspended, unpaid work, fine, compensation, probation, driving ban, discharge, not guilty); passed and confirmed by touch; test_touch 8 pass.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 46. Haggle (`haggle`): VERIFIED
-- **Where:** `games/haggle/index.html` · v0.2.0 · Pawn shop / haggling · 1 thumb(s)
+- **Where:** `games/haggle/index.html` · v0.2.1 · Pawn shop / haggling · 1 thumb(s)
 - **What it is:** A pawn shop: sellers bring things in, you turn a brass dial to make offers, check for fakes, and learn what things are worth over the days; beat the day's profit target.
 - **First look:** fine (2D).
+- **Changed:** 25 Nov night, 0.2.1 (his general fix: way more combinations): 40 reasons for selling, 48 names, things from the deck; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 47. Battle Lines (`war`): VERIFIED
 - **Where:** `games/war/index.html` · v0.3.0 · War tactics · 1 thumb(s)
@@ -450,10 +462,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 25 Nov evening: test_touch 12 pass; blind strings 7 of 5696 before the last tune, within the limit after; SEEN in stills, not on a phone.
 
 ### 50. Spellshop (`spell`): VERIFIED
-- **Where:** `games/spell/index.html` · v0.1.3 · Magic / puzzle · 1 thumb(s)
+- **Where:** `games/spell/index.html` · v0.2.0 · Magic / puzzle · 1 thumb(s)
 - **What it is:** The town magician: read the customer's story for clues, pick the jars (each always means one thing), pour, stir in or out, trace the rune, seal; funny mistakes come back to be fixed, bad ones complain.
 - **First look:** fine (2D).
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 194 troubles (56), 48 villagers; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 51. Rex (`rex`): VERIFIED
 - **Where:** `games/rex/index.html` · v0.4.0 · Dinosaur / hunt · 2 thumb(s)
@@ -564,11 +578,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** test_touch 6 pass.
 
 ### 65. Plumber (`plumber`): VERIFIED
-- **Where:** `games/plumber/index.html` · v0.1.4 · Job / puzzle · 1 thumb(s)
+- **Where:** `games/plumber/index.html` · v0.2.0 · Job / puzzle · 1 thumb(s)
 - **What it is:** His idea: a plumber's day of house calls. Pick calls from the phone, drive there, look at parts of the cut-open house to find the real fault, pick the fix and do it by hand (hold a wrench into the green, plunge on the beat, feed a snake, set a dial, fit a part); floods until the main is shut; 21 kinds of job.
 - **First look:** fine (2D); labels in the house are tiny.
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 35 kinds of call (21), 174 lines (63); the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): taps on the pipes. Judged plain enough; nothing changed.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 66. Stunt Kart (`stunt`): VERIFIED
 - **Where:** `games/stunt/index.html` · v0.1.10 · Racing / stunts · 2 thumb(s)
@@ -666,12 +682,14 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 23 Nov, 0.1.2: six pictures of a stop driven up to in real time looked at (two getting off, seen walking towards the camera, then four getting on).
 
 ### 79. Cake Designer (`cake`): VERIFIED
-- **Where:** `games/cake/index.html` · v0.1.3 · Creative / baking · 1 thumb(s)
+- **Where:** `games/cake/index.html` · v0.2.0 · Creative / baking · 1 thumb(s)
 - **What it is:** His idea: a calm 3D bakery. A customer orders a cake (tiers, icing colour, drip, swirls, toppings) and you make it in five stages, each with its own control: STACK (tap to set each gliding tier down), COLOUR (tap the icing on the card), ICE (the cake spins; hold your thumb on it and the knife spreads icing there), PIPE (tap as each dot passes under the bag), TOP (tap to place berries, candles, cherries, macarons). The customer scores each part; great cakes tip. Six bakeries, show cakes, stands, upgrades and ranks.
 - **Problem:** CRITICAL: the icing is coarse square blocks; a cake game has to look delicious.
 - **Changed:** Icing is drawn as soft round dabs with one smoothing pass, not square blocks.
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 18 icings, 7 sponges, 8 toppings, 48 occasions; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).
 - **Checked:** test_touch 15 pass; speed 60 a second; picture looked at.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 80. Paint It (`roller`): VERIFIED
 - **Where:** `games/roller/index.html` · v0.1.4 · Creative / painting · 1 thumb(s)
@@ -688,12 +706,14 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (11 passed, 0 failed).
 
 ### 82. Dress Designer (`dress`): VERIFIED
-- **Where:** `games/dress/index.html` · v0.1.4 · Creative / fashion · 1 thumb(s)
+- **Where:** `games/dress/index.html` · v0.2.0 · Creative / fashion · 1 thumb(s)
 - **What it is:** A client brings a brief; design the dress part by part on a turning model (cut, length, sleeves, fabric, colour, pattern, finishing touches placed on the dress), then she walks the runway and three judges give stars, saying exactly what missed.
 - **Problem:** the model is a faceless wooden figure and tiny on the catwalk, where the dress should be the star.
 - **Changed:** The model has a face (eyes, brows, lips, a little blush), and the camera looks a little higher so her head is under the client's card instead of behind it.
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 40 occasions (8), 50 customers; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (16 passed, 0 failed).
 - **Checked:** test_touch 16 pass; a close picture looked at.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 - **Still open:** On the catwalk she starts far away and small.
 
 ### 83. Taxi Driver (`taxi`): VERIFIED
@@ -753,13 +773,15 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (26 passed, 0 failed).
 
 ### 90. Mocktail Bar (`mocktail`): VERIFIED
-- **Where:** `games/mocktail/index.html` · v0.2.3 · Bartending / cooking · 1 thumb(s)
+- **Where:** `games/mocktail/index.html` · v0.3.0 · Bartending / cooking · 1 thumb(s)
 - **What it is:** A mocktail bar: read the order (or a feeling), pick the glass, pour to the parts, muddle, shake, stir or layer, garnish and serve; the customer's face and words say what was right or wrong.
 - **Problem:** CRITICAL: (his words) a blob customer fills the view and the drink is a faint ghost; should be first person, looking down at a beautiful glass, with real liquid.
 - **Changed:** Rebuilt in first person, looking down at the glass: four glass shapes, colour bands, a shining rippling surface, bubbles, ice, a labelled bottle that pours, muddler, spoon, shaker; the served glass slides away.
 - **Changed:** Controls: hold a bottle to pour, taps, hold STIR / SHAKE; three tabs; the next thing to touch glows on levels 1-6.
+- **Changed:** 25 Nov night, 0.3.0 (his general fix: way more combinations): 41 drinks (11), 60 customers; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (38 passed, 0 failed).
 - **Checked:** test_touch 38 pass; test_play (spam cannot win, robots, lessons) 15 pass; tutorial test passes; speed 60 a second on the test machine; pictures of pouring, layers, each glass looked at.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 91. Timber (`timber`): VERIFIED
 - **Where:** `games/timber/index.html` · v0.1.4 · Forestry / aiming · 1 thumb(s)
@@ -838,10 +860,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (30 passed, 0 failed).
 
 ### 100. Dentist (`dentist`): VERIFIED
-- **Where:** `games/dentist/index.html` · v0.1.4 · Calm / job · 1 thumb(s)
+- **Where:** `games/dentist/index.html` · v0.2.0 · Calm / job · 1 thumb(s)
 - **What it is:** Calm one-thumb dentist, upright: a 3D clinic and a 2D close-up of the mouth; brush, scrape and polish, find cavities with the mirror and X-ray, drill-rinse-fill-smooth-set, chips, crowns, braces, extractions; keep them comfortable; before-and-after smiles.
 - **First look:** good.
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 11 kinds of patient (4), 70 names; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (29 passed, 0 failed).
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 101. Balloon Drift (`balloon`): VERIFIED
 - **Where:** `games/balloon/index.html` · v0.2.0 · Flight / calm · 1 thumb(s)
@@ -871,11 +895,13 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** third pass: its controls read through against his rule (obvious to a first-timer): one thumb and two labelled buttons (TUCK, CHUTE). Judged plain enough; nothing changed.
 
 ### 104. Detective (`detective`): VERIFIED
-- **Where:** `games/detective/index.html` · v0.1.4 · Mystery / deduction · 1 thumb(s)
+- **Where:** `games/detective/index.html` · v0.2.0 · Mystery / deduction · 1 thumb(s)
 - **What it is:** His idea 33: generated cases (thefts, sabotage, fraud, disappearances, locked rooms) in a house, hotel, museum, train or office. Tap objects in the 3D room, turn them over to find hidden marks, question suspects and show them clues (liars crack, secret-keepers own up), link clues in the notebook, then accuse with who, how, when and two proving clues.
 - **Problem:** the 3D rooms are dark brown boxes on black; a lot of reading.
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 9 places (5), 62 things, 35 methods (four on the sheet), 18 motives, 12 secrets, 72 names; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed).
 - **Checked:** third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 105. Convoy Escort (`convoy`): VERIFIED
 - **Where:** `games/convoy/index.html` · v0.2.4 · Naval / tactics · 2 thumb(s)
@@ -888,10 +914,12 @@ Made by `python3 tools/progress.py` from `specs/progress.json`. Do not edit by h
 - **Checked:** touch test 55 pass; pictures of levels 1 and 5 looked at.
 
 ### 106. Pottery Wheel (`pottery`): VERIFIED
-- **Where:** `games/pottery/index.html` · v0.1.3 · Craft / calm · 1 thumb(s)
+- **Where:** `games/pottery/index.html` · v0.2.0 · Craft / calm · 1 thumb(s)
 - **What it is:** Mine, the calm one for set 19: a customer's order (a bowl, cup, vase, jug, bottle, dish, tall vase or moon jar, and a glaze). Centre the clay with steady pressure, pull the walls up with steady drags (too fast tears), shape the spinning pot to the dotted outline, trim the rim, glaze and fire it; thin or leaning walls slump; rare kiln surprises.
 - **First look:** good (twin of #20 Potter's Wheel).
+- **Changed:** 25 Nov night, 0.2.0 (his general fix: way more combinations): 24 shapes (8), 16 glazes with six on the bench, 40 customers; the centring instruction only in the tutorial; the deck that remembers (nothing returns until its list is through).
 - **Checked:** 22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (20 passed, 0 failed).
+- **Checked:** 25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.
 
 ### 107. Joust (`joust`): VERIFIED
 - **Where:** `games/joust/index.html` · v0.1.4 · Tournament / jousting · 2 thumb(s)

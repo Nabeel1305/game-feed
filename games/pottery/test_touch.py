@@ -42,7 +42,7 @@ with sync_playwright() as p:
     ok(E(f"__sim.G.r[{i}]") > r0 + 1.2, 'a touch on the pot moved out pushes the wall out there', str([r0, E(f"__sim.G.r[{i}]")]))
     hb = E("__sim.G.h"); tap(*btn('trim')); zt = hb - 2; q = scr(4, zt); tap(q[0], q[1]); ok(abs(E("__sim.G.h") - zt) < 0.6, 'TRIM then a touch at a height cuts the rim there', str([hb, E("__sim.G.h"), zt]))
     tap(*btn('done')); ok(E("__sim.G.phase") == 'glaze', 'DONE goes to the glaze')
-    L = E("__sim.layout()"); g = L['glaze'][E("__sim.G.ord.glaze")]; tap(g['x'], g['y']); ok(E("__sim.G.phase") == 'kiln' and E("__sim.G.glaze") == E("__sim.G.ord.glaze"), 'a swatch glazes it and it goes in the kiln')
+    L = E("__sim.layout()"); want = E("__sim.G.ord.glaze"); bench = [b['i'] for b in L['glaze']]; ok(len(bench) == 6 and len(set(bench)) == 6 and want in bench and all(b['x'] > 20 and b['x'] < 370 for b in L['glaze']), 'six glazes are on the bench (of sixteen), the one asked for among them, all on the screen', str(bench)); g = [b for b in L['glaze'] if b['i'] == want][0]; tap(g['x'], g['y']); ok(E("__sim.G.phase") == 'kiln' and E("__sim.G.glaze") == E("__sim.G.ord.glaze"), 'a swatch glazes it and it goes in the kiln')
     ok(pg.wait_for_function("__sim.G.over", timeout=8000) is not None, 'and it comes out fired (the order is over)')
     # ---------- the rules ----------
     r = E("""(() => { const out = []; for (const noise of [0, 1.5, 4]) { __sim.start(6, { seed: 3 }); const G = __sim.G, X = __sim.x(); G.phase = 'pull'; G.pulls = 1; G.h = G.ord.h; for (let i = 0; i < G.r.length; i++) G.r[i] = i * X.DZ <= G.h ? G.target[i] + noise * Math.sin(i) : 0; out.push(X.match(G)); } return out; })()""")

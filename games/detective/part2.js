@@ -18,54 +18,98 @@ const UPGRADES = [{ id: 'lens', name: 'Better lens', max: 2, cost: l => [60, 140
   { id: 'nerve', name: 'Steady nerve', max: 1, cost: () => 150, desc: 'A third accusation before the case goes cold.' }];
 const upLv = id => { if (typeof HEADLESS !== 'undefined' && HEADLESS) return 0; return ((store.get('ups', {}) || {})[id]) | 0; };
 const RANKS = [[0, 'Constable'], [60, 'Sergeant'], [200, 'Inspector'], [500, 'Chief Inspector'], [1100, 'Superintendent'], [2500, 'Legend of the Yard']];
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const PLACES = [
   { id: 'home', name: 'Ashcombe House', sky: 'golden', rooms: ['Study', 'Drawing room', 'Kitchen', 'Hall', 'Conservatory', 'Library'], roles: ['the butler', 'the niece', 'the gardener', 'the cook', 'a house guest', 'the lawyer'] },
   { id: 'hotel', name: 'The Grand Meridian', sky: 'dusk', rooms: ['Suite 12', 'Lobby', 'Bar', 'Cloakroom', 'Ballroom', 'Kitchen'], roles: ['the night porter', 'a guest', 'the pianist', 'the manager', 'a chambermaid', 'the chef'] },
   { id: 'museum', name: 'The Halden Museum', sky: 'noon', rooms: ['East gallery', 'Curator\'s office', 'Storeroom', 'Café', 'Cloakroom', 'Workshop'], roles: ['the curator', 'a guard', 'a restorer', 'a visiting collector', 'the cleaner', 'the director'] },
   { id: 'train', name: 'The Night Express', sky: 'night', rooms: ['Dining car', 'Sleeper 3', 'Luggage van', 'Lounge car', 'Sleeper 7', 'Galley'], roles: ['the conductor', 'a passenger', 'the waiter', 'a salesman', 'the cook', 'a student'] },
   { id: 'office', name: 'Brightwell & Co.', sky: 'overcast', rooms: ['Boss\'s office', 'Open office', 'Archive', 'Staff kitchen', 'Lobby', 'Meeting room'], roles: ['the secretary', 'the accountant', 'an intern', 'the director', 'a cleaner', 'the courier'] },
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): four more places, and in every list below far more to draw from
+  { id: 'theatre', name: 'The Lyric Theatre', sky: 'dusk', rooms: ['Dressing room', 'Stage', 'Box office', 'Props store', 'Green room', 'Orchestra pit'], roles: ['the leading lady', 'the stage manager', 'a stagehand', 'the conductor', 'the understudy', 'the critic'] },
+  { id: 'ship', name: 'The SS Corvina', sky: 'noon', rooms: ['Purser\'s office', 'Promenade deck', 'Cabin 14', 'Saloon', 'Hold', 'Radio room'], roles: ['the purser', 'the first mate', 'a steward', 'a card player', 'the ship\'s doctor', 'a stowaway'] },
+  { id: 'school', name: 'St Olave\'s College', sky: 'overcast', rooms: ['Headmaster\'s study', 'Chapel', 'Laboratory', 'Dormitory', 'Library', 'Trophy room'], roles: ['the headmaster', 'the matron', 'the science master', 'a prefect', 'the groundsman', 'the bursar'] },
+  { id: 'inn', name: 'The Blue Boar Inn', sky: 'night', rooms: ['Snug', 'Cellar', 'Room 3', 'Stable yard', 'Kitchen', 'Taproom'], roles: ['the landlord', 'a commercial traveller', 'the barmaid', 'the ostler', 'a fiddler', 'the cook'] },
 ];
-const placeOf = N => (N - 1) % 5 === 0 && N > 1 ? (N - 1) / 5 % 5 : N <= 3 ? 0 : (N + 1) % 5;
-const NAMES = ['Ada Finch', 'Bram Holloway', 'Cora Vane', 'Dev Malik', 'Edie Marsh', 'Felix Rook', 'Greta Lund', 'Hugo Penn', 'Iris Calder', 'Jonah Pike', 'Kit Moreau', 'Lena Sato', 'Milo Grant', 'Nora Quill', 'Otto Brandt', 'Pia Larkin', 'Quentin Hale', 'Rosa Ibarra', 'Silas Thorne', 'Tess Oduya', 'Uma Varga', 'Vic Dunmore', 'Wren Ashby', 'Yara Kell'];
+const placeOf = N => { const n = PLACES.length; return (N - 1) % 5 === 0 && N > 1 ? ((N - 1) / 5) % n : N <= 3 ? 0 : (N + 1) % n; };
+const NAMES = ['Ada Finch', 'Bram Holloway', 'Cora Vane', 'Dev Malik', 'Edie Marsh', 'Felix Rook', 'Greta Lund', 'Hugo Penn', 'Iris Calder', 'Jonah Pike', 'Kit Moreau', 'Lena Sato', 'Milo Grant', 'Nora Quill', 'Otto Brandt', 'Pia Larkin', 'Quentin Hale', 'Rosa Ibarra', 'Silas Thorne', 'Tess Oduya', 'Uma Varga', 'Vic Dunmore', 'Wren Ashby', 'Yara Kell', 'Alma Reeve', 'Basil Crane', 'Clara Voss', 'Dorian Blythe', 'Elsie Tarn', 'Fabian Locke', 'Gwen Adair', 'Hector Slade', 'Ivy Montrose', 'Jasper Wynn', 'Keziah Burr', 'Leo Farrow', 'Mabel Stroud', 'Ned Carrow', 'Odile Fenn', 'Percy Lathe', 'Queenie Ash', 'Rufus Dray', 'Sybil Kerr', 'Tobias Wren', 'Una Hartley', 'Victor Sable', 'Winnie Poole', 'Xavier Bloom', 'Yolanda Frost', 'Zeke Arden', 'Agnes Mallory', 'Bertie Quince', 'Celia Drummond', 'Dexter Vail', 'Esme Corrigan', 'Florian Teague', 'Hattie Bellamy', 'Ignatius Poe', 'Juno Castellan', 'Kasper Lind', 'Lottie Ferris', 'Magnus Yarrow', 'Nell Hargreave', 'Oswin Tate', 'Petra Novak', 'Roland Eames', 'Selma Okoye', 'Thaddeus Birch', 'Viola Renshaw', 'Wilbur Cray', 'Zadie Underhill', 'Amos Kettering'];
 const TIMES = ['7 pm', '8 pm', '9 pm', '10 pm', '11 pm'];
-const PERSONAL = ['glove', 'cufflink', 'hairpin', 'fountain pen', 'button', 'ticket stub', 'scarf', 'lighter'];
+const PERSONAL = ['glove', 'cufflink', 'hairpin', 'fountain pen', 'button', 'ticket stub', 'scarf', 'lighter', 'spectacles case', 'pocket comb', 'monogrammed handkerchief', 'tie pin', 'key fob', 'pipe', 'earring', 'matchbook', 'theatre ticket', 'locket', 'pencil stub', 'cloakroom token', 'thimble', 'cigar band', 'hat ribbon', 'watch chain'];
 // the kinds of case, each with four ways it could have been done (the trace each leaves, and the clue that ties a person to it)
 const CRIMES = {
-  theft: { what: ['the jade figurine', 'the silver locket', 'a rare stamp', 'the ruby brooch', 'the gold pocket watch'], verb: 'was stolen', title: 'THEFT',
+  theft: { what: ['the jade figurine', 'the silver locket', 'a rare stamp', 'the ruby brooch', 'the gold pocket watch', 'the pearl necklace', 'a silver snuffbox', 'the emerald ring', 'an ivory chess king', 'the gold medal', 'a signed first edition', 'the diamond tiepin'], verb: 'was stolen', title: 'THEFT',
     how: [{ id: 'window', name: 'Out through the window', trace: 'Fresh scratches on the window latch, and sand on the sill.', item: 'window', means: '{S}\'s shoes, with sand on the soles.', mitem: 'coatstand' },
       { id: 'swap', name: 'Swapped for a fake', trace: 'The {O} on show is a fake: the mark underneath is only printed on.', item: 'case', means: 'A receipt for a replica of {O}, in {S}\'s name.', mitem: 'desk' },
       { id: 'key', name: 'Opened with the spare key', trace: 'The case lock is unscratched: it was opened with a key.', item: 'case', means: 'The key book: {S} signed out the spare key.', mitem: 'cabinet' },
-      { id: 'bag', name: 'Carried out in a bag', trace: 'An empty cloth bag, still shaped like {O}.', item: 'bin', means: '{S}\'s set of cloth bags: one is missing.', mitem: 'suitcase' }] },
-  sabotage: { what: ['the music box', 'the projector', 'the old organ', 'the clock mechanism', 'the fountain pump'], verb: 'was wrecked', title: 'SABOTAGE',
+      { id: 'bag', name: 'Carried out in a bag', trace: 'An empty cloth bag, still shaped like {O}.', item: 'bin', means: '{S}\'s set of cloth bags: one is missing.', mitem: 'suitcase' },
+      { id: 'sleeve', name: 'Slipped up a sleeve', trace: 'A thread of dark wool caught on the hinge of the case.', item: 'case', means: '{S}\'s jacket: a pulled thread at the cuff.', mitem: 'coatstand' },
+      { id: 'palm', name: 'Buried in the potted palm', trace: 'Soil scattered round the palm, and a hollow dug in it.', item: 'plant', means: 'A trowel with fresh soil on it, in {S}\'s bag.', mitem: 'suitcase' },
+      { id: 'post', name: 'Posted out in a parcel', trace: 'Offcuts of brown paper and string in the waste bin.', item: 'bin', means: 'A post office receipt for a small parcel, in {S}\'s name.', mitem: 'desk' }] },
+  sabotage: { what: ['the music box', 'the projector', 'the old organ', 'the clock mechanism', 'the fountain pump', 'the stage lights', 'the dumb waiter', 'the telephone exchange', 'the printing press', 'the grandfather clock', 'the gramophone'], verb: 'was wrecked', title: 'SABOTAGE',
     how: [{ id: 'water', name: 'Water poured inside', trace: 'A wet ring on the table and an empty jug beside it.', item: 'table', means: '{S}\'s sleeves are still damp, the cook says.', mitem: 'coatstand' },
       { id: 'wire', name: 'A wire cut', trace: 'A wire snipped clean through: pliers, not wear.', item: 'desk', means: 'Small pliers in {S}\'s pocket.', mitem: 'cabinet' },
       { id: 'coin', name: 'Jammed with a coin', trace: 'A bent coin wedged in the gears.', item: 'clock', means: '{S}\'s purse: the same foreign coins.', mitem: 'suitcase' },
-      { id: 'fuse', name: 'The fuse swapped', trace: 'A burnt-out fuse dropped in the bin.', item: 'bin', means: 'A packet of fuses, opened, in {S}\'s drawer.', mitem: 'desk' }] },
-  fraud: { what: ['the accounts', 'the auction ledger', 'the will', 'the cheque book', 'the share register'], verb: 'was forged', title: 'FRAUD',
+      { id: 'fuse', name: 'The fuse swapped', trace: 'A burnt-out fuse dropped in the bin.', item: 'bin', means: 'A packet of fuses, opened, in {S}\'s drawer.', mitem: 'desk' },
+      { id: 'sand', name: 'Sand in the works', trace: 'Grit in the oil: someone poured sand into the gears.', item: 'clock', means: 'A paper twist of sand in {S}\'s coat pocket.', mitem: 'coatstand' },
+      { id: 'screw', name: 'A screw taken out', trace: 'One screw hole is bright and empty; the others are dusty.', item: 'cabinet', means: 'A single brass screw in {S}\'s drawer.', mitem: 'desk' },
+      { id: 'glue', name: 'Glued shut', trace: 'A drip of dried glue on the edge of the table.', item: 'table', means: 'A glue pot, still tacky, in {S}\'s case.', mitem: 'suitcase' }] },
+  fraud: { what: ['the accounts', 'the auction ledger', 'the will', 'the cheque book', 'the share register', 'the guest book', 'the insurance papers', 'the deed to the house', 'the prize list', 'the payroll', 'the cargo list'], verb: 'was forged', title: 'FRAUD',
     how: [{ id: 'traced', name: 'A signature traced', trace: 'Pencil lines under the ink: the signature was traced.', item: 'desk', means: 'Tracing paper with the signature on it, in {S}\'s folder.', mitem: 'shelf' },
       { id: 'pages', name: 'Pages swapped', trace: 'Two pages glued in: the stitching does not match.', item: 'shelf', means: 'Glue and a binding needle in {S}\'s bag.', mitem: 'suitcase' },
       { id: 'stamp', name: 'The office stamp used', trace: 'The office stamp is missing from its drawer.', item: 'cabinet', means: 'Fresh red stamp ink on {S}\'s cuff.', mitem: 'coatstand' },
-      { id: 'burned', name: 'The real pages burned', trace: 'Ash and a half-burnt page in the grate.', item: 'bin', means: 'Matches from the grate in {S}\'s pocket.', mitem: 'cabinet' }] },
-  vanish: { what: ['Duchess the cat', 'the prize parrot', 'Professor Lark', 'the guest of honour', 'little Biscuit the dog'], verb: 'has vanished', title: 'DISAPPEARANCE',
+      { id: 'burned', name: 'The real pages burned', trace: 'Ash and a half-burnt page in the grate.', item: 'bin', means: 'Matches from the grate in {S}\'s pocket.', mitem: 'cabinet' },
+      { id: 'bleach', name: 'The ink bleached out', trace: 'A pale patch on the page that smells of lemon.', item: 'desk', means: 'A bottle of ink remover in {S}\'s bag.', mitem: 'suitcase' },
+      { id: 'carbon', name: 'Copied through carbon paper', trace: 'A sheet of carbon paper with the figures still on it.', item: 'bin', means: 'A box of carbon paper, one sheet short, on {S}\'s shelf.', mitem: 'shelf' },
+      { id: 'typed', name: 'Retyped on another machine', trace: 'The letter "e" sits high on this page, and on no other.', item: 'shelf', means: '{S}\'s typewriter: its "e" sits high.', mitem: 'desk' }] },
+  vanish: { what: ['Duchess the cat', 'the prize parrot', 'Professor Lark', 'the guest of honour', 'little Biscuit the dog', 'the head waiter', 'old Mr Finch', 'the bride\'s terrier', 'the star tenor', 'Pickles the tortoise', 'the night watchman'], verb: 'has vanished', title: 'DISAPPEARANCE',
     how: [{ id: 'backdoor', name: 'Led out by the back way', trace: 'The back window is unbolted, footprints below it.', item: 'window', means: '{S}\'s boots by the door, muddy to the ankle.', mitem: 'coatstand' },
       { id: 'cupboard', name: 'Hidden in the storeroom', trace: 'Hairs and a saucer of milk behind the cupboard.', item: 'cabinet', means: 'The storeroom key on {S}\'s ring.', mitem: 'desk' },
       { id: 'basket', name: 'Taken off in a basket', trace: 'A basket lid with fresh scratches inside it.', item: 'suitcase', means: 'A receipt for a travel basket, signed by {S}.', mitem: 'shelf' },
-      { id: 'note', name: 'Lured by a note', trace: 'A torn note: "Come to the garden. Now."', item: 'bin', means: 'Notepaper in {S}\'s desk: the same torn edge.', mitem: 'desk' }] },
-  locked: { what: ['the sapphire', 'the master key', 'the first-edition book', 'the bronze medal', 'the old map'], verb: 'went from a locked room', title: 'LOCKED ROOM',
+      { id: 'note', name: 'Lured by a note', trace: 'A torn note: "Come to the garden. Now."', item: 'bin', means: 'Notepaper in {S}\'s desk: the same torn edge.', mitem: 'desk' },
+      { id: 'laundry', name: 'Wheeled out in the laundry cart', trace: 'Wheel tracks in the carpet, deeper than a load of sheets.', item: 'sofa', means: 'The laundry rota: {S} took the cart tonight.', mitem: 'shelf' },
+      { id: 'cab', name: 'Sent off in a cab', trace: 'Half a cab ticket by the window, torn across.', item: 'window', means: 'The other half of a cab ticket in {S}\'s coat.', mitem: 'coatstand' },
+      { id: 'treat', name: 'Tempted away with a treat', trace: 'A trail of biscuit crumbs from the table to the door.', item: 'table', means: 'A bag of the same biscuits in {S}\'s desk.', mitem: 'desk' }] },
+  locked: { what: ['the sapphire', 'the master key', 'the first-edition book', 'the bronze medal', 'the old map', 'the pearl-handled letter opener', 'the signet ring', 'the ship in a bottle', 'the silver whistle', 'the white queen from the chess set', 'the opera glasses'], verb: 'went from a locked room', title: 'LOCKED ROOM',
     how: [{ id: 'vent', name: 'Through the air vent', trace: 'The vent cover behind the painting: its screws are loose.', item: 'painting', means: 'A small screwdriver in {S}\'s coat.', mitem: 'coatstand' },
       { id: 'early', name: 'Taken before it was locked', trace: 'The clock was put back an hour: the dust ring around it is broken.', item: 'clock', means: '{S} wound the clocks that evening, the rota says.', mitem: 'shelf' },
       { id: 'inside', name: 'Hidden inside all along', trace: 'A hollow under the sofa cushion, just the right size.', item: 'sofa', means: '{S} chose that sofa for the room, the receipt says.', mitem: 'desk' },
-      { id: 'line', name: 'Pulled under the door on a line', trace: 'A fishing line, cut, caught under the door frame.', item: 'window', means: 'A reel of fishing line in {S}\'s luggage.', mitem: 'suitcase' }] },
+      { id: 'line', name: 'Pulled under the door on a line', trace: 'A fishing line, cut, caught under the door frame.', item: 'window', means: 'A reel of fishing line in {S}\'s luggage.', mitem: 'suitcase' },
+      { id: 'hinge', name: 'The door lifted off its hinges', trace: 'The hinge pins are bright: tapped out and put back.', item: 'cabinet', means: 'A small hammer and a nail punch in {S}\'s bag.', mitem: 'suitcase' },
+      { id: 'chimney', name: 'Hooked up the chimney', trace: 'Soot on the side table, and a scratch up the fire-back beside it.', item: 'table', means: 'A sooty hook on a cord, behind {S}\'s books.', mitem: 'shelf' },
+      { id: 'wax', name: 'A key copied in wax', trace: 'The candle by the lamp has a piece cut out of it.', item: 'lamp', means: 'A block of wax with a key pressed into it, in {S}\'s desk.', mitem: 'desk' }] },
 };
 const KINDS = ['theft', 'theft', 'theft', 'sabotage', 'fraud', 'vanish', 'locked'];
 const FURN = ['desk', 'shelf', 'cabinet', 'sofa', 'table', 'bin', 'coatstand', 'lamp', 'plant', 'case', 'painting', 'window', 'suitcase', 'clock'];
 const ITEMNAME = { desk: 'writing desk', shelf: 'bookshelf', cabinet: 'cabinet', sofa: 'sofa', table: 'side table', bin: 'waste bin', coatstand: 'coat stand', lamp: 'lamp', plant: 'potted palm', case: 'display case', painting: 'painting', window: 'window', suitcase: 'suitcase', clock: 'mantel clock' };
 const FILL = { desk: 'Letters and bills, nothing out of place.', shelf: 'Dusty books, undisturbed for weeks.', cabinet: 'Glasses and napkins, all neat.', sofa: 'Just cushions. Nothing tucked in.', table: 'A vase of flowers. Nothing else.', bin: 'Only paper scraps.', coatstand: 'An umbrella, dry.', lamp: 'Warm bulb. Nothing else.', plant: 'Soil undisturbed.', case: 'Empty velvet.', painting: 'A landscape. Firmly fixed.', window: 'Locked tight.', suitcase: 'Folded clothes.', clock: 'Ticking, on time.' };
-const MOTIVE = ['{S} owes money to the owner.', '{S} was left out of the will.', '{S} has wanted {O} for years, a letter says.', '{S} was sacked last week, a letter says.'];
+const FILL2 = { desk: ['A blotter, a ruler, a dried-up inkwell.', 'Drawers of string and sealing wax.'], shelf: ['Almanacs, in order of year.', 'A row of ledgers, spines unbroken.'], cabinet: ['Folded linen and a spare decanter.', 'Cups on hooks; none missing.'], sofa: ['A dropped hairgrip, years old.', 'Springs and horsehair. Nothing more.'], table: ['A ring from a teacup, long dry.', 'A newspaper, three days old.'], bin: ['Orange peel and a broken nib.', 'Empty, and lately emptied.'], coatstand: ['Two hats, both dusty.', 'A walking stick. Nothing in the pockets.'], lamp: ['The shade is askew, nothing more.', 'A moth, asleep.'], plant: ['Dry leaves. No hollow.', 'It needs watering.'], case: ['The glass is clean: no prints.', 'A card: "Do not touch".'], painting: ['It hangs straight. Nothing behind.', 'A stern ancestor. Fixed to the wall.'], window: ['Painted shut years ago.', 'Cobwebs across the catch.'], suitcase: ['Shirts and a railway guide.', 'Empty but for a luggage label.'], clock: ['Wound and right.', 'It strikes the quarter. Nothing else.'] };
+const fillOf = (G, k) => { const L = [FILL[k]].concat(FILL2[k] || []); return L[(G.rnd() * L.length) | 0]; };
+const MOTIVE = ['{S} owes money to the owner.', '{S} was left out of the will.', '{S} has wanted {O} for years, a letter says.', '{S} was sacked last week, a letter says.', '{S} was passed over for promotion.', '{S} quarrelled with the owner on Sunday.', '{S} has gambling debts, a letter says.', '{S} was caught out over the accounts.', '{S} was refused a loan last month.', '{S} is leaving the country next week.', '{S} blames the owner for an old injury.', '{S} was jilted by the owner\'s son.', '{S} has another buyer for {O}, a telegram says.', '{S} was promised {O} once, and never got it.', '{S} is being blackmailed, a note says.', '{S} lost a fortune on the owner\'s advice.', '{S} was struck out of the family Bible.', '{S} has been selling stories to a newspaper.'];
 const SECRET = [{ clue: 'A note in {S}\'s hand: "Meet me at {T}. Tell no one."', admit: 'All right: I slipped out to meet someone I love. Ask the gardener: he saw us in the garden all hour.', clears: 'The gardener\'s note: "{S} in the garden with a friend, {T} till late."' },
   { clue: '{S}\'s betting slip, dated tonight.', admit: 'I was at the card table in the back room, losing. Not proud of it. The dealer kept the list.', clears: 'The card table list: {S} played from 8 till midnight.' },
   { clue: 'A pawn ticket in {S}\'s name, dated today.', admit: 'I pawned my mother\'s ring to pay a debt. I was at the telephone in the lobby for an hour, begging the bank. The operator logs every call.', clears: 'The operator\'s log: {S} on the telephone, {T}, one hour.' },
-  { clue: 'A second passport, {S}\'s photo, another name.', admit: 'It is an old name, from before I moved here. I was writing letters in my room; the maid brought tea at {T}.', clears: 'The maid\'s tea list: tea to {S}\'s room at {T}.' }];
+  { clue: 'A second passport, {S}\'s photo, another name.', admit: 'It is an old name, from before I moved here. I was writing letters in my room; the maid brought tea at {T}.', clears: 'The maid\'s tea list: tea to {S}\'s room at {T}.' },
+  { clue: 'A music-hall programme in {S}\'s pocket, for tonight.', admit: 'I slipped off to the music hall. I am supposed to be in mourning. The usher tore my ticket at {T}.', clears: 'The usher\'s stub book: {S}, seat 14, in at {T}.' },
+  { clue: 'Flour on {S}\'s sleeve, and nobody saw them at dinner.', admit: 'I was in the kitchen learning to bake, in secret, for a birthday. The cook timed my loaf at {T}.', clears: 'The cook\'s slate: "{S}\'s loaf in at {T}, out an hour on."' },
+  { clue: 'A doctor\'s card in {S}\'s wallet, with tonight\'s date.', admit: 'I have been seeing a doctor about my nerves and have told nobody. I was in his waiting room from {T}.', clears: 'The doctor\'s book: {S}, {T}, a full hour.' },
+  { clue: 'Half a letter of resignation in {S}\'s hand.', admit: 'I am leaving for a rival firm. I was on the terrace with their agent, signing papers, from {T}.', clears: 'The agent\'s contract, witnessed and timed: {S}, {T}.' },
+  { clue: 'A child\'s drawing folded in {S}\'s pocket.', admit: 'I have a daughter nobody here knows about. I was telephoning her goodnight at {T}; the exchange will tell you.', clears: 'The exchange record: a long call from {S}, begun at {T}.' },
+  { clue: 'Chalk dust on {S}\'s cuffs.', admit: 'I play billiards for money in the back room. Badly. The marker keeps the scores.', clears: 'The billiard marker\'s board: {S} at the table from {T}.' },
+  { clue: 'A wet bathing costume in {S}\'s bag.', admit: 'I swim at night, where I should not. The boatman fished me out at {T} and gave me a lecture.', clears: 'The boatman\'s log: "{T}: pulled {S} out of the water. Again."' },
+  { clue: 'A library slip in {S}\'s name, stamped tonight.', admit: 'I am studying for an examination in secret. The librarian shut me in the reading room by mistake from {T}.', clears: 'The librarian\'s note: "{S} shut in the reading room, {T}. My apologies."' }];
 
 function makeCfg(N, help, o = {}) {
   const f = curve(N), e = easyOf(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
@@ -80,13 +124,14 @@ function newGame(N, o = {}) {
   return G;
 }
 // ---------- making a case: the truth first, then the clues ----------
-function makeCase(G, R, c) { const P = PLACES[c.place], K = CRIMES[c.kind], shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  const names = shuffle(NAMES.slice()), roles = shuffle(P.roles.slice()), roomNames = shuffle(P.rooms.slice());
-  const crimeRoom = roomNames[0], obj = pick(R, K.what), how = (R() * 4) | 0, when = 1 + ((R() * 3) | 0);
+function makeCase(G, R, c) { const P = PLACES[c.place], K0 = CRIMES[c.kind], four = [], shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  while (four.length < 4) four.push(dealIf('how.' + c.kind, K0.how, q => !four.includes(q), R)); const K = Object.assign({}, K0, { how: four });      /* four of this crime's seven ways are on the sheet in any one case */
+  const names = [], roles = shuffle(P.roles.slice()), roomNames = shuffle(P.rooms.slice()); while (names.length < c.sus) names.push(dealIf('name', NAMES, q => !names.includes(q), R));
+  const crimeRoom = roomNames[0], obj = K.what[deal('what.' + c.kind, K.what.length, R)], how = (R() * 4) | 0, when = 1 + ((R() * 3) | 0);
   const S = []; for (let i = 0; i < c.sus; i++) S.push({ i, name: names[i], role: roles[i % roles.length], look: [R(), R(), R()], asked: {}, patience: 3, cleared: false });
   const culprit = (R() * S.length) | 0, herrings = []; while (herrings.length < Math.min(c.herrings, S.length - 1)) { const h = (R() * S.length) | 0; if (h !== culprit && !herrings.includes(h)) herrings.push(h); }
   // where everyone says they were (and where they really were)
-  const others = roomNames.slice(1); S.forEach((s, i) => { s.claim = others[i % others.length]; s.truth = i === culprit ? crimeRoom : herrings.includes(i) ? 'the garden' : s.claim; if (herrings.includes(i)) s.secret = pick(R, SECRET); });
+  const others = roomNames.slice(1); S.forEach((s, i) => { s.claim = others[i % others.length]; s.truth = i === culprit ? crimeRoom : herrings.includes(i) ? 'the garden' : s.claim; if (herrings.includes(i)) s.secret = dealIf('secret', SECRET, q => !S.some(o => o.secret === q), R); });
   // the rooms you can search, and their furniture (the crime room always; items needed by the clues always present)
   const vis = roomNames.slice(0, c.rooms), rooms = vis.map((nm, ri) => ({ name: nm, items: [] })), meth = K.how[how];
   const needs = [{ room: 0, kind: meth.item }];
@@ -116,7 +161,7 @@ function goRoom(G, i) { if (G.over || !G.rooms[i]) return false; G.room = i; G.i
 function tapScene(G, x, z) { if (G.over) return false; const r = G.rooms[G.room]; let best = null, bd = 1e9; for (const it of r.items) { const d = Math.hypot(it.x - x, it.z - z); if (d < bd) { bd = d; best = it; } }
   if (!best || bd > best.r * 1.4) return false; return inspect(G, r.items.indexOf(best)); }
 function inspect(G, j) { const r = G.rooms[G.room], it = r.items[j]; if (!it) return false; G.insp = { j, yaw: 0, it }; it.seen = true; G.acts++; G.ev.push({ k: 'inspect', kind: it.kind });
-  const cl = it.clue != null ? clue(G, it.clue) : null; if (cl && !cl.hidden) findClue(G, cl); else if (!cl) G.ev.push({ k: 'nothing', text: FILL[it.kind] }); else G.ev.push({ k: 'nothing', text: FILL[it.kind] }); return true; }
+  const cl = it.clue != null ? clue(G, it.clue) : null; if (cl && !cl.hidden) findClue(G, cl); else if (!cl) G.ev.push({ k: 'nothing', text: fillOf(G, it.kind) }); else G.ev.push({ k: 'nothing', text: fillOf(G, it.kind) }); return true; }
 function turnInspect(G, d) { if (!G.insp) return false; G.insp.yaw += d; return true; }
 const faceNow = G => { const y = ((G.insp.yaw % TAU) + TAU) % TAU; return Math.round(y / (Math.PI / 2)) % 4; };
 function tapInspect(G, u, v) { const I = G.insp; if (!I || G.over) return false; const cl = I.it.clue != null ? clue(G, I.it.clue) : null;

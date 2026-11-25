@@ -81,6 +81,16 @@ check it; tell him which were done, with their links). **A press takes the card 
 the card is drawn (`data-in`), not by whether the press changed anything (the fault of 25 Nov: a note typed first had already moved the game to To
 fix without moving its card, so NEEDS FIXING "did nothing"). ALL shows every game grouped by its list. UNDO, and WRITE IT when a game was sent with
 nothing written, are in the line at the bottom.
+**Games of combinations never run dry** (his words, 25 Nov 2026, 21:43, a GENERAL fix: "all the ones that has options, the ones that you have to have
+combinations, like judge... heaven and hell... a vet... I need you to make way more combinations within those games that require them... it keeps on coming,
+something novel each time. Someone can play this game for years, and they only see something similar to something else only, like once in a blue moon").
+A game whose rounds are drawn from written lists (cases, patients, customers, orders, troubles, briefs, drinks, jobs) has (1) lists many times longer than one
+sitting can use, built from several parts that multiply (who x what x how x twist), and (2) **the deck that remembers**: `deal(name, n, R)`, `dealOf`, `dealIf`
+(the block at the top of the lists in `part2.js`; copy it from The Bench): each list is dealt in a shuffled order KEPT ON THE PHONE, so nothing comes round again
+until everything else in its list has. In the robots' fast games (HEADLESS) the deck is plain luck from the game's own dice and takes NO EXTRA dice for
+anything added, so measured games stay as they were. `python3 tools/test_decks.py` proves it for every such game. The fourteen that have it, what each
+holds and what was looked at and left: `specs/combinations-2026-11-25.md`. A new game of this kind starts with both. This reaches good and okay games too
+(he asked for it by kind of game).
 The page is built by `python3 tools/review_page.py` and proved by `python3 tools/test_review_page.py` (what he types reaches the
 store, comes back on a phone that has forgotten everything, survives no signal). `python3 tools/small_screen.py` opens every
 card of every game on a 360 x 640 phone and reports buttons that cannot be reached.

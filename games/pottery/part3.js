@@ -90,7 +90,7 @@ function draw(now, dt) {
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(40,28,20,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
-function layout(G) { const bw = (W - 50) / 4, y = H - 70 * k; return { modes: ['pull', 'shape', 'trim', 'done'].map((m, i) => ({ m, x: 10 + i * (bw + 10), y, w: bw, h: 52 * k })), glaze: GLAZES.map((g, i) => ({ i, x: W / 2 + (i - 2.5) * 58 * k, y: H - 150 * k, r: 24 * k })) }; }
+function layout(G) { const bw = (W - 50) / 4, y = H - 70 * k; return { modes: ['pull', 'shape', 'trim', 'done'].map((m, i) => ({ m, x: 10 + i * (bw + 10), y, w: bw, h: 52 * k })), glaze: (G && G.ord && G.ord.bench ? G.ord.bench : [0, 1, 2, 3, 4, 5]).map((gi, i) => ({ i: gi, x: W / 2 + (i - 2.5) * 58 * k, y: H - 150 * k, r: 24 * k })) }; }
 function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G);
   // the order card
   { const x = 12, y = 56 * k, w = 128 * k, h = 118 * k; ctx.fillStyle = 'rgba(255,248,232,.95)'; rrect(x, y, w, h, 8); ctx.fill(); ctx.strokeStyle = 'rgba(90,60,30,.4)'; ctx.lineWidth = 1; rrect(x, y, w, h, 8); ctx.stroke();
@@ -107,7 +107,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G);
   // centring: the pressure gauge with its green band
   if (G.phase === 'center') { const gx = W / 2 - 110 * k, gy = H - 120 * k, gw = 220 * k; ctx.fillStyle = 'rgba(40,28,20,.6)'; rrect(gx, gy, gw, 18 * k, 9); ctx.fill(); ctx.fillStyle = 'rgba(143,224,171,.7)'; ctx.fillRect(gx + gw * 0.42, gy, gw * 0.36, 18 * k);
     const px = gx + gw * G.press; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(px, gy - 4); ctx.lineTo(px - 7 * k, gy - 14 * k); ctx.lineTo(px + 7 * k, gy - 14 * k); ctx.fill();
-    txt(G.holding ? (G.press > 0.78 ? 'too hard' : G.press < 0.42 ? 'press a little more' : 'good: hold it') : 'HOLD ON THE CLAY AND PRESS (DRAG DOWN)', W / 2, gy - 30 * k, '#fff', `700 ${Math.round(14 * k)}px ${BC}`);
+    txt(G.holding ? (G.press > 0.78 ? 'too hard' : G.press < 0.42 ? 'press a little more' : 'good: hold it') : G.lesson ? 'HOLD ON THE CLAY AND PRESS (DRAG DOWN)' : '', W / 2,      /* what to do is said only in the tutorial (his rule of 24 Nov); what is happening (too hard, a little more, good) is said always */ gy - 30 * k, '#fff', `700 ${Math.round(14 * k)}px ${BC}`);
     const wb = clamp(1 - G.wob, 0, 1); ctx.fillStyle = 'rgba(40,28,20,.6)'; rrect(gx, gy + 30 * k, gw, 8 * k, 4); ctx.fill(); ctx.fillStyle = '#ffd36a'; rrect(gx, gy + 30 * k, gw * wb, 8 * k, 4); ctx.fill(); txt('centred', gx + gw / 2, gy + 50 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(11 * k)}px ${BC}`); }
   // the tools
   if (G.phase === 'pull' || G.phase === 'shape') { const lab = { pull: '⬆ PULL', shape: '✋ SHAPE', trim: '✂ TRIM', done: '✔ DONE' }; L.modes.forEach(b => { const on = b.m === ui.mode || (b.m === 'shape' && G.phase === 'shape' && ui.mode !== 'trim') || (b.m === 'pull' && G.phase === 'pull' && ui.mode !== 'trim'); const dis = (b.m !== 'pull' && G.pulls === 0);

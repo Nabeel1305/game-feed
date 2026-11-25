@@ -237,6 +237,19 @@ note first") is also a press that does nothing: the button he presses wins, and 
 - **Food on a plate is arranged, not dropped.** Short Order: a thing has a board shape and a plate shape (`form`), and the plate lays them out
   (`plateLayout`): a stack for a burger, side by side for a meal.
 
+### The night of 25 Nov: games of combinations (the record is `specs/combinations-2026-11-25.md`)
+- **Lists many times longer than a sitting, in parts that multiply, and a deck that remembers.** `deal`, `dealOf`, `dealIf` (top of the lists in
+  `part2.js` of the fourteen games; `tools/test_decks.py` proves them). A shuffled order kept on the phone beats plain luck: with luck a list of 120
+  repeats something within a dozen draws; with the deck never before the 121st.
+- **New content takes no extra dice in the robots' games.** One more `R()` shifts every game that follows: Country Vet's random-mover won a game it
+  had never won, Haggle's level 1 fell from 10/10 to 7/10, and nothing a player meets had changed. In HEADLESS a new line uses its first form.
+- **Check a list by script before looking**: duplicates, a reference to something that does not exist (a job's field, a drink's bottle, a fix a
+  fixture does not have), the longest line against the old longest, and for anything with rules (a dress with no clash, a drink that fits its glass)
+  that at least one good answer exists.
+- **A rare rate needs a big sample; a ceiling needs another measure.** (The Bench's blind test; Detective's "it gets harder".)
+- **Keep what the player has learnt.** Haggle's maker names tell him what a thing is worth; they were not varied. The vet's, plumber's and dentist's
+  new work uses the tools already taught.
+
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.
 1. **Spamming cannot win. On any level, the first included.** (15 Nov 2026, of Plunder's first build: "Spamming cannot win... Just repeatedly doing something cannot win. There needs to be a little bit of skill. This is why I love the boxing game.") Any repeated move, **at any speed**, must lose on **every** level: mashing, a slow steady beat of one move, a short string of moves on a beat, a control held over or wiggled, a button pressed on a count. "Early levels are for learning" (rule 0) means generous windows and soft punishment for someone who is trying to do the right thing; it never means a rhythm works. How to get there (all of it learned the hard way on Plunder, see its notes):

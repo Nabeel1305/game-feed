@@ -5236,12 +5236,32 @@ const RULES = [
 ];
 // the animals and what can be wrong with them
 const ANIMALS = {
-  dog: { name: 'dog', names: ['Bella', 'Max', 'Rex', 'Daisy', 'Buddy'], temper: 0.9, hoofed: false, from: 1, probs: ['thorn', 'cut', 'shot', 'mud', 'ear'] },
-  cow: { name: 'cow', names: ['Clover', 'Buttercup', 'Rosie', 'Mabel', 'Bessie'], temper: 1.0, hoofed: true, from: 2, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud'] },
-  sheep: { name: 'sheep', names: ['Woolly', 'Dolly', 'Shaun', 'Fern', 'Pip'], temper: 1.1, hoofed: true, from: 2, probs: ['mud', 'hoof', 'thorn', 'ear'] },
-  horse: { name: 'horse', names: ['Duke', 'Star', 'Ginger', 'Nutmeg', 'Thunder'], temper: 1.25, hoofed: true, from: 3, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud'] },
-  pig: { name: 'pig', names: ['Peggy', 'Truffle', 'Wilbur', 'Hamlet', 'Rosa'], temper: 1.0, hoofed: true, from: 3, probs: ['shot', 'cut', 'mud', 'ear'] },
-  goat: { name: 'goat', names: ['Billy', 'Nanny', 'Pepper', 'Heidi', 'Gruff'], temper: 1.15, hoofed: true, from: 4, probs: ['hoof', 'ear', 'thorn', 'shot'] },
+  dog: { name: 'dog', names: ['Bella', 'Max', 'Rex', 'Daisy', 'Buddy', 'Scout', 'Poppy', 'Bruno', 'Tess', 'Monty', 'Luna', 'Jasper', 'Biscuit', 'Shadow'], temper: 0.9, hoofed: false, from: 1, probs: ['thorn', 'cut', 'shot', 'mud', 'ear'] },
+  cow: { name: 'cow', names: ['Clover', 'Buttercup', 'Rosie', 'Mabel', 'Bessie', 'Daffodil', 'Hazel', 'Primrose', 'Molly', 'Dot', 'Gertie', 'Flora', 'Queenie', 'Marigold'], temper: 1.0, hoofed: true, from: 2, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud'] },
+  sheep: { name: 'sheep', names: ['Woolly', 'Dolly', 'Shaun', 'Fern', 'Pip', 'Blossom', 'Cotton', 'Mopsy', 'Barley', 'Snowy', 'Nell', 'Tuppence', 'Bramble', 'Misty'], temper: 1.1, hoofed: true, from: 2, probs: ['mud', 'hoof', 'thorn', 'ear'] },
+  horse: { name: 'horse', names: ['Duke', 'Star', 'Ginger', 'Nutmeg', 'Thunder', 'Copper', 'Willow', 'Captain', 'Juniper', 'Chestnut', 'Biscuit', 'Major', 'Bonnie', 'Flint'], temper: 1.25, hoofed: true, from: 3, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud'] },
+  pig: { name: 'pig', names: ['Peggy', 'Truffle', 'Wilbur', 'Hamlet', 'Rosa', 'Bubbles', 'Acorn', 'Pickle', 'Dumpling', 'Petal', 'Rasher', 'Snuffles', 'Olive', 'Curly'], temper: 1.0, hoofed: true, from: 3, probs: ['shot', 'cut', 'mud', 'ear'] },
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): six animals were the whole practice. Twenty-two now, coming in as the
+  // levels go by; each is drawn from the same parts as one of the six (BODY in part3), with its own size, coat and temper.
+  sheepdog: { name: 'sheepdog', names: ['Meg', 'Jess', 'Fly', 'Moss', 'Gyp', 'Roy', 'Nell', 'Cap', 'Bess', 'Glen', 'Tweed', 'Skye'], temper: 0.85, hoofed: false, from: 2, probs: ['thorn', 'cut', 'shot', 'mud', 'ear'] },
+  lamb: { name: 'lamb', names: ['Pudding', 'Tiny', 'Bobbin', 'Sprout', 'Minty', 'Dinky', 'Pom', 'Fleece', 'Button', 'Skip'], temper: 1.2, hoofed: true, from: 4, probs: ['mud', 'thorn', 'ear', 'shot'] },
+  pony: { name: 'pony', names: ['Bramble', 'Toffee', 'Peanut', 'Merrylegs', 'Dusty', 'Conker', 'Pippin', 'Sugar', 'Smudge', 'Honey'], temper: 1.15, hoofed: true, from: 5, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud'] },
+  calf: { name: 'calf', names: ['Bluebell', 'Dandelion', 'Patch', 'Moo', 'Freckle', 'Nutkin', 'Sorrel', 'Midge', 'Tansy', 'Bud'], temper: 1.2, hoofed: true, from: 5, probs: ['thorn', 'cut', 'shot', 'mud', 'ear'] },
+  terrier: { name: 'terrier', names: ['Scamp', 'Rags', 'Digger', 'Pepper', 'Ziggy', 'Nipper', 'Tuppy', 'Badger', 'Fizz', 'Jock'], temper: 1.05, hoofed: false, from: 6, probs: ['thorn', 'cut', 'shot', 'ear', 'mud'] },
+  cat: { name: 'farm cat', names: ['Smokey', 'Tiger', 'Mittens', 'Ginger', 'Sooty', 'Marmalade', 'Tabitha', 'Felix', 'Purdy', 'Socks'], temper: 1.3, hoofed: false, from: 6, probs: ['thorn', 'cut', 'shot', 'ear'] },
+  piglet: { name: 'piglet', names: ['Squeak', 'Pip', 'Bacon Bit', 'Truffles', 'Pinky', 'Wiggle', 'Rollo', 'Peaches', 'Snout', 'Dot'], temper: 1.25, hoofed: true, from: 6, probs: ['shot', 'cut', 'mud', 'ear'] },
+  donkey: { name: 'donkey', names: ['Eeyore', 'Jenny', 'Moses', 'Dolores', 'Barnaby', 'Thistle', 'Noddy', 'Hetty', 'Solomon', 'Oats'], temper: 1.1, hoofed: true, from: 7, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud', 'ear'] },
+  kid: { name: 'kid goat', names: ['Skippy', 'Bounce', 'Nibbles', 'Tuft', 'Hopscotch', 'Pogo', 'Clove', 'Bleat', 'Fidget', 'Twig'], temper: 1.25, hoofed: true, from: 7, probs: ['thorn', 'ear', 'shot', 'cut'] },
+  ram: { name: 'ram', names: ['Rambo', 'Hector', 'Angus', 'Boris', 'Samson', 'Curly', 'Tup', 'Goliath', 'Bruce', 'Fergus'], temper: 1.25, hoofed: true, from: 8, probs: ['hoof', 'mud', 'thorn', 'shot'] },
+  bull: { name: 'bull', names: ['Ferdinand', 'Brutus', 'Titan', 'Hercules', 'Monty', 'Boss', 'Duke', 'Tank', 'Caesar', 'Big Bill'], temper: 1.35, hoofed: true, from: 9, probs: ['hoof', 'thorn', 'cut', 'shot'] },
+  foal: { name: 'foal', names: ['Comet', 'Spindle', 'Dancer', 'Wisp', 'Sparrow', 'Lark', 'Pixie', 'Dash', 'Minnow', 'Jet'], temper: 1.35, hoofed: true, from: 9, probs: ['thorn', 'cut', 'shot', 'mud'] },
+  blacksheep: { name: 'black sheep', names: ['Sooty', 'Inky', 'Raven', 'Coal', 'Liquorice', 'Shadow', 'Ebony', 'Pepper', 'Midnight', 'Treacle'], temper: 1.1, hoofed: true, from: 10, probs: ['mud', 'hoof', 'thorn', 'ear'] },
+  spottedpig: { name: 'spotted pig', names: ['Domino', 'Splodge', 'Patches', 'Dotty', 'Marble', 'Blot', 'Freckles', 'Pebbles', 'Smudge', 'Speckle'], temper: 1.05, hoofed: true, from: 10, probs: ['shot', 'cut', 'mud', 'ear'] },
+  billy: { name: 'billy goat', names: ['Gruff', 'Rufus', 'Capricorn', 'Butch', 'Whisker', 'Old Nick', 'Horatio', 'Zeus', 'Ramsay', 'Clatter'], temper: 1.3, hoofed: true, from: 11, probs: ['hoof', 'ear', 'thorn', 'shot', 'cut'] },
+  highland: { name: 'highland cow', names: ['Heather', 'Morag', 'Fiona', 'Isla', 'Hamish', 'Shona', 'Bonnie', 'Thistle', 'Kirsty', 'Flora'], temper: 1.1, hoofed: true, from: 12, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud'] },
+  carthorse: { name: 'carthorse', names: ['Samson', 'Goliath', 'Boxer', 'Clyde', 'Dobbin', 'Prince', 'Sergeant', 'Old Tom', 'Bertha', 'Punch'], temper: 1.0, hoofed: true, from: 13, probs: ['hoof', 'thorn', 'cut', 'shot', 'mud'] },
+  alpaca: { name: 'alpaca', names: ['Pablo', 'Inca', 'Fuzz', 'Llama Bean', 'Cusco', 'Noodle', 'Paddington', 'Mocha', 'Tumble', 'Chai'], temper: 1.3, hoofed: false, from: 14, probs: ['thorn', 'mud', 'shot', 'ear', 'cut'] },
+  goat: { name: 'goat', names: ['Billy', 'Nanny', 'Pepper', 'Heidi', 'Gruff', 'Clover', 'Nettle', 'Toffee', 'Mischief', 'Thistle', 'Bandit', 'Whiskers', 'Juno', 'Pebble'], temper: 1.15, hoofed: true, from: 4, probs: ['hoof', 'ear', 'thorn', 'shot'] },
 };
 // what each problem looks like on the card, where it can be, and its steps (each step: the tool and how it is used)
 const PROBS = {
@@ -5251,6 +5271,29 @@ const PROBS = {
   cut: { card: 'Scratched', name: 'a cut', spots: ['front', 'hind'], steps: ['spray', 'bandage'], from: 3 },
   shot: { card: 'Off her food', name: 'a fever', spots: ['neck'], steps: ['syringe'], from: 3 },
   ear: { card: 'Shaking her head', name: 'a sore ear', spots: ['ear'], steps: ['drops'], from: 4 },
+};
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
+// the same trouble shows itself in many ways: what the card says (the treatment is the same; the card is the farmer's word for it, the animal shows the rest)
+const SIGNS = {
+  thorn: ['Limping', 'Holding a foot up', 'Hopping on three legs', 'Licking at a foot', 'Will not put a foot down', 'Came in hobbling'],
+  hoof: ['Limping', 'Hooves clicking', 'Walking on tiptoe', 'Standing oddly', 'Slow to walk', 'Rocking back on her heels'],
+  mud: ['Filthy', 'Rolled in something', 'Caked in mud', 'Coat all matted', 'Came through the ditch', 'Stuck in the bog all night'],
+  cut: ['Scratched', 'Caught on the wire', 'Bleeding a little', 'A nasty graze', 'Nipped by another', 'Went through the hedge'],
+  shot: ['Off her food', 'Running a fever', 'Dull and listless', 'Shivering', 'Needs her jab', 'Coughing since Sunday'],
+  ear: ['Shaking her head', 'Scratching an ear', 'One ear drooping', 'Head on one side', 'Ear hot and red', 'Flinches when her ear is touched'],
 };
 const TOOLS = ['hand', 'tweezers', 'rasp', 'spray', 'bandage', 'syringe', 'brush', 'drops'];
 const TOOLNAME = { hand: 'Hand', tweezers: 'Tweezers', rasp: 'Hoof rasp', spray: 'Clean spray', bandage: 'Bandage', syringe: 'Injection', brush: 'Brush', drops: 'Ear drops' };
@@ -5289,17 +5332,17 @@ function newPatient(G, only) {
   let animals = Object.keys(ANIMALS).filter(a => ANIMALS[a].from <= Math.max(G.N, 1));
   if (kinds) animals = animals.filter(a => ANIMALS[a].probs.includes(kinds[0]));
   if (L && L.animal) animals = [L.animal];
-  const a = pick(R, animals), A = ANIMALS[a];
+  const a = L || kinds ? pick(R, animals) : dealIf('animal', Object.keys(ANIMALS), q => animals.includes(q), R), A = ANIMALS[a];      /* outside a lesson: from the deck, so every animal he has met comes round before one comes twice */
   const pool = A.probs.filter(p => PROBS[p].from <= Math.max(G.N, 1) && (!PROBS[p].hoofed || A.hoofed));
   const want = kinds ? 1 : Math.max(1, Math.min(c.probsMax, 1 + Math.floor(R() * c.probsMax + (G.N > 20 ? 0.4 : 0))));
   const probs = [], used = new Set();
   for (let tries = 0; probs.length < want && tries < 40; tries++) {
     const kind = kinds ? kinds[0] : pick(R, pool), P = PROBS[kind], spot = pick(R, P.spots.filter(s => !used.has(s)));
     if (!spot || probs.some(p => p.kind === kind)) continue; used.add(spot);
-    probs.push({ kind, spot, step: 0, prog: 0, len: kind === 'hoof' ? 0.75 + R() * 0.25 : 0, done: false, sore: false });
+    probs.push({ kind, sign: L || (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : deal('sign.' + kind, SIGNS[kind].length, R),      /* (the robots' games take no dice for it: their games stay as they were measured) */ spot, step: 0, prog: 0, len: kind === 'hoof' ? 0.75 + R() * 0.25 : 0, done: false, sore: false });
   }
   const face = R() < 0.5 ? 1 : -1;
-  G.pt = { animal: a, name: pick(R, A.names), face, probs, stress: L && L.nervous != null ? L.nervous : L ? 0.15 : Math.min(0.6, c.arrive * (0.85 + R() * 0.3) * A.temper), phase: 'in', pt: 0, rough: 0, lastStroke: -9,
+  G.pt = { animal: a, name: L ? pick(R, A.names) : A.names[deal('name.' + a, A.names.length, R)], face, probs, stress: L && L.nervous != null ? L.nervous : L ? 0.15 : Math.min(0.6, c.arrive * (0.85 + R() * 0.3) * A.temper), phase: 'in', pt: 0, rough: 0, lastStroke: -9,
     twitchAt: 0, tele: false, shakeAt: 0, shaking: 0, id: ++G.seen };
   schedule(G); G.tool = 'hand'; G.hold = null; G.focus = null;
   G.ev.push({ k: 'arrive', animal: a, name: G.pt.name });
@@ -5511,6 +5554,25 @@ const BODY = {
   sheep: { L: 0.95, leg: 0.4, ry: 0.3, rz: 0.27, neck: [0.18, 0.5, 0.09], head: 0.11, muzzle: [0.08, 0.07, 0.06], ears: 'side', tail: [0.14, 0.05, 1.2], coat: 0xe9e1cf, belly: 0xe9e1cf, wool: true, face: 0x2a2522, legC: 0x2a2522, foot: 'hoof' },
   horse: { L: 1.55, leg: 0.95, ry: 0.32, rz: 0.25, neck: [0.62, 0.95, 0.15], head: 0.24, muzzle: [0.2, 0.1, 0.09], ears: 'up', tail: [0.75, 0.06, 0.55], coat: 0x7b3f1d, belly: 0x7b3f1d, mane: 0x2a1a10, foot: 'hoof', blaze: true },
   pig: { L: 1.05, leg: 0.28, ry: 0.3, rz: 0.27, neck: [0.1, 0.1, 0.2], head: 0.17, muzzle: [0.1, 0.08, 0.08], ears: 'flop', tail: [0.12, 0.02, -0.4], coat: 0xeaa99a, belly: 0xf0b7a8, foot: 'hoof', snout: true },
+  // the sixteen that came on 25 Nov 2026: each is built as one of the six (base), with its own measures and coat
+  sheepdog: { base: 'dog', L: 0.8, leg: 0.36, ry: 0.16, rz: 0.13, neck: [0.22, 0.62, 0.075], head: 0.11, muzzle: [0.115, 0.05, 0.05], ears: 'side', tail: [0.4, 0.04, -0.3], coat: 0x1c1c1e, belly: 0xf4f1ea, legC: 0xf4f1ea, foot: 'paw' },
+  terrier: { base: 'dog', L: 0.5, leg: 0.22, ry: 0.115, rz: 0.095, neck: [0.14, 0.7, 0.055], head: 0.085, muzzle: [0.075, 0.04, 0.04], ears: 'up', tail: [0.16, 0.022, -1.2], coat: 0xf1ece0, belly: 0xf1ece0, legC: null, foot: 'paw' },
+  cat: { base: 'dog', L: 0.48, leg: 0.2, ry: 0.1, rz: 0.085, neck: [0.1, 0.55, 0.05], head: 0.085, muzzle: [0.035, 0.035, 0.04], ears: 'up', tail: [0.42, 0.02, -1.1], coat: 0xd9862f, belly: 0xf3e2c8, legC: null, foot: 'paw' },
+  calf: { base: 'cow', L: 1.0, leg: 0.56, ry: 0.24, rz: 0.2, neck: [0.3, 0.32, 0.11], head: 0.15, muzzle: [0.11, 0.085, 0.085], ears: 'side', tail: [0.5, 0.025, 1.35], coat: 0x8a5a36, belly: 0x8a5a36, patches: 0xf2efe8, foot: 'hoof', nose: 0xe6a2a0 },
+  bull: { base: 'cow', L: 1.75, leg: 0.74, ry: 0.42, rz: 0.36, neck: [0.44, 0.2, 0.21], head: 0.23, muzzle: [0.18, 0.13, 0.13], ears: 'side', tail: [0.8, 0.04, 1.35], coat: 0x2a2320, belly: 0x2a2320, foot: 'hoof', nose: 0x8a6a66, horns: true },
+  highland: { base: 'cow', L: 1.45, leg: 0.6, ry: 0.36, rz: 0.31, neck: [0.38, 0.25, 0.18], head: 0.2, muzzle: [0.15, 0.115, 0.115], ears: 'side', tail: [0.7, 0.045, 1.35], coat: 0xb5692c, belly: 0xb5692c, foot: 'hoof', nose: 0xc9958c, horns: true, wool: true, face: 0xb5692c, legC: 0x9a5524 },
+  lamb: { base: 'sheep', L: 0.58, leg: 0.3, ry: 0.19, rz: 0.17, neck: [0.13, 0.6, 0.06], head: 0.085, muzzle: [0.06, 0.05, 0.045], ears: 'side', tail: [0.16, 0.035, 1.0], coat: 0xf6f1e4, belly: 0xf6f1e4, wool: true, face: 0xf1e9da, legC: 0xf1e9da, foot: 'hoof' },
+  ram: { base: 'sheep', L: 1.05, leg: 0.42, ry: 0.33, rz: 0.3, neck: [0.2, 0.5, 0.11], head: 0.125, muzzle: [0.09, 0.075, 0.065], ears: 'side', tail: [0.14, 0.05, 1.2], coat: 0xd9cfb8, belly: 0xd9cfb8, wool: true, face: 0xe6dccb, legC: 0xcfc4ae, foot: 'hoof', horns: true },
+  blacksheep: { base: 'sheep', L: 0.95, leg: 0.4, ry: 0.3, rz: 0.27, neck: [0.18, 0.5, 0.09], head: 0.11, muzzle: [0.08, 0.07, 0.06], ears: 'side', tail: [0.14, 0.05, 1.2], coat: 0x3a3430, belly: 0x3a3430, wool: true, face: 0x16130f, legC: 0x16130f, foot: 'hoof' },
+  alpaca: { base: 'sheep', L: 0.95, leg: 0.62, ry: 0.27, rz: 0.23, neck: [0.62, 1.3, 0.1], head: 0.115, muzzle: [0.09, 0.062, 0.058], ears: 'up', tail: [0.12, 0.05, 0.9], coat: 0xc9a57a, belly: 0xc9a57a, wool: true, face: 0xd8b98f, legC: 0xb8946a, foot: 'hoof' },
+  pony: { base: 'horse', L: 1.15, leg: 0.62, ry: 0.29, rz: 0.23, neck: [0.44, 0.9, 0.13], head: 0.19, muzzle: [0.15, 0.085, 0.075], ears: 'up', tail: [0.6, 0.06, 0.55], coat: 0xd8c08a, belly: 0xd8c08a, mane: 0xf3ead0, foot: 'hoof' },
+  donkey: { base: 'horse', L: 1.25, leg: 0.68, ry: 0.3, rz: 0.24, neck: [0.44, 0.85, 0.135], head: 0.22, muzzle: [0.17, 0.1, 0.09], ears: 'up', tail: [0.55, 0.03, 0.75], coat: 0x8d8a85, belly: 0xcfcac2, mane: 0x3a3632, foot: 'hoof' },
+  foal: { base: 'horse', L: 0.95, leg: 0.72, ry: 0.2, rz: 0.16, neck: [0.4, 1.0, 0.09], head: 0.15, muzzle: [0.12, 0.065, 0.06], ears: 'up', tail: [0.34, 0.04, 0.6], coat: 0x9a5a2e, belly: 0x9a5a2e, mane: 0x2a1a10, foot: 'hoof', blaze: true },
+  carthorse: { base: 'horse', L: 1.75, leg: 1.02, ry: 0.38, rz: 0.31, neck: [0.66, 0.9, 0.19], head: 0.27, muzzle: [0.22, 0.115, 0.105], ears: 'up', tail: [0.85, 0.07, 0.5], coat: 0x3d3029, belly: 0x3d3029, mane: 0x141010, foot: 'hoof', blaze: true },
+  piglet: { base: 'pig', L: 0.6, leg: 0.17, ry: 0.17, rz: 0.155, neck: [0.06, 0.1, 0.11], head: 0.105, muzzle: [0.06, 0.05, 0.05], ears: 'flop', tail: [0.08, 0.014, -0.4], coat: 0xf2b8ac, belly: 0xf6c6bb, foot: 'hoof', snout: true },
+  spottedpig: { base: 'pig', L: 1.1, leg: 0.3, ry: 0.32, rz: 0.29, neck: [0.1, 0.1, 0.21], head: 0.18, muzzle: [0.105, 0.085, 0.085], ears: 'flop', tail: [0.12, 0.02, -0.4], coat: 0xe9b8a4, belly: 0xf0c4b4, patches: 0x2a2422, foot: 'hoof', snout: true },
+  kid: { base: 'goat', L: 0.55, leg: 0.34, ry: 0.13, rz: 0.11, neck: [0.2, 0.95, 0.05], head: 0.085, muzzle: [0.065, 0.04, 0.04], ears: 'side', tail: [0.1, 0.022, -1.0], coat: 0x8a6a4a, belly: 0xe8e0d2, foot: 'hoof' },
+  billy: { base: 'goat', L: 1.0, leg: 0.54, ry: 0.24, rz: 0.2, neck: [0.34, 0.9, 0.095], head: 0.135, muzzle: [0.11, 0.065, 0.06], ears: 'side', tail: [0.14, 0.03, -1.0], coat: 0x4a3a30, belly: 0x4a3a30, foot: 'hoof', horns: true, beard: true },
   goat: { L: 0.9, leg: 0.5, ry: 0.21, rz: 0.17, neck: [0.32, 0.9, 0.08], head: 0.12, muzzle: [0.1, 0.06, 0.055], ears: 'side', tail: [0.14, 0.03, -1.0], coat: 0xe8e0d2, belly: 0xe8e0d2, patches: 0x6b4428, foot: 'hoof', horns: true, beard: true },
 };
 function coatTex(base, spot, seed) {
@@ -5522,7 +5584,7 @@ function coatTex(base, spot, seed) {
   const tx = new T.CanvasTexture(cvs); tx.colorSpace = T.SRGBColorSpace; tx.wrapS = tx.wrapT = T.RepeatWrapping; return tx;
 }
 function buildAnimal(kind) {
-  const T = THREE, B = BODY[kind], g = new T.Group(), R = W3.rng(kind.length * 31);
+  const T = THREE, B = BODY[kind], g = new T.Group(), R = W3.rng(kind.length * 31); kind = B.base || kind;      /* the parts special to a kind (a horse's muzzle, a cow's udder, a sheep's legs) go by the animal it is built as */
   const fur = new T.MeshStandardMaterial({ color: 0xffffff, map: coatTex(B.coat, B.patches, kind.length * 7), roughness: 0.85 });
   const plain = c => new T.MeshStandardMaterial({ color: c, roughness: 0.8 });
   const legM = B.legC ? plain(B.legC) : fur, faceM = B.face ? plain(B.face) : fur, dark = new T.MeshStandardMaterial({ color: 0x141110, roughness: 0.35 });
@@ -5726,7 +5788,7 @@ function poseAnimal(G, p, A, t, dt) {
   // head: low when unwell, tossing when frightened, a shake for a sore ear; ears back when nervous
   const ill = p.probs.some(q => !q.done && q.kind === 'shot'), shake = p.shaking > 0 ? Math.sin(t * 38) * 0.5 * Math.min(1, p.shaking / 0.3) : 0;
   u.head.rotation.x = shake; u.head.rotation.y = Math.sin(t * 0.6) * 0.1 + (s > 0.55 ? Math.sin(t * 5) * (s - 0.55) * 0.5 : 0);
-  const baseZ = p.animal === 'horse' ? -0.9 : 0; u.head.rotation.z = baseZ + (ill ? -0.35 : 0) + Math.sin(t * 0.9) * 0.04 - (p.phase === 'out' && !p.bolted ? 0 : 0);
+  const baseZ = (BODY[p.animal].base || p.animal) === 'horse' ? -0.9 : 0; u.head.rotation.z = baseZ + (ill ? -0.35 : 0) + Math.sin(t * 0.9) * 0.04 - (p.phase === 'out' && !p.bolted ? 0 : 0);
   u.ears.forEach(e => { const back = clamp((s - 0.3) * 1.8, 0, 1); e.rotation.x = e.userData.base + e.userData.s * (back * 0.8 + Math.max(0, Math.sin(t * 2.3 + e.userData.s)) * 0.12 + (ill ? 0.3 : 0)); e.rotation.z = -back * 0.6; e.userData.inner.material.color.setHex(p.probs.some(q => !q.done && q.kind === 'ear') ? 0xd8302a : 0xd88f86); });
   u.tail.rotation.x = Math.sin(t * (1.5 + s * 6)) * (0.15 + s * 0.6);
   // the problems on her
@@ -5766,7 +5828,7 @@ function hud(G) {
   if (G.lesson) lessonPanel(G);
   // the card: her name, what the owner noticed (ticked when fixed); the calm bar under it
   const ty = G.lesson ? H * 0.235 : 40 * k;
-  if (p) { const A = ANIMALS[p.animal], w = Math.min(W - 28, 250 * k), x = 14, items = p.probs.map(q => [PROBS[q.kind].card, q.done]), h = (44 + 15 * items.length) * k;
+  if (p) { const A = ANIMALS[p.animal], w = Math.min(W - 28, 250 * k), x = 14, items = p.probs.map(q => [(SIGNS[q.kind] && SIGNS[q.kind][q.sign | 0]) || PROBS[q.kind].card, q.done]), h = (44 + 15 * items.length) * k;
     ctx.save(); ctx.translate(x, ty); ctx.rotate(-0.012); ctx.fillStyle = '#f6efdc'; rrect(0, 0, w, h, 6); ctx.fill(); ctx.fillStyle = '#5a8a4a'; ctx.fillRect(0, 0, w, 5 * k);
     ctx.fillStyle = '#2b2b2b'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.fillText(`${p.name} the ${A.name}`, 10, 10 * k);
     ctx.font = `600 ${Math.round(12.5 * k)}px ${BC}`; items.forEach(([s, d], j) => { ctx.fillStyle = d ? '#4a8a4a' : '#5a4a3a'; ctx.fillText(`${d ? '✓' : '•'} ${s}`, 12, 30 * k + j * 15 * k); });
@@ -6004,7 +6066,7 @@ window.__sim = {
   frame() { draw(performance.now() / 1000, 1 / 60); },
   pickTool(t) { pickTool(G, t); }, touch(sp) { return !!touch(G, sp); }, stroke(v) { stroke(G, v); }, pull(d, dt) { pull(G, d, dt); }, rasp(a) { rasp(G, a); }, wrap(s) { wrap(G, s); }, brush(d) { brush(G, d); }, drop() { drop(G); }, lift() { lift(G); }, spotScreen, headTail, toolAt, trayRect, ui, get V3() { return V3; }, W3, newPatient(o) { newPatient(G, o); },
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

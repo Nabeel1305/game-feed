@@ -224,12 +224,14 @@
    "changes": [
     "On a phone the camera looks nearly straight down: the hob, the board and the food fill the lower two thirds of the screen (it was a dark wall above, small food, glare and a black strip below).",
     "25 Nov, 0.2.0 (his review): a tap on the board or any stroke is a chop; the ticket numbers and ticks the layers; tap the plate to take the top off; +1 tip built in order.",
-    "25 Nov evening, 0.3.0 (his final fix): the plate is dressed (burger stack with crown, plated meals side by side, things on toast), grill lines, flat salmon; 34 dishes, four new foods (cheese 5, bacon 8, mushroom 12, sausage 14)."
+    "25 Nov evening, 0.3.0 (his final fix): the plate is dressed (burger stack with crown, plated meals side by side, things on toast), grill lines, flat salmon; 34 dishes, four new foods (cheese 5, bacon 8, mushroom 12, sausage 14).",
+    "25 Nov night, 0.3.1 (his general fix: way more combinations): dishes mostly from the deck; the deck that remembers (nothing returns until its list is through)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 checks passed, 0 failed.).",
     "test_touch 8 pass; pictures of level 1 and level 5 looked at.",
-    "25 Nov evening: every dish checked makeable from its level's trays; twelve plates SEEN in close stills on a computer (both ways up), not on a phone."
+    "25 Nov evening: every dish checked makeable from its level's trays; twelve plates SEEN in close stills on a computer (both ways up), not on a phone.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [
     "Dragging food to the pan and a swipe to chop are the genre's own gestures: to judge by hand."
@@ -241,11 +243,13 @@
     "at level 1 the first animal is not on screen in the first seconds (empty barn floor); otherwise fine."
    ],
    "changes": [
-    "third pass, 22 Nov evening: the animal is in sight from the first instant (the barn stood empty for a second and a half)."
+    "third pass, 22 Nov evening: the animal is in sight from the first instant (the barn stood empty for a second and a half).",
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 22 animals (6), six signs for each trouble, more names; the deck that remembers (nothing returns until its list is through)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (13 checks passed, 0 failed.).",
-    "touch test 13 pass; picture looked at."
+    "touch test 13 pass; picture looked at.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": []
   },
@@ -268,9 +272,12 @@
   "hiring": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 34 jobs (8), 28 lines of work, 19 certificates, 80 lines about themselves; the deck that remembers (nothing returns until its list is through)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 checks passed, 0 failed.)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 checks passed, 0 failed.).",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [],
    "note": "fine (2D papers)."
@@ -392,12 +399,14 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "25 Nov evening, 0.2.1 (his final fix): 240 best/worst deeds (was 48), 72 small deeds (was 12), more names and causes; no deed twice in a day; 'in her sleep' no longer said of men."
+    "25 Nov evening, 0.2.1 (his final fix): 240 best/worst deeds (was 48), 72 small deeds (was 12), more names and causes; no deed twice in a day; 'in her sleep' no longer said of men.",
+    "25 Nov night, 0.2.2 (his general fix: way more combinations): the deeds are dealt from the deck; the deck that remembers (nothing returns until its list is through)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (6 checks passed, 0 failed.).",
     "third pass: its controls read through against his rule (obvious to a first-timer): a swipe to sort, with the three ways named on screen. Judged plain enough; nothing changed.",
-    "25 Nov evening: lists counted (each kind 7/7/6 by weight, longest line 46 letters as before); 30 days played by the computer: 311 of 312 deeds came up, none twice in a day; one card SEEN in a still."
+    "25 Nov evening: lists counted (each kind 7/7/6 by weight, longest line 46 letters as before); 30 days played by the computer: 311 of 312 deeds came up, none twice in a day; one card SEEN in a still.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [],
    "note": "fine (2D)."
@@ -624,20 +633,25 @@
     "it asks him to TYPE a sentence on a phone; should be dials/chips (prison, suspended, fine, community)."
    ],
    "changes": [
-    "A sentence builder: tap + Prison, + Fine, + Compensation and so on, then − and + to change the amount; the words appear in the box as if written. Typing still works (his idea: a sentence in your own words)."
+    "A sentence builder: tap + Prison, + Fine, + Compensation and so on, then − and + to change the amount; the words appear in the box as if written. Typing still works (his idea: a sentence in your own words).",
+    "25 Nov night, 0.3.0 (his general fix: way more combinations): 58 offences (29), four tellings each, 45 factors (19), more names, jobs, shops, places; the deck that remembers (nothing returns until its list is through)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (8 passed, 0 failed).",
-    "Built sentences read back correctly by the court's parser (prison, suspended, unpaid work, fine, compensation, probation, driving ban, discharge, not guilty); passed and confirmed by touch; test_touch 8 pass."
+    "Built sentences read back correctly by the court's parser (prison, suspended, unpaid work, fine, compensation, probation, driving ban, discharge, not guilty); passed and confirmed by touch; test_touch 8 pass.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": []
   },
   "haggle": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov night, 0.2.1 (his general fix: way more combinations): 40 reasons for selling, 48 names, things from the deck; the deck that remembers (nothing returns until its list is through)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [],
    "note": "fine (2D)."
@@ -691,9 +705,12 @@
   "spell": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 194 troubles (56), 48 villagers; the deck that remembers (nothing returns until its list is through)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (7 passed, 0 failed).",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [],
    "note": "fine (2D)."
@@ -875,10 +892,13 @@
   "plumber": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 35 kinds of call (21), 174 lines (63); the deck that remembers (nothing returns until its list is through)."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).",
-    "third pass: its controls read through against his rule (obvious to a first-timer): taps on the pipes. Judged plain enough; nothing changed."
+    "third pass: its controls read through against his rule (obvious to a first-timer): taps on the pipes. Judged plain enough; nothing changed.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [],
    "note": "fine (2D); labels in the house are tiny."
@@ -1048,11 +1068,13 @@
     "CRITICAL: the icing is coarse square blocks; a cake game has to look delicious."
    ],
    "changes": [
-    "Icing is drawn as soft round dabs with one smoothing pass, not square blocks."
+    "Icing is drawn as soft round dabs with one smoothing pass, not square blocks.",
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 18 icings, 7 sponges, 8 toppings, 48 occasions; the deck that remembers (nothing returns until its list is through)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (15 passed, 0 failed).",
-    "test_touch 15 pass; speed 60 a second; picture looked at."
+    "test_touch 15 pass; speed 60 a second; picture looked at.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": []
   },
@@ -1086,11 +1108,13 @@
     "the model is a faceless wooden figure and tiny on the catwalk, where the dress should be the star."
    ],
    "changes": [
-    "The model has a face (eyes, brows, lips, a little blush), and the camera looks a little higher so her head is under the client's card instead of behind it."
+    "The model has a face (eyes, brows, lips, a little blush), and the camera looks a little higher so her head is under the client's card instead of behind it.",
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 40 occasions (8), 50 customers; the deck that remembers (nothing returns until its list is through)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (16 passed, 0 failed).",
-    "test_touch 16 pass; a close picture looked at."
+    "test_touch 16 pass; a close picture looked at.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [
     "On the catwalk she starts far away and small."
@@ -1194,11 +1218,13 @@
    ],
    "changes": [
     "Rebuilt in first person, looking down at the glass: four glass shapes, colour bands, a shining rippling surface, bubbles, ice, a labelled bottle that pours, muddler, spoon, shaker; the served glass slides away.",
-    "Controls: hold a bottle to pour, taps, hold STIR / SHAKE; three tabs; the next thing to touch glows on levels 1-6."
+    "Controls: hold a bottle to pour, taps, hold STIR / SHAKE; three tabs; the next thing to touch glows on levels 1-6.",
+    "25 Nov night, 0.3.0 (his general fix: way more combinations): 41 drinks (11), 60 customers; the deck that remembers (nothing returns until its list is through)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (38 passed, 0 failed).",
-    "test_touch 38 pass; test_play (spam cannot win, robots, lessons) 15 pass; tutorial test passes; speed 60 a second on the test machine; pictures of pouring, layers, each glass looked at."
+    "test_touch 38 pass; test_play (spam cannot win, robots, lessons) 15 pass; tutorial test passes; speed 60 a second on the test machine; pictures of pouring, layers, each glass looked at.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": []
   },
@@ -1328,9 +1354,12 @@
   "dentist": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 11 kinds of patient (4), 70 names; the deck that remembers (nothing returns until its list is through)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (29 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (29 passed, 0 failed).",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [],
    "note": "good."
@@ -1382,10 +1411,13 @@
    "problems": [
     "the 3D rooms are dark brown boxes on black; a lot of reading."
    ],
-   "changes": [],
+   "changes": [
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 9 places (5), 62 things, 35 methods (four on the sheet), 18 motives, 12 secrets, 72 names; the deck that remembers (nothing returns until its list is through)."
+   ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (22 passed, 0 failed).",
-    "third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read."
+    "third pass: pictures of levels 1 and 5 looked at again after the shared light fix: the storm, fog, dark rooms or far monsters that were the problem can now be read.",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": []
   },
@@ -1408,9 +1440,12 @@
   "pottery": {
    "status": "verified",
    "problems": [],
-   "changes": [],
+   "changes": [
+    "25 Nov night, 0.2.0 (his general fix: way more combinations): 24 shapes (8), 16 glazes with six on the bench, 40 customers; the centring instruction only in the tutorial; the deck that remembers (nothing returns until its list is through)."
+   ],
    "checks": [
-    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (20 passed, 0 failed)."
+    "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (20 passed, 0 failed).",
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
    ],
    "remaining": [],
    "note": "good (twin of #20 Potter's Wheel)."

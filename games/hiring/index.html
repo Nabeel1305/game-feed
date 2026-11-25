@@ -446,12 +446,34 @@ const RULES = [
   'Two wrong placements and the day is over. Later, candidates will not wait for ever.',
 ];
 const TODAY = { d: 17, m: 11, y: 2026 };
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const FEM = ['Amara', 'Grace', 'Sofia', 'Mia', 'Ada', 'Zara', 'Chloe', 'Lucia', 'Hannah', 'Ella', 'Nora', 'Fatima', 'Ngozi', 'Aisha'], MAS = ['Tunde', 'Liam', 'Kofi', 'Omar', 'Noah', 'Ibrahim', 'Emeka', 'Ravi', 'Yusuf', 'Chidi', 'Leo', 'Sam', 'Diego', 'Femi'];
-const LAST = ['Okafor', 'Smith', 'Adeyemi', 'Garcia', 'Mensah', 'Novak', 'Bello', 'Rossi', 'Khan', 'Eze', 'Brown', 'Silva', 'Nwosu', 'Dubois', 'Patel', 'Lee', 'Ibe', 'Moreau'];
-const ABOUT = ['I never give up.', 'Ask me about my sourdough.', 'I have a dog called Biscuit.', 'Calm under pressure.', 'I run every morning.', 'I sing in a choir.', 'Team player, early riser.', 'I once met the mayor.', 'Fluent in sarcasm.', 'I like a tidy desk.', 'I can fix almost anything.', 'People say I am very patient.'];
+const FEM = ['Amara', 'Grace', 'Sofia', 'Mia', 'Ada', 'Zara', 'Chloe', 'Lucia', 'Hannah', 'Ella', 'Nora', 'Fatima', 'Ngozi', 'Aisha', 'Bisi', 'Carmen', 'Dalia', 'Efua', 'Freya', 'Greta', 'Halima', 'Ines', 'Jade', 'Kemi', 'Lena', 'Mei', 'Nadia', 'Olive', 'Priya', 'Rosa', 'Sade', 'Tara', 'Uma', 'Vera', 'Wanjiru', 'Yasmin', 'Zainab', 'Ife', 'Ruth', 'Elif'], MAS = ['Tunde', 'Liam', 'Kofi', 'Omar', 'Noah', 'Ibrahim', 'Emeka', 'Ravi', 'Yusuf', 'Chidi', 'Leo', 'Sam', 'Diego', 'Femi', 'Anton', 'Bayo', 'Carlos', 'Dele', 'Enzo', 'Farouk', 'Gus', 'Hamza', 'Ivo', 'Jomo', 'Kenji', 'Luca', 'Musa', 'Nnamdi', 'Obi', 'Pavel', 'Rafa', 'Segun', 'Tomas', 'Uche', 'Viktor', 'Wale', 'Xavier', 'Yaw', 'Zubair', 'Marek'];
+const LAST = ['Okafor', 'Smith', 'Adeyemi', 'Garcia', 'Mensah', 'Novak', 'Bello', 'Rossi', 'Khan', 'Eze', 'Brown', 'Silva', 'Nwosu', 'Dubois', 'Patel', 'Lee', 'Ibe', 'Moreau', 'Abubakar', 'Brandt', 'Costa', 'Danjuma', 'Evans', 'Fofanah', 'Grant', 'Haddad', 'Ivanov', 'Jensen', 'Kimura', 'Lawal', 'Mwangi', 'Ndlovu', 'Obi', 'Petrov', 'Quaye', 'Reyes', 'Sato', 'Tanaka', 'Usman', 'Varga', 'Walker', 'Yilmaz', 'Zulu', 'Okeke', 'Diaz'];
+const ABOUT = ['I never give up.', 'Ask me about my sourdough.', 'I have a dog called Biscuit.', 'Calm under pressure.', 'I run every morning.', 'I sing in a choir.', 'Team player, early riser.', 'I once met the mayor.', 'Fluent in sarcasm.', 'I like a tidy desk.', 'I can fix almost anything.', 'People say I am very patient.',
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): twelve lines about themselves made every tenth CV a twin
+  'I bake for the whole street.', 'Ask me about bees.', 'I have never missed a bus.', 'Chess club champion, 2019.', 'I talk to plants. They listen.', 'I collect old maps.', 'My handshake is famous.', 'I can whistle any tune.', 'Seven brothers. I am the quiet one.', 'I cycle to work in any weather.',
+  'Good with numbers, bad with ties.', 'I make my own jam.', 'I once drove a tractor to a wedding.', 'First to arrive, last to complain.', 'I knit on my lunch break.', 'I referee on Sundays.', 'I keep chickens.', 'I can carry four plates at once.', 'I learn names fast.', 'I read a book a week.',
+  'I like a problem before breakfast.', 'I never lose my keys.', 'Night owl, strong tea.', 'I grew up above a shop.', 'I can calm any baby.', 'I fix bicycles for the neighbours.', 'I play the drums. Quietly.', 'I love a spreadsheet.', 'I taught my gran to text.', 'I am the one who brings cake.',
+  'I can park anything anywhere.', 'I draw cartoons of my workmates.', 'Honest to a fault.', 'I run the village quiz.', 'I am happiest outdoors.', 'An allotment and too many courgettes.', 'I once fixed a fridge with a spoon.', 'I answer emails the same day.', 'I can sleep anywhere.', 'I dance at weddings. All of them.',
+  'I am told I have a calming voice.', 'I mend my own shoes.', 'Three languages and a loud laugh.', 'I love an early start.', 'I walk five miles before work.', 'I was school goalkeeper.', 'I iron my own shirts.', 'I remember every birthday.', 'I never say "that is not my job".', 'I can read a map upside down.',
+  'I count the till twice.', 'I am saving for a boat.', 'My soup wins prizes.', 'I look after my nan on Fridays.', 'I like things done properly.', 'I can lift more than I look.', 'I write neat labels.', 'I sing while I work. Sorry.', 'I have a twin. Hire us both.', 'I fold a fitted sheet perfectly.',
+  'I once swam the bay for charity.', 'I am never ill on Mondays.', 'I make a proper cup of tea.', 'I like night shifts. Peaceful.', 'I can talk to anyone.', 'Dog person. Cat tolerant.', 'I restore old radios.', 'I captain the darts team.'];
 // the things a job can need, each a test on a CV and a way to make a CV pass or just fail it
-const LANGS = ['French', 'Spanish', 'Arabic', 'Yoruba', 'German', 'Chinese'];
+const LANGS = ['French', 'Spanish', 'Arabic', 'Yoruba', 'German', 'Chinese', 'Portuguese', 'Hausa', 'Igbo', 'Swahili', 'Hindi', 'Italian', 'Polish', 'Turkish', 'Japanese', 'Twi'];
 const NEEDS = {
   exp: { say: (n, a) => `${a.n}+ years ${a.as}`, test: (cv, a) => cv.work.filter(w => w.field === a.field).reduce((s, w) => s + w.yrs, 0) >= a.n },
   cert: { say: (n, a) => `${a.cert} (in date)`, test: (cv, a) => cv.certs.some(c => c.name === a.cert && dateGE(c.until, TODAY)) },
@@ -471,10 +493,37 @@ const JOBS = [
   { id: 'teach', name: 'Teacher', field: 'teaching', as: 'teaching', cert: 'Teaching licence', extra: ['lang', 'near'] },
   { id: 'mech', name: 'Mechanic', field: 'garage', as: 'in a garage', lic: true, extra: ['weekends', 'age'] },
   { id: 'guide', name: 'Tour guide', field: 'tours', as: 'guiding tours', lang: true, extra: ['licence', 'weekends'] },
+  // 25 Nov 2026: eight jobs were the whole town. Thirty-four now; three are open each day and none comes back until the rest have (the deck).
+  { id: 'baker', name: 'Night baker', field: 'bakery', as: 'in a bakery', cert: 'Food hygiene', extra: ['nights', 'near'] },
+  { id: 'secur', name: 'Security guard', field: 'security', as: 'in security', cert: 'Security badge', extra: ['nights', 'age'] },
+  { id: 'labour', name: 'Site labourer', field: 'building', as: 'on building sites', cert: 'Site safety card', extra: ['near', 'age'] },
+  { id: 'carer', name: 'Care worker', field: 'care', as: 'in care', cert: 'First aid', extra: ['nights', 'weekends'] },
+  { id: 'forklift', name: 'Forklift driver', field: 'warehouse', as: 'in a warehouse', cert: 'Forklift licence', extra: ['nights', 'near'] },
+  { id: 'stylist', name: 'Hair stylist', field: 'salon', as: 'in a salon', cert: 'Hairdressing diploma', extra: ['weekends', 'lang'] },
+  { id: 'pharm', name: 'Pharmacy aide', field: 'pharmacy', as: 'in a pharmacy', cert: 'Pharmacy registration', extra: ['weekends', 'near'] },
+  { id: 'nursery', name: 'Nursery worker', field: 'childcare', as: 'with children', cert: 'Childcare check', extra: ['age', 'near'] },
+  { id: 'spark', name: 'Electrician', field: 'electrics', as: 'as an electrician', cert: 'Electrical ticket', extra: ['licence', 'weekends'] },
+  { id: 'plumb', name: 'Plumber', field: 'plumbing', as: 'as a plumber', cert: 'Gas safety card', extra: ['licence', 'near'] },
+  { id: 'coach', name: 'Football coach', field: 'sport', as: 'coaching', cert: 'Coaching badge', extra: ['weekends', 'age'] },
+  { id: 'deck', name: 'Ferry deckhand', field: 'sea', as: 'at sea', cert: 'Sea safety ticket', extra: ['nights', 'weekends'] },
+  { id: 'bar', name: 'Bar manager', field: 'bar', as: 'behind a bar', cert: 'Bar licence', extra: ['nights', 'age'] },
+  { id: 'weld', name: 'Welder', field: 'metal', as: 'welding', cert: 'Welding ticket', extra: ['near', 'nights'] },
+  { id: 'lab', name: 'Lab technician', field: 'lab', as: 'in a lab', cert: 'Lab safety', extra: ['lang', 'near'] },
+  { id: 'medic', name: 'Ambulance crew', field: 'rescue', as: 'on ambulances', cert: 'Paramedic registration', extra: ['nights', 'licence'] },
+  { id: 'bus', name: 'Bus driver', field: 'driving', as: 'driving', lic: true, extra: ['weekends', 'age'] },
+  { id: 'courier', name: 'Night courier', field: 'driving', as: 'driving', lic: true, extra: ['nights', 'near'] },
+  { id: 'concierge', name: 'Hotel concierge', field: 'hotel', as: 'in a hotel', lang: true, extra: ['nights', 'age'] },
+  { id: 'museum', name: 'Museum guide', field: 'tours', as: 'guiding tours', lang: true, extra: ['weekends', 'near'] },
+  { id: 'clerk', name: 'Office clerk', field: 'office', as: 'in an office', lang: true, extra: ['near', 'age'] },
+  { id: 'shop', name: 'Shop manager', field: 'retail', as: 'in a shop', cert: 'First aid', extra: ['weekends', 'near'] },
+  { id: 'farm', name: 'Farm hand', field: 'farming', as: 'on a farm', lic: true, extra: ['weekends', 'age'] },
+  { id: 'library', name: 'Librarian', field: 'library', as: 'in a library', lang: true, extra: ['weekends', 'near'] },
+  { id: 'cook2', name: 'School cook', field: 'kitchen', as: 'in a kitchen', cert: 'Food hygiene', extra: ['near', 'age'] },
+  { id: 'pool', name: 'Swim teacher', field: 'lifeguard', as: 'as a lifeguard', cert: 'Pool lifesaving', extra: ['weekends', 'lang'] },
 ];
-const FIELDS = ['kitchen', 'driving', 'nursing', 'lifeguard', 'hotel', 'teaching', 'garage', 'tours', 'retail', 'office', 'farming'];
-const WORKAS = { kitchen: ['Line cook', 'Kitchen porter', 'Sous chef'], driving: ['Delivery driver', 'Taxi driver', 'Courier'], nursing: ['Ward nurse', 'Care nurse'], lifeguard: ['Beach lifeguard', 'Pool lifeguard'], hotel: ['Front desk', 'Concierge'], teaching: ['Teaching assistant', 'Maths teacher'], garage: ['Mechanic', 'Tyre fitter'], tours: ['City guide', 'Museum guide'], retail: ['Shop assistant', 'Cashier'], office: ['Office clerk', 'Data entry'], farming: ['Farm hand', 'Gardener'] };
-const CERTS = ['Food hygiene', 'Nursing registration', 'Pool lifesaving', 'Teaching licence', 'First aid'];
+const FIELDS = ['kitchen', 'driving', 'nursing', 'lifeguard', 'hotel', 'teaching', 'garage', 'tours', 'retail', 'office', 'farming', 'bakery', 'security', 'building', 'care', 'warehouse', 'salon', 'pharmacy', 'childcare', 'electrics', 'plumbing', 'sport', 'sea', 'bar', 'metal', 'lab', 'rescue', 'library'];
+const WORKAS = { kitchen: ['Line cook', 'Kitchen porter', 'Sous chef'], driving: ['Delivery driver', 'Taxi driver', 'Courier'], nursing: ['Ward nurse', 'Care nurse'], lifeguard: ['Beach lifeguard', 'Pool lifeguard'], hotel: ['Front desk', 'Concierge'], teaching: ['Teaching assistant', 'Maths teacher'], garage: ['Mechanic', 'Tyre fitter'], tours: ['City guide', 'Museum guide'], retail: ['Shop assistant', 'Cashier'], office: ['Office clerk', 'Data entry'], farming: ['Farm hand', 'Gardener', 'Dairy worker'], bakery: ['Baker', 'Pastry cook', 'Bakery assistant'], security: ['Night watchman', 'Door supervisor', 'Store detective'], building: ['Bricklayer\'s mate', 'Site labourer', 'Roofer'], care: ['Care assistant', 'Home help', 'Support worker'], warehouse: ['Picker and packer', 'Stock controller', 'Loader'], salon: ['Barber', 'Junior stylist', 'Colourist'], pharmacy: ['Dispenser', 'Counter assistant'], childcare: ['Nanny', 'Playgroup helper', 'Classroom helper'], electrics: ['Electrician\'s mate', 'Wireman', 'Alarm fitter'], plumbing: ['Plumber\'s mate', 'Heating fitter', 'Drain engineer'], sport: ['Youth coach', 'Gym instructor', 'Referee'], sea: ['Deckhand', 'Trawler crew', 'Harbour hand'], bar: ['Bartender', 'Cellar hand', 'Glass collector'], metal: ['Welder', 'Sheet-metal worker', 'Fabricator'], lab: ['Lab assistant', 'Sample tester'], rescue: ['Ambulance driver', 'First responder', 'Call handler'], library: ['Library assistant', 'Archive clerk'] };
+const CERTS = ['Food hygiene', 'Nursing registration', 'Pool lifesaving', 'Teaching licence', 'First aid', 'Security badge', 'Site safety card', 'Forklift licence', 'Hairdressing diploma', 'Pharmacy registration', 'Childcare check', 'Electrical ticket', 'Gas safety card', 'Coaching badge', 'Sea safety ticket', 'Bar licence', 'Welding ticket', 'Lab safety', 'Paramedic registration'];
 const dateGE = (a, b) => a.y !== b.y ? a.y > b.y : a.m !== b.m ? a.m > b.m : a.d >= b.d;
 const ageOf = cv => TODAY.y - cv.born - (cv.bornM > TODAY.m ? 1 : 0);
 
@@ -490,11 +539,11 @@ function makeCfg(N, help) {
 // three jobs for the day, each with its needs
 function makeJobs(G) {
   const c = G.cfg, R = G.rnd, pool = JOBS.slice(); const jobs = [];
-  for (let i = 0; i < 3; i++) { const J = pool.splice((R() * pool.length) | 0, 1)[0], needs = [];
+  for (let i = 0; i < 3; i++) { const J = dealIf('job', JOBS, q => pool.includes(q) && !jobs.some(j => j.field === q.field), R), needs = []; pool.splice(pool.indexOf(J), 1);      /* never two jobs in the same line of work on one day: their notes would read alike */
     needs.push({ k: 'exp', field: J.field, as: J.as, n: c.needs <= 1 ? 1 : 1 + ((R() * (c.f > 10 ? 4 : 3)) | 0) });
     if (J.cert && c.dates) needs.push({ k: 'cert', cert: J.cert }); else if (J.lic) needs.push({ k: 'licence', max: c.f > 12 && R() < 0.5 ? 3 + ((R() * 4) | 0) : null }); else if (J.lang) needs.push({ k: 'lang', lang: pick(R, LANGS) });
     for (const ex of J.extra) { if (needs.length >= c.needs) break; needs.push(ex === 'lang' ? { k: 'lang', lang: pick(R, LANGS) } : ex === 'age' ? { k: 'age', n: pick(R, [18, 21, 25]) } : ex === 'near' ? { k: 'near', km: pick(R, [5, 10, 15, 20]) } : ex === 'licence' ? { k: 'licence', max: null } : { k: ex }); }
-    jobs.push({ id: J.id, name: J.name, needs: needs.slice(0, Math.max(1, c.needs)) }); }
+    jobs.push({ id: J.id, name: J.name, field: J.field, needs: needs.slice(0, Math.max(1, c.needs)) }); }
   return jobs;
 }
 const fits = (cv, job) => job.needs.every(n => NEEDS[n.k].test(cv, n));
@@ -503,7 +552,7 @@ const fitsOf = (G, cv) => G.jobs.map((j, i) => fits(cv, j) ? i : -1).filter(i =>
 function makeCV(G, t) {
   const c = G.cfg, R = G.rnd;
   for (let tries = 0; tries < 80; tries++) {
-    const fem = R() < 0.5, cv = { name: pick(R, fem ? FEM : MAS) + ' ' + pick(R, LAST), born: TODAY.y - (19 + ((R() * 30) | 0)), bornM: 1 + ((R() * 12) | 0), km: 1 + ((R() * 30) | 0), licence: R() < 0.5, points: 0, langs: ['English'], avail: [], work: [], certs: [], about: pick(R, ABOUT), face: (R() * 1e6) | 0, female: fem };
+    const fem = R() < 0.5, cv = { name: pick(R, fem ? FEM : MAS) + ' ' + pick(R, LAST), born: TODAY.y - (19 + ((R() * 30) | 0)), bornM: 1 + ((R() * 12) | 0), km: 1 + ((R() * 30) | 0), licence: R() < 0.5, points: 0, langs: ['English'], avail: [], work: [], certs: [], about: ABOUT[deal('about', ABOUT.length, R)], face: (R() * 1e6) | 0, female: fem };
     if (cv.licence) cv.points = R() < 0.6 ? 0 : 3 + ((R() * 7) | 0);
     if (R() < 0.45) cv.langs.push(pick(R, LANGS));
     if (R() < 0.5) cv.avail.push('weekends'); if (R() < 0.4) cv.avail.push('nights');
@@ -904,7 +953,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   place(t) { place(G, t); }, layout() { return layout(G); }, ui, adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

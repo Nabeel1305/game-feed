@@ -453,6 +453,20 @@ const RULES = [
   'There is no right answer and nothing to win: talk it over with whoever is with you. When the queue is empty, the next day comes.',
 ];
 // deeds: kind (for the day's rules), text, weight (+ good, - bad)
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const KINDS = { animal: '🐾', family: '🏠', money: '🪙', truth: '🗣️', courage: '🔥', work: '🔨' };
 const GOOD = [
   ['animal', 'Fed every stray cat on the street', 1], ['animal', 'Ran a shelter for old dogs', 2], ['animal', 'Freed a fox from a snare in winter', 2], ['animal', 'Saved a herd from a barn fire', 3],
@@ -553,10 +567,10 @@ function verdict(G, s) {
 function makeSoul(G, want, o = {}) {
   const c = G.cfg, R = G.rnd, L = lessonNow(G);
   for (let tries = 0; tries < 200; tries++) {
-    const used = G.used || (G.used = new Set()), fresh = L => { let d = L[(R() * L.length) | 0]; for (let i = 0; i < 6 && used.has(d); i++) d = L[(R() * L.length) | 0]; return d; }, g = fresh(GOOD), b = fresh(BAD);      /* no deed twice in one day at the gate */
+    const used = G.used || (G.used = new Set()), fresh = (L, nm) => { if (!(typeof HEADLESS !== 'undefined' && HEADLESS) && !G.lesson) return dealOf(nm, L, R); let d = L[(R() * L.length) | 0]; for (let i = 0; i < 6 && used.has(d); i++) d = L[(R() * L.length) | 0]; return d; }, g = fresh(GOOD, 'good'), b = fresh(BAD, 'bad');      /* in play: from the deck that remembers, so of 120 best things none comes twice until the other 119 have */      /* no deed twice in one day at the gate */
     const nh = o.hidden != null ? o.hidden : Math.min(3, Math.floor(R() * (c.hidden + 0.999) + (R() < c.hidden % 1 ? 1 : 0)));
     const deeds = [{ kind: g[0], text: g[1], w: g[2], best: true }, { kind: b[0], text: b[1], w: -b[2], worst: true }];
-    for (let i = 0; i < nh; i++) { const good = R() < 0.5, SL = good ? SMALL_GOOD : SMALL_BAD, s = SL[(R() * SL.length) | 0]; deeds.push({ kind: s[0], text: s[1], w: good ? 1 : -1, hidden: true }); }
+    for (let i = 0; i < nh; i++) { const good = R() < 0.5, SL = good ? SMALL_GOOD : SMALL_BAD, s = SL[deal(good ? 'sg' : 'sb', SL.length, R)]; deeds.push({ kind: s[0], text: s[1], w: good ? 1 : -1, hidden: true }); }
     const liar = false;
     const age = o.age != null ? o.age : R() < 0.06 ? 6 + ((R() * 5) | 0) : R() < 0.06 ? 101 + ((R() * 5) | 0) : 18 + ((R() * 80) | 0);
     const female = R() < 0.5, s = { id: ++G.id, name: (female ? SHE : HE)[(R() * (female ? SHE : HE).length) | 0] + ' ' + LAST[(R() * LAST.length) | 0], age, cause: CAUSE[(R() * CAUSE.length) | 0], deeds, liar, face: (R() * 1e9) | 0, female, looked: false };
@@ -993,7 +1007,7 @@ window.__sim = {
   frame() { draw(performance.now() / 1000, 1 / 60); },
   judge(d) { judge(G, d); }, look() { return look(G); }, bookRect, verdict(s) { return verdict(G, s || G.soul); }, renderShop, ui,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

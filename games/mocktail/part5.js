@@ -156,7 +156,7 @@ window.__sim = {
   x() { return { DRINKS, ING, newDrink, addPart, nextOrder, planFor, judge, cardLines, k }; },
   pickGlass(id) { return pickGlass(G, id); }, select(id) { return select(G, id); }, pourStart() { return pourStart(G); }, pourStop() { return pourStop(G); }, addIce(kd) { return addIce(G, kd); }, muddle() { return muddle(G); }, useShaker() { return useShaker(G); }, shake() { return shake(G); }, stir(n) { return stir(G, n); }, garnish(id) { return garnish(G, id); }, serve() { return serve(G); }, ask() { return ask(G); }, layout() { return layout(G); }, glassScr, tasteOf() { return tasteOf(G.drink); }, judge() { return judge(G); }, ui, store, practice(on) { practiceOn = on; }, showAqua, mySkin, SKINS, store, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

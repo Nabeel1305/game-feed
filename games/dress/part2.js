@@ -12,6 +12,20 @@ const RULES = [
   '<b>Walk the runway.</b> Three judges: THE CLIENT (her wishes), STYLE (does it go together?), CRAFT (touches in the right places).',
   '<b>Three stars or more from each judge</b> and she buys it. Win stars to open new studio looks.',
 ];
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const PARTS = {
   cut: { name: 'CUT', opts: [{ id: 'aline', name: 'A-line' }, { id: 'sheath', name: 'Sheath' }, { id: 'ballgown', name: 'Ball gown' }, { id: 'mermaid', name: 'Mermaid' }, { id: 'slip', name: 'Slip' }] },
   len: { name: 'LENGTH', opts: [{ id: 'mini', name: 'Mini' }, { id: 'knee', name: 'Knee' }, { id: 'midi', name: 'Midi' }, { id: 'maxi', name: 'Maxi' }, { id: 'floor', name: 'Floor' }] },
@@ -36,6 +50,40 @@ const BRIEFS = [
   { id: 'prom', name: 'Prom', wishes: { colour: ['fam:bright', 'fam:pastel'], len: ['floor', 'maxi'], cut: ['ballgown'], fabric: ['satin', 'chiffon'], sleeve: ['offsh', 'strapless'], pattern: ['plain'], trim: ['bow'] } },
   { id: 'office', name: 'Office Chic', wishes: { colour: ['fam:dark'], len: ['knee'], cut: ['sheath'], fabric: ['cotton'], pattern: ['stripes', 'plain'], sleeve: ['short', 'long'], trim: ['belt'] } },
   { id: 'festival', name: 'Summer Festival', wishes: { colour: ['fam:bright'], len: ['mini', 'knee'], pattern: ['polka', 'floral'], fabric: ['cotton'], sleeve: ['straps', 'short'], cut: ['aline', 'slip'], trim: ['flowers'] } },
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): eight occasions were the whole order book. Forty now; none comes back
+  // until the others have (the deck), and each asks for a different few of its wishes every time.
+  { id: 'tea', name: 'Afternoon Tea', wishes: { colour: ['fam:pastel'], len: ['knee', 'midi'], pattern: ['polka', 'floral'], fabric: ['cotton'], sleeve: ['short'], cut: ['aline'], trim: ['bow', 'lace'] } },
+  { id: 'opera', name: 'Opera Night', wishes: { colour: ['fam:dark'], len: ['floor'], pattern: ['plain'], fabric: ['velvet', 'satin'], sleeve: ['long', 'offsh'], cut: ['mermaid', 'ballgown'], trim: ['pearls'] } },
+  { id: 'picnic', name: 'Picnic Date', wishes: { colour: ['fam:bright', 'fam:pastel'], len: ['knee'], pattern: ['polka', 'stripes'], fabric: ['cotton'], sleeve: ['short', 'straps'], cut: ['aline'], trim: ['belt', 'bow'] } },
+  { id: 'cocktail', name: 'Cocktail Hour', wishes: { colour: ['fam:dark', 'fam:metal'], len: ['knee', 'mini'], pattern: ['plain'], fabric: ['satin'], sleeve: ['strapless', 'straps'], cut: ['sheath'], trim: ['pearls', 'belt'] } },
+  { id: 'boho', name: 'Boho Wedding', wishes: { colour: ['fam:white'], len: ['maxi'], pattern: ['floral', 'plain'], fabric: ['chiffon'], sleeve: ['long', 'offsh'], cut: ['aline', 'slip'], trim: ['flowers', 'lace'] } },
+  { id: 'carpet', name: 'Red Carpet', wishes: { colour: ['fam:bright'], len: ['floor'], pattern: ['plain'], fabric: ['satin'], sleeve: ['strapless', 'offsh'], cut: ['mermaid'], trim: ['pearls'] } },
+  { id: 'newyear', name: 'New Year\'s Eve', wishes: { colour: ['fam:metal'], len: ['mini', 'knee'], pattern: ['plain'], fabric: ['sequins'], sleeve: ['straps', 'strapless'], cut: ['sheath', 'slip'], trim: ['belt'] } },
+  { id: 'grad', name: 'Graduation Day', wishes: { colour: ['fam:white', 'fam:pastel'], len: ['knee', 'midi'], pattern: ['plain', 'floral'], fabric: ['cotton', 'satin'], sleeve: ['short'], cut: ['sheath', 'aline'], trim: ['belt', 'bow'] } },
+  { id: 'cruise', name: 'Sunset Cruise', wishes: { colour: ['fam:bright'], len: ['maxi'], pattern: ['stripes', 'plain'], fabric: ['cotton'], sleeve: ['straps', 'strapless'], cut: ['slip', 'aline'], trim: ['flowers'] } },
+  { id: 'palace', name: 'Palace Garden', wishes: { colour: ['fam:pastel'], len: ['midi', 'knee'], pattern: ['floral'], fabric: ['satin', 'chiffon'], sleeve: ['short', 'long'], cut: ['aline', 'sheath'], trim: ['pearls', 'lace'] } },
+  { id: 'masked', name: 'Masquerade Ball', wishes: { colour: ['fam:dark', 'fam:metal'], len: ['floor'], pattern: ['plain'], fabric: ['velvet', 'satin'], sleeve: ['offsh', 'long'], cut: ['ballgown'], trim: ['lace', 'pearls'] } },
+  { id: 'brunch', name: 'Sunday Brunch', wishes: { colour: ['fam:pastel', 'fam:white'], len: ['knee', 'midi'], pattern: ['stripes', 'polka'], fabric: ['cotton'], sleeve: ['short', 'straps'], cut: ['aline', 'sheath'], trim: ['belt'] } },
+  { id: 'jazz', name: 'Jazz Club', wishes: { colour: ['fam:dark'], len: ['midi', 'knee'], pattern: ['plain'], fabric: ['velvet', 'satin'], sleeve: ['straps', 'offsh'], cut: ['slip', 'sheath'], trim: ['pearls'] } },
+  { id: 'valentine', name: 'Valentine Dinner', wishes: { colour: ['fam:bright'], len: ['knee', 'midi'], pattern: ['plain'], fabric: ['satin'], sleeve: ['offsh', 'straps'], cut: ['sheath', 'slip'], trim: ['bow'] } },
+  { id: 'carnival', name: 'Carnival', wishes: { colour: ['fam:bright', 'fam:metal'], len: ['mini'], pattern: ['plain'], fabric: ['sequins'], sleeve: ['strapless', 'straps'], cut: ['slip'], trim: ['flowers', 'belt'] } },
+  { id: 'christening', name: 'Christening', wishes: { colour: ['fam:white', 'fam:pastel'], len: ['midi', 'knee'], pattern: ['plain', 'floral'], fabric: ['cotton', 'chiffon'], sleeve: ['short', 'long'], cut: ['aline'], trim: ['lace', 'bow'] } },
+  { id: 'premiere', name: 'Film Premiere', wishes: { colour: ['fam:metal', 'fam:dark'], len: ['floor', 'maxi'], pattern: ['plain'], fabric: ['sequins', 'satin'], sleeve: ['strapless', 'offsh'], cut: ['mermaid', 'sheath'], trim: ['pearls'] } },
+  { id: 'harvest', name: 'Harvest Dance', wishes: { colour: ['fam:bright'], len: ['knee', 'midi'], pattern: ['floral', 'polka'], fabric: ['cotton'], sleeve: ['short', 'long'], cut: ['aline'], trim: ['belt', 'flowers'] } },
+  { id: 'icegala', name: 'Ice Gala', wishes: { colour: ['fam:pastel', 'fam:metal'], len: ['floor'], pattern: ['plain'], fabric: ['satin', 'velvet'], sleeve: ['long'], cut: ['ballgown', 'mermaid'], trim: ['pearls', 'lace'] } },
+  { id: 'gallery', name: 'Gallery Opening', wishes: { colour: ['fam:dark', 'fam:white'], len: ['midi', 'maxi'], pattern: ['plain', 'stripes'], fabric: ['satin', 'cotton'], sleeve: ['long', 'short'], cut: ['sheath', 'slip'], trim: ['belt'] } },
+  { id: 'island', name: 'Island Holiday', wishes: { colour: ['fam:bright'], len: ['mini', 'knee'], pattern: ['floral'], fabric: ['cotton', 'chiffon'], sleeve: ['straps', 'strapless'], cut: ['slip', 'aline'], trim: ['flowers'] } },
+  { id: 'debut', name: 'Debutante Ball', wishes: { colour: ['fam:white'], len: ['floor'], pattern: ['plain'], fabric: ['satin', 'chiffon'], sleeve: ['offsh', 'strapless'], cut: ['ballgown'], trim: ['bow', 'pearls'] } },
+  { id: 'rock', name: 'Rock Concert', wishes: { colour: ['fam:dark'], len: ['mini'], pattern: ['plain', 'stripes'], fabric: ['cotton', 'velvet'], sleeve: ['short', 'straps'], cut: ['sheath', 'slip'], trim: ['belt'] } },
+  { id: 'races', name: 'Day at the Races', wishes: { colour: ['fam:pastel', 'fam:bright'], len: ['knee', 'midi'], pattern: ['polka', 'floral'], fabric: ['satin', 'cotton'], sleeve: ['short', 'offsh'], cut: ['sheath', 'aline'], trim: ['bow', 'flowers'] } },
+  { id: 'golden', name: 'Golden Wedding', wishes: { colour: ['fam:metal'], len: ['midi', 'floor'], pattern: ['plain'], fabric: ['satin', 'sequins'], sleeve: ['long', 'short'], cut: ['sheath', 'aline'], trim: ['pearls', 'lace'] } },
+  { id: 'spring', name: 'Spring Fair', wishes: { colour: ['fam:pastel'], len: ['mini', 'knee'], pattern: ['floral', 'polka'], fabric: ['cotton'], sleeve: ['straps', 'short'], cut: ['aline'], trim: ['flowers', 'bow'] } },
+  { id: 'charity', name: 'Charity Dinner', wishes: { colour: ['fam:dark'], len: ['floor', 'maxi'], pattern: ['plain', 'floral'], fabric: ['chiffon', 'satin'], sleeve: ['long', 'offsh'], cut: ['aline', 'sheath'], trim: ['lace', 'pearls'] } },
+  { id: 'tango', name: 'Tango Night', wishes: { colour: ['fam:bright', 'fam:dark'], len: ['midi', 'knee'], pattern: ['plain'], fabric: ['satin'], sleeve: ['straps', 'strapless'], cut: ['slip', 'sheath'], trim: ['flowers', 'lace'] } },
+  { id: 'lodge', name: 'Snow Lodge Party', wishes: { colour: ['fam:dark', 'fam:white'], len: ['knee', 'midi'], pattern: ['plain', 'stripes'], fabric: ['velvet', 'cotton'], sleeve: ['long'], cut: ['sheath', 'aline'], trim: ['belt', 'bow'] } },
+  { id: 'birthday', name: 'Birthday Bash', wishes: { colour: ['fam:bright'], len: ['mini', 'knee'], pattern: ['polka', 'plain'], fabric: ['satin', 'cotton'], sleeve: ['straps', 'strapless'], cut: ['aline', 'slip'], trim: ['bow', 'belt'] } },
+  { id: 'vineyard', name: 'Vineyard Lunch', wishes: { colour: ['fam:dark', 'fam:pastel'], len: ['midi', 'maxi'], pattern: ['floral', 'plain'], fabric: ['chiffon', 'cotton'], sleeve: ['short', 'straps'], cut: ['aline', 'slip'], trim: ['flowers', 'belt'] } },
+  { id: 'firstnight', name: 'First Night', wishes: { colour: ['fam:dark', 'fam:metal'], len: ['maxi', 'floor'], pattern: ['plain'], fabric: ['velvet', 'sequins'], sleeve: ['long', 'strapless'], cut: ['sheath', 'mermaid'], trim: ['pearls'] } },
 ];
 // what never goes together (STYLE): a clash costs a star
 const CLASHES = [
@@ -47,7 +95,7 @@ const CLASHES = [
   [d => d.fabric === 'chiffon' && d.pattern === 'stripes', 'Chiffon blurs stripes'],
   [d => (d.colour === 'black' || d.colour === 'navy') && d.pattern === 'polka' && d.fabric === 'sequins', 'Too much going on'],
 ];
-const PEOPLE = ['Amara', 'Bea', 'Chioma', 'Dani', 'Elif', 'Fola', 'Gigi', 'Hana', 'Imani', 'Jade', 'Kemi', 'Lola', 'Mina', 'Nia', 'Odette', 'Priya', 'Rosa', 'Sade', 'Tami', 'Zuri'];
+const PEOPLE = ['Amara', 'Bea', 'Chioma', 'Dani', 'Elif', 'Fola', 'Gigi', 'Hana', 'Imani', 'Jade', 'Kemi', 'Lola', 'Mina', 'Nia', 'Odette', 'Priya', 'Rosa', 'Sade', 'Tami', 'Zuri', 'Abena', 'Bisi', 'Carmen', 'Delphine', 'Esi', 'Farah', 'Greta', 'Halle', 'Ines', 'Joy', 'Kiki', 'Leila', 'Maya', 'Noor', 'Opal', 'Paloma', 'Queenie', 'Ruth', 'Simone', 'Temi', 'Uma', 'Vivi', 'Wren', 'Xena', 'Yinka', 'Zelda', 'Anouk', 'Bola', 'Coco', 'Dua'];
 const PLACES = [{ name: 'Little Studio', sky: 'morning' }, { name: 'City Atelier', sky: 'noon' }, { name: 'Fashion Week', sky: 'night' }, { name: 'Seaside Show', sky: 'golden' }, { name: 'Grand Gala', sky: 'night' }, { name: 'Paris-ish', sky: 'sunset' }];
 const placeOf = N => Math.floor((N - 1) / 5) % PLACES.length;
 const SKINS = [{ id: 'classic', name: 'Classic studio', col: 0xe8a8ff, stars: 0 }, { id: 'rose', name: 'Rose studio', col: 0xff8ab0, stars: 6 }, { id: 'gold', name: 'Gold studio', col: 0xe0b040, stars: 14 },
@@ -71,7 +119,7 @@ function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != n
   return G; }
 const optIdx = (part, id) => PARTS[part].opts.findIndex(o => o.id === id);
 function setup(G, o = {}) { const c = G.cfg, R = G.rnd; G.t = 0; G.yard = o.yard || null;
-  const brief = o.brief || BRIEFS[(R() * BRIEFS.length) | 0], stages = o.stages || c.stages; G.brief = brief; G.who = PEOPLE[(R() * PEOPLE.length) | 0];
+  const brief = o.brief || dealOf('brief', BRIEFS, R), stages = o.stages || c.stages; G.brief = brief; G.who = dealOf('who', PEOPLE, R);
   const can = stages.filter(p => brief.wishes[p]).sort(() => R() - 0.5), n = Math.min(can.length, o.wishes || c.wishes);
   G.wish = can.slice(0, n); if (!G.wish.includes('colour') && can.includes('colour')) G.wish[0] = 'colour';
   G.ok = Object.assign({}, brief.wishes); if (c.exact && G.wish.includes('colour')) { const all = PARTS.colour.opts.filter(q => meets('colour', q.id, brief.wishes.colour)); G.ok.colour = [all[(R() * all.length) | 0].id]; }      // early clients name one colour

@@ -139,7 +139,7 @@ window.__sim = {
   frame() { draw(performance.now() / 1000, 1 / 60); },
   take(f, d, i) { return take(G, f, d, i); }, flip(i) { flip(G, i); }, chop() { chop(G); }, panToPlate(i) { return panToPlate(G, i); }, boardToPlate() { return boardToPlate(G); }, serve() { serve(G); }, spots() { return spots(G); }, scr, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

@@ -159,7 +159,7 @@ window.__sim = {
   x() { return { pickTool, down, moveTo, up, flip, reassure, finishPatient, left, checklist, toothLeft, nextTool, m2s, s2m, layout, pat, archOf, gaugeP, TOOLS, LIFT, k }; }, layout() { return layout(G); }, ui, store,
   practice(on) { practiceOn = on; }, showAqua, mySkin, SKINS, renderShop, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

@@ -51,7 +51,7 @@ with sync_playwright() as p:
             if set(q) == {'.'} or any(L % d == 0 and q == q[:d] * (L // d) for d in range(1, L)): continue
             pats.add(canon(q))
     pats = sorted(pats); Ps = [0.1, 0.18, 0.26, 0.35, 0.5, 0.7, 1.0, 1.4]; t0 = time.time(); rows = []
-    for i in range(0, len(pats), 10): rows += pg.evaluate('(spec) => __B.blindBeats(spec)', dict(pats=pats[i:i + 10], Ps=Ps, levels=[1, 2, 3, 6], n=2, seed=900))
+    for i in range(0, len(pats), 10): rows += pg.evaluate('(spec) => __B.blindBeats(spec)', dict(pats=pats[i:i + 10], Ps=Ps, levels=[1, 2, 3, 6], n=6, seed=900))      # n was 2 (1,984 games): a rate of a few in ten thousand cannot be read from so few (25 Nov 2026: 0.20 per thousand before the new offences, 0.30 after, over 19,840 games each; the small sample showed 1 and then 3)
     tot = sum(r['n'] for r in rows); won = sum(r['w'] for r in rows); worst = max(rows, key=lambda r: r['w'])
     print(f'  every blind string of up to four moves ({len(pats)} strings x {len(Ps)} beats x levels 1 2 3 6): {tot} games, won {won}   ({time.time() - t0:.0f} s)')
     ok(won <= tot * TARGETS['blind_rate'], 'SPAM: no blind string wins (beyond one game in a thousand)', f'{won} of {tot}; worst {worst}')

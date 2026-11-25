@@ -14,6 +14,20 @@ const RULES = [
   'Your <b>Grimoire</b> keeps every meaning you have learned. Happy customers come back with thanks.',
 ];
 // the jars: each always means one thing; rarer ones arrive as the levels go on
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const INGS = [
   { id: 'rose', name: 'Rose petals', icon: '🌹', means: 'love', n: 1, side: 'everyone at the market keeps proposing to me' },
   { id: 'moon', name: 'Moonwater', icon: '🌙', means: 'sleep and dreams', n: 1, side: 'I fell asleep in my soup. Twice' },
@@ -100,9 +114,149 @@ const TROUBLES = [
   ['acorn', 'in', 'house', 'Our **fields** are **dry** and nothing will **grow**.', 'rain'],
   ['mirror', 'in', 'heart', 'I want to tell my husband the **truth** about the broken vase, and still have his **love**.', 'rose'],
   ['ember', 'in', 'house', 'My **home** is **cold** and the bailiffs keep **coming**. Warm it and **protect** it.', 'salt'],
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): 56 troubles were the whole village. 194 now: every jar has eight more
+  // people at the door, some wanting a thing brought and some wanting it gone, to every part of a life; and ten more that need two jars.
+  ["rose", "in", "eye", "My husband only **thinks** about his turnips. Put some **love** in that **head** of his."],
+  ["rose", "out", "house", "The newlyweds next door coo through my wall all night. Cool the **love** in that **house**. A little."],
+  ["rose", "in", "star", "My sweetheart sails **far away** tomorrow. Send my **love** down the **road** with him."],
+  ["rose", "out", "eye", "I can't **think** for **love**. I've burnt nine loaves daydreaming of the miller. **Clear it** from my **head**."],
+  ["rose", "in", "coin", "I carve wooden spoons for my wife. Put my **love** into the **things** I make."],
+  ["rose", "out", "coin", "They say I **love** my **purse** more than my children. **Take** that love **off** my **coins**."],
+  ["rose", "in", "heart", "My old dog has gone cold on me since the puppy came. Make his **heart** **love** me again."],
+  ["rose", "out", "hand", "I go weak when she walks by; my knees give way. Get this **love** **out** of my **limbs**."],
+  ["moon", "in", "house", "The baby, the dog and the rooster are all up at midnight. Bring **sleep** to our **house**."],
+  ["moon", "out", "eye", "I **daydream** through every sermon. Take the **dreams out** of my **head** till Sunday is done."],
+  ["moon", "in", "hand", "My **legs** twitch and kick all night. Let my **body** **rest**."],
+  ["moon", "out", "heart", "I **dream** of my lost love every night and wake weeping. **Take** her **out** of them, for my **heart**."],
+  ["moon", "in", "star", "The night coach is ten hours of bumps. Let me **sleep** the whole **road**."],
+  ["moon", "out", "coin", "My scarecrow looks fast **asleep** and the crows sit on it. **Wake** the **thing** up."],
+  ["moon", "in", "eye", "I lie awake counting my worries. Quiet my **mind** and let me **sleep**."],
+  ["moon", "out", "hand", "My **foot** has been **asleep** since Tuesday. **Wake** it."],
+  ["thistle", "in", "eye", "I know the answer, but my **mind** goes blank before the judge. Give my **wits** some **nerve**."],
+  ["thistle", "in", "house", "Every creak sends my family under the beds. Make ours a **brave** **household**."],
+  ["thistle", "in", "star", "I've never left the village. Give me the **courage** for the **road** to the city."],
+  ["thistle", "out", "hand", "My boy **dares** to climb the church tower every day. **Take** the **daring** out of those **legs**."],
+  ["thistle", "out", "heart", "My **heart** is too **bold**: I've proposed to five women this week. **Calm** it."],
+  ["thistle", "in", "coin", "I'm too **timid** to ask a fair price. Put some **nerve** into my **trade**."],
+  ["thistle", "out", "house", "My hens have turned **fearless**. They chase the fox. **Take it out** of my **henhouse**."],
+  ["thistle", "in", "hand", "My **hands** shake when I hold the razor, and I'm the barber. A steady **nerve**, please."],
+  ["gold", "in", "heart", "I'm **unlucky** in matters of the **heart**: three weddings, three brides who never came. Bring me **luck**."],
+  ["gold", "in", "hand", "I trip on flat ground and bang every doorframe. Give this clumsy **body** some **luck**."],
+  ["gold", "in", "house", "The roof leaks, the cow's dry, the chimney fell in. Our **home** needs **luck**."],
+  ["gold", "out", "house", "Our **lucky** horseshoe brings so many visitors we can't sit down. **Take** the luck **off** the **house**."],
+  ["gold", "in", "eye", "I guess wrong every time: cards, weather, husbands. Give my **head** some **luck**."],
+  ["gold", "out", "hand", "I win every arm-wrestle by a **fluke** and now nobody will play. **Take** the **luck** out of my **arm**."],
+  ["gold", "out", "star", "I find a coin on every **road** I walk, and now thieves follow me. **Take** the **luck** off my **travels**."],
+  ["gold", "in", "coin", "I've a ticket in the harvest lottery. A little **luck** on my **stake**?"],
+  ["mint", "in", "heart", "My **heart** flutters like a moth since the fever. Make it **well**."],
+  ["mint", "in", "eye", "My **head** aches from dawn to dusk. **Heal** it.", null, [["moon", "She slept it off. Fourteen hours"]]],
+  ["mint", "out", "hand", "My brother is so **healthy** he hasn't sat down in a year. **Take** a little **out** of his **body**."],
+  ["mint", "in", "star", "The **road** to the coast is all coughs and bad water. Keep me **well** on the **way**."],
+  ["mint", "in", "coin", "My apple cart has gone to rot: bruised, wormy fruit. Make my **goods** **wholesome** again."],
+  ["mint", "out", "house", "Mother's **health** tonics are so strong the whole **house** is bouncing off the walls. **Draw it out**."],
+  ["mint", "in", "house", "Everyone under my **roof** has the sniffles. **Heal** the **household**."],
+  ["mint", "in", "hand", "My **back** went when I lifted the anvil. **Mend** it."],
+  ["salt", "in", "heart", "I fall for every sad story and it breaks me. **Guard** my **heart** a little."],
+  ["salt", "in", "eye", "A fortune-teller keeps getting into my **head**. **Shield** my **thoughts**."],
+  ["salt", "in", "hand", "I'm off to fight in the tourney. Keep my **body** **safe** from harm.", null, [["iron", "He was not safe at all, but he hit back very hard"]]],
+  ["salt", "in", "coin", "Mice, moths and thieves: keep my **stock** **safe**."],
+  ["salt", "out", "house", "So many **charms** hang on our **house** that the postman can't get up the path. **Take** the wards **off**."],
+  ["salt", "out", "eye", "I'm so **guarded** I trust nobody, not even the cat. Let my **mind** **drop** its shield."],
+  ["salt", "out", "coin", "I put a **ward** on my **strongbox** and now I can't open it either. **Take it off**."],
+  ["salt", "in", "house", "Wolves were at the door last night. **Protect** my **home**."],
+  ["ash", "in", "heart", "My **heart** still aches for a man who left ten years ago. Let it **forget** him."],
+  ["ash", "in", "hand", "I learnt to juggle wrong and my **hands** won't unlearn it. Make them **forget**."],
+  ["ash", "in", "star", "I told the whole **town** I could fly. Make the **world** **forget** I said it."],
+  ["ash", "in", "coin", "A debt in my **ledger** was paid twice and argued over for years. Let the **book** **forget** it."],
+  ["ash", "out", "house", "Our **household** has **forgotten** everything: birthdays, chores, the baby. **Drive** the forgetting **out**."],
+  ["ash", "out", "heart", "I've **forgotten** how it felt to be happy. **Take** the forgetting **off** my **heart**."],
+  ["ash", "in", "eye", "I saw the mayor in his bath. Make my **mind** **forget** it."],
+  ["ash", "in", "house", "A quarrel has sat at our table for a year. Bring it to an **end** under our **roof**."],
+  ["sage", "in", "heart", "I can't tell if it's him I want or his pies. Let my **heart** see **clearly**."],
+  ["sage", "in", "hand", "I've lost the steps of the harvest dance. Let my **feet** **remember**."],
+  ["sage", "in", "house", "We've lost grandmother's ring somewhere at home. Help this **house** **remember** where things are."],
+  ["sage", "in", "star", "I get lost on the way to my own gate. Let me **remember** the **road**."],
+  ["sage", "out", "eye", "I **remember** everything: every slight since I was four. It's too much. **Dull** my **memory** a touch."],
+  ["sage", "out", "heart", "I **think** too hard about every feeling and never feel it. **Take** the thinking **out** of my **heart**."],
+  ["sage", "in", "coin", "I never know what's in my own shop. Let me keep my **stock** **clear in my head**."],
+  ["sage", "out", "house", "My family **remembers** every argument, word for word. **Take** the memory **out** of that **house**."],
+  ["honey", "in", "eye", "I mean kind things and say rude ones. Put **sweet words** in my **head** before they reach my mouth."],
+  ["honey", "in", "house", "The new neighbours won't even nod. Make ours a **friendly** **house** to visit."],
+  ["honey", "in", "star", "I'm a stranger everywhere I go. Let me find **friends** on the **road**."],
+  ["honey", "in", "hand", "My handshake frightens people. Make my **grip** **friendly**."],
+  ["honey", "out", "heart", "I'm everyone's **friend**: nine christenings this month. Make my **heart** a little **less** friendly."],
+  ["honey", "out", "eye", "I **flatter** everyone, and now the baker thinks his bread is good. **Take** the sweet talk **out** of my **head**."],
+  ["honey", "out", "coin", "I **sweet-talk** every customer and give it all away at half price. Get the sweetness **out** of my **trade**."],
+  ["honey", "in", "heart", "My sister and I haven't spoken since the goose business. Make us **friends** at **heart** again.", null, [["rose", "They hug every morning now. A bit much, they both say"]]],
+  ["feather", "in", "hand", "I've been stiff as a gatepost since the winter. Let my **limbs** move **free**."],
+  ["feather", "in", "eye", "My thoughts go round one track like a mill-horse. Let my **mind** **wander free**."],
+  ["feather", "in", "house", "We've not left the farm in nine years. Give this **household** a taste for **travel**."],
+  ["feather", "in", "coin", "My **goods** sit in the barn and rot. Help them **travel** to market."],
+  ["feather", "out", "star", "My husband **wanders** off down every **road** he sees. Three days, last time. **Stop** his roaming."],
+  ["feather", "out", "heart", "My **heart** wants to **run away** to sea every spring, and I've a farm to mind. **Settle** it."],
+  ["feather", "out", "house", "Everything in my **house** has got **loose**: the hens, the washing, the children. **Take** the freedom **out**."],
+  ["feather", "in", "star", "The pass is snowed in and my mother is waiting. Open the **road** and let me **travel**."],
+  ["iron", "in", "heart", "My **heart** gives up at the first setback. Make it **strong**.", null, [["thistle", "He is braver now, if no tougher. It will do"]]],
+  ["iron", "in", "eye", "I change my **mind** whenever anyone frowns. Give me a **strong** **will**."],
+  ["iron", "in", "coin", "My **cart** falls apart on every hill. Make the **thing** **strong**."],
+  ["iron", "in", "star", "The bridge on the north **road** sways like a hammock. **Strengthen** it before market day."],
+  ["iron", "out", "heart", "My father's **heart** is **hard as iron**: he hasn't forgiven anyone since the flood. **Soften** it."],
+  ["iron", "out", "eye", "My wife's **will** is so **strong** the mule obeys her. **Take** a little **out** of her **head**."],
+  ["iron", "out", "house", "I built our door so **strong** that nobody can open it. Including us. **Weaken** the **house** a bit."],
+  ["iron", "in", "hand", "I'm the new blacksmith and I can't lift the hammer. **Strength** for my **arms**, quick."],
+  ["silk", "in", "eye", "Nothing **stays** in my **head**: names, sums, where I live. Make things **stick**.", null, [["sage", "He remembers it all now. Whether he wants to or not"]]],
+  ["silk", "in", "hand", "I drop everything: plates, babies, hints. Make my **hands** **hold on**."],
+  ["silk", "in", "house", "My children are leaving one by one for the city. **Keep** the family **together** under our **roof**."],
+  ["silk", "in", "star", "My flock scatters on every **road**. **Bind** them to the path."],
+  ["silk", "out", "heart", "I'm still **tied** to a promise I made a dead man. **Unbind** my **heart**."],
+  ["silk", "out", "hand", "I shook on a bad bargain and my **hand** won't let go of his. **Unstick** us."],
+  ["silk", "out", "coin", "My **purse** is **knotted** so tight I can't pay anyone. They think I'm mean. **Loosen** it."],
+  ["silk", "out", "eye", "A tune has been **stuck** in my **head** since midsummer. **Free** it."],
+  ["acorn", "in", "hand", "My son is twelve and the size of a hen. Help his **body** **grow**."],
+  ["acorn", "in", "eye", "I've learnt nothing new since I was nine. Make my **mind** **grow**."],
+  ["acorn", "in", "heart", "My **heart** is a small, mean thing, my wife says. Help it **grow**."],
+  ["acorn", "in", "star", "Our village is four houses and a duck. Make it **grow** into a **town**."],
+  ["acorn", "out", "house", "The ivy has **grown** through the windows and up the stairs. **Shrink** it out of my **house**."],
+  ["acorn", "out", "coin", "My **debts** keep **growing**. **Stop** them."],
+  ["acorn", "out", "heart", "A grudge is **growing** in my **heart** like a weed. **Stunt** it."],
+  ["acorn", "in", "coin", "Three coins in the jar. Make my **savings** **grow**."],
+  ["rain", "in", "heart", "I buried my wife dry-eyed and it sits in me like a stone. Let my **heart** **weep**."],
+  ["rain", "in", "star", "The whole **valley** is cracked and brown. Bring **rain** on the **land**."],
+  ["rain", "in", "coin", "My well is dust and my **mill-wheel** won't turn. Bring **water** to my **works**."],
+  ["rain", "in", "eye", "I'm an actor and I can't **cry** when I'm told to. Put **tears** at my **command**."],
+  ["rain", "out", "house", "The roof leaks in nine places. Keep the **rain** **out** of my **house**."],
+  ["rain", "out", "eye", "I **weep** when I **think** of anything at all: sunsets, onions, the price of eggs. **Dry** it up."],
+  ["rain", "out", "coin", "My market **stall** has been **rained** on every single Saturday. **Keep it off** my **goods**."],
+  ["rain", "out", "hand", "My **knees** tell me when **rain** is coming, and they are never quiet. Get the rain **out** of my **bones**."],
+  ["mirror", "in", "hand", "My face gives nothing away and nobody believes I'm ill. Let my **body** tell the **truth**."],
+  ["mirror", "in", "coin", "The merchant swears this is silver. Make the **thing** show what it **truly** is."],
+  ["mirror", "in", "star", "The whole **town** believes the lie about my mother. Let the **world** see the **truth**."],
+  ["mirror", "in", "house", "Someone under my **roof** ate the Sunday pie and all five deny it. Bring the **truth** home."],
+  ["mirror", "out", "eye", "I see the **truth** of everyone I meet and I've no friends left. **Blur** my **mind** a little."],
+  ["mirror", "out", "heart", "My **heart** is too **honest**: I told the bride she looked like a goose. **Take** some honesty **out**."],
+  ["mirror", "out", "coin", "I sell second-hand horses and I cannot stop telling the **truth** about them. **Take it out** of my **trade**."],
+  ["mirror", "in", "eye", "I can't tell when my son is lying. Let my **mind** see the **truth**."],
+  ["ember", "in", "hand", "My **fingers** are blue from October to May. **Warm** this **body**.", null, [["mint", "Her fingers are pink and healthy, though still a bit chilly"]]],
+  ["ember", "in", "eye", "I used to love my work. Now I count the nails. Put the **fire** back in my **mind**."],
+  ["ember", "in", "coin", "My **forge** has gone cold and won't catch. Put **fire** in the **thing**."],
+  ["ember", "in", "star", "It's a week's walk through the snow. Keep me **warm** on the **road**."],
+  ["ember", "out", "heart", "My temper **flares** at nothing: I shouted at a cabbage. **Cool** the fire in my **heart**."],
+  ["ember", "out", "house", "My wife keeps the hearth so **hot** the candles droop. **Cool** our **home** down."],
+  ["ember", "out", "hand", "I danced too near the bonfire and I've been **glowing hot** ever since. **Take** the heat **out** of my **body**."],
+  ["ember", "out", "coin", "My new **kettle** boils over the moment I look at it. **Take** some **fire** out of the **thing**."],
+  ["mint", "in", "hand", "I go to war in spring. Keep my **body** **healthy** and **strong**.", "iron"],
+  ["rose", "in", "house", "We wed tomorrow. Bless our **home** with **love** and **luck**.", "gold"],
+  ["moon", "in", "eye", "Let my **mind** **sleep**, and **forget** the day I've had.", "ash"],
+  ["honey", "in", "star", "I'm sent to make peace with the next valley. Give me **sweet words** and **courage** for the **journey**.", "thistle"],
+  ["salt", "in", "hand", "My boy starts at the quarry on Monday. Keep his **body** **safe** and **strong**.", "iron"],
+  ["sage", "in", "eye", "I sit the scholars' exam at dawn. A **clear head**, and a little **luck** with it.", "gold"],
+  ["feather", "in", "star", "I'm walking to the sea and back. Let me **travel** light and stay **well** on the **road**.", "mint"],
+  ["ember", "in", "heart", "He's kind but cold as a fish. Put **warmth** and **love** in his **heart**.", "rose"],
+  ["acorn", "in", "coin", "I've planted my last seed-corn. Make the **crop** **grow**, and send it **rain**.", "rain"],
+  ["mirror", "in", "house", "We need the **truth** told at our table, but **kindly**. For the sake of the **family**.", "honey"],
 ];
 const AMT = [null, ['Just a **little**, mind.', 'Only a **drop** of it, please.', 'Nothing too **strong**.'], null, ['Make it **strong**. **Very strong**.', 'As **much** as you can.', 'A **big** dose. It\'s **bad**.']];
-const PEOPLE = ['Mrs Pell', 'Old Bram', 'Tilly the baker', 'Farmer Odo', 'Lady Wren', 'Captain Ruff', 'Young Pip', 'Granny Moss', 'Sir Alden', 'Nell the weaver', 'Doctor Quill', 'Hob the miller', 'Widow Flint', 'Master Crake', 'Rosa the singer', 'Little Jem'];
+const PEOPLE = ['Mrs Pell', 'Old Bram', 'Tilly the baker', 'Farmer Odo', 'Lady Wren', 'Captain Ruff', 'Young Pip', 'Granny Moss', 'Sir Alden', 'Nell the weaver', 'Doctor Quill', 'Hob the miller', 'Widow Flint', 'Master Crake', 'Rosa the singer', 'Little Jem', 'Tam the fisher', 'Mistress Oake', 'Brother Anselm', 'Daft Wat', 'Meg of the mill', 'Old Mother Sedge', 'Jory the piper', 'Dame Hester', 'Bess the brewer', 'Simkin', 'Lord Fenwick', 'Tibb the thatcher', 'Goody Marsh', 'Perkin the tailor', 'Sister Agnes', 'Wilf the shepherd', 'Madam Ysolde', 'Ned the carter', 'Lame Hugh', 'Annis the midwife', 'Squire Bolt', 'Cob the tinker', 'Maud of the ford', 'Peg the goose-girl', 'Father Ambrose', 'Jenet the dyer', 'Big Hal', 'Odd Oswin', 'Mistress Tansy', 'Rafe the fowler', 'Kit the potboy', 'Aunt Dorcas'];
 const PLACES = [{ name: 'Mossbrook' }, { name: 'Raven Hill' }, { name: 'Saltmarsh' }, { name: 'The Old City' }];
 const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
 const UPGRADES = [
@@ -122,8 +276,9 @@ function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != n
 // the day's customers are dealt: troubles the jars on the shelf can cure, no two alike, a share of two-jar ones
 function planDay(G) { const c = G.cfg, R = G.rnd, have = new Set(c.ings.map(i => i.id)), runes = new Set(c.runes.map(r => r.id));
   const ok = t => have.has(t[0]) && runes.has(t[2]) && (!t[4] || (c.two && have.has(t[4]))) && (c.dirs || t[1] === 'in'), pool = TROUBLES.filter(ok), ones = pool.filter(t => !t[4]).sort(() => R() - 0.5), twos = pool.filter(t => t[4]).sort(() => R() - 0.5);
-  const nTwo = Math.min(twos.length, Math.round(c.people * c.two)); G.queue = twos.slice(0, nTwo).concat(ones.slice(0, c.people - nTwo)).sort(() => R() - 0.5).map((t, i) => makeVisit(G, t, i)); G.total = G.queue.length; }
-function makeVisit(G, t, i) { const R = G.rnd, c = G.cfg, amt = c.amtOn ? [1, 2, 3][(R() * 3) | 0] : 2, who = PEOPLE[(G.seed + i * 7 + ((R() * 16) | 0)) % PEOPLE.length];
+  const nTwo = Math.min(twos.length, Math.round(c.people * c.two)); const takeN = (L, n) => { const out = []; for (let k = 0; k < n && k < L.length; k++) out.push(dealIf('trouble', TROUBLES, q => L.includes(q) && !out.includes(q), R)); return out; };      /* from the deck: no trouble comes to the door twice until every other one the shelf can cure has */
+  G.queue = takeN(twos, nTwo).concat(takeN(ones, c.people - nTwo)).sort(() => R() - 0.5).map((t, i) => makeVisit(G, t, i)); G.total = G.queue.length; }
+function makeVisit(G, t, i) { const R = G.rnd, c = G.cfg, amt = c.amtOn ? [1, 2, 3][(R() * 3) | 0] : 2, who = PEOPLE[(G.seed + i * 7 + ((R() * 16) | 0) + deal('who', PEOPLE.length, R)) % PEOPLE.length];
   let story = t[3]; if (amt !== 2) story += ' ' + pick(R, AMT[amt]);
   return { id: i, who, story, need: [t[0]].concat(t[4] ? [t[4]] : []), dir: t[1], rune: t[2], amt, alt: t[5] || [], face: (R() * 6) | 0, hat: (R() * 4) | 0 }; }
 function nextCustomer(G) { const ret = G.done.find((d, i) => d.back && !d.seenBack && (G.done.length > i + 1 || !G.queue.length));      /* they come back after the next customer */

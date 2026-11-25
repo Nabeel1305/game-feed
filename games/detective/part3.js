@@ -16,7 +16,7 @@ function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Mat
   if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
 function mySkin() { if (typeof HEADLESS !== 'undefined' && HEADLESS) return SKINS[0]; const id = store.get('skin', 'trench'); return SKINS.find(q => q.id === id) || SKINS[0]; }
 const SH = () => H * 0.5;      // the height of the 3D picture (the top half)
-const WALL = { home: [0xc8b89a, 0x6a4a3a], hotel: [0xd8c8b0, 0x8a2a2a], museum: [0xe8e4dc, 0x5a6a7a], train: [0x8a5a3a, 0x3a5a4a], office: [0xd0d4d8, 0x4a5a6a] };
+const WALL = { home: [0xc8b89a, 0x6a4a3a], hotel: [0xd8c8b0, 0x8a2a2a], museum: [0xe8e4dc, 0x5a6a7a], train: [0x8a5a3a, 0x3a5a4a], office: [0xd0d4d8, 0x4a5a6a], theatre: [0x7a2a34, 0xc8a050], ship: [0xe4e8ea, 0x2a4a6a], school: [0xb8b4a0, 0x3a4a3a], inn: [0xd8c4a0, 0x4a3020] };
 function buildWorld() {
   if (V3) return V3; const T = window.THREE; if (!T || !W3 || !W3.init({ canvas: $('gl'), fov: 42, far: 200, near: 0.1, dims: () => [W, SH()] })) { V3 = { none: true }; return V3; }
   V3 = { T, S: W3.scene, t: 0, for: null, items: [] }; const V = V3, M = (c, o = {}) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7 }, o)); V.M = M;

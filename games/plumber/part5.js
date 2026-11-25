@@ -150,7 +150,7 @@ window.__sim = {
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   takeCall(i) { return takeCall(G, i); }, tapPart(id) { return tapPart(G, id); }, act(k) { return act(G, k); }, press() { press(G); }, lift() { lift(G); }, dial(v) { dial(G, v); }, dialDone() { dialDone(G); }, drop(d) { drop(G, d); }, lay, renderShop, ui, spot: id => spot(G, id), FIX, callRect, actRect, sliderRect, fitTarget, fitStart, leaveRect, closeRect,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

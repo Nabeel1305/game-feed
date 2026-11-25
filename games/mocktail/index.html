@@ -5249,6 +5249,20 @@ const RULES = [
   'A drink they dislike fails that order: make it again. Too many and the shift is over.',
 ];
 // ingredients: what each part does to the taste (sweet, sour, bitter, fruity), and its colour
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const ING = {
   orange: { name: 'Orange juice', cat: 'juice', col: '#ffa020', t: [1.2, 0.6, 0, 1], lv: 1 }, cranberry: { name: 'Cranberry', cat: 'juice', col: '#c81a3a', t: [0.8, 1.0, 0.3, 1], lv: 1 },
   apple: { name: 'Apple juice', cat: 'juice', col: '#f0d060', t: [1.3, 0.4, 0, 1], lv: 1 }, lime: { name: 'Lime juice', cat: 'juice', col: '#b8e060', t: [0.2, 2.6, 0.2, 0.6], lv: 2 },
@@ -5275,6 +5289,38 @@ const DRINKS = [
   { id: 'tonictwist', name: 'Tonic Twist', lv: 6, ing: { tonic: 4, grapefruit: 2 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'lime' },
   { id: 'tropic', name: 'Tropic Storm', lv: 8, ing: { pineapple: 3, orange: 2, grenadine: 1 }, glass: 'hurricane', ice: 'crushed', how: 'layer', garn: 'umbrella' },
   { id: 'garden', name: 'Garden Party', lv: 9, ing: { apple: 3, lemon: 1, vanilla: 1, soda: 2 }, fresh: ['basil'], glass: 'highball', ice: 'cubes', how: 'muddle', garn: 'mint' },
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): eleven named drinks were the whole menu. Forty-one now, from the same
+  // bottles, every one a different mix, glass, ice and way of making; none is ordered twice until the rest of the menu has been (the deck).
+  { id: 'orchard', name: 'Orchard Fizz', lv: 1, ing: { apple: 3, soda: 3 }, glass: 'highball', ice: 'cubes', how: 'build', garn: 'lime' },
+  { id: 'ruby', name: 'Ruby Cooler', lv: 1, ing: { cranberry: 3, soda: 3 }, glass: 'highball', ice: 'cubes', how: 'build', garn: 'lime' },
+  { id: 'glow', name: 'Morning Glow', lv: 1, ing: { orange: 3, apple: 2 }, glass: 'highball', ice: 'cubes', how: 'build', garn: 'orange' },
+  { id: 'blush', name: 'Apple Blush', lv: 2, ing: { apple: 4, grenadine: 1 }, glass: 'highball', ice: 'cubes', how: 'layer', garn: 'cherry' },
+  { id: 'rickey', name: 'Cran-Lime Rickey', lv: 2, ing: { cranberry: 2, lime: 1, soda: 3 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'lime' },
+  { id: 'sharp', name: 'Short & Sharp', lv: 2, ing: { lime: 2, sugar: 1, apple: 2 }, glass: 'rocks', ice: 'cubes', how: 'stir', garn: 'lime' },
+  { id: 'cloudy', name: 'Cloudy Lemonade', lv: 3, ing: { lemon: 2, sugar: 1, soda: 4 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'lime' },
+  { id: 'pink', name: 'Pink Lemonade', lv: 5, ing: { lemon: 2, cranberry: 2, sugar: 1, soda: 3 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'cherry' },
+  { id: 'citrus', name: 'Three Citrus', lv: 3, ing: { orange: 3, lemon: 1, lime: 1 }, glass: 'rocks', ice: 'cubes', how: 'stir', garn: 'orange' },
+  { id: 'mule', name: 'Garden Mule', lv: 4, ing: { ginger: 4, lime: 1, apple: 1 }, glass: 'highball', ice: 'crushed', how: 'build', garn: 'lime' },
+  { id: 'mintapple', name: 'Minted Apple', lv: 4, ing: { apple: 3, lime: 1, soda: 2 }, fresh: ['mint'], glass: 'highball', ice: 'crushed', how: 'muddle', garn: 'mint' },
+  { id: 'smash', name: 'Cranberry Smash', lv: 4, ing: { cranberry: 3, sugar: 1, soda: 2 }, fresh: ['mint'], glass: 'rocks', ice: 'crushed', how: 'muddle', garn: 'mint' },
+  { id: 'gingersun', name: 'Ginger Sunrise', lv: 4, ing: { ginger: 3, orange: 2, grenadine: 1 }, glass: 'highball', ice: 'cubes', how: 'layer', garn: 'orange' },
+  { id: 'honeysour', name: 'Honey Bee Sour', lv: 5, ing: { lemon: 2, honey: 1, apple: 2 }, glass: 'coupe', ice: 'none', how: 'shake', garn: 'cherry' },
+  { id: 'pinecool', name: 'Pineapple Cooler', lv: 5, ing: { pineapple: 3, lime: 1, soda: 3 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'lime' },
+  { id: 'berrysour', name: 'Berry Sour', lv: 5, ing: { cranberry: 2, lemon: 2, sugar: 1 }, fresh: ['berries'], glass: 'coupe', ice: 'none', how: 'shake', garn: 'cherry' },
+  { id: 'honeygold', name: 'Honey Gold', lv: 5, ing: { pineapple: 2, orange: 2, honey: 1 }, glass: 'coupe', ice: 'none', how: 'shake', garn: 'orange' },
+  { id: 'honeymint', name: 'Honey Mint', lv: 5, ing: { lime: 2, honey: 1, soda: 4 }, fresh: ['mint'], glass: 'highball', ice: 'crushed', how: 'muddle', garn: 'mint' },
+  { id: 'bitterlemon', name: 'Bitter Lemon', lv: 6, ing: { tonic: 4, lemon: 2 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'lime' },
+  { id: 'pinkfizz', name: 'Pink Grapefruit', lv: 6, ing: { grapefruit: 3, sugar: 1, soda: 3 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'cherry' },
+  { id: 'harbour', name: 'Harbour Breeze', lv: 6, ing: { cranberry: 3, grapefruit: 2 }, glass: 'rocks', ice: 'cubes', how: 'build', garn: 'umbrella' },
+  { id: 'gintonic', name: 'Ginger Tonic', lv: 6, ing: { tonic: 3, ginger: 3, lime: 1 }, glass: 'highball', ice: 'cubes', how: 'build', garn: 'lime' },
+  { id: 'grapesmash', name: 'Grapefruit Smash', lv: 6, ing: { grapefruit: 3, lime: 1, sugar: 1 }, fresh: ['mint'], glass: 'rocks', ice: 'crushed', how: 'muddle', garn: 'mint' },
+  { id: 'island', name: 'Island Layer', lv: 8, ing: { pineapple: 4, cranberry: 3, grenadine: 1 }, glass: 'hurricane', ice: 'crushed', how: 'layer', garn: 'umbrella' },
+  { id: 'bigwave', name: 'Big Wave', lv: 8, ing: { orange: 3, pineapple: 3, lime: 1, soda: 2 }, glass: 'hurricane', ice: 'crushed', how: 'stir', garn: 'umbrella' },
+  { id: 'punch', name: 'Fruit Punch', lv: 8, ing: { orange: 2, apple: 2, cranberry: 2, pineapple: 2, ginger: 2 }, glass: 'hurricane', ice: 'cubes', how: 'stir', garn: 'orange' },
+  { id: 'cloud', name: 'Vanilla Cloud', lv: 9, ing: { pineapple: 2, vanilla: 1, lemon: 1 }, glass: 'coupe', ice: 'none', how: 'shake', garn: 'cherry' },
+  { id: 'basil', name: 'Basil Smash', lv: 9, ing: { lemon: 2, sugar: 1, soda: 3 }, fresh: ['basil'], glass: 'highball', ice: 'crushed', how: 'muddle', garn: 'lime' },
+  { id: 'vanginger', name: 'Vanilla Ginger', lv: 9, ing: { ginger: 4, vanilla: 1, lime: 1 }, glass: 'highball', ice: 'cubes', how: 'stir', garn: 'lime' },
+  { id: 'orchardbasil', name: 'Orchard & Basil', lv: 9, ing: { apple: 3, lime: 1, tonic: 3 }, fresh: ['basil'], glass: 'highball', ice: 'cubes', how: 'muddle', garn: 'mint' },
 ];
 // feelings a customer can ask for: each a test of the drink's taste (per part, averaged) and its build
 const WANTS = {
@@ -5288,7 +5334,7 @@ const WANTS = {
   fresh: { say: 'refreshing', test: q => q.ice && (q.fresh || q.so >= 0.8 || q.fizz >= 0.3), no: 'It isn\'t refreshing: ice and mint, or something sharp.', ask: 'Cold, with mint or citrus.' },
   long: { say: 'a long drink', test: q => q.parts >= 6, no: 'That\'s too small: a long drink, please.', ask: 'A big glass, please.' },
 };
-const PEOPLE = ['Ada', 'Bo', 'Chidi', 'Dara', 'Emi', 'Femi', 'Gus', 'Hana', 'Ife', 'Jun', 'Kemi', 'Lars', 'Mira', 'Nia', 'Oto', 'Pia', 'Remi', 'Sade', 'Tomi', 'Uche'];
+const PEOPLE = ['Ada', 'Bo', 'Chidi', 'Dara', 'Emi', 'Femi', 'Gus', 'Hana', 'Ife', 'Jun', 'Kemi', 'Lars', 'Mira', 'Nia', 'Oto', 'Pia', 'Remi', 'Sade', 'Tomi', 'Uche', 'Ayo', 'Bex', 'Cole', 'Dina', 'Eli', 'Fola', 'Gia', 'Hugo', 'Isa', 'Jide', 'Kai', 'Lola', 'Milo', 'Noor', 'Ola', 'Pru', 'Quin', 'Rae', 'Seun', 'Taj', 'Uma', 'Vik', 'Wes', 'Xan', 'Yemi', 'Zoe', 'Abe', 'Bimpe', 'Cyd', 'Dele', 'Efe', 'Fenn', 'Greta', 'Habib', 'Ines', 'Joss'];
 const SKINS = [{ id: 'classic', name: 'Classic bar', col: 0x8a4a2a, stars: 0 }, { id: 'neon', name: 'Neon lounge', col: 0x6a2a9a, stars: 6 }, { id: 'beach', name: 'Beach shack', col: 0xd8b070, stars: 14 }, { id: 'marble', name: 'Marble', col: 0xe8e4e0, stars: 24 }, { id: 'jungle', name: 'Jungle', col: 0x2a6a3a, stars: 36 }, { id: 'gold', name: 'Golden hour', col: 0xd6a630, stars: 50 }];
 const UPGRADES = [{ id: 'jigger', name: 'Measuring jigger', max: 1, cost: () => 60, desc: 'Marks every half part on the glass.' }, { id: 'tips', name: 'Tip jar', max: 2, cost: l => [40, 100][l], desc: 'Happy customers tip more.' }, { id: 'lights', name: 'Fairy lights', max: 1, cost: () => 50, desc: 'Lights along the bar (looks only).' }];
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
@@ -5309,7 +5355,7 @@ function nextOrder(G, retry) { const c = G.cfg, R = G.rnd; G.drink = newDrink();
   if (retry && G.order) { G.order.tries++; G.ev.push({ k: 'order', retry: true }); return; }
   const L = lessonNow(G), pool = DRINKS.filter(d => avail(G, d.lv) && (!L || d.lv <= 1)), newest = pool.filter(d => d.lv === Math.max(...pool.map(q => q.lv)));
   let o; if (!L && R() < c.feel) { let want; for (let tries = 0; tries < 30; tries++) { want = pickWants(G, R); if (solve(G, want, R)) break; } o = { feel: want, hint: null }; }
-  if (!o) { const d = R() < 0.5 && G.served < 2 ? newest[(R() * newest.length) | 0] : pool[(R() * pool.length) | 0]; o = { drink: d }; }
+  if (!o) { const d = R() < 0.5 && G.served < 2 ? newest[(R() * newest.length) | 0] : L ? pool[(R() * pool.length) | 0] : dealIf('drink', DRINKS, q => pool.includes(q), R); o = { drink: d }; }
   o.who = PEOPLE[(G.N * 7 + G.served * 3 + (G.seed % 11)) % PEOPLE.length]; o.tries = 0; o.asked = false; o.t0 = G.t; G.order = o; G.ev.push({ k: 'order' }); }
 // a drink that fits a feeling: tries small mixes of the bottles open on this level (used to make sure every request can be
 // met, and by the honest robot); returns a plan like a named drink, or null
@@ -5900,7 +5946,7 @@ window.__sim = {
   x() { return { DRINKS, ING, newDrink, addPart, nextOrder, planFor, judge, cardLines, k }; },
   pickGlass(id) { return pickGlass(G, id); }, select(id) { return select(G, id); }, pourStart() { return pourStart(G); }, pourStop() { return pourStop(G); }, addIce(kd) { return addIce(G, kd); }, muddle() { return muddle(G); }, useShaker() { return useShaker(G); }, shake() { return shake(G); }, stir(n) { return stir(G, n); }, garnish(id) { return garnish(G, id); }, serve() { return serve(G); }, ask() { return ask(G); }, layout() { return layout(G); }, glassScr, tasteOf() { return tasteOf(G.drink); }, judge() { return judge(G); }, ui, store, practice(on) { practiceOn = on; }, showAqua, mySkin, SKINS, store, scr, renderShop, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
-  playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
+  deal, dealIf, playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
   skipTutorial() { skipTutorial(); }, startTutorial() { startTutorial(); }, get tutRun() { return tutRun; },
   get G() { return G; }

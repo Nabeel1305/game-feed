@@ -12,12 +12,31 @@ const RULES = [
   '<b>PIPE:</b> the cake turns under the piping bag. Tap as each guide dot passes under it to pipe a swirl.',
   '<b>TOP:</b> tap on top of the cake to place berries or candles, evenly spaced, as many as ordered. The customer scores it: make their dream cake.',
 ];
+// A DECK THAT REMEMBERS (25 Nov 2026, his words: "way more combinations... something novel each time. Someone can play this game for years, and they only
+// see something similar to something else only, like once in a blue moon"). deal(name, n) gives the next of n things in a shuffled order that is KEPT ON THE
+// PHONE: nothing comes round again until everything else in its list has, today or next month. dealIf() is the same for a list where only some fit just now
+// (the rest go back under the deck). In the robots' fast games (HEADLESS) it is plain luck from the game's own dice, so a seed still gives the same game.
+const DECKS = {};
+function deal(name, n, R) { if (n <= 1) return 0; if (typeof HEADLESS !== 'undefined' && HEADLESS) return (R() * n) | 0;
+  let q = DECKS[name]; if (!q) { try { q = store.get('deck.' + name, null); } catch (e) { q = null; } q = DECKS[name] = Array.isArray(q) ? q.filter(i => i >= 0 && i < n) : []; }
+  if (!q.length) { for (let i = 0; i < n; i++) q.push(i); for (let i = n - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0, t = q[i]; q[i] = q[j]; q[j] = t; } if (DECKS['<' + name] === q[n - 1] && n > 2) { const t = q[0]; q[0] = q[n - 1]; q[n - 1] = t; } }
+  const i = q.pop(); DECKS['<' + name] = i; try { store.set('deck.' + name, q); } catch (e) {} return i; }
+const dealOf = (name, list, R) => list[deal(name, list.length, R)];
+function dealIf(name, list, ok, R) { if (typeof HEADLESS !== 'undefined' && HEADLESS) { const L = list.filter(ok); return L[(R() * L.length) | 0]; }
+  const back = []; let got = -1; for (let k = 0; k < list.length * 2 && got < 0; k++) { const i = deal(name, list.length, R); if (ok(list[i], i)) got = i; else back.push(i); }
+  if (back.length) { const q = DECKS[name]; for (const i of back) if (i !== got && !q.includes(i)) q.unshift(i); try { store.set('deck.' + name, q); } catch (e) {} }
+  return got < 0 ? list.filter(ok)[0] : list[got]; }
 const ICINGS = [{ id: 'pink', name: 'Pink', col: 0xf6a6c8 }, { id: 'white', name: 'Vanilla', col: 0xfbf4ea }, { id: 'choc', name: 'Chocolate', col: 0x6a3a22 }, { id: 'mint', name: 'Mint', col: 0xa8e6c8 },
-  { id: 'lemon', name: 'Lemon', col: 0xfbe27a }, { id: 'blue', name: 'Sky', col: 0xa8d0f6 }, { id: 'lilac', name: 'Lilac', col: 0xcdb2ef }, { id: 'red', name: 'Red velvet', col: 0xd8455a }];
-const TOPS = [{ id: 'berry', name: 'strawberries', one: 'strawberry' }, { id: 'candle', name: 'candles', one: 'candle' }, { id: 'cherry', name: 'cherries', one: 'cherry' }, { id: 'macaron', name: 'macarons', one: 'macaron' }];
-const SPONGES = [0xf3d79a, 0x7a4a2a, 0xf2b8b8];
-const PEOPLE = ['Ada', 'Bayo', 'Chloe', 'Dami', 'Ella', 'Femi', 'Grace', 'Hassan', 'Ife', 'Jade', 'Kemi', 'Leo', 'Musa', 'Nora', 'Ola', 'Priya', 'Rosa', 'Sade', 'Tunde', 'Zara'];
-const OCCASIONS = ['birthday', 'wedding', 'graduation', 'anniversary', 'baby shower', 'party', 'promotion', 'tea party'];
+  { id: 'lemon', name: 'Lemon', col: 0xfbe27a }, { id: 'blue', name: 'Sky', col: 0xa8d0f6 }, { id: 'lilac', name: 'Lilac', col: 0xcdb2ef }, { id: 'red', name: 'Red velvet', col: 0xd8455a },
+  // 25 Nov 2026 (his words: "way more combinations... something novel each time"): ten more icings, four more sponges, four more toppings, forty more
+  // occasions and forty more customers; an order is dealt from the deck, so no icing, topping or occasion comes twice until the rest have
+  { id: 'peach', name: 'Peach', col: 0xfbc49a }, { id: 'caramel', name: 'Caramel', col: 0xc98a3a }, { id: 'pistachio', name: 'Pistachio', col: 0xb9d27a }, { id: 'raspberry', name: 'Raspberry', col: 0xc2185b },
+  { id: 'orange', name: 'Orange', col: 0xf89a2a }, { id: 'teal', name: 'Teal', col: 0x3aa9a0 }, { id: 'blackberry', name: 'Blackberry', col: 0x4a2a5a }, { id: 'coral', name: 'Coral', col: 0xf47a6a },
+  { id: 'blueberry', name: 'Blueberry', col: 0x3a4a9a }, { id: 'coffee', name: 'Coffee', col: 0xa67c52 }];
+const TOPS = [{ id: 'berry', name: 'strawberries', one: 'strawberry' }, { id: 'candle', name: 'candles', one: 'candle' }, { id: 'cherry', name: 'cherries', one: 'cherry' }, { id: 'macaron', name: 'macarons', one: 'macaron' }, { id: 'blueberry', name: 'blueberries', one: 'blueberry' }, { id: 'flower', name: 'sugar flowers', one: 'sugar flower' }, { id: 'star', name: 'gold stars', one: 'gold star' }, { id: 'curl', name: 'chocolate curls', one: 'chocolate curl' }];
+const SPONGES = [0xf3d79a, 0x7a4a2a, 0xf2b8b8, 0xa8323a, 0xf6e27a, 0xc98a4a, 0x9a6a44];      // vanilla, chocolate, strawberry; red velvet, lemon, carrot, coffee
+const PEOPLE = ['Ada', 'Bayo', 'Chloe', 'Dami', 'Ella', 'Femi', 'Grace', 'Hassan', 'Ife', 'Jade', 'Kemi', 'Leo', 'Musa', 'Nora', 'Ola', 'Priya', 'Rosa', 'Sade', 'Tunde', 'Zara', 'Abel', 'Bisi', 'Cyrus', 'Dalia', 'Emeka', 'Farah', 'Gus', 'Hauwa', 'Ivo', 'Joy', 'Kofi', 'Lena', 'Milo', 'Ngozi', 'Otis', 'Pia', 'Quinn', 'Remi', 'Seyi', 'Tess', 'Uche', 'Vera', 'Wale', 'Xena', 'Yemi', 'Zeb', 'Amaka', 'Bruno', 'Cleo', 'Dayo', 'Esme', 'Felix', 'Gigi', 'Hugo', 'Ines', 'Jomo'];
+const OCCASIONS = ['birthday', 'wedding', 'graduation', 'anniversary', 'baby shower', 'party', 'promotion', 'tea party', 'engagement', 'retirement', 'housewarming', 'christening', 'school play', 'naming day', 'homecoming', 'picnic', 'bake sale', 'street party', 'sleepover', 'book club', 'garden party', 'surprise', 'farewell', 'reunion', 'new job', 'new baby', 'big win', 'exam results', 'sweet sixteen', '18th birthday', '21st birthday', '40th birthday', '70th birthday', 'golden wedding', 'silver wedding', 'first birthday', 'welcome home', 'thank-you', 'get-well', 'harvest supper', 'village fete', 'school fair', 'team party', 'opening night', 'New Year', 'feast day', 'parade', 'driving test'];
 const PLACES = [{ name: 'Corner Bakery', sky: 'morning' }, { name: 'Market Stall', sky: 'noon' }, { name: 'Tea Room', sky: 'golden' }, { name: 'Wedding Hall', sky: 'sunset' }, { name: 'Night Bakery', sky: 'night' }, { name: 'Royal Kitchen', sky: 'noon' }];
 const placeOf = N => Math.floor((N - 1) / 5) % PLACES.length;
 const SKINS = [{ id: 'stand', name: 'Cake stand', col: 0xf2f2f2, stars: 0 }, { id: 'gold', name: 'Gold stand', col: 0xe0b040, stars: 6 }, { id: 'mint', name: 'Mint stand', col: 0x9ee0c0, stars: 14 },
@@ -38,8 +57,8 @@ function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != n
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, wait: 0, next: null };
   setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G; }
-function order(G) { const c = G.cfg, R = G.rnd, n = ICINGS.length; return { who: PEOPLE[(R() * PEOPLE.length) | 0], why: OCCASIONS[(R() * OCCASIONS.length) | 0], tiers: c.tiers, icing: (R() * n) | 0, sponge: (R() * 3) | 0,
-  swirls: c.swirls, top: c.tops ? (R() * TOPS.length) | 0 : -1, tops: c.tops, drip: c.drip ? (R() * n) | 0 : -1 }; }
+function order(G) { const c = G.cfg, R = G.rnd, n = ICINGS.length; return { who: dealOf('who', PEOPLE, R), why: dealOf('why', OCCASIONS, R), tiers: c.tiers, icing: deal('icing', n, R), sponge: deal('sponge', SPONGES.length, R),
+  swirls: c.swirls, top: c.tops ? deal('top', TOPS.length, R) : -1, tops: c.tops, drip: c.drip ? (R() * n) | 0 : -1 }; }
 function setup(G, o = {}) { const c = G.cfg; G.t = 0; G.yard = o.yard || null; G.ord = o.ord || order(G);
   const ord = G.ord; G.tiers = []; G.colour = null; G.swatches = null; G.ice = null; G.swirls = []; G.tops = []; G.ang = 0; G.stage = null; G.thumb = null; G.marks = {};
   if (G.yard === 'ice') { for (let i = 0; i < ord.tiers; i++) G.tiers.push({ off: 0, r: tierR(i) }); G.colour = ord.icing; goStage(G, 'ice'); }
