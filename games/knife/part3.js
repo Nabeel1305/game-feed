@@ -9,7 +9,7 @@ let hint = null, FLYING = [], WEDGES = [], dropIn = 0, HALVES = [];
 const NU = 'Nunito, "Barlow Condensed", "Arial Narrow", sans-serif';
 function sparks(x, y, n, col, sp = 220, g = 520) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, life: 0.4 + Math.random() * 0.4, t: 0, col, r: 1.5 + Math.random() * 2.5, g }); } if (PT.length > 400) PT.splice(0, PT.length - 400); }
 function say(txt, x, y, col = '#fff', size = 22) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 const S1 = () => Math.min(W, H * 0.6) / 390;
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lay() { const s = S1(), R = Math.min(W * 0.31, H * 0.17), cx = W / 2, cy = Math.max(H * 0.36, 110 * s + R + 30 * s), ky = Math.min(H - 110 * s, cy + R + 230 * s); return { s, R, cx, cy, ky, klen: 86 * s }; }

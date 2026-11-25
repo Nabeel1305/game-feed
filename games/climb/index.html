@@ -5520,7 +5520,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0, slow: 0 }, TXT = [], PARTS = [
 let hint = null, V3 = null;
 const ui = { snap: true, cam: null, banner: null, drag: null, look: null, lookT: 0, lp: null };
 function say(txt, x, y, col = '#fff', size = 22) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 140) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60 * k, t: 0, life: 0.5 + Math.random() * 0.5, col, r: (2 + Math.random() * 3) * k }); } }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.6) TXT.shift();
@@ -5644,7 +5644,7 @@ function onEvent(G, e) { const hs = G.route.holds, at = i => { const h = hs[i]; 
     case 'grab': { const h = hs[e.i]; sfx.grab(h.ty, isHand(e.l)); vibe(isHand(e.l) ? HAP.tick : HAP.light); if (isHand(e.l) && HT[h.ty].need === 'below') tip('sloper', 'A sloper (round dome) only holds when it is below your shoulders: step your feet up first.', 4); if (h.ty === 'side') tip('side', 'A side-pull holds when your body is on the side it faces.', 3.6); if (h.ty === 'ledge' && isHand(e.l)) tip('ledge', 'A big ledge: both hands on it with good feet and your grip fills up.', 3.6);
       const p = at(e.i); if (h.ty === 'ledge' || h.ty === 'jug') burst(p.x, p.y, 'rgba(255,255,255,.8)', 5, 50); } break;
     case 'miss': sfx.scrape(); vibe(HAP.tick); { const p = scrOf(G, e.x, e.y) || { x: W / 2, y: H / 2 }; say(e.n > 1 ? 'NOTHING THERE (TIRING)' : 'NOTHING THERE', p.x, p.y, '#ffd0a0', 15); } tip('lit', 'Let go near a hold that is lit up. A slap at bare rock tires you, more each time.', 3.6); break;
-    case 'needjump': sfx.no(); { const p = at(e.i); say('TOO FAR: HOLD TO JUMP', p.x, p.y - 20 * k, '#ffb46a', 15); } break;
+    case 'needjump': sfx.no(); { const p = at(e.i); say((G && G.lesson) ? 'TOO FAR: HOLD TO JUMP' : 'TOO FAR', p.x, p.y - 20 * k, '#ffb46a', 15); } break;
     case 'load': sfx.load(); break;
     case 'caught': sfx.caught(); vibe(HAP.best); FX.flash = 0.3; FX.shake = 6; { const p = at(e.i); say('CAUGHT IT!', p.x, p.y - 30 * k, '#9be3b5', 24); burst(p.x, p.y, '#ffffff', 14, 120); } break;
     case 'jumpmiss': say(e.early ? 'TOO SOON' : 'TOO LATE', W / 2, H * 0.4, '#ffd0a0', 22); break;

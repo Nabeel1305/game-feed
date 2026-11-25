@@ -8,7 +8,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
 let hint = null, LAWN = { key: '', c: null, cx: null, img: null, dirty: true };
 const NU = 'Nunito, "Barlow Condensed", "Arial Narrow", sans-serif';
 function say(txt, x, y, col = '#fff', size = 20) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 const S1 = () => Math.min(W, H * 0.6) / 390;
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 // paint into a screen-sized picture of its own (with the usual helpers, which draw on ctx)

@@ -10,7 +10,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0, slow: 0 }, TXT = [], PARTS = [
 let hint = null, V3 = null;
 const ui = { snap: true, banner: null, drag: null, tab: 'glass', bubble: null, stirA: null, book: 0, stirId: null, shakeId: null, shakeAcc: 0 };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 160) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60 * k, t: 0, life: 0.4 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 2.5) * k }); } if (PARTS.length > 220) PARTS.splice(0, PARTS.length - 220); }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.4) TXT.shift();
@@ -167,7 +167,7 @@ function onEvent(G, e) { const cx = W / 2;
     case 'start': ui.banner = { txt: G.cfg.practice ? 'FREE MIX' : PLACES[placeOf(G.N)].name, t: 0, secs: 1.5, col: '#ff9ac0' }; break;
     case 'order': ui.bubble = null; ui.tab = G.drink && G.drink.glass ? 'bottles' : 'glass'; if (!G.order.free) { sfx.bell(); if (e.retry) say('TRY AGAIN', cx, H * 0.3, '#ffd0e0', 22); else if (G.order.feel) tip('feel', 'They describe a FEELING: any drink that fits is right. Not sure? ASK one question.', 3.5); else if (G.N >= 4 && G.order.drink.how === 'muddle') tip('muddle', 'Fresh mint or berries: add them to the glass, then MUDDLE (tap 3 times) to crush them.', 3.4); else if (G.N >= 5 && G.order.drink.how === 'shake') tip('shake', 'SHAKE: tap SHAKER, pour into it, HOLD the same button to shake, then tap it again to pour it into the glass.', 3.8); else if (G.order.drink.how === 'layer') tip('layer', 'LAYERS: pour the heavy syrup LAST and do not stir: it sinks into a red layer.', 3.4); else if (G.order.drink.how === 'stir') tip('stir', 'STIR: hold the STIR button until the colours blend.', 3); } break;
     case 'glass': sfx.glass(); vibe(HAP.tick); if (ui.tab === 'glass') ui.tab = 'bottles'; break;
-    case 'needglass': sfx.no(); say('PICK A GLASS FIRST', cx, H * 0.42, '#ffd0e0', 18); ui.tab = 'glass'; break;
+    case 'needglass': sfx.no(); say((G && G.lesson) ? 'PICK A GLASS FIRST' : 'NO GLASS YET', cx, H * 0.42, '#ffd0e0', 18); ui.tab = 'glass'; break;
     case 'select': sfx.click(); break;
     case 'pour': sfx.pourOn(); break; case 'pourstop': sfx.pourOff(); break; case 'full': sfx.no(); say('FULL!', cx, H * 0.42, '#fff', 18); sfx.pourOff(); break;
     case 'ice': sfx.ice(e.kind); vibe(HAP.tick); if (e.kind !== 'none') { const p = glassScr(); burst(p.x, p.top, 'rgba(235,248,255,.9)', 8, 90); } break; case 'fresh': sfx.leaf(); break;

@@ -8,7 +8,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0, slow: 0 }, TXT = [], PARTS = [
 let hint = null, V3 = null;
 const ui = { snap: true, cam: null, pads: { L: 0, R: 0 }, qual: null, banner: null, ghost: null };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 160) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.5 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 2.5) * k }); } if (PARTS.length > 240) PARTS.splice(0, PARTS.length - 240); }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.4) TXT.shift();
@@ -269,7 +269,7 @@ function hud(G, t) { ctx.textBaseline = 'middle'; const y = G.you, D = G.D, run 
   // the starter
   if (!G.lesson || G.yard === 'gun') { let b = ui.banner; if (G.phase === 'marks' && !G.over) b = { txt: 'ON YOUR MARKS', t: 0.5, col: '#fff', small: true };
     if (b) { const sc = b.t < 0.12 ? 1.25 - b.t / 0.12 * 0.25 : 1; ctx.textAlign = 'center'; ctx.font = `400 ${Math.round((b.small ? 30 : b.txt.length > 6 ? 40 : 64) * k * sc)}px ${TF}`; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(10,12,20,.7)'; ctx.strokeText(b.txt, W / 2, H * 0.4); ctx.fillStyle = b.col || '#fff'; ctx.fillText(b.txt, W / 2, H * 0.4); }
-    if (G.phase === 'set' && !G.over) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText('KEEP STILL... GO ON THE BANG', W / 2, H * 0.4 + 44 * k); }
+    if (G.lesson && G.phase === 'set' && !G.over) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText('KEEP STILL... GO ON THE BANG', W / 2, H * 0.4 + 44 * k); }
     if (G.fs === 1 && !G.over && !y.started) { ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#ffb4a8'; ctx.fillText('⚠ ONE FALSE START: ONE MORE AND YOU ARE OUT', W / 2, H * 0.4 + 64 * k); } }
   // flow and speed
   if (run && y.started) { ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(18 * k)}px ${TF}`; ctx.fillStyle = y.flow >= 5 ? '#7af0ff' : '#fff'; const kmh = Math.round(y.v * 3.6);

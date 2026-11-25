@@ -38,10 +38,13 @@ function makeCfg(N, help) {
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 10 === 0;
   return { N, f, help: !!help, boss,
     // your kick
-    band: x(0.17, 0.1, 30) + 0.02 * upLv('boots') + (help ? 0.03 : 0), sweep: x(1.15, 0.62, 35) * (1 + 0.12 * upLv('focus')),
+    // (25 Nov 2026, his review: "as the levels go up make it faster the green parts smaller ans the line go faster for saving and scoring".
+    // It did, but too gently to feel: by level 10 the green was only a tenth narrower. The green now narrows, the needle quickens and
+    // their shot comes sooner about half as fast again over the first twenty levels, and each goes a little further in the end.)
+    band: x(0.17, 0.09, 20) + 0.02 * upLv('boots') + (help ? 0.03 : 0), sweep: x(1.15, 0.56, 26) * (1 + 0.12 * upLv('focus')),
     relK: x(0.95, 0.5, 30) - (boss ? 0.06 : 0), memK: x(0.35, 0.85, 30), reachK: x(1.3, 1.9, 35) + (boss ? 0.12 : 0),
     // their kick
-    relC: x(0.96, 0.55, 35), sw: x(0.85, 0.97, 30), pc: x(0.06, 0.35, 35) + (boss ? 0.08 : 0), mk: x(0.05, 0.03, 40), flight: x(0.6, 0.4, 35), stutter: N >= 3 ? x(0.25, 0.55, 30) : 0, centre: x(0.08, 0.2, 30),
+    relC: x(0.96, 0.55, 35), sw: x(0.85, 0.97, 30), pc: x(0.06, 0.35, 35) + (boss ? 0.08 : 0), mk: x(0.05, 0.03, 40), flight: x(0.6, 0.38, 26), stutter: N >= 3 ? x(0.25, 0.55, 30) : 0, centre: x(0.08, 0.2, 30),
     reach: 1.45 + 0.12 * upLv('gloves') + (help ? 0.15 : 0), dive: 0.2 - 0.04 * upLv('spring'), arrow: N <= 5, retake: upLv('captain'), scout: upLv('scout') };
 }
 function newGame(N, o = {}) {

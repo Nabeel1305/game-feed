@@ -10,6 +10,7 @@ const RULES = [
   'In doubt? <b>🔍 Loupe</b> checks signatures and hallmarks, <b>🔦 UV</b> spots fakes. Each look tries their patience.',
   '<b>Drag the dial</b> to your offer and tap <b>OFFER</b>. Too low insults them; they may walk. They will counter.',
   'Pay less than it is worth: at <b>closing</b> it sells for its real value. Make the day\'s profit target.',
+  'If <b>two</b> customers walk out on you, the shop shuts for the day.',
   'Every sale fills your <b>Price Book</b>: you learn what things are worth.',
 ];
 // the kinds of thing people bring, what a good one fetches, and three makers (cheap, middling, fine) for each
@@ -26,7 +27,23 @@ const TYPES = [
   { id: 'painting', name: 'Painting', base: 600, makers: ['Print', 'Amateur oil', 'Old master'], lux: true, sig: true, n: 5 },
   { id: 'violin', name: 'Violin', base: 700, makers: ['Student', 'Workshop', 'Cremona-style'], lux: true, n: 7 },
   { id: 'handbag', name: 'Handbag', base: 380, makers: ['High street', 'Bellini', 'Maison Vey'], lux: true, n: 9 },
+  // 25 Nov 2026 (his review: "expand the list of products"): twelve more kinds of thing, some from the first day
+  { id: 'record', name: 'Vinyl record', base: 90, makers: ['Reissue', 'First pressing', 'Rare pressing'], ed: true, n: 1 },
+  { id: 'teddy', name: 'Teddy bear', base: 110, makers: ['Fairground', 'Hand-sewn', 'Antique mohair'], lux: true, n: 1 },
+  { id: 'skateboard', name: 'Skateboard', base: 140, makers: ['Toy shop', 'Street deck', 'Pro model'], n: 2 },
+  { id: 'necklace', name: 'Necklace', base: 440, makers: ['Costume', 'Silver', 'Diamond'], lux: true, n: 2 },
+  { id: 'typewriter', name: 'Typewriter', base: 200, makers: ['Plastic portable', 'Regent', 'Empress 1920s'], n: 3 },
+  { id: 'trumpet', name: 'Trumpet', base: 300, makers: ['School band', 'Bandmaster', 'Silver-plated'], n: 4 },
+  { id: 'laptop', name: 'Laptop', base: 350, makers: ['Chromo', 'Vertex', 'Titan Pro'], n: 4 },
+  { id: 'pen', name: 'Fountain pen', base: 160, makers: ['Steel nib', 'Gold nib', 'Limited edition'], lux: true, n: 5 },
+  { id: 'lamp', name: 'Table lamp', base: 280, makers: ['Flat-pack', 'Brass', 'Stained glass'], lux: true, n: 6 },
+  { id: 'clock', name: 'Mantel clock', base: 520, makers: ['Quartz', 'Brass movement', 'French gilt'], lux: true, n: 6 },
+  { id: 'telescope', name: 'Telescope', base: 330, makers: ['Toy', 'Brass', "Naval officer's"], n: 8 },
+  { id: 'medal', name: 'Medal', base: 400, makers: ['Sports day', 'Long service', 'Gallantry'], lux: true, n: 8 },
 ];
+// 25 Nov 2026 (his review: "make it more intense: if they lose like 2 offers, they lose the round"): the second customer who walks out
+// on you closes the shop for the day, whatever you have made.
+const WALKS = 2;
 const TIER = [0.35, 1, 2.6], COND = [{ t: 'mint, still boxed', m: 1.3 }, { t: 'in good shape', m: 1 }, { t: 'worn and scratched', m: 0.6 }, { t: 'broken', m: 0.25 }];
 const SELLERS = [
   { id: 'desperate', name: 'needs the money today', walk: [0.35, 0.5], ask: [1.0, 1.2], pat: 5, face: 0 },
@@ -45,7 +62,7 @@ const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.g
 const RANKS = [[0, 'Junk dealer'], [40, 'Pawnbroker'], [130, 'Antiques dealer'], [320, 'Auction house'], [700, 'Collector'], [1500, 'Tycoon']];
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, help: !!help, place: placeOf(N), people: Math.round(x(7, 9, 25)), target: 0, share: x(0.13, 0.25, 30), vs: x(1, 3.2, 30),
-    fakes: N >= 3 ? x(0.12, 0.3, 30) : 0, claims: N >= 2 ? x(0.25, 0.5, 30) : 0, hot: N >= 4, types: TYPES.filter(t => t.n <= N), sell: 1 + 0.1 * upLv('window'), pat: upLv('charm') }; }
+    fakes: N >= 3 ? x(0.12, 0.3, 30) : 0, claims: N >= 2 ? x(0.25, 0.5, 30) : 0, hot: N >= 4, types: TYPES.filter(t => t.n <= N), sell: 1 + 0.1 * upLv('window'), pat: upLv('charm') + (N <= 4 ? 1 : 0) }; }      // (two walk-outs now end the day: on the first four levels everyone has one more patience)
 // one customer and the thing they bring
 function makeVisit(G, opts = {}) { const R = G.rnd, c = G.cfg, T = opts.type ? TYPES.find(t => t.id === opts.type) : c.types[(R() * c.types.length) | 0];
   const dk = G.deck && G.deck[G.n % G.deck.length] || {}, tier = opts.tier != null ? opts.tier : dk.tier != null ? dk.tier : 1, cond = opts.cond != null ? opts.cond : dk.cond != null ? dk.cond : 1;
@@ -88,13 +105,13 @@ function offer(G, amt) { const v = G.visit; if (!v || G.over || G.wait > 0) retu
 function buy(G, P) { const v = G.visit; G.bought.push({ name: v.T.name, maker: v.maker, type: v.T.id, cond: v.cond, P, V: v.V, fake: v.fake, claim: v.claim, claimTrue: v.claimTrue, id: v.id });
   G.ev.push({ k: 'deal', P }); lessonSee(G, 'deal', v, P); return nextVisit(G); }
 function pass(G) { const v = G.visit; if (!v || G.over || G.wait > 0) return false; G.passed++; G.ev.push({ k: 'pass' }); lessonSee(G, 'pass', v); return nextVisit(G); }
-function walkOut(G, why) { G.walked++; G.ev.push({ k: 'walk', why }); lessonSee(G, 'walk', G.visit); return nextVisit(G); }
+function walkOut(G, why) { G.walked++; G.ev.push({ k: 'walk', why, n: G.walked }); lessonSee(G, 'walk', G.visit); if (!G.lesson && G.walked >= WALKS) { G.visit = null; G.wait = 1.6; G.next = () => closing(G, 'walked'); return true; } return nextVisit(G); }
 function nextVisit(G) { G.n++; const v = G.visit; G.visit = null; G.wait = 1.3;
   G.next = () => { if (G.lesson) { lessonVisit(G); return; } if (G.n >= G.cfg.people) return closing(G); G.visit = G.queue[G.n]; G.ev.push({ k: 'enter' }); }; return true; }
 // closing time: everything bought sells for what it is worth
-function closing(G) { const c = G.cfg, sales = G.bought.map(b => ({ ...b, sold: Math.round(b.V * c.sell) })), profit = sales.reduce((a, b) => a + b.sold - b.P, 0), win = profit >= c.target;
+function closing(G, why) { const c = G.cfg, sales = G.bought.map(b => ({ ...b, sold: Math.round(b.V * c.sell) })), profit = sales.reduce((a, b) => a + b.sold - b.P, 0), win = !why && profit >= c.target;
   G.over = win ? 'won' : 'lost'; const stars = win ? (profit >= c.target * 1.6 ? 3 : profit >= c.target * 1.25 ? 2 : 1) : 0;
-  G.res = { win, stars, profit, target: c.target, sales, passed: G.passed, walked: G.walked, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
+  G.res = { win, stars, why: why || (win ? '' : 'profit'), profit, target: c.target, sales, passed: G.passed, walked: G.walked, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
   G.ev.push({ k: 'closing', profit }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {

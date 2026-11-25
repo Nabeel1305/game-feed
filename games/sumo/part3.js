@@ -8,7 +8,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0, slow: 0 }, TXT = [], PARTS = [
 let hint = null, V3 = null;
 const ui = { snap: true, cam: null, banner: null, drag: null, hold: {}, endCam: 0 };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 160) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60 * k, t: 0, life: 0.5 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 2.5) * k }); } if (PARTS.length > 240) PARTS.splice(0, PARTS.length - 240); }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.4) TXT.shift();
@@ -182,7 +182,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const m = G.me, o = G.op, c 
   if (ui.drag) { const d2 = ui.drag, R = 50 * k, dx = clamp(d2.x - d2.x0, -R, R), dy = clamp(d2.y - d2.y0, -R, R); ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(d2.x0, d2.y0, R, 0, TAU); ctx.stroke();
     ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.textAlign = 'center'; ctx.fillText(m.grip ? 'DRIVE' : 'PRESS', d2.x0, d2.y0 - R - 9 * k); ctx.fillText(m.grip ? 'PULL' : 'BACK', d2.x0, d2.y0 + R + 9 * k);
     ctx.fillStyle = 'rgba(255,208,128,.65)'; ctx.beginPath(); ctx.arc(d2.x0 + dx, d2.y0 + dy, 22 * k, 0, TAU); ctx.fill(); }
-  else if (!G.over && G.phase !== 'end') { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(now * 4); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(W * 0.24, H - 120 * k, 50 * k, 0, TAU); ctx.stroke(); ctx.font = `400 ${Math.round(12 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('THUMB HERE', W * 0.24, H - 120 * k); ctx.fillText('↑ PRESS IN', W * 0.24, H - 120 * k - 64 * k); ctx.globalAlpha = 1; }
+  else if (!G.over && G.phase !== 'end') { ctx.globalAlpha = 0.4 + 0.3 * Math.sin(now * 4); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(W * 0.24, H - 120 * k, 50 * k, 0, TAU); ctx.stroke(); ctx.font = `400 ${Math.round(12 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; if (G && G.lesson) { ctx.fillText('THUMB HERE', W * 0.24, H - 120 * k); ctx.fillText('↑ PRESS IN', W * 0.24, H - 120 * k - 64 * k); } ctx.globalAlpha = 1; }
   // the three buttons: PUSH (big; a ring fills while you hold it for the big push), GRIP (lit while you hold his belt), DODGE (dims while it recovers)
   const B = btnRects(G), hold = m.pushing ? clamp(m.pushing / 0.35, 0, 1) : 0, near = dist(m, o) < 1.25;
   const btn = (r, txt, col, on, dim, sub) => { const cx2 = r.x + r.w / 2, cy2 = r.y + r.h / 2; ctx.globalAlpha = dim ? 0.45 : 1; ctx.fillStyle = on ? col : 'rgba(24,16,10,.66)'; ctx.beginPath(); ctx.arc(cx2, cy2, r.w / 2, 0, TAU); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 3 * k; ctx.beginPath(); ctx.arc(cx2, cy2, r.w / 2 - 2 * k, 0, TAU); ctx.stroke();

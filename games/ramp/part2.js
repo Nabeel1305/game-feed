@@ -27,13 +27,13 @@ function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (
   return { N, f, help: !!help, place: placeOf(N), len: Math.round(x(300, 700, 30)), kick: x(0.68, 0.8, 25), big: x(0.2, 1, 30), slack: x(0.06, 0.0, 30) * (1 + 0.5 * e) + (help ? 0.15 : 0),
     tol: 0.42 + 0.05 * upLv('shocks') + 0.16 * e + (help ? 0.1 : 0), top: 15 * (1 + 0.06 * upLv('engine')), nitro: 1.2 * (1 + 0.3 * upLv('nitro')), par: 0 }; }
 // ---------- the track: a height for every half metre, built from pieces ----------
-function buildTrack(G) { const c = G.cfg, R = G.rnd, hs = [], marks = [], flags = []; let y = 0, x = 0; const push = yy => { hs.push(yy); x += DX; };
+function buildTrack(G) { const c = G.cfg, R = G.rnd, hs = [], marks = [], flags = [], pits = []; let y = 0, x = 0; const push = yy => { hs.push(yy); x += DX; };
   const flat = m => { for (let i = 0; i < m / DX; i++) push(y); };
   const hill = (m, h) => { const y0 = y, n = m / DX; for (let i = 1; i <= n; i++) push(y0 + h * (1 - Math.cos(TAU * i / n)) / 2); y = y0; };
   const slope = (m, dh) => { const y0 = y, n = m / DX; for (let i = 1; i <= n; i++) push(y0 + dh * (1 - Math.cos(Math.PI * i / n)) / 2); y = y0 + dh; };
   // a kicker: a curved lip up to h, then a gap (a pit), then a landing slope down to the ground beyond
   const kicker = (h, gap, land, kind = 'down', ex = 1.8) => { const y0 = y, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, ex)); marks.push({ k: 'kick', x, kind });
-    for (let i = 0; i < gap / DX; i++) push(y0 - 3); const m = land / DX;
+    { const xa = x; for (let i = 0; i < gap / DX; i++) push(y0 - 3); pits.push([xa - DX, x]); } const m = land / DX;
     if (kind === 'down') { const top = y0 + h * 0.55; for (let i = 1; i <= m; i++) push(top - (top - (y0 - h * 0.4)) * (1 - Math.cos(Math.PI * i / m)) / 2); y = y0 - h * 0.4; }
     else if (kind === 'flat') { const top = y0 + h * 0.3; for (let i = 1; i <= m; i++) push(top); y = top; }
     else { const a = y0 + h * 0.15, b2 = y0 + h * 0.75; for (let i = 1; i <= m; i++) push(a + (b2 - a) * Math.sin(Math.PI / 2 * i / m)); y = b2; } };      // a step-up: you land going uphill
@@ -44,7 +44,7 @@ function buildTrack(G) { const c = G.cfg, R = G.rnd, hs = [], marks = [], flags 
     else if (r < c.kick + 0.35) { slope(10 + R() * 8, (R() < 0.5 ? -1 : 1) * (2 + R() * 4)); flat(6); }
     else flat(10 + R() * 10);
     if (x - (flags[flags.length - 1] || 0) > 110) { flat(6); flags.push(x - 4); } }
-  flat(30); G.track = { hs, marks, flags, end: x - 24 };
+  flat(30); G.track = { hs, marks, flags, pits, end: x - 24 };
   // the time to beat: the length at a fair speed, with slack that shrinks over the levels
   c.par = Math.round(x / (c.top * 0.92) * (1 + c.slack)); }
 const groundY = (G, x) => { const hs = G.track.hs, i = x / DX, i0 = Math.max(0, Math.min(hs.length - 2, Math.floor(i))), t = clamp(i - i0, 0, 1); return hs[i0] + (hs[i0 + 1] - hs[i0]) * t; };
@@ -66,6 +66,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.tl = Math.m
   b.boost = Math.max(0, b.boost - dt);
   if (!b.air) {
     // on the ground: the bike follows the ground; the engine pulls toward its top speed, slopes help or hinder
+    if (inPit(G, b.x) && b.x > 2) return crash(G);
     const th = slopeAt(G, b.x), top = b.boost > 0 ? c.top * 1.4 : c.top; let sp = Math.hypot(b.vx, b.vy) * Math.sign(b.vx || 1);
     sp += (sp < top ? 9 : -6) * dt - GRAV * Math.sin(th) * dt * 0.55; if (L === 'brake') sp -= 14 * dt; else if (lean === 1) sp -= 3 * dt; else if (lean === -1 && th < -0.05) sp += 5 * dt;
     sp = clamp(sp, 2, top * 1.25);
@@ -77,6 +78,9 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.tl = Math.m
     // in the air: gravity; your lean turns the bike
     b.airT += dt; b.vy -= GRAV * dt; b.x += b.vx * dt; b.y += b.vy * dt; const want = lean * 6; b.w += (want - b.w) * Math.min(1, dt * (lean ? 9 : 6)); b.a += b.w * dt; b.spin += b.w * dt;
     const gy = groundY(G, b.x);
+    // 25 Nov 2026 (his review: "The holes seem to be glitching out"): the gap after a ramp had a floor you could land on and ride along, and then the
+    // bike drove straight up the far wall. A hole is a hole: come down in one and you have crashed.
+    if (b.y <= gy && inPit(G, b.x)) return crash(G);
     if (b.y <= gy) { const th = slopeAt(G, b.x), diff = Math.abs(wrap(b.a - th)), flips = Math.floor(Math.abs(b.spin) / TAU + 0.25);
       if (diff > c.tol + (G.lesson ? 0.12 : 0) || Math.abs(th) > 1) return crash(G);      /* or you hit the face of the landing: too short */
       b.air = false; b.y = gy; const along = b.vx * Math.cos(th) + b.vy * Math.sin(th); b.vx = Math.max(4, along) * Math.cos(th); b.vy = 0; b.a = th; b.w = 0;
@@ -88,6 +92,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.tl = Math.m
   if (G.trace.length < 6000 && ((G.t * 10) | 0) !== G.lastTr) { G.lastTr = (G.t * 10) | 0; G.trace.push([+b.x.toFixed(1), +b.y.toFixed(1), +b.a.toFixed(2)]); }
   if (b.y < -60) return crash(G);
   if (b.x >= tr.end) { if (G.lesson) { lessonSee(G, 'end'); return; } return finish(G, G.clock <= G.cfg.par); } }
+const inPit = (G, x) => (G.track.pits || []).some(p => x > p[0] && x < p[1]);
 function crash(G) { const b = G.b; G.crashes++; if (!G.lesson) G.clock += 2;      // a crash costs two seconds on top of the ride back
   G.ev.push({ k: 'crash', x: b.x, y: b.y, a: b.a }); lessonSee(G, 'crash'); const back = b.lastFlag; b.air = false; b.vx = 0; G.wait = 1.1; G.next = () => reset(G, back); }
 function finish(G, win) { const c = G.cfg; G.over = win ? 'won' : 'lost'; const t = +G.clock.toFixed(2);
@@ -104,10 +109,10 @@ const LESSONS = {
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonTrack(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
-function lessonTrack(G) { const st = lessonNow(G), hs = [], flags = [0]; let y = 0; const push = v => hs.push(v); for (let i = 0; i < 40; i++) push(0);
-  for (let k = 0; k < 6; k++) { const h = st.id === 'flip' ? 5.5 : 2.6, y0 = 0, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, 1.8)); const gap = st.id === 'flip' ? 5 : 4; for (let i = 0; i < gap / DX; i++) push(-3);
+function lessonTrack(G) { const st = lessonNow(G), hs = [], flags = [0], pits = []; let y = 0; const push = v => hs.push(v); for (let i = 0; i < 40; i++) push(0);
+  for (let k = 0; k < 6; k++) { const h = st.id === 'flip' ? 5.5 : 2.6, y0 = 0, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, 1.8)); const gap = st.id === 'flip' ? 5 : 4; { const xa = hs.length * DX; for (let i = 0; i < gap / DX; i++) push(-3); pits.push([xa - DX, hs.length * DX]); }
     const top = h * 0.55, m = (st.id === 'flip' ? 26 : 14) / DX; for (let i = 1; i <= m; i++) push(top - (top + h * 0.4) * (1 - Math.cos(Math.PI * i / m)) / 2); for (let i = 0; i < 30; i++) push(-h * 0.4 + h * 0.4 * i / 30); for (let i = 0; i < 16; i++) push(0); flags.push((hs.length - 20) * DX); }
-  for (let i = 0; i < 60; i++) push(0); G.track = { hs, marks: [], flags, end: (hs.length - 30) * DX }; reset(G, 0); }
+  for (let i = 0; i < 60; i++) push(0); G.track = { hs, marks: [], flags, pits, end: (hs.length - 30) * DX }; reset(G, 0); }
 function lessonSee(G, what, d) { const st = lessonNow(G); if (!st) return; let ok = null;
   if (what === 'crash') { if (st.id === 'flip') { G.ev.push({ k: 'lessonmiss', how: 'Let go a little earlier, so the spin stops as the wheels meet the slope.' }); return; } ok = false; }
   if (what === 'end') { G.ev.push({ k: 'lessonmiss', how: st.how }); lessonTrack(G); return; }

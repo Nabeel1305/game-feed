@@ -8,7 +8,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [], PARTS = [];
 let hint = null, V3 = null;
 const ui = { snap: true, cam: null, flash: [], btn: [] };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 140) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40 * k, t: 0, life: 0.4 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 2) * k }); } if (PARTS.length > 200) PARTS.splice(0, PARTS.length - 200); }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.5) TXT.shift(); for (const p of PARTS) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 200 * k * dt; } for (let i = PARTS.length - 1; i >= 0; i--) if (PARTS[i].t > PARTS[i].life) PARTS.splice(i, 1);
@@ -30,9 +30,15 @@ function buildWorld() { if (V3) return V3; const T = THREE; if (!W3 || !W3.init(
 // the field for this battle: the ground with its hills, woods, a river of a stream at the edge, a few farm walls
 function buildField(V, g) { const T = THREE, P = PLACES[g.place]; if (V.field) { V.S.remove(V.field); V.field.traverse(o => { if (o.geometry) o.geometry.dispose(); }); } const F = new T.Group(); V.field = F; V.S.add(F);
   const N3 = new T.ImprovedNoise(), base = new T.Color(P.ground);
-  const tr = W3.terrain({ size: 900, seg: 120, x: 0, z: 0, height: (x, z) => { const out = Math.max(0, Math.max(Math.abs(x) - FW - 8, Math.abs(z) - FZ - 10)); return hillH(g, x, z) + N3.noise(x * 0.05, 0.3, z * 0.05) * 0.6 + Math.min(40, out * out * 0.02); },
+  // 25 Nov 2026 (his review: "The soldiers seem to be phasing through the ground. make them stand"). The men were stood on the hills as the
+  // rules know them (hillH), but the ground that is DRAWN also has small bumps (up to 0.6 m) and is made of flat pieces 7.5 m wide, so in
+  // places it rose to their waists. The drawn ground's own heights are kept (V.gh, one for each corner of each piece) and groundY() reads
+  // the height of the very piece a man stands on: feet on the grass everywhere.
+  const SEG = 120, SIZE = 900, hOf = (x, z) => { const out = Math.max(0, Math.max(Math.abs(x) - FW - 8, Math.abs(z) - FZ - 10)); return hillH(g, x, z) + N3.noise(x * 0.05, 0.3, z * 0.05) * 0.6 + Math.min(40, out * out * 0.02); };
+  V.gh = new Float32Array((SEG + 1) * (SEG + 1)); for (let j = 0; j <= SEG; j++) for (let i = 0; i <= SEG; i++) V.gh[j * (SEG + 1) + i] = hOf(-SIZE / 2 + i * SIZE / SEG, -SIZE / 2 + j * SIZE / SEG); V.gseg = SEG; V.gsize = SIZE;
+  const tr = W3.terrain({ size: SIZE, seg: SEG, x: 0, z: 0, height: hOf,
     colour: (x, z, h) => { const n = N3.noise(x * 0.1, 1.3, z * 0.1) * 0.5 + 0.5; return [base.r * (0.85 + n * 0.25) + h * 0.01, base.g * (0.85 + n * 0.2) + h * 0.01, base.b * (0.85 + n * 0.2)]; }, map: W3.grainTex(256, 11, 200, 40, 6) });
-  const trees = []; for (const w of g.woods) for (let i = 0; i < w.r * w.r * 0.9; i++) { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * w.r; trees.push({ x: w.x + Math.cos(a) * r, z: w.z + Math.sin(a) * r, y: hillH(g, w.x, w.z) - 0.2, s: 0.8 + Math.random() * 0.6, hue: Math.random(), shade: Math.random() * 0.5 }); }
+  const trees = []; for (const w of g.woods) for (let i = 0; i < w.r * w.r * 0.9; i++) { const a = Math.random() * TAU, r = Math.sqrt(Math.random()) * w.r; trees.push({ x: w.x + Math.cos(a) * r, z: w.z + Math.sin(a) * r, y: hOf(w.x + Math.cos(a) * r, w.z + Math.sin(a) * r) - 0.3, s: 0.8 + Math.random() * 0.6, hue: Math.random(), shade: Math.random() * 0.5 }); }
   for (let i = 0; i < 300; i++) { const x = (Math.random() - 0.5) * 400, z = (Math.random() - 0.5) * 400; if (Math.abs(x) < FW + 14 && Math.abs(z) < FZ + 16) continue; trees.push({ x, z, y: 0, s: 1 + Math.random(), hue: Math.random(), shade: Math.random() * 0.5 }); } if (trees.length) W3.pines(trees, { layers: 3 });
   // lines on the grass where each army stands at first (a faint chalk mark), and a field edge of hedges
   const hedgeM = new T.MeshStandardMaterial({ color: 0x3a5a2a, roughness: 1 }); for (const sx of [-1, 1]) { const h = new T.Mesh(new T.BoxGeometry(1.2, 1.2, FZ * 2 + 20), hedgeM); h.position.set(sx * (FW + 6), 0.6, 0); F.add(h); }
@@ -42,6 +48,9 @@ function banner(V, u, g) { let b = V.banners.get(u.id); if (b) return b; const T
   const flag = new T.Mesh(new T.PlaneGeometry(1.6, 1.0), new T.MeshStandardMaterial({ color: col, side: T.DoubleSide, roughness: 0.7 })); flag.position.set(0.8, 4.0, 0); grp.add(flag);
   const key = u.type + u.side; if (!V.icons[key]) V.icons[key] = new T.SpriteMaterial({ map: iconTex(UT[u.type].icon, u.side === 0 ? hex(col) : '#a02020'), depthTest: false }); const ic = new T.Sprite(V.icons[key]); ic.scale.setScalar(2.6); ic.position.y = 6.2; ic.renderOrder = 5; grp.add(ic);
   grp.userData = { flag }; V.S.add(grp); V.banners.set(u.id, b = grp); return b; }
+// the height of the drawn ground at a point (the two flat triangles of the piece it is in, as the terrain is made)
+function groundY(V, g, x, z) { if (!V || !V.gh) return hillH(g, x, z); const N = V.gseg, cs = V.gsize / N, gx = clamp((x + V.gsize / 2) / cs, 0, N - 0.001), gz = clamp((z + V.gsize / 2) / cs, 0, N - 0.001), i = gx | 0, j = gz | 0, u = gx - i, v = gz - j, H = V.gh, a = H[j * (N + 1) + i], b = H[(j + 1) * (N + 1) + i], c = H[(j + 1) * (N + 1) + i + 1], d = H[j * (N + 1) + i + 1];
+  return u + v <= 1 ? a + (d - a) * u + (b - a) * v : c + (b - c) * (1 - u) + (d - c) * (1 - v); }
 const MM = new (window.THREE ? THREE.Matrix4 : Object)(), QQ = new (window.THREE ? THREE.Quaternion : Object)(), PP = new (window.THREE ? THREE.Vector3 : Object)(), SC = new (window.THREE ? THREE.Vector3 : Object)(1, 1, 1), CC = new (window.THREE ? THREE.Color : Object)(), YAX = new (window.THREE ? THREE.Vector3 : Object)(0, 1, 0);
 // place every soldier of every unit in its ranks (or scattered, running)
 function syncUnits(V, g, t) { const n = { body: 0, head: 0, helm: 0, horse: 0, hhead: 0, spear: 0, shield: 0, bow: 0 };
@@ -50,17 +59,17 @@ function syncUnits(V, g, t) { const n = { body: 0, head: 0, helm: 0, horse: 0, h
   for (const u of g.units) { if (u.gone) continue; seen.add(u.id); const U = UT[u.type], horse = !!U.charge, sp = horse ? 1.9 : 1.25, cols = Math.max(2, Math.ceil(Math.sqrt(u.n0 * (horse ? 1 : 1.6)))), col = u.side === 0 ? g.banner.col : RED, rot = -u.face, fx = Math.cos(u.face), fz = Math.sin(u.face), rx = -fz, rz = fx, moving = u.order || u.tgt;
     for (let i = 0; i < u.n; i++) { const r = Math.floor(i / cols), c = i % cols, w = (Math.min(cols, u.n) - 1) / 2; let lx = (c - w) * sp, lz = -r * sp * 1.1;
       if (u.rout) { lx += Math.sin(i * 7.3 + t * 3) * 2.5; lz += Math.cos(i * 3.1) * 3; } else if (u.fight > 0) { lx += Math.sin(t * 9 + i) * 0.25; lz += Math.sin(t * 7 + i * 2) * 0.35; }
-      const x = u.x + rx * lx + fx * lz * 1, z = u.z + rz * lx + fz * lz, y = hillH(g, x, z), bob = moving || u.rout ? Math.abs(Math.sin(t * (horse ? 10 : 7) + i)) * 0.18 : 0, srot = u.rout ? rot + Math.PI : rot;
+      const x = u.x + rx * lx + fx * lz * 1, z = u.z + rz * lx + fz * lz, y = groundY(V, g, x, z), bob = moving || u.rout ? Math.abs(Math.sin(t * (horse ? 10 : 7) + i)) * 0.18 : 0, srot = u.rout ? rot + Math.PI : rot;
       if (horse) { put('horse', x, y + 1.0 + bob, z, srot, 1, 1, 1); put('hhead', x + fx * 1.05 * (u.rout ? -1 : 1), y + 1.55 + bob, z + fz * 1.05 * (u.rout ? -1 : 1), srot); put('body', x, y + 1.95 + bob, z, srot, 0.85, 0.75, 0.85, col); put('head', x, y + 2.6 + bob, z, srot); put('helm', x, y + 2.66 + bob, z, srot);
         if (u.type === 'knight') put('spear', x + fx * 0.8, y + 2.1 + bob, z + fz * 0.8, srot, 1, 1, 1); }
       else { put('body', x, y + 0.65 + bob, z, srot, 1, 1, 1, col); put('head', x, y + 1.5 + bob, z, srot); if (u.type !== 'archer' && u.type !== 'xbow') put('helm', x, y + 1.56 + bob, z, srot);
         if (u.type === 'spear') { put('spear', x + rx * 0.3 + fx * 0.6, y + 1.4 + bob, z + rz * 0.3 + fz * 0.6, srot, 1, 1, 1); put('shield', x + fx * 0.35, y + 0.75 + bob, z + fz * 0.35, srot, 1, 1, 1, col); }
         if (u.type === 'sword') put('shield', x + fx * 0.35, y + 0.75 + bob, z + fz * 0.35, srot, 1, 1, 1, col);
         if (u.type === 'archer' || u.type === 'xbow') put('bow', x + rx * 0.35, y + 1.0 + bob, z + rz * 0.35, srot + Math.PI / 2, 1, 1, 1); } }
-    const b = banner(V, u, g); b.visible = !u.rout; b.position.set(u.x - fx * (Math.ceil(u.n / cols) * sp * 0.6), hillH(g, u.x, u.z), u.z - fz * (Math.ceil(u.n / cols) * sp * 0.6)); b.userData.flag.rotation.y = Math.sin(t * 2 + u.id) * 0.3; }
+    const b = banner(V, u, g); b.visible = !u.rout; { const bx = u.x - fx * (Math.ceil(u.n / cols) * sp * 0.6), bz = u.z - fz * (Math.ceil(u.n / cols) * sp * 0.6); b.position.set(bx, groundY(V, g, bx, bz), bz); } b.userData.flag.rotation.y = Math.sin(t * 2 + u.id) * 0.3; }
   for (const [id, b] of V.banners) if (!seen.has(id)) { V.S.remove(b); V.banners.delete(id); }
   for (const m in n) { V[m].count = n[m]; V[m].instanceMatrix.needsUpdate = true; if (V[m].instanceColor) V[m].instanceColor.needsUpdate = true; }
-  const su = g.sel && g.units.find(u => u.id === g.sel) || (g.pickD && g.units.find(u => u.id === g.pickD)); V.ring.visible = !!su; if (su) { V.ring.position.set(su.x, hillH(g, su.x, su.z) + 0.2, su.z); V.ring.scale.setScalar(R_(su) + 0.8 + Math.sin(t * 6) * 0.2); }
+  const su = g.sel && g.units.find(u => u.id === g.sel) || (g.pickD && g.units.find(u => u.id === g.pickD)); V.ring.visible = !!su; if (su) { V.ring.position.set(su.x, groundY(V, g, su.x, su.z) + 0.35, su.z); V.ring.scale.setScalar(R_(su) + 0.8 + Math.sin(t * 6) * 0.2); }
   // arrows in flight: little arcs
   const P = V.arrowP; let q = 0; for (const a of g.arrows) { const u = a.t / 0.6; for (let j = 0; j < 3; j++) { const uu = clamp(u - j * 0.05, 0, 1), x = a.x0 + (a.x1 - a.x0) * uu, z = a.z0 + (a.z1 - a.z0) * uu, y = 2 + Math.sin(uu * Math.PI) * 8; if (q < 40 * 6) { P.set([x, y, z, x + (a.x1 - a.x0) * 0.03, y - 0.3, z + (a.z1 - a.z0) * 0.03], q * 3); q += 2; } } }
   for (let i = q; i < 40 * 6; i++) P.set([0, -100, 0], i * 3); V.arrowG.attributes.position.needsUpdate = true; }

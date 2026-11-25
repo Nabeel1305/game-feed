@@ -108,10 +108,11 @@ function makeQueue(G, n) {
   for (const want of wants) { const s = makeSoul(G, want) || makeSoul(G, want, { hidden: 0 }) || makeSoul(G, 'up'); out.push(s); }
   return out;
 }
-function nextSoul(G) { G.soul = G.queue.shift() || null; G.wait = 0; if (G.soul) G.ev.push({ k: 'soul' }); }
+function nextSoul(G) { G.soul = G.queue.shift() || null; G.wait = 0; if (G.soul) { G.soul.t0 = G.t; G.ev.push({ k: 'soul' }); } }
 // ---------- the thumb ----------
 function judge(G, dir) {      // wherever you send them is your answer: nothing is right or wrong
   const s = G.soul; if (G.over || !s || G.gap > 0) return; G.judged++; G.gap = 0.55; G.last = { s, dir }; G.sent[dir]++; G.right++;
+  if (!G.lesson) { const b = s.deeds.find(d => d.best), w = s.deeds.find(d => d.worst); (G.log = G.log || []).push({ dir, bk: b.kind, bw: b.w, wk: w.kind, ww: -w.w, hid: s.deeds.some(d => d.hidden), looked: !!s.looked, age: s.age, dt: Math.min(30, G.t - (s.t0 || G.t)) }); }
   G.karma += 1 * (1 + 0.25 * upLv('choir')); G.ev.push({ k: 'right', dir, n: 0 }); lessonSee(G, 'right');
 }
 function look(G) {
@@ -125,9 +126,46 @@ function step(G, dt) {
 function finish(G, win, why) {
   const c = G.cfg; G.over = win ? 'won' : 'lost';
   const stars = win ? 3 : 0;      // a day done is a day done: no grading
-  G.res = { win, why, stars, sent: G.sent, right: G.right, wrong: G.wrong, judged: G.judged, souls: c.souls, best: G.best, karma: Math.round(G.karma + (win ? stars * 2 + Math.ceil(G.N / 3) : 0)), combo: G.best, time: G.t };
+  G.res = { win, why, stars, log: G.log || [], sent: G.sent, right: G.right, wrong: G.wrong, judged: G.judged, souls: c.souls, best: G.best, karma: Math.round(G.karma + (win ? stars * 2 + Math.ceil(G.N / 3) : 0)), combo: G.best, time: G.t };
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
+// ---------- what your gate says about you ----------
+// 25 Nov 2026, his review: "At the end of every level analysze who the person sent to heaven hell of purgatory and tell them something
+// instresting about themselves and what they value. It should be short but they can click for a deeper analysis maybe a paragraph long
+// that says you value x y z and some predictable possible persnility traits always flatter the player. Even if they are dead wrong
+// sometimes find anything good." Nothing here says a verdict was right or wrong (his rule of 23 Nov stands): it reads what you
+// rewarded and what you would not forgive, how you used Purgatory and the Book, and how fast you were sure; and every reading is kind.
+const VAL = { animal: ['kindness to animals', 'gentle', 'been kind to animals', 'been cruel to an animal', 'gentle and patient, and quick to notice anyone who cannot speak up for themselves'],
+  family: ['family', 'loyal', 'stood by their family', 'let their family down', 'loyal and dependable: the ones the others call when something goes wrong'],
+  money: ['generosity', 'generous', 'given freely', 'cheated or taken what was not theirs', 'warm and open-handed: they give without keeping count'],
+  truth: ['honesty', 'honest', 'told the truth when it cost them', 'lied when it mattered', 'straight talkers people trust, who keep a promise and have no time for gossip'],
+  courage: ['courage', 'brave', 'shown real courage', 'run when they were needed', 'brave in their own lives: the ones who step forward when others hold back'],
+  work: ['honest work', 'dependable', 'worked hard for others', 'cheated at their work', 'steady and reliable: they finish what they start'] };
+function tally(log, T) { T = T || { n: 0, up: 0, down: 0, side: 0, looked: 0, sealed: 0, time: 0, redeem: 0, strict: 0, k: {} }; for (const k2 in VAL) T.k[k2] = T.k[k2] || { gu: 0, gd: 0, gs: 0, bu: 0, bd: 0, bs: 0 };
+  for (const e of log) { T.n++; T[e.dir]++; if (e.hid) { T.sealed++; if (e.looked) T.looked++; } T.time += e.dt; T.k[e.bk]['g' + e.dir[0]]++; T.k[e.wk]['b' + e.dir[0]]++; if (e.dir === 'up' && e.ww >= e.bw) T.redeem++; if (e.dir === 'down' && e.bw >= e.ww) T.strict++; } return T; }
+// today's souls (log) and everything before (life, a tally kept from day to day): { title, line, values, deep }
+function reading(log, life) { const D = tally(log), A = tally(log, life ? JSON.parse(JSON.stringify(life)) : null), n = Math.max(1, D.n), plural = (q, w) => `${q} ${w}${q === 1 ? '' : 's'}`;
+  // what you value: the kinds of good you rewarded and the kinds of wrong you would not forgive (today counts double)
+  const care = k2 => { const a = A.k[k2], d = D.k[k2], seen = a.gu + a.gd + a.gs + a.bu + a.bd + a.bs + d.gu + d.gd + d.gs + d.bu + d.bd + d.bs; return seen ? ((a.gu + d.gu + a.bd + d.bd) * 2 - (a.gd + d.gd + a.bu + d.bu)) / (seen + 2) : -9; };
+  const ks = Object.keys(VAL).sort((a, b) => care(b) - care(a)), vals = ks.slice(0, A.n >= 30 && care(ks[2]) > 0.4 ? 3 : 2), v1 = vals[0];
+  const up = D.up / n, down = D.down / n, side = D.side / n;
+  const style = side >= 0.4 ? ['THE THOUGHTFUL', `You did not rush: ${plural(D.side, 'soul')} went to Purgatory. You can live with a question that has no easy answer.`, 'open-minded']
+    : up >= 0.6 ? ['THE MERCIFUL', `You look for the good in people: ${D.up} of ${D.n} went to Heaven.`, 'warm-hearted']
+    : down >= 0.6 ? ['THE JUST', `For you, what people do matters: ${D.down} of ${D.n} answered for it. That is a strong sense of justice.`, 'principled']
+    : ['THE FAIR', `No two verdicts alike: ${D.up} up, ${D.down} down, ${D.side} between. You weigh each life on its own.`, 'even-handed'];
+  const list = vals.map(k2 => VAL[k2][0]), listTxt = list.length > 2 ? `${list[0]}, ${list[1]} and ${list[2]}` : list.join(' and ');
+  // the paragraph
+  const P = [`You value ${listTxt}.`], d1 = D.k[v1], g1 = d1.gu + d1.gd + d1.gs, b1 = d1.bu + d1.bd + d1.bs;
+  if (d1.gu > 0 && d1.gu * 2 >= g1) P.push(`Today ${d1.gu === g1 ? (g1 === 1 ? 'the one soul' : `all ${g1} souls`) : `${d1.gu} of the ${g1} souls`} who had ${VAL[v1][2]} went to Heaven${d1.bd > 0 ? `, and ${d1.bd === b1 ? (b1 === 1 ? 'the one' : `all ${b1}`) : `${d1.bd} of the ${b1}`} who had ${VAL[v1][3]} went to Hell` : ''}.`);
+  else if (d1.bd > 0) P.push(`Today ${d1.bd === b1 ? (b1 === 1 ? 'the one soul' : `all ${b1} souls`) : `${d1.bd} of the ${b1} souls`} who had ${VAL[v1][3]} went to Hell: it is the thing you find hardest to forgive.`);
+  if (D.redeem >= 2 && D.redeem >= D.strict) P.push(`${D.redeem} times you opened Heaven to someone whose worst deed was as heavy as their best: you believe people are more than the worst thing they did.`);
+  else if (D.strict >= 2) P.push(`${D.strict} times a great good deed was not enough for you: there are lines you will not see crossed, and you are not easily bought.`);
+  else P.push(style[1]);
+  if (D.sealed >= 2 && D.looked / D.sealed >= 0.6) P.push(`You opened the Book for ${D.looked} of ${D.sealed} sealed lives: you want the whole story before you decide, the mark of a careful mind.`);
+  else if (D.sealed >= 2 && D.looked / D.sealed <= 0.25) P.push(`You hardly needed the Book: you trust your first reading of a person.`);
+  const avg = D.time / n; if (avg > 0 && avg < 3) P.push('And you were quick about it: sure of your own compass.'); else if (avg > 8) P.push('And you took your time: you do not hand out a verdict lightly.');
+  P.push(`People who judge like this are often ${VAL[v1][4]}. ${style[2][0].toUpperCase() + style[2].slice(1)} and ${VAL[v1][1]}: that is a rare mix, and good company to keep.`);
+  return { title: style[0], line: style[1], values: list, deep: P.join(' '), life: A }; }
 // ---------- LESSONS ----------
 const LESSONS = {
   1: [{ id: 'weigh', title: 'YOU KEEP THE GATE', say: 'SWIPE UP, DOWN OR SIDEWAYS', do: 'swipe', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Read the best and the worst thing each soul did, then send them where you think: swipe UP to Heaven, DOWN to Hell, SIDEWAYS to Purgatory. There is no right answer. Send three.', need: 3, ok: w => w === 'right', make: G => makeSoul(G, ['up', 'down', 'side'][(G.rnd() * 3) | 0], { hidden: 0 }) }],

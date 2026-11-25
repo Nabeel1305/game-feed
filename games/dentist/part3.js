@@ -8,7 +8,7 @@ let hint = null, V3 = null;
 const ui = { snap: true, banner: null, finger: null, zoom: 1, zc: { x: 0, y: -0.15 }, demo: null, seen: {} };
 const LIFT = 46;      // the tool works this far above the fingertip (in px, times k)
 function say(txt, x, y, col = '#fff', size = 20) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 140) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60 * k, t: 0, life: 0.5 + Math.random() * 0.5, col, r: (2 + Math.random() * 3) * k }); } }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.6) TXT.shift();
@@ -167,11 +167,12 @@ function strip(G, now) { const P = pat(G), y = 72 * k, fx = 34 * k, fr = 24 * k,
   for (const r of rows) { const t = `${r.done ? '✓' : r.icon} ${r.txt}`, w = ctx.measureText(t).width + 16; if (x + w > W - 10) { x = 10; yy += 22 * k; } ctx.fillStyle = r.done ? 'rgba(90,200,138,.2)' : 'rgba(255,255,255,.9)'; rrect(x, yy - 9 * k, w, 18 * k, 9); ctx.fill(); ctx.fillStyle = r.done ? '#2a8a5a' : '#2a3a4a'; ctx.textAlign = 'left'; ctx.fillText(t, x + 8, yy); x += w + 6; }
 }
 // ---------- events ----------
-const WARN = { brushwrong: 'The brush is done here: that yellow crust needs the 🪝 scaler, the brown stain the ✨ polisher.', scalerwrong: 'The scaler is for the yellow crust (tartar) at the gum line.',
-  polishfirst: 'Brush and scrape first: the polisher only works on clean teeth.', lookfirst: 'Find it first: drag the 🔍 mirror over the teeth (or take an X-ray).', drillslow: 'Slowly with the drill: hold it on the dark decay.',
-  rinsefirst: 'Rinse the dust out first (💧 water), then fill.', nohole: 'Nothing to fill on this tooth.', fillfirst: 'Fill it up first, then the blue light.', nothingtocure: 'The blue light sets a filling or a crown. Nothing to set here.',
-  prep: 'Smooth the broken edge with the 🥄 shaper first, then the crown.', jagshaper: 'Use the 🥄 shaper to smooth the broken edge.', nobraces: 'No braces on this row.', brackets: 'Glue the loose bracket first (🧴), then tighten the wire.', done: 'The wire is already right.',
-  healthy: 'That tooth is healthy! The forceps are only for the bad tooth.', numb: 'Numb it first: 🧊 gel on the bad tooth, then wait a moment.' };
+// (25 Nov 2026, his review of Rodeo: "After the tutorial you don't tell the player... not in this game or anyone for that matter". A wrong
+// move is answered with what is wrong, in a few words, and the picture of the tool that is missing; never with what to do next.)
+const WARN = { brushwrong: 'Not for the brush 🪝 ✨', scalerwrong: 'No crust here', polishfirst: 'Not clean yet', lookfirst: 'Not found yet 🔍', drillslow: 'Too fast!',
+  rinsefirst: 'Dust in it 💧', nohole: 'Nothing to fill', fillfirst: 'Not full yet', nothingtocure: 'Nothing to set',
+  prep: 'Edge still rough 🥄', jagshaper: 'Edge still rough 🥄', nobraces: 'No braces here', brackets: 'Bracket loose 🧴', done: 'Already right',
+  healthy: 'Healthy tooth!', numb: 'Not numb yet 🧊' };
 function onEvent(G, e) { const P = pat(G), A = archOf(G), at = i => { const t = A.teeth[i]; return t ? m2s(G, t.x, t.y) : { x: W / 2, y: H / 2 }; };
   switch (e.k) {
     case 'patient': ui.snap = true; ui.zoom = 1; ui.showLeft = 0; break;
@@ -187,7 +188,7 @@ function onEvent(G, e) { const P = pat(G), A = archOf(G), at = i => { const t = 
     case 'clean': sfx.ding(); vibe(HAP.tick); { const p = at(e.t); burst(p.x, p.y, '#ffffff', 6, 70); if (e.what !== 'food') say('✨', p.x, p.y - 20 * k, '#fff', 20); } break;
     case 'drilled': sfx.ding(); { const p = at(e.t); say('DECAY GONE', p.x, p.y - 26 * k, '#5ac88a', 16); } break;
     case 'fixed': sfx.fixed(); vibe(HAP.light); { const p = e.t != null ? at(e.t) : { x: W / 2, y: H * 0.45 }; say({ filling: 'FILLED!', chip: 'GOOD AS NEW!', crown: 'CROWN SET!', bracket: 'BRACKET ON', wire: 'WIRE JUST RIGHT' }[e.what] || 'DONE!', p.x, p.y - 30 * k, '#5ac88a', 22); burst(p.x, p.y, '#ffffff', 16, 140); } break;
-    case 'crownon': sfx.click(); { const p = at(e.t); say('NOW THE BLUE LIGHT', p.x, p.y - 30 * k, '#6aaee8', 16); } break;
+    case 'crownon': sfx.click(); { const p = at(e.t); if (G && G.lesson) say('NOW THE BLUE LIGHT', p.x, p.y - 30 * k, '#6aaee8', 16); } break;
     case 'gel': sfx.click(); { const p = at(e.t); say('NUMBING…', p.x, p.y - 30 * k, '#8ad8ff', 16); } break;
     case 'rock': sfx.creak(); break;
     case 'pulled': sfx.fixed(); vibe(HAP.best); { const p = at(e.t); say('OUT!', p.x, p.y - 30 * k, '#5ac88a', 26); burst(p.x, p.y, '#f2a0a8', 14, 140); } break;
@@ -228,7 +229,7 @@ function talkBubble(G, now) { const P = pat(G), y = H * 0.18, w = W - 40; ctx.fo
   ctx.fillStyle = 'rgba(255,255,255,.96)'; rrect(20, y, w, h, 18); ctx.fill(); ctx.beginPath(); ctx.moveTo(W * 0.55, y + h); ctx.lineTo(W * 0.62, y + h + 22 * k); ctx.lineTo(W * 0.68, y + h); ctx.fill();
   ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillStyle = '#6a7a8a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillText(`${P.name.toUpperCase()}${P.kind !== 'calm' ? ' · ' + KINDS[P.kind].name.toUpperCase() : ''}${G.pts.length > 1 ? ` · PATIENT ${G.pi + 1} OF ${G.pts.length}` : ''}`, 36, y + 14 * k);
   ctx.fillStyle = '#2a3a4a'; ctx.font = `600 ${Math.round(17 * k)}px ${TF}`; lines.forEach((l, i) => ctx.fillText(l, 36, y + 34 * k + i * 24 * k)); ctx.textBaseline = 'middle';
-  ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = 'rgba(42,58,74,.8)'; ctx.fillText('tap to begin · "Open wide!"', W / 2, H - 60 * k); }
+  ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = 'rgba(42,58,74,.8)'; ctx.fillText((G && G.lesson) ? 'tap to begin · "Open wide!"' : '"Open wide!"', W / 2, H - 60 * k); }
 function beforeAfter(G) { const P = pat(G), w = W * 0.42, y = H - 170 * k;
   const mini = (data, x0, lbl, A) => { ctx.fillStyle = 'rgba(255,255,255,.95)'; rrect(x0, y, w, 140 * k, 14); ctx.fill(); ctx.fillStyle = '#6a7a8a'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText(lbl, x0 + w / 2, y + 14 * k);
     const s = w / 1.7, cx = x0 + w / 2, cy = y + 74 * k; A.teeth.forEach((t, i) => { const px = cx + t.x * s, py = cy + (t.y + 0.2) * s * 0.75, r = t.r * s; const g = data ? data[i].g : null, dirty = g && g.some(v => v & 7), bad = g && g.some(v => v & 24);

@@ -5363,7 +5363,7 @@ function humGrip(H, v, dt = 1) { H.grip += (v - H.grip) * Math.min(1, dt * 18); 
 const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [];
 let hint = null, V3 = null;
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 6) TXT.shift(); }
-function tip(key, txt, secs = 2.8) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 2.8) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 1.8);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.3) TXT.shift(); if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
 const ui = { drag: null };
@@ -5416,7 +5416,7 @@ function onEvent(G, e) { const cx = W / 2, cy = H * 0.34;
     case 'step': sfx.step(); break;
     case 'gust': sfx.gust(); say(e.dir > 0 ? 'GUST →' : '← GUST', cx, cy + 30 * k, '#cfe6ff', 20); break;
     case 'bird': sfx.flap(); FX.shake = 4; break;
-    case 'banner': if (e.hit) { sfx.thud(); say('DUCK!', cx, cy, '#ffb4a8', 22); tip('banner', 'Pull your thumb DOWN to crouch under banners.', 3); } else sfx.whoosh(); break;
+    case 'banner': if (e.hit) { sfx.thud(); say((G && G.lesson) ? 'DUCK!' : 'OUCH!', cx, cy, '#ffb4a8', 22); tip('banner', 'Pull your thumb DOWN to crouch under banners.', 3); } else sfx.whoosh(); break;
     case 'bag': sfx.thud(); FX.shake = 8; say('SANDBAG!', cx, cy, '#ffb4a8', 22); tip('bag', 'Stand still and let the sandbag swing clear, then go.', 3); break;
     case 'star': sfx.star(e.n); FX.flash = 0.25; say('★ GOT IT', cx, cy, '#ffd36a', 22); break;
     case 'cp': sfx.cp(); say('PLATFORM: SAFE HERE', cx, cy, '#9be3b5', 18); break;

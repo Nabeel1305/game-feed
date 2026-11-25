@@ -6,7 +6,7 @@
 const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
 let hint = null, RIP = [], NOTES = [], SPARK = [];
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 6) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 const S1 = () => Math.min(W, H * 0.6) / 390;
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lay() { return { s: S1(), lw: W / 4, rh: H / 4 }; }
@@ -56,7 +56,7 @@ function hud(G, L, now) { const s = L.s;
   const bw = W * 0.6, bx = (W - bw) / 2, by = 122 * s, tot = G.total, u = clamp(G.pos / tot, 0, 1), m1 = G.songEnd / tot; ctx.fillStyle = 'rgba(0,0,0,.1)'; rrect(bx, by, bw, 6 * s, 3); ctx.fill(); ctx.fillStyle = '#e83a4a'; rrect(bx, by, bw * u, 6 * s, 3); ctx.fill();
   const star = (x, on, dim) => { ctx.font = `${Math.round(18 * s)}px sans-serif`; ctx.fillStyle = on ? '#e8b830' : dim ? 'rgba(0,0,0,.12)' : 'rgba(0,0,0,.25)'; ctx.fillText('★', x, by + 3 * s); };
   star(bx + bw * m1 - 12 * s, G.songDone, false); star(bx + bw * m1 + 10 * s, G.songDone && G.holdsAll, !G.holdsAll); star(bx + bw, G.encDone, false);
-  if (!G.go && !G.miss) { ctx.fillStyle = 'rgba(40,30,40,.6)'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText('Tap START', W / 2, H * 0.62); } }
+  if (G.lesson && !G.go && !G.miss) { ctx.fillStyle = 'rgba(40,30,40,.6)'; ctx.font = `700 ${Math.round(14 * s)}px ${BC}`; ctx.fillText('Tap START', W / 2, H * 0.62); } }
 function lessonPanel(G, L) { coachPanel(G); }
 function onEvent(G, e) { const L = lay(), s = L.s, vp = viewPos(G);
   switch (e.k) {

@@ -7,7 +7,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
 let hint = null, gavelT = 9, galT = 9, gal = 'nod', bgC = null;
 function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 2 }); } }
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function fxStep(dt) {
   FX.shake = Math.max(0, FX.shake - dt * 40); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2); gavelT += dt; galT += dt;
   for (const p of PT) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 420 * dt; } for (let i = PT.length - 1; i >= 0; i--) if (PT[i].t > PT[i].life) PT.splice(i, 1);
@@ -32,8 +32,8 @@ function onEvent(G, e) { const cx = W / 2, top = sceneH();
   switch (e.k) {
     case 'start': if (!G.cfg.free) say(`${PLACES[G.place].name.toUpperCase()}`, cx, top * 0.55, '#ffe3a0', 18); sfx.rise(); break;
     case 'case': renderCase(G); sfx.paper(); break;
-    case 'gavel': gavelT = 0; galT = 0; gal = e.gal; FX.shake = 6; sfx.gavel(); vibe(HAP.light); setTimeout(() => sfx.gallery(e.gal), 220);
-      say({ nod: 'The gallery nods.', gasp: 'A gasp from the gallery.', boo: 'Boos from the gallery.', puzzled: 'Puzzled murmurs.', horror: 'Uproar!' }[e.gal], cx, top * 0.78, e.gal === 'nod' ? '#ccf2d4' : '#ffd0c4', 15);
+    case 'gavel': gavelT = 0; galT = 0; gal = e.gal; FX.shake = 6; sfx.gavel(); vibe(HAP.light); if (e.gal !== 'quiet') setTimeout(() => sfx.gallery(e.gal), 220);
+      if (e.gal !== 'quiet') say({ nod: 'The gallery nods.', gasp: 'A gasp from the gallery.', boo: 'Boos from the gallery.', puzzled: 'Puzzled murmurs.', horror: 'Uproar!' }[e.gal], cx, top * 0.78, e.gal === 'nod' ? '#ccf2d4' : '#ffd0c4', 15);
       setPhase('wait'); $('readBack').innerHTML = '<b>Sentence passed.</b> ' + esc(G.done.length ? G.done[G.done.length - 1].read : ''); break;
     case 'lessonnext': if (e.first) hint = null; sfx.ding(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, cx, top * 0.5, '#9be3b5', 22); sfx.coin(e.n); break;
@@ -69,7 +69,7 @@ function draw(now) {
   ctx.fillStyle = '#4a2e18'; ctx.fillRect(0, SH * 0.5 + 18 * s, W, 8 * s);
   // the dock and the defendant
   const dx = W / 2, dy0 = SH * 0.95; ctx.fillStyle = '#6a4424'; rrect(dx - 70 * s, dy0 - 30 * s, 140 * s, 34 * s, 6); ctx.fill(); ctx.fillStyle = 'rgba(255,220,170,.12)'; ctx.fillRect(dx - 70 * s, dy0 - 30 * s, 140 * s, 3);
-  if (g && g.case) { const after = gavelT < 1.6, slump = after && gal !== 'nod' && gal !== 'puzzled' ? 1 : 0, lift = after && gal === 'nod' ? 1 : 0, by = dy0 - 30 * s + slump * 4 * s - lift * 2 * s;
+  if (g && g.case) { const after = gavelT < 1.6, slump = after && gal !== 'nod' && gal !== 'puzzled' && gal !== 'quiet' ? 1 : 0, lift = after && gal === 'nod' ? 1 : 0, by = dy0 - 30 * s + slump * 4 * s - lift * 2 * s;
     ctx.fillStyle = '#2c3446'; rrect(dx - 26 * s, by - 34 * s, 52 * s, 40 * s, 12); ctx.fill(); ctx.fillStyle = '#e0b898'; ctx.beginPath(); ctx.arc(dx, by - 46 * s + slump * 5 * s, 14 * s, 0, TAU); ctx.fill();
     ctx.fillStyle = '#2a1a10'; ctx.beginPath(); ctx.arc(dx, by - 50 * s + slump * 5 * s, 14 * s, Math.PI, 0); ctx.fill();
     ctx.fillStyle = '#ffe3a0'; ctx.font = `700 ${Math.round(12 * s)}px ${BC}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(g.case.who.toUpperCase(), dx, dy0 - 12 * s); }

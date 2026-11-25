@@ -443,13 +443,13 @@ function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (
   return { N, f, help: !!help, place: placeOf(N), len: Math.round(x(300, 700, 30)), kick: x(0.68, 0.8, 25), big: x(0.2, 1, 30), slack: x(0.06, 0.0, 30) * (1 + 0.5 * e) + (help ? 0.15 : 0),
     tol: 0.42 + 0.05 * upLv('shocks') + 0.16 * e + (help ? 0.1 : 0), top: 15 * (1 + 0.06 * upLv('engine')), nitro: 1.2 * (1 + 0.3 * upLv('nitro')), par: 0 }; }
 // ---------- the track: a height for every half metre, built from pieces ----------
-function buildTrack(G) { const c = G.cfg, R = G.rnd, hs = [], marks = [], flags = []; let y = 0, x = 0; const push = yy => { hs.push(yy); x += DX; };
+function buildTrack(G) { const c = G.cfg, R = G.rnd, hs = [], marks = [], flags = [], pits = []; let y = 0, x = 0; const push = yy => { hs.push(yy); x += DX; };
   const flat = m => { for (let i = 0; i < m / DX; i++) push(y); };
   const hill = (m, h) => { const y0 = y, n = m / DX; for (let i = 1; i <= n; i++) push(y0 + h * (1 - Math.cos(TAU * i / n)) / 2); y = y0; };
   const slope = (m, dh) => { const y0 = y, n = m / DX; for (let i = 1; i <= n; i++) push(y0 + dh * (1 - Math.cos(Math.PI * i / n)) / 2); y = y0 + dh; };
   // a kicker: a curved lip up to h, then a gap (a pit), then a landing slope down to the ground beyond
   const kicker = (h, gap, land, kind = 'down', ex = 1.8) => { const y0 = y, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, ex)); marks.push({ k: 'kick', x, kind });
-    for (let i = 0; i < gap / DX; i++) push(y0 - 3); const m = land / DX;
+    { const xa = x; for (let i = 0; i < gap / DX; i++) push(y0 - 3); pits.push([xa - DX, x]); } const m = land / DX;
     if (kind === 'down') { const top = y0 + h * 0.55; for (let i = 1; i <= m; i++) push(top - (top - (y0 - h * 0.4)) * (1 - Math.cos(Math.PI * i / m)) / 2); y = y0 - h * 0.4; }
     else if (kind === 'flat') { const top = y0 + h * 0.3; for (let i = 1; i <= m; i++) push(top); y = top; }
     else { const a = y0 + h * 0.15, b2 = y0 + h * 0.75; for (let i = 1; i <= m; i++) push(a + (b2 - a) * Math.sin(Math.PI / 2 * i / m)); y = b2; } };      // a step-up: you land going uphill
@@ -460,7 +460,7 @@ function buildTrack(G) { const c = G.cfg, R = G.rnd, hs = [], marks = [], flags 
     else if (r < c.kick + 0.35) { slope(10 + R() * 8, (R() < 0.5 ? -1 : 1) * (2 + R() * 4)); flat(6); }
     else flat(10 + R() * 10);
     if (x - (flags[flags.length - 1] || 0) > 110) { flat(6); flags.push(x - 4); } }
-  flat(30); G.track = { hs, marks, flags, end: x - 24 };
+  flat(30); G.track = { hs, marks, flags, pits, end: x - 24 };
   // the time to beat: the length at a fair speed, with slack that shrinks over the levels
   c.par = Math.round(x / (c.top * 0.92) * (1 + c.slack)); }
 const groundY = (G, x) => { const hs = G.track.hs, i = x / DX, i0 = Math.max(0, Math.min(hs.length - 2, Math.floor(i))), t = clamp(i - i0, 0, 1); return hs[i0] + (hs[i0 + 1] - hs[i0]) * t; };
@@ -482,6 +482,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.tl = Math.m
   b.boost = Math.max(0, b.boost - dt);
   if (!b.air) {
     // on the ground: the bike follows the ground; the engine pulls toward its top speed, slopes help or hinder
+    if (inPit(G, b.x) && b.x > 2) return crash(G);
     const th = slopeAt(G, b.x), top = b.boost > 0 ? c.top * 1.4 : c.top; let sp = Math.hypot(b.vx, b.vy) * Math.sign(b.vx || 1);
     sp += (sp < top ? 9 : -6) * dt - GRAV * Math.sin(th) * dt * 0.55; if (L === 'brake') sp -= 14 * dt; else if (lean === 1) sp -= 3 * dt; else if (lean === -1 && th < -0.05) sp += 5 * dt;
     sp = clamp(sp, 2, top * 1.25);
@@ -493,6 +494,9 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.tl = Math.m
     // in the air: gravity; your lean turns the bike
     b.airT += dt; b.vy -= GRAV * dt; b.x += b.vx * dt; b.y += b.vy * dt; const want = lean * 6; b.w += (want - b.w) * Math.min(1, dt * (lean ? 9 : 6)); b.a += b.w * dt; b.spin += b.w * dt;
     const gy = groundY(G, b.x);
+    // 25 Nov 2026 (his review: "The holes seem to be glitching out"): the gap after a ramp had a floor you could land on and ride along, and then the
+    // bike drove straight up the far wall. A hole is a hole: come down in one and you have crashed.
+    if (b.y <= gy && inPit(G, b.x)) return crash(G);
     if (b.y <= gy) { const th = slopeAt(G, b.x), diff = Math.abs(wrap(b.a - th)), flips = Math.floor(Math.abs(b.spin) / TAU + 0.25);
       if (diff > c.tol + (G.lesson ? 0.12 : 0) || Math.abs(th) > 1) return crash(G);      /* or you hit the face of the landing: too short */
       b.air = false; b.y = gy; const along = b.vx * Math.cos(th) + b.vy * Math.sin(th); b.vx = Math.max(4, along) * Math.cos(th); b.vy = 0; b.a = th; b.w = 0;
@@ -504,6 +508,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; G.tl = Math.m
   if (G.trace.length < 6000 && ((G.t * 10) | 0) !== G.lastTr) { G.lastTr = (G.t * 10) | 0; G.trace.push([+b.x.toFixed(1), +b.y.toFixed(1), +b.a.toFixed(2)]); }
   if (b.y < -60) return crash(G);
   if (b.x >= tr.end) { if (G.lesson) { lessonSee(G, 'end'); return; } return finish(G, G.clock <= G.cfg.par); } }
+const inPit = (G, x) => (G.track.pits || []).some(p => x > p[0] && x < p[1]);
 function crash(G) { const b = G.b; G.crashes++; if (!G.lesson) G.clock += 2;      // a crash costs two seconds on top of the ride back
   G.ev.push({ k: 'crash', x: b.x, y: b.y, a: b.a }); lessonSee(G, 'crash'); const back = b.lastFlag; b.air = false; b.vx = 0; G.wait = 1.1; G.next = () => reset(G, back); }
 function finish(G, win) { const c = G.cfg; G.over = win ? 'won' : 'lost'; const t = +G.clock.toFixed(2);
@@ -520,10 +525,10 @@ const LESSONS = {
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonTrack(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
-function lessonTrack(G) { const st = lessonNow(G), hs = [], flags = [0]; let y = 0; const push = v => hs.push(v); for (let i = 0; i < 40; i++) push(0);
-  for (let k = 0; k < 6; k++) { const h = st.id === 'flip' ? 5.5 : 2.6, y0 = 0, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, 1.8)); const gap = st.id === 'flip' ? 5 : 4; for (let i = 0; i < gap / DX; i++) push(-3);
+function lessonTrack(G) { const st = lessonNow(G), hs = [], flags = [0], pits = []; let y = 0; const push = v => hs.push(v); for (let i = 0; i < 40; i++) push(0);
+  for (let k = 0; k < 6; k++) { const h = st.id === 'flip' ? 5.5 : 2.6, y0 = 0, n = Math.round(h * 2.2 / DX); for (let i = 1; i <= n; i++) push(y0 + h * Math.pow(i / n, 1.8)); const gap = st.id === 'flip' ? 5 : 4; { const xa = hs.length * DX; for (let i = 0; i < gap / DX; i++) push(-3); pits.push([xa - DX, hs.length * DX]); }
     const top = h * 0.55, m = (st.id === 'flip' ? 26 : 14) / DX; for (let i = 1; i <= m; i++) push(top - (top + h * 0.4) * (1 - Math.cos(Math.PI * i / m)) / 2); for (let i = 0; i < 30; i++) push(-h * 0.4 + h * 0.4 * i / 30); for (let i = 0; i < 16; i++) push(0); flags.push((hs.length - 20) * DX); }
-  for (let i = 0; i < 60; i++) push(0); G.track = { hs, marks: [], flags, end: (hs.length - 30) * DX }; reset(G, 0); }
+  for (let i = 0; i < 60; i++) push(0); G.track = { hs, marks: [], flags, pits, end: (hs.length - 30) * DX }; reset(G, 0); }
 function lessonSee(G, what, d) { const st = lessonNow(G); if (!st) return; let ok = null;
   if (what === 'crash') { if (st.id === 'flip') { G.ev.push({ k: 'lessonmiss', how: 'Let go a little earlier, so the spin stops as the wheels meet the slope.' }); return; } ok = false; }
   if (what === 'end') { G.ev.push({ k: 'lessonmiss', how: st.how }); lessonTrack(G); return; }
@@ -558,7 +563,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
 let hint = null, camX = 0, camY = 0, ghost = null;
 function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 2.5 }); } }
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 const S1 = () => Math.min(W, H * 0.6) / 390;
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
@@ -588,14 +593,19 @@ function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const g = G, s = S1
   for (const [k2, a, hgt] of [[0.15, 0.35, 0.3], [0.35, 0.6, 0.2]]) { ctx.fillStyle = P.hills; ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(0, H); for (let px = 0; px <= W + 8; px += 8) { const wx = (px + camX * m * k2) / 90; ctx.lineTo(px, H * (0.3 + hgt * 0.5) - (Math.sin(wx) * 0.5 + Math.sin(wx * 2.3) * 0.3 + 0.8) * H * hgt * 0.5 + camY * m * k2 * 0.3); } ctx.lineTo(W, H); ctx.fill(); } ctx.globalAlpha = 1;
   ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
   // the ground
-  const x0 = camX - W * 0.32 / m - 2, x1 = camX + W * 0.7 / m + 2; ctx.beginPath(); ctx.moveTo(toS(x0, -100).x, H + 10);
-  for (let x = Math.max(0, x0); x <= x1; x += DX) { const p = toS(x, groundY(g, x)); ctx.lineTo(p.x, p.y); } ctx.lineTo(toS(x1, 0).x, H + 10); ctx.closePath(); ctx.fillStyle = P.ground; ctx.fill();
+  // (25 Nov 2026, his review: "The holes seem to be glitching out". The ground was drawn from points that slid along with the camera, so
+  // the steep sides of every hole were in a slightly different place each frame and shook. The points now sit on the track's own
+  // half-metres (xs), so a wall stays where it is; and a hole is shaded dark inside, with nothing growing in it.)
+  const x0 = camX - W * 0.32 / m - 2, x1 = camX + W * 0.7 / m + 2, xs = Math.max(0, Math.floor(x0 / (DX * 2)) * DX * 2); ctx.beginPath(); ctx.moveTo(toS(xs, -100).x, H + 10);
+  for (let x = xs; x <= x1; x += DX) { const p = toS(x, groundY(g, x)); ctx.lineTo(p.x, p.y); } ctx.lineTo(toS(x1 + DX, 0).x, H + 10); ctx.closePath(); ctx.fillStyle = P.ground; ctx.fill();
   // 22 Nov 2026 (the audit: "flat, no detail"): bands of rock under the surface, stones in it, scrub on it
-  ctx.save(); ctx.clip(); for (let j = 1; j <= 5; j++) { ctx.strokeStyle = j % 2 ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.09)'; ctx.lineWidth = (5 + j * 2.5) * s; ctx.beginPath(); for (let x = Math.max(0, x0); x <= x1; x += DX * 2) { const p = toS(x, groundY(g, x)); const yy = p.y + j * 26 * s + Math.sin(x * 0.35 + j * 1.7) * 6 * s; if (x === Math.max(0, x0)) ctx.moveTo(p.x, yy); else ctx.lineTo(p.x, yy); } ctx.stroke(); }
+  ctx.save(); ctx.clip(); for (let j = 1; j <= 5; j++) { ctx.strokeStyle = j % 2 ? 'rgba(0,0,0,.10)' : 'rgba(255,255,255,.09)'; ctx.lineWidth = (5 + j * 2.5) * s; ctx.beginPath(); for (let x = xs; x <= x1; x += DX * 2) { const p = toS(x, groundY(g, x)); const yy = p.y + j * 26 * s + Math.sin(x * 0.35 + j * 1.7) * 6 * s; if (x === xs) ctx.moveTo(p.x, yy); else ctx.lineTo(p.x, yy); } ctx.stroke(); }
   for (let i = Math.floor(x0 / 1.7); i <= x1 / 1.7; i++) { if (i < 0) continue; const h1 = Math.sin(i * 127.1) * 43758.5453, r1 = h1 - Math.floor(h1), h2 = Math.sin(i * 311.7) * 24634.63, r2 = h2 - Math.floor(h2), xx = i * 1.7 + r1, p = toS(xx, groundY(g, xx)); ctx.fillStyle = 'rgba(0,0,0,.16)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + (16 + r2 * 90) * s, (4 + r1 * 9) * s, (3 + r2 * 5) * s, r1, 0, TAU); ctx.fill(); }
   ctx.restore();
-  for (let i = Math.floor(x0 / 3.1); i <= x1 / 3.1; i++) { if (i < 0) continue; const h1 = Math.sin(i * 91.7) * 15731.743, r1 = h1 - Math.floor(h1); if (r1 > 0.55) continue; const xx = i * 3.1 + r1 * 2, p = toS(xx, groundY(g, xx)), hh = (7 + r1 * 16) * s; ctx.strokeStyle = 'rgba(40,60,30,.55)'; ctx.lineWidth = 2 * s; ctx.beginPath(); for (const a of [-0.5, -0.15, 0.2, 0.55]) { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.sin(a) * hh, p.y - Math.cos(a) * hh); } ctx.stroke(); }
-  ctx.strokeStyle = P.top; ctx.lineWidth = 5; ctx.beginPath(); for (let x = Math.max(0, x0); x <= x1; x += DX) { const p = toS(x, groundY(g, x)); if (x === Math.max(0, x0)) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); } ctx.stroke();
+  for (const pt of g.track.pits || []) { if (pt[1] < x0 || pt[0] > x1) continue; const fl = groundY(g, (pt[0] + pt[1]) / 2), a0 = toS(pt[0] + DX, fl), b0 = toS(pt[1] - DX, fl), gr = ctx.createLinearGradient(0, a0.y, 0, a0.y - 4.5 * m); gr.addColorStop(0, 'rgba(8,6,10,.78)'); gr.addColorStop(1, 'rgba(8,6,10,0)'); ctx.fillStyle = gr; ctx.fillRect(a0.x, a0.y - 4.5 * m, b0.x - a0.x, 4.5 * m + 2); }
+  for (let i = Math.floor(x0 / 3.1); i <= x1 / 3.1; i++) { if (i < 0) continue; const h1 = Math.sin(i * 91.7) * 15731.743, r1 = h1 - Math.floor(h1); if (r1 > 0.55) continue; const xx = i * 3.1 + r1 * 2; if (inPit(g, xx)) continue; const p = toS(xx, groundY(g, xx)), hh = (7 + r1 * 16) * s; ctx.strokeStyle = 'rgba(40,60,30,.55)'; ctx.lineWidth = 2 * s; ctx.beginPath(); for (const a of [-0.5, -0.15, 0.2, 0.55]) { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.sin(a) * hh, p.y - Math.cos(a) * hh); } ctx.stroke(); }
+  ctx.strokeStyle = P.top; ctx.lineWidth = 5; ctx.beginPath(); for (let x = xs; x <= x1; x += DX) { const p = toS(x, groundY(g, x)); if (x === xs) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); } ctx.stroke();
+  for (const pt of g.track.pits || []) { if (pt[1] < x0 || pt[0] > x1) continue; const fl = groundY(g, (pt[0] + pt[1]) / 2), a0 = toS(pt[0] + DX, fl), b0 = toS(pt[1] - DX, fl); ctx.fillStyle = 'rgb(12,10,14)'; ctx.fillRect(a0.x - 3, a0.y - 5, b0.x - a0.x + 6, H - a0.y + 16); }
   // flags and the finish
   for (const f of g.track.flags) { if (f < x0 || f > x1 || f === 0) continue; const p = toS(f, groundY(g, f)); ctx.strokeStyle = '#333'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - 2.2 * m); ctx.stroke(); ctx.fillStyle = f <= b.lastFlag ? '#4ad06a' : '#ffd020'; ctx.beginPath(); ctx.moveTo(p.x, p.y - 2.2 * m); ctx.lineTo(p.x + 0.9 * m, p.y - 1.9 * m); ctx.lineTo(p.x, p.y - 1.6 * m); ctx.fill(); }
   { const e = g.track.end; if (e > x0 && e < x1) { const p = toS(e, groundY(g, e)); for (let i = 0; i < 8; i++) for (let j = 0; j < 2; j++) { ctx.fillStyle = (i + j) % 2 ? '#111' : '#fff'; ctx.fillRect(p.x - 0.3 * m + j * 0.3 * m, p.y - 4 * m + i * 0.5 * m, 0.3 * m, 0.5 * m); } } }

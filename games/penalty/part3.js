@@ -6,7 +6,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [];
 let hint = null, V3 = null;
 const ui = { snap: true };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 2.8) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 2.8) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function fxStep(dt) {
   FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.5) TXT.shift();
@@ -238,7 +238,7 @@ function hud(G, t) {
   if (G.side === 'K' && G.K) { const K = G.K;
     if (G.N <= 3 || G.lesson) { const y = H - 44 * k; ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.textAlign = 'center'; [['◀ DIVE', W / 6], ['STAY', W / 2], ['DIVE ▶', W * 5 / 6]].forEach(([s, x]) => { ctx.strokeText(s, x, y); ctx.fillText(s, x, y); });
       ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 1.5; ctx.beginPath(); for (const x of [W / 3, W * 2 / 3]) { ctx.moveTo(x, H * 0.62); ctx.lineTo(x, H - 20 * k); } ctx.stroke();
-      if (G.ph === 'spot' || G.ph === 'run') { ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.fillStyle = '#ffe08a'; ctx.strokeText('WAIT FOR THE PLANT...', W / 2, H * 0.58); ctx.fillText('WAIT FOR THE PLANT...', W / 2, H * 0.58); } }
+      if (G.ph === 'spot' || G.ph === 'run') { ctx.font = `700 ${Math.round(15 * k)}px ${BC}`; ctx.fillStyle = '#ffe08a'; if (G.lesson) { ctx.strokeText('WAIT FOR THE PLANT...', W / 2, H * 0.58); ctx.fillText('WAIT FOR THE PLANT...', W / 2, H * 0.58); } } }
     if (G.ph !== 'resK') { const kk = K.kk, sideTxt = kk.fs > 0 ? 'YOUR LEFT' : 'YOUR RIGHT'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; const s2 = `No. ${kk.no} ${kk.name.toUpperCase()}` + (G.cfg.scout ? ` · LIKES ${sideTxt}` : ''); ctx.strokeText(s2, W / 2, ly + 22 * k); ctx.fillText(s2, W / 2, ly + 22 * k); }
     if (G.cfg.arrow && (G.ph === 'kickK') && G.pt < 0.22 + K.T) { const a = scr(0, 0.05, SPOT - 0.3), b = scr(K.cue * 2.2, 0.05, SPOT - 3.2); const al = clamp(G.pt / 0.08, 0, 1); ctx.globalAlpha = 0.85 * al; arrow(a, b, '#ffffff'); ctx.globalAlpha = 1; } }
 }

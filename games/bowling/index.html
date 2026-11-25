@@ -5356,7 +5356,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [], PARTS = [];
 let hint = null, V3 = null;
 const ui = { snap: true, touch: null, cam: null, pinDir: {}, swept: {}, roll: 0, lastPhase: null, sline: null };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 2.8) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 2.8) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 140) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40 * k, t: 0, life: 0.45 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 3) * k }); } if (PARTS.length > 220) PARTS.splice(0, PARTS.length - 220); }
 function fxStep(dt) {
   FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 1.8);

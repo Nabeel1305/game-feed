@@ -54,11 +54,31 @@ PROG = json.load(open(os.path.join(R, 'specs', 'progress.json')))['games']
 # that I made a complaint and you fixed it on that game.") specs/reviews-fixed.json: what he said and what was done, a green box on the game's card;
 # his boxes on that card are emptied (in the store too) so that the next thing he writes there is his next review.
 DONE = {k: v for k, v in json.load(open(os.path.join(R, 'specs', 'reviews-fixed.json'))).items() if not k.startswith('_')}
+# His words, 25 Nov 2026: "create one so that I can know I made a comment here, you fixed it, and I can click that and you show only those
+# games that you just fixed... I can click one and I can see all the games that I have not yet reviewed. And the ones that I clicked good
+# and didn't put any comment, then you differentiate those... there's one that says all games... Just make it for easier reviewing...
+# so that I don't have to go checking again and again." Every game is in exactly one of four lists, by what HE has done since the last fix:
+#   FIXED, CHECK THESE  a fix of his own note (or a fix here from his note on another game, in the newest round) that he has not rated since
+#   YOUR NOTES          he has written something (or pressed Bad) that is not fixed yet
+#   YOU SAID FINE       Good or Okay, and nothing written
+#   NOT REVIEWED        nothing from him and nothing fixed for him
+# A fix empties his boxes, which is what moves the game from YOUR NOTES to FIXED; his next rating moves it on. An entry with "general": true
+# (something done to every game, like the music) shows in the green box but does not put the game in his list to check.
+def round_of(d):
+    if d.get('round'): return d['round']
+    m = re.match(r'(\d+) Nov', d.get('when', '')); return '2026-11-%02d' % int(m.group(1)) if m else '2026-11-22'
+from collections import Counter
+SAID = Counter(d['said'].strip() for v in DONE.values() for d in v)
+for v in DONE.values():
+    for d in v:
+        if d['kind'] != 'yours' and SAID[d['said'].strip()] >= 15: d['general'] = True      # the same words on fifteen games or more: done to every game
+LATEST = max(round_of(d) for v in DONE.values() for d in v if d['kind'] == 'yours' or not d.get('general'))
 rows = []
 for g in games:
     s = seen.get(g['number'], ''); crit = s.startswith('C '); flaw = s.startswith('F '); note = s[2:] if (crit or flaw) else s
     fixed = '' if any(d['kind'] == 'yours' for d in DONE.get(g['id'], [])) else FIXED.get(g['id'], ''); todo = ' '.join(PROG.get(g['id'], {}).get('remaining', []))      # what is still open comes from the record (PROGRESS.md), not from the first list of faults
-    rows.append({'n': g['number'], 'id': g['id'], 'name': g['name'], 'genre': g['feed'].get('genre', ''), 'thumbs': g['feed'].get('thumbs', 1), 'fixed': fixed, 'todo': todo, 'crit': bool(crit and not fixed and g['id'] not in DONE), 'band': g['id'] not in NOBAND, 'done': DONE.get(g['id'], [])})
+    rows.append({'n': g['number'], 'id': g['id'], 'name': g['name'], 'genre': g['feed'].get('genre', ''), 'thumbs': g['feed'].get('thumbs', 1), 'fixed': fixed, 'todo': todo, 'crit': bool(crit and not fixed and g['id'] not in DONE), 'band': g['id'] not in NOBAND, 'done': [dict(d, round=round_of(d)) for d in DONE.get(g['id'], [])],
+                 'check': any(d['kind'] == 'yours' or (round_of(d) == LATEST and not d.get('general')) for d in DONE.get(g['id'], [])), 'day': max([round_of(d) for d in DONE.get(g['id'], []) if d['kind'] == 'yours' or not d.get('general')] or [''])})
 out = R + '/out/review'; shutil.rmtree(out, ignore_errors=True); os.makedirs(out + '/games')
 for g in games: os.makedirs(f'{out}/games/{g["id"]}'); shutil.copy(f'{R}/games/{g["id"]}/index.html', f'{out}/games/{g["id"]}/index.html')
 page = r'''<!DOCTYPE html>
@@ -69,14 +89,15 @@ page = r'''<!DOCTYPE html>
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 header{position:sticky;top:0;z-index:5;background:rgba(18,20,28,.96);border-bottom:1px solid var(--line);padding:12px 14px 10px}
 h1{margin:0 0 2px;font-size:20px}.sub{color:var(--dim);font-size:13px}
-.bar{display:flex;gap:8px;margin-top:10px;overflow-x:auto;padding-bottom:2px}.chip{flex:none;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:18px;padding:8px 13px;font:inherit;font-size:14px}
-.chip.on{background:var(--acc);color:#1d1204;border-color:var(--acc);font-weight:700}
+.bar{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.chip{flex:none;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:18px;padding:8px 11px;font:inherit;font-size:14px}
+.chip.on{background:var(--acc);color:#1d1204;border-color:var(--acc);font-weight:700}.chip i{font-style:normal;font-weight:800;margin-left:4px;opacity:.85}.chip.c-check{border-color:#2f6a48}.chip.c-wait{border-color:#7a5a20}.what{margin-top:8px;font-size:13px;color:#d8dcea}
+.st{display:block;font-size:12px;font-weight:800;letter-spacing:.3px;border-radius:8px;padding:5px 9px;margin:10px 0 0}.st.check{background:#7be0a0;color:#08240f}.st.wait{background:#4a3a14;color:#ffd98a}.st.fine{background:#1e3a2a;color:#9fe0b8}.st.new{background:#262b3c;color:#aab3c8}.g.s-check{border-color:#3f9a68}.g.s-wait{border-color:#8a6a20}
 main{padding:12px 12px 120px;max-width:720px;margin:0 auto}
 .g{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px;border:1px solid var(--line)}.g.crit{border-color:#6a3a34}
 .top{display:flex;align-items:center;gap:10px}.num{color:var(--dim);font-size:13px;min-width:34px}.nm{font-weight:800;font-size:18px;flex:1}.gen{color:var(--dim);font-size:12px}
 .play{flex:none;border:0;border-radius:12px;background:var(--acc);color:#1d1204;font:inherit;font-weight:800;padding:12px 18px;font-size:16px}
 .tag{display:inline-block;font-size:11px;font-weight:800;border-radius:6px;padding:2px 7px;margin:8px 6px 0 0;letter-spacing:.3px}.t-fix{background:#1e4a34;color:var(--ok)}.t-all{background:#26304a;color:#a8c0ff}.t-todo{background:#4a2a26;color:#ffb0a0}.t-done{background:#7be0a0;color:#08240f}
-.done{margin-top:10px;border:1px solid #2f6a48;background:#15301f;border-radius:12px;padding:10px 12px}.done .h{font-weight:800;color:var(--ok);font-size:14px;letter-spacing:.2px}.done .h small{font-weight:400;color:#9fcfb2}.done .said{margin-top:6px;font-size:13px;color:#b9c7bf;font-style:italic}.done .did{margin-top:6px;font-size:14px;color:#eaf6ee}.done .did b{color:var(--ok)}.again{margin-top:12px;font-size:13px;color:var(--dim)}
+.done{margin-top:10px;border:1px solid #2f6a48;background:#15301f;border-radius:12px;padding:10px 12px}.done .h{font-weight:800;color:var(--ok);font-size:14px;letter-spacing:.2px}.done .h small{font-weight:400;color:#9fcfb2}.done .said{margin-top:6px;font-size:13px;color:#b9c7bf;font-style:italic}.done .did{margin-top:6px;font-size:14px;color:#eaf6ee}.done .did b{color:var(--ok)}.again{margin-top:12px;font-size:13px;color:var(--dim)}details.old{margin-top:10px}details.old summary{font-size:13px;color:var(--dim);padding:6px 0}
 p.w{margin:6px 0 0;font-size:14px;color:#d8dcea}p.w b{color:var(--ink)}
 .rate{display:flex;gap:8px;margin-top:12px}.rate button{flex:1;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:10px;padding:9px 4px;font:inherit;font-size:14px}.rate button.on{background:#2c3a5a;border-color:#6a86d8;font-weight:700}
 label{display:block;font-size:12px;font-weight:800;margin:12px 0 4px;letter-spacing:.3px}label.c{color:var(--bad)}label.f{color:var(--acc)}label small{font-weight:400;color:var(--dim)}
@@ -92,33 +113,40 @@ footer .cnt{flex:1;font-size:12px;color:var(--dim);min-width:0}footer .cnt b{dis
 #out{position:fixed;inset:0;z-index:40;background:rgba(10,12,18,.97);display:none;flex-direction:column;padding:16px}#out.on{display:flex}#out textarea{flex:1;margin:10px 0}#out button{border:0;border-radius:12px;background:var(--acc);color:#1d1204;font:inherit;font-weight:800;padding:13px}
 .hide{display:none}
 </style></head><body>
-<header><h1>Game Review</h1><div class="sub">__N__ games · tap PLAY, then rate it and write what is wrong. Everything saves by itself as you go; SAVE makes sure. Take as many days as you like.</div>
-<div class="key"><b>👍 Good</b> = leave it as it is · <b>😐 Okay</b> = not for me, but leave it · <b>👎 Bad</b> = it needs work (say what, if you know)</div>
-<div class="bar"><button class="chip on" data-f="all">All</button><button class="chip" data-f="done">Your reviews: fixed</button><button class="chip" data-f="fixed">Changed most</button><button class="chip" data-f="todo">Still open</button><button class="chip" data-f="untested">Not rated yet</button><button class="chip" data-f="noted">With your notes</button></div></header>
+<header><h1>Game Review</h1><div class="sub">Tap PLAY, rate it, write what is wrong. It saves by itself.</div>
+<div class="bar"><button class="chip" data-f="all">All <i id="n-all"></i></button><button class="chip c-check" data-f="check">✔ Fixed <i id="n-check"></i></button><button class="chip c-wait" data-f="wait">✎ To fix <i id="n-wait"></i></button><button class="chip c-new" data-f="new">○ Not reviewed <i id="n-new"></i></button><button class="chip c-fine" data-f="fine">👍 Fine <i id="n-fine"></i></button></div><div class="what" id="what"></div></header>
 <main id="list"></main>
 <footer><div class="cnt"><b id="svAll">Checking…</b><span id="cnt"></span></div><button id="save">SAVE</button><button id="submit">SUBMIT REVIEW</button></footer>
 <div id="player"><div id="pbar"><button id="pback">‹ Games</button><div class="pn" id="pname"></div><button id="pnotes">✎ Notes</button></div><iframe id="frame" title="game" allow="autoplay; fullscreen"></iframe></div>
 <div id="sheet"></div>
 <div id="out"><b>Your review</b><div id="outMsg"></div><div class="sub">Everything you have written so far is below. You can submit again whenever you have done more.</div><textarea id="outText" readonly></textarea><div class="row"><button id="copy">COPY</button><button id="outClose">Done</button></div></div>
 <script>
-const GAMES = __DATA__;
+const GAMES = __DATA__, LATEST = '__LATEST__';
 const mem = {}; const get = k => { try { const v = localStorage.getItem('rev.' + k); return v == null ? (mem[k] || '') : v; } catch (e) { return mem[k] || ''; } };
 const set = (k, v) => { mem[k] = v; try { localStorage.setItem('rev.' + k, v); } catch (e) {} };
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let filter = 'all', cur = null;
+let filter = get('filter') || 'all', cur = null;
+// which of the four lists a game is in (see the top of tools/review_page.py)
+function stateOf(g) { const r = get(g.id + '.r'), noted = (get(g.id + '.c') + get(g.id + '.f')).trim(); return noted || r === 'bad' ? 'wait' : r ? 'fine' : g.check ? 'check' : 'new'; }
+const STATE = { check: '✔ FIXED: PLAY IT, THEN RATE IT', wait: '✎ YOUR NOTE IS SAVED: NOT FIXED YET', fine: '👍 YOU SAID IT IS FINE', new: '○ NOT REVIEWED YET' };
+const WHAT = { all: 'ALL: every game.', check: 'FIXED: only the games I fixed from what you wrote, newest first. Play one and rate it, and it leaves this list.', wait: 'TO FIX: games where you wrote something (or pressed Bad) that I have not fixed yet.', new: 'NOT REVIEWED: games you have not rated or written about yet.', fine: 'FINE: games you rated Good or Okay with nothing written. Nothing to do here.' };
 const ORD = ['', 'FIRST', 'SECOND', 'THIRD', 'FOURTH', 'FIFTH'];
-function doneHtml(g) { if (!g.done || !g.done.length) return ''; let n = 0; return g.done.map(d => { const mine = d.kind === 'yours'; if (mine) n++; return `<div class="done"><div class="h">✔ ${mine ? `YOUR ${ORD[n] || n + 'TH'} REVIEW: FIXED` : 'FIXED HERE TOO'} <small>(${esc(d.when)})</small></div><div class="said">You said: “${esc(d.said.trim())}”</div><div class="did"><b>What I did:</b> ${esc(d.did)}</div></div>`; }).join('') + (n ? `<div class="again">Your old note is cleared from the boxes below. Play it again and write your next review there if anything is still wrong.</div>` : ''); }
+function doneHtml(g) { if (!g.done || !g.done.length) return ''; let n = 0; const box = d => { const mine = d.kind === 'yours'; if (mine) n++; return `<div class="done"><div class="h">✔ ${mine ? `YOUR ${ORD[n] || n + 'TH'} REVIEW: ${d.answer ? 'CHECKED' : 'FIXED'}` : d.general ? 'DONE TO EVERY GAME' : 'FIXED HERE TOO'} <small>(${esc(d.when)})</small></div><div class="said">You said: “${esc(d.said.trim())}”</div><div class="did"><b>What I did:</b> ${esc(d.did)}</div></div>`; };
+  const now = [], old = []; for (const d of g.done) (d.kind === 'yours' || d.round === LATEST ? now : old).push(box(d)); const mine = g.done.some(d => d.kind === 'yours' && !d.answer);
+  return now.join('') + (old.length ? `<details class="old"><summary>Earlier changes to this game (${old.length})</summary>${old.join('')}</details>` : '') + (mine ? `<div class="again">Your old note is cleared from the boxes below. Play it again and write your next review there if anything is still wrong.</div>` : ''); }
 function notesHtml(g) { const r = get(g.id + '.r'); return `<div class="rate" data-id="${g.id}">${[['good', '👍 Good'], ['ok', '😐 Okay'], ['bad', '👎 Bad']].map(([k, t]) => `<button data-r="${k}" class="${r === k ? 'on' : ''}">${t}</button>`).join('')}</div>
 <label class="c">CRITICAL FLAWS <small>(makes it almost unplayable)</small></label><textarea data-k="${g.id}.c" placeholder="e.g. I can't tell what to do">${esc(get(g.id + '.c'))}</textarea>
 <label class="f">FLAWS <small>(fixing this would make it much better)</small></label><textarea data-k="${g.id}.f" placeholder="e.g. the character is too small">${esc(get(g.id + '.f'))}</textarea><div class="sv" data-sv="${g.id}"></div>`; }
-function show(g) { const noted = get(g.id + '.c') || get(g.id + '.f'), rated = get(g.id + '.r'); return filter === 'all' || (filter === 'done' && g.done && g.done.length) || (filter === 'fixed' && g.fixed) || (filter === 'todo' && g.todo) || (filter === 'untested' && !rated) || (filter === 'noted' && noted); }
-function render() { const L = document.getElementById('list'); L.innerHTML = GAMES.filter(show).map(g => `<section class="g${g.crit ? ' crit' : ''}" id="g-${g.id}"><div class="top"><div class="num">#${g.n}</div><div class="nm">${esc(g.name)}<div class="gen">${esc(g.genre)} · ${g.thumbs === 2 ? 'two thumbs' : 'one thumb'}</div></div><button class="play" data-play="${g.id}">PLAY</button></div>
-${g.done && g.done.length ? `<span class="tag t-done">${g.done.some(d => d.kind === 'yours') ? 'YOUR REVIEW: FIXED' : 'FIXED FROM YOUR REVIEW'}</span>` : ''}${g.fixed ? `<span class="tag t-fix">CHANGED</span>` : ''}<span class="tag t-all">NEW LIGHT${g.band ? ' + MUSIC' : ''}</span>${g.todo ? `<span class="tag t-todo">STILL OPEN</span>` : ''}
-${doneHtml(g)}${g.fixed ? `<p class="w"><b>What I changed:</b> ${esc(g.fixed)}</p>` : ''}${g.todo ? `<p class="w"><b>Still open, or yours to judge:</b> ${esc(g.todo)}</p>` : ''}${notesHtml(g)}</section>`).join('') || '<p class="sub">Nothing here.</p>'; count(); }
-function count() { let r = 0, n = 0; for (const g of GAMES) { if (get(g.id + '.r')) r++; if (get(g.id + '.c') || get(g.id + '.f')) n++; } document.getElementById('cnt').textContent = `${r} of ${GAMES.length} rated · ${n} with notes`; return [r, n]; }
+function show(g) { return filter === 'all' || stateOf(g) === filter; }
+function render() { const L = document.getElementById('list'), list = GAMES.filter(show); if (filter === 'check') list.sort((a, b) => (b.day || '').localeCompare(a.day || '') || a.n - b.n);
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.f === filter)); document.getElementById('what').textContent = WHAT[filter] || '';
+  L.innerHTML = list.map(g => { const st = stateOf(g); return `<section class="g s-${st}" id="g-${g.id}"><span class="st ${st}" data-st="${g.id}">${STATE[st]}</span><div class="top" style="margin-top:10px"><div class="num">#${g.n}</div><div class="nm">${esc(g.name)}<div class="gen">${esc(g.genre)} · ${g.thumbs === 2 ? 'two thumbs' : 'one thumb'}</div></div><button class="play" data-play="${g.id}">PLAY</button></div>
+${doneHtml(g)}${g.fixed ? `<p class="w"><b>What I changed:</b> ${esc(g.fixed)}</p>` : ''}${g.todo ? `<p class="w"><b>Still open, or yours to judge:</b> ${esc(g.todo)}</p>` : ''}${notesHtml(g)}</section>`; }).join('') || '<p class="sub">Nothing here.</p>'; count(); }
+function count() { let r = 0, n = 0; const by = { all: GAMES.length, check: 0, wait: 0, fine: 0, new: 0 }; for (const g of GAMES) { if (get(g.id + '.r')) r++; if (get(g.id + '.c') || get(g.id + '.f')) n++; const st = stateOf(g); by[st]++; const el = document.querySelector(`[data-st="${g.id}"]`); if (el) { el.textContent = STATE[st]; el.className = 'st ' + st; } }
+  for (const k in by) { const el = document.getElementById('n-' + k); if (el) el.textContent = by[k]; } document.getElementById('cnt').textContent = `${r} of ${GAMES.length} rated · ${n} with notes`; return [r, n]; }
 document.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.k; if (k) { set(k, e.target.value); count(); touch(k.slice(0, k.lastIndexOf('.'))); } });
 document.addEventListener('click', e => { const t = e.target;
-  if (t.dataset.f) { filter = t.dataset.f; document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === t)); render(); scrollTo(0, 0); return; }
+  const chip = t.closest && t.closest('.chip'); if (chip) { filter = chip.dataset.f; set('filter', filter); render(); scrollTo(0, 0); return; }
   if (t.dataset.r) { const id = t.parentNode.dataset.id, was = get(id + '.r'); set(id + '.r', was === t.dataset.r ? '' : t.dataset.r); t.parentNode.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === t && was !== t.dataset.r)); count(); touch(id); return; }
   if (t.dataset.play) { play(t.dataset.play); return; } });
 function play(id) { cur = GAMES.find(g => g.id === id); document.getElementById('pname').textContent = `#${cur.n} ${cur.name}`; document.getElementById('frame').src = 'games/' + id + '/index.html'; document.getElementById('player').classList.add('on'); }
@@ -168,7 +196,7 @@ document.getElementById('outClose').onclick = () => document.getElementById('out
 const render0 = render; render = function () { render0(); status(); };
 render(); connect();
 </script></body></html>'''
-page = page.replace('__N__', str(len(rows))).replace('__DATA__', json.dumps(rows, ensure_ascii=False).replace('</', '<\\/'))
+page = page.replace('__LATEST__', LATEST).replace('__N__', str(len(rows))).replace('__DATA__', json.dumps(rows, ensure_ascii=False).replace('</', '<\\/'))
 open(out + '/index.html', 'w').write(page)
 tot = sum(os.path.getsize(f'{out}/games/{g["id"]}/index.html') for g in games)
 print(len(rows), 'games,', round(tot / 1048576, 1), 'MiB; fixed', sum(1 for r in rows if r['fixed']), 'todo', sum(1 for r in rows if r['todo']), 'no audit line', [r['n'] for r in rows if r['n'] not in seen])

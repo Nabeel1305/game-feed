@@ -83,12 +83,13 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (one thumb): tap a bubble to take that job (tap it again to let it go); tap a job at the bottom to let it go
+// input (one thumb): tap a place to send the attendant there (the desk, the kitchen, the laundry, a room); tap a stop at the bottom to cancel it
 const inR = (b, x, y, pad = 6) => x > b.x - pad && x < b.x + b.w + pad && y > b.y - pad && y < b.y + b.h + pad;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || G.wait > 0) return; const L = lay(), x = e.clientX, y = e.clientY;
-  for (let i = 0; i < L.chips.length; i++) if (inR(L.chips[i], x, y) && G.queue[i] != null) { if (!drop(G, G.queue[i])) sfx.no(); return; }
-  let best = null, bd = 34 * L.s; for (const q of G.reqs) { if (q.gone || (q.got && q.k === 'bags')) continue; const p = bubXY(q, L), d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = q; } }
-  if (best) { if (G.queue.includes(best.id)) { if (!drop(G, best.id)) sfx.no(); } else take(G, best.id); } });
+  for (let i = 0; i < L.chips.length; i++) if (inR(L.chips[i], x, y) && G.route[i]) { if (!goTo(G, G.route[i])) sfx.no(); return; }      // a stop in the bar: cancel it
+  if (y < L.top - 20 || y > L.bot + 4) return;
+  // a tap in the hotel: the floor it is on and how far along (a bubble sits over its own place, so tapping the bubble is tapping the place)
+  tapAt(G, Math.floor((L.bot - y) / L.fh), (x - L.mx) / L.bw); });
 const rankOf = tot => { let r = RANKS[0][1]; for (const [n, name] of RANKS) if (tot >= n) r = name; return r; };
 function renderShop() { const el = $('eShop'); if (!el) return; const bank = store.get('bank', 0), ups = store.get('ups', {}) || {}; let h = `<h3><span>THE STAFF ROOM</span><span>£ ${bank}</span></h3><div class="grid">`;
   for (const u of UPGRADES) { const lv = ups[u.id] | 0, max = lv >= u.max, cost = max ? 0 : u.cost(lv), can = !max && bank >= cost;
@@ -128,7 +129,7 @@ window.__sim = {
 /*SOUNDCHECK*/
   start(N, o) { HEADLESS = true; MUTE = true; level = N; G = newGame(N, o || {}); },
   step(dt) { step(G, dt); G.ev.length = 0; },
-  take(id) { return take(G, id); }, drop(id) { return drop(G, id); }, tapAt(f, x) { return tapAt(G, f, x); }, lay, bubXY, renderShop,
+  goTo(st) { return goTo(G, st); }, placeAt(f, x) { return placeAt(G, f, x); }, tapAt(f, x) { return tapAt(G, f, x); }, lay, bubXY, renderShop,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

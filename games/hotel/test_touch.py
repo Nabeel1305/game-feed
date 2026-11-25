@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Grand Hotel with real touches: tapping a bubble takes the job (it shows in the job bar); the attendant goes and does it and a
-tip comes in; tapping a job in the bar lets it go; a fourth job does not fit; no JavaScript errors.
+"""Grand Hotel with real touches (the controls of 25 Nov 2026: you send the attendant yourself): a tap on the kitchen lines it up as
+a stop and he walks there and takes a plate; a tap on the room that rang serves it and a tip comes in; a tap on a stop in the bar
+cancels it; a fourth stop does not fit; a knock on the wrong door costs rating; no JavaScript errors.
 Run: python3 games/hotel/test_touch.py"""
 import os, sys
 from playwright.sync_api import sync_playwright
@@ -14,17 +15,20 @@ with sync_playwright() as p:
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.goto('file://' + os.path.join(here, 'index.html')); pg.wait_for_function('typeof window.gameFeedStart === "function"'); pg.wait_for_timeout(600)
     pg.evaluate("localStorage.setItem('ht.taught', '3'); __sim.go(3);"); pg.wait_for_timeout(300)
-    # make three requests now
-    pg.evaluate("(() => { const G = __sim.G; G.sched.slice(0, 4).forEach(s => s.at = 0); })()"); pg.wait_for_timeout(500)
-    def bub(i): return pg.evaluate(f"(() => {{ const G = __sim.G, L = __sim.lay(), q = G.reqs.filter(r => !r.gone)[{i}]; const p = __sim.bubXY(q, L); return [p.x, p.y, q.id]; }})()")
-    x, y, id0 = bub(0); pg.touchscreen.tap(x, y); pg.wait_for_timeout(200)
-    ok(pg.evaluate(f"__sim.G.queue.includes({id0})"), 'tapping a bubble takes the job')
-    x, y, id1 = bub(1); pg.touchscreen.tap(x, y); pg.wait_for_timeout(200)
-    c = pg.evaluate("__sim.lay().chips[1]"); pg.touchscreen.tap(c['x'] + c['w'] / 2, c['y'] + c['h'] / 2); pg.wait_for_timeout(200)
-    ok(not pg.evaluate(f"__sim.G.queue.includes({id1})"), 'tapping a job in the bar lets it go')
+    # a quiet hotel, one room ringing for food
+    pg.evaluate("(() => { const G = __sim.G; G.sched = []; G.clock = 90; G.reqs = []; G.route = []; G.me.carry = []; G.me.x = 0.98; G.me.f = 0; G.cfg.sp0 = G.cfg.sp; G.cfg.sp = 0.02; G.rooms.forEach(r => { r.state = 'occ'; }); const r = G.rooms[1]; G.reqs.push({ id: 900, k: 'food', room: r.id, f: r.f, x: r.x, pat: 99, max: 99, t: 0 }); })()")
+    def at(f, x): return pg.evaluate(f"(() => {{ const L = __sim.lay(); return [L.sx({x}), L.fy({f}) - L.fh * 0.4]; }})()")
+    def tap(f, x): px, py = at(f, x); pg.touchscreen.tap(px, py); pg.wait_for_timeout(200)
+    room = pg.evaluate("(() => { const r = __sim.G.rooms[1]; return [r.f, r.x]; })()"); other = pg.evaluate("(() => { const r = __sim.G.rooms[2]; return [r.f, r.x]; })()")
+    tap(0, 0.55); ok(pg.evaluate("__sim.G.route.length === 1 && __sim.G.route[0].place === 'kitchen'"), 'a tap on the kitchen lines it up as a stop', str(pg.evaluate("__sim.G.route")))
+    tap(*room); tap(*other); ok(pg.evaluate("__sim.G.route.length") == 3, 'three stops line up')
+    tap(0, 0.8); ok(pg.evaluate("__sim.G.route.length") == 3, 'a fourth stop does not fit')
+    c = pg.evaluate("__sim.lay().chips[2]"); pg.touchscreen.tap(c['x'] + c['w'] / 2, c['y'] + c['h'] / 2); pg.wait_for_timeout(200)
+    ok(pg.evaluate("__sim.G.route.length") == 2, 'a tap on a stop in the bar cancels it')
+    pg.evaluate("__sim.G.cfg.sp = __sim.G.cfg.sp0")
     tips0 = pg.evaluate("__sim.G.tips"); pg.wait_for_timeout(9000)
-    ok(pg.evaluate("__sim.G.tips") > tips0, 'the attendant does the job and a tip comes in', str(pg.evaluate("[__sim.G.tips, __sim.G.queue]")))
-    n = pg.evaluate("(() => { const G = __sim.G; G.queue = []; for (let i = 0; i < 4; i++) G.reqs.push({ id: 900 + i, k: 'food', room: 0, f: 1, x: 0.3, pat: 99, max: 99, t: 0 }); [900, 901, 902, 903].forEach(id => __sim.take(id)); return G.queue.length; })()")
-    ok(n == 3, 'you hold three jobs at most', str(n))
+    ok(pg.evaluate("__sim.G.tips") > tips0 and pg.evaluate("__sim.G.wrongs") == 0, 'he fetches the plate, takes it up and a tip comes in', str(pg.evaluate("[__sim.G.tips, __sim.G.route, __sim.G.me.carry]")))
+    r0 = pg.evaluate("__sim.G.rating"); tap(*other); pg.wait_for_timeout(4000)
+    ok(pg.evaluate("__sim.G.rating") < r0 and pg.evaluate("__sim.G.wrongs") == 1, 'a knock on a door that asked for nothing costs rating', str(pg.evaluate("[__sim.G.rating, __sim.G.wrongs]")))
     ok(not errs, 'no JavaScript errors', str(errs[:3])); b.close()
 print(f'\n{oks} passed, {len(fails)} failed'); sys.exit(1 if fails else 0)

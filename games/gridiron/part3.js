@@ -13,7 +13,7 @@ function rpApply(G, f) { const b = G.ball, save = { P: G.P.map(p => RPK.map(kk =
   G.P.forEach((p, i) => RPK.forEach((kk, j) => p[kk] = f.P[i][j])); b.x = f.b[0]; b.y = f.b[1]; b.z = f.b[2]; b.kind = f.b[3]; b.own = f.b[4] >= 0 ? G.P[f.b[4]] : null; G.phase = 'live'; G.los = f.los; G.fdl = f.fdl; G.ctrl = f.ctrl; return save; }
 function rpRestore(G, s) { const b = G.ball; G.P.forEach((p, i) => RPK.forEach((kk, j) => p[kk] = s.P[i][j])); b.x = s.b[0]; b.y = s.b[1]; b.z = s.b[2]; b.kind = s.b[3]; b.own = s.b[4]; G.phase = s.phase; G.los = s.los; G.fdl = s.fdl; G.ctrl = s.ctrl; }
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 160) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40 * k, t: 0, life: 0.5 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 2.5) * k }); } if (PARTS.length > 240) PARTS.splice(0, PARTS.length - 240); }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.4) TXT.shift();
@@ -129,7 +129,7 @@ function recvButtons(G) { if (G.phase !== 'live' || G.att !== 0) return []; cons
   return eligible(G).map(q => { const p = scr(q.x, 2.6, q.z), o = openness(G, q); return { id: q.id, x: p.x, y: p.y - 14 * k, r: 22 * k, o, col: o > 3 ? '#3ad06a' : o > 1.8 ? '#ffd23a' : '#ff5a4a' }; }); }
 function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), b = G.ball, p = me(G);
   if (ui.rp) { const pulse = 0.6 + 0.4 * Math.sin(now * 6); ctx.fillStyle = 'rgba(8,20,10,.85)'; rrect(W - 214 * k, 10 * k, 200 * k, 40 * k, 10 * k); ctx.fill(); ctx.fillStyle = `rgba(255,70,60,${pulse})`; ctx.beginPath(); ctx.arc(W - 194 * k, 30 * k, 7 * k, 0, TAU); ctx.fill();
-    ctx.font = `600 ${Math.round(20 * k)}px ${TF}`; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText('REPLAY', W - 180 * k, 31 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#cfe8d4'; ctx.fillText('tap to skip', W - 92 * k, 31 * k);
+    ctx.font = `600 ${Math.round(20 * k)}px ${TF}`; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.fillText('REPLAY', W - 180 * k, 31 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillStyle = '#cfe8d4'; ctx.fillText('SKIP ▸', W - 92 * k, 31 * k);
     ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 6 * k; ctx.strokeRect(3 * k, 3 * k, W - 6 * k, H - 6 * k); return; }
   if (ui.rpOffer && !G.over) { const R2 = L.rp; ctx.fillStyle = 'rgba(255,224,96,.95)'; rrect(R2.x, R2.y, R2.w, R2.h, 10 * k); ctx.fill(); ctx.fillStyle = '#1a1a1a'; ctx.font = `600 ${Math.round(19 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText('▶ REPLAY', R2.x + R2.w / 2, R2.y + R2.h / 2 + 1); }
   if (G.lesson) lessonPanel(G);

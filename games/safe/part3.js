@@ -7,7 +7,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, PT = [], TXT = [];
 let hint = null, pulse = 0, boltT = [], doorT = 0, jam = 0;
 function sparks(x, y, n, col, sp = 220) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random()); PT.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.5 + Math.random() * 0.4, t: 0, col, r: 2 + Math.random() * 2.5 }); } }
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 const S1 = () => Math.min(W, H * 0.6) / 390;
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
@@ -70,7 +70,7 @@ function drawGuard(g, L, now) { const s = L.s, gd = g.gd; if (!g.useGuard || gd.
     ctx.font = `${Math.round(18 * s)}px sans-serif`; ctx.textAlign = 'center'; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(now * 8); ctx.fillText('👣', W * (0.1 + u * 0.3), H * 0.86); ctx.globalAlpha = 1;
     ctx.fillStyle = '#ffd36a'; ctx.font = `${Math.round(22 * s)}px ${TF}`; ctx.fillText('FOOTSTEPS…', W / 2, H * 0.135); }
   if (gd.s === 'torch') { const u = 1 - gd.t / g.cfg.torch, bx = W * (-0.1 + u * 1.2), by = H * 0.5; const tg = ctx.createRadialGradient(bx, by, 10, bx, by, W * 0.55); tg.addColorStop(0, 'rgba(255,240,180,.55)'); tg.addColorStop(1, 'rgba(255,240,180,0)'); ctx.fillStyle = tg; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#fff'; ctx.font = `${Math.round(26 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText('KEEP STILL', W / 2, H * 0.135); ctx.fillText('KEEP STILL', W / 2, H * 0.135); } }
+    ctx.fillStyle = '#fff'; ctx.font = `${Math.round(26 * s)}px ${TF}`; ctx.textAlign = 'center'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.7)'; if (G && G.lesson) { ctx.strokeText('KEEP STILL', W / 2, H * 0.135); ctx.fillText('KEEP STILL', W / 2, H * 0.135); } } }
 function hud(G, L, now) { const s = L.s, c = G.cfg; let top = 48 * s;
   if (G.lesson) top = lessonPanel(G) + 6; else {
     ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = '#fff'; ctx.font = `${Math.round(16 * s)}px ${TF}`; ctx.fillText(PLACES[G.place].name, 14, 52 * s);

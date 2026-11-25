@@ -5435,7 +5435,7 @@ let hint = null, V3 = null;
 const ui = { snap: true, banner: null, stick: null, btn: {}, cam: null, yaw: 0, map: false };
 const optShake = () => store.get('shake', true) !== false;
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 160) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 40 * k, t: 0, life: 0.5 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 2.5) * k }); } if (PARTS.length > 240) PARTS.splice(0, PARTS.length - 240); }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.4) TXT.shift();
@@ -5514,7 +5514,7 @@ function onEvent(G, e) { const me = G.me, at = (x, z) => scrOf(x, 12, z) || { x:
     case 'mehit': sfx.boom(0); FX.red = 1; FX.shake = 16; vibe(HAP.heavy); ui.banner = { txt: 'WE ARE HIT!', sub: { engOk: 'Engine damaged: speed down', sonarOk: 'Sonar out', gunOk: 'Gun out' }[e.part] + ' · fire and flooding', t: 0, secs: 2.6, small: true }; tip('crew', 'Send the crew: 🔥 fight the fire first, then 🔧 repair.', 4); break;
     case 'periscope': tip('peri', 'A periscope! He is shallow: set depth charges to SHALLOW.', 3.4); break;
     case 'scared': break;
-    case 'crew': sfx.click(); break; case 'jobdone': sfx.job(); break; case 'crewbusy': sfx.no(); say('ALL TEAMS BUSY', W * 0.2, 130 * k, '#ffd0a0', 18); break; case 'toofar': sfx.no(); say('GET CLOSER TO THE SURVIVORS', W * 0.25, 130 * k, '#ffd0a0', 18); break;
+    case 'crew': sfx.click(); break; case 'jobdone': sfx.job(); break; case 'crewbusy': sfx.no(); say('ALL TEAMS BUSY', W * 0.2, 130 * k, '#ffd0a0', 18); break; case 'toofar': sfx.no(); say((G && G.lesson) ? 'GET CLOSER TO THE SURVIVORS' : 'TOO FAR AWAY', W * 0.25, 130 * k, '#ffd0a0', 18); break;
     case 'fast': if (e.why === 'danger') say('DANGER: BACK TO NORMAL SPEED', W / 2, H * 0.24, '#ffd0a0', 20); sfx.click(); break; case 'nofast': sfx.no(); break;
     case 'notarget': sfx.no(); break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.36, '#ffd36a', 24); break;

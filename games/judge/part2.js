@@ -193,7 +193,9 @@ function sentence(G, S, text) { if (G.over || G.wait > 0 || !G.case) return fals
   const ms = COUNCIL.map(cn => mark(K, S, cn.lean, G.record)), avg = Math.round(ms.reduce((a, m) => a + m.s, 0) / ms.length), P = severity(S);
   const entry = { id: K.id, off: K.off, name: K.name, last: K.last, who: K.who, centre: K.centre, P, text: String(text || '').slice(0, 200), read: readBack(S), score: avg, marks: ms, valid: !!(S && S.valid) };
   G.done.push(entry); if (S && S.valid && !S.cruel) G.record.push({ id: K.id, off: K.off, centre: K.centre, P, last: K.last });
-  const dir = ms[0].dir, gal = !S || !S.valid ? 'puzzled' : S.cruel ? 'horror' : avg >= 70 ? 'nod' : dir > 0 ? 'gasp' : 'boo'; G.gallery = { kind: gal, t: 0 };
+  // (25 Nov 2026, his review: "When you off council they should be no boo's or nods": with the council switched off nobody is judging the
+  // sentence, so the gallery keeps quiet too. Only a sentence that could not be understood still gets its puzzled murmur.)
+  const dir = ms[0].dir, gal = !S || !S.valid ? 'puzzled' : G.cfg.free ? 'quiet' : S.cruel ? 'horror' : avg >= 70 ? 'nod' : dir > 0 ? 'gasp' : 'boo'; G.gallery = { kind: gal, t: 0 };
   G.ev.push({ k: 'gavel', gal, score: avg });
   if (G.lesson) { lessonSee(G, entry); return true; }
   G.wait = 1.6; G.next = () => { if (!G.cfg.free && G.done.length >= G.cfg.cases) return judgeDocket(G); G.case = makeCase(G); G.ev.push({ k: 'case' }); };

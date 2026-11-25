@@ -5462,7 +5462,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0, slow: 0 }, TXT = [], PARTS = [
 let hint = null, V3 = null;
 const ui = { snap: true, banner: null, cam: null, drag: null, zoom: 1, pinch: null, tab: 'scene', sus: null, acc: { who: null, how: null, when: null, proof: [] }, linkFor: null, said: null, why: null, dirty: true };
 function say(txt, x, y, col = '#fff', size = 22) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 3) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 140) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60 * k, t: 0, life: 0.5 + Math.random() * 0.5, col, r: (2 + Math.random() * 3) * k }); } }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 2.5); FX.red = Math.max(0, FX.red - dt * 2);
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.4) TXT.shift();
@@ -5571,7 +5571,7 @@ function layout(G) { return { scene: { x: 0, y: 0, w: W, h: SH() } }; }
 function hud(G, now) { ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
   if (!G.insp) { const r = G.rooms[G.room]; r.items.forEach(it => { const p = scrOf(it.x, 0.05, it.z); if (!p) return; ctx.strokeStyle = it.seen ? 'rgba(255,255,255,.25)' : 'rgba(255,214,110,.85)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y + 6 * k, 9 * k, 0, TAU); ctx.stroke(); if (!it.seen) { ctx.fillStyle = 'rgba(255,214,110,.85)'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillText('?', p.x, p.y + 6 * k); } });
     if ((G && G.lesson) && G.t < 6 && !G.lesson) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText('TAP AN OBJECT TO LOOK CLOSER', W / 2, SH() - 50 * k); ctx.fillStyle = '#fff'; ctx.fillText('TAP AN OBJECT TO LOOK CLOSER', W / 2, SH() - 50 * k); } }
-  else { const y = SH() - 130 * k; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillText('◀ drag to turn it ▶   ·   pinch to zoom   ·   tap what you notice', W / 2, 92 * k);
+  else { const y = SH() - 130 * k; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = 'rgba(255,255,255,.8)'; if (G && G.lesson) ctx.fillText('◀ drag to turn it ▶   ·   pinch to zoom   ·   tap what you notice', W / 2, 92 * k);
     if (!ui.drag) { const a = Math.sin(now * 2.5) * 30 * k; ctx.globalAlpha = 0.35; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(W / 2 + a, y, 14 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; } }
   if (ui.banner) { const b = ui.banner, a = Math.min(1, b.t / 0.2, ((b.secs || 1.6) - b.t) / 0.4); ctx.globalAlpha = Math.max(0, a); ctx.font = `400 ${Math.round(30 * k)}px ${TF}`; ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(20,14,20,.8)'; ctx.strokeText(b.txt, W / 2, SH() * 0.4); ctx.fillStyle = '#ffd36a'; ctx.fillText(b.txt, W / 2, SH() * 0.4);
     if (b.sub) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.lineWidth = 4; ctx.strokeText(b.sub, W / 2, SH() * 0.4 + 28 * k); ctx.fillStyle = '#fff'; ctx.fillText(b.sub, W / 2, SH() * 0.4 + 28 * k); } ctx.globalAlpha = 1; } }

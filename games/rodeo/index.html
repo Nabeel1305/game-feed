@@ -5321,7 +5321,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [], PARTS = [];
 let hint = null, V3 = null;
 const ui = { snap: true, held: { l: 0, r: 0 } };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
-function tip(key, txt, secs = 2.8) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 2.8) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function dust(x, y, n = 16, col = 'rgba(190,150,100,') { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = -Math.PI * Math.random(), v = (60 + Math.random() * 140) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.6, t: 0, life: 0.6 + Math.random() * 0.6, col, r: (4 + Math.random() * 8) * k }); } if (PARTS.length > 200) PARTS.splice(0, PARTS.length - 200); }
 function fxStep(dt) {
   FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 2);
@@ -5476,9 +5476,9 @@ function hud(G, t) {
   // the bull's tell: an arrow for where he will throw you, and which side to hold (early levels and lessons)
   const mv = G.mv; if (mv && G.ph === 'ride' && mv.k !== 'fake' && (G.cfg.arrow || G.lesson)) { const tt = G.ride - mv.t0; if (tt < mv.tell + mv.dur) { const al = clamp(tt / 0.15, 0, 1), y = H * 0.36, cx = W / 2;
       ctx.globalAlpha = al; ctx.textAlign = 'center'; ctx.font = `800 ${Math.round(15 * k)}px ${BC}`;
-      if (mv.k === 'spin') { ctx.fillStyle = '#9ad8ff'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 4; ctx.strokeText('SPIN! HOLD BOTH TO GRIP', cx, y); ctx.fillText('SPIN! HOLD BOTH TO GRIP', cx, y); }
+      if (mv.k === 'spin') { ctx.fillStyle = '#9ad8ff'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 4; { const sw = G.lesson ? 'SPIN! HOLD BOTH TO GRIP' : 'SPIN!'; ctx.strokeText(sw, cx, y); ctx.fillText(sw, cx, y); } }
       else { const d = mv.d, ax = cx + d * 70 * k; ctx.strokeStyle = '#ff7a5a'; ctx.fillStyle = '#ff7a5a'; ctx.lineWidth = 7 * k; ctx.beginPath(); ctx.moveTo(cx - d * 20 * k, y); ctx.lineTo(ax, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(ax + d * 16 * k, y); ctx.lineTo(ax - d * 4 * k, y - 13 * k); ctx.lineTo(ax - d * 4 * k, y + 13 * k); ctx.closePath(); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 4; const s = `HOLD ${d > 0 ? 'LEFT' : 'RIGHT'}`; ctx.strokeText(s, cx, y + 26 * k); ctx.fillText(s, cx, y + 26 * k); }
+        ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 4; if (G.lesson) { const s = `HOLD ${d > 0 ? 'LEFT' : 'RIGHT'}`; ctx.strokeText(s, cx, y + 26 * k); ctx.fillText(s, cx, y + 26 * k); } }
       ctx.globalAlpha = 1; } }
   // your balance: an arc with the danger at both ends
   if (G.ph === 'ride' || G.ph === 'chute') { const cx = W / 2, cy = H - 70 * k, r = 96 * k, a0 = -Math.PI / 2, span = 1.1, f = G.cfg.fall;

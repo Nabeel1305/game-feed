@@ -5400,7 +5400,7 @@ const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [], PARTS = [];
 let hint = null, V3 = null;
 const ui = { snap: true, stick: null, cam: { x: 0, z: 0, span: 12 }, combo: 0, comboT: 0, dashWas: false, fillShow: 0, hungerShow: 1, toast: null };
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 9) TXT.shift(); }
-function tip(key, txt, secs = 2.8) { if (HEADLESS) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
+function tip(key, txt, secs = 2.8) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function burst(x, y, col, n = 12, sp = 120, up = 0) { if (HEADLESS) return; for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = sp * (0.4 + Math.random() * 0.8) * k; PARTS.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, life: 0.45 + Math.random() * 0.4, col, r: (1.5 + Math.random() * 3) * k, up }); } if (PARTS.length > 260) PARTS.splice(0, PARTS.length - 260); }
 function bubbles(x, y, n = 6) { if (HEADLESS) return; for (let i = 0; i < n; i++) PARTS.push({ x: x + (Math.random() - 0.5) * 16 * k, y: y + (Math.random() - 0.5) * 10 * k, vx: (Math.random() - 0.5) * 20 * k, vy: -(30 + Math.random() * 50) * k, t: 0, life: 0.7 + Math.random() * 0.6, col: 'bub', r: (2 + Math.random() * 3) * k, up: 1 }); }
 function fxStep(dt) {

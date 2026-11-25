@@ -41,7 +41,11 @@ function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
   $('eTitle').textContent = 'THE GATES CLOSE FOR TODAY'; $('eTitle').style.color = 'var(--acc)';
   $('eStars').innerHTML = '';      // no grading: where you sent them is your answer
-  $('eSub').innerHTML = `Today you sent <b>${r.sent.up}</b> to Heaven, <b>${r.sent.down}</b> to Hell and <b>${r.sent.side}</b> to Purgatory.<br>Would the people with you have chosen the same? · <b>+${r.karma} 🕊️</b>` + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '');
+  // what your gate says about you (his review, 25 Nov 2026): a title and a line, and a paragraph behind a tap; the tally is kept from day to day
+  let rd = null; if (r.log && r.log.length) { try { rd = reading(r.log, store.get('profile', null)); if (!r.readDone) { r.readDone = true; store.set('profile', rd.life); } } catch (e) { rd = null; } }
+  $('eSub').innerHTML = `Today you sent <b>${r.sent.up}</b> to Heaven, <b>${r.sent.down}</b> to Hell and <b>${r.sent.side}</b> to Purgatory.`
+    + (rd ? `<div class="read"><div class="rt tf">${rd.title}</div><div class="rv">You value <b>${rd.values.join('</b> and <b>')}</b>.</div><div class="rl">${rd.line}</div><details><summary>What this says about you ▾</summary><p>${rd.deep}</p></details></div>` : '')
+    + `Would the people with you have chosen the same? · <b>+${r.karma} 🕊️</b>` + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '');
   renderShop();
   $('eMain').textContent = r.win ? 'NEXT LEVEL' : 'TRY AGAIN'; $('eMain').dataset.act = r.win ? 'next' : 'again';
   $('eAlt').classList.toggle('hidden', !r.win);
