@@ -16,6 +16,8 @@ const sfx = {
   whoosh() { noise(0.35, 900, 0.08, 'bandpass', 0.8, 0, 0.05); },
   clank() { tone(1600, 0.15, 0.06, 'square', 0, 900, 3000); noise(0.08, 3000, 0.06, 'highpass', 1); },
   hurt() { tone(60, 0.35, 0.2, 'sine', 0, 35); noise(0.25, 600, 0.14, 'lowpass', 1); tone(260, 0.4, 0.05, 'sawtooth', 0.1, 120, 700); },
+  tear() { noise(0.22, 900, 0.12, 'bandpass', 0.7, 0, 0.02); tone(140, 0.16, 0.07, 'sawtooth', 0, 70, 600); },
+  gulp() { tone(170, 0.16, 0.12, 'sine', 0, 80); tone(120, 0.2, 0.1, 'sine', 0.2, 60); },
   eat() { noise(0.4, 500, 0.08, 'lowpass', 1); [0, 4, 7].forEach((q, j) => tone(note(196, q), 0.4, 0.06, 'triangle', 0.1 + j * 0.08)); },
   thunder() { noise(2.8, 140, 0.3, 'lowpass', 0.7, 0, 0.08); },
   win() { [0, 3, 7, 12, 15].forEach((s, j) => pluck(note(196, s), 1.2, 0.13, j * 0.1)); },

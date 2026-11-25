@@ -92,10 +92,13 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
   if (!ui.drag && Math.hypot(x - sb.x, y - sb.y) < sb.zone) { ui.drag = { id: e.pointerId, x, y }; G.in.ref = ui.camYaw != null ? ui.camYaw : G.me.h; stickAt(x, y); }      // on the stick: walk
   else if (!ui.look) ui.look = { id: e.pointerId, x, y };      // anywhere else: look round
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} });
-function stickAt(x, y) { const sb = stickBase(); stick(G, clamp((x - sb.x) / sb.r, -1, 1), clamp((sb.y - y) / sb.r, -1, 1), ui.camYaw != null ? ui.camYaw : G.me.h); }
+// 25 Nov 2026, his words: "Joystick still doesnt work if i go left it goes right". It did: measured against the real camera, the stick pushed right
+// walked him to the LEFT of the screen. The rules turn him by a plus angle towards +x, and with the view looking along +z, +x is the screen's left (the
+// earlier test worked the angle out on paper and never asked the camera). So the stick's right is minus that angle; the test now asks the camera.
+function stickAt(x, y) { const sb = stickBase(); stick(G, -clamp((x - sb.x) / sb.r, -1, 1), clamp((sb.y - y) / sb.r, -1, 1), ui.camYaw != null ? ui.camYaw : G.me.h); }
 cv.addEventListener('pointermove', e => { if (!G) return; const d = ui.drag, L = ui.look;
   if (d && e.pointerId === d.id) { d.x = e.clientX; d.y = e.clientY; stickAt(d.x, d.y); }
-  else if (L && e.pointerId === L.id) { const dx = e.clientX - L.x, dy = e.clientY - L.y; L.x = e.clientX; L.y = e.clientY; if (ui.camYaw == null) ui.camYaw = G.me.h; ui.camYaw += dx * 0.0075; ui.camPitch = clamp(ui.camPitch + dy * 0.004, 0.12, 0.95); } });      // drag right: the view turns right; drag down: look down from higher
+  else if (L && e.pointerId === L.id) { const dx = e.clientX - L.x, dy = e.clientY - L.y; L.x = e.clientX; L.y = e.clientY; if (ui.camYaw == null) ui.camYaw = G.me.h; ui.camYaw -= dx * 0.0075; ui.camPitch = clamp(ui.camPitch + dy * 0.004, 0.12, 0.95); } });      // drag right: the view turns right (it was turning left: the same mirror as the stick); drag down: look down from higher
 function endTouch(e) { if (ui.look && e.pointerId === ui.look.id) ui.look = null; const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) stick(G, 0, 0); }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------

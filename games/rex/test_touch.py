@@ -21,21 +21,23 @@ with sync_playwright() as p:
     ok(0.3 < pg.evaluate("__sim.G.in.sy") < 0.9 and not pg.evaluate("__sim.G.me.run"), 'a short push up strides', str(pg.evaluate("[__sim.G.in.sy, __sim.G.me.run]")))
     pg.mouse.move(sx0, sy0 - sr * 1.2, steps=4); pg.wait_for_timeout(500); ok(pg.evaluate("__sim.G.me.run"), 'pushed far: a charge')
     pg.mouse.up(); pg.wait_for_timeout(200); ok(pg.evaluate("__sim.G.in.sy") == 0, 'letting go stops the stick'); ok(pg.evaluate("Math.hypot(__sim.G.me.x, __sim.G.me.z - (%f))" % z0) > 2, 'the rex moved')
-    # his words (23 Nov 2026): "I go left it goes somewhere else". Push each way: he turns to that way as seen on the screen and walks it,
-    # and the view does not turn while he does
+    # his words (23 Nov 2026): "I go left it goes somewhere else"; (25 Nov 2026): "Joystick still doesnt work if i go left it goes right". The test
+    # of the 23rd worked the directions out on paper (world angles) and passed while the game was mirrored. This one asks the CAMERA: which way is
+    # the screen's right, which way is into the screen; push each way and measure how far he went along each. The view must not turn while he does.
     pg.wait_for_timeout(1500)
-    for name, dx, dy, want in [('left', -1, 0, -90), ('right', 1, 0, 90), ('down', 0, 1, 180), ('up', 0, -1, 0), ('up-left', -0.7, -0.7, -45)]:
-        v0 = pg.evaluate("__sim.ui.camYaw"); p0 = pg.evaluate("[__sim.G.me.x, __sim.G.me.z]")
+    AX = "(() => { const c = __sim.W3.cam; c.updateMatrixWorld(); const r = new THREE.Vector3(1, 0, 0).applyQuaternion(c.quaternion), f = new THREE.Vector3(0, 0, -1).applyQuaternion(c.quaternion); const fl = Math.hypot(f.x, f.z) || 1; return [r.x, r.z, f.x / fl, f.z / fl, __sim.G.me.x, __sim.G.me.z, __sim.ui.camYaw]; })()"
+    for name, dx, dy in [('left', -1, 0), ('right', 1, 0), ('down', 0, 1), ('up', 0, -1), ('up-left', -0.7, -0.7)]:
+        e0 = pg.evaluate(AX)
         pg.mouse.move(sx0, sy0); pg.mouse.down(); pg.mouse.move(sx0 + dx * sr * 0.8, sy0 + dy * sr * 0.8, steps=4); pg.wait_for_timeout(1800)
-        r = pg.evaluate("[__sim.G.me.h, __sim.G.me.x, __sim.G.me.z, __sim.ui.camYaw]"); pg.mouse.up(); pg.wait_for_timeout(900)
-        face = (math.degrees(r[0] - v0) + 180) % 360 - 180; went = (math.degrees(math.atan2(r[1] - p0[0], r[2] - p0[1]) - v0) + 180) % 360 - 180
-        off = lambda a: abs((a - want + 180) % 360 - 180)
-        ok(off(face) < 10 and off(went) < 25 and abs(r[3] - v0) < 0.01 and math.hypot(r[1] - p0[0], r[2] - p0[1]) > 1.5, f'the stick pushed {name}: he faces and walks {name} on the screen; the view holds still', str([round(face), round(went), round(math.degrees(r[3] - v0), 1)]))
+        e1 = pg.evaluate(AX); pg.mouse.up(); pg.wait_for_timeout(900)
+        mx, mz = e1[4] - e0[4], e1[5] - e0[5]; right = mx * e0[0] + mz * e0[1]; into = mx * e0[2] + mz * e0[3]; n = math.hypot(dx, dy); wr, wi = dx / n, -dy / n; d = math.hypot(right, into) or 1
+        ok(d > 1.5 and (right / d) * wr + (into / d) * wi > 0.9 and abs(e1[6] - e0[6]) < 0.01, f'the stick pushed {name}: he walks {name} ON THE SCREEN (measured with the camera); the view holds still', str([round(right, 1), round(into, 1), round(math.degrees(e1[6] - e0[6]), 1)]))
     # "make the joystick in one place, not everywhere I tap": a touch in the middle of the screen does not walk him; dragging it turns the view
-    p0 = pg.evaluate("[__sim.G.me.x, __sim.G.me.z]"); v0 = pg.evaluate("__sim.ui.camYaw")
-    pg.mouse.move(200, 380); pg.mouse.down(); pg.mouse.move(320, 380, steps=6); pg.wait_for_timeout(600); moved = pg.evaluate("Math.hypot(__sim.G.me.x - %f, __sim.G.me.z - %f)" % tuple(p0)); pg.mouse.up()
+    p0 = pg.evaluate("[__sim.G.me.x, __sim.G.me.z]"); e0 = pg.evaluate(AX)
+    pg.mouse.move(200, 380); pg.mouse.down(); pg.mouse.move(320, 380, steps=6); pg.wait_for_timeout(600); moved = pg.evaluate("Math.hypot(__sim.G.me.x - %f, __sim.G.me.z - %f)" % tuple(p0)); pg.mouse.up(); pg.wait_for_timeout(200)
     ok(moved < 0.3 and pg.evaluate("__sim.G.in.sx") == 0, 'a touch away from the stick does not walk him', str(moved))
-    ok(math.degrees(pg.evaluate("__sim.ui.camYaw") - v0) > 30, 'dragging the screen right turns the view to the right', str(math.degrees(pg.evaluate("__sim.ui.camYaw") - v0)))
+    e1 = pg.evaluate(AX); lean = e1[2] * e0[0] + e1[3] * e0[1]      # the new way he looks, measured along the OLD screen-right: plus = the view turned right
+    ok(lean > 0.5, 'dragging the screen right turns the view to the right (measured with the camera)', str(round(lean, 2)))
     B = pg.evaluate("__sim.btnRects()"); n0 = pg.evaluate("__sim.G.bites")
     pg.touchscreen.tap(B['bite']['x'] + B['bite']['w'] / 2, B['bite']['y'] + B['bite']['h'] / 2); pg.wait_for_timeout(150); ok(pg.evaluate("__sim.G.bites") == n0 + 1, 'BITE bites')
     pg.touchscreen.tap(B['roar']['x'] + B['roar']['w'] / 2, B['roar']['y'] + B['roar']['h'] / 2); pg.wait_for_timeout(150); ok(pg.evaluate("__sim.G.me.roarCD") > 0, 'ROAR roars')

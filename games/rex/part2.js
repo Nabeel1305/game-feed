@@ -53,7 +53,7 @@ function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (
     rivalHp: x(5, 7, 30), rivalDmg: x(18, 25, 30) * (1 - 0.15 * upLv('hide')), dmgK: 1 - 0.15 * upLv('hide'), bite: 1 + 0.25 * upLv('jaws'), stam: 3.4 * (1 + 0.25 * upLv('legs')), roarCD: 10 / (1 + 0.25 * upLv('lungs')), roarR: 20 * (1 + 0.15 * upLv('lungs')), extra: Math.round(x(4, 9, 30)) }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, weather: cfg.weather, wait: 0, nid: 1,
-    me: { x: 0, z: -20, h: 0, v: 0, hp: 100, hunger: 100, stam: cfg.stam, bite: 0, bcd: 0, roarCD: 0, hit: 0 }, in: { sx: 0, sy: 0, ref: 0, run: false }, dinos: [], got: {}, eaten: 0, bites: 0, hits: 0, wins: 0 };
+    me: { x: 0, z: -20, h: 0, v: 0, hp: 100, hunger: 100, stam: cfg.stam, bite: 0, bcd: 0, roarCD: 0, hit: 0, eatT: 0, eatId: 0 }, in: { sx: 0, sy: 0, ref: 0, run: false }, dinos: [], got: {}, eaten: 0, bites: 0, hits: 0, wins: 0 };
   spawnAll(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G; }
 function mk(G, k, x, z, o = {}) { const K = KINDS[k], d = Object.assign({ id: G.nid++, k, x, z, h: G.rnd() * TAU, v: 0, hp: K.hp * (k === 'rival' ? G.cfg.rivalHp / 6 : 1), max: 0, state: 'idle', t: 0, alerted: false, zig: 0, tell: 0, tired: 0, lunge: 0, freeze: 0, dead: false, eat: 0, hx: x, hz: z }, o); if (k === 'rival' && o.big) d.hp *= 1.4; d.max = d.hp; G.dinos.push(d); return d; }
@@ -76,7 +76,7 @@ const goalLeft = G => G.cfg.goals.map(g => ({ k: g.k, left: g.n - (G.got[g.k] ||
 // came down); the rex turns towards the stick's way (a heavy beast: a moment to turn round) and walks when he faces it.
 function stick(G, sx, sy, ref) { G.in.sx = clamp(sx, -1, 1); G.in.sy = clamp(sy, -1, 1); if (ref != null) G.in.ref = ref; }
 function go(G, h, p) { const m = G.me; stick(G, Math.sin(h - m.h) * p, Math.cos(h - m.h) * p, m.h); }      // the robots: walk on heading h, push p
-function bite(G) { const m = G.me; if (G.over || G.wait > 0 || m.bcd > 0 || m.hp <= 0) return false; m.bite = 0.35; m.bcd = 0.75; G.bites++; G.ev.push({ k: 'snap' });
+function bite(G) { const m = G.me; if (G.over || G.wait > 0 || m.bcd > 0 || m.hp <= 0 || m.eatT > 0) return false; m.bite = 0.35; m.bcd = 0.75; G.bites++; G.ev.push({ k: 'snap' });
   // what is in front of the jaws
   let best = null, bd = 9; for (const d of G.dinos) { if (d.dead) continue; const r = 4.8 + KINDS[d.k].size * 1.6, dd = dist(m, d), da = Math.abs(wrapA(angTo(m, d) - m.h)); if (dd < r && da < 0.85 && dd < bd) { best = d; bd = dd; } }
   if (!best) { lessonSee(G, 'miss'); return true; }
@@ -91,20 +91,26 @@ function bite(G) { const m = G.me; if (G.over || G.wait > 0 || m.bcd > 0 || m.hp
 function roar(G) { const m = G.me, c = G.cfg; if (G.over || G.wait > 0 || m.roarCD > 0) return false; m.roarCD = c.roarCD; G.ev.push({ k: 'roar' });
   for (const d of G.dinos) { if (d.dead || dist(m, d) > c.roarR) continue; const K = KINDS[d.k]; if (K.flee) { d.freeze = d.k === 'runner' ? 1.8 : 1.3; d.alerted = true; } if (K.rival && d.state === 'tell') { d.state = 'circle'; d.tell = 0; d.tired = 0.9; G.ev.push({ k: 'flinch', x: d.x, z: d.z }); } }
   lessonSee(G, 'roar'); return true; }
-function kill(G, d) { d.dead = true; d.eat = 1.2; G.got[d.k] = (G.got[d.k] || 0) + 1; const K = KINDS[d.k];
-  if (K.rival) { G.wins++; G.ev.push({ k: 'beaten', x: d.x, z: d.z }); } else { G.eaten++; G.me.hunger = Math.min(100, G.me.hunger + K.food); G.me.hp = Math.min(100, G.me.hp + K.food * 0.3); G.ev.push({ k: 'eat', x: d.x, z: d.z, kind: d.k }); }
-  lessonSee(G, 'kill', d); if (!G.lesson && !goalLeft(G).length) finish(G, true); }
-function hurtMe(G, dmg, why) { const m = G.me; m.hp -= dmg * G.cfg.dmgK; m.hit = 0.4; G.ev.push({ k: 'hurt', why, dmg }); lessonSee(G, 'hurt'); if (m.hp <= 0 && !G.lesson) finish(G, false); if (m.hp <= 0 && G.lesson) m.hp = 100; }
+// 25 Nov 2026, his words: "animate the t rex eating". A kill is a meal: he stands over it for EAT seconds, head down, tearing at it (the view
+// draws that from me.eatT and comes round to show it). The food counts at the kill, as before; a level won on a kill ends when the meal does.
+// Struck while eating, he leaves it and fights.
+const EAT = 2.3;
+function kill(G, d) { d.dead = true; d.eat = 1.2; G.got[d.k] = (G.got[d.k] || 0) + 1; const K = KINDS[d.k], m = G.me;
+  if (K.rival) { G.wins++; G.ev.push({ k: 'beaten', x: d.x, z: d.z }); } else { G.eaten++; m.hunger = Math.min(100, m.hunger + K.food); m.hp = Math.min(100, m.hp + K.food * 0.3); m.eatT = EAT; m.eatId = d.id; m.bite = 0; d.eat = EAT + 0.2; G.ev.push({ k: 'eat', x: d.x, z: d.z, kind: d.k }); }
+  lessonSee(G, 'kill', d); if (!G.lesson && !goalLeft(G).length) { if (m.eatT > 0) G.fin = true; else finish(G, true); } }
+function eatStep(G, dt) { const m = G.me; if (!(m.eatT > 0)) return; m.eatT = Math.max(0, m.eatT - dt); const d = G.dinos.find(q => q.id === m.eatId);
+  if (d) m.h += clamp(wrapA(angTo(m, d) - m.h), -3 * dt, 3 * dt); m.v += (0 - m.v) * Math.min(1, dt * 8); if (m.eatT <= 0 && G.fin) finish(G, true); }
+function hurtMe(G, dmg, why) { const m = G.me; if (G.fin) return; if (m.eatT > 0) { m.eatT = 0; for (const d of G.dinos) if (d.id === m.eatId) d.eat = Math.min(d.eat, 0.5); } m.hp -= dmg * G.cfg.dmgK; m.hit = 0.4; G.ev.push({ k: 'hurt', why, dmg }); lessonSee(G, 'hurt'); if (m.hp <= 0 && !G.lesson) finish(G, false); if (m.hp <= 0 && G.lesson) m.hp = 100; }
 function finish(G, win) { if (G.over) return; const c = G.cfg, m = G.me; G.over = win ? 'won' : 'lost'; const t = Math.round(G.t);
   const stars = win ? 1 + (m.hp >= 60 ? 1 : 0) + (G.hits / Math.max(1, G.bites) >= 0.6 && t < 120 ? 1 : 0) : 0;
   G.res = { win, stars, time: t, eaten: G.eaten, wins: G.wins, hp: Math.round(Math.max(0, m.hp)), acc: Math.round(100 * G.hits / Math.max(1, G.bites)), goals: c.goals.map(g => ({ k: g.k, n: g.n, got: Math.min(g.n, G.got[g.k] || 0) })), coins: win ? 5 + Math.ceil(G.N / 3) + stars * 2 : 1 };
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- the valley, step by step ----------
-function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; for (const d of G.dinos) if (d.dead && d.eat > 0) d.eat = Math.max(0, d.eat - dt); eatStep(G, dt); if (G.over) return; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
   const c = G.cfg, m = G.me, I = G.in;
   // you
   m.bcd = Math.max(0, m.bcd - dt); m.bite = Math.max(0, m.bite - dt); m.roarCD = Math.max(0, m.roarCD - dt); m.hit = Math.max(0, m.hit - dt);
-  const push = Math.min(1, Math.hypot(I.sx, I.sy)); let face = 0, run = false;
+  const push = m.eatT > 0 ? 0 : Math.min(1, Math.hypot(I.sx, I.sy)); let face = 0, run = false;
   if (push > 0.12) { const dh = wrapA((I.ref || 0) + Math.atan2(I.sx, I.sy) - m.h); face = Math.max(0, Math.cos(dh)); run = push > 0.85 && face > 0.75 && m.stam > 0.2; const rate = run ? 1.8 : m.v < 3 ? 3.6 : 2.8; m.h += clamp(dh, -rate * dt, rate * dt); }      // a gentle push (under 0.3) only turns him to look
   const want = m.bite > 0 ? 7 : run ? 11.5 : 5.5 * clamp((push - 0.3) / 0.55, 0, 1) * face; m.v += (want - m.v) * Math.min(1, dt * (want > m.v ? 4.2 : 5));
   m.stam = run ? Math.max(0, m.stam - dt) : Math.min(c.stam, m.stam + dt * 0.45); m.run = run;
@@ -112,7 +118,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 
   if (!G.lesson) { m.hunger -= dt * 100 / c.hungerT; if (m.hunger <= 0) { m.hunger = 0; m.hp -= dt * 4; if (m.hp <= 0) return finish(G, false); } }
   // how loud you are: a charge carries, a creep does not
   const noise = run ? 1.45 : m.v > 3 ? 1 : 0.55;
-  for (const d of G.dinos) { if (d.dead) { d.eat = Math.max(0, d.eat - dt); continue; } think(G, d, dt, noise); }
+  for (const d of G.dinos) { if (d.dead) continue; think(G, d, dt, noise); }
   if (G.lesson) lessonTick(G, dt); }
 function think(G, d, dt, noise) { const K = KINDS[d.k], c = G.cfg, m = G.me, dd = dist(d, m), R = G.rnd; d.t += dt; d.freeze = Math.max(0, d.freeze - dt); d.tired = Math.max(0, d.tired - dt);
   const moveTo = (h, sp) => { d.h += clamp(wrapA(h - d.h), -dt * 3.5, dt * 3.5); d.v += (sp - d.v) * Math.min(1, dt * 3); d.x += Math.sin(d.h) * d.v * dt; d.z += Math.cos(d.h) * d.v * dt; d.x = clamp(d.x, -BOUND, BOUND); d.z = clamp(d.z, -BOUND + 40, BOUND + 60); };
@@ -156,13 +162,13 @@ const LESSONS = {
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
-function lessonSetup(G) { const st = lessonNow(G), m = G.me; G.dinos = []; m.x = 0; m.z = 0; m.h = 0; m.hp = 100; m.roarCD = 0;
+function lessonSetup(G) { const st = lessonNow(G), m = G.me; G.dinos = []; m.x = 0; m.z = 0; m.h = 0; m.hp = 100; m.roarCD = 0; m.eatT = 0;
   if (st.id === 'creep') mk(G, 'runner', (G.rnd() - 0.5) * 10, 22);
   if (st.id === 'roar') { const d = mk(G, 'runner', (G.rnd() - 0.5) * 6, 13); d.state = 'flee'; d.alerted = true; d.lesson = true; }
   if (st.id === 'dodge') { const d = mk(G, 'rival', 0, 16); d.hp = 99; d.state = 'circle'; d.cool = 1.5; } }
 function lessonTick(G) { const st = lessonNow(G); if (!st) return; const live = G.dinos.filter(d => !d.dead);
   if (st.id === 'roar') for (const d of live) if (dist(d, G.me) > 45) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); lessonSetup(G); return; }
-  if (!live.length && !G.lessonWait) { G.lessonWait = true; G.wait = 1; G.next = () => { G.lessonWait = false; if (lessonNow(G)) lessonSetup(G); }; } }
+  if (!live.length && !G.lessonWait) { G.lessonWait = true; G.wait = Math.max(1, (G.me.eatT || 0) + 0.25); G.next = () => { G.lessonWait = false; if (lessonNow(G)) lessonSetup(G); }; } }
 function lessonSee(G, what, d, extra) { const st = lessonNow(G); if (!st) return; let ok = null;
   if (st.id === 'creep' && what === 'kill') ok = true;
   if (st.id === 'roar' && what === 'kill') ok = d.freeze > 0 || G.me.roarCD > 0;
@@ -170,7 +176,7 @@ function lessonSee(G, what, d, extra) { const st = lessonNow(G); if (!st) return
   if (ok == null) return;
   if (!ok) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); return; }
   G.lesson.n++; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
-  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { G.dinos = []; G.got = {}; G.eaten = G.wins = G.bites = G.hits = 0; Object.assign(G.me, { x: 0, z: -20, h: 0, hp: 100, hunger: 100 }); spawnAll(G); G.ev.push({ k: 'start' }); }; } else lessonSetup(G); }
+  G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = Math.max(1.6, (G.me.eatT || 0) + 0.25); G.next = () => { G.dinos = []; G.got = {}; G.eaten = G.wins = G.bites = G.hits = 0; Object.assign(G.me, { x: 0, z: -20, h: 0, hp: 100, hunger: 100, eatT: 0 }); spawnAll(G); G.ev.push({ k: 'start' }); }; } else lessonSetup(G); }
 // ---------- for the robots ----------
 // BLIND: a thumb that does not look: pushes the stick some way for a while, bites, or roars
 const BLIND = { s: G => { const a = Math.random() * TAU, r = Math.random(); stick(G, Math.sin(a) * r, Math.cos(a) * r); }, b: G => bite(G), r: G => roar(G) };

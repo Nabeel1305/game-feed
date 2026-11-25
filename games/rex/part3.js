@@ -41,6 +41,19 @@ function dino(T, kind, col) {
   g.traverse(o => { if (o.isMesh) o.castShadow = true; }); g.userData = { legs, body, head, jaw, tail, neck, ph: Math.random() * 6 };
   const sc = { rex: 1, rival: 1, runner: 0.38, duck: 0.82, spike: 0.95, horns: 1.05 }[kind] || 1; g.scale.setScalar(sc); return g;
 }
+// the meal, from 0 (the kill) to 1 (swallowed): head down with jaws wide, three bites (snap shut, tug with a shake, tear a piece free), head thrown back, two gulps
+function eatPose(u) { const none = { bow: 0, open: 0, shake: 0, up: 0, tug: 0, f: 0, cyc: -1, left: 1 }; if (!(u >= 0)) return none;
+  const ss = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }, down = ss(0, 0.13, u) * (1 - ss(0.72, 0.84, u)), up = ss(0.76, 0.86, u) * (1 - ss(0.93, 1, u));
+  let open = 0, shake = 0, tug = 0, cyc = -1, f = 0;
+  if (u < 0.13) open = ss(0, 0.1, u) * 0.85;
+  else if (u < 0.73) { const p = (u - 0.13) / 0.2; cyc = Math.min(2, Math.floor(p)); f = p - cyc; open = f < 0.2 ? 0.85 * (1 - f / 0.2) : f > 0.8 && cyc < 2 ? 0.85 * ((f - 0.8) / 0.2) : 0.05; tug = ss(0.2, 0.42, f) * (1 - ss(0.62, 0.8, f)); shake = tug * Math.sin(f * 42) * 0.3; }
+  else if (u > 0.8 && u < 0.97) open = Math.max(0, Math.sin((u - 0.8) / 0.17 * Math.PI * 2)) * 0.4;
+  return { bow: down * (1 - tug * 0.28), open, shake, up, tug, f, cyc, left: u >= 0.73 ? 0 : 1 - (Math.max(0, cyc) + (cyc >= 0 && f > 0.62 ? 1 : 0)) / 3.4 }; }
+// pieces of the meal: they fly from his jaws when he tears one free
+function gibs(V, x, y, z, n) { const T = V.T; if (!V.gib) { V.gib = []; const g = new T.BoxGeometry(1, 1, 1), red = new T.MeshStandardMaterial({ color: 0x8e1c18, roughness: 0.6 }), bone = new T.MeshStandardMaterial({ color: 0xe8dcc0, roughness: 0.5 });
+    for (let i = 0; i < 18; i++) { const m = new T.Mesh(g, i % 4 === 3 ? bone : red); m.visible = false; m.userData = { t: 9, life: 1 }; V.S.add(m); V.gib.push(m); } }
+  for (let i = 0; i < n; i++) for (const m of V.gib) if (m.userData.t >= m.userData.life) { const s = 0.12 + Math.random() * 0.2; m.scale.set(s, s * 0.6, s * 1.3); m.position.set(x + (Math.random() - 0.5) * 0.8, y, z + (Math.random() - 0.5) * 0.8); m.userData = { t: 0, life: 0.6 + Math.random() * 0.4, vx: (Math.random() - 0.5) * 7, vy: 3 + Math.random() * 5, vz: (Math.random() - 0.5) * 7 }; m.visible = true; break; } }
+function gibStep(V, dt) { if (!V.gib) return; for (const m of V.gib) { const q = m.userData; if (q.t >= q.life) { m.visible = false; continue; } q.t += dt; q.vy -= 16 * dt; m.position.x += q.vx * dt; m.position.y += q.vy * dt; m.position.z += q.vz * dt; m.rotation.x += dt * 9; m.rotation.z += dt * 7; const gy = hgt(m.position.x, m.position.z) + 0.08; if (m.position.y < gy) { m.position.y = gy; q.vy = 0; q.vx *= 0.5; q.vz *= 0.5; } } }
 function gait(m, sp, dt, o = {}) { const u = m.userData; u.ph += sp * dt * 1.3; const sw = Math.min(0.7, sp * 0.09);
   u.legs.forEach((lg, i) => lg.rotation.x = Math.sin(u.ph + (u.legs.length === 2 ? i * Math.PI : [0, Math.PI, Math.PI, 0][i])) * sw);
   u.body.position.y = Math.abs(Math.sin(u.ph)) * Math.min(0.25, sp * 0.02); u.body.rotation.x = -(o.rear || 0) * 0.5 + (o.lower || 0) * 0.15;
@@ -48,7 +61,10 @@ function gait(m, sp, dt, o = {}) { const u = m.userData; u.ph += sp * dt * 1.3; 
   if (u.neck) u.neck.rotation.x = (o.lower || 0) * 0.6 - (o.rear || 0) * 0.3; if (u.jaw) u.jaw.rotation.x = (o.open || 0) * 0.7;
   if (u.trex) {      // the T-Rex: knees and ankles fold as each foot comes forward, the tail's end swings after its base, the body rocks over the planted foot
     u.legs.forEach((lg, i) => { const p = u.ph + i * Math.PI, lift = Math.max(0, -Math.cos(p)) * Math.min(1, sp * 0.12); lg.userData.knee.rotation.x = lift * 0.8; lg.userData.ankle.rotation.x = -lift * 1.15; });
-    u.roof.visible = u.tongue.visible = (o.open || 0) > 0.04;      // the inside of the mouth only when it opens
+    // eating (o.bow 0..1): he tips forward from the hips with his feet planted (the body turns about the hip, the legs turn back by as much), the neck
+    // and head go down to the meal, the tail lifts to balance; o.shake swings the head from side to side as he tears; o.up throws it back to swallow
+    { const a = (o.bow || 0) * 0.42, hy = 3.05, hz = -0.25, c = Math.cos(a), sn = Math.sin(a); u.body.rotation.x += a; u.body.position.y += hy - (hy * c - hz * sn); u.body.position.z = hz - (hy * sn + hz * c);
+      u.legs.forEach(lg => lg.rotation.x -= a); u.neck.rotation.x += (o.bow || 0) * 0.5 - (o.up || 0) * 0.55; u.head.rotation.x = 0.12 + (o.bow || 0) * 0.2 - (o.up || 0) * 0.35; u.head.rotation.y = o.shake || 0; u.head.rotation.z = (o.shake || 0) * 0.5; u.tail.rotation.x -= (o.bow || 0) * 0.22; }
     u.body.rotation.z = Math.sin(u.ph) * Math.min(0.05, sp * 0.006); if (u.tail2) u.tail2.rotation.y = Math.sin(u.ph * 0.5 - 0.9) * 0.18 + (o.swing || 0) * 0.6;
     if (sp < 0.3) { const br = Math.sin(performance.now() / 900) * 0.012; u.body.position.y += br; } } }
 function buildWorld() {
@@ -96,7 +112,7 @@ function onEvent(G, e) { const cx = W / 2, cy = H * 0.3, V = V3 && !V3.none ? V3
     case 'tell': sfx.warn(e.kind); if (e.kind === 'spike') tip('tail', 'The tail is lifting: get away from it!', 2.4); else if (e.kind === 'rival') tip('rear', 'It rears up before it lunges: step out of its line!', 2.6); else tip('horn', 'It paws and lowers its head: it will charge. Step aside!', 2.6); break;
     case 'charge': case 'lunge': sfx.stomp(); break;
     case 'swing': sfx.whoosh(); break;
-    case 'stuck': say('NOW! BITE IT', cx, cy, '#ffe08a', 20); break;
+    case 'stuck': say(G && G.lesson ? 'NOW! BITE IT' : 'STUCK!', cx, cy, '#ffe08a', 20); break;
     case 'hurt': sfx.hurt(); FX.red = 0.7; FX.shake = 14; vibe(HAP.thud); say(e.why === 'tail' ? 'CLUBBED!' : e.why === 'horns' ? 'GORED!' : e.why === 'counter' ? 'IT BIT BACK' : 'BITTEN!', cx, cy, '#ffb4a8', 24); if (e.why === 'counter') tip('counter', 'A rival bites back unless it is tired: wait for it to lunge, then bite.', 3); break;
     case 'eat': sfx.eat(); FX.flash = 0.3; say('+FOOD', cx, cy, '#9be3b5', 22); break;
     case 'beaten': sfx.roar(1.2); FX.flash = 0.5; say('THE RIVAL FLEES!', cx, cy, '#ffe08a', 26); break;
@@ -111,10 +127,20 @@ function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#10140c'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D valley.', W / 2, H / 2); return; }
   const g = G || idleG(), t = now; setWeather(g); const m = g.me;
-  V.me.position.set(m.x, hgt(m.x, m.z), m.z); V.me.rotation.y = m.h; gait(V.me, m.v, dt, { open: m.bite > 0 ? Math.sin((0.35 - m.bite) / 0.35 * Math.PI) : 0, lower: m.bite > 0 ? 0.6 : 0 });
+  const eu = m.eatT > 0 ? 1 - m.eatT / EAT : -1, ep = eatPose(eu), mouth = { x: m.x + Math.sin(m.h) * 4.1, z: m.z + Math.cos(m.h) * 4.1 };
+  V.me.position.set(m.x, hgt(m.x, m.z), m.z); V.me.rotation.y = m.h; gait(V.me, m.v, dt, eu >= 0 ? ep : { open: m.bite > 0 ? Math.sin((0.35 - m.bite) / 0.35 * Math.PI) : 0, lower: m.bite > 0 ? 0.6 : 0 });
+  // the sounds and the flying pieces of each bite, once each
+  { const E = V.eatS || (V.eatS = { id: 0, snap: -1, tear: -1, gulp: false }); if (eu < 0) E.id = 0; else { if (E.id !== m.eatId) Object.assign(E, { id: m.eatId, snap: -1, tear: -1, gulp: false });
+      if (ep.cyc >= 0 && ep.f > 0.2 && E.snap < ep.cyc) { E.snap = ep.cyc; if (g === G) { sfx.crunch(ep.cyc === 2); vibe(HAP.light); } }
+      if (ep.cyc >= 0 && ep.f > 0.62 && E.tear < ep.cyc) { E.tear = ep.cyc; gibs(V, mouth.x, hgt(mouth.x, mouth.z) + 1.1, mouth.z, 5); if (g === G) { FX.shake = Math.max(FX.shake, 4); sfx.tear(); } }
+      if (eu > 0.84 && !E.gulp) { E.gulp = true; if (g === G) sfx.gulp(); } } }
+  gibStep(V, dt);
   if (m.run && Math.random() < 0.5) puff(V, m.x, m.z, 1, 2);
   const seen = new Set(); for (const d of g.dinos) { const mo = modelOf(V, d); seen.add(d.id); mo.visible = !d.dead || d.eat > 0; if (!mo.visible) continue;
     mo.position.set(d.x, hgt(d.x, d.z), d.z); mo.rotation.y = d.h; mo.rotation.z = d.dead ? 1.4 : 0; if (d.dead) mo.position.y -= 0.3;
+    { const s0 = mo.userData.s0 || (mo.userData.s0 = mo.scale.x); if (d.dead && eu >= 0 && d.id === m.eatId) {      // the meal: dragged to his jaws, jerked as he tugs, smaller with every piece torn off, gone when he swallows
+        const kk = Math.min(1, eu / 0.13), e2 = kk * kk * (3 - 2 * kk), px = d.x + (mouth.x - d.x) * e2 - Math.sin(m.h) * ep.tug * 0.5, pz = d.z + (mouth.z - d.z) * e2 - Math.cos(m.h) * ep.tug * 0.5;
+        mo.position.set(px, hgt(px, pz) - 0.3 + ep.tug * 0.7, pz); mo.rotation.y = d.h + ep.shake * 1.2; mo.scale.setScalar(s0 * (0.25 + 0.75 * ep.left)); mo.visible = ep.left > 0; } else if (mo.scale.x !== s0) mo.scale.setScalar(s0); }
     gait(mo, d.dead ? 0 : d.v, dt, { rear: d.state === 'tell' && d.k === 'rival' ? 1 : 0, lower: d.state === 'tell' && d.k === 'horns' ? 1 : d.state === 'charge' ? 0.8 : 0, lift: d.state === 'tell' && d.k === 'spike' ? 1 : 0, swing: d.state === 'swing' ? Math.sin(t * 20) * 0.9 : 0, open: d.k === 'rival' && (d.state === 'tell' || d.state === 'lunge') ? 1 : 0 }); }
   for (const [id, mo] of V.models) if (!seen.has(id)) { V.S.remove(mo); V.models.delete(id); }
   // the goal's nearest, ringed
@@ -128,10 +154,13 @@ function draw(now, dt) {
   if (!(G && g === G)) ui.camYaw += wrapA(m.h - ui.camYaw) * Math.min(1, dt * 1.2);      // the demo behind the menu follows him round
   if (!V.F) V.F = { x: m.x, z: m.z }; { const ef = 1 - Math.exp(-dt * 8); V.F.x += (m.x - V.F.x) * ef; V.F.z += (m.z - V.F.z) * ef; }
   V.back = (V.back || 17) + ((m.run ? 19 : 17) - (V.back || 17)) * Math.min(1, dt * 2);
-  const C = V.cam, cyw = ui.camYaw, cp = ui.camPitch, fy = hgt(V.F.x, V.F.z), cx = V.F.x - Math.sin(cyw) * V.back * Math.cos(cp), cz = V.F.z - Math.cos(cyw) * V.back * Math.cos(cp);
-  C.x = cx; C.z = cz; C.y = Math.max(hgt(cx, cz) + 2.5, fy + 2 + V.back * Math.sin(cp));
+  // while he eats the view comes round to his side, low and close, so the meal is seen, and then goes back to exactly where it was: ui.camYaw itself
+  // is never touched, so the stick's left is still the screen's left the moment he can walk again
+  { const on = !!(G && g === G && eu >= 0 && eu < 0.9); if (on && !V.eatOn) { const a = wrapA(m.h + Math.PI / 2 + 0.55 - ui.camYaw), b = wrapA(m.h - Math.PI / 2 - 0.55 - ui.camYaw); V.eatOff = Math.abs(a) < Math.abs(b) ? a : b; } V.eatOn = on; V.eatK = (V.eatK || 0) + ((on ? 1 : 0) - (V.eatK || 0)) * Math.min(1, dt * (on ? 4.5 : 3.5)); if (V.eatK < 0.002) V.eatK = 0; }
+  const ek = V.eatK * V.eatK * (3 - 2 * V.eatK), C = V.cam, cyw = ui.camYaw + ek * (V.eatOff || 0), cp = ui.camPitch + (0.2 - ui.camPitch) * ek, bk = V.back + (11.5 - V.back) * ek, Fx = V.F.x + Math.sin(m.h) * 3.3 * ek, Fz = V.F.z + Math.cos(m.h) * 3.3 * ek, fy = hgt(Fx, Fz), cx = Fx - Math.sin(cyw) * bk * Math.cos(cp), cz = Fz - Math.cos(cyw) * bk * Math.cos(cp);
+  C.x = cx; C.z = cz; C.y = Math.max(hgt(cx, cz) + 2.5 - ek, fy + 2 + bk * Math.sin(cp));
   const cam = W3.cam, stomp = m.run ? Math.abs(Math.sin(V.me.userData.ph)) * 0.12 : 0; cam.position.set(C.x, C.y + stomp, C.z); if (cam.near !== 0.3) { cam.near = 0.3; cam.updateProjectionMatrix(); } if (W3.setSee) W3.setSee(cam.position, new THREE.Vector3(m.x, hgt(m.x, m.z) + 2.2, m.z), 5.5);
-  cam.lookAt(V.F.x + Math.sin(cyw) * 6, fy + 3.2, V.F.z + Math.cos(cyw) * 6); V.viewYaw = cyw; if (ui.drag && G && g === G) G.in.ref = cyw;
+  cam.lookAt(Fx + Math.sin(cyw) * 6 * (1 - ek), fy + 3.2 - 1.3 * ek, Fz + Math.cos(cyw) * 6 * (1 - ek)); V.viewYaw = ui.camYaw; if (ui.drag && G && g === G) G.in.ref = ui.camYaw;
   if (FX.shake > 0) { cam.rotation.z += (Math.random() - 0.5) * FX.shake * 0.003; cam.position.y += (Math.random() - 0.5) * FX.shake * 0.02; }
   W3.setFocus(m.x, 0, m.z + 10, 50); W3.render(dt);
   if (G) hud(G, t, tg);
@@ -154,7 +183,7 @@ function hud(G, t, tg) { const c = G.cfg, m = G.me;
   bar(by, m.hp / 100, m.hp < 35 ? '#ff6a5a' : '#8fe0ab', 'HEALTH'); if (!G.lesson) bar(by + 14 * k, m.hunger / 100, m.hunger < 25 ? '#ff9a5a' : '#e8b04a', 'HUNGER'); bar(by + (G.lesson ? 14 : 28) * k, m.stam / c.stam, '#9bd3ff', 'CHARGE');
   // where to go: an arrow at the top edge when the goal is off to the side or behind, and the distance
   if (tg) { const s = wScreen(tg.x, hgt(tg.x, tg.z) + 5, tg.z), dd = Math.round(dist(tg, m)); if (s.front && s.x > 20 && s.x < W - 20 && s.y > 60) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#ffd36a'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.strokeText(`▼ ${dd} m`, s.x, s.y); ctx.fillText(`▼ ${dd} m`, s.x, s.y); }
-    else { const a = wrapA(angTo(m, tg) - m.h), ax = W / 2 - Math.sin(a) * W * 0.38, ay = H * 0.2; ctx.save(); ctx.translate(ax, ay); ctx.rotate(-a); ctx.fillStyle = '#ffd36a'; ctx.beginPath(); ctx.moveTo(0, -16 * k); ctx.lineTo(10 * k, 6 * k); ctx.lineTo(-10 * k, 6 * k); ctx.fill(); ctx.restore(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText(`${dd} m`, ax, ay + 18 * k); } }
+    else { const a = wrapA(angTo(m, tg) - (ui.camYaw != null ? ui.camYaw : m.h)), ax = W / 2 - Math.sin(a) * W * 0.38, ay = H * 0.2; ctx.save(); ctx.translate(ax, ay); ctx.rotate(-a); ctx.fillStyle = '#ffd36a'; ctx.beginPath(); ctx.moveTo(0, -16 * k); ctx.lineTo(10 * k, 6 * k); ctx.lineTo(-10 * k, 6 * k); ctx.fill(); ctx.restore(); ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText(`${dd} m`, ax, ay + 18 * k); } }
   // warnings over the animals that are about to strike
   for (const d of G.dinos) { if (d.dead || !(d.state === 'tell' || d.state === 'lunge' || d.state === 'charge' || ((KINDS[d.k].rival && d.tired > 0) || d.state === 'stuck'))) continue; const s = wScreen(d.x, hgt(d.x, d.z) + 6 * KINDS[d.k].size + 1, d.z); if (!s.front) continue;
     const open = d.tired > 0 || d.state === 'stuck'; ctx.font = `${Math.round((open ? 16 : 28) * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillStyle = open ? '#9be3b5' : '#ff4a3a'; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,.6)'; const s2 = open ? 'BITE!' : '!'; ctx.strokeText(s2, s.x, s.y); ctx.fillText(s2, s.x, s.y); }
@@ -165,6 +194,6 @@ function hud(G, t, tg) { const c = G.cfg, m = G.me;
     ctx.fillStyle = on ? 'rgba(0,0,0,.28)' : 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(sb.x, sb.y, sb.r, 0, TAU); ctx.fill(); ctx.strokeStyle = on ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,.5)'; for (let a = 0; a < 4; a++) { const ax = sb.x + Math.sin(a * Math.PI / 2) * sb.r * 0.78, ay = sb.y - Math.cos(a * Math.PI / 2) * sb.r * 0.78; ctx.beginPath(); ctx.arc(ax, ay, 3.5 * k, 0, TAU); ctx.fill(); }
     ctx.fillStyle = m.run ? '#ffb030' : on ? 'rgba(255,255,255,.95)' : 'rgba(255,255,255,.7)'; ctx.beginPath(); ctx.arc(kx, ky, 24 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 2; ctx.stroke(); }
-  if ((G && G.lesson) && !ui.drag && !G.lesson && G.t < 6) { ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('STICK: WALK · PUSH FAR: CHARGE', W / 2, H * 0.6); ctx.fillText('DRAG ANYWHERE ELSE TO LOOK ROUND', W / 2, H * 0.6 + 17 * k); } }
+}
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
