@@ -132,6 +132,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "⛳", "win": "SINK EVERY HOLE IN FEW SHOTS", "lose": "USE UP THE SHOTS", "how": "PULL BACK, LET GO"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'putt', title: 'PULL BACK, LET GO', say: G => golfCue(G)[0], do: G => golfCue(G)[1], at: G => golfCue(G)[2], how: 'Put your thumb down anywhere and pull back, away from where you want the ball to go. Let go. Sink it in two strokes or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
   2: [{ id: 'bank', title: 'OFF THE RAILS', say: G => golfCue(G)[0], do: G => golfCue(G)[1], at: G => golfCue(G)[2], how: 'The ball bounces off the wooden rails. Play it off a rail round the corner: sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],

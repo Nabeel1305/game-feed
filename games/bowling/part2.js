@@ -132,6 +132,7 @@ function finish(G) { const c = G.cfg, win = G.score >= c.target; G.over = win ? 
   G.res = { win, stars, score: G.score, target: c.target, kind: c.kind, rivals: G.rivals ? G.rivals.map(r => ({ name: r.name, tot: r.frames[c.frames - 1].tot })) : null, strikes: G.strikes, spares: G.spares, bestRun: G.bestRun, frames: G.frames, coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) : 0) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🎳", "win": "BEAT THE TARGET SCORE", "lose": "SCORE TOO LOW", "how": "AIM, ROLL, KNOCK THE PINS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'roll', title: 'ROLL', say: 'PULL BACK, LET GO', do: G => G.phase === 'aim' && G.wait <= 0 ? 'drag' : 'wait', at: G => G.phase === 'aim' && G.wait <= 0 ? bowlCue(G) : false, how: 'Touch to line the ball up, pull back toward you and let go. Knock down 6 pins or more, twice in a row.', need: 2 }],
   2: [{ id: 'pocket', title: 'THE POCKET', say: 'AIM BESIDE THE FRONT PIN', do: G => G.phase === 'aim' && G.wait <= 0 ? 'drag' : 'wait', at: G => G.phase === 'aim' && G.wait <= 0 ? bowlCue(G) : false, how: 'Roll just beside the front pin, not straight at it. Get a strike, or 9 pins.', need: 1 }],

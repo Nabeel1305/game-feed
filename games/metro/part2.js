@@ -114,6 +114,7 @@ function inspect(G, sid) { const s = st(G, sid); if (!s) return null; const want
   if (!reasons.length && s.q.length > s.cap - 2) reasons.push(`Busy: ${s.q.length} waiting. Add a train to ${lines.length > 1 ? 'its lines' : 'its line'}.`);
   if (s.closed > 0) reasons.unshift('Closed for repairs.'); return { s, want, lines: lines.length, reasons }; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚇", "win": "GET PEOPLE WHERE THEY'RE GOING", "lose": "A STATION OVERFLOWS", "how": "DRAG STATION TO STATION"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'line', title: 'DRAW A LINE', say: G => metroCue(G)[0], do: G => metroCue(G)[1], at: G => metroCue(G)[2], how: 'Drag from one station to another, then on to the third, without lifting your finger. A train starts on it.', need: 1 }],
   2: [{ id: 'extend', title: 'REACH THE NEW STATIONS', say: G => metroCue(G)[0], do: G => metroCue(G)[1], at: G => metroCue(G)[2], how: 'New stations keep appearing. Drag from the END of your line to each one. Three of them.', need: 3 }],

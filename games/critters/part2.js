@@ -126,6 +126,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🐾", "win": "MAKE ALL THEIR CRITTERS FAINT", "lose": "ALL YOURS FAINT", "how": "ATTACK, TAP ON THE GOLD RING"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'crit', title: 'ATTACK!', say: G => critCue(G)[0], do: G => critCue(G)[1], at: G => critCue(G)[2], how: 'Tap ATTACK. Then tap anywhere when the white ring meets the gold ring: a CRITICAL! Land two criticals in a row.', need: 2, foe: 'leaf', me: 'fire' }],
   2: [{ id: 'type', title: 'TYPES', say: G => critCue(G)[0], do: G => critCue(G)[1], at: G => critCue(G)[2], how: 'Water beats fire! Tap Puddlewump on your bench to send it in, then attack: two SUPER EFFECTIVE hits in a row.', need: 2, foe: 'fire', me: 'fire' }],

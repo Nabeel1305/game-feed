@@ -199,6 +199,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.you) return; const r
   const a = aim(G, G.you, { react, acc }, mem, 1 / 60); ACT.stick(G, a[0], a[1]); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.ate = G.total; if (G.mark) G.mark.alive = false; finish(G, true); }
 // ---------- LESSONS: little yards ----------
+const AIMCARD = {"pic": "🕳️", "win": "FILL THE TOWN METER", "lose": "THE CLOCK RUNS OUT", "how": "SLIDE: SWALLOW SMALL THINGS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'swallow', title: 'SLIDE AND SWALLOW', say: G => sinkCue(G)[0], do: G => sinkCue(G)[1], at: G => sinkCue(G)[2], how: 'Slide your thumb to glide the hole. Swallow 12 cones and bins. Never a RED barrel: it blows up.', need: 12 }],
   2: [{ id: 'grow', title: 'GROW, THEN EAT THE CAR', say: G => sinkCue(G)[0], do: G => sinkCue(G)[1], at: G => sinkCue(G)[2], how: 'Swallow the little things to grow. When the hole is bigger than the car, swallow the car! Mind the red barrels.', need: 1 }],

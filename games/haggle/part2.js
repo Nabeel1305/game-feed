@@ -159,6 +159,7 @@ function closing(G, why) { const c = G.cfg, sales = G.bought.map(b => ({ ...b, s
   G.res = { win, stars, why: why || (win ? '' : 'profit'), profit, target: c.target, cash0: isFinite(G.cash0) ? G.cash0 : 0, left: isFinite(G.cash) ? G.cash : 0, best: Math.round(G.best || 0), sales, passed: G.passed, walked: G.walked, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
   G.ev.push({ k: 'closing', profit }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "💰", "win": "MAKE THE DAY'S PROFIT", "lose": "SPEND YOUR MONEY BADLY", "how": "CHECK IT, OFFER LOW, BUY CHEAP"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'buy', title: 'BUY LOW', say: 'SLIDE, TAP OFFER', do: 'drag', dir: 'lr', how: 'Drag the dial to an offer below what it is worth and tap OFFER. They counter; meet somewhere sensible. Two good buys in a row.', need: 2 }],
   2: [{ id: 'haggle', title: 'HAGGLE', say: 'START LOW', do: 'drag', dir: 'lr', how: 'Open low but not insulting, then come up a little each time. Buy two for under 70% of their worth, in a row.', need: 2 }],

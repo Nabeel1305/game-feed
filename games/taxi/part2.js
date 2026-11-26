@@ -237,6 +237,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.taxi) return; const 
 const BLIND = { L: G => { G.in.sx = -1; }, R: G => { G.in.sx = 1; }, N: G => { G.in.sx = 0; }, G: G => { G.in.gas = true; G.in.brake = false; }, B: G => { G.in.brake = true; G.in.gas = false; } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.log = [{ type: 'plain', left: 10, pay: 8, tip: 3, bumps: 0 }]; G.tips = 1; G.done = G.cfg.fares; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚕", "win": "DRIVE EACH FARE THERE FAST", "lose": "SCARE THEM OR TAKE TOO LONG", "how": "GAS, BRAKE, FOLLOW THE ARROW"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'pick', title: 'GAS, BRAKE, STOP IN THE RING', say: G => taxiCue(G)[0], do: G => taxiCue(G)[1], at: G => taxiCue(G)[2], how: 'Left thumb: the stick steers. Right thumb: hold GAS to go, BRAKE to stop. Stop in the green ring beside the person waving; then stop in the ring at their door.', need: 2 }],
   2: [{ id: 'turn', title: 'FOLLOW THE GPS ARROW', say: G => taxiCue(G)[0], do: G => taxiCue(G)[1], at: G => taxiCue(G)[2], how: 'BRAKE before the corner, then steer the way the GPS arrow points (left or right). Take 2 turns.', need: 2 }],

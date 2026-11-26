@@ -156,6 +156,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏰", "win": "HOLD THE GATE THROUGH EVERY WAVE", "lose": "THE GATE FALLS", "how": "TAP A PAD, BUILD A TOWER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'build', title: 'BUILD ARCHERS', say: G => castleCue(G)[0], do: G => castleCue(G)[1], at: G => castleCue(G)[2], how: 'Tap a stone pad beside the road, then tap the ARCHERS. Build two towers and hold off the goblins.', need: 1, ok: w => w === 'held', kinds: ['goblin'], waves: 2 }],
   2: [{ id: 'mix', title: 'THE RIGHT TOWER', say: G => castleCue(G)[0], do: G => castleCue(G)[1], at: G => castleCue(G)[2], how: 'Bats fly: catapults and frost cannot touch them. Knights wear plate: arrows bounce off. Build a MAGE and a CATAPULT.', need: 1, ok: w => w === 'held', kinds: ['bat', 'knight', 'soldier'], waves: 2 }],

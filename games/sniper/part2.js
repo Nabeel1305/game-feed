@@ -134,6 +134,7 @@ function snipeCue(G) { if (G.over || G.wait > 0 || !G.thief) return ['WAIT…', 
   return ['LET GO!', 'release', [P.x, P.y]]; }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; if (G.thief) G.thief.asleep = 1; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🎯", "win": "PUT THE THIEF TO SLEEP", "lose": "HE ESCAPES, OR YOU HIT THE WRONG ONE", "how": "FIND HIM, AIM, HOLD, LET GO"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'aim', title: 'AIM AND FIRE', say: G => snipeCue(G)[0], do: G => snipeCue(G)[1], at: G => snipeCue(G)[2], how: 'The thief stands still by the fountain. Left thumb: drag to aim. Right thumb: HOLD the FIRE pad (the scope), let go to fire.' }],
   2: [{ id: 'clue', title: 'READ THE CARD', say: G => snipeCue(G)[0], do: G => snipeCue(G)[1], at: G => snipeCue(G)[2], how: 'Only one of these people matches the card. Find him; never hit anyone else.' }],

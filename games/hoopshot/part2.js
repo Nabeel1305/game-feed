@@ -127,6 +127,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || G.state !== 'aim') retu
 const BLIND = { f: G => shoot(G, 0.1 + Math.random() * 0.9, Math.random() * 2 - 1), g: G => shoot(G, 0.5, 0) };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.made = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏀", "win": "SCORE ENOUGH BASKETS", "lose": "RUN OUT OF BALLS", "how": "PULL BACK, LET GO"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'pull', title: 'PULL BACK, LET GO', say: G => shotCue(G)[0], do: G => shotCue(G)[1], at: G => shotCue(G)[2], how: 'Put your thumb down, pull it back (down the screen) and let go. Pull further for more power: watch the dotted path. Make 2 baskets.', need: 2 }],
   2: [{ id: 'aim', title: 'AIM SIDEWAYS', say: G => shotCue(G)[0], do: G => shotCue(G)[1], at: G => shotCue(G)[2], how: 'Now the hoop is off to one side. Move your thumb sideways as you pull: left sends the ball right, like a slingshot. Make 2 baskets.', need: 2 }],

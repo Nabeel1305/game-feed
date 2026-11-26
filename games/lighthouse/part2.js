@@ -115,6 +115,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🗼", "win": "BRING THE BOATS INTO HARBOUR", "lose": "BOATS HIT THE ROCKS", "how": "SHINE YOUR LIGHT, LEAD THEM IN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'catch', title: 'FIND THE BOAT', say: G => lightCue(G)[0], do: G => lightCue(G)[1], at: G => lightCue(G)[2], how: 'A boat is lost out there: its little lamp is in the dark. Touch the sea to move your light onto it, and hold it there until its lamp blinks back.', need: 1, ok: w => w === 'sees' },
       { id: 'lead', title: 'LEAD IT HOME', say: G => lightCue(G)[0], do: G => lightCue(G)[1], at: G => lightCue(G)[2], how: 'Now it follows your light. Slide your light slowly to the harbour mouth, between the red and green lights. Too fast and it loses you.', need: 1, ok: w => w === 'home' }],

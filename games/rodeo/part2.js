@@ -91,6 +91,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🐂", "win": "STAY ON FOR 8 SECONDS", "lose": "GET THROWN OFF", "how": "HOLD THE SIDE AWAY FROM HIS LEAN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'lean', title: 'LEAN AGAINST HIM', say: G => rodeoCue(G)[0], do: G => rodeoCue(G)[1], at: G => rodeoCue(G)[2], how: 'He leans you one way: the arrow shows which. Hold the OTHER half of the screen until he stops. Three in a row.', need: 3 }],
   2: [{ id: 'buck', title: 'THE BUCK', say: G => rodeoCue(G)[0], do: G => rodeoCue(G)[1], at: G => rodeoCue(G)[2], how: "His head swings to the side he's about to throw you. Hold the OTHER side just before he bucks. Ride out three bucks in a row.", need: 3 }],

@@ -207,6 +207,7 @@ function sumoCue(G) { if (G.over || G.wait > 0 || !G.me) return ['WAIT…', 'wai
 const BLIND = { m: G => { if (Math.random() < 0.2) stick(G, 0, 0); else { const a = Math.random() * TAU; stick(G, Math.cos(a), Math.sin(a)); } }, p: G => { act(G, G.me, 'pushDown'); act(G, G.me, 'pushUp'); }, g: G => act(G, G.me, 'grip', !G.me.wantGrip), d: G => act(G, G.me, 'dodge') };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.wins = G.cfg.need; G.log.push({ won: true, how: 'out', tech: 'Yorikiri', counter: true, edge: false, t: 5, rival: G.rival.name }); finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🤼", "win": "PUSH HIM OUT OF THE RING", "lose": "HE PUSHES YOU OUT", "how": "PUSH, GRIP, DODGE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'push', title: 'PRESS IN AND SHOVE', say: G => sumoCue(G)[0], do: G => sumoCue(G)[1], at: G => sumoCue(G)[2], how: 'Left thumb: push the stick UP to press into him. Tap PUSH (right) for a shove. Shove him out of the ring.', need: 1 }],
   2: [{ id: 'grip', title: 'GRIP AND DRIVE', say: G => sumoCue(G)[0], do: G => sumoCue(G)[1], at: G => sumoCue(G)[2], how: 'Get close and HOLD GRIP: you take his belt. Keep holding and push the stick UP to drive him out.', need: 1 }],

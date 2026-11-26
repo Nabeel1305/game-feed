@@ -106,6 +106,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚁", "win": "FLY THROUGH EVERY HOOP", "lose": "CRASH TOO MUCH, OR TIME RUNS OUT", "how": "HOLD TO FLY, SLIDE TO STEER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'fly', title: 'FORWARDS AND TURN', say: G => droneCue(G)[0], do: G => droneCue(G)[1], at: G => droneCue(G)[2], how: 'Hold your thumb down: the drone flies forwards. Slide it left or right to turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
   2: [{ id: 'climb', title: 'UP AND DOWN', say: G => droneCue(G)[0], do: G => droneCue(G)[1], at: G => droneCue(G)[2], how: 'These hoops are high and low. Slide your thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],

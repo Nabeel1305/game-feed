@@ -80,6 +80,7 @@ function finish(G, win) { if (G.over) return; const c = G.cfg; G.over = win ? 'w
   G.res = { win, stars, time: t, falls: G.falls, got: G.got, of: c.stars, len: G.len, dist: Math.round(G.me.s), coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 + G.got : 1 };
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🤸", "win": "WALK ACROSS THE WIRE", "lose": "FALL OFF TOO OFTEN", "how": "PUSH UP TO WALK, SLIDE TO BALANCE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'walk', title: 'WALK AND LEAN', say: G => ropeCue(G)[0], do: G => ropeCue(G)[1], at: G => ropeCue(G)[2], how: 'Thumb down, push UP to walk. When you tip, slide the OTHER way to swing the pole and pull back. Cross 20 m without falling.', need: 1 }],
   2: [{ id: 'wind', title: 'WIND', say: G => ropeCue(G)[0], do: G => ropeCue(G)[1], at: G => ropeCue(G)[2], how: 'When the flags stream and WIND shows, stop walking (thumb to the middle) and lean into it, then go on. Cross 25 m in the wind.', need: 1 }],

@@ -276,6 +276,15 @@ game and is actually working for each game"; and "the first level should be the 
   measures each game's ordinary and sloppy players on levels 1, 2, 3, 5 and 10.
 - **Easing level 1 must not let mashing win.** The help of a loss on level 1 made blind play win in Wild Water, Splash and Hoops 3v3, and more cards let blind tapping finish Peaks' lesson: each was taken back or narrowed. Ease level 1, then run the game's test_play.
 
+### 26 Nov 2026, evening: every tutorial starts with the aim (his words, after Tri-Peaks: "I don't understand the aim of the game. How do I win?")
+- **A person must know how to win and what loses, before the first move.** Each game has `const AIM = { pic, win, lose, how }` (written in
+  `specs/aims.json`, put in by `python3 tools/aims.py`). The kit's `aimCard` shows it before the first lesson (the game waits while it is up; a
+  tap on the card closes it) and the pause menu has **❓ How to play** with the same card. A few big words each; a picture at the top.
+- Write the card as someone who has never seen the game: what the goal is in the player's words (CLEAR ALL THE CARDS), what ends it (NO MOVES
+  AND NO CARDS LEFT), and the one move that does it (TAP A CARD ONE UP OR DOWN). Check it against the game's own finish() and lives.
+- Homemaker (his review): a drag off the plot turns the camera; MOVE picks a whole straight wall with a fixed cross of arrows and ⟳; it moves
+  for real and glows; ✓ KEEP or ✕ back. `games/house/test_move.py` proves it with real touches.
+
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.
 1. **Spamming cannot win. On any level, the first included.** (15 Nov 2026, of Plunder's first build: "Spamming cannot win... Just repeatedly doing something cannot win. There needs to be a little bit of skill. This is why I love the boxing game.") Any repeated move, **at any speed**, must lose on **every** level: mashing, a slow steady beat of one move, a short string of moves on a beat, a control held over or wiggled, a button pressed on a count. "Early levels are for learning" (rule 0) means generous windows and soft punishment for someone who is trying to do the right thing; it never means a rhythm works. How to get there (all of it learned the hard way on Plunder, see its notes):

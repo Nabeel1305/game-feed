@@ -87,6 +87,7 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.res = { win, stars, saved: G.saved, whistles: G.whistles, falses: G.falses, missed: G.missed, avg: +avg.toFixed(1), flags: G.cfg.flags - G.flags, coins: G.coins + (win ? 8 + Math.ceil(G.N / 2) + stars * 3 : 0), beach: G.beach };
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏖️", "win": "SAVE EVERY SWIMMER", "lose": "SOMEONE GETS IN TROUBLE: NO HEARTS", "how": "TAP A SWIMMER TO SAVE THEM"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'rescue', title: 'BRING THEM IN', say: G => lgCue(G)[0], do: G => lgCue(G)[1], at: G => lgCue(G)[2], how: 'Someone is in trouble: low in the water, struggling. TAP THEM to swim out. Then TAP THE BEACH beside the rip, not straight back through it.', need: 2 }],
   2: [{ id: 'whistle', title: 'WHISTLE THEM BACK', say: G => lgCue(G)[0], do: G => lgCue(G)[1], at: G => lgCue(G)[2], how: 'A swimmer is drifting into the rip (the dark gap in the waves). TAP THEM to whistle them back before it turns to trouble. Three times.', need: 3 }],

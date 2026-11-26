@@ -168,6 +168,7 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.res = { win, stars, mode: c.mode, score: G.score.slice(), stats: Object.assign({}, S), coins: Math.round(Math.max(0, S.yds) / 5) + S.td * 4 + S.tk + S.ints * 3 + (win ? 8 + Math.ceil(G.N / 2) + stars * 3 : 0), foe: G.foe };
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏈", "win": "SCORE MORE POINTS", "lose": "THEY SCORE MORE", "how": "PICK A PLAY, THROW TO THE OPEN MAN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'run', title: 'RUN IT', say: G => gridCue(G)[0], do: G => gridCue(G)[1], at: G => gridCue(G)[2], how: 'Pick DIVE, tap SNAP, then HANDOFF. Run with the stick: get past the yellow line (ten yards). DODGE just before a tackle.', need: 1 }],
   2: [{ id: 'pass', title: 'THROW IT', say: G => gridCue(G)[0], do: G => gridCue(G)[1], at: G => gridCue(G)[2], how: 'Pick SLANTS and SNAP. Wait for a receiver to turn GREEN (open), then tap his button. Three catches in a row.', need: 3 }],

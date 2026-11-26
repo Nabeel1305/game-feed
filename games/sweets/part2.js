@@ -227,6 +227,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
 function progress(G) { const g = G.cfg.goal; if (g === 'score') return Math.min(1, G.score / G.target); if (g === 'jelly') return G.jelly0 ? 1 - jellyLeft(G) / G.jelly0 : 1; if (g === 'frost') return G.frost0 ? 1 - frostLeft(G) / G.frost0 : 1;
   if (g === 'collect') { if (!G.collect || !G.collect.length) return 0; const a = G.collect.reduce((s, x) => s + Math.min(x.got, x.n), 0), b = G.collect.reduce((s, x) => s + x.n, 0); return a / b; } if (g === 'cherry') return G.cherOut / G.cherT; return 0; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🍬", "win": "REACH THE GOAL", "lose": "RUN OUT OF MOVES", "how": "SWIPE TO MAKE 3 IN A ROW"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'match', title: 'MAKE A LINE', say: G => sweetCue(G)[0], do: G => sweetCue(G)[1], at: G => sweetCue(G)[2], how: 'Swipe a sweet into its neighbour to swap them. Three of a colour in a line pop! Pop three lines.', need: 3 }],
   2: [{ id: 'four', title: 'FOUR IN A ROW', say: G => sweetCue(G)[0], do: G => sweetCue(G)[1], at: G => sweetCue(G)[2], how: 'Line up FOUR of a colour to make a STRIPED sweet. Then put it in a line: it clears a whole row or column!', need: 1 }],

@@ -159,6 +159,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 
 // ---------- LESSONS: steer and ping, depth charges, guard the convoy ----------
+const AIMCARD = {"pic": "🚢", "win": "GET THE SHIPS HOME", "lose": "SUBMARINES SINK TOO MANY", "how": "PING, FIND THE SUB, DROP A CHARGE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'find', title: 'FIND THE SUBMARINE', say: G => convoyCue(G)[0], do: G => convoyCue(G)[1], at: G => convoyCue(G)[2], how: 'Steer towards the marker and PING. A ring shows where he may be; ping again and it tightens to a sure contact (red). Then steer right over the red ring. Twice.', need: 2 }],
   2: [{ id: 'charge', title: 'DEPTH CHARGES', say: G => convoyCue(G)[0], do: G => convoyCue(G)[1], at: G => convoyCue(G)[2], how: 'Ping to find him, steer over the ring, set the depth the report gives (he is at MEDIUM), and DROP. Hit him twice.', need: 2 }],

@@ -97,6 +97,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.res = { win, stars, score: G.score, tiles: G.tiles, prog, song: G.cfg.song.name, by: G.cfg.song.by, enc: G.encDone, holds: G.holdsAll, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + Math.floor(prog * 4) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: slow, no song to lose; a mistake starts the lesson again ----------
+const AIMCARD = {"pic": "🎹", "win": "PLAY THE WHOLE SONG", "lose": "TAP WHITE OR MISS A BLACK", "how": "TAP THE BLACK TILES ONLY"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
   2: [{ id: 'hold', title: 'LONG TILES', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],

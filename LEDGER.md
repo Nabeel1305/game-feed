@@ -60,7 +60,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 50 | **Spellshop** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/YHmHT3EMvkRMWDZYKEw7kp) | `games/spell/index.html` |
 | 51 | **Rex** | testing | not yet (he has not said so) | 0.4.0 | [play](https://claude.ai/artifact/1EwFxTrKhi53P5QcMQg8KJ) | `games/rex/index.html` |
 | 52 | **High Wire** | testing | not yet (he has not said so) | 0.1.7 | [play](https://claude.ai/artifact/3mFJ9Jt81ep5US56NQETA7) | `games/rope/index.html` |
-| 53 | **Homemaker** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK) | `games/house/index.html` |
+| 53 | **Homemaker** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK) | `games/house/index.html` |
 | 54 | **Fruit Fight** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/AaN4KXLpYKSDUmjRGaYycM) | `games/fruit/index.html` |
 | 55 | **Tri-Peaks** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/LMRVK8AJrKdaFVGBM48Pkz) | `games/peaks/index.html` |
 | 56 | **Oarsmen** | testing | not yet (he has not said so) | 0.1.4 | [play](https://claude.ai/artifact/MjBGfJ9nsPc25wSnrLeEz6) | `games/row/index.html` |

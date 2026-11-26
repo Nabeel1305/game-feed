@@ -62,6 +62,7 @@ function finish(G, win) { if (G.over) return true; if (G.lesson) { lessonSee(G, 
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🃏", "win": "CLEAR ALL THE CARDS", "lose": "NO MOVES AND NO CARDS LEFT", "how": "TAP A CARD ONE UP OR DOWN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'run', title: 'ONE UP, ONE DOWN', say: G => peaksCue(G)[0], do: G => peaksCue(G)[1], at: G => peaksCue(G)[2], how: 'Your card is on the pile. Tap a face-up card one higher or one lower. Keep going! Play a run of four.', need: 1 }],
   2: [{ id: 'choose', title: 'CHOOSE WELL', say: G => peaksCue(G)[0], do: G => peaksCue(G)[1], at: G => peaksCue(G)[2], how: 'Two cards fit. One leads to a longer run. Look ahead and pick the one that keeps you going: a run of five without drawing.', need: 1 }],

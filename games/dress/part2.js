@@ -178,6 +178,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || G.stage !== 'design') r
 const BLIND = { t: G => { if (Math.random() < 0.6) choose(G, (Math.random() * (curPart(G) === 'colour' ? 16 : 5)) | 0); }, s: G => spot(G, ['neck', 'waist', 'hem'][(Math.random() * 3) | 0]), n: G => { if (Math.random() < 0.5) next(G); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.judges = [5, 5, 5]; G.notes = []; G.met = G.wish.length; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "👗", "win": "WIN OVER THE JUDGES", "lose": "LOW SCORES FROM THE JUDGES", "how": "PICK, COLOUR, WALK THE RUNWAY"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'design', title: 'TAP TO DESIGN', say: G => dressCue(G)[0], do: G => dressCue(G)[1], at: G => dressCue(G)[2], how: 'Her card says what she wants. Tap the options that match: the dress changes as you tap. NEXT when it matches. Meet all 3 wishes.', need: 1 }],
   2: [{ id: 'style', title: 'DOES IT GO TOGETHER?', say: G => dressCue(G)[0], do: G => dressCue(G)[1], at: G => dressCue(G)[2], how: 'STYLE judges what clashes. Sequins with a pattern is too busy. Meet her wishes AND keep it clean.', need: 1 }],

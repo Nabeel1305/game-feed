@@ -1,0 +1,621 @@
+{
+ "_about": "26 Nov 2026, his words: \"when somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... simple, and visual cues, as little words as possible... the words should be big\". One card a game: pic, WIN, LOSE, HOW (a few big words each). Shown before the first lesson and from the pause menu (HOW TO PLAY). tools/aims.py writes it into each game.",
+ "reel": {
+  "pic": "🎣",
+  "win": "CATCH THE FISH THE DAY ASKS FOR",
+  "lose": "LINE SNAPS TOO OFTEN, OR TIME RUNS OUT",
+  "how": "CAST, WAIT, STRIKE, REEL IN"
+ },
+ "wild-water": {
+  "pic": "🛶",
+  "win": "REACH THE END OF THE RIVER",
+  "lose": "HIT ROCKS: NO HEARTS LEFT",
+  "how": "PADDLE LEFT OR RIGHT TO STEER"
+ },
+ "soar": {
+  "pic": "🪽",
+  "win": "FLY THROUGH ENOUGH RINGS",
+  "lose": "NOTHING HURTS YOU: JUST FLY",
+  "how": "SLIDE TO TURN, CLIMB, DIVE"
+ },
+ "vine": {
+  "pic": "🌿",
+  "win": "SWING TO THE END OF THE JUNGLE",
+  "lose": "FALL TOO OFTEN, OR TIME RUNS OUT",
+  "how": "HOLD TO SWING, LET GO, CATCH"
+ },
+ "hunter": {
+  "pic": "🏹",
+  "win": "BRING DOWN THE ANIMALS ASKED FOR",
+  "lose": "GET HURT: NO HEARTS LEFT",
+  "how": "CREEP CLOSE, THROW AT THE CHEST"
+ },
+ "police": {
+  "pic": "🚓",
+  "win": "CATCH THE CAR, THEN ARREST HIM",
+  "lose": "CRASH TOO MUCH, OR LOSE HIM",
+  "how": "STEER, GAS, RAM HIS SIDE"
+ },
+ "pilot": {
+  "pic": "✈️",
+  "win": "LAND ON THE GOLD RUNWAY",
+  "lose": "CRASH THE PLANE",
+  "how": "TAKE OFF, FLY TO THE GOLD BEAM"
+ },
+ "cook": {
+  "pic": "🍳",
+  "win": "SERVE EVERY ORDER",
+  "lose": "BURNT OR LATE FOOD: NO HEARTS LEFT",
+  "how": "COOK GOLDEN, PLATE IT, SERVE"
+ },
+ "vet": {
+  "pic": "🐄",
+  "win": "MAKE EVERY ANIMAL BETTER",
+  "lose": "SCARE THEM: THEY RUN OFF",
+  "how": "CALM THEM, PICK THE TOOL, FIX IT"
+ },
+ "lighthouse": {
+  "pic": "🗼",
+  "win": "BRING THE BOATS INTO HARBOUR",
+  "lose": "BOATS HIT THE ROCKS",
+  "how": "SHINE YOUR LIGHT, LEAD THEM IN"
+ },
+ "hiring": {
+  "pic": "📄",
+  "win": "PUT EVERY CV IN THE RIGHT JOB",
+  "lose": "WRONG JOBS: NO HEARTS LEFT",
+  "how": "READ IT, DRAG TO A JOB OR THE BIN"
+ },
+ "potter": {
+  "pic": "🏺",
+  "win": "SHAPE POTS THAT MATCH THE ORDER",
+  "lose": "RUIN THREE POTS",
+  "how": "TOUCH THE CLAY, MOVE SLOWLY"
+ },
+ "drone": {
+  "pic": "🚁",
+  "win": "FLY THROUGH EVERY HOOP",
+  "lose": "CRASH TOO MUCH, OR TIME RUNS OUT",
+  "how": "HOLD TO FLY, SLIDE TO STEER"
+ },
+ "whaling": {
+  "pic": "🐋",
+  "win": "LAND THE WHALES THE TRIP NEEDS",
+  "lose": "SHE GETS AWAY: NO HEARTS LEFT",
+  "how": "ROW CLOSE, THROW, HAUL THE LINE"
+ },
+ "wolf": {
+  "pic": "🐺",
+  "win": "CATCH THE MARKED ELK",
+  "lose": "GET KICKED: NO HEARTS LEFT",
+  "how": "RUN BESIDE HER, BITE FROM THE SIDE"
+ },
+ "run": {
+  "pic": "🚗",
+  "win": "REACH THE SAFEHOUSE",
+  "lose": "CRASH OUT OR GET BOXED IN",
+  "how": "FOLLOW THE GREEN ARROWS"
+ },
+ "castle": {
+  "pic": "🏰",
+  "win": "HOLD THE GATE THROUGH EVERY WAVE",
+  "lose": "THE GATE FALLS",
+  "how": "TAP A PAD, BUILD A TOWER"
+ },
+ "tag": {
+  "pic": "🏃",
+  "win": "TAG THEM ALL, OR DON'T GET CAUGHT",
+  "lose": "THE BELL RINGS FIRST, OR NO HEARTS",
+  "how": "DRAG TO RUN, TAP DASH"
+ },
+ "heaven": {
+  "pic": "⚖️",
+  "win": "NO RIGHT ANSWER: YOU DECIDE",
+  "lose": "YOU CAN'T LOSE",
+  "how": "SWIPE UP: HEAVEN. DOWN: HELL"
+ },
+ "harvest": {
+  "pic": "🥕",
+  "win": "FILL THE ORDERS BY SUNSET",
+  "lose": "THE SUN SETS FIRST",
+  "how": "PLANT, WATER, PICK"
+ },
+ "horde": {
+  "pic": "🧟",
+  "win": "SURVIVE UNTIL THE BELL",
+  "lose": "MONSTERS EMPTY YOUR HEALTH",
+  "how": "MOVE: YOUR HERO FIGHTS BY HIMSELF"
+ },
+ "golf": {
+  "pic": "⛳",
+  "win": "SINK EVERY HOLE IN FEW SHOTS",
+  "lose": "USE UP THE SHOTS",
+  "how": "PULL BACK, LET GO"
+ },
+ "penalty": {
+  "pic": "⚽",
+  "win": "SCORE MORE PENALTIES THAN THEM",
+  "lose": "THEY SCORE MORE",
+  "how": "TAP A SPOT, TAP ON GREEN"
+ },
+ "critters": {
+  "pic": "🐾",
+  "win": "MAKE ALL THEIR CRITTERS FAINT",
+  "lose": "ALL YOURS FAINT",
+  "how": "ATTACK, TAP ON THE GOLD RING"
+ },
+ "rodeo": {
+  "pic": "🐂",
+  "win": "STAY ON FOR 8 SECONDS",
+  "lose": "GET THROWN OFF",
+  "how": "HOLD THE SIDE AWAY FROM HIS LEAN"
+ },
+ "eleven": {
+  "pic": "⚽",
+  "win": "SCORE MORE GOALS",
+  "lose": "THEY SCORE MORE",
+  "how": "PASS, RUN, SHOOT"
+ },
+ "shark": {
+  "pic": "🦈",
+  "win": "EAT FISH, GROW BIG",
+  "lose": "STARVE OR GET EATEN",
+  "how": "DRAG TO SWIM INTO SMALL FISH"
+ },
+ "powder": {
+  "pic": "🏂",
+  "win": "BEAT THE TIME DOWN THE MOUNTAIN",
+  "lose": "TOO SLOW",
+  "how": "SLIDE TO CARVE, TAP TO JUMP"
+ },
+ "cairn": {
+  "pic": "🪨",
+  "win": "STACK STONES THIS HIGH",
+  "lose": "IT FALLS, OR NO STONES LEFT",
+  "how": "DROP EACH STONE SO IT BALANCES"
+ },
+ "pinball": {
+  "pic": "🎯",
+  "win": "LIGHT THE TARGETS",
+  "lose": "LOSE ALL YOUR BALLS",
+  "how": "TAP LEFT AND RIGHT TO FLIP"
+ },
+ "drumline": {
+  "pic": "🥁",
+  "win": "PLAY THE WHOLE SONG",
+  "lose": "MISS TOO MANY: THE CROWD LEAVES",
+  "how": "TAP THE DRUM AS THE NOTE HITS"
+ },
+ "bowling": {
+  "pic": "🎳",
+  "win": "BEAT THE TARGET SCORE",
+  "lose": "SCORE TOO LOW",
+  "how": "AIM, ROLL, KNOCK THE PINS"
+ },
+ "bonsai": {
+  "pic": "🌳",
+  "win": "GROW THE TREE INTO THE OUTLINE",
+  "lose": "TOO FEW LEAVES IN THE OUTLINE",
+  "how": "TAP A BUD TO GROW, PRUNE WILD ONES"
+ },
+ "miner": {
+  "pic": "🚀",
+  "win": "BRING HOME THE ORE ASKED FOR",
+  "lose": "SHIP BREAKS, OR TIME RUNS OUT",
+  "how": "FLY OVER ORE, THEN TO THE GREEN RING"
+ },
+ "lantern": {
+  "pic": "👻",
+  "win": "CATCH EVERY GHOST",
+  "lose": "GHOSTS SCARE YOU: NO HEARTS",
+  "how": "HOLD A GHOST IN YOUR LIGHT"
+ },
+ "kart": {
+  "pic": "🏎️",
+  "win": "FINISH IN THE TOP PLACES",
+  "lose": "FINISH TOO FAR BACK",
+  "how": "STEER, DRIFT, BOOST"
+ },
+ "judge": {
+  "pic": "⚖️",
+  "win": "GIVE FAIR SENTENCES",
+  "lose": "NO WRONG ANSWER: JUDGES COMMENT",
+  "how": "READ THE CASE, WRITE A SENTENCE"
+ },
+ "haggle": {
+  "pic": "💰",
+  "win": "MAKE THE DAY'S PROFIT",
+  "lose": "SPEND YOUR MONEY BADLY",
+  "how": "CHECK IT, OFFER LOW, BUY CHEAP"
+ },
+ "war": {
+  "pic": "⚔️",
+  "win": "BREAK THEIR ARMY",
+  "lose": "YOUR ARMY BREAKS",
+  "how": "TAP YOUR UNIT, TAP THE ENEMY"
+ },
+ "hotel": {
+  "pic": "🛎️",
+  "win": "KEEP GUESTS HAPPY ALL SHIFT",
+  "lose": "TOO MANY GUESTS LEAVE ANGRY",
+  "how": "TAP A REQUEST, DO THE JOB"
+ },
+ "ramp": {
+  "pic": "🏍️",
+  "win": "REACH THE END IN TIME",
+  "lose": "CRASH OR RUN OUT OF TIME",
+  "how": "HOLD LEFT: BACK. RIGHT: FORWARD"
+ },
+ "spell": {
+  "pic": "🔮",
+  "win": "BREW THE RIGHT SPELL FOR EACH STORY",
+  "lose": "WRONG SPELLS UPSET THEM",
+  "how": "PICK, BREW, STIR, SEAL"
+ },
+ "rex": {
+  "pic": "🦖",
+  "win": "EAT THE PREY ASKED FOR",
+  "lose": "GET HURT OR STARVE",
+  "how": "WALK UP, BITE, ROAR"
+ },
+ "rope": {
+  "pic": "🤸",
+  "win": "WALK ACROSS THE WIRE",
+  "lose": "FALL OFF TOO OFTEN",
+  "how": "PUSH UP TO WALK, SLIDE TO BALANCE"
+ },
+ "house": {
+  "pic": "🏠",
+  "win": "BUILD EVERYTHING ON THE LIST",
+  "lose": "RUN OUT OF JOBS",
+  "how": "PICK A PIECE, TAP OR DRAG"
+ },
+ "fruit": {
+  "pic": "🍉",
+  "win": "STOP EVERY MONSTER",
+  "lose": "MONSTERS REACH YOU",
+  "how": "PULL BACK, AIM, LET GO"
+ },
+ "peaks": {
+  "pic": "🃏",
+  "win": "CLEAR ALL THE CARDS",
+  "lose": "NO MOVES AND NO CARDS LEFT",
+  "how": "TAP A CARD ONE UP OR DOWN"
+ },
+ "row": {
+  "pic": "🚣",
+  "win": "WIN THE RACE",
+  "lose": "THEY FINISH FIRST",
+  "how": "TAP BOTH SIDES ON GREEN"
+ },
+ "safe": {
+  "pic": "🔐",
+  "win": "OPEN THE SAFE",
+  "lose": "THE ALARM GOES OFF",
+  "how": "TURN SLOWLY, FEEL THE CLICK"
+ },
+ "fire": {
+  "pic": "🚒",
+  "win": "PUT OUT THE FIRE, SAVE THE PEOPLE",
+  "lose": "THE HOUSE BURNS DOWN",
+  "how": "HOLD TO SPRAY, SEND THE LADDER"
+ },
+ "origami": {
+  "pic": "🦊",
+  "win": "FOLD THE ANIMAL",
+  "lose": "CRUMPLE THE PAPER",
+  "how": "DRAG THE CORNER TO THE LINE"
+ },
+ "sweets": {
+  "pic": "🍬",
+  "win": "REACH THE GOAL",
+  "lose": "RUN OUT OF MOVES",
+  "how": "SWIPE TO MAKE 3 IN A ROW"
+ },
+ "keys": {
+  "pic": "🎹",
+  "win": "PLAY THE WHOLE SONG",
+  "lose": "TAP WHITE OR MISS A BLACK",
+  "how": "TAP THE BLACK TILES ONLY"
+ },
+ "paint": {
+  "pic": "🎨",
+  "win": "MAKE THE COLOUR ASKED FOR",
+  "lose": "THE JAR OVERFLOWS",
+  "how": "SLIDE, DROP: SAME COLOURS JOIN"
+ },
+ "pour": {
+  "pic": "🧪",
+  "win": "EACH GLASS ONE COLOUR",
+  "lose": "RUN OUT OF MOVES",
+  "how": "TAP A GLASS, TAP WHERE TO POUR"
+ },
+ "blocks": {
+  "pic": "🧱",
+  "win": "REACH THE SCORE",
+  "lose": "NO ROOM FOR A BLOCK",
+  "how": "DRAG BLOCKS, FILL A LINE"
+ },
+ "plumber": {
+  "pic": "🔧",
+  "win": "FIX EVERY JOB",
+  "lose": "TIME RUNS OUT",
+  "how": "FIND THE FAULT, USE THE RIGHT TOOL"
+ },
+ "stunt": {
+  "pic": "🏁",
+  "win": "FINISH IN THE TOP PLACES",
+  "lose": "FINISH TOO FAR BACK",
+  "how": "IN THE AIR: TAP FOR TRICKS"
+ },
+ "knife": {
+  "pic": "🔪",
+  "win": "STICK ALL YOUR KNIVES IN",
+  "lose": "HIT ANOTHER KNIFE",
+  "how": "TAP TO THROW"
+ },
+ "mow": {
+  "pic": "🌱",
+  "win": "MOW THE WHOLE LAWN",
+  "lose": "CRUSH FLOWERS OR RUN OUT OF FUEL",
+  "how": "DRAG TO DRIVE THE MOWER"
+ },
+ "helix": {
+  "pic": "🟠",
+  "win": "DROP THE BALL TO THE BOTTOM",
+  "lose": "LAND ON RED",
+  "how": "DRAG TO TURN THE TOWER"
+ },
+ "sinkhole": {
+  "pic": "🕳️",
+  "win": "FILL THE TOWN METER",
+  "lose": "THE CLOCK RUNS OUT",
+  "how": "SLIDE: SWALLOW SMALL THINGS"
+ },
+ "crowd": {
+  "pic": "👥",
+  "win": "BE BIGGER THAN THE GIANT",
+  "lose": "YOUR CROWD IS GONE",
+  "how": "SLIDE THROUGH THE BEST GATE"
+ },
+ "words": {
+  "pic": "🔤",
+  "win": "FILL THE CROSSWORD",
+  "lose": "MADE-UP WORDS USE UP YOUR INK",
+  "how": "SLIDE ACROSS LETTERS"
+ },
+ "sniper": {
+  "pic": "🎯",
+  "win": "PUT THE THIEF TO SLEEP",
+  "lose": "HE ESCAPES, OR YOU HIT THE WRONG ONE",
+  "how": "FIND HIM, AIM, HOLD, LET GO"
+ },
+ "dash": {
+  "pic": "🎵",
+  "win": "REACH THE END",
+  "lose": "HIT SPIKES: NO HEARTS",
+  "how": "TAP TO JUMP"
+ },
+ "crew": {
+  "pic": "🕵️",
+  "win": "FINISH YOUR SECRET JOBS",
+  "lose": "THEY VOTE YOU OUT",
+  "how": "SNEAK, KNOCK OUT UNSEEN, BLEND IN"
+ },
+ "kingdom": {
+  "pic": "🏎️",
+  "win": "FINISH IN THE TOP PLACES",
+  "lose": "FINISH TOO FAR BACK",
+  "how": "STEER, DRIFT, NITRO"
+ },
+ "sprint": {
+  "pic": "🏃",
+  "win": "FINISH IN THE TOP PLACES",
+  "lose": "FALSE START TWICE, OR TOO SLOW",
+  "how": "TAP LEFT, RIGHT, LEFT IN TIME"
+ },
+ "bus": {
+  "pic": "🚌",
+  "win": "PICK EVERYONE UP ON TIME",
+  "lose": "RUN RED LIGHTS OR MISS STOPS",
+  "how": "GAS, BRAKE, STOP ON THE MARK"
+ },
+ "cake": {
+  "pic": "🎂",
+  "win": "MAKE THE CAKE THEY ASKED FOR",
+  "lose": "THE CAKE LOOKS WRONG",
+  "how": "STACK, ICE, PIPE, TOP"
+ },
+ "roller": {
+  "pic": "🖌️",
+  "win": "PAINT IT ALL, NEATLY",
+  "lose": "MESSY PAINT EVERYWHERE",
+  "how": "DRAG OVER IT TO PAINT"
+ },
+ "kites": {
+  "pic": "🪁",
+  "win": "CUT THEIR KITE STRINGS",
+  "lose": "THEY CUT YOURS, OR YOU CRASH",
+  "how": "HOLD TO PULL, LET GO TO TURN"
+ },
+ "dress": {
+  "pic": "👗",
+  "win": "WIN OVER THE JUDGES",
+  "lose": "LOW SCORES FROM THE JUDGES",
+  "how": "PICK, COLOUR, WALK THE RUNWAY"
+ },
+ "taxi": {
+  "pic": "🚕",
+  "win": "DRIVE EACH FARE THERE FAST",
+  "lose": "SCARE THEM OR TAKE TOO LONG",
+  "how": "GAS, BRAKE, FOLLOW THE ARROW"
+ },
+ "roach": {
+  "pic": "🪳",
+  "win": "BRING CRUMBS HOME BY DAWN",
+  "lose": "GET SQUASHED OR SPRAYED",
+  "how": "PUSH TO RUN, DODGE THE SLIPPER"
+ },
+ "hoopshot": {
+  "pic": "🏀",
+  "win": "SCORE ENOUGH BASKETS",
+  "lose": "RUN OUT OF BALLS",
+  "how": "PULL BACK, LET GO"
+ },
+ "sheepdog": {
+  "pic": "🐑",
+  "win": "GET THE SHEEP IN THE PEN",
+  "lose": "DARK COMES, OR FOXES TAKE THEM",
+  "how": "HOLD WHERE THE DOG SHOULD RUN"
+ },
+ "sumo": {
+  "pic": "🤼",
+  "win": "PUSH HIM OUT OF THE RING",
+  "lose": "HE PUSHES YOU OUT",
+  "how": "PUSH, GRIP, DODGE"
+ },
+ "memory": {
+  "pic": "🧠",
+  "win": "REMEMBER WHAT YOU SAW",
+  "lose": "TOO MANY WRONG",
+  "how": "LOOK CLOSELY, THEN ANSWER"
+ },
+ "spy": {
+  "pic": "📸",
+  "win": "PHOTO THE FILE, GET BACK OUT",
+  "lose": "A GUARD SEES YOU",
+  "how": "SNEAK, HIDE, TAP PHOTO"
+ },
+ "mocktail": {
+  "pic": "🍹",
+  "win": "MAKE THE DRINK THEY ORDER",
+  "lose": "WRONG DRINKS UPSET THEM",
+  "how": "GLASS, POUR, SHAKE, SERVE"
+ },
+ "timber": {
+  "pic": "🌲",
+  "win": "DROP EACH TREE IN THE STRIP",
+  "lose": "TREES FALL WRONG",
+  "how": "NOTCH, SAW, STOP ON GREEN"
+ },
+ "hockey": {
+  "pic": "🏒",
+  "win": "SCORE MORE GOALS",
+  "lose": "THEY SCORE MORE",
+  "how": "SKATE, PASS, SHOOT"
+ },
+ "tennis": {
+  "pic": "🎾",
+  "win": "WIN THE MATCH",
+  "lose": "THEY WIN THE POINTS",
+  "how": "MOVE UNDER IT, SWIPE UP TO HIT"
+ },
+ "metro": {
+  "pic": "🚇",
+  "win": "GET PEOPLE WHERE THEY'RE GOING",
+  "lose": "A STATION OVERFLOWS",
+  "how": "DRAG STATION TO STATION"
+ },
+ "binround": {
+  "pic": "🗑️",
+  "win": "EMPTY EVERY BIN",
+  "lose": "MESSY OR MISSED BINS",
+  "how": "TAP A BIN, HOLD TO EMPTY"
+ },
+ "lifeguard": {
+  "pic": "🏖️",
+  "win": "SAVE EVERY SWIMMER",
+  "lose": "SOMEONE GETS IN TROUBLE: NO HEARTS",
+  "how": "TAP A SWIMMER TO SAVE THEM"
+ },
+ "hoops3": {
+  "pic": "🏀",
+  "win": "SCORE MORE POINTS",
+  "lose": "THEY SCORE MORE",
+  "how": "MOVE, PASS, HOLD SHOOT"
+ },
+ "gridiron": {
+  "pic": "🏈",
+  "win": "SCORE MORE POINTS",
+  "lose": "THEY SCORE MORE",
+  "how": "PICK A PLAY, THROW TO THE OPEN MAN"
+ },
+ "climb": {
+  "pic": "🧗",
+  "win": "REACH THE TOP",
+  "lose": "FALL THREE TIMES",
+  "how": "DRAG A HAND TO A HOLD"
+ },
+ "dentist": {
+  "pic": "🦷",
+  "win": "FIX EVERY PATIENT",
+  "lose": "HURT THEM, OR THE DAY ENDS",
+  "how": "FIND THE PROBLEM, USE THE TOOL"
+ },
+ "balloon": {
+  "pic": "🎈",
+  "win": "DROP ON THE X, LAND SOFT",
+  "lose": "RUN OUT OF FUEL",
+  "how": "HOLD TO RISE, LET GO TO SINK"
+ },
+ "sandworm": {
+  "pic": "🪱",
+  "win": "RIDE TO THE END",
+  "lose": "FALL OFF THE WORM",
+  "how": "STEER, SURGE, BRACE"
+ },
+ "skydive": {
+  "pic": "🪂",
+  "win": "LAND ON THE X",
+  "lose": "LAND HARD OR FAR AWAY",
+  "how": "FLY, OPEN THE CHUTE, FLARE"
+ },
+ "detective": {
+  "pic": "🔍",
+  "win": "NAME WHO DID IT",
+  "lose": "ACCUSE WRONG TOO MANY TIMES",
+  "how": "SEARCH, ASK, PROVE IT"
+ },
+ "convoy": {
+  "pic": "🚢",
+  "win": "GET THE SHIPS HOME",
+  "lose": "SUBMARINES SINK TOO MANY",
+  "how": "PING, FIND THE SUB, DROP A CHARGE"
+ },
+ "pottery": {
+  "pic": "🏺",
+  "win": "MAKE THE POT THEY ORDERED",
+  "lose": "THE POT COLLAPSES",
+  "how": "PRESS, PULL UP, SHAPE"
+ },
+ "joust": {
+  "pic": "🐎",
+  "win": "KNOCK THEM OFF THEIR HORSE",
+  "lose": "THEY KNOCK YOU OFF",
+  "how": "AIM THE LANCE, BRACE AT THE HIT"
+ },
+ "splash": {
+  "pic": "💦",
+  "win": "FINISH IN TIME",
+  "lose": "TOO SLOW",
+  "how": "PUSH THIS WAY, HOLD JUMP, LET GO"
+ },
+ "surf": {
+  "pic": "🏄",
+  "win": "BEAT THE SCORE",
+  "lose": "SCORE TOO LOW",
+  "how": "PADDLE, STAND, RIDE THE WAVE"
+ },
+ "santa": {
+  "pic": "🎅",
+  "win": "LEAVE THE RIGHT PRESENTS",
+  "lose": "WAKE THEM, OR TIME RUNS OUT",
+  "how": "LAND, SNEAK IN, GIVE GIFTS"
+ },
+ "skim": {
+  "pic": "🪨",
+  "win": "MAKE THE SKIPS ASKED FOR",
+  "lose": "NO STONES LEFT",
+  "how": "DRAG BACK, LET GO, TAP AS IT LANDS"
+ }
+}

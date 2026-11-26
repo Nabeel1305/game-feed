@@ -72,6 +72,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.res = { win, stars, score: G.score + (win ? 100 : 0), prog, passed: G.passed, floors: c.floors, smashed: G.smashed, streak: G.bestStreak, bounces: G.bounces, coins: Math.round(G.passed / 4) + (win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: short towers ----------
+const AIMCARD = {"pic": "🟠", "win": "DROP THE BALL TO THE BOTTOM", "lose": "LAND ON RED", "how": "DRAG TO TURN THE TOWER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'drop', title: 'TURN AND DROP', say: G => helixCue(G)[0], do: G => helixCue(G)[1], at: G => helixCue(G)[2], how: 'Slide your thumb left or right to turn the tower. Bring the GAP under the ball. Reach the bottom of this little tower; red ends it.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 1, single: true } } }],
   2: [{ id: 'fire', title: 'CATCH FIRE', say: G => helixCue(G)[0], do: G => helixCue(G)[1], at: G => helixCue(G)[2], how: 'Drop through 3 platforms in a row without a bounce: the ball catches FIRE and smashes the next one. Smash one!', need: 1, tower: { floors: 12, plat: { red: 5, gapW: 3, single: true } } }],

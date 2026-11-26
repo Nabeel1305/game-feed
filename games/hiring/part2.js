@@ -203,6 +203,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "📄", "win": "PUT EVERY CV IN THE RIGHT JOB", "lose": "WRONG JOBS: NO HEARTS LEFT", "how": "READ IT, DRAG TO A JOB OR THE BIN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'hire', title: 'FIND THE JOB IT FITS', say: G => hireCue(G)[0], do: G => hireCue(G)[1], at: G => hireCue(G)[2], how: 'Read the CV. Which job at the top does it fit? Drag the CV onto that job.', need: 2, ok: w => w === 'hire', want: 'job' },
       { id: 'bin', title: 'FITS NONE? THE BIN', say: G => hireCue(G)[0], do: G => hireCue(G)[1], at: G => hireCue(G)[2], how: 'This one fits none of the three jobs. Drag it down into the bin.', need: 1, ok: w => w === 'bin', want: 'bin' }],

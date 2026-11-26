@@ -3,7 +3,7 @@
 // up piece by piece (wood floors, cream walls, windows with glass, doors, furniture, trees, and a roof once it is closed).
 // You turn the view a quarter at a time. When you move in, the camera walks you through the front door and round every room.
 const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [];
-let hint = null, V3 = null, viewA = 0, viewT = 0, showRoof = true, tour = null;
+let hint = null, V3 = null, viewA = 0, viewT = 0, viewTilt = 1.05, showRoof = true, tour = null;
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 6) TXT.shift(); }
 function tip(key, txt, secs = 2.8) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 1.8);
@@ -23,7 +23,7 @@ function buildWorld(G) {
   return V; }
 const MAT = {}; function mat(T, key, col, o = {}) { return MAT[key] || (MAT[key] = new T.MeshStandardMaterial(Object.assign({ color: col, roughness: 0.8 }, o))); }
 // rebuild the house's meshes when it changes
-function rebuild(G) { const V = V3, T = V.T, key = snapshot(G) + showRoof + !!tour + upLv('brick') + upLv('tile'); if (V.built === key) return; V.built = key; if (V.grp) V.S.remove(V.grp); const g = new T.Group(); V.grp = g; V.S.add(g);
+function rebuild(G) { const V = V3, T = V.T, key = snapshot(G) + showRoof + !!tour + upLv('brick') + upLv('tile') + (G.sel ? G.sel.keys.join(',') : ''); if (V.built === key) return; V.built = key; if (V.grp) V.S.remove(V.grp); const g = new T.Group(); V.grp = g; V.S.add(g);
   const ox = -G.pw / 2, oz = -G.pd / 2, H = 2.2, th = 0.14, wallM = upLv('brick') ? mat(T, 'brick', 0xb8584a, { map: W3.grainTex(64, 2, 200, 40, 6) }) : mat(T, 'wall', 0xf2ead8), floorM = mat(T, 'floor', 0xb88a5a, { map: W3.grainTex(64, 3, 200, 30, 4) }), doorM = mat(T, 'door', upLv('paint') ? 0x2a7ad8 : 0x7a4a2a), glassM = mat(T, 'glass', 0x9ad0f0, { transparent: true, opacity: 0.45, roughness: 0.1, metalness: 0.2 });
   const box = (w, h, d, m, x, y, z, ry = 0) => { const b = new T.Mesh(new T.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.rotation.y = ry; b.castShadow = b.receiveShadow = true; g.add(b); return b; };
   for (const k of Object.keys(G.C)) { const [x, z] = k.split(':').map(Number); box(0.98, 0.1, 0.98, floorM, ox + x + 0.5, 0.06, oz + z + 0.5); }
@@ -31,6 +31,7 @@ function rebuild(G) { const V = V3, T = V.T, key = snapshot(G) + showRoof + !!to
     if (w === 'wall') box(1.02, H, th, wallM, cx, H / 2, cz, ry);
     if (w === 'window') { box(1.02, 0.85, th, wallM, cx, 0.425, cz, ry); box(1.02, 0.45, th, wallM, cx, H - 0.225, cz, ry); for (const s of [-1, 1]) { const p = box(0.16, 0.9, th, wallM, 0, 1.3, 0, ry); p.position.set(cx + (h ? s * 0.43 : 0), 1.3, cz + (h ? 0 : s * 0.43)); } box(0.7, 0.9, 0.03, glassM, cx, 1.3, cz, ry); }
     if (w === 'door') { box(1.02, 0.25, th, wallM, cx, H - 0.125, cz, ry); for (const s of [-1, 1]) { const p = box(0.14, H - 0.25, th, wallM, 0, (H - 0.25) / 2, 0, ry); p.position.set(cx + (h ? s * 0.44 : 0), (H - 0.25) / 2, cz + (h ? 0 : s * 0.44)); } if (!tour) box(0.72, H - 0.3, 0.05, doorM, cx, (H - 0.3) / 2, cz, ry); } }
+  if (G.sel) { const glow = mat(T, 'selglow', 0xffd84a, { emissive: 0xffb020, emissiveIntensity: 0.9, transparent: true, opacity: 0.55 }); for (const k of G.sel.keys) { const [o, xs, zs] = k.split(':'), x = +xs, z = +zs, h = o === 'h'; box(1.08, H + 0.12, th + 0.12, glow, h ? ox + x + 0.5 : ox + x, (H + 0.12) / 2, h ? oz + z : oz + z + 0.5, h ? 0 : Math.PI / 2); } }      /* the wall you are moving glows */
   for (const [k, it] of Object.entries(G.items)) { const [x, z] = k.split(':').map(Number), px = ox + x + 0.5, pz = oz + z + 0.5, r = it.r * Math.PI / 2, f = new T.Group(); f.position.set(px, 0.11, pz); f.rotation.y = r; g.add(f); const add = (w, h, d, m, x2, y2, z2) => { const b = new T.Mesh(new T.BoxGeometry(w, h, d), m); b.position.set(x2, y2, z2); b.castShadow = true; f.add(b); };
     if (it.k === 'bed') { add(0.8, 0.35, 0.95, mat(T, 'bedf', 0x6a4a3a), 0, 0.18, 0); add(0.74, 0.12, 0.88, mat(T, 'sheet', 0xf0f0f8), 0, 0.41, 0); add(0.6, 0.1, 0.22, mat(T, 'pillow', 0xffffff), 0, 0.5, -0.3); add(0.76, 0.06, 0.5, mat(T, 'quilt', 0x5a7ad8), 0, 0.48, 0.18); }
     if (it.k === 'stove') { add(0.7, 0.8, 0.6, mat(T, 'stove', 0x3a3a3e, { metalness: 0.4 }), 0, 0.4, 0); for (const [a, b] of [[-0.17, -0.12], [0.17, -0.12], [-0.17, 0.12], [0.17, 0.12]]) add(0.16, 0.02, 0.16, mat(T, 'burn', 0x111111), a, 0.81, b); }
@@ -57,6 +58,7 @@ function onEvent(G, e) { const cx = W / 2, cy = H * 0.42;
     case 'start': say(G.cfg.brief.title.toUpperCase(), cx, cy, '#fff', 22); sfx.chime(); break;
     case 'put': sfx.put(e.what); break; case 'turn': sfx.turn(); break; case 'erase': sfx.erase(); break; case 'undo': sfx.erase(); break;
     case 'tool': sfx.click(); break;
+    case 'select': sfx.click(); vibe(HAP.light); break; case 'shift': sfx.put('wall'); break; case 'placed': sfx.turn(); break; case 'blocked': sfx.no(); say('NO ROOM THERE', cx, cy, '#ffd0c4', 18); break;
     case 'needwall': tip('needwall', 'Windows and doors go into a wall: build the wall first, then tap it.', 3); sfx.no(); break;
     case 'needfloor': tip('needfloor', 'Furniture goes on the floor: lay FLOOR there first.', 3); sfx.no(); break;
     case 'noroof': say('CLOSE THE WALLS FIRST', cx, cy, '#ffd0c4', 18); tip('noroof', 'A roof needs a floor closed in by walls all the way round.', 3); sfx.no(); break;
@@ -77,7 +79,7 @@ function draw(now, dt) {
   const cam = W3.cam, fov = tour ? 72 : 45; if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
   if (tour) { tour.t += dt; const P = tour.pts, u = Math.min(P.length - 1.001, tour.t / 2.2), i = Math.floor(u), f = u - i, a = P[i], b = P[Math.min(P.length - 1, i + 1)], x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f, c = P[Math.min(P.length - 1, i + 2)];
     const lx = b[0] + (c[0] - b[0]) * f, lz = b[1] + (c[1] - b[1]) * f; cam.position.set(x, 1.55, z); cam.lookAt(lx === x && lz === z ? x + 1 : lx, 1.4, lz === z && lx === x ? z : lz); if (tour.t > tour.dur) { tour = null; showRoof = true; if (G && G.over && !HEADLESS) showEnd(); } }
-  else { viewT += (viewA - viewT) * Math.min(1, dt * 6); const r = Math.max(g.pw, g.pd) * 1.55 + 4, a = viewT * Math.PI / 2 + 0.6; cam.position.set(Math.sin(a) * r, r * 1.05, Math.cos(a) * r); cam.lookAt(0, -1.2, 0); }
+  else { viewT += (viewA - viewT) * Math.min(1, dt * 6); const r = Math.max(g.pw, g.pd) * 1.55 + 4, a = viewT * Math.PI / 2 + 0.6, tl = clamp(viewTilt, 0.25, 1.6); cam.position.set(Math.sin(a) * r * Math.cos(Math.atan(tl)) * 1.45, r * 1.05 * Math.sin(Math.atan(tl)) * 1.45, Math.cos(a) * r * Math.cos(Math.atan(tl)) * 1.45); cam.lookAt(0, -1.2, 0); }
   W3.setFocus(0, 0, 0, 20); W3.render(dt);
   if (G && !tour) hud(G, now);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -90,7 +92,9 @@ let IG = null; function idleG() { if (!IG || IG.over || IG.t > 30) { IG = newGam
 // the tray, the buttons, the checklist
 function layout(G) { const tools = G.cfg.tools, per = 7, bw = (W - 16) / per, bh = 54 * k, rows = Math.ceil(tools.length / per), y0 = H - rows * (bh + 6) - 12;
   const tray = tools.map((id, i) => ({ id, x: 8 + (i % per) * bw + 2, y: y0 + Math.floor(i / per) * (bh + 6), w: bw - 4, h: bh }));
-  const top = y0 - 52 * k; return { tray, move: { x: W - 132 * k, y: top, w: 120 * k, h: 42 * k }, undo: { x: 12, y: top, w: 56 * k, h: 42 * k }, rotL: { x: 74 * k, y: top, w: 42 * k, h: 42 * k }, rotR: { x: 122 * k, y: top, w: 42 * k, h: 42 * k }, eye: { x: 170 * k, y: top, w: 42 * k, h: 42 * k }, trayTop: y0, top }; }
+  const top = y0 - 52 * k; return { tray, move: { x: W - 132 * k, y: top, w: 120 * k, h: 42 * k }, undo: { x: 12, y: top, w: 56 * k, h: 42 * k }, rotL: { x: 74 * k, y: top, w: 42 * k, h: 42 * k }, rotR: { x: 122 * k, y: top, w: 42 * k, h: 42 * k }, eye: { x: 170 * k, y: top, w: 42 * k, h: 42 * k }, trayTop: y0, top, cross: crossOf(top) }; }
+// the cross that moves the chosen wall: its own fixed place, right side above the buttons (bigger rather than smaller); ⟳ in the middle; ✓ and ✕ beside it
+function crossOf(top) { const b = 50 * k, cx = W - b * 1.5 - 14, cy = top - b * 1.5 - 14, at = (dx, dy) => ({ x: cx + dx * b - b / 2, y: cy + dy * b - b / 2, w: b - 4, h: b - 4 }); return { up: at(0, -1), down: at(0, 1), left: at(-1, 0), right: at(1, 0), turn: at(0, 0), ok: { x: cx - b * 3.1, y: cy - b / 2, w: b * 1.1, h: b - 4 }, no: { x: cx - b * 3.1, y: cy + b * 0.6, w: b * 1.1, h: b - 4 } }; }
 function hud(G, t) { const L = layout(G), c = G.cfg;
   if (G.lesson) lessonPanel(G);
   // checklist
@@ -99,6 +103,7 @@ function hud(G, t) { const L = layout(G), c = G.cfg;
   list.forEach((q, i) => { ctx.fillStyle = q.ok ? '#9be3b5' : q.star ? 'rgba(255,224,138,.85)' : '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(`${q.ok ? '✓' : q.star ? '☆' : '○'} ${q.txt}`, 18, y0 + (i + (G.lesson ? 0 : 1)) * lh + (G.lesson ? 0 : 0)); });
   // buttons
   const btn = (r, txt, on, col = 'rgba(0,0,0,.5)', tc = '#fff') => { ctx.fillStyle = on ? col : 'rgba(0,0,0,.3)'; rrect(r.x, r.y, r.w, r.h, 12); ctx.fill(); ctx.fillStyle = on ? tc : 'rgba(255,255,255,.4)'; ctx.font = `${Math.round(Math.min(r.h * 0.38, 16 * k))}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, r.x + r.w / 2, r.y + r.h / 2 + 1); };
+  if (G.sel) { const X = L.cross; for (const [kk, t] of [['up', '▲'], ['down', '▼'], ['left', '◀'], ['right', '▶'], ['turn', '⟳']]) btn(X[kk], t, true, kk === 'turn' ? 'rgba(255,190,60,.92)' : 'rgba(20,30,40,.78)', kk === 'turn' ? '#2a1a00' : '#ffe08a'); btn(X.ok, '✓ KEEP', true, '#7ad08a', '#10301a'); btn(X.no, '✕', true, 'rgba(120,40,40,.8)'); }
   btn(L.move, 'MOVE IN', G.ready, '#7ad08a', '#10301a'); btn(L.undo, 'UNDO', G.hist.length > 0); btn(L.rotL, '⟲', true); btn(L.rotR, '⟳', true); btn(L.eye, showRoof ? '⌂' : '◫', true);
   ctx.fillStyle = 'rgba(10,16,12,.75)'; rrect(4, L.trayTop - 6, W - 8, H - L.trayTop + 2, 14); ctx.fill();
   for (const b of L.tray) { const T = TOOLS.find(q => q.id === b.id), on = G.tool === b.id; ctx.fillStyle = on ? 'rgba(122,208,138,.85)' : 'rgba(255,255,255,.1)'; rrect(b.x, b.y, b.w, b.h, 10); ctx.fill();

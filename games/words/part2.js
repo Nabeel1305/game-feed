@@ -121,6 +121,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.r
   { const n = G.letters.length, idx = []; while (idx.length < 4 && idx.length < n) { const i = (R() * n) | 0; if (!idx.includes(i)) idx.push(i); } spell(G, idx); mem.t = 1.5 + react * 3; } }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; for (const q of G.words) q.found = true; G.found = G.words.length; finish(G, true); }
 // ---------- LESSONS: little pages ----------
+const AIMCARD = {"pic": "🔤", "win": "FILL THE CROSSWORD", "lose": "MADE-UP WORDS USE UP YOUR INK", "how": "SLIDE ACROSS LETTERS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'spell', title: 'SLIDE TO SPELL', say: G => wordsCue(G)[0], do: 'drag', dir: 'right', at: G => wordsCue(G)[1], how: 'Put your thumb on a letter and slide through the others to spell a word. Lift to try it. Fill the crossword!', page: { base: 'heart', words: ['heart', 'earth', 'hate', 'tear', 'hat'] } }],
   2: [{ id: 'hint', title: 'STUCK? A HINT', say: 'STUCK? TAP 💡', do: 'tap', at: G => { const L = lay(); return [L.bulb.x, L.bulb.y]; }, how: 'Find the words. Stuck? Tap the 💡 bulb: it shows a letter (two free in this lesson). Made-up words spill ink!', page: { base: 'stone', words: ['stone', 'notes', 'tone', 'nest', 'one', 'set'] } }],

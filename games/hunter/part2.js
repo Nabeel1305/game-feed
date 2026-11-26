@@ -184,6 +184,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏹", "win": "BRING DOWN THE ANIMALS ASKED FOR", "lose": "GET HURT: NO HEARTS LEFT", "how": "CREEP CLOSE, THROW AT THE CHEST"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
       { id: 'throw', title: 'THROW AT THE CHEST', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],

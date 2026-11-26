@@ -150,6 +150,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true;
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "⚽", "win": "SCORE MORE PENALTIES THAN THEM", "lose": "THEY SCORE MORE", "how": "TAP A SPOT, TAP ON GREEN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'shoot', kind: 'S', title: 'SHOOT', say: G => penCue(G)[0], do: G => penCue(G)[1], at: G => penCue(G)[2], how: 'Tap the spot in the goal you want to hit. Then tap again when the needle is in the GREEN. Score twice in a row.', need: 2 },
     { id: 'save', kind: 'K', title: 'SAVE', say: G => penCue(G)[0], do: G => penCue(G)[1], at: G => penCue(G)[2], how: 'Watch the kicker. When he plants his foot his body turns to where he will shoot: tap that side (the middle to stay). Not before, or he sees you go. Save two in a row.', need: 2 }],

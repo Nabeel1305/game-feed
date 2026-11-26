@@ -112,6 +112,7 @@ function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lo
   G.res = { win, rest: !!o.rest, stars: win ? 1 : 0, houses: l.houses, total: G.stops.length, from: G.first, items, log: Object.assign({}, l), coins: G.coins + (win ? 10 + G.N : 0), street: G.street, season: G.season.id };
   G.ev.push({ k: win ? 'won' : 'rest' }); }
 // ---------- LESSONS: the first three levels each start with one ----------
+const AIMCARD = {"pic": "🗑️", "win": "EMPTY EVERY BIN", "lose": "MESSY OR MISSED BINS", "how": "TAP A BIN, HOLD TO EMPTY"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'empty', title: 'EMPTY A BIN', say: G => binCue(G)[0], do: G => binCue(G)[1], at: G => binCue(G)[2], how: 'Tap the bin: you fetch it. HOLD COLLECT. Let go when the ring reaches the GREEN. Two bins.', need: 2 }],
   2: [{ id: 'pickout', title: 'KEEP THE RECYCLING CLEAN', say: G => binCue(G)[0], do: G => binCue(G)[1], at: G => binCue(G)[2], how: 'A bin bag is on top of the recycling. Fetch it, tap PICK OUT, then empty the box.', need: 1 }],

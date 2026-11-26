@@ -122,6 +122,7 @@ function finish(G, win, why) { const c = G.cfg; G.over = win ? 'won' : 'lost';
   G.res = { win, why, stars, delivered: G.delivered, goal: c.goal, trips: G.trips, mined: G.mined, dents: G.dents, spilled: G.spilled, kills: G.kills, gems: G.gems, left: Math.round(G.left), time: c.time, coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) + stars : 0) };
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚀", "win": "BRING HOME THE ORE ASKED FOR", "lose": "SHIP BREAKS, OR TIME RUNS OUT", "how": "FLY OVER ORE, THEN TO THE GREEN RING"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'scoop', title: 'FLY AND MINE', say: G => minerCue(G)[0], do: G => minerCue(G)[1], at: G => minerCue(G)[2], how: 'Put your thumb down anywhere and drag to fly. Fly near a rock: your laser cracks it. Scoop up 3 ore in a row, quickly.', need: 3 }],
   2: [{ id: 'dock', title: 'HOME', say: G => minerCue(G)[0], do: G => minerCue(G)[1], at: G => minerCue(G)[2], how: 'You carry ore. Fly into the green ring under the mothership to unload it. Twice.', need: 2 }],

@@ -185,6 +185,7 @@ function serve(G) { const o = G.order; if (!o || G.wait > 0 || G.over) return fa
 function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lost'; const perfect = G.log.filter(q => q.like && !q.minor.length).length, stars = win ? (G.failed === 0 ? (perfect === G.served ? 3 : 2) : G.failed === 1 ? 2 : 1) : 0;
   G.res = { win, stars, why: o.why || null, served: G.served, failed: G.failed, tips: G.tips, log: G.log, coins: win ? G.tips + Math.ceil(G.N / 2) + stars * 3 : Math.max(1, G.tips >> 1) }; G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🍹", "win": "MAKE THE DRINK THEY ORDER", "lose": "WRONG DRINKS UPSET THEM", "how": "GLASS, POUR, SHAKE, SERVE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'pour', title: 'POUR TO THE MARKS', say: G => mockCue(G)[0], do: G => mockCue(G)[1], at: G => mockCue(G)[2], how: 'Tap a GLASS. Then HOLD a bottle: it pours while you hold. Let go at the STOP line. Then the next bottle. Tap SERVE.', need: 1 }],
   2: [{ id: 'ice', title: 'GLASS AND ICE', say: G => mockCue(G)[0], do: G => mockCue(G)[1], at: G => mockCue(G)[2], how: 'Each drink has its glass and its ice. Tap the right glass, tap ICE, then pour, garnish if asked, and SERVE.', need: 1 }],

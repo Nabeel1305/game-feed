@@ -184,6 +184,7 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.res = { win, stars, place, need: c.place, laps: c.laps, time: +G.t.toFixed(1), tricks: G.tricks, perfects: G.perfects, wipeouts: G.wipeouts, starN: G.stars, hits: G.hits, zaps: G.zaps, coins: Math.round(G.coins / 3) + (win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1), track: TRACKS[c.track].name, style: G.tricks * 100 + G.perfects * 50 };
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: a track to yourself ----------
+const AIMCARD = {"pic": "🏁", "win": "FINISH IN THE TOP PLACES", "lose": "FINISH TOO FAR BACK", "how": "IN THE AIR: TAP FOR TRICKS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'trick', title: 'JUMP AND TRICK', say: G => stuntCue(G)[0], do: G => stuntCue(G)[1], at: G => stuntCue(G)[2], how: 'Off every ramp, TAP the right side once in the air for a trick, and land after it has finished. Two jumps in a row. Tap only in the air!', need: 2 }],
   2: [{ id: 'two', title: 'TWO IN ONE JUMP', say: G => stuntCue(G)[0], do: G => stuntCue(G)[1], at: G => stuntCue(G)[2], how: 'Fit TWO tricks into one jump: tap as you leave the ramp, tap again the moment the first one ends, and land clean. Twice.', need: 2 }],

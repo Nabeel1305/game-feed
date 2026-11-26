@@ -157,6 +157,7 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.res = { win, stars, score: G.score.slice(), foe: G.foe, stats: Object.assign({}, G.stats), coins: Math.round(G.stats.pts / 2) + G.stats.ast * 2 + G.stats.stl * 2 + G.stats.blk * 2 + (win ? 8 + Math.ceil(G.N / 2) + stars * 3 : 0), tour: G.tour };
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏀", "win": "SCORE MORE POINTS", "lose": "THEY SCORE MORE", "how": "MOVE, PASS, HOLD SHOOT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'shoot', title: 'SHOOT IN THE GREEN', say: G => hoopsCue(G)[0], do: G => hoopsCue(G)[1], at: G => hoopsCue(G)[2], how: 'HOLD SHOOT. The meter fills: let go when it is in the GREEN. Three good releases.', need: 3 }],
   2: [{ id: 'pass', title: 'GIVE AND GO', say: G => hoopsCue(G)[0], do: G => hoopsCue(G)[1], at: G => hoopsCue(G)[2], how: 'Tap PASS (or drag from it towards a teammate), then RUN TO THE BASKET with the stick. The ball comes back to you: tap SHOOT for the layup.', need: 2 }],

@@ -251,6 +251,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.r
 function follow(G, mem) { const Y = G.you; if (!mem.p || !mem.p.length) { ACT.stick(G, 0, 0); return; } const [tx, tz] = mem.p[0], dx = tx - Y.x, dz = tz - Y.z, d = Math.hypot(dx, dz); if (d < 0.25) { mem.p.shift(); return follow(G, mem); } ACT.stick(G, dx / d, dz / d); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.meet = null; finish(G, true, 'last'); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🕵️", "win": "FINISH YOUR SECRET JOBS", "lose": "THEY VOTE YOU OUT", "how": "SNEAK, KNOCK OUT UNSEEN, BLEND IN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'sneak', title: 'WHEN NO ONE IS LOOKING', say: G => crewCue(G)[0], do: G => crewCue(G)[1], at: G => crewCue(G)[2], how: 'SKY works alone in Electrical. LIME walks in and out. Slide to walk there; KNOCK OUT SKY only when LIME is gone.' }],
   2: [{ id: 'vent', title: 'VANISH', say: G => crewCue(G)[0], do: G => crewCue(G)[1], at: G => crewCue(G)[2], how: 'Knock out RUBY in MedBay, then hide in the VENT (stand on it, tap VENT) and come out somewhere else before anyone comes.' }],

@@ -103,6 +103,7 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.res = { win, stars, why, share, need: c.need, score, stripes: G.stripes, stripeNeed, crushed: G.crushed, coinsGot: G.coinsGot, treasure: G.treasure && G.treasure.got ? G.treasure.what : null, owner: G.owner, fuel: G.fuel / G.fuelMax, prog: Math.min(1, share / c.need), coins: G.coinsGot + (win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1) };
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS: a small lawn each ----------
+const AIMCARD = {"pic": "🌱", "win": "MOW THE WHOLE LAWN", "lose": "CRUSH FLOWERS OR RUN OUT OF FUEL", "how": "DRAG TO DRIVE THE MOWER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'mow', title: 'MOW IN STRIPES', say: G => mowCue(G)[0], do: G => mowCue(G)[1], at: G => mowCue(G)[2], how: 'Slide your thumb: the mower goes that way; lift it to stop. Mow this lawn in long straight lines, up and down: 2 STRIPES and most of the grass.', need: 1, lawn: { w: 6, h: 9, beds: 0, trees: 0, gnomes: 0, nodog: true } }],
   2: [{ id: 'flowers', title: 'MIND THE FLOWERS', say: G => mowCue(G)[0], do: G => mowCue(G)[1], at: G => mowCue(G)[2], how: 'Mow round the flower bed without touching it. Drive over it and the lesson starts again.', need: 1, lawn: { w: 6, h: 8, beds: 1, bed: [1.5, 1.2], trees: 0, gnomes: 0, nodog: true } }],

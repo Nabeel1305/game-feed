@@ -17,7 +17,7 @@ const TOOLS = [
   { id: 'floor', name: 'Floor', icon: '▦', kind: 'cell' }, { id: 'bed', name: 'Bed', icon: '🛏️', kind: 'item', n: 3 }, { id: 'stove', name: 'Stove', icon: '🍳', kind: 'item', n: 3 },
   { id: 'table', name: 'Table', icon: '🍽️', kind: 'item', n: 3 }, { id: 'sofa', name: 'Sofa', icon: '🛋️', kind: 'item', n: 5 }, { id: 'bath', name: 'Bath', icon: '🛁', kind: 'item', n: 6 },
   { id: 'desk', name: 'Desk', icon: '🖥️', kind: 'item', n: 9 }, { id: 'plant', name: 'Plant', icon: '🪴', kind: 'item', n: 4 }, { id: 'tree', name: 'Tree', icon: '🌳', kind: 'garden', n: 7 },
-  { id: 'roof', name: 'Roof', icon: '⌂', kind: 'once' }, { id: 'erase', name: 'Erase', icon: '✕', kind: 'erase' } ];
+  { id: 'roof', name: 'Roof', icon: '⌂', kind: 'once' }, { id: 'erase', name: 'Erase', icon: '✕', kind: 'erase' }, { id: 'move', name: 'Move', icon: '✥', kind: 'select' } ];
 const ROOMS = { bedroom: { name: 'a bedroom', need: ['bed'] }, kitchen: { name: 'a kitchen', need: ['stove', 'table'] }, living: { name: 'a living room', need: ['sofa'] }, bathroom: { name: 'a bathroom', need: ['bath'] }, study: { name: 'a study', need: ['desk'] } };
 const PLACES = [{ name: 'Meadow Lane', grass: 0x6aa84a }, { name: 'Lakeside', grass: 0x5a9a5a }, { name: 'Hill Top', grass: 0x8aa850 }, { name: 'Pine Edge', grass: 0x4a8a4a }];
 const placeOf = N => Math.floor((N - 1) / 5) % 4;
@@ -54,7 +54,7 @@ function snapshot(G) { return JSON.stringify({ E: G.E, C: G.C, items: G.items, r
 function load(G, s) { try { const o = typeof s === 'string' ? JSON.parse(s) : s; G.E = o.E || {}; G.C = o.C || {}; G.items = o.items || {}; G.roof = !!o.roof; } catch (e) {} }
 function push(G) { G.hist.push(snapshot(G)); if (G.hist.length > 80) G.hist.shift(); }
 // ---------- what you do ----------
-function setTool(G, id) { if (!G.cfg.tools.includes(id) || G.over) return false; if (id === 'roof') return raiseRoof(G); G.tool = id; G.ev.push({ k: 'tool', id }); return true; }
+function setTool(G, id) { if (!G.cfg.tools.includes(id) || G.over) return false; if (G.sel) confirmSel(G); if (id === 'roof') return raiseRoof(G); G.tool = id; G.ev.push({ k: 'tool', id }); return true; }
 function placeEdge(G, o, x, z) { if (G.over || G.wait > 0) return false; const key = ek(o, x, z), t = G.tool, cur = G.E[key];
   if (o === 'h' ? !(x >= 0 && x < G.pw && z >= 0 && z <= G.pd) : !(z >= 0 && z < G.pd && x >= 0 && x <= G.pw)) return false;
   if (t === 'wall') { if (cur === 'wall') return false; push(G); G.E[key] = 'wall'; G.placed++; G.roof = false; G.ev.push({ k: 'put', what: 'wall', o, x, z }); return after(G); }
@@ -69,13 +69,32 @@ function placeCell(G, x, z) { if (G.over || G.wait > 0 || !inPlot(G, x, z)) retu
     push(G); G.items[key] = { k: t, r: 0 }; G.placed++; G.ev.push({ k: 'put', what: t, x, z }); return after(G); }
   if (t === 'erase') { if (G.items[key]) { push(G); delete G.items[key]; G.ev.push({ k: 'erase' }); return after(G); } if (G.C[key]) { push(G); delete G.C[key]; G.roof = false; G.ev.push({ k: 'erase' }); return after(G); } }
   return false; }
+// ---------- moving a wall (26 Nov 2026, his review: "Tap a wall to select it and display a clear cross-shaped movement control with directional
+// arrows... Add an obvious rotation control... Show their position and orientation before confirming placement") ----------
+// With MOVE, a tap on a wall picks its whole straight run (walls, windows and doors in one line). The arrows move it a square at a time and ⟳ turns it
+// a quarter round its first end; it moves for real so you see where it is, glowing; ✓ keeps it, ✕ puts it back as it was.
+const runKeys = (G, o, x, z) => { if (!G.E[ek(o, x, z)]) return []; const out = [ek(o, x, z)]; for (const d of [-1, 1]) for (let i = 1; i < 40; i++) { const k2 = o === 'h' ? ek(o, x + d * i, z) : ek(o, x, z + d * i); if (!G.E[k2]) break; out.push(k2); } return out; };
+function selectWall(G, o, x, z) { if (G.over || G.wait > 0) return false; const run = runKeys(G, o, x, z); if (!run.length) { G.sel = null; G.ev.push({ k: 'needwall' }); return false; } G.sel = { keys: run, from: snapshot(G) }; G.ev.push({ k: 'select', n: run.length }); return true; }
+function moveSel(G, dx, dz) { const S = G.sel; if (!S || G.over) return false; const parts = S.keys.map(k2 => { const [o, x, z] = k2.split(':'); return [o, +x + dx, +z + dz, G.E[k2]]; });
+  return applySel(G, parts); }
+function rotateSel(G) { const S = G.sel; if (!S || G.over) return false; const cs = S.keys.map(k2 => { const [o, x, z] = k2.split(':'); return [o, +x, +z, G.E[k2]]; }), o = cs[0][0];
+  cs.sort((a, b) => o === 'h' ? a[1] - b[1] : a[2] - b[2]); const [, x0, z0] = cs[0], n = cs.length, no = o === 'h' ? 'v' : 'h';
+  const tryAt = (sg) => cs.map((c, i) => no === 'v' ? [no, x0, sg > 0 ? z0 + i : z0 - 1 - i, c[3]] : [no, sg > 0 ? x0 + i : x0 - 1 - i, z0, c[3]]);
+  return applySel(G, tryAt(1)) || applySel(G, tryAt(-1)); }
+function applySel(G, parts) { const S = G.sel, mine = new Set(S.keys);
+  for (const [o, x, z] of parts) { if (o === 'h' ? !(x >= 0 && x < G.pw && z >= 0 && z <= G.pd) : !(z >= 0 && z < G.pd && x >= 0 && x <= G.pw)) { G.ev.push({ k: 'blocked' }); return false; } const k2 = ek(o, x, z); if (G.E[k2] && !mine.has(k2)) { G.ev.push({ k: 'blocked' }); return false; } }
+  if (!S.pushed) { push(G); S.pushed = true; } const vals = parts.map(p2 => p2[3]); for (const k2 of S.keys) delete G.E[k2]; S.keys = parts.map(([o, x, z], i) => { const k2 = ek(o, x, z); G.E[k2] = vals[i]; return k2; });
+  G.roof = false; G.ev.push({ k: 'shift' }); check(G); return true; }
+function confirmSel(G) { if (!G.sel) return false; const moved = G.sel.pushed; G.sel = null; G.ev.push({ k: 'placed' }); if (moved) after(G); return true; }
+function cancelSel(G) { const S = G.sel; if (!S) return false; G.sel = null; if (S.pushed) { load(G, S.from); G.hist.pop(); check(G); } G.ev.push({ k: 'undo' }); return true; }
 // a tap on the plot at (fx, fz) in grid units: the nearest grid line for edge tools, the square for the rest
 function tapAt(G, fx, fz) { const T = TOOLS.find(q => q.id === G.tool); if (!T) return false;
   const nearEdge = () => { const xi = Math.round(fx), zi = Math.round(fz), dx = Math.abs(fx - xi), dz = Math.abs(fz - zi); return dz < dx ? ['h', Math.floor(fx), zi] : ['v', xi, Math.floor(fz)]; };
   if (T.kind === 'edge' || T.kind === 'conv') { const [o, x, z] = nearEdge(); return placeEdge(G, o, x, z); }
+  if (T.kind === 'select') { const [o, x, z] = nearEdge(); if (G.sel) confirmSel(G); return selectWall(G, o, x, z); }
   if (T.kind === 'erase') { const cx = Math.floor(fx), cz = Math.floor(fz), [o, x, z] = nearEdge(), ed = o === 'h' ? Math.abs(fz - z) : Math.abs(fx - x); if (ed < 0.18 && G.E[ek(o, x, z)]) return placeEdge(G, o, x, z); return placeCell(G, cx, cz); }
   return placeCell(G, Math.floor(fx), Math.floor(fz)); }
-function undo(G) { if (G.over || !G.hist.length) return false; load(G, G.hist.pop()); G.ev.push({ k: 'undo' }); return after(G, false); }      /* undoing is free; the mistake already cost a job */
+function undo(G) { if (G.over || !G.hist.length) return false; G.sel = null; load(G, G.hist.pop()); G.ev.push({ k: 'undo' }); return after(G, false); }      /* undoing is free; the mistake already cost a job */
 function raiseRoof(G) { if (G.over) return false; const A = analyse(G); if (!A.closed.length) { G.ev.push({ k: 'noroof' }); return false; } push(G); G.roof = true; G.ev.push({ k: 'roof' }); return after(G); }
 function after(G, worked = true) { if (worked && !G.lesson) G.work = (G.work || 0) + 1; check(G); lessonSee(G); if (!G.lesson && !G.over && G.work >= G.cfg.work && !G.ready) { G.over = 'lost'; G.res = { win: false, stars: 0, pieces: G.pieces, budget: G.cfg.budget, missing: G.list.filter(q => !q.ok && !q.star).map(q => q.txt), coins: 1, save: snapshot(G) }; G.ev.push({ k: 'lost' }); } return true; }
 // ---------- what the plot adds up to: rooms, closed houses, windows, doors ----------
@@ -111,6 +130,7 @@ function finish(G) { const c = G.cfg, wish = G.list.filter(q => q.star), within 
   G.ev.push({ k: 'won' }); return true; }
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏠", "win": "BUILD EVERYTHING ON THE LIST", "lose": "RUN OUT OF JOBS", "how": "PICK A PIECE, TAP OR DRAG"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'walls', title: 'FLOOR AND WALLS', say: G => houseCue(G)[0], do: G => houseCue(G)[1], at: G => houseCue(G)[2], how: 'Pick FLOOR and drag over 4 squares. Then pick WALL and drag along the grid lines all round it. Then DOOR: tap one of the walls. Tap MOVE IN.', need: 1 }],
   2: [{ id: 'roof', title: 'WINDOWS AND A ROOF', say: G => houseCue(G)[0], do: G => houseCue(G)[1], at: G => houseCue(G)[2], how: 'Turn two walls into WINDOWS (tap them), then tap ROOF. Then MOVE IN.', need: 1 }],

@@ -92,7 +92,20 @@ function plotAt(x, y) { const p = pickAt(G, x, y); if (!p) return; const T = TOO
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || tour) return; const L = layout(G), x = e.clientX, y = e.clientY;
   for (const b of L.tray) if (inR(b, x, y)) { setTool(G, b.id); return; }
   if (inR(L.move, x, y)) { moveIn(G); return; } if (inR(L.undo, x, y)) { undo(G); return; } if (inR(L.rotL, x, y)) { viewA--; sfx.click(); return; } if (inR(L.rotR, x, y)) { viewA++; sfx.click(); return; } if (inR(L.eye, x, y)) { showRoof = !showRoof; sfx.click(); return; }
-  if (y > L.trayTop - 8) return; ui.drag = { id: e.pointerId }; lastKey = null; try { cv.setPointerCapture(e.pointerId); } catch (err) {} plotAt(x, y); });
+  if (G.sel) { const X = L.cross; if (inR(X.ok, x, y)) { confirmSel(G); return; } if (inR(X.no, x, y)) { cancelSel(G); return; } if (inR(X.turn, x, y)) { rotateSel(G); return; }
+    for (const [kk, sx, sy] of [['up', 0, 1], ['down', 0, -1], ['left', -1, 0], ['right', 1, 0]]) if (inR(X[kk], x, y)) { const [dx, dz] = screenStep(sx, sy); moveSel(G, dx, dz); return; } }
+  if (y > L.trayTop - 8) return; try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  // 26 Nov 2026, his review: "Make looking around and adjusting a selected wall distinct, so dragging doesn't accidentally perform the wrong action".
+  // A drag that starts off the plot (grass, sky), or any drag with MOVE, turns the camera round the house; with a building piece a drag ON the plot builds.
+  const p = pickAt(G, x, y), onPlot = p && p.fx > -0.35 && p.fx < G.pw + 0.35 && p.fz > -0.35 && p.fz < G.pd + 0.35;
+  if (G.tool === 'move' || !onPlot) { ui.orbit = { id: e.pointerId, x, y, x0: x, y0: y, moved: false, tap: onPlot && G.tool === 'move' }; return; }
+  ui.drag = { id: e.pointerId }; lastKey = null; plotAt(x, y); });
+// the arrow that points up the screen moves the wall away from you, whichever way the camera faces
+function screenStep(sx, sy) { const a = viewT * Math.PI / 2 + 0.6, vx = sx * Math.cos(a) - sy * Math.sin(a), vz = -sx * Math.sin(a) - sy * Math.cos(a); return Math.abs(vx) > Math.abs(vz) ? [Math.sign(vx), 0] : [0, Math.sign(vz)]; }
+cv.addEventListener('pointermove', e => { const o = ui.orbit; if (!o || e.pointerId !== o.id || !G) return; const dx = e.clientX - o.x, dy = e.clientY - o.y; o.x = e.clientX; o.y = e.clientY;
+  if (Math.hypot(o.x - o.x0, o.y - o.y0) > 10) o.moved = true; if (!o.moved) return; viewA -= dx / (W * 0.45); viewT = viewA; viewTilt = clamp(viewTilt + dy / (H * 0.35), 0.25, 1.6); });
+const endOrbit = e => { const o = ui.orbit; if (!o || e.pointerId !== o.id) return; ui.orbit = null; if (!o.moved && o.tap && G && !G.over && !paused) { const p = pickAt(G, o.x0, o.y0); if (p) tapAt(G, p.fx, p.fz); } };
+cv.addEventListener('pointerup', endOrbit); cv.addEventListener('pointercancel', endOrbit);
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; const T = TOOLS.find(q => q.id === G.tool); if (T && (T.id === 'wall' || T.id === 'floor' || T.id === 'erase')) plotAt(e.clientX, e.clientY); });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; lastKey = null; }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
@@ -131,7 +144,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  tapAt(x, z) { return tapAt(G, x, z); }, analyse() { return analyse(G); }, plan() { return plan(G); }, setTool(id) { return setTool(G, id); }, moveIn() { return moveIn(G); }, undo() { return undo(G); }, layout() { return layout(G); }, pickAt(x, y) { return pickAt(G, x, y); }, wScreen, renderShop, startTour() { startTour(G); }, get tour() { return tour; }, ui, get V3() { return V3; }, W3,
+  tapAt(x, z) { return tapAt(G, x, z); }, moveSel(dx, dz) { return moveSel(G, dx, dz); }, rotateSel() { return rotateSel(G); }, confirmSel() { return confirmSel(G); }, cancelSel() { return cancelSel(G); }, get viewA() { return viewA; }, analyse() { return analyse(G); }, plan() { return plan(G); }, setTool(id) { return setTool(G, id); }, moveIn() { return moveIn(G); }, undo() { return undo(G); }, layout() { return layout(G); }, pickAt(x, y) { return pickAt(G, x, y); }, wScreen, renderShop, startTour() { startTour(G); }, get tour() { return tour; }, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
@@ -158,7 +171,7 @@ $('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
 ['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
 $('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
 $('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
-setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+setInterval(() => { const on = !!(G && G.lesson && !G.over && (!paused || (typeof AIMEL !== 'undefined' && AIMEL && AIMEL._unpause)) && !HEADLESS);      /* Skip stays while the aim card is up */ $('skipTut').classList.toggle('hidden', !on); }, 150);
 window.gameFeedTutorial = () => { audio(); startTutorial(); };
 // ---------- settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; the sound side is in the juice kit) ----------
 Object.assign(SET, store.get('settings', {}) || {});

@@ -4716,9 +4716,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4954,6 +4956,31 @@ function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas
   const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
+// ---------- THE AIMCARD CARD (26 Nov 2026, his words: "when somebody goes through the tutorial, a person must always understand what is the aim of this
+// game, how do I win, what causes me to lose... simple, and visual cues, as little words as possible... the words should be big"; and "when they press
+// pause... they can basically understand the aim of the game"). A game that defines AIMCARD = { pic, win, lose, how } gets: the card before its first
+// lesson (the game waits while it is up), and a HOW TO PLAY button in its pause menu. A tap on the card closes it; so does leaving the lesson.
+const AIMSEEN = new WeakSet(); let AIMEL = null;
+function aimClose() { if (!AIMEL) return; const el = AIMEL; AIMEL = null; el.remove(); if (el._unpause) { try { paused = false; last = performance.now(); } catch (e) {} } }
+function aimCard(fromPause) { if (typeof AIMCARD === 'undefined' || AIMEL) return; const host = document.getElementById('stage') || document.body, el = document.createElement('div'); AIMEL = el;
+  let was = true; try { was = paused; if (!fromPause) paused = true; } catch (e) {} el._unpause = !fromPause && !was; el._g = typeof G !== 'undefined' ? G : null;
+  const F = String(typeof TF !== 'undefined' ? TF : 'sans-serif').replace(/"/g, "'"), B = String(typeof BC !== 'undefined' ? BC : 'sans-serif').replace(/"/g, "'"), name = (document.title || '').split(/ [·|–—-] /)[0].trim();
+  el.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'inset:0;z-index:60;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(4,8,16,.55)';
+  const row = (ic, lab, col, txt) => `<div style="display:flex;align-items:center;gap:12px;margin:10px 0;text-align:left"><div style="font-size:34px;width:44px;text-align:center;flex:none">${ic}</div><div><div style="font:800 14px ${B};letter-spacing:2px;color:${col}">${lab}</div><div style="font:800 24px/1.12 ${B};color:#fff">${txt}</div></div></div>`;
+  el.innerHTML = `<div id="aimCard" style="pointer-events:auto;width:min(86%,360px);background:linear-gradient(180deg,#1d2a44,#121a2c);border:2px solid rgba(255,211,106,.65);border-radius:22px;padding:18px 18px 16px;box-shadow:0 18px 50px rgba(0,0,0,.55);text-align:center">
+    <div style="font-size:58px;line-height:1">${AIMCARD.pic || '🎮'}</div><div style="font:400 24px ${F};color:#ffd36a;margin:6px 0 6px">${name.toUpperCase()}</div>
+    ${row('🏆', 'TO WIN', '#8fe0ab', AIMCARD.win)}${row('✖️', 'YOU LOSE IF', '#ff9a8a', AIMCARD.lose)}${AIMCARD.how ? row('👆', 'HOW', '#9fd0ff', AIMCARD.how) : ''}
+    <div id="aimGo" style="margin-top:14px;padding:13px 0;border-radius:14px;background:#ffd36a;color:#2a1a00;font:800 20px ${B};letter-spacing:1px">${fromPause ? 'OK' : "LET'S PLAY ▶"}</div></div>`;
+  host.appendChild(el); const card = el.querySelector('#aimCard'); { const hh = host === document.body ? innerHeight : (host.clientHeight || H), ch = card.offsetHeight; if (ch > hh * 0.76) card.style.transform = `scale(${(hh * 0.76 / ch).toFixed(3)})`; }      /* a sideways game's picture is short: the card shrinks to fit inside it, clear of the pause button */ ['pointerdown', 'touchstart', 'mousedown'].forEach(k => card.addEventListener(k, e => { e.stopPropagation(); }, { passive: true }));
+  card.addEventListener('click', e => { e.stopPropagation(); aimClose(); });
+  // a touch anywhere else closes it first (before the game sees the touch), so the pause button, Skip and the game itself always answer
+  const away = e => { if (AIMEL !== el) { document.removeEventListener('pointerdown', away, true); return; } if (!card.contains(e.target)) { document.removeEventListener('pointerdown', away, true); aimClose(); } }; document.addEventListener('pointerdown', away, true);
+  const watch = () => { if (AIMEL !== el) return; let g = null; try { g = G; } catch (e) {} if (!fromPause && (g !== el._g || !g || !g.lesson)) { aimClose(); return; } requestAnimationFrame(watch); }; requestAnimationFrame(watch);
+  try { if (typeof sfx !== 'undefined' && sfx.click) sfx.click(); } catch (e) {} }
+// the pause menu gets HOW TO PLAY (next to Tutorial)
+function aimButton() { if (typeof AIMCARD === 'undefined') return; const t = document.getElementById('pTut'); if (!t || document.getElementById('pAim')) return; const b = document.createElement('button'); b.id = 'pAim'; b.className = t.className; b.textContent = '❓ How to play'; const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;width:100%'; t.parentNode.insertBefore(row, t); row.appendChild(b); row.appendChild(t); for (const x of [b, t]) { x.style.flex = '1'; x.style.minWidth = '0'; x.style.margin = '0'; } b.onclick = () => aimCard(true); }      /* side by side with Tutorial: the menu is no taller than before */
+if (typeof document !== 'undefined') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', aimButton); else setTimeout(aimButton, 0); }
+
 function coachMiss() { COACH.miss = performance.now(); }
 function coachWord(txt, x, y, size, col) { const F = typeof BC !== 'undefined' ? BC : 'sans-serif'; CCX.font = `800 ${Math.round(size)}px ${F}`; const mw = CCX.measureText(txt).width; if (mw > W - 28) { size *= (W - 28) / mw; CCX.font = `800 ${Math.round(size)}px ${F}`; } CCX.textAlign = 'center'; CCX.textBaseline = 'middle'; CCX.lineJoin = 'round';
   CCX.lineWidth = Math.max(5, size * 0.2); CCX.strokeStyle = 'rgba(0,0,0,.72)'; CCX.strokeText(txt, x, y); CCX.fillStyle = col; CCX.fillText(txt, x, y); }
@@ -4985,6 +5012,7 @@ function coachCue(c, now) {
 // the lesson on screen: which lesson of how many, the dots of what is done, the few big words, the gesture, and a big tick or TRY AGAIN
 function coachPanel(G, extra) {
   const D = G.lesson; if (!D || !D.steps) return; const st = D.steps[D.i]; if (!st) return; const now = performance.now(); if (typeof HEADLESS !== 'undefined' && HEADLESS) return; coachLayer();
+  if (typeof AIMCARD !== 'undefined' && !AIMSEEN.has(G) && D.i === 0 && D.n === 0 && typeof LESSONS !== 'undefined' && G.N === Math.min(...Object.keys(LESSONS).map(Number))) { AIMSEEN.add(G); aimCard(false); }
   if (COACH.i !== D.i || COACH.n > D.n) { COACH.i = D.i; COACH.n = D.n; COACH.t0 = now; } if (D.n > COACH.n) { COACH.n = D.n; COACH.ok = now; }
   CCX.save(); const top = 64 * k, need = st.need || 1;
   CCX.font = `800 ${Math.round(12 * k)}px ${typeof BC !== 'undefined' ? BC : 'sans-serif'}`; const lab = `${D.i + 1} / ${D.steps.length}`, lw = CCX.measureText(lab).width + 22 + need * 18 * k;
@@ -5245,7 +5273,7 @@ const TOOLS = [
   { id: 'floor', name: 'Floor', icon: '▦', kind: 'cell' }, { id: 'bed', name: 'Bed', icon: '🛏️', kind: 'item', n: 3 }, { id: 'stove', name: 'Stove', icon: '🍳', kind: 'item', n: 3 },
   { id: 'table', name: 'Table', icon: '🍽️', kind: 'item', n: 3 }, { id: 'sofa', name: 'Sofa', icon: '🛋️', kind: 'item', n: 5 }, { id: 'bath', name: 'Bath', icon: '🛁', kind: 'item', n: 6 },
   { id: 'desk', name: 'Desk', icon: '🖥️', kind: 'item', n: 9 }, { id: 'plant', name: 'Plant', icon: '🪴', kind: 'item', n: 4 }, { id: 'tree', name: 'Tree', icon: '🌳', kind: 'garden', n: 7 },
-  { id: 'roof', name: 'Roof', icon: '⌂', kind: 'once' }, { id: 'erase', name: 'Erase', icon: '✕', kind: 'erase' } ];
+  { id: 'roof', name: 'Roof', icon: '⌂', kind: 'once' }, { id: 'erase', name: 'Erase', icon: '✕', kind: 'erase' }, { id: 'move', name: 'Move', icon: '✥', kind: 'select' } ];
 const ROOMS = { bedroom: { name: 'a bedroom', need: ['bed'] }, kitchen: { name: 'a kitchen', need: ['stove', 'table'] }, living: { name: 'a living room', need: ['sofa'] }, bathroom: { name: 'a bathroom', need: ['bath'] }, study: { name: 'a study', need: ['desk'] } };
 const PLACES = [{ name: 'Meadow Lane', grass: 0x6aa84a }, { name: 'Lakeside', grass: 0x5a9a5a }, { name: 'Hill Top', grass: 0x8aa850 }, { name: 'Pine Edge', grass: 0x4a8a4a }];
 const placeOf = N => Math.floor((N - 1) / 5) % 4;
@@ -5282,7 +5310,7 @@ function snapshot(G) { return JSON.stringify({ E: G.E, C: G.C, items: G.items, r
 function load(G, s) { try { const o = typeof s === 'string' ? JSON.parse(s) : s; G.E = o.E || {}; G.C = o.C || {}; G.items = o.items || {}; G.roof = !!o.roof; } catch (e) {} }
 function push(G) { G.hist.push(snapshot(G)); if (G.hist.length > 80) G.hist.shift(); }
 // ---------- what you do ----------
-function setTool(G, id) { if (!G.cfg.tools.includes(id) || G.over) return false; if (id === 'roof') return raiseRoof(G); G.tool = id; G.ev.push({ k: 'tool', id }); return true; }
+function setTool(G, id) { if (!G.cfg.tools.includes(id) || G.over) return false; if (G.sel) confirmSel(G); if (id === 'roof') return raiseRoof(G); G.tool = id; G.ev.push({ k: 'tool', id }); return true; }
 function placeEdge(G, o, x, z) { if (G.over || G.wait > 0) return false; const key = ek(o, x, z), t = G.tool, cur = G.E[key];
   if (o === 'h' ? !(x >= 0 && x < G.pw && z >= 0 && z <= G.pd) : !(z >= 0 && z < G.pd && x >= 0 && x <= G.pw)) return false;
   if (t === 'wall') { if (cur === 'wall') return false; push(G); G.E[key] = 'wall'; G.placed++; G.roof = false; G.ev.push({ k: 'put', what: 'wall', o, x, z }); return after(G); }
@@ -5297,13 +5325,32 @@ function placeCell(G, x, z) { if (G.over || G.wait > 0 || !inPlot(G, x, z)) retu
     push(G); G.items[key] = { k: t, r: 0 }; G.placed++; G.ev.push({ k: 'put', what: t, x, z }); return after(G); }
   if (t === 'erase') { if (G.items[key]) { push(G); delete G.items[key]; G.ev.push({ k: 'erase' }); return after(G); } if (G.C[key]) { push(G); delete G.C[key]; G.roof = false; G.ev.push({ k: 'erase' }); return after(G); } }
   return false; }
+// ---------- moving a wall (26 Nov 2026, his review: "Tap a wall to select it and display a clear cross-shaped movement control with directional
+// arrows... Add an obvious rotation control... Show their position and orientation before confirming placement") ----------
+// With MOVE, a tap on a wall picks its whole straight run (walls, windows and doors in one line). The arrows move it a square at a time and ⟳ turns it
+// a quarter round its first end; it moves for real so you see where it is, glowing; ✓ keeps it, ✕ puts it back as it was.
+const runKeys = (G, o, x, z) => { if (!G.E[ek(o, x, z)]) return []; const out = [ek(o, x, z)]; for (const d of [-1, 1]) for (let i = 1; i < 40; i++) { const k2 = o === 'h' ? ek(o, x + d * i, z) : ek(o, x, z + d * i); if (!G.E[k2]) break; out.push(k2); } return out; };
+function selectWall(G, o, x, z) { if (G.over || G.wait > 0) return false; const run = runKeys(G, o, x, z); if (!run.length) { G.sel = null; G.ev.push({ k: 'needwall' }); return false; } G.sel = { keys: run, from: snapshot(G) }; G.ev.push({ k: 'select', n: run.length }); return true; }
+function moveSel(G, dx, dz) { const S = G.sel; if (!S || G.over) return false; const parts = S.keys.map(k2 => { const [o, x, z] = k2.split(':'); return [o, +x + dx, +z + dz, G.E[k2]]; });
+  return applySel(G, parts); }
+function rotateSel(G) { const S = G.sel; if (!S || G.over) return false; const cs = S.keys.map(k2 => { const [o, x, z] = k2.split(':'); return [o, +x, +z, G.E[k2]]; }), o = cs[0][0];
+  cs.sort((a, b) => o === 'h' ? a[1] - b[1] : a[2] - b[2]); const [, x0, z0] = cs[0], n = cs.length, no = o === 'h' ? 'v' : 'h';
+  const tryAt = (sg) => cs.map((c, i) => no === 'v' ? [no, x0, sg > 0 ? z0 + i : z0 - 1 - i, c[3]] : [no, sg > 0 ? x0 + i : x0 - 1 - i, z0, c[3]]);
+  return applySel(G, tryAt(1)) || applySel(G, tryAt(-1)); }
+function applySel(G, parts) { const S = G.sel, mine = new Set(S.keys);
+  for (const [o, x, z] of parts) { if (o === 'h' ? !(x >= 0 && x < G.pw && z >= 0 && z <= G.pd) : !(z >= 0 && z < G.pd && x >= 0 && x <= G.pw)) { G.ev.push({ k: 'blocked' }); return false; } const k2 = ek(o, x, z); if (G.E[k2] && !mine.has(k2)) { G.ev.push({ k: 'blocked' }); return false; } }
+  if (!S.pushed) { push(G); S.pushed = true; } const vals = parts.map(p2 => p2[3]); for (const k2 of S.keys) delete G.E[k2]; S.keys = parts.map(([o, x, z], i) => { const k2 = ek(o, x, z); G.E[k2] = vals[i]; return k2; });
+  G.roof = false; G.ev.push({ k: 'shift' }); check(G); return true; }
+function confirmSel(G) { if (!G.sel) return false; const moved = G.sel.pushed; G.sel = null; G.ev.push({ k: 'placed' }); if (moved) after(G); return true; }
+function cancelSel(G) { const S = G.sel; if (!S) return false; G.sel = null; if (S.pushed) { load(G, S.from); G.hist.pop(); check(G); } G.ev.push({ k: 'undo' }); return true; }
 // a tap on the plot at (fx, fz) in grid units: the nearest grid line for edge tools, the square for the rest
 function tapAt(G, fx, fz) { const T = TOOLS.find(q => q.id === G.tool); if (!T) return false;
   const nearEdge = () => { const xi = Math.round(fx), zi = Math.round(fz), dx = Math.abs(fx - xi), dz = Math.abs(fz - zi); return dz < dx ? ['h', Math.floor(fx), zi] : ['v', xi, Math.floor(fz)]; };
   if (T.kind === 'edge' || T.kind === 'conv') { const [o, x, z] = nearEdge(); return placeEdge(G, o, x, z); }
+  if (T.kind === 'select') { const [o, x, z] = nearEdge(); if (G.sel) confirmSel(G); return selectWall(G, o, x, z); }
   if (T.kind === 'erase') { const cx = Math.floor(fx), cz = Math.floor(fz), [o, x, z] = nearEdge(), ed = o === 'h' ? Math.abs(fz - z) : Math.abs(fx - x); if (ed < 0.18 && G.E[ek(o, x, z)]) return placeEdge(G, o, x, z); return placeCell(G, cx, cz); }
   return placeCell(G, Math.floor(fx), Math.floor(fz)); }
-function undo(G) { if (G.over || !G.hist.length) return false; load(G, G.hist.pop()); G.ev.push({ k: 'undo' }); return after(G, false); }      /* undoing is free; the mistake already cost a job */
+function undo(G) { if (G.over || !G.hist.length) return false; G.sel = null; load(G, G.hist.pop()); G.ev.push({ k: 'undo' }); return after(G, false); }      /* undoing is free; the mistake already cost a job */
 function raiseRoof(G) { if (G.over) return false; const A = analyse(G); if (!A.closed.length) { G.ev.push({ k: 'noroof' }); return false; } push(G); G.roof = true; G.ev.push({ k: 'roof' }); return after(G); }
 function after(G, worked = true) { if (worked && !G.lesson) G.work = (G.work || 0) + 1; check(G); lessonSee(G); if (!G.lesson && !G.over && G.work >= G.cfg.work && !G.ready) { G.over = 'lost'; G.res = { win: false, stars: 0, pieces: G.pieces, budget: G.cfg.budget, missing: G.list.filter(q => !q.ok && !q.star).map(q => q.txt), coins: 1, save: snapshot(G) }; G.ev.push({ k: 'lost' }); } return true; }
 // ---------- what the plot adds up to: rooms, closed houses, windows, doors ----------
@@ -5339,6 +5386,7 @@ function finish(G) { const c = G.cfg, wish = G.list.filter(q => q.star), within 
   G.ev.push({ k: 'won' }); return true; }
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏠", "win": "BUILD EVERYTHING ON THE LIST", "lose": "RUN OUT OF JOBS", "how": "PICK A PIECE, TAP OR DRAG"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'walls', title: 'FLOOR AND WALLS', say: G => houseCue(G)[0], do: G => houseCue(G)[1], at: G => houseCue(G)[2], how: 'Pick FLOOR and drag over 4 squares. Then pick WALL and drag along the grid lines all round it. Then DOOR: tap one of the walls. Tap MOVE IN.', need: 1 }],
   2: [{ id: 'roof', title: 'WINDOWS AND A ROOF', say: G => houseCue(G)[0], do: G => houseCue(G)[1], at: G => houseCue(G)[2], how: 'Turn two walls into WINDOWS (tap them), then tap ROOF. Then MOVE IN.', need: 1 }],
@@ -5402,7 +5450,7 @@ function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.
 // up piece by piece (wood floors, cream walls, windows with glass, doors, furniture, trees, and a roof once it is closed).
 // You turn the view a quarter at a time. When you move in, the camera walks you through the front door and round every room.
 const FX = { shake: 0, stop: 0, flash: 0, red: 0 }, TXT = [];
-let hint = null, V3 = null, viewA = 0, viewT = 0, showRoof = true, tour = null;
+let hint = null, V3 = null, viewA = 0, viewT = 0, viewTilt = 1.05, showRoof = true, tour = null;
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 6) TXT.shift(); }
 function tip(key, txt, secs = 2.8) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
 function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Math.max(0, FX.flash - dt * 3); FX.red = Math.max(0, FX.red - dt * 1.8);
@@ -5422,7 +5470,7 @@ function buildWorld(G) {
   return V; }
 const MAT = {}; function mat(T, key, col, o = {}) { return MAT[key] || (MAT[key] = new T.MeshStandardMaterial(Object.assign({ color: col, roughness: 0.8 }, o))); }
 // rebuild the house's meshes when it changes
-function rebuild(G) { const V = V3, T = V.T, key = snapshot(G) + showRoof + !!tour + upLv('brick') + upLv('tile'); if (V.built === key) return; V.built = key; if (V.grp) V.S.remove(V.grp); const g = new T.Group(); V.grp = g; V.S.add(g);
+function rebuild(G) { const V = V3, T = V.T, key = snapshot(G) + showRoof + !!tour + upLv('brick') + upLv('tile') + (G.sel ? G.sel.keys.join(',') : ''); if (V.built === key) return; V.built = key; if (V.grp) V.S.remove(V.grp); const g = new T.Group(); V.grp = g; V.S.add(g);
   const ox = -G.pw / 2, oz = -G.pd / 2, H = 2.2, th = 0.14, wallM = upLv('brick') ? mat(T, 'brick', 0xb8584a, { map: W3.grainTex(64, 2, 200, 40, 6) }) : mat(T, 'wall', 0xf2ead8), floorM = mat(T, 'floor', 0xb88a5a, { map: W3.grainTex(64, 3, 200, 30, 4) }), doorM = mat(T, 'door', upLv('paint') ? 0x2a7ad8 : 0x7a4a2a), glassM = mat(T, 'glass', 0x9ad0f0, { transparent: true, opacity: 0.45, roughness: 0.1, metalness: 0.2 });
   const box = (w, h, d, m, x, y, z, ry = 0) => { const b = new T.Mesh(new T.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.rotation.y = ry; b.castShadow = b.receiveShadow = true; g.add(b); return b; };
   for (const k of Object.keys(G.C)) { const [x, z] = k.split(':').map(Number); box(0.98, 0.1, 0.98, floorM, ox + x + 0.5, 0.06, oz + z + 0.5); }
@@ -5430,6 +5478,7 @@ function rebuild(G) { const V = V3, T = V.T, key = snapshot(G) + showRoof + !!to
     if (w === 'wall') box(1.02, H, th, wallM, cx, H / 2, cz, ry);
     if (w === 'window') { box(1.02, 0.85, th, wallM, cx, 0.425, cz, ry); box(1.02, 0.45, th, wallM, cx, H - 0.225, cz, ry); for (const s of [-1, 1]) { const p = box(0.16, 0.9, th, wallM, 0, 1.3, 0, ry); p.position.set(cx + (h ? s * 0.43 : 0), 1.3, cz + (h ? 0 : s * 0.43)); } box(0.7, 0.9, 0.03, glassM, cx, 1.3, cz, ry); }
     if (w === 'door') { box(1.02, 0.25, th, wallM, cx, H - 0.125, cz, ry); for (const s of [-1, 1]) { const p = box(0.14, H - 0.25, th, wallM, 0, (H - 0.25) / 2, 0, ry); p.position.set(cx + (h ? s * 0.44 : 0), (H - 0.25) / 2, cz + (h ? 0 : s * 0.44)); } if (!tour) box(0.72, H - 0.3, 0.05, doorM, cx, (H - 0.3) / 2, cz, ry); } }
+  if (G.sel) { const glow = mat(T, 'selglow', 0xffd84a, { emissive: 0xffb020, emissiveIntensity: 0.9, transparent: true, opacity: 0.55 }); for (const k of G.sel.keys) { const [o, xs, zs] = k.split(':'), x = +xs, z = +zs, h = o === 'h'; box(1.08, H + 0.12, th + 0.12, glow, h ? ox + x + 0.5 : ox + x, (H + 0.12) / 2, h ? oz + z : oz + z + 0.5, h ? 0 : Math.PI / 2); } }      /* the wall you are moving glows */
   for (const [k, it] of Object.entries(G.items)) { const [x, z] = k.split(':').map(Number), px = ox + x + 0.5, pz = oz + z + 0.5, r = it.r * Math.PI / 2, f = new T.Group(); f.position.set(px, 0.11, pz); f.rotation.y = r; g.add(f); const add = (w, h, d, m, x2, y2, z2) => { const b = new T.Mesh(new T.BoxGeometry(w, h, d), m); b.position.set(x2, y2, z2); b.castShadow = true; f.add(b); };
     if (it.k === 'bed') { add(0.8, 0.35, 0.95, mat(T, 'bedf', 0x6a4a3a), 0, 0.18, 0); add(0.74, 0.12, 0.88, mat(T, 'sheet', 0xf0f0f8), 0, 0.41, 0); add(0.6, 0.1, 0.22, mat(T, 'pillow', 0xffffff), 0, 0.5, -0.3); add(0.76, 0.06, 0.5, mat(T, 'quilt', 0x5a7ad8), 0, 0.48, 0.18); }
     if (it.k === 'stove') { add(0.7, 0.8, 0.6, mat(T, 'stove', 0x3a3a3e, { metalness: 0.4 }), 0, 0.4, 0); for (const [a, b] of [[-0.17, -0.12], [0.17, -0.12], [-0.17, 0.12], [0.17, 0.12]]) add(0.16, 0.02, 0.16, mat(T, 'burn', 0x111111), a, 0.81, b); }
@@ -5456,6 +5505,7 @@ function onEvent(G, e) { const cx = W / 2, cy = H * 0.42;
     case 'start': say(G.cfg.brief.title.toUpperCase(), cx, cy, '#fff', 22); sfx.chime(); break;
     case 'put': sfx.put(e.what); break; case 'turn': sfx.turn(); break; case 'erase': sfx.erase(); break; case 'undo': sfx.erase(); break;
     case 'tool': sfx.click(); break;
+    case 'select': sfx.click(); vibe(HAP.light); break; case 'shift': sfx.put('wall'); break; case 'placed': sfx.turn(); break; case 'blocked': sfx.no(); say('NO ROOM THERE', cx, cy, '#ffd0c4', 18); break;
     case 'needwall': tip('needwall', 'Windows and doors go into a wall: build the wall first, then tap it.', 3); sfx.no(); break;
     case 'needfloor': tip('needfloor', 'Furniture goes on the floor: lay FLOOR there first.', 3); sfx.no(); break;
     case 'noroof': say('CLOSE THE WALLS FIRST', cx, cy, '#ffd0c4', 18); tip('noroof', 'A roof needs a floor closed in by walls all the way round.', 3); sfx.no(); break;
@@ -5476,7 +5526,7 @@ function draw(now, dt) {
   const cam = W3.cam, fov = tour ? 72 : 45; if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
   if (tour) { tour.t += dt; const P = tour.pts, u = Math.min(P.length - 1.001, tour.t / 2.2), i = Math.floor(u), f = u - i, a = P[i], b = P[Math.min(P.length - 1, i + 1)], x = a[0] + (b[0] - a[0]) * f, z = a[1] + (b[1] - a[1]) * f, c = P[Math.min(P.length - 1, i + 2)];
     const lx = b[0] + (c[0] - b[0]) * f, lz = b[1] + (c[1] - b[1]) * f; cam.position.set(x, 1.55, z); cam.lookAt(lx === x && lz === z ? x + 1 : lx, 1.4, lz === z && lx === x ? z : lz); if (tour.t > tour.dur) { tour = null; showRoof = true; if (G && G.over && !HEADLESS) showEnd(); } }
-  else { viewT += (viewA - viewT) * Math.min(1, dt * 6); const r = Math.max(g.pw, g.pd) * 1.55 + 4, a = viewT * Math.PI / 2 + 0.6; cam.position.set(Math.sin(a) * r, r * 1.05, Math.cos(a) * r); cam.lookAt(0, -1.2, 0); }
+  else { viewT += (viewA - viewT) * Math.min(1, dt * 6); const r = Math.max(g.pw, g.pd) * 1.55 + 4, a = viewT * Math.PI / 2 + 0.6, tl = clamp(viewTilt, 0.25, 1.6); cam.position.set(Math.sin(a) * r * Math.cos(Math.atan(tl)) * 1.45, r * 1.05 * Math.sin(Math.atan(tl)) * 1.45, Math.cos(a) * r * Math.cos(Math.atan(tl)) * 1.45); cam.lookAt(0, -1.2, 0); }
   W3.setFocus(0, 0, 0, 20); W3.render(dt);
   if (G && !tour) hud(G, now);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -5489,7 +5539,9 @@ let IG = null; function idleG() { if (!IG || IG.over || IG.t > 30) { IG = newGam
 // the tray, the buttons, the checklist
 function layout(G) { const tools = G.cfg.tools, per = 7, bw = (W - 16) / per, bh = 54 * k, rows = Math.ceil(tools.length / per), y0 = H - rows * (bh + 6) - 12;
   const tray = tools.map((id, i) => ({ id, x: 8 + (i % per) * bw + 2, y: y0 + Math.floor(i / per) * (bh + 6), w: bw - 4, h: bh }));
-  const top = y0 - 52 * k; return { tray, move: { x: W - 132 * k, y: top, w: 120 * k, h: 42 * k }, undo: { x: 12, y: top, w: 56 * k, h: 42 * k }, rotL: { x: 74 * k, y: top, w: 42 * k, h: 42 * k }, rotR: { x: 122 * k, y: top, w: 42 * k, h: 42 * k }, eye: { x: 170 * k, y: top, w: 42 * k, h: 42 * k }, trayTop: y0, top }; }
+  const top = y0 - 52 * k; return { tray, move: { x: W - 132 * k, y: top, w: 120 * k, h: 42 * k }, undo: { x: 12, y: top, w: 56 * k, h: 42 * k }, rotL: { x: 74 * k, y: top, w: 42 * k, h: 42 * k }, rotR: { x: 122 * k, y: top, w: 42 * k, h: 42 * k }, eye: { x: 170 * k, y: top, w: 42 * k, h: 42 * k }, trayTop: y0, top, cross: crossOf(top) }; }
+// the cross that moves the chosen wall: its own fixed place, right side above the buttons (bigger rather than smaller); ⟳ in the middle; ✓ and ✕ beside it
+function crossOf(top) { const b = 50 * k, cx = W - b * 1.5 - 14, cy = top - b * 1.5 - 14, at = (dx, dy) => ({ x: cx + dx * b - b / 2, y: cy + dy * b - b / 2, w: b - 4, h: b - 4 }); return { up: at(0, -1), down: at(0, 1), left: at(-1, 0), right: at(1, 0), turn: at(0, 0), ok: { x: cx - b * 3.1, y: cy - b / 2, w: b * 1.1, h: b - 4 }, no: { x: cx - b * 3.1, y: cy + b * 0.6, w: b * 1.1, h: b - 4 } }; }
 function hud(G, t) { const L = layout(G), c = G.cfg;
   if (G.lesson) lessonPanel(G);
   // checklist
@@ -5498,6 +5550,7 @@ function hud(G, t) { const L = layout(G), c = G.cfg;
   list.forEach((q, i) => { ctx.fillStyle = q.ok ? '#9be3b5' : q.star ? 'rgba(255,224,138,.85)' : '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(`${q.ok ? '✓' : q.star ? '☆' : '○'} ${q.txt}`, 18, y0 + (i + (G.lesson ? 0 : 1)) * lh + (G.lesson ? 0 : 0)); });
   // buttons
   const btn = (r, txt, on, col = 'rgba(0,0,0,.5)', tc = '#fff') => { ctx.fillStyle = on ? col : 'rgba(0,0,0,.3)'; rrect(r.x, r.y, r.w, r.h, 12); ctx.fill(); ctx.fillStyle = on ? tc : 'rgba(255,255,255,.4)'; ctx.font = `${Math.round(Math.min(r.h * 0.38, 16 * k))}px ${TF}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, r.x + r.w / 2, r.y + r.h / 2 + 1); };
+  if (G.sel) { const X = L.cross; for (const [kk, t] of [['up', '▲'], ['down', '▼'], ['left', '◀'], ['right', '▶'], ['turn', '⟳']]) btn(X[kk], t, true, kk === 'turn' ? 'rgba(255,190,60,.92)' : 'rgba(20,30,40,.78)', kk === 'turn' ? '#2a1a00' : '#ffe08a'); btn(X.ok, '✓ KEEP', true, '#7ad08a', '#10301a'); btn(X.no, '✕', true, 'rgba(120,40,40,.8)'); }
   btn(L.move, 'MOVE IN', G.ready, '#7ad08a', '#10301a'); btn(L.undo, 'UNDO', G.hist.length > 0); btn(L.rotL, '⟲', true); btn(L.rotR, '⟳', true); btn(L.eye, showRoof ? '⌂' : '◫', true);
   ctx.fillStyle = 'rgba(10,16,12,.75)'; rrect(4, L.trayTop - 6, W - 8, H - L.trayTop + 2, 14); ctx.fill();
   for (const b of L.tray) { const T = TOOLS.find(q => q.id === b.id), on = G.tool === b.id; ctx.fillStyle = on ? 'rgba(122,208,138,.85)' : 'rgba(255,255,255,.1)'; rrect(b.x, b.y, b.w, b.h, 10); ctx.fill();
@@ -5627,7 +5680,20 @@ function plotAt(x, y) { const p = pickAt(G, x, y); if (!p) return; const T = TOO
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || tour) return; const L = layout(G), x = e.clientX, y = e.clientY;
   for (const b of L.tray) if (inR(b, x, y)) { setTool(G, b.id); return; }
   if (inR(L.move, x, y)) { moveIn(G); return; } if (inR(L.undo, x, y)) { undo(G); return; } if (inR(L.rotL, x, y)) { viewA--; sfx.click(); return; } if (inR(L.rotR, x, y)) { viewA++; sfx.click(); return; } if (inR(L.eye, x, y)) { showRoof = !showRoof; sfx.click(); return; }
-  if (y > L.trayTop - 8) return; ui.drag = { id: e.pointerId }; lastKey = null; try { cv.setPointerCapture(e.pointerId); } catch (err) {} plotAt(x, y); });
+  if (G.sel) { const X = L.cross; if (inR(X.ok, x, y)) { confirmSel(G); return; } if (inR(X.no, x, y)) { cancelSel(G); return; } if (inR(X.turn, x, y)) { rotateSel(G); return; }
+    for (const [kk, sx, sy] of [['up', 0, 1], ['down', 0, -1], ['left', -1, 0], ['right', 1, 0]]) if (inR(X[kk], x, y)) { const [dx, dz] = screenStep(sx, sy); moveSel(G, dx, dz); return; } }
+  if (y > L.trayTop - 8) return; try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  // 26 Nov 2026, his review: "Make looking around and adjusting a selected wall distinct, so dragging doesn't accidentally perform the wrong action".
+  // A drag that starts off the plot (grass, sky), or any drag with MOVE, turns the camera round the house; with a building piece a drag ON the plot builds.
+  const p = pickAt(G, x, y), onPlot = p && p.fx > -0.35 && p.fx < G.pw + 0.35 && p.fz > -0.35 && p.fz < G.pd + 0.35;
+  if (G.tool === 'move' || !onPlot) { ui.orbit = { id: e.pointerId, x, y, x0: x, y0: y, moved: false, tap: onPlot && G.tool === 'move' }; return; }
+  ui.drag = { id: e.pointerId }; lastKey = null; plotAt(x, y); });
+// the arrow that points up the screen moves the wall away from you, whichever way the camera faces
+function screenStep(sx, sy) { const a = viewT * Math.PI / 2 + 0.6, vx = sx * Math.cos(a) - sy * Math.sin(a), vz = -sx * Math.sin(a) - sy * Math.cos(a); return Math.abs(vx) > Math.abs(vz) ? [Math.sign(vx), 0] : [0, Math.sign(vz)]; }
+cv.addEventListener('pointermove', e => { const o = ui.orbit; if (!o || e.pointerId !== o.id || !G) return; const dx = e.clientX - o.x, dy = e.clientY - o.y; o.x = e.clientX; o.y = e.clientY;
+  if (Math.hypot(o.x - o.x0, o.y - o.y0) > 10) o.moved = true; if (!o.moved) return; viewA -= dx / (W * 0.45); viewT = viewA; viewTilt = clamp(viewTilt + dy / (H * 0.35), 0.25, 1.6); });
+const endOrbit = e => { const o = ui.orbit; if (!o || e.pointerId !== o.id) return; ui.orbit = null; if (!o.moved && o.tap && G && !G.over && !paused) { const p = pickAt(G, o.x0, o.y0); if (p) tapAt(G, p.fx, p.fz); } };
+cv.addEventListener('pointerup', endOrbit); cv.addEventListener('pointercancel', endOrbit);
 cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; const T = TOOLS.find(q => q.id === G.tool); if (T && (T.id === 'wall' || T.id === 'floor' || T.id === 'erase')) plotAt(e.clientX, e.clientY); });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; lastKey = null; }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
@@ -5679,7 +5745,7 @@ window.__sim = {
   step(dt) { step(G, dt); G.ev.length = 0; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  tapAt(x, z) { return tapAt(G, x, z); }, analyse() { return analyse(G); }, plan() { return plan(G); }, setTool(id) { return setTool(G, id); }, moveIn() { return moveIn(G); }, undo() { return undo(G); }, layout() { return layout(G); }, pickAt(x, y) { return pickAt(G, x, y); }, wScreen, renderShop, startTour() { startTour(G); }, get tour() { return tour; }, ui, get V3() { return V3; }, W3,
+  tapAt(x, z) { return tapAt(G, x, z); }, moveSel(dx, dz) { return moveSel(G, dx, dz); }, rotateSel() { return rotateSel(G); }, confirmSel() { return confirmSel(G); }, cancelSel() { return cancelSel(G); }, get viewA() { return viewA; }, analyse() { return analyse(G); }, plan() { return plan(G); }, setTool(id) { return setTool(G, id); }, moveIn() { return moveIn(G); }, undo() { return undo(G); }, layout() { return layout(G); }, pickAt(x, y) { return pickAt(G, x, y); }, wScreen, renderShop, startTour() { startTour(G); }, get tour() { return tour; }, ui, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },
@@ -5706,7 +5772,7 @@ $('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
 ['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
 $('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
 $('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
-setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+setInterval(() => { const on = !!(G && G.lesson && !G.over && (!paused || (typeof AIMEL !== 'undefined' && AIMEL && AIMEL._unpause)) && !HEADLESS);      /* Skip stays while the aim card is up */ $('skipTut').classList.toggle('hidden', !on); }, 150);
 window.gameFeedTutorial = () => { audio(); startTutorial(); };
 // ---------- settings: Music, Sound effects, Vibration (his rule, 20 Nov 2026; the sound side is in the juice kit) ----------
 Object.assign(SET, store.get('settings', {}) || {});

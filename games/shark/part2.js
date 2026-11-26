@@ -227,6 +227,7 @@ function finish(G, win, why, by) {
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true;
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🦈", "win": "EAT FISH, GROW BIG", "lose": "STARVE OR GET EATEN", "how": "DRAG TO SWIM INTO SMALL FISH"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'eat', title: 'EAT', say: G => sharkCue(G)[0], do: G => sharkCue(G)[1], at: G => sharkCue(G)[2], how: 'Drag your thumb: the shark swims that way. Swim into the small fish (they glow green). Eat five.', need: 5 }],
   2: [{ id: 'escape', title: 'GET AWAY', say: G => sharkCue(G)[0], do: G => sharkCue(G)[1], at: G => sharkCue(G)[2], how: 'A hunter is coming (the red mark). Drag all the way to the edge to dash away until it gives up.', need: 1 }],

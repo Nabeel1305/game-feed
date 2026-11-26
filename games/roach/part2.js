@@ -203,6 +203,7 @@ function lineD(s, x, z) { const ex = s.ox + s.dx * 150, ez = s.oz + s.dz * 150, 
 const BLIND = { m: G => { if (Math.random() < 0.2) stick(G, 0, 0); else { const a = Math.random() * TAU; stick(G, Math.cos(a), Math.sin(a)); } }, s: G => sprint(G, !G.me.run), h: G => hideBtn(G) };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.stash = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🪳", "win": "BRING CRUMBS HOME BY DAWN", "lose": "GET SQUASHED OR SPRAYED", "how": "PUSH TO RUN, DODGE THE SLIPPER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'eat', title: 'RUN, GRAB, GET HOME', say: G => roachCue(G)[0], do: G => roachCue(G)[1], at: G => roachCue(G)[2], how: 'Left thumb: push the stick to run. Touch the crumbs to pick them up, then bring them back to your crack (the glowing gap). 3 crumbs.', need: 3 }],
   2: [{ id: 'slip', title: 'DODGE THE SLIPPER', say: G => roachCue(G)[0], do: G => roachCue(G)[1], at: G => roachCue(G)[2], how: 'A shadow on the floor: a slipper is coming, aimed where you are heading. Turn away, or push the stick all the way to SPRINT. Dodge 3.', need: 3, force: true }],

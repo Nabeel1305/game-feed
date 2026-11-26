@@ -273,6 +273,7 @@ function judgeDocket(G) { const c = G.cfg, avg = Math.round(G.done.reduce((a, e)
   G.res = { win, stars, avg, pass: c.pass, done: G.done, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1, record: G.record.slice(-30) };
   G.ev.push({ k: 'council', avg }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "⚖️", "win": "GIVE FAIR SENTENCES", "lose": "NO WRONG ANSWER: JUDGES COMMENT", "how": "READ THE CASE, WRITE A SENTENCE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'write', title: 'PASS SENTENCE', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
   2: [{ id: 'weigh', title: 'WEIGH IT UP', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],

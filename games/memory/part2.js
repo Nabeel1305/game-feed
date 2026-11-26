@@ -125,6 +125,7 @@ function finish(G, win, acc = 0) { if (G.over) return; G.over = win ? 'won' : 'l
   G.res = { win, acc, stars: win ? (acc >= 0.999 ? 3 : acc >= 0.9 ? 2 : 1) : 0, points: pts, log: G.log, types, need: G.cfg.pass };
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS: one way of answering at a time ----------
+const AIMCARD = {"pic": "🧠", "win": "REMEMBER WHAT YOU SAW", "lose": "TOO MANY WRONG", "how": "LOOK CLOSELY, THEN ANSWER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'which', type: 'which', title: 'WHICH WERE THERE?', say: G => memCue(G)[0], do: G => memCue(G)[1], at: G => memCue(G)[2], how: 'Look at the three things. When they are covered, tap the three you saw (twice in a row).', need: 2 }],
   2: [{ id: 'place', type: 'place', title: 'PUT THEM BACK', say: G => memCue(G)[0], do: G => memCue(G)[1], at: G => memCue(G)[2], how: 'Remember where each thing sits. Then drag each one back to its place (or tap it, then tap the place).', need: 2 }],

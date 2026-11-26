@@ -93,6 +93,7 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.res = { win, stars, kills: G.kills, hearts: G.hearts, acc: Math.round(acc * 100), combos: G.combos, best: G.best, wave: G.wave, waves: c.waves, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 + G.combos : 1 };
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🍉", "win": "STOP EVERY MONSTER", "lose": "MONSTERS REACH YOU", "how": "PULL BACK, AIM, LET GO"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'aim', title: 'PULL AND LET GO', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'Pull back with your thumb: the dotted arc shows where it goes. Let go when it ends on the blob. Splat three blobs.', need: 3 }],
   2: [{ id: 'melon', title: 'THE WATERMELON', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'Tap 🍉, then burst it in the middle of the crowd. Hit two or more with one melon.', need: 1 }],

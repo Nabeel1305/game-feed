@@ -145,6 +145,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🌿", "win": "SWING TO THE END OF THE JUNGLE", "lose": "FALL TOO OFTEN, OR TIME RUNS OUT", "how": "HOLD TO SWING, LET GO, CATCH"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'go', title: 'LET GO AT THE RIGHT MOMENT', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'Hold your thumb down: you swing. Lift it as you swing forward and up. Your hand catches the next vine by itself, for now.', need: 3, ok: w => w === 'catch', autoGrab: 1 },
       { id: 'grab', title: 'CATCH THE VINE', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'This time you let go by yourself. Put your thumb down when your hand reaches the next vine.', need: 3, ok: w => w === 'catch', autoGo: 1 }],

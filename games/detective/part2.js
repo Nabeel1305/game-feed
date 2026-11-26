@@ -218,6 +218,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 
 // ---------- LESSONS: turn things over, challenge a story, accuse with proof ----------
+const AIMCARD = {"pic": "🔍", "win": "NAME WHO DID IT", "lose": "ACCUSE WRONG TOO MANY TIMES", "how": "SEARCH, ASK, PROVE IT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'search', title: 'LOOK CLOSELY', say: G => detCue(G)[0], do: G => detCue(G)[1], at: G => detCue(G)[2], how: 'Tap an object to look at it. Drag to turn it round: some clues are only on the back. Tap what you notice. Find three hidden marks.', need: 3 }],
   2: [{ id: 'challenge', title: 'CHALLENGE A STORY', say: G => detCue(G)[0], do: G => detCue(G)[1], at: G => detCue(G)[2], how: 'In People, ask where they were. Then Show a clue that is about them: a liar cracks, someone with a secret owns up. Do it twice. (A clue about someone else starts the count again.)', need: 2 }],

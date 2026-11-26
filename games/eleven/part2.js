@@ -314,6 +314,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true;
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "⚽", "win": "SCORE MORE GOALS", "lose": "THEY SCORE MORE", "how": "PASS, RUN, SHOOT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'pass', title: 'PASS', say: G => elevenCue(G)[0], do: G => elevenCue(G)[1], at: G => elevenCue(G)[2], how: 'Run with your LEFT thumb. Point at a team-mate (a white ring shows who) and tap PASS. Three passes.', need: 3 },
     { id: 'goal', title: 'SHOOT', say: G => elevenCue(G)[0], do: G => elevenCue(G)[1], at: G => elevenCue(G)[2], how: 'Run at goal and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],

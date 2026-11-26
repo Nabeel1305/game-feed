@@ -98,6 +98,7 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.res = { win, why: why || null, stars, saved: G.rescued, lost: G.lost, people: G.w.filter(w => w.p).length, outs: G.outs, blasts: G.blasts, time: Math.round(G.t), par: Math.round(par), coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + G.rescued };
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚒", "win": "PUT OUT THE FIRE, SAVE THE PEOPLE", "lose": "THE HOUSE BURNS DOWN", "how": "HOLD TO SPRAY, SEND THE LADDER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'hose', title: 'THE HOSE', say: G => fireCue(G)[0], do: G => fireCue(G)[1], at: G => fireCue(G)[2], how: 'Hold your thumb on a fire: the water lands just above your thumb. Put every fire out.', need: 1 }],
   2: [{ id: 'ladder', title: 'THE LADDER', say: G => fireCue(G)[0], do: G => fireCue(G)[1], at: G => fireCue(G)[2], how: 'Someone is trapped! Put out the fire in their window, then TAP them to send up the ladder.', need: 1 }],

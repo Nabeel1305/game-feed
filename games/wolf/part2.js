@@ -93,6 +93,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🐺", "win": "CATCH THE MARKED ELK", "lose": "GET KICKED: NO HEARTS LEFT", "how": "RUN BESIDE HER, BITE FROM THE SIDE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'run', title: 'RUN HER DOWN', say: G => wolfCue(G)[0], do: G => wolfCue(G)[1], at: G => wolfCue(G)[2], how: 'Slide your thumb left or right to steer at the marked elk. Push it up for a burst. When you are close and BESIDE her, the BITE button glows: tap it.', need: 1, ok: w => w === 'caught', start: 14 }],
   2: [{ id: 'cut', title: 'CUT THE CORNER', say: G => wolfCue(G)[0], do: G => wolfCue(G)[1], at: G => wolfCue(G)[2], how: 'Her head turns before she swerves. Steer to where she is going, come up alongside, and strike from the side.', need: 1, ok: w => w === 'caught' }],

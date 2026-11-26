@@ -73,6 +73,7 @@ function finish(G, place) { if (G.over) return; const win = place === 1; G.over 
   G.res = { win, stars, place, of: G.boats.length + 1, time: t, perfect: Math.round(q * 100), crabs: G.crabs, bumps: G.bumps, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + (place === 2 ? 1 : 0) };
   G.ev.push({ k: win ? 'won' : 'lost', place }); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚣", "win": "WIN THE RACE", "lose": "THEY FINISH FIRST", "how": "TAP BOTH SIDES ON GREEN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'together', title: 'TOGETHER', say: G => rowCue(G)[0], do: G => rowCue(G)[1], at: G => rowCue(G)[2], how: 'Tap left and right at the same time, each time both rings turn green. Six perfect strokes together.', need: 6 }],
   2: [{ id: 'steer', title: 'STEER', say: G => rowCue(G)[0], do: G => rowCue(G)[1], at: G => rowCue(G)[2], how: 'One oar turns you: the LEFT oar turns you RIGHT, the right oar turns you left. Row 150 m down the bends without touching the bank.', need: 1 }],

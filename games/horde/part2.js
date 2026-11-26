@@ -178,6 +178,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🧟", "win": "SURVIVE UNTIL THE BELL", "lose": "MONSTERS EMPTY YOUR HEALTH", "how": "MOVE: YOUR HERO FIGHTS BY HIMSELF"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'move', title: 'MOVE, AND LET HIM FIGHT', say: G => hordeCue(G)[0], do: G => hordeCue(G)[1], at: G => hordeCue(G)[2], how: 'Drag anywhere to move. Your sword swings by itself. Walk over the blue crystals the monsters drop. Fill the bar.', need: 1, ok: w => w === 'pick', kinds: ['zombie', 'bat'], rate: 0.8 }],
   2: [{ id: 'pick', title: 'PICK YOUR POWER', say: G => hordeCue(G)[0], do: G => hordeCue(G)[1], at: G => hordeCue(G)[2], how: 'Each level-up, pick one of three: a new weapon, a better one, or a blessing. Level up twice.', need: 2, ok: w => w === 'pick', kinds: ['zombie', 'skel', 'bat'], rate: 1 }],

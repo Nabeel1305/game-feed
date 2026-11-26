@@ -89,6 +89,7 @@ function finish(G, win) { G.over = win ? 'won' : 'lost'; const tot = G.notes.len
   G.res = { win, stars, score: G.score, acc, perfects: G.perfects, goods: G.goods, oks: G.oks, misses: G.misses, strays: G.strays, maxCombo: G.maxCombo, name: G.cfg.name, prog: Math.min(1, G.t / G.len), coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) : 0) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🥁", "win": "PLAY THE WHOLE SONG", "lose": "MISS TOO MANY: THE CROWD LEAVES", "how": "TAP THE DRUM AS THE NOTE HITS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'hit', title: 'ON THE BEAT', say: G => drumCue(G)[0], do: G => drumCue(G)[1], at: G => drumCue(G)[2], how: 'Tap the left half for the left drum, the right half for the right, as each note reaches its drum. Eight in a row.', need: 8 }],
   2: [{ id: 'both', title: 'BOTH DRUMS', say: G => drumCue(G)[0], do: G => drumCue(G)[1], at: G => drumCue(G)[2], how: 'Gold notes: tap both halves at once. Three in a row.', need: 3 }],

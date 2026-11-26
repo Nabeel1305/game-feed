@@ -163,6 +163,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS: the first three runs teach every stroke, slowly, two or three times each ----------
+const AIMCARD = {"pic": "🛶", "win": "REACH THE END OF THE RIVER", "lose": "HIT ROCKS: NO HEARTS LEFT", "how": "PADDLE LEFT OR RIGHT TO STEER"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'left', title: 'A STROKE ON THE LEFT', say: 'SWIPE DOWN ON THE LEFT', do: 'swipe', dir: 'down', at: G => [W * 0.27, H * 0.72], how: 'Swipe down on the left half of the screen. The bow swings to the right.', need: 3, ok: w => w === 'stroke-1', slow: 1 },
       { id: 'right', title: 'A STROKE ON THE RIGHT', say: 'SWIPE DOWN ON THE RIGHT', do: 'swipe', dir: 'down', at: G => [W * 0.73, H * 0.72], how: 'Swipe down on the right half. The bow swings to the left.', need: 3, ok: w => w === 'stroke1', slow: 1 },

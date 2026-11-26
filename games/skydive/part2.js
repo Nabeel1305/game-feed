@@ -117,6 +117,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 
 // ---------- LESSONS: fly the freefall, open between the marks, flare to land soft ----------
+const AIMCARD = {"pic": "🪂", "win": "LAND ON THE X", "lose": "LAND HARD OR FAR AWAY", "how": "FLY, OPEN THE CHUTE, FLARE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'fly', title: 'FLY YOUR BODY', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Drag the left thumb: forward to fly forward, left or right to turn. Fly through three gold rings.', need: 3 }],
   2: [{ id: 'open', title: 'OPEN BETWEEN THE MARKS', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Watch the altimeter on the right. When the needle is between the yellow marks, tap CHUTE. Twice.', need: 2 }],

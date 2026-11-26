@@ -157,6 +157,7 @@ function finish(G) { const c = G.cfg, win = G.match >= c.need; G.over = win ? 'w
     tree: G.nodes.filter(n => n.g > 0.5).map(n => [+n.x0.toFixed(3), +n.y0.toFixed(3), +n.x.toFixed(3), +n.y.toFixed(3), +padR(n).toFixed(3)]), sp: G.sp.id };
   G.ev.push({ k: 'judge', match: G.match }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🌳", "win": "GROW THE TREE INTO THE OUTLINE", "lose": "TOO FEW LEAVES IN THE OUTLINE", "how": "TAP A BUD TO GROW, PRUNE WILD ONES"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'grow', title: 'GROW', say: 'TAP THIS BUD', do: 'tap', how: 'Tap a bud (a pink dot at a branch tip) whose branch would grow into the outline. Grow three.', need: 3 }],
   2: [{ id: 'prune', title: 'PRUNE', say: 'CUT THIS BRANCH', do: 'tap', how: 'Some branches grew wild, out of the outline. Tap each one to cut it off. Cut two.', need: 2 }],

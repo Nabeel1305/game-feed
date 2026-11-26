@@ -159,6 +159,7 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.res = { win, stars, place, need: c.place, laps: c.laps, time: +G.t.toFixed(1), boosts: G.boosts, bigBoosts: G.bigBoosts, hits: G.hits, zaps: G.zaps, coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1), track: TRACKS[c.track].name };
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏎️", "win": "FINISH IN THE TOP PLACES", "lose": "FINISH TOO FAR BACK", "how": "STEER, DRIFT, BOOST"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'steer', title: 'STEER', say: G => kartCue(G)[0], do: G => kartCue(G)[1], at: G => kartCue(G)[2], how: 'Left thumb: slide to steer round the bends.', need: 1 },
     { id: 'boost', title: 'DRIFT', say: G => kartCue(G)[0], do: G => kartCue(G)[1], at: G => kartCue(G)[2], how: 'In a bend HOLD the DRIFT button and steer: the kart slides and sparks. When the sparks come, let go: a boost. Twice.', need: 2 }],

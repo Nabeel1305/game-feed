@@ -110,6 +110,7 @@ function finish(G, win) { const c = G.cfg; G.over = win ? 'won' : 'lost'; const 
 // ---------- what you do: hold a side (the screen's halves, for the robots a short press) ----------
 function press(G, side, secs = 0.3) { if (side === 'l') G.tl = secs; else if (side === 'r') G.tr = secs; else if (side === 'bl') G.tbl = secs; else G.tbr = secs; }      // l, r: the FLIP buttons; bl, br: the LEAN buttons
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏍️", "win": "REACH THE END IN TIME", "lose": "CRASH OR RUN OUT OF TIME", "how": "HOLD LEFT: BACK. RIGHT: FORWARD"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'land', title: 'STICK IT', say: G => rampCue(G)[0], do: G => rampCue(G)[1], at: G => rampCue(G)[2], how: 'Off the ramp the bike points up. Hold LEAN FWD in the air to tip it forward, so it lands flat on the slope. Three clean landings in a row.', need: 3 }],
   2: [{ id: 'flip', title: 'FLIP', say: G => rampCue(G)[0], do: G => rampCue(G)[1], at: G => rampCue(G)[2], how: 'Big ramp. Hold BACK FLIP in the air to spin a backflip, let go as it comes round, and land it. Twice.', need: 2 }],

@@ -387,6 +387,31 @@ function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas
   const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
+// ---------- THE AIMCARD CARD (26 Nov 2026, his words: "when somebody goes through the tutorial, a person must always understand what is the aim of this
+// game, how do I win, what causes me to lose... simple, and visual cues, as little words as possible... the words should be big"; and "when they press
+// pause... they can basically understand the aim of the game"). A game that defines AIMCARD = { pic, win, lose, how } gets: the card before its first
+// lesson (the game waits while it is up), and a HOW TO PLAY button in its pause menu. A tap on the card closes it; so does leaving the lesson.
+const AIMSEEN = new WeakSet(); let AIMEL = null;
+function aimClose() { if (!AIMEL) return; const el = AIMEL; AIMEL = null; el.remove(); if (el._unpause) { try { paused = false; last = performance.now(); } catch (e) {} } }
+function aimCard(fromPause) { if (typeof AIMCARD === 'undefined' || AIMEL) return; const host = document.getElementById('stage') || document.body, el = document.createElement('div'); AIMEL = el;
+  let was = true; try { was = paused; if (!fromPause) paused = true; } catch (e) {} el._unpause = !fromPause && !was; el._g = typeof G !== 'undefined' ? G : null;
+  const F = String(typeof TF !== 'undefined' ? TF : 'sans-serif').replace(/"/g, "'"), B = String(typeof BC !== 'undefined' ? BC : 'sans-serif').replace(/"/g, "'"), name = (document.title || '').split(/ [·|–—-] /)[0].trim();
+  el.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'inset:0;z-index:60;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(4,8,16,.55)';
+  const row = (ic, lab, col, txt) => `<div style="display:flex;align-items:center;gap:12px;margin:10px 0;text-align:left"><div style="font-size:34px;width:44px;text-align:center;flex:none">${ic}</div><div><div style="font:800 14px ${B};letter-spacing:2px;color:${col}">${lab}</div><div style="font:800 24px/1.12 ${B};color:#fff">${txt}</div></div></div>`;
+  el.innerHTML = `<div id="aimCard" style="pointer-events:auto;width:min(86%,360px);background:linear-gradient(180deg,#1d2a44,#121a2c);border:2px solid rgba(255,211,106,.65);border-radius:22px;padding:18px 18px 16px;box-shadow:0 18px 50px rgba(0,0,0,.55);text-align:center">
+    <div style="font-size:58px;line-height:1">${AIMCARD.pic || '🎮'}</div><div style="font:400 24px ${F};color:#ffd36a;margin:6px 0 6px">${name.toUpperCase()}</div>
+    ${row('🏆', 'TO WIN', '#8fe0ab', AIMCARD.win)}${row('✖️', 'YOU LOSE IF', '#ff9a8a', AIMCARD.lose)}${AIMCARD.how ? row('👆', 'HOW', '#9fd0ff', AIMCARD.how) : ''}
+    <div id="aimGo" style="margin-top:14px;padding:13px 0;border-radius:14px;background:#ffd36a;color:#2a1a00;font:800 20px ${B};letter-spacing:1px">${fromPause ? 'OK' : "LET'S PLAY ▶"}</div></div>`;
+  host.appendChild(el); const card = el.querySelector('#aimCard'); { const hh = host === document.body ? innerHeight : (host.clientHeight || H), ch = card.offsetHeight; if (ch > hh * 0.76) card.style.transform = `scale(${(hh * 0.76 / ch).toFixed(3)})`; }      /* a sideways game's picture is short: the card shrinks to fit inside it, clear of the pause button */ ['pointerdown', 'touchstart', 'mousedown'].forEach(k => card.addEventListener(k, e => { e.stopPropagation(); }, { passive: true }));
+  card.addEventListener('click', e => { e.stopPropagation(); aimClose(); });
+  // a touch anywhere else closes it first (before the game sees the touch), so the pause button, Skip and the game itself always answer
+  const away = e => { if (AIMEL !== el) { document.removeEventListener('pointerdown', away, true); return; } if (!card.contains(e.target)) { document.removeEventListener('pointerdown', away, true); aimClose(); } }; document.addEventListener('pointerdown', away, true);
+  const watch = () => { if (AIMEL !== el) return; let g = null; try { g = G; } catch (e) {} if (!fromPause && (g !== el._g || !g || !g.lesson)) { aimClose(); return; } requestAnimationFrame(watch); }; requestAnimationFrame(watch);
+  try { if (typeof sfx !== 'undefined' && sfx.click) sfx.click(); } catch (e) {} }
+// the pause menu gets HOW TO PLAY (next to Tutorial)
+function aimButton() { if (typeof AIMCARD === 'undefined') return; const t = document.getElementById('pTut'); if (!t || document.getElementById('pAim')) return; const b = document.createElement('button'); b.id = 'pAim'; b.className = t.className; b.textContent = '❓ How to play'; const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;width:100%'; t.parentNode.insertBefore(row, t); row.appendChild(b); row.appendChild(t); for (const x of [b, t]) { x.style.flex = '1'; x.style.minWidth = '0'; x.style.margin = '0'; } b.onclick = () => aimCard(true); }      /* side by side with Tutorial: the menu is no taller than before */
+if (typeof document !== 'undefined') { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', aimButton); else setTimeout(aimButton, 0); }
+
 function coachMiss() { COACH.miss = performance.now(); }
 function coachWord(txt, x, y, size, col) { const F = typeof BC !== 'undefined' ? BC : 'sans-serif'; CCX.font = `800 ${Math.round(size)}px ${F}`; const mw = CCX.measureText(txt).width; if (mw > W - 28) { size *= (W - 28) / mw; CCX.font = `800 ${Math.round(size)}px ${F}`; } CCX.textAlign = 'center'; CCX.textBaseline = 'middle'; CCX.lineJoin = 'round';
   CCX.lineWidth = Math.max(5, size * 0.2); CCX.strokeStyle = 'rgba(0,0,0,.72)'; CCX.strokeText(txt, x, y); CCX.fillStyle = col; CCX.fillText(txt, x, y); }
@@ -418,6 +443,7 @@ function coachCue(c, now) {
 // the lesson on screen: which lesson of how many, the dots of what is done, the few big words, the gesture, and a big tick or TRY AGAIN
 function coachPanel(G, extra) {
   const D = G.lesson; if (!D || !D.steps) return; const st = D.steps[D.i]; if (!st) return; const now = performance.now(); if (typeof HEADLESS !== 'undefined' && HEADLESS) return; coachLayer();
+  if (typeof AIMCARD !== 'undefined' && !AIMSEEN.has(G) && D.i === 0 && D.n === 0 && typeof LESSONS !== 'undefined' && G.N === Math.min(...Object.keys(LESSONS).map(Number))) { AIMSEEN.add(G); aimCard(false); }
   if (COACH.i !== D.i || COACH.n > D.n) { COACH.i = D.i; COACH.n = D.n; COACH.t0 = now; } if (D.n > COACH.n) { COACH.n = D.n; COACH.ok = now; }
   CCX.save(); const top = 64 * k, need = st.need || 1;
   CCX.font = `800 ${Math.round(12 * k)}px ${typeof BC !== 'undefined' ? BC : 'sans-serif'}`; const lab = `${D.i + 1} / ${D.steps.length}`, lw = CCX.measureText(lab).width + 22 + need * 18 * k;
@@ -537,6 +563,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.res = { win, stars, score: G.score, tiles: G.tiles, prog, song: G.cfg.song.name, by: G.cfg.song.by, enc: G.encDone, holds: G.holdsAll, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + Math.floor(prog * 4) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: slow, no song to lose; a mistake starts the lesson again ----------
+const AIMCARD = {"pic": "🎹", "win": "PLAY THE WHOLE SONG", "lose": "TAP WHITE OR MISS A BLACK", "how": "TAP THE BLACK TILES ONLY"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
   2: [{ id: 'hold', title: 'LONG TILES', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
@@ -847,7 +874,7 @@ $('skipTut').onclick = e => { e.stopPropagation(); skipTutorial(); };
 ['pointerdown', 'touchstart'].forEach(k => $('skipTut').addEventListener(k, e => e.stopPropagation(), { passive: true }));
 $('tutBtn').onclick = () => { audio(); sfx.click(); startTutorial(); };
 $('pTut').onclick = () => { sfx.click(); paused = false; startTutorial(); };
-setInterval(() => { const on = !!(G && G.lesson && !G.over && !paused && !HEADLESS); $('skipTut').classList.toggle('hidden', !on); }, 150);
+setInterval(() => { const on = !!(G && G.lesson && !G.over && (!paused || (typeof AIMEL !== 'undefined' && AIMEL && AIMEL._unpause)) && !HEADLESS);      /* Skip stays while the aim card is up */ $('skipTut').classList.toggle('hidden', !on); }, 150);
 window.gameFeedTutorial = () => { audio(); startTutorial(); };
 applyStep(); showHome(); requestAnimationFrame(frame);
 })();

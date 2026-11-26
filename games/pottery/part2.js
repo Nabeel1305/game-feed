@@ -137,6 +137,7 @@ function finish(G, win, why, o = {}) { if (G.over) return; G.over = win ? 'won' 
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 
 // ---------- LESSONS: centre, pull, shape ----------
+const AIMCARD = {"pic": "🏺", "win": "MAKE THE POT THEY ORDERED", "lose": "THE POT COLLAPSES", "how": "PRESS, PULL UP, SHAPE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'center', title: 'CENTRE THE CLAY', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Hold your thumb on the clay and drag down a little to press. Keep the pressure needle in the green until the wobble stops. Twice.', need: 2 }],
   2: [{ id: 'pull', title: 'PULL THE WALLS UP', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Drag upwards along the wall, from the bottom to the top, steadily (the trail turns red if too fast). Make three good pulls.', need: 3 }],

@@ -111,6 +111,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🐋", "win": "LAND THE WHALES THE TRIP NEEDS", "lose": "SHE GETS AWAY: NO HEARTS LEFT", "how": "ROW CLOSE, THROW, HAUL THE LINE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'throw', title: 'ROW, THEN THROW', say: G => whaleCue(G)[0], do: G => whaleCue(G)[1], at: G => whaleCue(G)[2], how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
       { id: 'haul', title: 'HAUL WHEN SHE IS CALM', say: G => whaleCue(G)[0], do: G => whaleCue(G)[1], at: G => whaleCue(G)[2], how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],

@@ -117,6 +117,7 @@ function finish(G) {
   G.ev.push({ k: win ? 'won' : 'lost' }); return true;
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏂", "win": "BEAT THE TIME DOWN THE MOUNTAIN", "lose": "TOO SLOW", "how": "SLIDE TO CARVE, TAP TO JUMP"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'gate', title: 'CARVE', say: G => powderCue(G)[0], do: G => powderCue(G)[1], at: G => powderCue(G)[2], how: 'Hold your thumb and slide it left or right to carve. Ride between the flags of three gates in a row.', need: 3 }],
   2: [{ id: 'rock', title: 'JUMP', say: G => powderCue(G)[0], do: G => powderCue(G)[1], at: G => powderCue(G)[2], how: 'Tap to jump. Hop over two rocks in a row.', need: 2 }],

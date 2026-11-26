@@ -129,6 +129,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.you) return; const y
 const BLIND = { h: G => hold(G, true), r: G => hold(G, false), t: G => { hold(G, true); hold(G, false); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.cuts = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🪁", "win": "CUT THEIR KITE STRINGS", "lose": "THEY CUT YOURS, OR YOU CRASH", "how": "HOLD TO PULL, LET GO TO TURN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'steer', title: 'LET GO TO TURN, HOLD TO GO', say: G => kiteCue(G)[0], do: G => kiteCue(G)[1], at: G => kiteCue(G)[2], how: 'Let go and the kite turns on the spot. When its nose (the arrow) points at a ring, HOLD to dart through it. Fly through all 4 rings.', need: 4 }],
   2: [{ id: 'cut', title: 'CROSS AND CUT', say: G => kiteCue(G)[0], do: G => kiteCue(G)[1], at: G => kiteCue(G)[2], how: 'Fly so your line crosses the practice kite\'s line, then HOLD while they cross: you saw through it. Cut it!', need: 1 }],

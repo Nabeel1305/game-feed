@@ -168,6 +168,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.dog) return; const d
 const BLIND = { d: G => { if (Math.random() < 0.25) dogTo(G, null); else dogTo(G, (Math.random() - 0.5) * 2 * FR, (Math.random() - 0.5) * 2 * FR); }, b: G => bark(G) };      // (two moves: the blind test plays every string of them, and this game's flock is slow to simulate)
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.penned = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🐑", "win": "GET THE SHEEP IN THE PEN", "lose": "DARK COMES, OR FOXES TAKE THEM", "how": "HOLD WHERE THE DOG SHOULD RUN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'push', title: 'HOLD TO RUN, PUSH THEM IN', say: G => dogCue(G)[0], do: G => dogCue(G)[1], at: G => dogCue(G)[2], how: 'Hold your thumb on the field: your dog runs there. Sheep walk away from her. Get behind them (away from the pen) and walk them in. 3 sheep.', need: 3 }],
   2: [{ id: 'gather', title: 'GATHER THE STRAYS', say: G => dogCue(G)[0], do: G => dogCue(G)[1], at: G => dogCue(G)[2], how: 'They are scattered. Go round the FAR side of a stray to bring it back to the others; then drive them all in. Come in slowly: rushing scatters them. 5 sheep.', need: 5 }],

@@ -134,6 +134,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || G.dead) { mem.tap = nul
   mem.tap = Math.max(0, f + err); if (mem.tap === 0) { mem.tap = null; press(G); release(G); mem.cool = 4; } }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.best = 1; finish(G, true); }
 // ---------- LESSONS: short courses ----------
+const AIMCARD = {"pic": "🎵", "win": "REACH THE END", "lose": "HIT SPIKES: NO HEARTS", "how": "TAP TO JUMP"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'jump', title: 'TAP TO JUMP', say: G => dashCue(G)[0], do: G => dashCue(G)[1], at: G => dashCue(G)[2], how: 'Tap anywhere to jump over the spikes. Land on the blocks. Reach the end!' }],
   2: [{ id: 'pad', title: 'PADS AND RINGS', say: G => dashCue(G)[0], do: G => dashCue(G)[1], at: G => dashCue(G)[2], how: 'Yellow pads throw you high by themselves. Over a gap, tap as you pass through the yellow ring to jump again.' }],

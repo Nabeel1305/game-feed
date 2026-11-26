@@ -170,6 +170,7 @@ function practiceFeed(G) { const d = DRILLS[G.drill].id, b = G.ball, m = G.me, o
   b.x = (R() - 0.5) * 2; b.z = -HZ + 1; b.y = 1.0; launch(b, b.x, b.y, b.z, tx, tz, d === 'volley' ? 0.9 : 1.3 / G.cfg.slow, 0.3); b.by = 1; b.serve = false; b.kind = 'feed'; G.ev.push({ k: 'feed' }); }
 function setDrill(G, i) { if (!G.cfg.practice) return; G.drill = (i + DRILLS.length) % DRILLS.length; G.wait = 0.3; G.next = () => practiceFeed(G); G.ball.live = false; G.ev.push({ k: 'drill', name: DRILLS[G.drill].name }); }
 // ---------- LESSONS (and later, short practice challenges for new shots) ----------
+const AIMCARD = {"pic": "🎾", "win": "WIN THE MATCH", "lose": "THEY WIN THE POINTS", "how": "MOVE UNDER IT, SWIPE UP TO HIT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'rally', title: 'RALLY', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'Move under the ball with your LEFT thumb. As it reaches you, SWIPE UP with your right thumb. Hit 4 back over the net.', need: 4 }],
   2: [{ id: 'serve', title: 'SERVE', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'TAP to toss the ball. SWIPE UP when the ring turns green, at the top. Land 4 good serves in the box (swipe while the ring is green).', need: 4 }],

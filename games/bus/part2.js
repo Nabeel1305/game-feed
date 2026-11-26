@@ -150,6 +150,7 @@ function busPlan(G, acc, err, st) { const b = G.bus, c = G.cfg, out = { go: fals
 const BLIND = { g: G => pedal(G, 'go', !G.bus.goH), b: G => pedal(G, 'br', !G.bus.brH), n: G => { pedal(G, 'go', false); pedal(G, 'br', false); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.stops.forEach(s => { s.served = true; s.at = s.at || G.t; }); G.late = G.stops.map(() => 0); G.lateEnd = 0; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚌", "win": "PICK EVERYONE UP ON TIME", "lose": "RUN RED LIGHTS OR MISS STOPS", "how": "GAS, BRAKE, STOP ON THE MARK"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'stop', title: 'GO, BRAKE, STOP ON THE MARK', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Hold GO (right) to drive. Hold BRAKE (left) to slow. Stop with the front door on the yellow mark: the doors open by themselves. Serve 2 stops.', need: 2 }],
   2: [{ id: 'time', title: 'KEEP TO TIME', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Every stop has a time. When everyone is on, wait for the time, then press GO to leave. Not before it! Leave 2 stops on time.', need: 2 }],

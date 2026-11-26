@@ -146,6 +146,7 @@ function finish(G, win) { G.over = win ? 'won' : 'lost'; const stars = win ? (G.
   G.res = { win, stars, score: G.score, done: G.done, goal: G.cfg.goal, left: G.left, ramps: G.ramps, orbits: G.orbits, coins: G.coins + Math.floor(G.score / 2000) + (win ? 4 + Math.ceil(G.N / 3) : 0), mis: G.mis && G.mis.k, misN: G.mis && G.mis.n, misNeed: G.mis && G.mis.need };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🎯", "win": "LIGHT THE TARGETS", "lose": "LOSE ALL YOUR BALLS", "how": "TAP LEFT AND RIGHT TO FLIP"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'keep', title: 'FLIP', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Hold the left side of the screen for the left flipper, the right side for the right. Hit the ball up the table 6 times without losing it.', need: 6 }],
   2: [{ id: 'drop', title: 'AIM', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Flip late to send the ball up its own side, early to send it across. Knock down three drop targets (on the left).', need: 3 }],

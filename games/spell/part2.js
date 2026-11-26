@@ -323,6 +323,7 @@ function step(G, dt) { if (G.over) return; G.t += dt; if (G.wait > 0) { G.wait -
   if (G.phase === 'pour' && G.pouring) { G.amount = Math.min(2.2, G.amount + dt * 0.9); }
   if (G.phase === 'seal') G.sealT += dt; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🔮", "win": "BREW THE RIGHT SPELL FOR EACH STORY", "lose": "WRONG SPELLS UPSET THEM", "how": "PICK, BREW, STIR, SEAL"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'read', title: 'READ THE STORY', say: G => spellCue(G)[0], do: G => spellCue(G)[1], at: G => spellCue(G)[2], how: 'Their words point to the jar: "love" is 🌹, "sleep" is 🌙... Pick it, BREW, stir round, then tap the rune for what it acts on (♥ heart, 👁 mind, ✋ body). Three spells in a row that are just right.', need: 3 }],
   2: [{ id: 'dose', title: 'IN OR OUT, AND HOW MUCH', say: G => spellCue(G)[0], do: G => spellCue(G)[1], at: G => spellCue(G)[2], how: 'Stir clockwise to draw it IN, anticlockwise to drive it OUT. Hold to pour: one line for "a little", two for usual, three for "strong". Two good spells in a row.', need: 2 }],

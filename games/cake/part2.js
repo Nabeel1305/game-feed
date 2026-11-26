@@ -146,6 +146,7 @@ const blindAt = () => ({ u: Math.random(), h: Math.random() * 3 - 1, top: [Math.
 const BLIND = { t: G => { press(G, blindAt()); if (G.stage === 'ice') lift(G); }, h: G => press(G, blindAt()), u: G => lift(G) };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.score = 100; G.parts = []; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🎂", "win": "MAKE THE CAKE THEY ASKED FOR", "lose": "THE CAKE LOOKS WRONG", "how": "STACK, ICE, PIPE, TOP"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'ice', title: 'HOLD TO ICE', say: G => cakeCue(G)[0], do: G => cakeCue(G)[1], at: G => cakeCue(G)[2], how: 'The cake spins. Hold your thumb on it: the knife spreads icing where your thumb is. Slide up and down until it is all covered.', need: 1 }],
   2: [{ id: 'pipe', title: 'TAP TO PIPE', say: G => cakeCue(G)[0], do: G => cakeCue(G)[1], at: G => cakeCue(G)[2], how: 'The cake turns under the piping bag. Tap as each guide dot passes under the bag. Pipe 4 swirls right on their dots.', need: 4 }],

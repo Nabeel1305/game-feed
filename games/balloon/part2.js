@@ -116,6 +116,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 
 // ---------- LESSONS: rise to the ring, sink to the ring, drop on the X ----------
+const AIMCARD = {"pic": "🎈", "win": "DROP ON THE X, LAND SOFT", "lose": "RUN OUT OF FUEL", "how": "HOLD TO RISE, LET GO TO SINK"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'rise', title: 'BURN TO RISE', say: G => heightCue(G, G.lesson.y)[0], do: G => heightCue(G, G.lesson.y)[1], at: G => heightCue(G, G.lesson.y)[2], how: 'Hold anywhere: the burner warms the balloon and it rises, a little late. Let go before the ring: it keeps going a moment. Stop inside the gold ring, twice.', need: 2 }],
   2: [{ id: 'wind', title: 'STEER BY HEIGHT', say: G => heightCue(G, G.winds[G.lesson.layer].y + 8)[0], do: G => heightCue(G, G.winds[G.lesson.layer].y + 8)[1], at: G => heightCue(G, G.winds[G.lesson.layer].y + 8)[2], how: 'The winds blow different ways at different heights (the arrows on the right). Climb or sink into the one that blows you to the gold flag.', need: 2 }],

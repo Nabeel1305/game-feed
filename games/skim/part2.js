@@ -104,6 +104,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, 'goal'); }
 function goalText(cfg) { return cfg.kind === 'skips' ? `Skip a stone ${cfg.skips} times` : cfg.kind === 'far' ? `Skip a stone past the buoy (${cfg.far} m)` : cfg.kind === 'rings' ? `Skip through ${cfg.rings === 1 ? 'the floating ring' : `all ${cfg.rings} floating rings`}` : 'Skip a stone onto the old jetty'; }
 // ---------- lessons (levels 1-3) ----------
+const AIMCARD = {"pic": "🪨", "win": "MAKE THE SKIPS ASKED FOR", "lose": "NO STONES LEFT", "how": "DRAG BACK, LET GO, TAP AS IT LANDS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'throw', title: 'DRAG BACK, LET GO', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Put your thumb on the stone and drag back down the screen: the line shows where it goes. Let go to throw. Then tap each time it kisses the water. Three good taps in a row.', need: 3 }],
   2: [{ id: 'perfect', title: 'RIGHT ON TIME', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Watch the ring close on the stone as it comes down: tap just as it touches. Three PERFECT kisses.', need: 3 }],

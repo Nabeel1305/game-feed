@@ -159,6 +159,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 function winNow(G) { if (!G || G.over || G.lesson) return; G.done = G.V.map(h => h.i); finish(G, true, 'all'); }
 // ---------- lessons (levels 1-3) ----------
+const AIMCARD = {"pic": "🎅", "win": "LEAVE THE RIGHT PRESENTS", "lose": "WAKE THEM, OR TIME RUNS OUT", "how": "LAND, SNEAK IN, GIVE GIFTS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => santaCue(G)[0], do: G => santaCue(G)[1], at: G => santaCue(G)[2], how: 'Hold FORWARD and steer with the stick towards the glowing house. Over its marker, let go of FORWARD and push the stick down: the sleigh comes down onto the roof. Land once.', need: 1 }],
   2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', say: G => santaCue(G)[0], do: G => santaCue(G)[1], at: G => santaCue(G)[2], how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],

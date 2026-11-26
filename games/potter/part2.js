@@ -90,6 +90,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏺", "win": "SHAPE POTS THAT MATCH THE ORDER", "lose": "RUIN THREE POTS", "how": "TOUCH THE CLAY, MOVE SLOWLY"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'press', title: 'THE CLAY FOLLOWS YOUR FINGER', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Touch the side of the spinning clay and slowly move your finger in towards the middle. Watch it narrow.', need: 1, ok: (w, m) => w === 'shaped' },
       { id: 'fire', title: 'MATCH, THEN FIRE', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Shape it to the dotted outline, bottom to top, slowly. When the match reaches the mark, tap FIRE.', need: 1, ok: w => w === 'fired', ctrl: 2 }],

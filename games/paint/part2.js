@@ -89,6 +89,7 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
 // ---------- LESSONS ----------
 // lesson 1 asks for aim: drop each red right onto the red in the jar, four in a row (a drop that does not squash on landing
 // starts the count again), so it cannot be passed by luck
+const AIMCARD = {"pic": "🎨", "win": "MAKE THE COLOUR ASKED FOR", "lose": "THE JAR OVERFLOWS", "how": "SLIDE, DROP: SAME COLOURS JOIN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'aim', title: 'SAME COLOURS SQUASH', say: G => paintCue(G)[0], do: G => paintCue(G)[1], at: G => paintCue(G)[2], how: 'Slide to aim, let go to drop. Drop the red right onto the red in the jar: they squash into an ORANGE! Four in a row.', need: 4 }],
   2: [{ id: 'chain', title: 'CHAINS', say: G => paintCue(G)[0], do: G => paintCue(G)[1], at: G => paintCue(G)[2], how: 'Drop the red on the red: it makes an orange, which squashes into the orange beside it. Make a YELLOW in one drop, three times.', need: 3 }],

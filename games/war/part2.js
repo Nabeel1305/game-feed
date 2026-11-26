@@ -146,6 +146,7 @@ function finish(G, win) { const mine0 = G.units.filter(u => u.side === 0), kept 
   G.res = { win, stars, kept, all, kills: G.units.filter(u => u.side === 1).reduce((a, u) => a + (u.n0 - (u.gone ? 0 : u.n)), 0), routed: G.units.filter(u => u.side === 1 && (u.rout || u.gone)).length, enemy: G.units.filter(u => u.side === 1).length, time: Math.round(G.bt), form: G.form, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "⚔️", "win": "BREAK THEIR ARMY", "lose": "YOUR ARMY BREAKS", "how": "TAP YOUR UNIT, TAP THE ENEMY"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'order', title: 'ORDERS', say: G => warCue(G)[0], do: G => warCue(G)[1], at: G => warCue(G)[2], how: 'Tap one of your units (blue), then tap a red unit to attack it: men you send in yourself fight twice as hard. Break two enemy units.', need: 2 }],
   2: [{ id: 'match', title: 'SPEARS STOP HORSES', say: G => warCue(G)[0], do: G => warCue(G)[1], at: G => warCue(G)[2], how: 'Horsemen are coming for your archers. Send your SPEARMEN at them. Break two with spears.', need: 2 }],

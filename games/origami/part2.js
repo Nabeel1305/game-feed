@@ -92,6 +92,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🦊", "win": "FOLD THE ANIMAL", "lose": "CRUMPLE THE PAPER", "how": "DRAG THE CORNER TO THE LINE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'fold', title: 'YOUR FIRST FOX', say: G => oriCue(G)[0], do: G => oriCue(G)[1], at: G => oriCue(G)[2], how: 'Put your thumb on the glowing corner and drag it onto the dot: the paper follows your thumb. Let go on the dot. Three folds make a fox.', need: 1 }],
   2: [{ id: 'ghost', title: 'MATCH THE OUTLINE', say: G => oriCue(G)[0], do: G => oriCue(G)[1], at: G => oriCue(G)[2], how: 'Drag the glowing corner until the paper fits the dashed outline, then let go. Make a whole puppy.', need: 1 }],

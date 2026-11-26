@@ -101,6 +101,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 
 // ---------- LESSONS: aim with the rhythm, brace on time, the whole pass ----------
+const AIMCARD = {"pic": "🐎", "win": "KNOCK THEM OFF THEIR HORSE", "lose": "THEY KNOCK YOU OFF", "how": "AIM THE LANCE, BRACE AT THE HIT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'aim', title: 'AIM WITH THE RHYTHM', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
   2: [{ id: 'brace', title: 'BRACE AT THE CRASH', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Hold BRACE just before the crash, when it glows (not earlier: your arm tires). Three braced hits.', need: 3 }],

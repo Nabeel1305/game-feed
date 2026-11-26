@@ -134,6 +134,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.r
   goal += (R() - 0.5) * (1 - acc) * 1.4; mem.goal = clamp(goal, -HW + 0.3, HW - 0.3); mem.slide = true; ACT.slide(G, clamp(mem.goal - G.wantX, -0.12, 0.12)); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.left = G.n; G.stair = 0; finish(G, true); }
 // ---------- LESSONS: short tracks ----------
+const AIMCARD = {"pic": "👥", "win": "BE BIGGER THAN THE GIANT", "lose": "YOUR CROWD IS GONE", "how": "SLIDE THROUGH THE BEST GATE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'gates', title: 'PICK THE BETTER GATE', say: G => crowdCue(G)[0], do: G => crowdCue(G)[1], at: G => crowdCue(G)[2], how: 'Slide left and right. Run through the gate that makes your crowd BIGGER. Beat the giant at the end!' }],
   2: [{ id: 'dodge', title: 'DODGE THE SAWS', say: G => crowdCue(G)[0], do: G => crowdCue(G)[1], at: G => crowdCue(G)[2], how: 'Saws and bars knock runners off. Slide to where they are not. Keep enough runners to beat the giant!' }],

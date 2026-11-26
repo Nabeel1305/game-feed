@@ -154,6 +154,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🍳", "win": "SERVE EVERY ORDER", "lose": "BURNT OR LATE FOOD: NO HEARTS LEFT", "how": "COOK GOLDEN, PLATE IT, SERVE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'flip', title: 'GOLDEN, THEN FLIP', say: G => cookCue(G)[0], do: G => cookCue(G)[1], at: G => cookCue(G)[2], how: 'Drag a pancake into a pan. When the underside turns golden, tap the pan to flip it. Do it twice.', need: 2, ok: (w, s) => w === 'flip' && s >= GOLD[0] - 0.06 && s <= GOLD[1] + 0.06 },
       { id: 'serve', title: 'PLATE IT AND SERVE', say: G => cookCue(G)[0], do: G => cookCue(G)[1], at: G => cookCue(G)[2], how: 'Golden both sides? Drag it to the plate, then drag the plate up to the pass.', need: 1, ok: w => w === 'served', dish: 'pancakes' }],

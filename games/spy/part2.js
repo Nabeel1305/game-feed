@@ -183,6 +183,7 @@ function finish(G, win, o = {}) { if (G.over) return true; G.over = win ? 'won' 
   G.res = { win, stars, why: o.why || null, spotted: G.spotted, bonus: bon, bonusN: G.bonus.length, time: Math.round(G.t), clean, coins: win ? Math.max(1, 6 + Math.ceil(G.N / 2) + stars * 3 + bon * 4 - G.spotted * 2) : 1 };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "📸", "win": "PHOTO THE FILE, GET BACK OUT", "lose": "A GUARD SEES YOU", "how": "SNEAK, HIDE, TAP PHOTO"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'snap', title: 'IN, SNAP, OUT', say: G => spyCue(G)[0], do: G => spyCue(G)[1], at: G => spyCue(G)[2], how: 'Walk in (left thumb), to the desk with the glowing file. Tap PHOTOGRAPH and keep the file in the frame (steady it with the stick). Then back to the van.', need: 1 }],
   2: [{ id: 'crouch', title: 'CROUCH BEHIND DESKS', say: G => spyCue(G)[0], do: G => spyCue(G)[1], at: G => spyCue(G)[2], how: 'A guard watches the far room. Tap CROUCH: slow and silent, and the desks hide you. Get the photo and get out unseen.', need: 1 }],

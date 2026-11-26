@@ -88,6 +88,7 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.res = { win, why, stars, pours: G.pours, par: G.par, left, done, of: G.cfg.K, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + done };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: small rigged glasses; in a lesson a second wrong pour starts it again, and so does wandering ----------
+const AIMCARD = {"pic": "🧪", "win": "EACH GLASS ONE COLOUR", "lose": "RUN OUT OF MOVES", "how": "TAP A GLASS, TAP WHERE TO POUR"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'pour', title: 'POUR', say: G => pourCue(G)[0], do: G => pourCue(G)[1], at: G => pourCue(G)[2], how: 'Tap a glass, then another: the top colour pours onto the same colour, or into an empty glass. Fill two glasses with one colour each.', need: 2 }],
   2: [{ id: 'plan', title: 'MAKE ROOM', say: G => pourCue(G)[0], do: G => pourCue(G)[1], at: G => pourCue(G)[2], how: 'Use the empty glass to make room, then sort all three colours. Every move counts!', need: 1 }],

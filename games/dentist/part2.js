@@ -234,6 +234,7 @@ function finish(G, win, why) {
 }
 
 // ---------- LESSONS: brush (three teeth clean, gently), scrape (three teeth of tartar), polish (three stained teeth) ----------
+const AIMCARD = {"pic": "🦷", "win": "FIX EVERY PATIENT", "lose": "HURT THEM, OR THE DAY ENDS", "how": "FIND THE PROBLEM, USE THE TOOL"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'brush', title: 'BRUSH', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'brush', how: 'Take the 🪥 brush. Drag it calmly over the dirty teeth until they shine. Three teeth. Scrubbing fast starts the count again.', need: 3 }],
   2: [{ id: 'scaler', title: 'SCRAPE', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'scaler', how: 'The yellow crust at the gum is tartar. Take the 🪝 scaler and drag it slowly along the crust. Three teeth.', need: 3 }],

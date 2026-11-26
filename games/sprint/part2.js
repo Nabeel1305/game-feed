@@ -176,6 +176,7 @@ const BLIND = { l: G => tap(G, 'L'), r: G => tap(G, 'R'), b: G => { tap(G, 'L');
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; const y = G.you; if (G.phase !== 'run') { G.phase = 'run'; G.gunT = G.t; }
   y.started = true; y.fin = G.t; y.s = G.D; y.react = y.react || 0.18; y.place = 1; finish(G, true, { place: 1 }); }
 // ---------- LESSONS: the first three levels ----------
+const AIMCARD = {"pic": "🏃", "win": "FINISH IN THE TOP PLACES", "lose": "FALSE START TWICE, OR TOO SLOW", "how": "TAP LEFT, RIGHT, LEFT IN TIME"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'stride', title: 'LEFT, RIGHT, IN TIME', say: G => sprintCue(G)[0], do: G => sprintCue(G)[1], at: G => sprintCue(G)[2], how: 'Tap the side whose ring is closing, just as it closes. Left, right, left... Too soon, or the same side twice, and you trip. Run 10 strides without tripping!', need: 10 }],
   2: [{ id: 'gun', title: 'WAIT FOR THE GUN', say: G => sprintCue(G)[0], do: G => sprintCue(G)[1], at: G => sprintCue(G)[2], how: 'On SET keep still. Tap the moment you hear BANG! Tap before it and it is a false start. Make 2 clean starts.', need: 2 }],

@@ -117,6 +117,7 @@ function finish(G, win, why) { const c = G.cfg; if (G.lesson) return; G.over = w
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const holds = (G, k2) => G.me.carry.some(it => it.k === k2);
+const AIMCARD = {"pic": "🛎️", "win": "KEEP GUESTS HAPPY ALL SHIFT", "lose": "TOO MANY GUESTS LEAVE ANGRY", "how": "TAP A REQUEST, DO THE JOB"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'bags', title: 'BAGS UP', say: G => holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', at: G => hotelAt(G), how: 'Tap the guest\'s bags, then a clean room.', need: 2 }],
   2: [{ id: 'food', title: 'ROOM SERVICE', say: G => holds(G, 'food') ? 'TAP THE 🍝 ROOM' : 'TAP THE KITCHEN', do: 'tap', at: G => hotelAt(G), how: 'Tap the kitchen, then the room that rang.', need: 2 }],

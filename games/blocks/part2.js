@@ -86,6 +86,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.res = { win, stars, score: G.score, gems: G.gemsGot, goal: c.goal, need: c.goal === 'score' ? c.target : c.gems, prog: Math.min(1, ratio), lines: G.lines, best: G.best, placed: G.placed, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + Math.floor(Math.min(1, ratio) * 4) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: rigged boards; every placement must clear a line, or the lesson starts again ----------
+const AIMCARD = {"pic": "🧱", "win": "REACH THE SCORE", "lose": "NO ROOM FOR A BLOCK", "how": "DRAG BLOCKS, FILL A LINE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'line', title: 'FILL A LINE', say: G => blockCue(G) ? blockCue(G).say : 'NO ROOM: TAP 🔄', do: 'drag', at: G => blockCue(G) ? blockCue(G).at : false, how: 'Drag a piece from the tray into the gap: a full row or column clears! Clear three times in a row.', need: 3 }],
   2: [{ id: 'two', title: 'TWO AT ONCE', say: G => blockCue(G) ? blockCue(G).say : 'NO ROOM: TAP 🔄', do: 'drag', at: G => blockCue(G) ? blockCue(G).at : false, how: 'Place the piece where it fills a row AND a column: both clear, for far more points. Do it twice.', need: 2 }],

@@ -172,6 +172,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏃", "win": "TAG THEM ALL, OR DON'T GET CAUGHT", "lose": "THE BELL RINGS FIRST, OR NO HEARTS", "how": "DRAG TO RUN, TAP DASH"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'run', title: 'YOU ARE IT!', say: G => tagCue(G)[0], do: G => tagCue(G)[1], at: G => tagCue(G)[2], how: 'Put your thumb down anywhere and drag: you run that way. Tag all three kids.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 3 },
       { id: 'dash', title: 'DASH', say: G => tagCue(G)[0], do: G => tagCue(G)[1], at: G => tagCue(G)[2], how: 'Tap the DASH button: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],

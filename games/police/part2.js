@@ -186,6 +186,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚓", "win": "CATCH THE CAR, THEN ARREST HIM", "lose": "CRASH TOO MUCH, OR LOSE HIM", "how": "STEER, GAS, RAM HIS SIDE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'steer', ph: 'drive', title: 'FOLLOW THE RED ARROW', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow him round 2 corners.', need: 2, ok: w => w === 'corner' },
       { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'Catch him up and drive into his SIDE or back corner. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],

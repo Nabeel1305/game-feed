@@ -125,6 +125,7 @@ const blindAt = () => ({ x: Math.random() * 120 - 30, y: Math.random() * 168 - 4
 const BLIND = { d: G => press(G, Math.random() < 0.08 ? { done: true } : blindAt()), m: G => move(G, blindAt()), u: G => { lift(G); if (Math.random() < 0.3) press(G, { pot: (Math.random() * 3) | 0 }); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.score = 100; G.parts = []; finish(G, true); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🖌️", "win": "PAINT IT ALL, NEATLY", "lose": "MESSY PAINT EVERYWHERE", "how": "DRAG OVER IT TO PAINT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'roll', title: 'DRAG TO PAINT', say: G => rollCue(G)[0], do: G => rollCue(G)[1], at: G => rollCue(G)[2], how: 'Drag your thumb over the fence plank to roll paint on. Cover it all; keep off the grass.', need: 1 }],
   2: [{ id: 'pots', title: 'TWO COLOURS', say: G => rollCue(G)[0], do: G => rollCue(G)[1], at: G => rollCue(G)[2], how: 'Tap a pot to change colour. Paint each part the colour its faint pattern shows.', need: 1 }],

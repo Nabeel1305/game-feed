@@ -143,6 +143,7 @@ function finish(G, win, why) { const c = G.cfg; G.over = win ? 'won' : 'lost';
   G.res = { win, why, stars, caught: G.caught, total: G.total, scares: G.scares, oil: Math.round(G.oil), book: G.book, time: Math.round(G.t), coins: G.coins + (win ? 4 + Math.ceil(G.N / 3) + stars : 0) };
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "👻", "win": "CATCH EVERY GHOST", "lose": "GHOSTS SCARE YOU: NO HEARTS", "how": "HOLD A GHOST IN YOUR LIGHT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'light', title: 'LIGHT IT', say: G => lanternCue(G)[0], do: G => lanternCue(G)[1], at: G => lanternCue(G)[2], how: 'Drag a little to turn your lantern without walking. Hold the ghost in the beam until the lantern pulls it in. Catch 2.', need: 2 }],
   2: [{ id: 'behind', title: 'FROST', say: G => lanternCue(G)[0], do: G => lanternCue(G)[1], at: G => lanternCue(G)[2], how: 'Frost at the edge of the screen: a ghost is close, that way. Turn to it and catch it. Twice.', need: 2 }],

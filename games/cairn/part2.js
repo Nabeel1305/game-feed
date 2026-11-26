@@ -114,6 +114,7 @@ function finish(G, win) {
   G.ev.push({ k: win ? 'won' : 'lost' }); return true;
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🪨", "win": "STACK STONES THIS HIGH", "lose": "IT FALLS, OR NO STONES LEFT", "how": "DROP EACH STONE SO IT BALANCES"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'place', title: 'DROP', say: G => cairnCue(G)[0], do: G => cairnCue(G)[1], at: G => cairnCue(G)[2], how: 'Tap when the stone is right over the middle of the stack. Four in a row, each near the middle.', need: 4 }],
   2: [{ id: 'perfect', title: 'JUST RIGHT', say: G => cairnCue(G)[0], do: G => cairnCue(G)[1], at: G => cairnCue(G)[2], how: 'Wait for the stone to come right over the middle, then tap. Three perfect drops in a row.', need: 3 }],

@@ -182,6 +182,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, 'finish'); }
 // ---------- lessons (levels 1-3): one obstacle each, no clock; then the timed run ----------
+const AIMCARD = {"pic": "💦", "win": "FINISH IN TIME", "lose": "TOO SLOW", "how": "PUSH THIS WAY, HOLD JUMP, LET GO"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'balls', title: 'HOLD, THEN LET GO', say: G => splashCue(G)[0], do: G => splashCue(G)[1], at: G => splashCue(G)[2], how: 'Left thumb: push towards the next ball. Hold JUMP and let go: the longer you hold, the farther (the ring shows where you will land). Cross all four balls.', need: 5 }],
   2: [{ id: 'sweep', title: 'JUMP THE SWEEPER', say: G => splashCue(G)[0], do: G => splashCue(G)[1], at: G => splashCue(G)[2], how: 'Jump onto the round platform. Tap JUMP just before the arm reaches you (no direction: straight up). Keep it up until the gate opens, then jump across.', need: 3 }],

@@ -115,6 +115,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🥕", "win": "FILL THE ORDERS BY SUNSET", "lose": "THE SUN SETS FIRST", "how": "PLANT, WATER, PICK"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'grow', title: 'SOW, WATER, HARVEST', say: G => harvCue(G)[0], do: G => harvCue(G)[1], at: G => harvCue(G)[2], how: 'Tap an empty bed to plant a carrot. When a 💧 drop shows, tap it to water. When it sparkles, tap to pick it. Then tap the CART to sell three carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 3 }] }],
   2: [{ id: 'careful', title: 'ONLY WHEN THEY ASK', say: G => harvCue(G)[0], do: G => harvCue(G)[1], at: G => harvCue(G)[2], how: 'Water only crops with a 💧 drop: water a crop that is not thirsty and it rots. Pick a TOMATO in the seed bar too. Sell two carrots and two tomatoes.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 2 }, { kd: 'tomato', want: 2 }] }],

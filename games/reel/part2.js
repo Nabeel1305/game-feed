@@ -218,6 +218,7 @@ function finish(G, win, why) {
 }
 
 // ---------- LESSONS: the first three trips teach every move, two or three times each, before the clock runs ----------
+const AIMCARD = {"pic": "🎣", "win": "CATCH THE FISH THE DAY ASKS FOR", "lose": "LINE SNAPS TOO OFTEN, OR TIME RUNS OUT", "how": "CAST, WAIT, STRIKE, REEL IN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   // his words (24 Nov 2026): "a few big words like tap here to catch the fish... visual cues". say: the big words; do and at: the hand
   // shows the gesture where it is to be done (the kit's coach). how is kept for the robots and the record, and is never shown.

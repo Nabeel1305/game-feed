@@ -108,6 +108,7 @@ function finish(G, win) {
   G.ev.push({ k: win ? 'won' : 'lost' });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🪽", "win": "FLY THROUGH ENOUGH RINGS", "lose": "NOTHING HURTS YOU: JUST FLY", "how": "SLIDE TO TURN, CLIMB, DIVE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'turn', kind: 'ring', trail: 'turn', title: 'TURN', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Put your thumb down anywhere and move it left or right: you lean and turn. Fly through the rings.', need: 3, ok: w => w === 'ring' }],
   2: [{ id: 'updown', kind: 'ring', trail: 'updown', title: 'CLIMB AND DIVE', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Move your thumb up to climb, down to dive. Diving is faster. Through the rings, high and low.', need: 3, ok: w => w === 'ring' }],

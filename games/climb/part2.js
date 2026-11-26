@@ -246,6 +246,7 @@ function finish(G, win) {
 }
 
 // ---------- LESSONS: reach (three gold holds in a row), rest (on the ledge until the grip is full), the rope (two bolts) ----------
+const AIMCARD = {"pic": "🧗", "win": "REACH THE TOP", "lose": "FALL THREE TIMES", "how": "DRAG A HAND TO A HOLD"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'reach', title: 'REACH', say: G => climbCue(G)[0], do: G => climbCue(G)[1], at: G => climbCue(G)[2], how: 'Drag a hand onto the GOLD hold. Let go near it and you grab it. Three gold holds in a row.', need: 3 }],
   2: [{ id: 'rest', title: 'REST', say: G => climbCue(G)[0], do: G => climbCue(G)[1], at: G => climbCue(G)[2], how: 'Your grip is low (the bar). Get BOTH hands onto the big ledge and hang there until the bar is full.', need: 1 }],

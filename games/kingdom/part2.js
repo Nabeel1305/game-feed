@@ -400,6 +400,7 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
     coins: Math.round(G.coins / 3) + (win ? 5 + Math.ceil(G.N / 3) + stars * 2 : 1), track: TRACKS[c.track].name, order, cup: c.cup, cls: c.cls };
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: the course to yourself (and a few slow karts to aim at) ----------
+const AIMCARD = {"pic": "🏎️", "win": "FINISH IN THE TOP PLACES", "lose": "FINISH TOO FAR BACK", "how": "STEER, DRIFT, NITRO"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'boost', title: 'STEER AND DRIFT', say: G => kingCue(G)[0], do: G => kingCue(G)[1], at: G => kingCue(G)[2], how: 'Hold ◀ or ▶ to steer. In a bend, steer AND hold DRIFT: you slide and the sparks go blue, orange, purple. Let go of DRIFT for a BOOST. Twice.', need: 2 },
       { id: 'nitro', title: 'NITRO!', say: G => kingCue(G)[0], do: G => kingCue(G)[1], at: G => kingCue(G)[2], how: 'Drifts, tricks and slipstreams fill your NITRO. It is full now: tap NITRO (above DRIFT) for a big boost!', need: 1 }],

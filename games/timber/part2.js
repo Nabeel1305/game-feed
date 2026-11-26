@@ -121,6 +121,7 @@ function whyMiss(G, T, lat) { const S = T.spec; if (T.back) return 'It fell back
 function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lost'; const perfect = G.log.filter(q => q.grade === 'perfect').length, stars = win ? (G.failed === 0 ? (perfect * 2 >= G.done ? 3 : 2) : 1) : 0;
   G.res = { win, stars, why: o.why || null, done: G.done, failed: G.failed, perfect, log: G.log, coins: win ? G.coins + Math.ceil(G.N / 2) + stars * 3 : Math.max(1, G.coins >> 1) }; G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS: notch and saw; aim; the wedge ----------
+const AIMCARD = {"pic": "🌲", "win": "DROP EACH TREE IN THE STRIP", "lose": "TREES FALL WRONG", "how": "NOTCH, SAW, STOP ON GREEN"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'cut', title: 'NOTCH, THEN SAW', say: G => timberCue(G)[0], do: G => timberCue(G)[1], at: G => timberCue(G)[2], how: 'The felling line already points at the strip. HOLD NOTCH until the ring shows about a third, let go. Then HOLD SAW and let go while a green strip of wood is left.' }],
   2: [{ id: 'aim', title: 'AIM THE FALL', say: G => timberCue(G)[0], do: G => timberCue(G)[1], at: G => timberCue(G)[2], how: 'DRAG across the picture to turn the felling line into the open strip, away from the fence. Then NOTCH and SAW.' }],

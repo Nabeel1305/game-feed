@@ -116,6 +116,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 function winNow(G) { if (!G || G.over || G.lesson) return; G.score = Math.max(G.score, G.cfg.target); finish(G, true, 'target'); }
 // ---------- lessons (levels 1-3) ----------
+const AIMCARD = {"pic": "🏄", "win": "BEAT THE SCORE", "lose": "SCORE TOO LOW", "how": "PADDLE, STAND, RIDE THE WAVE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'ride', title: 'CATCH AND RIDE', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
   2: [{ id: 'snap', title: 'SNAP OFF THE LIP', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],

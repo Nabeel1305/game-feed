@@ -205,6 +205,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.res = { win, why, stars, a: G.score[0], b: G.score[1], stats: S, coins: G.score[0] * 3 + bonus + (win ? 6 + Math.ceil(G.N / 2) : 0), time: G.t };
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🏒", "win": "SCORE MORE GOALS", "lose": "THEY SCORE MORE", "how": "SKATE, PASS, SHOOT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'pass', title: 'PASS', say: G => hockeyCue(G)[0], do: G => hockeyCue(G)[1], at: G => hockeyCue(G)[2], how: 'Skate with your LEFT thumb. Point at a team-mate and tap PASS. Two passes.', need: 2 },
     { id: 'goal', title: 'SHOOT', say: G => hockeyCue(G)[0], do: G => hockeyCue(G)[1], at: G => hockeyCue(G)[2], how: 'Skate at the net and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],

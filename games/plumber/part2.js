@@ -240,6 +240,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.res = { win, stars, cash: G.cash, need: c.target, prog: Math.min(1, G.cash / c.target), jobs: G.jobsDone, avg, lost: G.lost, done: G.done, score: G.cash, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 + Math.floor(Math.min(1, G.cash / c.target) * 4) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: a single rigged job; any slip starts it again ----------
+const AIMCARD = {"pic": "🔧", "win": "FIX EVERY JOB", "lose": "TIME RUNS OUT", "how": "FIND THE FAULT, USE THE RIGHT TOOL"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'washer', title: 'A DRIPPING TAP', say: G => plumbCue(G)[0], do: G => plumbCue(G)[1], at: G => plumbCue(G)[2], how: 'Tap the dripping kitchen tap to look at it. Pick NEW WASHER, then HOLD and let go in the green. Twice.', need: 2, job: 'drip' }],
   2: [{ id: 'plunge', title: 'PLUNGE IT', say: G => plumbCue(G)[0], do: G => plumbCue(G)[1], at: G => plumbCue(G)[2], how: 'Tap the toilet, pick PLUNGE, then TAP each time the ring closes on the circle. Off-beat taps push the water back.', need: 1, job: 'wcclog' }],

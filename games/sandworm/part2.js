@@ -157,6 +157,7 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
 
 // ---------- LESSONS: steer through waystones, surge into a breach, brace for the knocks ----------
+const AIMCARD = {"pic": "🪱", "win": "RIDE TO THE END", "lose": "FALL OFF THE WORM", "how": "STEER, SURGE, BRACE"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'steer', title: 'STEER', say: G => wormCue(G)[0], do: G => wormCue(G)[1], at: G => wormCue(G)[2], how: 'Left thumb: drag to turn. The worm is heavy: start the turn early, ease it back to go straight. Pass between three pairs of waystones.', need: 3 }],
   2: [{ id: 'breach', title: 'SURGE AND BREACH', say: G => wormCue(G)[0], do: G => wormCue(G)[1], at: G => wormCue(G)[2], how: 'Hold SURGE (right) to speed up. Fast over a dune crest and the worm leaps out of the sand. Breach twice.', need: 2 }],

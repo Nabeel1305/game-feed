@@ -77,6 +77,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
   if (G.useTime && !G.lesson) { G.left -= dt; if (G.left <= 0) { G.left = 0; finish(G, false, 'dawn'); return; } }
   while (G.wave.length && G.t - G.wave[0].t > 3) G.wave.shift(); }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🔐", "win": "OPEN THE SAFE", "lose": "THE ALARM GOES OFF", "how": "TURN SLOWLY, FEEL THE CLICK"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'feel', title: 'FEEL THE CLICK', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Drag round the dial, slowly. When it CLICKS, a chalk mark appears. Turn back until the mark is under the pointer, then tap SET.', need: 1 }],
   2: [{ id: 'quiet', title: 'SOFTLY', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Too fast and you miss the click, and you make noise. Open both bolts without the noise bar filling up.', need: 1 }],

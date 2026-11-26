@@ -248,6 +248,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🐄", "win": "MAKE EVERY ANIMAL BETTER", "lose": "SCARE THEM: THEY RUN OFF", "how": "CALM THEM, PICK THE TOOL, FIX IT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'calm', title: 'CALM HER FIRST', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'With your hand, stroke slowly along her back. Slow, gentle strokes: three of them.', need: 3, ok: w => w === 'calm', prob: 'thorn', animal: 'dog', nervous: 0.6 },
       { id: 'thorn', title: 'THE THORN', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'She is limping: find the thorn in her paw. Pick the tweezers, put them on it, then pull away slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'thorn', prob: 'thorn', animal: 'dog' }],

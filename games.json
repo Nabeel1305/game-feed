@@ -1808,7 +1808,7 @@
       "id": "house",
       "name": "Homemaker",
       "status": "testing",
-      "version": "0.1.4",
+      "version": "0.2.0",
       "added": "2026-11-19",
       "path": "games/house/index.html",
       "artifact": "https://claude.ai/artifact/K5HGSNdSAfAqSbyoHSytYK",

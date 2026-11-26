@@ -220,6 +220,7 @@ function finish(G, win, why) {
   G.ev.push({ k: win ? 'won' : 'lost', why });
 }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🚗", "win": "REACH THE SAFEHOUSE", "lose": "CRASH OUT OR GET BOXED IN", "how": "FOLLOW THE GREEN ARROWS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'steer', title: 'FOLLOW THE GREEN ARROWS', say: G => runCue(G)[0], do: G => runCue(G)[1], at: G => runCue(G)[2], how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow the green arrows round 3 corners.', need: 3, ok: w => w === 'corner' },
       { id: 'nitro', title: 'NITRO', say: G => runCue(G)[0], do: G => runCue(G)[1], at: G => runCue(G)[2], how: 'Press the blue NITRO button for a burst of speed: it leaves the cops behind. Try it.', need: 1, ok: w => w === 'nitro' }],

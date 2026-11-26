@@ -77,6 +77,7 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
 // ---------- LESSONS: a slow target; a hit starts the lesson's target again ----------
 // each lesson target is full of knives except for a few gaps, so only a throw timed for a gap gets in (blind tapping cannot)
 const gapsAt = (n, off) => { const out = [], arc = TAU / n, m = Math.ceil((arc - 0.8) / 0.48) + 1; for (let k = 0; k < n; k++) for (let j = 0; j < m; j++) out.push(off + k * arc + 0.4 + j * (arc - 0.8) / (m - 1)); return out; };      /* knives no more than 0.48 apart: nothing fits between them */
+const AIMCARD = {"pic": "🔪", "win": "STICK ALL YOUR KNIVES IN", "lose": "HIT ANOTHER KNIFE", "how": "TAP TO THROW"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'gap', title: 'THROW INTO THE GAPS', say: G => knifeCue(G)[0], do: G => knifeCue(G)[1], at: G => knifeCue(G)[2], how: 'Knives are already in this target. Tap when a GAP is at the bottom: one knife into each of the 3 gaps.', need: 1, log: { need: 3, items: gapsAt(3, 0), moves: [{ v: 1.15, d: 99, ease: 0.5 }] } }],
   2: [{ id: 'apple', title: 'APPLES', say: G => knifeCue(G)[0], do: G => knifeCue(G)[1], at: G => knifeCue(G)[2], how: 'An apple sits in each gap. Throw when one is at the bottom to slice it: slice both.', need: 1, log: { need: 2, items: gapsAt(2, 0.3), appleAt: [0.3, 0.3 + Math.PI], moves: [{ v: -1.2, d: 99, ease: 0.5 }] } }],

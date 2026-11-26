@@ -158,6 +158,7 @@ function think(G, d, dt, noise) { const K = KINDS[d.k], c = G.cfg, m = G.me, dd 
       const want = dd > 13 ? angTo(d, m) : angTo(d, m) + 1.3; moveTo(want, dd > 13 ? 6 : 3.5); if (dd < 15 && d.cool <= 0) { d.state = 'tell'; d.tell = c.tell * (d.big ? 0.85 : 1); G.ev.push({ k: 'tell', kind: d.k, x: d.x, z: d.z }); } return; }
     if (R() < dt * 0.3) d.wh = R() * TAU; moveTo(dist(d, SPOTS.nest) > 10 ? angTo(d, SPOTS.nest) : d.wh || d.h, 1); } }
 // ---------- LESSONS ----------
+const AIMCARD = {"pic": "🦖", "win": "EAT THE PREY ASKED FOR", "lose": "GET HURT OR STARVE", "how": "WALK UP, BITE, ROAR"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'creep', title: 'CREEP AND BITE', say: G => rexCue(G)[0], do: G => rexCue(G)[1], at: G => rexCue(G)[2], how: 'A runner is grazing ahead. Walk to it (don\'t charge: it hears you), and BITE when it is in front of your jaws. Twice.', need: 2 }],
   2: [{ id: 'roar', title: 'ROAR', say: G => rexCue(G)[0], do: G => rexCue(G)[1], at: G => rexCue(G)[2], how: 'A runner darts off as you come. ROAR when you are close to freeze it, then BITE. Twice.', need: 2 }],
