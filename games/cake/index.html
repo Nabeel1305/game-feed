@@ -4956,9 +4956,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5382,10 +5382,23 @@ const BLIND = { t: G => { press(G, blindAt()); if (G.stage === 'ice') lift(G); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.score = 100; G.parts = []; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'ice', title: 'HOLD TO ICE', say: 'HOLD AND SLIDE', do: 'drag', dir: 'ud', how: 'The cake spins. Hold your thumb on it: the knife spreads icing where your thumb is. Slide up and down until it is all covered.', need: 1 }],
-  2: [{ id: 'pipe', title: 'TAP TO PIPE', say: 'TAP ON THE DOT', do: 'tap', how: 'The cake turns under the piping bag. Tap as each guide dot passes under the bag. Pipe 4 swirls right on their dots.', need: 4 }],
-  3: [{ id: 'top', title: 'TAP TO TOP', say: 'TAP ON THE RING', do: 'tap', how: 'Tap on top of the cake to place each strawberry on its faint ring spot. Place 4 evenly.', need: 4 }],
+  1: [{ id: 'ice', title: 'HOLD TO ICE', say: G => cakeCue(G)[0], do: G => cakeCue(G)[1], at: G => cakeCue(G)[2], how: 'The cake spins. Hold your thumb on it: the knife spreads icing where your thumb is. Slide up and down until it is all covered.', need: 1 }],
+  2: [{ id: 'pipe', title: 'TAP TO PIPE', say: G => cakeCue(G)[0], do: G => cakeCue(G)[1], at: G => cakeCue(G)[2], how: 'The cake turns under the piping bag. Tap as each guide dot passes under the bag. Pipe 4 swirls right on their dots.', need: 4 }],
+  3: [{ id: 'top', title: 'TAP TO TOP', say: G => cakeCue(G)[0], do: G => cakeCue(G)[1], at: G => cakeCue(G)[2], how: 'Tap on top of the cake to place each strawberry on its faint ring spot. Place 4 evenly.', need: 4 }],
 };
+// THE TUTORIAL SHOWS THE MOVE, THE PLACE AND THE MOMENT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// Icing: the hand holds on the cake and slides from its foot to its top, then LET GO once it is covered. Piping: WAIT… then TAP NOW! a quarter
+// of a second before the next dot is under the bag (held a quarter of a second). Topping: the hand on the next empty ring.
+const KCUE = { lit: -1e9 };
+function cakeCue(G) { const s = G.stage, c = G.cfg; if (G.over || G.wait > 0 || !V3 || V3.none) return ['WAIT…', 'wait', false];
+  if (s === 'ice') { if (G.ice && coverage(G) >= 0.86) return ['LET GO', 'release', false]; const r0 = G.tiers.length ? G.tiers[0].r : 1, Hc = G.tiers.length * TIER_H, a = scr(0, STAND_Y, r0), b = scr(0, STAND_Y + Hc, r0);
+    return [G.thumb ? 'SLIDE UP AND DOWN' : 'HOLD AND SLIDE', 'drag', [a.x, a.y - (a.y - b.y) * 0.1, b.x, b.y + (a.y - b.y) * 0.1]]; }
+  if (s === 'pipe') { const n = G.st.n, need = G.st.guides[G.swirls.length % n], af = (((G.ang + c.spin * 0.75 * 0.24) % 1) + 1) % 1, d = Math.min(Math.abs(af - need), 1 - Math.abs(af - need)), now = G.t * 1000;
+    if (d < 0.15 / n) KCUE.lit = now; return now - KCUE.lit < 250 ? ['TAP NOW!', 'tap', [W / 2, H * 0.62]] : ['WAIT FOR THE DOT…', 'wait', false]; }
+  if (s === 'top') { const sp = topSpots(G, 4).find(q => !G.tops.some(t => Math.hypot(t.x - q[0], t.z - q[1]) < 0.22)); if (!sp) return ['WAIT…', 'wait', false];
+    const top = G.tiers[G.tiers.length - 1], lx = sp[0] + (top ? top.off : 0), lz = sp[1], ang = -V3.cake.rotation.y, wx = lx * Math.cos(ang) - lz * Math.sin(ang), wz = lx * Math.sin(ang) + lz * Math.cos(ang), p = scr(wx, cakeTopY(G), wz);
+    return ['TAP ON THE RING', 'tap', [p.x, p.y]]; }
+  return ['WAIT…', 'wait', false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonDeal(G) { const st = lessonNow(G); G.rnd = rng(G.seed + (G.deals = (G.deals | 0) + 1)); G.lesson.n = 0; G.lessonIce = false; const ord = order(G); ord.tiers = 1; ord.swirls = 4; ord.tops = 4; ord.top = 0; ord.drip = -1; setup(G, { yard: st.id, ord }); G.ev.push({ k: 'yard' }); }

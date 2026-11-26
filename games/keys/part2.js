@@ -98,9 +98,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: slow, no song to lose; a mistake starts the lesson again ----------
 const LESSONS = {
-  1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', say: 'TAP THE BLACK', do: 'tap', how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
-  2: [{ id: 'hold', title: 'LONG TILES', say: 'HOLD THE LONG ONE', do: 'hold', how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
-  3: [{ id: 'double', title: 'TWO AT ONCE', say: 'TAP BOTH', do: 'tap', how: 'Some rows have two black tiles: tap both, one thumb each. Play three double rows.', need: 3 }],
+  1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
+  2: [{ id: 'hold', title: 'LONG TILES', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
+  3: [{ id: 'double', title: 'TWO AT ONCE', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Some rows have two black tiles: tap both, one thumb each. Play three double rows.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -121,6 +121,13 @@ const BLIND = { t: G => { G.lx = Math.random() * 4; press(G, Math.floor(G.lx), M
 // a player who looks: two thumbs, each needing a moment between taps (quicker when sharp); sees a tile once it has been on
 // screen a moment, taps it when it is in the lower part of the screen, a little off centre (more so the faster it goes),
 // holds long tiles until they pass (a careless one lets go early), and taps both tiles of a double row
+// THE HAND IS ON THE NEXT BLACK TILE (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It tapped in a
+// box: the black tile is somewhere else and moving. Now the hand is on the next black tile to play (START at first), and says HOLD IT for a long
+// one and TAP BOTH on a double row.
+function keysCue(G) { if (G.over || G.wait > 0 || G.miss) return ['WAIT…', 'wait', false]; const L = lay(); let r = null, j = -1; for (let k2 = G.go ? G.ri : 0; k2 < G.rows.length && k2 < (G.go ? G.ri : 0) + 4; k2++) { const q = G.rows[k2], jj = q.lanes.findIndex((z, i) => !q.tapped[i]); if (jj >= 0) { r = q; j = jj; break; } }      /* the next row still to tap (the row just tapped stays G.ri a moment) */
+  if (!r) return ['WAIT…', 'wait', false]; const yb = G.go ? r.i - G.pos : 0; if (yb > 2.4) return ['GET READY…', 'wait', false];
+  const at = [(r.lanes[j] + 0.5) * L.lw, H - (Math.max(0.05, yb) + 0.5) * L.rh], long = r.kind === 'long';
+  return [!G.go ? 'TAP START' : long ? 'HOLD IT' : r.lanes.length > 1 ? 'TAP BOTH' : 'TAP THE BLACK', long ? 'hold' : 'tap', at]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, dt = 1 / 60;
   if (G.over || G.wait > 0 || G.miss) { mem.th = null; return; } if (!mem.th) mem.th = [{ free: 0, hold: null }, { free: 0, hold: null }]; mem.t = (mem.t || 0) + dt;
   const gap = 0.12 + react * 0.35;

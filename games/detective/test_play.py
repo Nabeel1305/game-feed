@@ -16,7 +16,8 @@ from playwright.sync_api import sync_playwright
 here = os.path.dirname(os.path.abspath(__file__))
 TARGETS = dict(
     ordinary=dict(react=0.35, acc=0.85), sloppy=dict(react=0.5, acc=0.7), sharp=dict(react=0.2, acc=0.97),
-    ordinary_early=0.8,       # an ordinary player wins at least this share of levels 1-3
+    ordinary_first=0.9,       # 26 Nov 2026, his words: "the first level should be the only one that is given"
+    ordinary_early=0.6,       # ..."but after that it should actually engage the players": levels 2-3 are won often, not always
     sloppy_first=0.6,         # a sloppy player wins at least this share of level 1
     sharp_far=0.3,            # a sharp player still wins this share of level 40
     blind_rate=0.001,         # blind strings: at most one fight in a thousand overall
@@ -38,7 +39,7 @@ with sync_playwright() as p:
     o = rate('ordinary', [1, 2, 3, 5, 10, 20, 40]); print('  ordinary', o)
     s = rate('sloppy', [1, 2, 3, 10], 20); print('  sloppy  ', s)
     h = rate('sharp', [10, 40, 80]); print('  sharp   ', h)
-    ok(min(o[1], o[2], o[3]) >= TARGETS['ordinary_early'], 'an ordinary player wins the first three levels', str(o))
+    ok(o[1] >= TARGETS['ordinary_first'] and min(o[2], o[3]) >= TARGETS['ordinary_early'], 'an ordinary player wins level 1 (a given) and most of 2 and 3', str(o))
     ok(s[1] >= TARGETS['sloppy_first'], 'a sloppy player wins the first level', str(s))
     # 25 Nov 2026: the robot detective reads every clue, so its wins do not fall with the level (0.97 at level 3 and at level 40 over 60 games, before and
     # after the new places and methods; the old check passed or failed on one game in ten). What grows is the case: suspects, rooms, false trails.

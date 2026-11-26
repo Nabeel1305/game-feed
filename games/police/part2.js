@@ -187,12 +187,12 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'steer', ph: 'drive', title: 'FOLLOW THE RED ARROW', say: 'STEER, HOLD GAS', do: 'hold', how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow him round 2 corners.', need: 2, ok: w => w === 'corner' },
-      { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', say: 'HIT HIS BACK CORNER', do: 'hold', how: 'Catch him up and drive into his SIDE or back corner. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],
-  2: [{ id: 'corner', ph: 'foot', title: 'FOLLOW HIM ROUND THE CORNER', say: 'SWIPE HIS WAY', do: 'swipe', dir: 'lr', how: 'When the alley turns, swipe LEFT or RIGHT: the way he went.', need: 2, ok: w => w === 'corner' },
-      { id: 'dodge', ph: 'foot', title: 'DODGE, JUMP, SLIDE', say: 'SWIPE ROUND, UP, DOWN', do: 'swipe', dir: 'lr', how: 'Swipe left or right round crates, UP over fences, DOWN under pipes.', need: 4, ok: w => w === 'cleared' },
-      { id: 'tackle', ph: 'foot', title: 'ARREST HIM', say: 'TAP ARREST', do: 'tap', at: G => { const b = arrestBtn(); return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Run until you are right behind him. The ARREST button lights up: press it.', need: 1, ok: w => w === 'tackle' }],
-  3: [{ id: 'hold', ph: 'cuff', title: 'TAP FASTER THAN HE FIGHTS', say: 'TAP TAP TAP!', do: 'tap', how: 'Tap anywhere, fast: every tap pulls the bar towards CUFFED. When he fights back, tap faster.', need: 1, ok: w => w === 'cuffed' }],
+  1: [{ id: 'steer', ph: 'drive', title: 'FOLLOW THE RED ARROW', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'Left thumb: the stick steers. Right thumb: hold GAS. BRAKE before a corner. Follow him round 2 corners.', need: 2, ok: w => w === 'corner' },
+      { id: 'pit', ph: 'drive', title: 'RAM HIS BACK CORNER', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'Catch him up and drive into his SIDE or back corner. Straight into his bumper does nothing.', need: 1, ok: w => w === 'pit' }],
+  2: [{ id: 'corner', ph: 'foot', title: 'FOLLOW HIM ROUND THE CORNER', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'When the alley turns, swipe LEFT or RIGHT: the way he went.', need: 2, ok: w => w === 'corner' },
+      { id: 'dodge', ph: 'foot', title: 'DODGE, JUMP, SLIDE', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'Swipe left or right round crates, UP over fences, DOWN under pipes.', need: 4, ok: w => w === 'cleared' },
+      { id: 'tackle', ph: 'foot', title: 'ARREST HIM', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'Run until you are right behind him. The ARREST button lights up: press it.', need: 1, ok: w => w === 'tackle' }],
+  3: [{ id: 'hold', ph: 'cuff', title: 'TAP FASTER THAN HE FIGHTS', say: G => copCue(G)[0], do: G => copCue(G)[1], at: G => copCue(G)[2], how: 'Tap anywhere, fast: every tap pulls the bar towards CUFFED. When he fights back, tap faster.', need: 1, ok: w => w === 'cuffed' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonPhase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -210,6 +210,23 @@ function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; G.ev
 // BLIND: the stick left, right, centred; GAS (brake off), BRAKE (gas off); on foot: swipes and the ARREST button; in the struggle: taps.
 const BLIND = { L: G => { G.in.sx = -1; }, R: G => { G.in.sx = 1; }, N: G => { G.in.sx = 0; }, G: G => { G.in.gas = true; G.in.brake = false; }, B: G => { G.in.brake = true; G.in.gas = false; },
   l: G => swipe(G, 'l'), r: G => swipe(G, 'r'), u: G => swipe(G, 'u'), d: G => swipe(G, 'd'), t: G => tap(G) };
+// THE TUTORIAL SHOWS THE ONE THING FOR NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said
+// STEER, HOLD GAS (two thumbs) and SWIPE ROUND, UP, DOWN (three swipes) with a hand in a box. Now: in the car the robot's driving (dryPlanAll):
+// HOLD GAS / HOLD BRAKE on the pedal, STEER LEFT / RIGHT on the stick; on foot the swipe for what is coming, early enough for a thumb (SWIPE
+// LEFT / RIGHT at a turn or round a crate, SWIPE UP over a fence, SWIPE DOWN under a pipe), TAP ARREST when it lights, TAP TAP TAP! to cuff.
+const CPC = { t: -1e9, v: null };
+function copCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const c = [W / 2, H * 0.55], sw = (w, dx, dy) => [w, 'swipe', [c[0] - dx * 60 * k, c[1] - dy * 60 * k, c[0] + dx * 60 * k, c[1] + dy * 60 * k]];
+  if (G.ph === 'cuff') return ['TAP TAP TAP!', 'tap', c];
+  if (G.ph === 'foot') { const F = G.foot, nt = F.turns.find(q => !q.past), next = F.obs.find(q => !q.done && q.s > F.s), look = 4.2;
+    if (F.gap < G.cfg.tackle * 0.9) { const b = arrestBtn(); return ['TAP ARREST', 'tap', [b.x + b.w / 2, b.y + b.h / 2]]; }
+    if (nt && nt.got === null && nt.s - F.s <= FOOT_WIN + 1) return nt.dir > 0 ? sw('SWIPE RIGHT', 1, 0) : sw('SWIPE LEFT', -1, 0);
+    if (next && next.s - F.s < look + 2 && next.s - F.s > 0.5) { if (next.type === 'fence') return sw('SWIPE UP', 0, -1); if (next.type === 'pipe') return sw('SWIPE DOWN', 0, 1);
+      const lane = Math.round((F.x + 1.3) / 1.3); if (lane === next.lane || lane === next.two) { const free = [0, 1, 2].filter(l => l !== next.lane && l !== next.two).sort((a, b) => Math.abs(a - lane) - Math.abs(b - lane))[0]; return free > lane ? sw('SWIPE RIGHT', 1, 0) : sw('SWIPE LEFT', -1, 0); } }
+    return ['RUN…', 'wait', false]; }
+  if (G.ph === 'drive') { const now = performance.now(); if (now - CPC.t < 150) return CPC.v; CPC.t = now; const all = dryPlanAll(G, null, {}), d = all.filter(q => q[0] === 'drive').pop(), P = pedals(); let v = ['WAIT…', 'wait', false];
+    if (d) { const [, sx, gas, brake] = d, mid = r => [r.x + r.w / 2, r.y + r.h / 2]; if (brake) v = ['HOLD BRAKE', 'hold', mid(P.brake)]; else if (Math.abs(sx) > 0.35) { const x0 = W * 0.22, y0 = H * 0.7; v = [sx > 0 ? 'STEER RIGHT' : 'STEER LEFT', 'drag', [x0, y0, x0 + sx * 46 * k, y0]]; } else if (gas) v = ['HOLD GAS', 'hold', mid(P.gas)]; }
+    CPC.v = v; return v; }
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, t = G.t;
   const later = (key, cond) => { if (!cond) { mem[key] = null; return false; } if (mem[key] == null) mem[key] = t; return t - mem[key] >= react; };
@@ -225,15 +242,22 @@ function honest(G, o, mem) {
     // slow hands, not blind ones: the stick follows what he wants with a lag (his reaction time), the brake comes on a reaction late, and now and then he misjudges
     if (t > (mem.offT || 0)) { mem.offT = t + 0.7; mem.off = Math.random() > acc ? (Math.random() - 0.5) * 0.7 : 0; } err += mem.off || 0;
     if (sp < 1.5 && !onRoad(me.x + Math.sin(me.h) * 4, me.s + Math.cos(me.h) * 4, 1.1)) mem.back = t + 0.9;      // nose against a wall: back out
-    if (mem.back && t < mem.back) { drive(G, -clamp(err * 2, -1, 1), false, true); return; }
+    if (mem.back && t < mem.back) { ACT.drive(G, -clamp(err * 2, -1, 1), false, true); return; }
     mem.sx = (mem.sx || 0) + (clamp(err * 2.4 + dodge, -1, 1) - (mem.sx || 0)) * Math.min(1, (1 / 60) / (0.08 + react * 0.5)); const br = later('br', brake) && sp > 6;
-    drive(G, mem.sx, !br, br); return; }
+    ACT.drive(G, mem.sx, !br, br); return; }
   if (G.ph === 'foot') { const F = G.foot, next = F.obs.find(q => !q.done && q.s > F.s), look = 7.6 * (react + 0.25), nt = F.turns.find(q => !q.past);
-    if (nt && nt.got === null && later('tn', nt.s - F.s <= FOOT_WIN - 1)) { const d = Math.random() < acc + (1 - acc) * 0.5 ? nt.dir : -nt.dir; swipe(G, d > 0 ? 'r' : 'l'); mem.tn = null; }      // sees the way he went, a reaction late; now and then goes wrong
+    if (nt && nt.got === null && later('tn', nt.s - F.s <= FOOT_WIN - 1)) { const d = Math.random() < acc + (1 - acc) * 0.5 ? nt.dir : -nt.dir; ACT.swipe(G, d > 0 ? 'r' : 'l'); mem.tn = null; }      // sees the way he went, a reaction late; now and then goes wrong
     if (next && next.s - F.s < look + 2 && next.s - F.s > look - 1.5 && mem.obs !== next) { mem.obs = next; const right = Math.random() < acc;
-      if (next.type === 'fence') swipe(G, right ? 'u' : 'd'); else if (next.type === 'pipe') swipe(G, right ? 'd' : 'u');
-      else { const lane = Math.round((F.x + 1.3) / 1.3); if (lane === next.lane || lane === next.two) { const free = [0, 1, 2].filter(l => l !== next.lane && l !== next.two).sort((a, b) => Math.abs(a - lane) - Math.abs(b - lane))[0]; const d = right ? free : lane; if (d < lane) swipe(G, 'l'); else if (d > lane) swipe(G, 'r'); if (Math.abs(d - lane) > 1) swipe(G, d < lane ? 'l' : 'r'); } } }
-    if (later('tk', F.gap < G.cfg.tackle * 0.9)) { tap(G); mem.tk = null; } return; }
-  if (G.ph === 'cuff') { if (t >= (mem.cfT || 0)) { mem.cfT = t + 0.1 + react * 0.2; if (Math.random() < 0.5 + acc * 0.5) tap(G); } }      // taps as fast as his hands go: about 7 a second sharp, 5 clumsy
+      if (next.type === 'fence') ACT.swipe(G, right ? 'u' : 'd'); else if (next.type === 'pipe') ACT.swipe(G, right ? 'd' : 'u');
+      else { const lane = Math.round((F.x + 1.3) / 1.3); if (lane === next.lane || lane === next.two) { const free = [0, 1, 2].filter(l => l !== next.lane && l !== next.two).sort((a, b) => Math.abs(a - lane) - Math.abs(b - lane))[0]; const d = right ? free : lane; if (d < lane) ACT.swipe(G, 'l'); else if (d > lane) ACT.swipe(G, 'r'); if (Math.abs(d - lane) > 1) ACT.swipe(G, d < lane ? 'l' : 'r'); } } }
+    if (later('tk', F.gap < G.cfg.tackle * 0.9)) { ACT.tap(G); mem.tk = null; } return; }
+  if (G.ph === 'cuff') { if (t >= (mem.cfT || 0)) { mem.cfT = t + 0.1 + react * 0.2; if (Math.random() < 0.5 + acc * 0.5) ACT.tap(G); } }      // taps as fast as his hands go: about 7 a second sharp, 5 clumsy
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; if (G.ph !== 'cuff') startCuff(G); G.ph_t = 1; G.cuff.m = 1; cuffed(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { drive, swipe, tap }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

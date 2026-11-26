@@ -4946,9 +4946,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5376,10 +5376,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'shoot', kind: 'S', title: 'SHOOT', say: 'TAP A SPOT, TAP IN GREEN', do: 'tap', how: 'Tap the spot in the goal you want to hit. Then tap again when the needle is in the GREEN. Score twice in a row.', need: 2 },
-    { id: 'save', kind: 'K', title: 'SAVE', say: 'WAIT… TAP HIS SIDE', do: 'tap', how: 'Watch the kicker. When he plants his foot his body turns to where he will shoot: tap that side (the middle to stay). Not before, or he sees you go. Save two in a row.', need: 2 }],
-  2: [{ id: 'read', kind: 'S', title: 'READ THE KEEPER', say: 'SHOOT THE OTHER WAY', do: 'tap', how: 'The keeper leans to the side he is going to dive to. Shoot to the OTHER side. Score twice in a row.', need: 2 }],
-  3: [{ id: 'stutter', kind: 'K', title: 'THE STUTTER', say: 'WAIT FOR THE FOOT', do: 'wait', how: 'This kicker stops in his run-up to fool you. Wait for him to plant his foot, then dive. Save two in a row.', need: 2 }],
+  1: [{ id: 'shoot', kind: 'S', title: 'SHOOT', say: G => penCue(G)[0], do: G => penCue(G)[1], at: G => penCue(G)[2], how: 'Tap the spot in the goal you want to hit. Then tap again when the needle is in the GREEN. Score twice in a row.', need: 2 },
+    { id: 'save', kind: 'K', title: 'SAVE', say: G => penCue(G)[0], do: G => penCue(G)[1], at: G => penCue(G)[2], how: 'Watch the kicker. When he plants his foot his body turns to where he will shoot: tap that side (the middle to stay). Not before, or he sees you go. Save two in a row.', need: 2 }],
+  2: [{ id: 'read', kind: 'S', title: 'READ THE KEEPER', say: G => penCue(G)[0], do: G => penCue(G)[1], at: G => penCue(G)[2], how: 'The keeper leans to the side he is going to dive to. Shoot to the OTHER side. Score twice in a row.', need: 2 }],
+  3: [{ id: 'stutter', kind: 'K', title: 'THE STUTTER', say: G => penCue(G)[0], do: G => penCue(G)[1], at: G => penCue(G)[2], how: 'This kicker stops in his run-up to fool you. Wait for him to plant his foot, then dive. Save two in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonGo(G); }
 function lessonGo(G) { if (lessonNow(G).kind === 'S') startShot(G); else startSave(G); }
@@ -5398,6 +5398,16 @@ function lessonSee(G, good) {
 const BLIND = { t: G => { const R = Math.random; if (G.ph === 'aim') { if (R() < FGOAL) aimAt(G, (R() * 2 - 1) * (GW + 0.7), -0.4 + R() * (GH + 1.4)); } else if (G.ph === 'meter') shootNow(G); else dive(G, [-1, 0, 1][(R() * 3) | 0]); } };
 // a player who looks: reads the keeper's lean and shoots the other way (not where he has been shooting); stops the needle in
 // the green most of the time (acc); waits for the kicker to plant, reads his body and dives that way
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WHERE AND WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It said TAP A SPOT, TAP IN GREEN (two taps) with a hand in a box. Now: the hand on the spot in the goal (the corner away from the keeper's lean),
+// TAP NOW! as the needle comes into the green (a fifth of a second early), and as keeper WAIT FOR THE FOOT… then TAP THIS SIDE where he turns.
+const PNC = { lit: -1e9 };
+function penCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const S = G.S, now = G.t * 1000;
+  if (G.ph === 'aim' && S) { const side = S.lean ? -S.lean : 1, x = side * 2.6, y = 0.6; let at = [W / 2 + side * W * 0.3, H * 0.3]; try { if (V3 && !V3.none) { const P0 = new THREE.Vector3(); V3.plane.coplanarPoint(P0); const v = W3.screen(new THREE.Vector3(x, y, P0.z)); at = [v.x, v.y]; } } catch (e) {}
+    return [S.lean ? 'THE OTHER WAY: TAP HERE' : 'TAP THIS CORNER', 'tap', at]; }
+  if (G.ph === 'meter' && S) { const f = S.m + S.dir * 0.22 / G.cfg.sweep; if (Math.abs(f - S.bc) < S.w * 0.35) PNC.lit = now; return now - PNC.lit < 220 && now >= PNC.lit ? ['TAP NOW!', 'tap', [W / 2, H * 0.62]] : ['WAIT FOR GREEN…', 'wait', false]; }
+  if (G.ph === 'kickK' && G.K && G.K.dive == null) { const d = G.K.cue; return ['TAP ' + (d === 0 ? 'THE MIDDLE' : 'THIS SIDE'), 'tap', [d === 1 ? W / 6 : d === -1 ? W * 5 / 6 : W / 2, H * 0.55]]; }
+  return [G.ph === 'run' ? 'WAIT FOR THE FOOT…' : 'WAIT…', 'wait', false]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.lessonEnd || G.lessonSwap) return;

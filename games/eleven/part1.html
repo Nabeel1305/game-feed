@@ -165,9 +165,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 /*KIT*/
 /*WORLD3D*/

@@ -116,10 +116,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'catch', title: 'FIND THE BOAT', say: 'DRAG THE LIGHT TO THE BOAT', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'A boat is lost out there: its little lamp is in the dark. Touch the sea to move your light onto it, and hold it there until its lamp blinks back.', need: 1, ok: w => w === 'sees' },
-      { id: 'lead', title: 'LEAD IT HOME', say: 'SLIDE TO THE HARBOUR', do: 'drag', dir: 'down', at: G => [W / 2, H * 0.7], how: 'Now it follows your light. Slide your light slowly to the harbour mouth, between the red and green lights. Too fast and it loses you.', need: 1, ok: w => w === 'home' }],
-  2: [{ id: 'rocks', title: 'ROUND THE ROCKS', say: 'GO ROUND THE ROCKS', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Rocks show white with surf where your light falls. Lead the boat round them to the harbour, never across.', need: 1, ok: w => w === 'home', rocks: 4 }],
-  3: [{ id: 'two', title: 'TWO AT ONCE', say: 'ONE, THEN THE OTHER', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Two boats are lost. Bring one in, then go back for the other; a boat you leave drifts towards the shore.', need: 2, ok: w => w === 'home', two: true, rocks: 3 }],
+  1: [{ id: 'catch', title: 'FIND THE BOAT', say: G => lightCue(G)[0], do: G => lightCue(G)[1], at: G => lightCue(G)[2], how: 'A boat is lost out there: its little lamp is in the dark. Touch the sea to move your light onto it, and hold it there until its lamp blinks back.', need: 1, ok: w => w === 'sees' },
+      { id: 'lead', title: 'LEAD IT HOME', say: G => lightCue(G)[0], do: G => lightCue(G)[1], at: G => lightCue(G)[2], how: 'Now it follows your light. Slide your light slowly to the harbour mouth, between the red and green lights. Too fast and it loses you.', need: 1, ok: w => w === 'home' }],
+  2: [{ id: 'rocks', title: 'ROUND THE ROCKS', say: G => lightCue(G)[0], do: G => lightCue(G)[1], at: G => lightCue(G)[2], how: 'Rocks show white with surf where your light falls. Lead the boat round them to the harbour, never across.', need: 1, ok: w => w === 'home', rocks: 4 }],
+  3: [{ id: 'two', title: 'TWO AT ONCE', say: G => lightCue(G)[0], do: G => lightCue(G)[1], at: G => lightCue(G)[2], how: 'Two boats are lost. Bring one in, then go back for the other; a boat you leave drifts towards the shore.', need: 2, ok: w => w === 'home', two: true, rocks: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; const st = LESSONS[G.N][0]; if (st.rocks != null) makeRocks(G, st.rocks); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -154,21 +154,35 @@ function waypoint(G, b, goal) {
 }
 // a person who looks: lights the boat in most danger; with boats following, fetches the next lost one on the way (they all
 // follow the one light), then leads the little convoy home round the rocks, at a boat's pace
+// THE HAND DRAGS THE LIGHT WHERE IT SHOULD GO (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It dragged
+// in a fixed place whatever was out there. Now the robot is asked where it would put the light (dryPlan aim) and the hand drags from the light
+// to there: onto the lost boat, then a little at a time towards the harbour mouth, round the rocks.
+const LHC = { t: -1e9, v: null };
+function lightCue(G) { if (G.over || !G.T) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - LHC.t < 200) return LHC.v; LHC.t = now; const P = dryPlan(G, null, { next: -1 }); let v = ['HOLD IT THERE…', 'wait', false];
+  if (P && P[0] === 'aim') { const a = seaScreen(G.T.x, G.T.y), b = seaScreen(P[1], P[2]); if (Math.hypot(b.x - a.x, b.y - a.y) > 14 * k) v = ['DRAG THE LIGHT HERE', 'drag', [a.x, a.y, b.x, b.y]]; }
+  LHC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg;
-  if (G.t < (mem.next || 0)) { if (mem.goal) aim(G, mem.goal.x, mem.goal.y); return; }
+  if (G.t < (mem.next || 0)) { if (mem.goal) ACT.aim(G, mem.goal.x, mem.goal.y); return; }
   mem.next = G.t + 0.12 + react * 0.3;
   if (!G.boats.length) { mem.goal = null; return; }
   const n = (1 - acc) * 14, j = () => (Math.random() - 0.5) * 2 * n;
   const fol = G.boats.filter(q => q.mode === 'follow'), lost = G.boats.filter(q => q.mode === 'lost' || q.mode === 'adrift').sort((p, q) => danger(G, p) - danger(G, q));
   if (!fol.length) { const b = lost[0]; if (!b) { mem.goal = null; return; } if (mem.id !== b.id) { mem.id = b.id; mem.next = G.t + react; }
-    mem.goal = { x: b.x + Math.sin(b.h) * b.v * 0.6 + j() * 0.5, y: b.y + Math.cos(b.h) * b.v * 0.6 + j() * 0.5 }; aim(G, mem.goal.x, mem.goal.y); return; }
+    mem.goal = { x: b.x + Math.sin(b.h) * b.v * 0.6 + j() * 0.5, y: b.y + Math.cos(b.h) * b.v * 0.6 + j() * 0.5 }; ACT.aim(G, mem.goal.x, mem.goal.y); return; }
   const lead = fol.slice().sort((p, q) => Math.hypot(p.x - G.S.x, p.y - G.S.y) - Math.hypot(q.x - G.S.x, q.y - G.S.y))[0];
   const tail = Math.max(...fol.map(q => Math.hypot(q.x - lead.x, q.y - lead.y)));
   let goal = null; const next = lost[0];
   if (next && fol.length < 3 && (danger(G, next) < 30 || Math.hypot(lead.x - G.hx, lead.y - COAST) > 60)) { if (mem.id !== next.id) { mem.id = next.id; mem.next = G.t + react * 0.5; } goal = { x: next.x, y: next.y }; }
   const w = waypoint(G, lead, goal), dx = w.x - lead.x, dy = w.y - lead.y, L2 = Math.hypot(dx, dy) || 1, step = Math.min(L2, (tail > 14 ? 5 : 9) + Math.random() * 4);
   mem.goal = { x: lead.x + dx / L2 * step + j(), y: lead.y + dy / L2 * step + j() };
-  aim(G, mem.goal.x, mem.goal.y);
+  ACT.aim(G, mem.goal.x, mem.goal.y);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.made = G.cfg.boats; G.lives = G.cfg.lives; G.boats.length = 0; const b = newBoat(G); G.made = G.cfg.boats; b.x = G.hx; b.y = COAST + 0.5; b.mode = 'home'; b.h = Math.PI; b.v = 3; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { aim }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

@@ -102,9 +102,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: aim with the rhythm, brace on time, the whole pass ----------
 const LESSONS = {
-  1: [{ id: 'aim', title: 'AIM WITH THE RHYTHM', say: 'DRAG TO AIM', do: 'drag', dir: 'lr', how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
-  2: [{ id: 'brace', title: 'BRACE AT THE CRASH', say: 'HOLD BRACE AT THE CRASH', do: 'hold', at: G => { const b = layout(G).brace; return [b.x, b.y]; }, how: 'Hold BRACE just before the crash, when it glows (not earlier: your arm tires). Three braced hits.', need: 3 }],
-  3: [{ id: 'clean', title: 'BREAK A LANCE', say: 'MIDDLE + BRACE', do: 'hold', at: G => { const b = layout(G).brace; return [b.x, b.y]; }, how: 'Aim for the centre of the shield and brace on time: a clean braced hit breaks your lance (2 points). Twice.', need: 2 }],
+  1: [{ id: 'aim', title: 'AIM WITH THE RHYTHM', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
+  2: [{ id: 'brace', title: 'BRACE AT THE CRASH', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Hold BRACE just before the crash, when it glows (not earlier: your arm tires). Three braced hits.', need: 3 }],
+  3: [{ id: 'clean', title: 'BREAK A LANCE', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Aim for the centre of the shield and brace on time: a clean braced hit breaks your lance (2 points). Twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, e) { const D = G.lesson; if (!D || D.done || what !== 'clash') return; const id = D.id;
@@ -125,6 +125,15 @@ const BLIND = {
 // HONEST: a jouster who looks: learns the rhythm (knows where the sway will be at the crash, as well as acc allows) and aims
 // so the tip swings onto the shield centre; watches the late shifter's tell; braces about a third of a second before the
 // crash (later or earlier by react); leans a little at the last moment if the rival aims well.
+// THE TUTORIAL SHOWS THE ONE THING TO DO NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It slid
+// left and right in a box, and MIDDLE + BRACE was two things. Now: DRAG TO AIM (on the right: the drag that puts the ring on the middle, as
+// the robot works it out), WAIT FOR THE CRASH…, HOLD BRACE! a quarter second before the robot would brace (the time a thumb takes).
+function joustCue(G) { if (G.over || G.phase !== 'charge') return ['WAIT…', 'wait', false]; const L = layout(G), id = G.lesson && G.lesson.steps[G.lesson.i] ? G.lesson.steps[G.lesson.i].id : '';
+  if (G.brace) return ['KEEP HOLDING', 'hold', [L.brace.x, L.brace.y]];
+  if (id !== 'aim' && G.pt >= PASS_T - 0.6) return ['HOLD BRACE!', 'hold', [L.brace.x, L.brace.y]];
+  const sw = sway(G, PASS_T), tx = G.sh0.x + (G.told ? G.rv.shift : 0) - sw.x, ty = G.sh0.y - sw.y, sc = 0.0042 / k, ex = tx - G.aim.x, ey = ty - G.aim.y;
+  if (G.pt > 1 && G.pt < PASS_T - 0.4 && Math.hypot(ex, ey) > 0.03) { const x0 = W * 0.72, y0 = H * 0.5; return ['DRAG TO AIM', 'drag', [x0, y0, x0 + ex / sc, y0 - ey / sc]]; }
+  return [id === 'aim' ? 'WAIT… HOLD IT THERE' : 'WAIT FOR THE CRASH…', 'wait', false]; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.phase !== 'charge') { braceOn(G, false); mem.pass = null; return; }
   if (mem.pass !== G.pass) { mem.pass = G.pass; mem.err = { x: (R() - 0.5) * (1 - acc) * 0.5, y: (R() - 0.5) * (1 - acc) * 0.4 }; mem.bt = PASS_T - 0.32 + (R() - 0.5) * react * 0.9; mem.seenTell = false; mem.lean = null; }

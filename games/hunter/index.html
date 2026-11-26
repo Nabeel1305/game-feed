@@ -4708,9 +4708,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4941,9 +4943,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5405,10 +5407,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', say: 'CREEP… FREEZE!', do: 'drag', dir: 'up', how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
-      { id: 'throw', title: 'THROW AT THE CHEST', say: 'AIM, TAP THROW', do: 'tap', at: G => { const b = layout().fire; return [b.x, b.y]; }, how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
-  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', say: 'CLOSER, THEN THROW', do: 'tap', at: G => { const b = layout().fire; return [b.x, b.y]; }, how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
-  3: [{ id: 'lion', title: 'A LION!', say: 'SWIPE! THEN TAP TAP TAP', do: 'swipe', dir: 'lr', how: 'Tap the side the growl comes from to face it. When it leaps, SWIPE to dodge. Then TAP, TAP, TAP to spear it. It comes again until it is dead.', need: 1, ok: w => w === 'lion', lion: 1 }],
+  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
+      { id: 'throw', title: 'THROW AT THE CHEST', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
+  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
+  3: [{ id: 'lion', title: 'A LION!', say: G => huntCue(G)[0], do: G => huntCue(G)[1], dir: 'lr', at: G => huntCue(G)[2], how: 'Tap the side the growl comes from to face it. When it leaps, SWIPE to dodge. Then TAP, TAP, TAP to spear it. It comes again until it is dead.', need: 1, ok: w => w === 'lion', lion: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); if (lessonNow(G).near) newAnimal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5430,6 +5432,22 @@ const BLIND = {
 };
 // HONEST: creeps while it grazes, freezes on the tell (late by react), throws at the chest from a comfortable range, faces a growl
 // and braces on the leap (late by react).
+// THE TUTORIAL SHOWS THE ONE THING TO DO NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said
+// CREEP… FREEZE! (two things) with a drag up in a box, and AIM, TAP THROW. Now, as the robot judges it: PUSH TO CREEP on the stick, FREEZE! LET GO
+// when its head comes up, KEEP STILL…, DRAG TO AIM (the crosshair onto the chest, on the right), TAP THROW, SLIDE TO DODGE a charge; with the lion
+// TAP THIS SIDE (the growl), SWIPE! as it leaps, TAP! TAP! TAP! when it is open.
+function huntCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const a = G.a, Ln = G.lion, S = stickBase(), L = layout();
+  if (Ln && Ln.st !== 'gone') { if (Ln.st === 'stalk') return G.me.face !== Ln.side ? ['TAP THIS SIDE', 'tap', [W / 2 + Ln.side * W * 0.3, H * 0.45]] : ['WAIT FOR IT…', 'wait', false];
+    if (Ln.st === 'leap') return ['SWIPE!', 'swipe', [W * 0.35, H * 0.5, W * 0.7, H * 0.5]]; if (Ln.st === 'open') return ['TAP! TAP! TAP!', 'tap', [W / 2, H * 0.45]]; return ['WAIT…', 'wait', false]; }
+  if (!a) return ['WAIT…', 'wait', false];
+  if (a.st === 'threat' || a.st === 'charge') return a.locked ? ['SLIDE TO DODGE', 'drag', [S.x, S.y, S.x + S.r * 0.8, S.y]] : ['KEEP STILL…', G.me.creep ? 'release' : 'wait', false];
+  if (a.st === 'flee' || a.st === 'dead' || a.st === 'pass' || G.spears.some(q => !q.done)) return ['WAIT…', 'wait', false];
+  if (a.st === 'tell' || a.st === 'look') return G.me.creep ? ['FREEZE! LET GO', 'release', [S.x, S.y - S.r * 0.5]] : ['KEEP STILL…', 'wait', false];
+  if (distA(G) > 13) return [G.me.creep ? 'KEEP CREEPING' : 'PUSH TO CREEP', 'drag', [S.x, S.y, S.x, S.y - S.r * 0.5]];
+  if (!V3 || V3.none) return ['TAP THROW', 'tap', [L.fire.x, L.fire.y]];
+  const kd = a.kind, c0 = W3.screen(g2w(a.x, a.z, HGT(a.x, a.z) + 0.75 * kd.body)), vx = a.x + Math.sin(a.face) * kd.body * 0.5, vz = a.z + Math.cos(a.face) * kd.body * 0.5, v = W3.screen(g2w(vx, vz, HGT(vx, vz) + 0.6 * kd.body)), ch = ui.ch || { x: 0, y: 0 }, ex = v.x - c0.x - ch.x, ey = v.y - c0.y - ch.y;
+  if (Math.hypot(ex, ey) > 16 * k) { const x0 = W * 0.72, y0 = H * 0.42; return ['DRAG TO AIM', 'drag', [x0, y0, x0 + ex / 0.9, y0 + ey / 0.9]]; }
+  return ['TAP THROW', 'tap', [L.fire.x, L.fire.y]]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, a = G.a, Ln = G.lion, t = G.t;
   const seen = (key, cond) => { if (!cond) { mem[key] = null; return false; } if (mem[key] == null) mem[key] = t; return t - mem[key] >= react; };

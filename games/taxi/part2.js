@@ -190,6 +190,17 @@ function finish(G, win, o = {}) { if (G.over) return true; G.over = win ? 'won' 
 // He keeps to the right of the yellow line, pulls out round a slower car when the other lane is clear, takes the kerb lane for
 // the ring, slows for a corner and turns the way the GPS says (now and then the wrong way), stops for a red light and at the ring.
 // Slow hands, not blind ones: the stick follows what he wants with a lag, the pedals change a reaction late.
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said STEER,
+// GAS, STOP IN GREEN (three things) with a hand holding in a box. Now the robot is asked (dryPlanAll drive): HOLD GAS, HOLD BRAKE (to stop in
+// the ring, before a corner), STEER LEFT / STEER RIGHT on the stick (the GPS way, round a slow car), LET GO OF GAS to roll.
+const TXC = { t: -1e9, v: null };
+function taxiCue(G) { if (G.over || G.wait > 0 || !G.in) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - TXC.t < 150) return TXC.v; TXC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), dv = all.filter(q => q[0] === 'drive').pop(), mid = b => [b.x + b.w / 2, b.y + b.h / 2]; let v = ['WAIT…', 'wait', false];
+  if (dv) { const Pd = pedals(), x0 = 78 * k, y0 = H - 96 * k, R1 = 46 * k;
+    if (dv[3]) v = ['HOLD BRAKE', 'hold', mid(Pd.brake)];
+    else if (dv[2] && !G.in.gas) v = ['HOLD GAS', 'hold', mid(Pd.gas)];
+    else if (Math.abs(dv[1]) > 0.25) v = [dv[1] < 0 ? 'STEER LEFT' : 'STEER RIGHT', 'drag', [x0, y0, x0 + dv[1] * R1, y0]];
+    else v = dv[2] ? ['HOLD GAS', 'hold', mid(Pd.gas)] : G.in.gas ? ['LET GO OF GAS', 'release', mid(Pd.gas)] : ['ROLL…', 'wait', false]; }
+  TXC.v = v; return v; }
 function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.taxi) return; const t = G.taxi, c = G.cfg, acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react, T = G.t;
   const g = G.goal, d2n = BL - t.s, F = G.fare, sp = Math.abs(t.v), inJ = !!t.box;
   // decisions a few times a second: the turn at the junction ahead, the lane, the speed to hold
@@ -218,18 +229,18 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.taxi) return; const 
   let err = wrapPi(Math.atan2(tx - t.x, ty - t.y) - t.th);
   if (T > (mem.offT || 0)) { mem.offT = T + 0.7; mem.off = Math.random() > acc ? (Math.random() - 0.5) * 0.5 : 0; } err += mem.off || 0;
   if (sp < 0.8 && (mem.vt || 0) > 2 && !onRoadT(G, t.x + Math.sin(t.th) * 3.5, t.y + Math.cos(t.th) * 3.5, 1.0)) mem.back = T + 1.1;      // nose against a kerb: back out
-  if (mem.back && T < mem.back) { drive(G, -clamp(err * 2, -1, 1), false, true); return; }
+  if (mem.back && T < mem.back) { ACT.drive(G, -clamp(err * 2, -1, 1), false, true); return; }
   mem.sx = (mem.sx || 0) + (clamp(err * 2.6, -1, 1) - (mem.sx || 0)) * Math.min(1, (1 / 60) / (0.08 + react * 0.5));
   const vt = mem.vt == null ? c.vmax : mem.vt, slow = t.v > vt + 0.4, stop = vt < 0.4 && t.v < 0.5;
-  drive(G, mem.sx, !slow && !stop && t.v < vt - 0.2, slow && t.v > 0.2); }
+  ACT.drive(G, mem.sx, !slow && !stop && t.v < vt - 0.2, slow && t.v > 0.2); }
 // blind moves (no looking): the stick left, right, centred; GAS (brake off), BRAKE (gas off)
 const BLIND = { L: G => { G.in.sx = -1; }, R: G => { G.in.sx = 1; }, N: G => { G.in.sx = 0; }, G: G => { G.in.gas = true; G.in.brake = false; }, B: G => { G.in.brake = true; G.in.gas = false; } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.log = [{ type: 'plain', left: 10, pay: 8, tip: 3, bumps: 0 }]; G.tips = 1; G.done = G.cfg.fares; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pick', title: 'GAS, BRAKE, STOP IN THE RING', say: 'STEER, GAS, STOP IN GREEN', do: 'hold', how: 'Left thumb: the stick steers. Right thumb: hold GAS to go, BRAKE to stop. Stop in the green ring beside the person waving; then stop in the ring at their door.', need: 2 }],
-  2: [{ id: 'turn', title: 'FOLLOW THE GPS ARROW', say: 'BRAKE, THEN TURN', do: 'hold', how: 'BRAKE before the corner, then steer the way the GPS arrow points (left or right). Take 2 turns.', need: 2 }],
-  3: [{ id: 'lane', title: 'PASS SLOW CARS', say: 'GO ROUND THEM', do: 'drag', dir: 'lr', how: 'Steer out round a slow car and back in. Pass 3 without touching them.', need: 3 }],
+  1: [{ id: 'pick', title: 'GAS, BRAKE, STOP IN THE RING', say: G => taxiCue(G)[0], do: G => taxiCue(G)[1], at: G => taxiCue(G)[2], how: 'Left thumb: the stick steers. Right thumb: hold GAS to go, BRAKE to stop. Stop in the green ring beside the person waving; then stop in the ring at their door.', need: 2 }],
+  2: [{ id: 'turn', title: 'FOLLOW THE GPS ARROW', say: G => taxiCue(G)[0], do: G => taxiCue(G)[1], at: G => taxiCue(G)[2], how: 'BRAKE before the corner, then steer the way the GPS arrow points (left or right). Take 2 turns.', need: 2 }],
+  3: [{ id: 'lane', title: 'PASS SLOW CARS', say: G => taxiCue(G)[0], do: G => taxiCue(G)[1], at: G => taxiCue(G)[2], how: 'Steer out round a slow car and back in. Pass 3 without touching them.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -246,3 +257,10 @@ function lessonSee(G, what, ok) { const L = lessonNow(G); if (!L || G.wait > 0) 
   if (L.id === 'lane' && what === 'pass') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
   if (G.lesson.n < L.need) { if (L.id === 'lane' && G.taxi.s > BL - 10 && G.taxi.i === 3) { /* more road: the next block has more cars */ } return; }
   G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.4; G.next = () => { G.rnd = rng(G.seed); G.yardDrop = null; setup(G); G.ev.push({ k: 'start' }); G.ev.push({ k: 'yard' }); }; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { drive }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

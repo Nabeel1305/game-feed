@@ -228,9 +228,9 @@ function finish(G, win, why, by) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'eat', title: 'EAT', say: 'DRAG TO SWIM', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drag your thumb: the shark swims that way. Swim into the small fish (they glow green). Eat five.', need: 5 }],
-  2: [{ id: 'escape', title: 'GET AWAY', say: 'DRAG TO THE EDGE!', do: 'drag', dir: 'right', at: G => [W / 2, H * 0.7], how: 'A hunter is coming (the red mark). Drag all the way to the edge to dash away until it gives up.', need: 1 }],
-  3: [{ id: 'gold', title: 'THE GOLDEN FISH', say: 'GRAB IT, DASH AWAY', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'A golden fish is worth three, but it stays near a hunter. Dart in, grab it, dash away.', need: 1 }],
+  1: [{ id: 'eat', title: 'EAT', say: G => sharkCue(G)[0], do: G => sharkCue(G)[1], at: G => sharkCue(G)[2], how: 'Drag your thumb: the shark swims that way. Swim into the small fish (they glow green). Eat five.', need: 5 }],
+  2: [{ id: 'escape', title: 'GET AWAY', say: G => sharkCue(G)[0], do: G => sharkCue(G)[1], at: G => sharkCue(G)[2], how: 'A hunter is coming (the red mark). Drag all the way to the edge to dash away until it gives up.', need: 1 }],
+  3: [{ id: 'gold', title: 'THE GOLDEN FISH', say: G => sharkCue(G)[0], do: G => sharkCue(G)[1], at: G => sharkCue(G)[2], how: 'A golden fish is worth three, but it stays near a hunter. Dart in, grab it, dash away.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -248,15 +248,22 @@ function lessonMiss(G) { const st = lessonNow(G); G.lesson.n = 0; G.ev.push({ k:
 const BLIND = { d: G => { const R = Math.random; if (R() < 0.2) setStick(G, 0, 0); else { const a = R() * TAU, L = R() < 0.4 ? 1 : 0.4 + R() * 0.5; setStick(G, Math.cos(a) * L, Math.sin(a) * L); } } };
 // a player who looks: runs from a hunter that has noticed him (dashing, away from it), otherwise goes for the best fish he can
 // eat (worth over distance, minus the danger near it), and grabs a golden fish if the hunter beside it is not looking
+// THE TUTORIAL SAYS WHICH WAY TO SWIM (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid left and
+// right (or right) in a box, whatever was on the screen. Now the robot is asked (dryPlan setStick): SWIM THIS WAY (to the green fish, the gold one),
+// DRAG ALL THE WAY: DASH! away from a hunter.
+const SHC = { t: -1e9, v: null };
+function sharkCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SHC.t < 150) return SHC.v; SHC.t = now; const P = dryPlan(G, null, { t: -1, next: -1 }), s2 = ui.stick, x0 = s2 ? s2.x0 : W / 2, y0 = s2 ? s2.y0 : H * 0.7, R = 70 * k; let v = ['STAY STILL', 'wait', false];
+  if (P && P[0] === 'setStick') { const m = Math.hypot(P[1], P[2]) || 1, f = Math.min(1, m); v = [f > 0.9 && G.lesson && G.lesson.steps[G.lesson.i].id !== 'eat' ? 'ALL THE WAY: DASH!' : 'SWIM THIS WAY', 'drag', [x0, y0, x0 + P[1] / m * R * Math.max(0.6, f), y0 + P[2] / m * R * Math.max(0.6, f)]]; }
+  SHC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, m = G.me, s = sizeOf(G);
-  if (G.over || G.wait > 0) { setStick(G, 0, 0); return; }
+  if (G.over || G.wait > 0) { ACT.setStick(G, 0, 0); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.05 + react * 0.35;
   let fx = 0, fz = 0, threat = 0;
   for (const f of G.fish) { if (!danger(G, f) && !(f.sp.kind === 'jelly')) continue; const dx = m.x - f.x, dz = m.z - f.z, d = Math.hypot(dx, dz) || 1, w = f.sp.kind === 'jelly' ? (d < 1.4 + f.size + s * 0.7 ? 3.2 / d : 0) : f.state !== 'calm' ? 14 / d : d < 10 ? 4 / d : 0; fx += dx / d * w; fz += dz / d * w; if (f.sp.kind !== 'jelly' && f.state !== 'calm' && d < 18) threat = Math.max(threat, 1); }
   if (R() > acc && threat) { fx *= 0.3; fz *= 0.3; }      // a moment of panic: a thumb is not perfect
   const rr = Math.hypot(m.x, m.z); if (rr > bayOf(G) - 12) { fx -= m.x / rr * 0.8; fz -= m.z / rr * 0.8; }
-  if (threat) { setStick(G, fx * 3, fz * 3); const L = Math.hypot(G.stick.x, G.stick.z); if (L > 0.01) setStick(G, G.stick.x / L, G.stick.z / L); mem.mode = 'flee'; return; }
+  if (threat) { ACT.setStick(G, fx * 3, fz * 3); const L = Math.hypot(G.stick.x, G.stick.z); if (L > 0.01) ACT.setStick(G, G.stick.x / L, G.stick.z / L); mem.mode = 'flee'; return; }
   // little to eat here: he reads the map and swims to the nearest place that still has fish (the jelly garden last)
   if (!G.lesson) { const here = spotAt(G, m.x, m.z), fed = here && !(here.out > 0), pzf = G.ready ? G.fish.find(f => f.prize) : null; let nearN = 0, to = null; const vw = viewOf(G); for (const f of G.fish) if (edible(G, f) && f.leave == null && !f.prize && Math.hypot(f.x - m.x, f.z - m.z) < vw * 1.9) nearN++;
     if (m.hunger < 0.35) mem.feed = true; else if (m.hunger > 0.62) mem.feed = false;
@@ -266,16 +273,23 @@ function honest(G, o, mem) {
     {
       if (to) { const dx = to.x - m.x, dz = to.z - m.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d; let snack = null, sd = 6.5; for (const f of G.fish) { if (!edible(G, f) || f.leave != null || f.kind === 'puffer' || f.fleeing) continue; const ax = f.x - m.x, az = f.z - m.z, ad = Math.hypot(ax, az); if (ad < sd && (ax * ux + az * uz) > ad * 0.2) { sd = ad; snack = f; } }      /* a fish close by and on the way: taken in passing, as anyone would */
         const back = fx * ux + fz * uz; if (back < 0) { fx -= back * ux * 0.85; fz -= back * uz * 0.85; }      /* round a jellyfish, not back from it */
-        const gx = snack ? (snack.x - m.x) / (sd || 1) : ux, gz = snack ? (snack.z - m.z) / (sd || 1) : uz; let sx = gx * 0.85 + fx * 0.6, sz = gz * 0.85 + fz * 0.6; const L2 = Math.hypot(sx, sz) || 1, hurry = m.hunger < 0.4 && m.dash > 0.3; sx = sx / L2 * (hurry ? 1 : 0.88); sz = sz / L2 * (hurry ? 1 : 0.88); setStick(G, sx, sz); mem.mode = 'go ' + to.k + (snack ? ' +' + snack.kind : ''); return; } } }
+        const gx = snack ? (snack.x - m.x) / (sd || 1) : ux, gz = snack ? (snack.z - m.z) / (sd || 1) : uz; let sx = gx * 0.85 + fx * 0.6, sz = gz * 0.85 + fz * 0.6; const L2 = Math.hypot(sx, sz) || 1, hurry = m.hunger < 0.4 && m.dash > 0.3; sx = sx / L2 * (hurry ? 1 : 0.88); sz = sz / L2 * (hurry ? 1 : 0.88); ACT.setStick(G, sx, sz); mem.mode = 'go ' + to.k + (snack ? ' +' + snack.kind : ''); return; } } }
   let best = null, bs = -1e9; const ban = mem.ban || (mem.ban = {}), hp0 = G.lesson ? null : spotAt(G, m.x, m.z), hereP = hp0 && !(hp0.out > 0) ? hp0 : null;      // a fish he has chased for three seconds and not caught (a puffer that keeps puffing, a mackerel too quick for him) he gives up on for a while, as a person does
   if (!G.lesson && mem.tgt != null && G.t - mem.since > 3) { ban[mem.tgt] = G.t + 7; mem.tgt = null; }      /* not in a lesson: there the one fish it is about is the whole point */
   for (const f of G.fish) { if (!edible(G, f)) continue; if (f.prize) { if (G.ready && (!mem.feed || Math.hypot(f.x - m.x, f.z - m.z) < 11)) { best = f; bs = 1e9; break; } continue; } if (ban[f.id] > G.t) continue; const d = Math.hypot(f.x - m.x, f.z - m.z); let risk = 0; for (const h of G.fish) if (danger(G, h)) { const dh = Math.hypot(h.x - f.x, h.z - f.z); if (dh < 10) risk += (10 - dh) * (h.state === 'calm' ? 0.3 : 1.5); }
     for (const j of G.fish) if (j.sp.kind === 'jelly') { const dj = Math.hypot(j.x - f.x, j.z - f.z); if (dj < 1 + j.size + s * 0.5) risk += 4; else { const ax = f.x - m.x, az = f.z - m.z, al = Math.hypot(ax, az) || 1, t = clamp(((j.x - m.x) * ax + (j.z - m.z) * az) / (al * al), 0, 1), pd = Math.hypot(m.x + ax * t - j.x, m.z + az * t - j.z); if (pd < 0.5 + j.size * 0.6 + s * 0.35) risk += 3; } }      /* a jellyfish beside it or on the way to it: not that one */
     const sc = f.sp.val * 3 / (d + 4) - risk * 0.15 - (f.sp.kind === 'dart' && d > 8 ? 0.2 : 0) - (f.kind === 'puffer' && m.dash < 0.4 ? 0.5 : 0) - (hereP && Math.hypot(f.x - hereP.x, f.z - hereP.z) > hereP.r + 1 ? 0.35 : 0); if (sc > bs) { bs = sc; best = f; } }
-  if (!best) { setStick(G, -m.x / (rr || 1) * 0.6 + fx, -m.z / (rr || 1) * 0.6 + fz); return; }
+  if (!best) { ACT.setStick(G, -m.x / (rr || 1) * 0.6 + fx, -m.z / (rr || 1) * 0.6 + fz); return; }
   if (best.id !== mem.tgt) { mem.tgt = best.id; mem.since = G.t; }
   const d = Math.hypot(best.x - m.x, best.z - m.z), lead = Math.min(0.5, d / 10), tx = best.x + Math.cos(best.h) * best.v * lead - m.x, tz = best.z + Math.sin(best.h) * best.v * lead - m.z, L = Math.hypot(tx, tz) || 1;
   const dash = (best.fleeing && d < 8 && m.dash > 0.35) || (best.kind === 'puffer' && d < 7 && m.dash > 0.2) || (best.sp.gold && d < 10 && m.dash > 0.3);
-  setStick(G, tx / L * (dash ? 1 : 0.8) + fx * 0.6, tz / L * (dash ? 1 : 0.8) + fz * 0.6); mem.mode = 'hunt ' + best.kind + '@' + d.toFixed(1) + (best.fleeing ? ' fleeing' : '') + ' v' + best.v.toFixed(1);
+  ACT.setStick(G, tx / L * (dash ? 1 : 0.8) + fx * 0.6, tz / L * (dash ? 1 : 0.8) + fz * 0.6); mem.mode = 'hunt ' + best.kind + '@' + d.toFixed(1) + (best.fleeing ? ' fleeing' : '') + ' v' + best.v.toFixed(1);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.me.tier = G.cfg.goal - 1; G.ready = true; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

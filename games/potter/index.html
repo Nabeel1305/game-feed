@@ -4708,9 +4708,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4941,9 +4943,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5311,10 +5313,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'press', title: 'THE CLAY FOLLOWS YOUR FINGER', say: 'TOUCH THE SIDE, MOVE IN', do: 'drag', dir: 'right', how: 'Touch the side of the spinning clay and slowly move your finger in towards the middle. Watch it narrow.', need: 1, ok: (w, m) => w === 'shaped' },
-      { id: 'fire', title: 'MATCH, THEN FIRE', say: 'MATCH THE LINE, TAP FIRE', do: 'drag', dir: 'up', how: 'Shape it to the dotted outline, bottom to top, slowly. When the match reaches the mark, tap FIRE.', need: 1, ok: w => w === 'fired', ctrl: 2 }],
-  2: [{ id: 'curve', title: 'IN AND OUT', say: 'IN… AND OUT', do: 'drag', dir: 'up', how: 'This one curves. Move your finger in where it narrows and out where it swells, slowly, all the way up.', need: 1, ok: w => w === 'fired', ctrl: 3 }],
-  3: [{ id: 'two', title: 'TWO ORDERS', say: 'SLOW AND STEADY', do: 'drag', dir: 'up', how: 'Two pots to make. Slow, steady hands: too fast and the pot wobbles.', need: 2, ok: w => w === 'fired', ctrl: 3 }],
+  1: [{ id: 'press', title: 'THE CLAY FOLLOWS YOUR FINGER', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Touch the side of the spinning clay and slowly move your finger in towards the middle. Watch it narrow.', need: 1, ok: (w, m) => w === 'shaped' },
+      { id: 'fire', title: 'MATCH, THEN FIRE', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Shape it to the dotted outline, bottom to top, slowly. When the match reaches the mark, tap FIRE.', need: 1, ok: w => w === 'fired', ctrl: 2 }],
+  2: [{ id: 'curve', title: 'IN AND OUT', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'This one curves. Move your finger in where it narrows and out where it swells, slowly, all the way up.', need: 1, ok: w => w === 'fired', ctrl: 3 }],
+  3: [{ id: 'two', title: 'TWO ORDERS', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Two pots to make. Slow, steady hands: too fast and the pot wobbles.', need: 2, ok: w => w === 'fired', ctrl: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5340,6 +5342,13 @@ const BLIND = {
   f: G => fire(G),
 };
 // a potter who looks: sweeps up the side, finger on the order's line (a little off, as a thumb is), slowly; fires at the mark
+// THE HAND SHAPES WHERE THE POT IS WRONG (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It dragged right
+// or up in a box, and MATCH THE LINE, TAP FIRE was two things. Now the hand takes the wall where it is furthest from the dotted line and moves it
+// to the line (MOVE IN / MOVE OUT), sweeps slowly up the line when it is nearly there, and TAP FIRE when the match is enough.
+function potCue(G) { if (G.over || G.gap > 0) return ['WAIT…', 'wait', false]; const c = G.cfg; if (G.match >= c.pass + 0.01) { const r = fireRect(); return ['TAP FIRE', 'tap', [r.x + r.w / 2, r.y + r.h / 2]]; }
+  let bi = 0, bd = 0; for (let i = 0; i < NR; i++) { const d = Math.abs(G.target[i] - G.r[i]); if (d > bd) { bd = d; bi = i; } } const u = bi / (NR - 1);
+  if (bd > 0.05) { const a = potScreen(u, G.r[bi]), b = potScreen(u, G.target[bi]); return [G.target[bi] < G.r[bi] ? 'MOVE IN SLOWLY' : 'MOVE OUT SLOWLY', 'drag', [a.x, a.y, b.x, b.y]]; }
+  const a = potScreen(0.05, G.target[Math.round(0.05 * (NR - 1))]), b = potScreen(0.95, G.target[Math.round(0.95 * (NR - 1))]); return ['SLIDE UP THE LINE SLOWLY', 'drag', [a.x, a.y, b.x, b.y]]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg;
   if (G.gap > 0) { mem.sw = null; return; }

@@ -94,9 +94,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'RUN HER DOWN', say: G => G.wolf && G.prey && Math.hypot(G.prey.x - G.wolf.x, G.prey.z - G.wolf.z) < G.cfg.strike * 1.6 ? 'TAP BITE!' : 'SLIDE TO STEER', do: G => G.wolf && G.prey && Math.hypot(G.prey.x - G.wolf.x, G.prey.z - G.wolf.z) < G.cfg.strike * 1.6 ? 'tap' : 'drag', dir: 'lr', at: G => G.wolf && G.prey && Math.hypot(G.prey.x - G.wolf.x, G.prey.z - G.wolf.z) < G.cfg.strike * 1.6 ? [biteBtn().x, biteBtn().y] : [W * 0.4, H * 0.7], how: 'Slide your thumb left or right to steer at the marked elk. Push it up for a burst. When you are close and BESIDE her, the BITE button glows: tap it.', need: 1, ok: w => w === 'caught', start: 14 }],
-  2: [{ id: 'cut', title: 'CUT THE CORNER', say: 'GO WHERE SHE GOES', do: 'drag', dir: 'lr', at: G => [W * 0.4, H * 0.7], how: 'Her head turns before she swerves. Steer to where she is going, come up alongside, and strike from the side.', need: 1, ok: w => w === 'caught' }],
-  3: [{ id: 'flank', title: 'USE THE PACK', say: 'TAP FLANK', do: 'tap', at: G => { const r = flankRects().L; return [r.x + r.w / 2, r.y + r.h / 2]; }, how: 'Tap FLANK on a side: a packmate runs up that side of her and she swerves the other way, towards you. Then strike.', need: 1, ok: w => w === 'caught' }],
+  1: [{ id: 'run', title: 'RUN HER DOWN', say: G => wolfCue(G)[0], do: G => wolfCue(G)[1], at: G => wolfCue(G)[2], how: 'Slide your thumb left or right to steer at the marked elk. Push it up for a burst. When you are close and BESIDE her, the BITE button glows: tap it.', need: 1, ok: w => w === 'caught', start: 14 }],
+  2: [{ id: 'cut', title: 'CUT THE CORNER', say: G => wolfCue(G)[0], do: G => wolfCue(G)[1], at: G => wolfCue(G)[2], how: 'Her head turns before she swerves. Steer to where she is going, come up alongside, and strike from the side.', need: 1, ok: w => w === 'caught' }],
+  3: [{ id: 'flank', title: 'USE THE PACK', say: G => wolfCue(G)[0], do: G => wolfCue(G)[1], at: G => wolfCue(G)[2], how: 'Tap FLANK on a side: a packmate runs up that side of her and she swerves the other way, towards you. Then strike.', need: 1, ok: w => w === 'caught' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; newHunt(G); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -117,18 +117,37 @@ const BLIND = {
 };
 // a wolf who looks: runs for a point beside her (the side she is turning to, cutting the corner), bursts when close, sends the
 // pack to the far side, strikes alongside
+// THE TUTORIAL SAYS WHICH WAY AND WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). SLIDE TO STEER and GO
+// WHERE SHE GOES slid both ways in a box; TAP FLANK always pointed at the left one. Now the robot is asked (dryPlanAll): STEER LEFT / STEER RIGHT
+// (the way it would run: where she is going), PUSH UP: BURST, TAP BITE! when it would strike, TAP THIS FLANK (the side it would send).
+const WFC = { t: -1e9, v: null };
+function wolfCue(G) { if (G.over || G.ph !== 'chase' || !G.wolf || !G.prey) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - WFC.t < 120) return WFC.v; WFC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => all.filter(q => q[0] === n).pop(), B = biteBtn(), F = flankRects(), mid = r => [r.x + r.w / 2, r.y + r.h / 2];
+  const sk = last('strike'), fl = last('flank'), st = last('steer'), bu = last('burst'), sv = st ? st[1] : 0, d = ui.drag, x0 = d ? d.x0 : W * 0.4, y0 = d ? d.y0 : H * 0.7, R = 40 * k; let v;
+  if (sk) v = ['TAP BITE!', 'tap', [B.x, B.y]];
+  else if (fl) v = ['TAP THIS FLANK', 'tap', mid(fl[1] < 0 ? F.L : F.R)];
+  else if (Math.abs(sv) > 0.25) v = [sv > 0 ? 'STEER LEFT' : 'STEER RIGHT', 'drag', [x0, y0, x0 - sv * R * 0.9, y0 - (bu && bu[1] ? 30 * k : 0)]];
+  else if (bu && bu[1]) v = ['PUSH UP: BURST', 'drag', [x0, y0, x0, y0 - 34 * k]];
+  else v = ['RUN WITH HER…', 'wait', false];
+  WFC.v = v; return v; }
 function honest(G, o, mem) {
-  const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, w = G.wolf, p = G.prey; if (G.ph !== 'chase') { steer(G, 0); burst(G, false); return; }
+  const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, w = G.wolf, p = G.prey; if (G.ph !== 'chase') { ACT.steer(G, 0); ACT.burst(G, false); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.05 + react * 0.2;
   // which side to come up on: the side she is turning towards (seen after a moment), else the side we are on
   const rel = (w.x - p.x) * Math.cos(p.h) - (w.z - p.z) * Math.sin(p.h); let side = rel >= 0 ? 1 : -1;
   if (p.tell > 0) { mem.tellAt = mem.tellAt || G.t; if (G.t - mem.tellAt > react) side = Math.sign(p.turnTo) || side; } else mem.tellAt = 0;
   const d = Math.hypot(p.x - w.x, p.z - w.z), lead = clamp(d / 14, 0, 1.6), fx = p.x + Math.sin(p.h) * p.v * lead + Math.cos(p.h) * side * 2.4, fz = p.z + Math.cos(p.h) * p.v * lead - Math.sin(p.h) * side * 2.4;
   let err = Math.atan2(fx - w.x, fz - w.z) - w.h; while (err > Math.PI) err -= TAU; while (err < -Math.PI) err += TAU;
-  steer(G, clamp(err * 3 + (Math.random() - 0.5) * (1 - acc) * 1.5, -1, 1));
-  burst(G, d < 24 && w.stam > 0.4);
-  if (G.flankCD <= 0 && d < 30 && Math.random() < 0.5 * acc) flank(G, -side);
+  ACT.steer(G, clamp(err * 3 + (Math.random() - 0.5) * (1 - acc) * 1.5, -1, 1));
+  ACT.burst(G, d < 24 && w.stam > 0.4);
+  if (G.flankCD <= 0 && d < 30 && Math.random() < 0.5 * acc) ACT.flank(G, -side);
   let ang = Math.atan2(-(p.x - w.x), -(p.z - w.z)) - (p.h + Math.PI); while (ang > Math.PI) ang -= TAU; while (ang < -Math.PI) ang += TAU; ang = Math.abs(ang);
-  if (d < c.strike * (0.8 + acc * 0.2) && ang > c.side[0] + 0.1 && ang < c.side[1] && Math.random() < acc + 0.05) { if (!mem.at) mem.at = G.t + react * 0.5; const bear = Math.atan2(p.x - w.x, p.z - w.z) - w.h, aimA = bear + (Math.random() - 0.5) * (1 - acc) * 1.2; if (G.t >= mem.at) { strike(G, aimA); mem.at = 0; } } else if (d < c.strike && Math.random() > acc + 0.05) strike(G, Math.atan2(p.x - w.x, p.z - w.z) - w.h);
+  if (d < c.strike * (0.8 + acc * 0.2) && ang > c.side[0] + 0.1 && ang < c.side[1] && Math.random() < acc + 0.05) { if (!mem.at) mem.at = G.t + react * 0.5; const bear = Math.atan2(p.x - w.x, p.z - w.z) - w.h, aimA = bear + (Math.random() - 0.5) * (1 - acc) * 1.2; if (G.t >= mem.at) { ACT.strike(G, aimA); mem.at = 0; } } else if (d < c.strike && Math.random() > acc + 0.05) ACT.strike(G, Math.atan2(p.x - w.x, p.z - w.z) - w.h);
 }
 function winNow(G) { if (!G || G.over || G.gap > 0) return; G.lesson = null; G.caught = G.cfg.hunts - 1; G.lives = G.cfg.lives; G.gap = 0; G.ph = 'chase'; const p = G.prey, w = G.wolf; w.x = p.x + Math.cos(p.h) * 2.5; w.z = p.z - Math.sin(p.h) * 2.5; w.h = p.h; w.stun = 0; w.lunge = 0; strike(G, Math.atan2(p.x - w.x, p.z - w.z) - w.h); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { steer, burst, strike, flank }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

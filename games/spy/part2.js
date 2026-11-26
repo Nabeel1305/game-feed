@@ -30,7 +30,7 @@ const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.g
 const RANKS = [[0, 'Trainee'], [60, 'Agent'], [200, 'Field agent'], [500, 'Senior agent'], [1100, 'Spymaster'], [2500, 'Ghost']];
 const CELL = 1, PR = 0.3;      // a cell is a metre; the spy is a 0.3 m circle
 // cells: 0 floor, 1 wall, 2 door (closed), 3 door (open), 4 locked door, 5 outside (pavement)
-function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, help: !!help, cols: N <= 2 ? 2 : N <= 5 ? 3 : Math.min(5, 3 + Math.floor((f - 4) / 10)), rows: N <= 4 ? 2 : 3, guards: N <= 4 ? 1 : Math.min(4, 1 + Math.floor((f - 1) / 8)),
     see: (N <= 2 ? 0.25 : N <= 3 ? 0.35 : x(0.42, 0.62, 40)) * (help ? 0.7 : 1), range: N <= 2 ? 4.8 : x(5.2, 6.0, 40), gspeed: N <= 2 ? 0.85 : x(1.0, 1.2, 40), cones: N <= 14 ? 1 : N <= 30 ? 0.5 : 0.25,
     crouch: N >= 2, hide: N >= 3, coins: N >= 4 ? 2 + upLv('coins') : 0, locked: N >= 7, cams: N >= 8 ? Math.min(3, 1 + Math.floor((f - 8) / 14)) : 0, moving: N >= 9, bonus: N >= 5 ? 1 + (N >= 15 ? 1 : 0) : 0,
@@ -184,9 +184,9 @@ function finish(G, win, o = {}) { if (G.over) return true; G.over = win ? 'won' 
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'snap', title: 'IN, SNAP, OUT', say: 'WALK IN, TAP PHOTO', do: 'tap', at: G => { const b = btnRects(G).act; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Walk in (left thumb), to the desk with the glowing file. Tap PHOTOGRAPH and keep the file in the frame (steady it with the stick). Then back to the van.', need: 1 }],
-  2: [{ id: 'crouch', title: 'CROUCH BEHIND DESKS', say: 'TAP CROUCH', do: 'tap', at: G => { const b = btnRects(G).crouch; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A guard watches the far room. Tap CROUCH: slow and silent, and the desks hide you. Get the photo and get out unseen.', need: 1 }],
-  3: [{ id: 'hide', title: 'HIDE IN A CUPBOARD', say: 'TAP HIDE', do: 'tap', at: G => { const b = btnRects(G).act; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A guard walks the corridor. Stand by a cupboard and tap HIDE until he has passed, then come out and carry on.', need: 1 }],
+  1: [{ id: 'snap', title: 'IN, SNAP, OUT', say: G => spyCue(G)[0], do: G => spyCue(G)[1], at: G => spyCue(G)[2], how: 'Walk in (left thumb), to the desk with the glowing file. Tap PHOTOGRAPH and keep the file in the frame (steady it with the stick). Then back to the van.', need: 1 }],
+  2: [{ id: 'crouch', title: 'CROUCH BEHIND DESKS', say: G => spyCue(G)[0], do: G => spyCue(G)[1], at: G => spyCue(G)[2], how: 'A guard watches the far room. Tap CROUCH: slow and silent, and the desks hide you. Get the photo and get out unseen.', need: 1 }],
+  3: [{ id: 'hide', title: 'HIDE IN A CUPBOARD', say: G => spyCue(G)[0], do: G => spyCue(G)[1], at: G => spyCue(G)[2], how: 'A guard walks the corridor. Stand by a cupboard and tap HIDE until he has passed, then come out and carry on.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, safe: true }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -199,37 +199,56 @@ const BLIND = {
 };
 // HONEST: a careful player who looks: plans a way that keeps out of the guards' cones, waits behind cover when the next steps
 // are seen, crouches near guards, hides when one comes, throws a coin to move a guard who blocks the way, photographs steadily.
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said WALK
+// IN, TAP PHOTO with the hand on the button from the start, before he had walked anywhere. Now the robot is asked (dryPlanAll): WALK THIS WAY on
+// the stick (the way it would go: to the file, behind a desk, to the cupboard), TAP CROUCH, TAP PHOTO / HIDE / COME OUT (the button's own word)
+// when it would, STAND STILL while a guard looks.
+const SYC = { t: -1e9, v: null };
+function spyCue(G) { if (G.over || G.wait > 0 || !G.me) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SYC.t < 150) return SYC.v; SYC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), B = btnRects(G), mid = b => [b.x + b.w / 2, b.y + b.h / 2], d = ui.drag, x0 = d ? d.x0 : W * 0.25, y0 = d ? d.y0 : H * 0.72, R = 50 * k;
+  const ac = all.find(q => q[0] === 'action'), cr = all.find(q => q[0] === 'crouchBtn'), st = all.filter(q => q[0] === 'stick').pop(), A = actionHere(G); let v;
+  if (ac && A) v = ['TAP ' + A.label, 'tap', mid(B.act)];
+  else if (cr) v = [G.me.crouch ? 'TAP: STAND UP' : 'TAP CROUCH', 'tap', mid(B.crouch)];
+  else if (st && Math.hypot(st[1], st[2]) > 0.15) { const m = Math.hypot(st[1], st[2]); v = ['WALK THIS WAY', 'drag', [x0, y0, x0 + st[1] / m * R * Math.min(1, m) , y0 - st[2] / m * R * Math.min(1, m)]]; }
+  else v = d ? ['LET GO: STAND STILL', 'release', [d.x, d.y]] : ['STAND STILL', 'wait', false];
+  SYC.v = v; return v; }
 function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.me) return; const m = G.me, react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.85 : o.acc;
-  mem.cd = (mem.cd || 0) - 1 / 60; if (m.cam && m.photo) { const P = m.photo, err = Math.random() < acc ? 1 : 0.4; stick(G, clamp(-P.fx * 4 - P.vx * 0.8, -1, 1) * err, clamp(P.fz * 4 + P.vz * 0.8, -1, 1) * err); return; }
+  mem.cd = (mem.cd || 0) - 1 / 60; if (m.cam && m.photo) { const P = m.photo, err = Math.random() < acc ? 1 : 0.4; ACT.stick(G, clamp(-P.fx * 4 - P.vx * 0.8, -1, 1) * err, clamp(P.fz * 4 + P.vz * 0.8, -1, 1) * err); return; }
   if (mem.cd > 0) return; mem.cd = react * (0.6 + 0.8 * Math.random());
   const near = Math.min(99, ...G.guards.map(g => Math.hypot(g.x - m.x, g.z - m.z))), danger = G.guards.find(g => g.st === 'alert' || (g.sus > 0.3 && Math.hypot(g.x - m.x, g.z - m.z) < 6));
   const A = actionHere(G);
   if (m.hidden) { mem.hidT = (mem.hidT || 0) + react; const calm = !G.guards.some(g => g.st === 'alert' || g.st === 'search'), clear = !G.guards.some(g => Math.hypot(g.x - m.x, g.z - m.z) < 4.5), unseen = !G.guards.some(g => { const dx = m.x - g.x, dz = m.z - g.z, d = Math.hypot(dx, dz); let da = Math.atan2(dx, dz) - g.face; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; return d < 2 || (d < G.cfg.range && Math.abs(da) < 1.0 && sight(G, g.x, g.z, m.x, m.z, true)); });
-    if (calm && (clear || (mem.hidT > 5 && unseen))) { action(G); mem.hidT = 0; if (G.cfg.crouch || G.lesson) crouchBtn(G, true); } return; }
-  if (danger && A && A.k === 'hide' && Math.random() < acc) { action(G); stick(G, 0, 0); return; }
-  if (A && (A.k === 'photo' || A.k === 'check' || A.k === 'take' || A.k === 'key') && !danger) { stick(G, 0, 0); action(G); return; }
-  { const d0 = doorNear(G); if (d0 && d0.c !== 3 && (d0.c !== 4 || m.key) && (mem.path || []).some(p => Math.floor(p.x) === d0.x && Math.floor(p.z) === d0.z) && Math.random() < acc) { m.face = Math.atan2(d0.x + 0.5 - m.x, d0.z + 0.5 - m.z); if (action(G)) return; } }
-  if (A && A.k === 'door' && A.it.c !== 3 && (A.it.c !== 4 || m.key) && Math.random() < acc) { const pth = mem.path || []; if (pth.some(p => Math.floor(p.x) === A.it.x && Math.floor(p.z) === A.it.z)) { action(G); return; } }
+    if (calm && (clear || (mem.hidT > 5 && unseen))) { ACT.action(G); mem.hidT = 0; if (G.cfg.crouch || G.lesson) ACT.crouchBtn(G, true); } return; }
+  if (danger && A && A.k === 'hide' && Math.random() < acc) { ACT.action(G); ACT.stick(G, 0, 0); return; }
+  if (A && (A.k === 'photo' || A.k === 'check' || A.k === 'take' || A.k === 'key') && !danger) { ACT.stick(G, 0, 0); ACT.action(G); return; }
+  { const d0 = doorNear(G); if (d0 && d0.c !== 3 && (d0.c !== 4 || m.key) && (mem.path || []).some(p => Math.floor(p.x) === d0.x && Math.floor(p.z) === d0.z) && Math.random() < acc) { m.face = Math.atan2(d0.x + 0.5 - m.x, d0.z + 0.5 - m.z); if (ACT.action(G)) return; } }
+  if (A && A.k === 'door' && A.it.c !== 3 && (A.it.c !== 4 || m.key) && Math.random() < acc) { const pth = mem.path || []; if (pth.some(p => Math.floor(p.x) === A.it.x && Math.floor(p.z) === A.it.z)) { ACT.action(G); return; } }
   // spotted: run out of his sight (a cupboard if one is close and he is not between), and come back later
-  const hunter = G.guards.find(g => g.st === 'alert'); if (hunter) { if (m.crouch) crouchBtn(G, false); const cl = G.furn.filter(f => f.kind === 'closet' && G.cfg.hide).map(f => ({ x: f.x + 0.5, z: f.z + 1.1 })).find(q => Math.hypot(q.x - m.x, q.z - m.z) < 5 && Math.hypot(q.x - hunter.x, q.z - hunter.z) > Math.hypot(q.x - m.x, q.z - m.z) + 1.5);
+  const hunter = G.guards.find(g => g.st === 'alert'); if (hunter) { if (m.crouch) ACT.crouchBtn(G, false); const cl = G.furn.filter(f => f.kind === 'closet' && G.cfg.hide).map(f => ({ x: f.x + 0.5, z: f.z + 1.1 })).find(q => Math.hypot(q.x - m.x, q.z - m.z) < 5 && Math.hypot(q.x - hunter.x, q.z - hunter.z) > Math.hypot(q.x - m.x, q.z - m.z) + 1.5);
     let best = cl; if (!best) { let bd = -1; for (const q of G.rooms) { const c2 = { x: (q.x0 + q.x1) / 2 + 0.5, z: (q.z0 + q.z1) / 2 + 0.5 }, d = Math.hypot(c2.x - hunter.x, c2.z - hunter.z) - 0.5 * Math.hypot(c2.x - m.x, c2.z - m.z); if (d > bd && Math.hypot(c2.x - m.x, c2.z - m.z) > 2) { bd = d; best = c2; } } }
-    if (A && A.k === 'door' && A.it.c === 2) { action(G); return; }
-    const pf = best && pathTo(G, m, best, true); if (pf && pf.length > 1) { const t3 = pf[1], dx = t3.x - m.x, dz = t3.z - m.z, d = Math.hypot(dx, dz) || 1; stick(G, dx / d, -dz / d); } else { const dx = m.x - hunter.x, dz = m.z - hunter.z, d = Math.hypot(dx, dz) || 1; stick(G, dx / d, -dz / d); } mem.path = pf; return; }
+    if (A && A.k === 'door' && A.it.c === 2) { ACT.action(G); return; }
+    const pf = best && pathTo(G, m, best, true); if (pf && pf.length > 1) { const t3 = pf[1], dx = t3.x - m.x, dz = t3.z - m.z, d = Math.hypot(dx, dz) || 1; ACT.stick(G, dx / d, -dz / d); } else { const dx = m.x - hunter.x, dz = m.z - hunter.z, d = Math.hypot(dx, dz) || 1; ACT.stick(G, dx / d, -dz / d); } mem.path = pf; return; }
   if (!mem.reach || G.t - mem.reachT > 3) { mem.reachT = G.t; mem.reach = G.doc.cands.map(q => { const p2 = pathTo(G, m, q, true); return p2 ? p2.length : 1e9; }); }
   const ci = mem.reach.length ? mem.reach.indexOf(Math.min(...mem.reach)) : -1, cand = ci >= 0 && mem.reach[ci] < 1e9 ? G.doc.cands[ci] : null;
   const want = !G.doc.shot ? (G.doc.found ? (pathTo(G, m, G.doc, true) ? G.doc : G.key && !G.key.got ? G.key : G.doc) : cand || (G.key && !G.key.got ? G.key : G.doc.cands[0])) : G.bonus.find(b => !b.got && Math.hypot(b.x - m.x, b.z - m.z) < 5) || G.van;
-  if (G.cfg.crouch || G.lesson) { const cr = near < 8.5 || G.cams.length > 0; if (cr !== m.crouch && Math.random() < acc) crouchBtn(G, cr); }
+  if (G.cfg.crouch || G.lesson) { const cr = near < 8.5 || G.cams.length > 0; if (cr !== m.crouch && Math.random() < acc) ACT.crouchBtn(G, cr); }
   // the plan: cells in a guard's cone (now or a step ahead) cost a lot
   const cf = (x, z) => { let k2 = 0; for (const g of G.guards) { const d = Math.hypot(x + 0.5 - g.x, z + 0.5 - g.z); if (d < 2.2) k2 += 12; if (d < G.cfg.range) { let da = Math.atan2(x + 0.5 - g.x, z + 0.5 - g.z) - g.face; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; if (Math.abs(da) < 0.8 && sight(G, g.x, g.z, x + 0.5, z + 0.5, true)) k2 += 25; } } return k2; }, cg = new Float32Array(G.W * G.H); for (let z = 0; z < G.H; z++) for (let x = 0; x < G.W; x++) cg[z * G.W + x] = G.grid[z][x] === 1 ? 0 : cf(x, z); G.cost = (x, z) => cg[z * G.W + x];
   const p = pathTo(G, m, want, true); G.cost = null; mem.path = p;
-  if (!p || p.length < 2) { const dx = want.x - m.x, dz = want.z - m.z, d = Math.hypot(dx, dz) || 1; stick(G, dx / d * 0.8, -dz / d * 0.8); return; }
+  if (!p || p.length < 2) { const dx = want.x - m.x, dz = want.z - m.z, d = Math.hypot(dx, dz) || 1; ACT.stick(G, dx / d * 0.8, -dz / d * 0.8); return; }
   const nx = p[Math.min(2, p.length - 1)], seen = G.guards.some(g => { const dx = nx.x - g.x, dz = nx.z - g.z, d = Math.hypot(dx, dz); if (d > G.cfg.range * (m.crouch ? 0.7 : 1)) return false; let da = Math.atan2(dx, dz) - g.face; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU; return Math.abs(da) < 0.75 && sight(G, g.x, g.z, nx.x, nx.z, m.crouch); });
-  const watcher = G.guards.find(g => g.sus > 0.08 && seesFrom(G, g.x, g.z, g.face, 0.62, G.cfg.range) > 0); if (watcher && Math.random() < acc) { const e = mem.esc && G.t < mem.escT ? mem.esc : (mem.esc = escapeDir(G, watcher), mem.escT = G.t + 0.7, mem.esc); if (e) { if (Math.hypot(watcher.x - m.x, watcher.z - m.z) < 3.5 && m.crouch) crouchBtn(G, false); stick(G, e[0], e[1]); return; } }
-  const searcher = G.guards.find(g => (g.st === 'search' || g.st === 'investigate' || g.st === 'look') && Math.hypot(g.x - m.x, g.z - m.z) < 6.5); if (searcher && Math.random() < acc) { if (A && A.k === 'hide') { action(G); stick(G, 0, 0); return; } if (!m.crouch && G.cfg.crouch) crouchBtn(G, true); const exposed = Math.hypot(searcher.x - m.x, searcher.z - m.z) < G.cfg.range && sight(G, searcher.x, searcher.z, m.x, m.z, m.crouch); const e = exposed && escapeDir(G, searcher); if (e) stick(G, e[0] * 0.8, e[1] * 0.8); else stick(G, 0, 0); return; }
-  if (seen && !(G.guards.some(g => g.st === 'alert')) && Math.random() < acc) { mem.waited = (mem.waited || 0) + react; if (mem.waited > 4 && m.coins > 0) { const g = G.guards.reduce((a, b) => Math.hypot(a.x - m.x, a.z - m.z) < Math.hypot(b.x - m.x, b.z - m.z) ? a : b); m.face = Math.atan2(g.x - m.x, g.z - m.z) + Math.PI * 0.6; action(G); mem.waited = 0; } stick(G, 0, 0); return; }
-  mem.waited = 0; const t2 = p[1], dx = t2.x - m.x, dz = t2.z - m.z, d = Math.hypot(dx, dz) || 1, fast = !danger && near > 9 && !m.crouch ? 1 : 0.8; stick(G, dx / d * fast, -dz / d * fast); }
+  const watcher = G.guards.find(g => g.sus > 0.08 && seesFrom(G, g.x, g.z, g.face, 0.62, G.cfg.range) > 0); if (watcher && Math.random() < acc) { const e = mem.esc && G.t < mem.escT ? mem.esc : (mem.esc = escapeDir(G, watcher), mem.escT = G.t + 0.7, mem.esc); if (e) { if (Math.hypot(watcher.x - m.x, watcher.z - m.z) < 3.5 && m.crouch) ACT.crouchBtn(G, false); ACT.stick(G, e[0], e[1]); return; } }
+  const searcher = G.guards.find(g => (g.st === 'search' || g.st === 'investigate' || g.st === 'look') && Math.hypot(g.x - m.x, g.z - m.z) < 6.5); if (searcher && Math.random() < acc) { if (A && A.k === 'hide') { ACT.action(G); ACT.stick(G, 0, 0); return; } if (!m.crouch && G.cfg.crouch) ACT.crouchBtn(G, true); const exposed = Math.hypot(searcher.x - m.x, searcher.z - m.z) < G.cfg.range && sight(G, searcher.x, searcher.z, m.x, m.z, m.crouch); const e = exposed && escapeDir(G, searcher); if (e) ACT.stick(G, e[0] * 0.8, e[1] * 0.8); else ACT.stick(G, 0, 0); return; }
+  if (seen && !(G.guards.some(g => g.st === 'alert')) && Math.random() < acc) { mem.waited = (mem.waited || 0) + react; if (mem.waited > 4 && m.coins > 0) { const g = G.guards.reduce((a, b) => Math.hypot(a.x - m.x, a.z - m.z) < Math.hypot(b.x - m.x, b.z - m.z) ? a : b); m.face = Math.atan2(g.x - m.x, g.z - m.z) + Math.PI * 0.6; ACT.action(G); mem.waited = 0; } ACT.stick(G, 0, 0); return; }
+  mem.waited = 0; const t2 = p[1], dx = t2.x - m.x, dz = t2.z - m.z, d = Math.hypot(dx, dz) || 1, fast = !danger && near > 9 && !m.crouch ? 1 : 0.8; ACT.stick(G, dx / d * fast, -dz / d * fast); }
 // a step out of his sight: try a few directions and distances; prefer hidden spots, then far from him
 function escapeDir(G, g) { const m = G.me; let best = null, bs = -1e9; for (let i = 0; i < 16; i++) { const a = i / 16 * TAU; for (const r of [1.2, 2.4]) { const x = m.x + Math.sin(a) * r, z = m.z + Math.cos(a) * r; let bad = false; for (let q = 0.3; q <= r + 0.01; q += 0.3) if (blocked(G, m.x + Math.sin(a) * q, m.z + Math.cos(a) * q)) { bad = true; break; } if (bad) continue;
       const vis = Math.hypot(x - g.x, z - g.z) < G.cfg.range && sight(G, g.x, g.z, x, z, m.crouch), sc = (vis ? 0 : 20) + Math.hypot(x - g.x, z - g.z) - r * 0.5; if (sc > bs) { bs = sc; best = [Math.sin(a), -Math.cos(a)]; } } } return best; }
 function keyNeeded(G) { return !pathTo(G, G.me, G.doc, true); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.doc.shot = true; G.me.x = G.van.x; G.me.z = G.van.z; G.me.hidden = null; step(G, 1 / 60); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { stick, action, crouchBtn }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

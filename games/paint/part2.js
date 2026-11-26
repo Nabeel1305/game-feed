@@ -90,9 +90,9 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
 // lesson 1 asks for aim: drop each red right onto the red in the jar, four in a row (a drop that does not squash on landing
 // starts the count again), so it cannot be passed by luck
 const LESSONS = {
-  1: [{ id: 'aim', title: 'SAME COLOURS SQUASH', say: 'SLIDE, LET GO', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Slide to aim, let go to drop. Drop the red right onto the red in the jar: they squash into an ORANGE! Four in a row.', need: 4 }],
-  2: [{ id: 'chain', title: 'CHAINS', say: 'RED ON RED', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drop the red on the red: it makes an orange, which squashes into the orange beside it. Make a YELLOW in one drop, three times.', need: 3 }],
-  3: [{ id: 'line', title: 'MIND THE LINE', say: 'STAY UNDER THE LINE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'The jar is getting full. Keep everything under the dashed line: squash blobs to make room. Drop twelve blobs safely.', need: 12 }],
+  1: [{ id: 'aim', title: 'SAME COLOURS SQUASH', say: G => paintCue(G)[0], do: G => paintCue(G)[1], at: G => paintCue(G)[2], how: 'Slide to aim, let go to drop. Drop the red right onto the red in the jar: they squash into an ORANGE! Four in a row.', need: 4 }],
+  2: [{ id: 'chain', title: 'CHAINS', say: G => paintCue(G)[0], do: G => paintCue(G)[1], at: G => paintCue(G)[2], how: 'Drop the red on the red: it makes an orange, which squashes into the orange beside it. Make a YELLOW in one drop, three times.', need: 3 }],
+  3: [{ id: 'line', title: 'MIND THE LINE', say: G => paintCue(G)[0], do: G => paintCue(G)[1], at: G => paintCue(G)[2], how: 'The jar is getting full. Keep everything under the dashed line: squash blobs to make room. Drop twelve blobs safely.', need: 12 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -114,6 +114,11 @@ const BLIND = { d: G => drop(G), m: G => aimAt(G, Math.random() * G.jw), l: G =>
 // a player who looks: for the blob in hand, tries places along the top and judges where it would land (on a blob of its own
 // colour is best, beside one good; landing high, or on a smaller blob, bad), then drops a little off where it meant to
 function landing(G, x, r) { let top = r, hit = null; for (const b of G.b) { const dx = Math.abs(b.x - x); if (dx >= b.r + r) continue; const y = b.y + Math.sqrt((b.r + r) ** 2 - dx * dx); if (y > top) { top = y; hit = b; } } return { y: top, hit }; }
+// THE HAND SLIDES TO THE DROP THAT SQUASHES, AND LETS GO (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It slid left and right for ever. Now the robot is asked where it would drop (dryPlan aimAt) and the hand slides from where the blob is to
+// there and lets go: SLIDE HERE, LET GO.
+function paintCue(G) { if (G.over || G.wait > 0 || G.cool > 0 || (G.lesson && G.lesson.dropAt != null)) return ['WAIT…', 'wait', false]; const P = dryPlan(G, null, { t: 99 }); if (!P || P[0] !== 'aimAt') return ['WAIT…', 'wait', false];
+  const L = lay(G), x0 = L.sx(G.aim), x1 = L.sx(P[1]), y = H * 0.7; return [Math.abs(x1 - x0) < 8 * k ? 'LET GO HERE' : 'SLIDE HERE, LET GO', 'drag', [x0, y, x1 + (Math.abs(x1 - x0) < 8 * k ? 1 : 0), y]]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0 || G.cool > 0) return; mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.35 + react * 1.6) return; mem.t = 0;
   const t = G.queue[0], r = radOf(t), top = Math.max(1, G.cfg.goal); let best = G.jw / 2, bv = -1e9;
@@ -123,6 +128,13 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
       for (const b of G.b) { if (b === L.hit) continue; const d = Math.hypot(b.x - x, b.y - L.y) - b.r - r; if (d < 0.5) { if (b.t === t) v += 18; else if (b.t === t + 1) v += 4; } }
       v -= Math.abs(x - G.jw * (1 - Math.min(1, t / top)) ) * 0.5; }      /* big ones to the left, small ones to the right */
     v += gs(R) * (1 - acc) * 10; if (v > bv) { bv = v; best = x; } }
-  aimAt(G, best + gs(R) * (1 - acc) * 0.5); drop(G); }
+  ACT.aimAt(G, best + gs(R) * (1 - acc) * 0.5); ACT.drop(G); }
 const gs = R => { let s = 0; for (let i = 0; i < 4; i++) s += R(); return (s - 2) / 0.577; };
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.made = G.cfg.goal; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { aimAt, drop }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

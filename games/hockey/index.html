@@ -4969,9 +4969,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5454,11 +5454,25 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pass', title: 'PASS', say: 'SKATE, TAP PASS', do: 'tap', how: 'Skate with your LEFT thumb. Point at a team-mate and tap PASS. Two passes.', need: 2 },
-    { id: 'goal', title: 'SHOOT', say: 'TAP SHOOT', do: 'tap', how: 'Skate at the net and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
-  2: [{ id: 'poke', title: 'POKE CHECK', say: 'TAP POKE', do: 'tap', how: 'Without the puck: skate at the man with it and tap POKE when you are close, facing the puck. Steal it three times.', need: 3 }],
-  3: [{ id: 'slap', title: 'SLAP SHOT', say: 'HOLD SHOOT, LET GO', do: 'hold', how: 'HOLD SHOOT to wind up, let go to fire. Harder and faster: score once with one.', need: 1 }],
+  1: [{ id: 'pass', title: 'PASS', say: G => hockeyCue(G)[0], do: G => hockeyCue(G)[1], at: G => hockeyCue(G)[2], how: 'Skate with your LEFT thumb. Point at a team-mate and tap PASS. Two passes.', need: 2 },
+    { id: 'goal', title: 'SHOOT', say: G => hockeyCue(G)[0], do: G => hockeyCue(G)[1], at: G => hockeyCue(G)[2], how: 'Skate at the net and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
+  2: [{ id: 'poke', title: 'POKE CHECK', say: G => hockeyCue(G)[0], do: G => hockeyCue(G)[1], at: G => hockeyCue(G)[2], how: 'Without the puck: skate at the man with it and tap POKE when you are close, facing the puck. Steal it three times.', need: 3 }],
+  3: [{ id: 'slap', title: 'SLAP SHOT', say: G => hockeyCue(G)[0], do: G => hockeyCue(G)[1], at: G => hockeyCue(G)[2], how: 'HOLD SHOOT to wind up, let go to fire. Harder and faster: score once with one.', need: 1 }],
 };
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said SKATE, TAP PASS (two moves) with a hand in a box. Now the robot is asked (dryPlan) and the hand does it: SKATE THIS WAY
+// (the stick on the left), TAP PASS, TAP SHOOT, TAP POKE, HOLD SHOOT then LET GO for a slap shot, TAP SWITCH, TAP BURST, TAP NOW at a face-off.
+const HKC = { t: -1e9, v: null };
+function hockeyCue(G) { if (G.over || G.pause > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - HKC.t < 250) return HKC.v; HKC.t = now;
+  const L = layout(G), at = b => [b.x, b.y], P = dryPlan(G, null, { next: -1, cd: -1 }), slap = G.lesson && G.lesson.steps[G.lesson.i] && G.lesson.steps[G.lesson.i].id === 'slap'; let v = ['WAIT…', 'wait', false];
+  if (me(G).wind) v = me(G).wind > 0.55 ? ['LET GO!', 'release', at(L.shoot)] : ['KEEP HOLDING', 'hold', at(L.shoot)];
+  else if ((slap || (G.lesson && G.lesson.steps[G.lesson.i] && G.lesson.steps[G.lesson.i].id === 'goal')) && G.puck.own === me(G)) { const p = me(G), d = Math.hypot(GX - p.x, p.z);      // a shooting lesson: skate at the net, then shoot
+    if (d < 7.5) v = slap ? ['HOLD SHOOT', 'hold', at(L.shoot)] : ['TAP SHOOT', 'tap', at(L.shoot)]; else { const R = 56 * k * 0.8, x0 = W * 0.22, y0 = H * 0.6, dx = GX - 3 - p.x, dz = -p.z, m = Math.hypot(dx, dz) || 1; v = ['SKATE AT THE NET', 'drag', [x0, y0, x0 + dx / m * R, y0 + dz / m * R]]; } }
+  else if (P) { const a = P[0];
+    if (a === 'pass') v = ['TAP PASS', 'tap', at(L.pass)]; else if (a === 'poke') v = ['TAP POKE', 'tap', at(L.shoot)]; else if (a === 'shootDown') v = slap ? ['HOLD SHOOT', 'hold', at(L.shoot)] : ['TAP SHOOT', 'tap', at(L.shoot)];
+    else if (a === 'switchNear') v = ['TAP SWITCH', 'tap', at(L.pass)]; else if (a === 'btnBurst') v = ['TAP BURST', 'tap', at(L.burst)]; else if (a === 'faceTap') v = ['TAP NOW!', 'tap', at(L.shoot)];
+    else if (a === 'setStick') { const R = 56 * k * 0.8, x0 = W * 0.22, y0 = H * 0.6; v = ['SKATE THIS WAY', 'drag', [x0, y0, x0 + P[1] * R, y0 + P[2] * R]]; } }
+  HKC.v = v; return v; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSetup(G) { const st = lessonNow(G); faceoff(G, true); G.face = null; G.pause = 0.3; const u = G.puck;
@@ -5477,26 +5491,31 @@ function lessonCount(G) { const D = G.lesson, st = lessonNow(G); D.n++; if (D.n 
 const BLIND = { m: G => { const R = Math.random; if (R() < 0.2) setStick(G, 0, 0); else { const a = R() * TAU; setStick(G, Math.cos(a), Math.sin(a)); } }, p: G => btnPass(G), k: G => { shootDown(G); shootUp(G); }, h: G => { if (me(G).wind) shootUp(G); else shootDown(G); }, b: G => btnBurst(G) };
 // a player who looks: plays your man with the team's own brain, a moment late and a little off (react, acc)
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, u = G.puck, p = me(G);
-  if (G.over || G.pause > 0 || G.lessonWait) { setStick(G, 0, 0); return; }
-  if (G.face) { const F = G.face; if (F.t >= F.drop + react * 0.9 + R() * 0.05) faceTap(G); return; }
-  if (p.wind) { if (p.wind > mem.windTo) shootUp(G); return; }
+  if (G.over || G.pause > 0 || G.lessonWait) { ACT.setStick(G, 0, 0); return; }
+  if (G.face) { const F = G.face; if (F.t >= F.drop + react * 0.9 + R() * 0.05) ACT.faceTap(G); return; }
+  if (p.wind) { if (p.wind > mem.windTo) ACT.shootUp(G); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.08 + react * 0.4;
   if (u.own === p) { const gx = GX, dg = Math.hypot(gx - p.x, p.z), nf = nearestFoe(G, p), st = lessonNow(G), gk = G.P[4];
-    if (st && st.id === 'pass') { const q = bestTarget(G, p, { x: 1, z: 0 }); if (q) { pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } }
+    if (st && st.id === 'pass') { const q = bestTarget(G, p, { x: 1, z: 0 }); if (q) { ACT.pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } }
     const slap = st && st.id === 'slap' || (nf > 3.5 && dg > 7 && R() < 0.4);
-    if (dg < (slap ? 11 : 8.5) && p.x < GX - 1.2 && Math.abs(p.z) < 6 && (nf > 1.4 || dg < 4.5) && G.t - (p.gotAt || 0) > 0.4) { const aim = (gk.z > 0 ? -1 : 1) * (R() < acc ? 1 : -1); setStick(G, GX - p.x, aim * (GW2 - 0.2) - p.z); shootDown(G); if (slap) mem.windTo = 0.4 + R() * 0.3; else shootUp(G); return; }
-    if (nf < 2 || (nf < 3.5 && R() < 0.3)) { let q = bestTarget(G, p, { x: 1, z: 0 }); if (q && R() > acc) q = null; if (q) { pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } }
+    if (dg < (slap ? 11 : 8.5) && p.x < GX - 1.2 && Math.abs(p.z) < 6 && (nf > 1.4 || dg < 4.5) && G.t - (p.gotAt || 0) > 0.4) { const aim = (gk.z > 0 ? -1 : 1) * (R() < acc ? 1 : -1); ACT.setStick(G, GX - p.x, aim * (GW2 - 0.2) - p.z); ACT.shootDown(G); if (slap) mem.windTo = 0.4 + R() * 0.3; else ACT.shootUp(G); return; }
+    if (nf < 2 || (nf < 3.5 && R() < 0.3)) { let q = bestTarget(G, p, { x: 1, z: 0 }); if (q && R() > acc) q = null; if (q) { ACT.pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } }
     let ax = 0, az = 0; for (const f of team(G, 1)) { if (f.role === 'g') continue; const d = dist(f, p); if (d < 5 && f.x > p.x - 1.5) { ax += (p.x - f.x) / (d * d); az += (p.z - f.z) / (d * d); } }
-    const tx = (GX - 4 - p.x) * 0.2 + ax * 2, tz = az * 4 - p.z * 0.12 * (1 + (R() - 0.5) * (1 - acc)); setStick(G, tx, tz); if (nf > 4 && p.st > 0.6 && dg > 10 && R() < 0.2) btnBurst(G); return; }
+    const tx = (GX - 4 - p.x) * 0.2 + ax * 2, tz = az * 4 - p.z * 0.12 * (1 + (R() - 0.5) * (1 - acc)); ACT.setStick(G, tx, tz); if (nf > 4 && p.st > 0.6 && dg > 10 && R() < 0.2) ACT.btnBurst(G); return; }
   if (u.own && u.own.t === 1) { const o2 = u.own; let near = null, nd = 1e9; for (const q of team(G, 0)) { if (q.role === 'g') continue; const d = dist(q, o2); if (d < nd) { nd = d; near = q; } }
-    if (near && near !== p && dist(p, o2) > nd + 3) { switchNear(G); return; }
-    const d = dist(p, o2); if (d < 1.5 && R() < acc) { poke(G, p); return; }
-    const tx = o2.x + o2.vx * 0.25 - 0.8, tz = o2.z + o2.vz * 0.25; setStick(G, tx - p.x, tz - p.z); if (d > 5 && p.st > 0.5 && R() < 0.15) btnBurst(G); return; }
+    if (near && near !== p && dist(p, o2) > nd + 3) { ACT.switchNear(G); return; }
+    const d = dist(p, o2); if (d < 1.5 && R() < acc) { ACT.poke(G, p); return; }
+    const tx = o2.x + o2.vx * 0.25 - 0.8, tz = o2.z + o2.vz * 0.25; ACT.setStick(G, tx - p.x, tz - p.z); if (d > 5 && p.st > 0.5 && R() < 0.15) ACT.btnBurst(G); return; }
   if (!u.own) { const d = Math.hypot(u.x - p.x, u.z - p.z); let near = null, nd = 1e9; for (const q of team(G, 0)) { if (q.role === 'g') continue; const dd = Math.hypot(q.x - u.x, q.z - u.z); if (dd < nd) { nd = dd; near = q; } }
-    if (u.to && u.to.t === 0 && u.to !== p && u.to.role !== 'g') { G.ctrl = u.to.i; return; } if (u.to === p) { setStick(G, 0, 0); if (G.queued == null && u.kind === 'pass' && Math.hypot(GX - p.x, p.z) < 9 && Math.abs(p.z) < 5 && R() < acc * 0.6) { setStick(G, GX - p.x, (G.P[4].z > 0 ? -1 : 1) * (GW2 - 0.2) - p.z); shootDown(G); } return; } if (near && near !== p && d > nd + 3) { switchNear(G); return; }
-    setStick(G, u.x + u.vx * 0.3 - p.x, u.z + u.vz * 0.3 - p.z); return; }
-  setStick(G, 0, 0); }
+    if (u.to && u.to.t === 0 && u.to !== p && u.to.role !== 'g') { G.ctrl = u.to.i; return; } if (u.to === p) { ACT.setStick(G, 0, 0); if (G.queued == null && u.kind === 'pass' && Math.hypot(GX - p.x, p.z) < 9 && Math.abs(p.z) < 5 && R() < acc * 0.6) { ACT.setStick(G, GX - p.x, (G.P[4].z > 0 ? -1 : 1) * (GW2 - 0.2) - p.z); ACT.shootDown(G); } return; } if (near && near !== p && d > nd + 3) { ACT.switchNear(G); return; }
+    ACT.setStick(G, u.x + u.vx * 0.3 - p.x, u.z + u.vz * 0.3 - p.z); return; }
+  ACT.setStick(G, 0, 0); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.face = null; G.score[0] = G.score[1] + 1; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { pass, poke, shootDown, shootUp, switchNear, btnBurst, faceTap, setStick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 // ===================== THE VIEW: Ice Hockey (sideways; a raised camera along the near boards follows the puck) =====================
 // The rink: white ice with its lines and circles, boards and glass, two nets, the crowd. Eight skaters that lean into their
 // strides, a goalie in pads. The puck is made a little bigger than life, with a pale outline and a short trail so it never

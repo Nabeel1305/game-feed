@@ -4715,9 +4715,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4948,9 +4950,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5308,9 +5310,9 @@ function finish(G, win) { if (G.over) return; const c = G.cfg; G.over = win ? 'w
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'walk', title: 'WALK AND LEAN', say: 'PUSH UP, SLIDE TO LEAN', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Thumb down, push UP to walk. When you tip, slide the OTHER way to swing the pole and pull back. Cross 20 m without falling.', need: 1 }],
-  2: [{ id: 'wind', title: 'WIND', say: 'STOP, LEAN INTO IT', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'When the flags stream and WIND shows, stop walking (thumb to the middle) and lean into it, then go on. Cross 25 m in the wind.', need: 1 }],
-  3: [{ id: 'star', title: 'REACH FOR IT', say: 'LEAN TO THE STAR', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'A star hangs beside the wire. As you reach it, lean out towards it (just enough), then pull back. Grab two.', need: 2 }],
+  1: [{ id: 'walk', title: 'WALK AND LEAN', say: G => ropeCue(G)[0], do: G => ropeCue(G)[1], at: G => ropeCue(G)[2], how: 'Thumb down, push UP to walk. When you tip, slide the OTHER way to swing the pole and pull back. Cross 20 m without falling.', need: 1 }],
+  2: [{ id: 'wind', title: 'WIND', say: G => ropeCue(G)[0], do: G => ropeCue(G)[1], at: G => ropeCue(G)[2], how: 'When the flags stream and WIND shows, stop walking (thumb to the middle) and lean into it, then go on. Cross 25 m in the wind.', need: 1 }],
+  3: [{ id: 'star', title: 'REACH FOR IT', say: G => ropeCue(G)[0], do: G => ropeCue(G)[1], at: G => ropeCue(G)[2], how: 'A star hangs beside the wire. As you reach it, lean out towards it (just enough), then pull back. Grab two.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5330,8 +5332,20 @@ function lessonSee(G, what, d) { const st = lessonNow(G); if (!st) return; let o
 const BLIND = { d: G => { hold(G, true); lean(G, Math.random() * 2 - 1); walk(G, Math.random() < 0.6); crouch(G, false); }, c: G => { hold(G, true); crouch(G, Math.random() < 0.5); }, u: G => hold(G, false) };
 // a walker who looks: pulls against the lean and its speed (a little late, a little off), stands still when it is wobbling, crouches
 // for banners, waits for a sandbag to swing clear, reaches for stars when steady
+// THE TUTORIAL SAYS WHICH WAY NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said PUSH UP, SLIDE TO
+// LEAN (two at once) with a hand sliding in a box; which way to lean was his to work out. Now the robot is asked (dryPlanAll): PUSH UP: WALK,
+// SLIDE LEFT / SLIDE RIGHT (the way it would lean, from where the thumb went down), THUMB TO THE MIDDLE, PULL DOWN: CROUCH.
+const RPC = { t: -1e9, v: null };
+function ropeCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RPC.t < 120) return RPC.v; RPC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => (all.filter(q => q[0] === n).pop() || [])[1];
+  const d = ui.drag, x0 = d ? d.x0 : W / 2, y0 = d ? d.y0 : H * 0.7, R = 48 * k, u = last('lean') || 0, wk = last('walk'), cr = last('crouch'); let v;
+  if (!d && !wk && Math.abs(u) < 0.2 && !cr) v = ['THUMB DOWN', 'hold', [x0, y0]];
+  else if (cr) v = ['PULL DOWN: CROUCH', 'drag', [x0, y0, x0 + u * R * 0.8, y0 + R * 0.7]];
+  else if (Math.abs(u) > 0.25) v = [u < 0 ? 'SLIDE LEFT' : 'SLIDE RIGHT', 'drag', [x0, y0, x0 + u * R * 0.8, y0 + (wk ? -R * 0.5 : 0)]];
+  else if (wk) v = ['PUSH UP: WALK', 'drag', [x0, y0, x0 + u * R * 0.8, y0 - R * 0.5]];
+  else v = ['THUMB TO THE MIDDLE', 'drag', [d ? d.x : x0, d ? d.y : y0, x0, y0]];
+  RPC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, m = G.me, c = G.cfg, R = Math.random;
-  if (G.over || G.wait > 0) { hold(G, false); mem.hist = []; return; }
+  if (G.over || G.wait > 0) { ACT.hold(G, false); mem.hist = []; return; }
   mem.hist = mem.hist || []; mem.hist.push([m.th, m.w]); const lag = Math.round(react * 0.25 * 60), seen = mem.hist[Math.max(0, mem.hist.length - 1 - lag)]; if (mem.hist.length > 120) mem.hist.shift();
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.03 + react * 0.08;
   const th = seen[0] + (R() - 0.5) * (1 - acc) * 0.12, w = seen[1], gustAhead = G.gustWarn ? G.gustWarn.dir * G.gustWarn.str * 0.35 : 0;
@@ -5343,9 +5357,16 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   const bag = G.things.find(q => q.k === 'bag' && q.s - m.s < 1.8 && q.s - m.s > 0.6), inBag = G.things.some(q => q.k === 'bag' && Math.abs(q.s - m.s) <= 0.6), bagClear = !bag || (Math.abs(Math.sin((G.t + 0.9) * 1.6 + bag.ph) * 1.8) > 0.9 && Math.abs(Math.sin((G.t + 0.4) * 1.6 + bag.ph) * 1.8) > 0.6);
   const banner = G.things.find(q => q.k === 'banner' && !q.done && q.s - m.s < 1.2 && q.s - m.s > -0.5);
   const go = inBag || (!wobbly && bagClear && !(G.gust && Math.abs(G.gust) > 0.6));
-  hold(G, true); lean(G, u); walk(G, go); crouch(G, go && (!!banner || (G.gust && Math.abs(G.gust) > 0.5)));
+  ACT.hold(G, true); ACT.lean(G, u); ACT.walk(G, go); ACT.crouch(G, go && (!!banner || (G.gust && Math.abs(G.gust) > 0.5)));
   mem.walk = go; }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { hold, walk, lean, crouch }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }
 // ===================== A PERSON WITH JOINTS (Vine first, 23 Nov 2026; copied to the games that need it) =====================
 // His review of Vine: "do better on the animation... hands and the person holding the vines and swinging". The swinger was a pill
 // with two straight sticks for arms and two stumps for legs. humMake(T, look) builds a person: head, neck, a chest wider than the

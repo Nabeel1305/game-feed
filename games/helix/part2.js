@@ -73,9 +73,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: short towers ----------
 const LESSONS = {
-  1: [{ id: 'drop', title: 'TURN AND DROP', say: 'SLIDE TO TURN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Slide your thumb left or right to turn the tower. Bring the GAP under the ball. Reach the bottom of this little tower; red ends it.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 1, single: true } } }],
-  2: [{ id: 'fire', title: 'CATCH FIRE', say: 'DROP 3 IN A ROW', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drop through 3 platforms in a row without a bounce: the ball catches FIRE and smashes the next one. Smash one!', need: 1, tower: { floors: 12, plat: { red: 5, gapW: 3, single: true } } }],
-  3: [{ id: 'spin', title: 'MOVING PLATFORMS', say: 'WATCH THE GAP', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'These platforms turn by themselves. Watch the gap, and turn the tower to meet it. Reach the bottom.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 2, single: true, spin: 0.6 } } }],
+  1: [{ id: 'drop', title: 'TURN AND DROP', say: G => helixCue(G)[0], do: G => helixCue(G)[1], at: G => helixCue(G)[2], how: 'Slide your thumb left or right to turn the tower. Bring the GAP under the ball. Reach the bottom of this little tower; red ends it.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 1, single: true } } }],
+  2: [{ id: 'fire', title: 'CATCH FIRE', say: G => helixCue(G)[0], do: G => helixCue(G)[1], at: G => helixCue(G)[2], how: 'Drop through 3 platforms in a row without a bounce: the ball catches FIRE and smashes the next one. Smash one!', need: 1, tower: { floors: 12, plat: { red: 5, gapW: 3, single: true } } }],
+  3: [{ id: 'spin', title: 'MOVING PLATFORMS', say: G => helixCue(G)[0], do: G => helixCue(G)[1], at: G => helixCue(G)[2], how: 'These platforms turn by themselves. Watch the gap, and turn the tower to meet it. Reach the bottom.', need: 1, tower: { floors: 10, plat: { red: 5, gapW: 3, single: true, spin: 0.35 } } }]      /* (gentler for the lesson: a gap of 3 turning at 0.35, was 2 at 0.6; 26 Nov 2026) */,
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -89,6 +89,18 @@ function lessonSee(G, what) { const st = lessonNow(G); if (!st) return; if (what
 const BLIND = { l: G => turn(G, -(0.3 + Math.random() * 1.6)), r: G => turn(G, 0.3 + Math.random() * 1.6) };
 // a player who looks: turns the tower to bring the nearest gap (clear of red on the way in) under the ball before it lands,
 // as fast as a thumb slides; a little late or off now and then
+// THE TUTORIAL SAYS WHICH WAY AND HOW FAR (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid
+// left and right for ever. Now it slides the way and the distance that brings the nearest gap under the ball (the robot's own sum), and
+// says WAIT… when the ball is already over the gap or there is no time before it lands.
+function helixCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const pl = G.plats[G.pi]; if (!pl) return ['WAIT…', 'wait', false];
+  const b = G.ball, tl = landT(b, pl.y + 0.3), sp = 9, a = (((-G.theta - pl.a) % TAU) + TAU) % TAU, off = q => { const d = (q + 0.5) * SEG - a; return Math.atan2(Math.sin(d), Math.cos(d)); };
+  let gap = null; for (let q = 0; q < SEGS; q++) if (pl.p[q] === 'gap') { const d = off(q); if (gap == null || Math.abs(d) < Math.abs(gap)) gap = d; }
+  if (gap == null) return ['WAIT…', 'wait', false]; const cur = pl.p[Math.floor(a / SEG) % SEGS]; let want;
+  if (Math.abs(gap) / sp + 0.35 < tl) want = gap - (pl.spin || 0) * (Math.min(tl, 0.4) - 0.55);      // time to bring the gap round before it lands (a thumb's time allowed)
+  else if (cur === 'red') { let bd = 1e9; for (let q = 0; q < SEGS; q++) if (pl.p[q] !== 'red') { const d = off(q); if (Math.abs(d) < Math.abs(bd)) bd = d; } want = bd; }      // no time: off the red
+  else return ['WAIT FOR THE BOUNCE…', 'wait', false];      // no time: stay on the safe piece
+  if (Math.abs(want) < SEG * 0.3) return ['WAIT… IT DROPS', 'wait', false];
+  const dx = want / (G.cfg.turn * 0.0125 * 390 / Math.max(300, W)), x0 = clamp(W / 2 - dx / 2, 30, W - 30), y0 = H * 0.72; return [dx > 0 ? 'SLIDE RIGHT' : 'SLIDE LEFT', 'drag', [x0, y0, x0 + dx, y0]]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0) { mem.aim = null; return; } const pl = G.plats[G.pi]; if (!pl) return;
   if (mem.pl !== pl) { mem.pl = pl; mem.see = 0.06 + react * 0.4; mem.aim = (R() - 0.5) * 2 * SEG * (0.04 + (1 - acc) * 0.5); }      /* a new platform: a moment to see it */

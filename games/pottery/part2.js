@@ -138,9 +138,9 @@ function finish(G, win, why, o = {}) { if (G.over) return; G.over = win ? 'won' 
 
 // ---------- LESSONS: centre, pull, shape ----------
 const LESSONS = {
-  1: [{ id: 'center', title: 'CENTRE THE CLAY', say: 'HOLD, PRESS DOWN', do: 'drag', dir: 'down', how: 'Hold your thumb on the clay and drag down a little to press. Keep the pressure needle in the green until the wobble stops. Twice.', need: 2 }],
-  2: [{ id: 'pull', title: 'PULL THE WALLS UP', say: 'DRAG UP SLOWLY', do: 'drag', dir: 'up', how: 'Drag upwards along the wall, from the bottom to the top, steadily (the trail turns red if too fast). Make three good pulls.', need: 3 }],
-  3: [{ id: 'shape', title: 'SHAPE TO THE ORDER', say: 'MOVE IN AND OUT', do: 'drag', dir: 'lr', how: 'Tap SHAPE, then touch the pot and move in or out to follow the dotted outline. Tap DONE when it matches (70% or more), glaze, and fire it.', need: 1 }],
+  1: [{ id: 'center', title: 'CENTRE THE CLAY', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Hold your thumb on the clay and drag down a little to press. Keep the pressure needle in the green until the wobble stops. Twice.', need: 2 }],
+  2: [{ id: 'pull', title: 'PULL THE WALLS UP', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Drag upwards along the wall, from the bottom to the top, steadily (the trail turns red if too fast). Make three good pulls.', need: 3 }],
+  3: [{ id: 'shape', title: 'SHAPE TO THE ORDER', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Tap SHAPE, then touch the pot and move in or out to follow the dotted outline. Tap DONE when it matches (70% or more), glaze, and fire it.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true });
   if (st.id !== 'center') { G.phase = 'pull'; G.wob = 0; } if (st.id === 'shape') { for (let k2 = 0; k2 < 3; k2++) { G.phase = 'pull'; pullStart(G); pullMove(G, G.h, 10); pullEnd(G); } G.phase = 'pull'; } }
@@ -166,6 +166,19 @@ const BLIND = {
 // HONEST: a potter who looks: presses in the green (with a wobbly thumb), pulls steadily until the pot is the order's height,
 // then shapes slice by slice towards the dotted line (as accurately as acc), checks the match and the wall gauge, glazes
 // the colour asked for. react: seconds behind; acc: how steady.
+// THE HAND DOES THE MOVE ON THE CLAY ITSELF (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It dragged
+// down, up or sideways in a box. Now: HOLD, PRESS DOWN on the clay (to the green pressure), DRAG UP SLOWLY along the wall from its foot to its
+// top, TAP SHAPE, then MOVE IN / MOVE OUT where the pot is furthest from the dotted line, TAP DONE when it matches, TAP THIS GLAZE.
+function clayCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const m = potMap(), S = (r, z) => [m.ax + r * m.px, m.ay - z * m.py], L = layout(G), mid = b => [b.x + b.w / 2, b.y + b.h / 2];
+  if (G.phase === 'center') { const p = S(0, (G.h || 6) * 0.6); return [ui.touch ? 'KEEP IT IN THE GREEN' : 'HOLD, PRESS DOWN', 'drag', [p[0], p[1], p[0], p[1] + 42 * k]]; }
+  if (G.phase === 'glaze') { const b = L.glaze.find(q => q.i === G.ord.glaze); return ['TAP THIS GLAZE', 'tap', b ? [b.x, b.y] : false]; }
+  const shapeL = G.lesson && G.lesson.id === 'shape';
+  if (G.phase === 'pull' && !shapeL) { const r0 = G.r[0] || 3, a = S(r0, 0.5), b = S(G.r[Math.floor(G.h / DZ)] || r0, G.h); return ['DRAG UP SLOWLY', 'drag', [a[0], a[1], b[0], b[1]]]; }
+  if (G.phase === 'pull' && shapeL) { const b = L.modes.find(q => q.m === 'shape'); return ['TAP SHAPE', 'tap', mid(b)]; }
+  if (G.phase === 'shape') { if (match(G) >= G.cfg.goal) { const b = L.modes.find(q => q.m === 'done'); return ['TAP DONE', 'tap', mid(b)]; }
+    const n = Math.floor(G.h / DZ); let bi = 0, bd = 0; for (let i = 0; i <= n; i++) { const d = Math.abs((G.target[i] || G.r[i]) - G.r[i]); if (d > bd) { bd = d; bi = i; } } const z = bi * DZ, a = S(G.r[bi], z), b = S(G.target[bi] || G.r[bi], z);
+    return [b[0] < a[0] ? 'MOVE IN' : 'MOVE OUT', 'drag', [a[0], a[1], b[0], b[1]]]; }
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) {
   if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.phase === 'center') { mem.trimmed = 0; mem.passes = 0; mem.si = 0; mem.bias = null; if (G.t < (mem.nh || 0)) return; mem.nh = G.t + 0.15 + react * 0.3; hold(G, 0.6 + (R() - 0.5) * (1 - acc) * 0.9); return; }

@@ -28,11 +28,11 @@ const WEATHERS = ['golden', 'sunset', 'dusk', 'night', 'noon', 'golden', 'dusk',
 function weatherOf(N) { if (N <= 3) return ['golden', 'sunset', 'dusk'][N - 1]; const R = rng(N * 7741 + 5); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
 const RIDE = 8, GREEN = 0.36;      // eight seconds, and the dot in the green for over half of them
 
-function makeCfg(N, help) {
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 10 === 0, e = easyOf(N);
   return { N, f, help: !!help, boss,
-    inst: x(1.6, 4.5, 30) * (1 - 0.15 * e), lean: 9, damp: 6, wob: x(1.0, 3.0, 30) * (1 - 0.4 * e), fall: 1.1 + 0.07 * upLv('chaps') + (help ? 0.12 : 0),
-    gap: x(0.22, 0.1, 30) * (1 + 0.3 * e), tell: x(0.52, 0.26, 35), buckA: x(30, 46, 35) * (1 - 0.25 * e) * (boss ? 1.1 : 1), spinA: x(7, 11, 35), kickA: x(38, 55, 35),
+    inst: x(1.6, 4.5, 30) * (1 - 0.15 * e), lean: 9, damp: 6, wob: x(1.0, 3.0, 30) * (1 - 0.4 * e) * (N === 1 ? 0.7 : 1), fall: 1.1 + 0.07 * upLv('chaps') + (help ? 0.12 : 0),
+    gap: x(0.22, 0.1, 30) * (1 + 0.3 * e), tell: x(0.52, 0.26, 35) * (N === 1 ? 1.3 : 1), buckA: x(30, 46, 35) * (1 - 0.25 * e) * (boss ? 1.1 : 1), spinA: x(7, 11, 35), kickA: x(38, 55, 35),
     spinP: N >= 2 ? x(0.15, 0.3, 30) : 0, kickP: N >= 4 ? x(0.1, 0.3, 30) : 0, fakeP: N >= 6 ? x(0.05, 0.3, 40) : 0, combo: x(0, 0.45, 40), first: x(0.7, 0.5, 20),
     qualify: 65 - (help ? 5 : 0), grip: 1.2 + 0.4 * upLv('glove'), gripCut: 0.5 + 0.08 * upLv('rope'), shoe: upLv('shoe'), spurs: upLv('spurs'), arrow: N <= 5 };
 }
@@ -92,9 +92,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'lean', title: 'LEAN AGAINST HIM', say: 'HOLD THE OTHER SIDE', do: 'hold', how: 'He leans you one way: the arrow shows which. Hold the OTHER half of the screen until he stops. Three in a row.', need: 3 }],
-  2: [{ id: 'buck', title: 'THE BUCK', say: 'HOLD THE OTHER SIDE', do: 'hold', how: "His head swings to the side he's about to throw you. Hold the OTHER side just before he bucks. Ride out three bucks in a row.", need: 3 }],
-  3: [{ id: 'grip', title: 'GRIP THE SPIN', say: 'HOLD BOTH', do: 'hold', how: 'When he drops his shoulder and spins, hold BOTH thumbs to grip. Ride out two spins in a row.', need: 2 }],
+  1: [{ id: 'lean', title: 'LEAN AGAINST HIM', say: G => rodeoCue(G)[0], do: G => rodeoCue(G)[1], at: G => rodeoCue(G)[2], how: 'He leans you one way: the arrow shows which. Hold the OTHER half of the screen until he stops. Three in a row.', need: 3 }],
+  2: [{ id: 'buck', title: 'THE BUCK', say: G => rodeoCue(G)[0], do: G => rodeoCue(G)[1], at: G => rodeoCue(G)[2], how: "His head swings to the side he's about to throw you. Hold the OTHER side just before he bucks. Ride out three bucks in a row.", need: 3 }],
+  3: [{ id: 'grip', title: 'GRIP THE SPIN', say: G => rodeoCue(G)[0], do: G => rodeoCue(G)[1], at: G => rodeoCue(G)[2], how: 'When he drops his shoulder and spins, hold BOTH thumbs to grip. Ride out two spins in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, held: 0 }; G.ph = 'ride'; G.pt = 0; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -109,6 +109,14 @@ function lessonDone(G) { const D = G.lesson; D.i++; D.n = 0; D.held = 0; if (D.i
 const BLIND = { l: G => { hold(G, 'l', true); hold(G, 'r', false); }, r: G => { hold(G, 'r', true); hold(G, 'l', false); }, b: G => { hold(G, 'l', true); hold(G, 'r', true); }, o: G => { hold(G, 'l', false); hold(G, 'r', false); } };
 // a rider who looks: leans back against the tip (late by his reaction, sometimes wrong), reads the bull's head and leans against
 // the throw just before it lands, grips through a spin, ignores a fake most of the time
+// THE TUTORIAL SAYS WHICH SIDE, NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD THE OTHER
+// SIDE with a hand in a box: which side was his to work out. Now the robot is asked (dryPlanAll hold): HOLD LEFT / HOLD RIGHT with the hand on
+// that half, HOLD BOTH SIDES for a spin, LET GO when he is level.
+const RDC = { t: -1e9, v: null };
+function rodeoCue(G) { if (G.over || G.ph !== 'ride' || G.lessonWait) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RDC.t < 80) return RDC.v; RDC.t = now;
+  const all = dryPlanAll(G, null, { next: -1 }), l = (all.filter(q => q[0] === 'hold' && q[1] === 'l').pop() || [])[2], r = (all.filter(q => q[0] === 'hold' && q[1] === 'r').pop() || [])[2]; let v;
+  if (l && r) v = ['HOLD BOTH SIDES', 'hold', false]; else if (l) v = ['HOLD LEFT', 'hold', [W * 0.25, H * 0.62]]; else if (r) v = ['HOLD RIGHT', 'hold', [W * 0.75, H * 0.62]];
+  else v = G.held.l || G.held.r ? ['LET GO', 'release', [W * (G.held.l ? 0.25 : 0.75), H * 0.62]] : ['RIDE…', 'wait', false]; RDC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, c = G.cfg;
   if (G.over || G.ph !== 'ride' || G.lessonWait) { mem.next = 0; return; }
@@ -120,6 +128,13 @@ function honest(G, o, mem) {
     if (seen && mem.read) { if (mv.k === 'spin' && t > mv.tell - 0.1 && t < mv.tell + mv.dur) { if ((th + 0.32 * w) * mem.read > 0.15 || G.grip < 0.2) want = -mem.read; else grip = true; } else if (mv.k !== 'spin' && t > mv.tell - 0.2 && t < mv.tell + mv.dur * 0.9) want = -mem.read; } }
   if (mv && mv.k === 'fake' && mem.mv !== mv) { mem.mv = mv; mem.read = R() < 0.25 * (1 - acc) * 4 ? mv.d : 0; }
   if (want == null) { const s = th + 0.45 * w; want = s > 0.07 ? -1 : s < -0.07 ? 1 : 0; if (R() > acc) want = mem.prev != null ? mem.prev : 0; }      // a clumsy thumb: late to change, not random
-  mem.prev = grip ? 0 : want; if (grip) { hold(G, 'l', true); hold(G, 'r', true); } else { hold(G, 'l', want < 0); hold(G, 'r', want > 0); }
+  mem.prev = grip ? 0 : want; if (grip) { ACT.hold(G, 'l', true); ACT.hold(G, 'r', true); } else { ACT.hold(G, 'l', want < 0); ACT.hold(G, 'r', want > 0); }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.ride = RIDE; G.mid = RIDE; G.met = G.nb = 1; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { hold }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

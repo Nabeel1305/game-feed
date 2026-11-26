@@ -4946,9 +4946,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5313,7 +5313,7 @@ function throwCharm(G) { if (!canAct(G) || !canCatch(G)) return false; G.ph = 'r
 // the timing tap (anywhere) while the ring closes: right on the gold ring = critical; early = it glances off
 function tapRing(G) { if (G.over || G.ph !== 'ring' || G.act.tap != null) return false; G.act.tap = G.pt; G.ev.push({ k: 'tap' }); return true; }
 const ringAt = (c, a) => (a ? a.wait : 0) + 0.6 * c.ringT;      // when the white ring meets the gold one (it starts after a short, random wait)
-function timing(G) { const c = G.cfg, t = G.act.tap, tc = ringAt(c, G.act), hw = c.win * c.ringT * 1.2; if (t == null) return 'none'; if (Math.abs(t - tc) <= hw) return 'crit'; return t < tc ? 'early' : 'late'; }
+function timing(G) { const c = G.cfg, t = G.act.tap, tc = ringAt(c, G.act), hw = c.win * c.ringT * 1.2 * (G.lesson ? 1.8 : 1); if (t == null) return 'none';      /* (a lesson's window is wider: 0.2 s was too tight to learn from; 26 Nov 2026) */ if (Math.abs(t - tc) <= hw) return 'crit'; return t < tc ? 'early' : 'late'; }
 // ---------- the flow ----------
 function step(G, dt) {
   if (G.over) return; G.t += dt; G.pt += dt; const c = G.cfg;
@@ -5352,10 +5352,23 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'crit', title: 'ATTACK!', say: 'TAP ON THE GOLD RING', do: 'tap', how: 'Tap ATTACK. Then tap anywhere when the white ring meets the gold ring: a CRITICAL! Land two criticals in a row.', need: 2, foe: 'leaf', me: 'fire' }],
-  2: [{ id: 'type', title: 'TYPES', say: 'SEND IN THE WATER ONE', do: 'tap', how: 'Water beats fire! Tap Puddlewump on your bench to send it in, then attack: two SUPER EFFECTIVE hits in a row.', need: 2, foe: 'fire', me: 'fire' }],
-  3: [{ id: 'guard', title: 'GUARD', say: 'TAP GUARD!', do: 'tap', how: 'When the foe shows BIG ATTACK, tap GUARD before it lands. Block two big attacks.', need: 2, foe: 'water', me: 'leaf' }],
+  1: [{ id: 'crit', title: 'ATTACK!', say: G => critCue(G)[0], do: G => critCue(G)[1], at: G => critCue(G)[2], how: 'Tap ATTACK. Then tap anywhere when the white ring meets the gold ring: a CRITICAL! Land two criticals in a row.', need: 2, foe: 'leaf', me: 'fire' }],
+  2: [{ id: 'type', title: 'TYPES', say: G => critCue(G)[0], do: G => critCue(G)[1], at: G => critCue(G)[2], how: 'Water beats fire! Tap Puddlewump on your bench to send it in, then attack: two SUPER EFFECTIVE hits in a row.', need: 2, foe: 'fire', me: 'fire' }],
+  3: [{ id: 'guard', title: 'GUARD', say: G => critCue(G)[0], do: G => critCue(G)[1], at: G => critCue(G)[2], how: 'When the foe shows BIG ATTACK, tap GUARD before it lands. Block two big attacks.', need: 2, foe: 'water', me: 'leaf' }],
 };
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said TAP ON THE GOLD RING before ATTACK had even been pressed. Now the robot is asked (dryPlan) and the hand is on its button:
+// TAP ATTACK, then WAIT… / TAP NOW! as the white ring reaches the gold one (shown a quarter of a second early, the time a thumb takes);
+// TAP <the water one> on the bench; TAP GUARD when the foe shows BIG ATTACK.
+function critCue(G) { const c = G.cfg, B = q => { const b = buttons(G).find(q); return b ? [b.x + b.w / 2, b.y + b.h / 2] : false; };
+  if (G.over || G.lessonWait) return ['WAIT…', 'wait', false];
+  if (G.ph === 'ring') { if (G.act.tap != null) return ['WAIT…', 'wait', false]; const tc = ringAt(c, G.act); return G.pt >= tc - 0.2 && G.pt <= tc + 0.05 ? ['TAP NOW!', 'tap', [W / 2, H * 0.45]] : ['WAIT FOR GOLD…', 'wait', false]; }
+  if (G.ph !== 'choose') return ['WAIT…', 'wait', false];
+  const P = dryPlan(G, null, { at: -1e9 }); if (!P) return ['WAIT…', 'wait', false];
+  if (P[0] === 'attack') return ['TAP ATTACK', 'tap', B(q => q.k === 'attack')]; if (P[0] === 'guard') return ['TAP GUARD!', 'tap', B(q => q.k === 'guard')];
+  if (P[0] === 'switchTo') return ['TAP ' + (G.me[P[1]].name || 'IT').toUpperCase(), 'tap', B(q => q.k === 'bench' && q.i === P[1])];
+  if (P[0] === 'useBerry') return ['TAP THE BERRY', 'tap', B(q => q.k === 'berry')]; if (P[0] === 'throwCharm') return ['TAP CATCH', 'tap', B(q => q.k === 'catch')];
+  return ['WAIT…', 'wait', false]; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.saveFoe = G.foe; G.saveMe = G.me.map(m => Object.assign({}, m));
   const d = critter(st.foe, G.N, false, G.cfg); d.max = d.hp = 999; d.name = 'Practice ' + SPECIES[st.foe].name; G.foe = [d]; G.fi = 0; const mi = G.me.findIndex(m => m.type === st.me); G.ai = mi >= 0 ? mi : 0; G.sinceBig = 0;
   G.ev.push({ k: 'lessonnext', first: true }); nextIntent(G); }
@@ -5381,17 +5394,22 @@ function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, c = G.cfg;
   if (G.over || G.lessonWait) return;
   if (G.ph === 'ring') { if (G.act.tap != null) return; if (mem.r !== G.act) { mem.r = G.act; const hit = R() < Math.pow(acc, (0.085 / c.win) * Math.sqrt(0.95 / c.ringT)), tc = ringAt(c, G.act), hw = c.win * c.ringT * 1.2; mem.tt = hit ? tc + (R() - 0.5) * hw * 1.4 : tc + (R() < 0.4 ? -1 : 1) * (hw + 0.02 + R() * 0.12); }
-    if (G.pt >= mem.tt) tapRing(G); return; }
+    if (G.pt >= mem.tt) ACT.tapRing(G); return; }
   if (G.ph !== 'choose') { mem.at = null; return; } if (mem.at == null) mem.at = G.t + 0.3 + react * 2; if (G.t < mem.at) return; mem.at = null;
   const m = mine(G), f = theirs(G), it = G.intent || {}, L = lessonNow(G);
-  if (canCatch(G) && f.hp < f.max * 0.28) { throwCharm(G); return; }
-  if (it.k === 'big') { const res = G.me.findIndex((q, i) => q.alive && i !== G.ai && eff(f.type, q.type) < 1 && q.hp > q.max * 0.5); if (eff(f.type, m.type) >= 1 && res >= 0 && R() < 0.5) switchTo(G, res); else guard(G); return; }
-  if (m.hp < m.max * 0.3 && G.berry > 0) { useBerry(G); return; }
-  const best = bestFor(G, f.type); if (best >= 0 && best !== G.ai && eff(G.me[best].type, f.type) > eff(m.type, f.type) && (G.me[best].hp > G.me[best].max * 0.3 || L)) { switchTo(G, best); return; }
-  if (it.k === 'guard' && !L) { guard(G); return; }
-  attack(G);
+  if (canCatch(G) && f.hp < f.max * 0.28) { ACT.throwCharm(G); return; }
+  if (it.k === 'big') { const res = G.me.findIndex((q, i) => q.alive && i !== G.ai && eff(f.type, q.type) < 1 && q.hp > q.max * 0.5); if (eff(f.type, m.type) >= 1 && res >= 0 && R() < 0.5) ACT.switchTo(G, res); else ACT.guard(G); return; }
+  if (m.hp < m.max * 0.3 && G.berry > 0) { ACT.useBerry(G); return; }
+  const best = bestFor(G, f.type); if (best >= 0 && best !== G.ai && eff(G.me[best].type, f.type) > eff(m.type, f.type) && (G.me[best].hp > G.me[best].max * 0.3 || L)) { ACT.switchTo(G, best); return; }
+  if (it.k === 'guard' && !L) { ACT.guard(G); return; }
+  ACT.attack(G);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { tapRing, throwCharm, switchTo, guard, useBerry, attack }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 // ===================== THE VIEW: Critter Clash in 3D (three.js through tools/world3d.js) =====================
 // A ring of trodden earth in a flowery meadow (later the beach, an autumn wood, a snowfield), trees all round, the weather
 // changing. Little round critters bounce on their feet: Emberpup with a flickering flame tuft, Puddlewump with a fin, Sproutle

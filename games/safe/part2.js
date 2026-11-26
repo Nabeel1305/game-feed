@@ -78,9 +78,9 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
   while (G.wave.length && G.t - G.wave[0].t > 3) G.wave.shift(); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'feel', title: 'FEEL THE CLICK', say: 'TURN SLOWLY… TAP SET', do: 'drag', dir: 'lr', how: 'Drag round the dial, slowly. When it CLICKS, a chalk mark appears. Turn back until the mark is under the pointer, then tap SET.', need: 1 }],
-  2: [{ id: 'quiet', title: 'SOFTLY', say: 'SLOWLY!', do: 'drag', dir: 'lr', how: 'Too fast and you miss the click, and you make noise. Open both bolts without the noise bar filling up.', need: 1 }],
-  3: [{ id: 'freeze', title: 'KEEP STILL', say: 'LET GO! KEEP STILL', do: 'release', at: G => [W / 2, H * 0.7], how: 'Footsteps! When the torch comes, lift your thumb and keep perfectly still until it has gone.', need: 1 }],
+  1: [{ id: 'feel', title: 'FEEL THE CLICK', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Drag round the dial, slowly. When it CLICKS, a chalk mark appears. Turn back until the mark is under the pointer, then tap SET.', need: 1 }],
+  2: [{ id: 'quiet', title: 'SOFTLY', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Too fast and you miss the click, and you make noise. Open both bolts without the noise bar filling up.', need: 1 }],
+  3: [{ id: 'freeze', title: 'KEEP STILL', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Footsteps! When the torch comes, lift your thumb and keep perfectly still until it has gone.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -96,6 +96,16 @@ function lessonSee(G, what) { const st = lessonNow(G); if (!st) return; let ok =
 const BLIND = { r: G => turnDial(G, 1), l: G => turnDial(G, -1), s: G => setNum(G) };
 // a player who looks and listens: turns at a steady pace under the feel limit (a little too fast now and then), notices a click
 // after `react`, turns back to the chalk mark, slowing as it gets near, and sets it (sometimes one off); freezes for the torch
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said TURN
+// SLOWLY… TAP SET (two things) with a hand sliding left and right in a box, which does not turn a round dial. Now: TURN SLOWLY round the dial
+// (the hand goes round it) until the click; TURN BACK TO THE MARK (the way to the chalk mark); TAP SET when the mark is under the pointer;
+// LET GO! / KEEP STILL while the torch is on the door.
+function safeCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const L = lay(), c = G.cfg, arc = (dir) => { const r = L.R * 0.8, a0 = -Math.PI / 2 + 0.5 * dir, a1 = a0 - 0.4 * dir; return [L.cx + Math.cos(a0) * r, L.cy + Math.sin(a0) * r, L.cx + Math.cos(a1) * r, L.cy + Math.sin(a1) * r]; };
+  if (G.gd.s === 'warn' || G.gd.s === 'torch') return ui.drag ? ['LET GO!', 'release', [W / 2, H * 0.7]] : ['KEEP STILL', 'wait', false];
+  if (G.mark == null) return ['TURN SLOWLY', 'drag', arc(1)];
+  const M = c.M, diff = ((((G.mark - G.pos) % M) + M * 1.5) % M - M / 2);
+  if (Math.abs(diff) > 0.3) return ['TURN TO THE MARK', 'drag', arc(Math.sign(diff))];
+  return ['TAP SET', 'tap', [L.set.x + L.set.w / 2, L.set.y + L.set.h / 2]]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, dt = 1 / 60, c = G.cfg;
   if (G.over || G.wait > 0) { mem.markT = 0; return; }
   if (G.gd.s === 'warn' || G.gd.s === 'torch') { mem.seen = (mem.seen || 0) + dt; if (mem.seen > react) return; } else mem.seen = 0;

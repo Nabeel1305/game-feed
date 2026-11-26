@@ -209,7 +209,7 @@ const optAdult = () => (typeof HEADLESS !== 'undefined' && HEADLESS) ? false : !
 const optFree = () => (typeof HEADLESS !== 'undefined' && HEADLESS) ? false : store.get('council', true) === false;
 const PLACES = [{ name: 'The Magistrates\' Court' }, { name: 'The County Court' }, { name: 'The Crown Court' }, { name: 'The Old Bailey' }];
 const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
-function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, help: !!help, place: placeOf(N), cases: 5, pass: Math.round(x(69, 87, 30) - (help ? 6 : 0)), factors: [Math.round(x(1, 3, 25)), Math.round(x(2, 5, 25))], complex: x(0.1, 0.35, 30), repeat: x(0, 0.45, 30), adult: optAdult(), free: optFree() }; }
 // ---------- a case ----------
 function makeCase(G, forceOff, opts = {}) { const R = G.rnd, c = G.cfg;
@@ -274,9 +274,9 @@ function judgeDocket(G) { const c = G.cfg, avg = Math.round(G.done.reduce((a, e)
   G.ev.push({ k: 'council', avg }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'write', title: 'PASS SENTENCE', say: 'TAP TO BUILD, THEN PASS', do: 'tap', how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
-  2: [{ id: 'weigh', title: 'WEIGH IT UP', say: 'WEIGH IT UP', do: 'tap', how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],
-  3: [{ id: 'right', title: 'PUT IT RIGHT', say: 'ADD COMPENSATION', do: 'tap', how: 'A victim lost money: add + Compensation as well as the punishment. Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
+  1: [{ id: 'write', title: 'PASS SENTENCE', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
+  2: [{ id: 'weigh', title: 'WEIGH IT UP', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],
+  3: [{ id: 'right', title: 'PUT IT RIGHT', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: 'A victim lost money: add + Compensation as well as the punishment. Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonCase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

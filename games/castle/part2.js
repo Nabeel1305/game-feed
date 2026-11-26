@@ -68,7 +68,7 @@ const RANKS = [[0, 'Squire'], [40, 'Knight'], [140, 'Baron'], [350, 'Earl'], [80
 const WEATHERS = ['morning', 'golden', 'noon', 'overcast', 'rain', 'sunset', 'mist', 'storm', 'dusk', 'dawn'];
 function weatherOf(N) { if (N <= 3) return ['morning', 'noon', 'golden'][N - 1]; const R = rng(N * 4409 + 13); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
 
-function makeCfg(N, help) {
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */
   const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   // 23 Nov 2026, his note: "AMAZING GAME!!!! but just a little too hard on the earlier levels ramp it slowly": the first 15 levels are gentler
   // (weaker foes, a lighter army, more gold, longer between waves) and the full strength comes in step by step
@@ -157,10 +157,21 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'build', title: 'BUILD ARCHERS', say: 'TAP A PAD, THEN ARCHERS', do: 'tap', how: 'Tap a stone pad beside the road, then tap the ARCHERS. Build two towers and hold off the goblins.', need: 1, ok: w => w === 'held', kinds: ['goblin'], waves: 2 }],
-  2: [{ id: 'mix', title: 'THE RIGHT TOWER', say: 'BUILD A MAGE AND A CATAPULT', do: 'tap', how: 'Bats fly: catapults and frost cannot touch them. Knights wear plate: arrows bounce off. Build a MAGE and a CATAPULT.', need: 1, ok: w => w === 'held', kinds: ['bat', 'knight', 'soldier'], waves: 2 }],
-  3: [{ id: 'up', title: 'UPGRADE AND FIRE', say: 'TAP A TOWER: UPGRADE', do: 'tap', how: 'Tap a tower you built to UPGRADE it. Tap METEOR, then the road, to drop fire on a crowd. Hold two waves.', need: 1, ok: w => w === 'held', kinds: ['soldier', 'goblin', 'knight'], waves: 2 }],
+  1: [{ id: 'build', title: 'BUILD ARCHERS', say: G => castleCue(G)[0], do: G => castleCue(G)[1], at: G => castleCue(G)[2], how: 'Tap a stone pad beside the road, then tap the ARCHERS. Build two towers and hold off the goblins.', need: 1, ok: w => w === 'held', kinds: ['goblin'], waves: 2 }],
+  2: [{ id: 'mix', title: 'THE RIGHT TOWER', say: G => castleCue(G)[0], do: G => castleCue(G)[1], at: G => castleCue(G)[2], how: 'Bats fly: catapults and frost cannot touch them. Knights wear plate: arrows bounce off. Build a MAGE and a CATAPULT.', need: 1, ok: w => w === 'held', kinds: ['bat', 'knight', 'soldier'], waves: 2 }],
+  3: [{ id: 'up', title: 'UPGRADE AND FIRE', say: G => castleCue(G)[0], do: G => castleCue(G)[1], at: G => castleCue(G)[2], how: 'Tap a tower you built to UPGRADE it. Tap METEOR, then the road, to drop fire on a crowd. Hold two waves.', need: 1, ok: w => w === 'held', kinds: ['soldier', 'goblin', 'knight'], waves: 2 }],
 };
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It said TAP A PAD, THEN ARCHERS with the hand in a box. Now the robot is asked what it would do (dryPlan, tools/dry_plan.py) and the hand
+// does it: TAP THIS PAD, then the tower in the menu that opens (TAP ARCHERS, TAP MAGE...), TAP YOUR TOWER then UPGRADE, TAP METEOR then the
+// crowd; WAIT… while the towers fight.
+const CNAME = { archer: 'ARCHERS', mage: 'MAGE', cat: 'CATAPULT', frost: 'FROST' };
+function castleCue(G) { const padAt = i => { const s2 = scr(PADS[i][0], 0.4, PADS[i][1]); return [s2.x, s2.y]; }, btn = q => { const b = (ui.btns || []).find(q); return b ? [b.x, b.y] : null; };
+  const P = ui.aim && ui.aimD != null ? ['meteor', ui.aimD] : dryPlan(G);
+  if (P && P[0] === 'build') { const [, pad, kind] = P; if (ui.sel === pad) { const b = btn(q => q.act === 'build' && q.kind === kind); if (b) return ['TAP ' + CNAME[kind], 'tap', b]; } return ['TAP THIS PAD', 'tap', padAt(pad)]; }
+  if (P && P[0] === 'upgrade') { const i = P[1]; if (ui.sel === i) { const b = btn(q => q.act === 'up'); if (b) return ['TAP UPGRADE', 'tap', b]; } return ['TAP YOUR TOWER', 'tap', padAt(i)]; }
+  if (P && P[0] === 'meteor') { if (!ui.aim) { ui.aimD = P[1]; const m = meteorBtn(); return ['TAP METEOR ☄️', 'tap', [m.x, m.y]]; } const p = roadAt(P[1]), s2 = scr(p.x, 0, p.z); return ['TAP THE CROWD', 'tap', [s2.x, s2.y]]; }
+  ui.aimD = null; return [G.foes.length ? 'WAIT… YOUR TOWERS FIGHT' : 'WAIT… THEY ARE COMING', 'wait', false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.waves = makeWaves(G); G.wave = 0; G.next = 14; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what, arg) {
@@ -208,11 +219,16 @@ function honest(G, o, mem) {
   const built = G.towers.map((t, i) => t ? i : -1).filter(i => i >= 0 && G.towers[i].lv < 2).sort((a, b) => coverOf(b, G.towers[b].kind) - coverOf(a, G.towers[a].kind));
   const air = has('bat') || has('dragon'), upOk = i => !air || ['archer', 'mage'].includes(G.towers[i].kind) || Math.random() > acc;
   const upPick = built.filter(upOk).find(i => G.gold >= TOWERS[G.towers[i].kind].cost[G.towers[i].lv + 1]);
-  if (free.length && G.towers.filter(Boolean).length < Math.min(6, 3 + G.N / 12) && G.gold >= priceOf(G, want)) build(G, padFor(want), want);
-  else if (upPick != null) upgrade(G, upPick);
-  else if (free.length && G.gold >= priceOf(G, want) + 30) build(G, padFor(want), want);
-  else if (free.length && G.gold >= priceOf(G, 'archer') + 40 && !built.length) build(G, padFor('archer'), 'archer');
+  if (free.length && G.towers.filter(Boolean).length < Math.min(6, 3 + G.N / 12) && G.gold >= priceOf(G, want)) ACT.build(G, padFor(want), want);
+  else if (upPick != null) ACT.upgrade(G, upPick);
+  else if (free.length && G.gold >= priceOf(G, want) + 30) ACT.build(G, padFor(want), want);
+  else if (free.length && G.gold >= priceOf(G, 'archer') + 40 && !built.length) ACT.build(G, padFor('archer'), 'archer');
   // the meteor, on the thickest crowd close to the gate
-  if (G.meteor <= 0 && G.foes.length) { let best = null, bn = 0; for (const f of G.foes) { const n = G.foes.filter(g => Math.hypot(g.x - f.x, g.z - f.z) < 3).length + f.d / PATH_LEN * 2; if (n > bn) { bn = n; best = f; } } if (best && bn >= 3) meteor(G, best.d + FOES[best.k].v * SPEED * 0.8); }
+  if (G.meteor <= 0 && G.foes.length) { let best = null, bn = 0; for (const f of G.foes) { const n = G.foes.filter(g => Math.hypot(g.x - f.x, g.z - f.z) < 3).length + f.d / PATH_LEN * 2; if (n > bn) { bn = n; best = f; } } if (best && bn >= 3) ACT.meteor(G, best.d + FOES[best.k].v * SPEED * 0.8); }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wave = G.waves.length; G.queue.length = 0; G.foes.length = 0; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { build, upgrade, meteor }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

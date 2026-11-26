@@ -185,9 +185,9 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: a track to yourself ----------
 const LESSONS = {
-  1: [{ id: 'trick', title: 'JUMP AND TRICK', say: 'IN THE AIR: TAP', do: 'tap', at: G => [W * 0.73, H * 0.72], how: 'Off every ramp, TAP the right side once in the air for a trick, and land after it has finished. Two jumps in a row. Tap only in the air!', need: 2 }],
-  2: [{ id: 'two', title: 'TWO IN ONE JUMP', say: 'TAP, TAP AGAIN', do: 'tap', at: G => [W * 0.73, H * 0.72], how: 'Fit TWO tricks into one jump: tap as you leave the ramp, tap again the moment the first one ends, and land clean. Twice.', need: 2 }],
-  3: [{ id: 'glide', title: 'THE GLIDER', say: 'STEER TO THE COINS', do: 'drag', dir: 'lr', how: 'The GOLD ramp launches a glider. Steer through the coins in the air: catch 5 in one flight.', need: 1 }],
+  1: [{ id: 'trick', title: 'JUMP AND TRICK', say: G => stuntCue(G)[0], do: G => stuntCue(G)[1], at: G => stuntCue(G)[2], how: 'Off every ramp, TAP the right side once in the air for a trick, and land after it has finished. Two jumps in a row. Tap only in the air!', need: 2 }],
+  2: [{ id: 'two', title: 'TWO IN ONE JUMP', say: G => stuntCue(G)[0], do: G => stuntCue(G)[1], at: G => stuntCue(G)[2], how: 'Fit TWO tricks into one jump: tap as you leave the ramp, tap again the moment the first one ends, and land clean. Twice.', need: 2 }],
+  3: [{ id: 'glide', title: 'THE GLIDER', say: G => stuntCue(G)[0], do: G => stuntCue(G)[1], at: G => stuntCue(G)[2], how: 'The GOLD ramp launches a glider. Steer through the coins in the air: catch 5 in one flight.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -206,12 +206,24 @@ function lessonMiss(G, why) { const st = lessonNow(G); if (!st) return;
 const BLIND = { s: G => { const R = Math.random; setSteer(G, R() < 0.25 ? 0 : (R() * 2 - 1) * (R() < 0.5 ? 1 : 0.6)); }, t: G => { tapRight(G); } };
 // a driver who looks: follows a line, takes the pads and the coins when near, does as many tricks as a jump allows (a beat
 // late, now and then one too many), uses items with sense
+// THE TUTORIAL SAYS WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). IN THE AIR: TAP showed a tapping
+// hand on the road too, where a tap does nothing. Now the robot is asked (dryPlanAll): TAP: TRICK! only in the air when a trick has time to
+// finish, WAIT… LAND when it has not, STEER LEFT / RIGHT on the stick (to the ramp, to the coins in a glide), TAP: USE IT for an item.
+const STC = { t: -1e9, v: null };
+function stuntCue(G) { if (G.over || G.wait > 0 || G.count > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - STC.t < 80) return STC.v; STC.t = now; const k2 = G.me, all = dryPlanAll(G, null, { wait: 1, t: -1 }), s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.22, y0 = s2 ? s2.y0 : H * 0.72, R = 60 * k;
+  const tr = all.find(q => q[0] === 'startTrick'), it = all.find(q => q[0] === 'useItem'), st = all.filter(q => q[0] === 'setSteer').pop(), sv = st ? st[1] : 0; let v;
+  if (tr) v = ['TAP: TRICK!', 'tap', [W * 0.75, H * 0.72]];
+  else if (k2.air && !(G.lesson && G.lesson.steps[G.lesson.i].id === 'glide' && k2.glide)) v = ['WAIT… LAND', 'wait', false];
+  else if (it && !(G.lesson && G.lesson.steps[G.lesson.i].id !== 'glide')) v = ['TAP: USE IT', 'tap', [W * 0.75, H * 0.72]];
+  else if (Math.abs(sv) > 0.3) v = [sv < 0 ? 'STEER LEFT' : 'STEER RIGHT', 'drag', [x0, y0, x0 + sv * R * 0.8, y0]];
+  else v = ['DRIVE ON…', 'wait', false];
+  STC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, k = G.me, T = G.T, S = T.S, n = S.length;
-  if (G.over || G.wait > 0 || G.count > 0) { setSteer(G, 0); return; }
+  if (G.over || G.wait > 0 || G.count > 0) { ACT.setSteer(G, 0); return; }
   // tricks: start one when there is time for it to finish, with a human margin
   if (k.air) { if (!k.trick) { mem.wait = (mem.wait || 0) + 1 / 60; const tl = landIn(k, gravOf(k)), margin = 0.04 + react * 0.15 + (1 - acc) * 0.2;
-      if (mem.wait > 0.04 + react * 0.2 && tl > TRICK + margin) { startTrick(G, k); mem.wait = 0; } else if (mem.wait > 0.04 + react * 0.2 && tl > TRICK - 0.05 && R() < (1 - acc) * 0.05) { startTrick(G, k); mem.wait = 0; } } }
+      if (mem.wait > 0.04 + react * 0.2 && tl > TRICK + margin) { ACT.startTrick(G, k); mem.wait = 0; } else if (mem.wait > 0.04 + react * 0.2 && tl > TRICK - 0.05 && R() < (1 - acc) * 0.05) { ACT.startTrick(G, k); mem.wait = 0; } } }
   else mem.wait = 0;
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.05 + react * 0.15;
   const look = Math.round(8 + k.v * 0.3), p = S[(k.i + look) % n]; let bend = 0; for (let q = 4; q < 26; q += 2) bend += S[(k.i + q) % n].curve; bend /= 11;
@@ -219,8 +231,15 @@ function honest(G, o, mem) {
   let want = clamp(-Math.sign(bend) * Math.min(2.5, Math.abs(bend) * 5), -3, 3);
   if (k.glide) { let bc = null, bd = 1e9; for (const cn of G.coinsT) { if (!cn.air || cn.t > 0) continue; const ax = cn.x - k.x, az = cn.z - k.z, fw = ax * Math.cos(k.h) + az * Math.sin(k.h); if (fw > 2 && fw < bd) { bd = fw; bc = cn; } } if (bc) { const lc = locate(T, bc.x, bc.z, k.i); want = lc.lat; } } for (const pd of T.pads) { const rel = ((pd.i - k.i) % n + n) % n; if (rel > 0 && rel < 30) want = pd.lat; } for (const r of T.ramps) { const rel = ((r.i0 - k.i) % n + n) % n; if (rel > 0 && rel < 30) want = 0; }
   const tx = p.x - Math.sin(p.h) * want, tz = p.z + Math.cos(p.h) * want; let dh = Math.atan2(tz - k.z, tx - k.x) - k.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); let s = clamp(dh * 2.6, -1, 1);
-  if (R() > acc) s += (R() - 0.5) * 0.8; setSteer(G, s);
+  if (R() > acc) s += (R() - 0.5) * 0.8; ACT.setSteer(G, s);
   if (k.item && !k.air) { mem.it = (mem.it || 0) + 0.1; const ahead = G.karts.some(q => q !== k && race(q) > race(k) && race(q) - race(k) < 70), behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20);
-    if (k.item === 'turbo' && Math.abs(bend) < 0.2 || k.item === 'shield' || k.item === 'zap' && (ahead || G.lesson) || k.item === 'slick' && (behind || mem.it > 4 || G.lesson)) { if (useItem(G)) mem.it = 0; } }
+    if (k.item === 'turbo' && Math.abs(bend) < 0.2 || k.item === 'shield' || k.item === 'zap' && (ahead || G.lesson) || k.item === 'slick' && (behind || mem.it > 4 || G.lesson)) { if (ACT.useItem(G)) mem.it = 0; } }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.count = 0; G.me.place = 1; G.me.done = true; finish(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setSteer, startTrick, useItem }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

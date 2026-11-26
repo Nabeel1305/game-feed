@@ -22,8 +22,8 @@ const UPGRADES = [
 ];
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Newcomer'], [40, 'Card player'], [130, 'Card sharp'], [320, 'High roller'], [700, 'Dealer'], [1500, 'Grand master']];
-function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
-  return { N, f, help: !!help, place: placeOf(N), stock: Math.round(x(36, 22, 25) + 6 * e + (help ? 4 : 0)) + upLv('extra'), jokers: N >= 2 ? Math.round(x(2, 0.6, 30)) : 1, locks: N >= 4 ? Math.round(x(2, 6, 30)) : 0, undo: upLv('undo'), streakJ: 6 }; }
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  return { N, f, help: !!help, place: placeOf(N), stock: Math.round(x(36, 22, 25) + 6 * e + (help ? 4 : 0) + (N === 1 ? 4 : 0)) + upLv('extra'), jokers: N >= 2 ? Math.round(x(2, 0.6, 30)) : 1, locks: N >= 4 ? Math.round(x(2, 6, 30)) : 0, undo: upLv('undo'), streakJ: 6 }; }
 // the layout: rows of 3, 6, 9, 10; who covers whom
 const ROWS = [3, 6, 9, 10];
 function coverOf(r, i) { if (r === 0) return [[1, 2 * i], [1, 2 * i + 1]]; if (r === 1) { const b = i + Math.floor(i / 2); return [[2, b], [2, b + 1]]; } if (r === 2) return [[3, i], [3, i + 1]]; return []; }
@@ -63,9 +63,9 @@ function finish(G, win) { if (G.over) return true; if (G.lesson) { lessonSee(G, 
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'ONE UP, ONE DOWN', say: 'TAP ONE UP OR DOWN', do: 'tap', how: 'Your card is on the pile. Tap a face-up card one higher or one lower. Keep going! Play a run of four.', need: 1 }],
-  2: [{ id: 'choose', title: 'CHOOSE WELL', say: 'PICK THE BEST ONE', do: 'tap', how: 'Two cards fit. One leads to a longer run. Look ahead and pick the one that keeps you going: a run of five without drawing.', need: 1 }],
-  3: [{ id: 'peak', title: 'TO THE TOP', say: 'CLEAR THE TOP', do: 'tap', how: 'Clear a peak: play cards until the top card of a peak is gone.', need: 1 }],
+  1: [{ id: 'run', title: 'ONE UP, ONE DOWN', say: G => peaksCue(G)[0], do: G => peaksCue(G)[1], at: G => peaksCue(G)[2], how: 'Your card is on the pile. Tap a face-up card one higher or one lower. Keep going! Play a run of four.', need: 1 }],
+  2: [{ id: 'choose', title: 'CHOOSE WELL', say: G => peaksCue(G)[0], do: G => peaksCue(G)[1], at: G => peaksCue(G)[2], how: 'Two cards fit. One leads to a longer run. Look ahead and pick the one that keeps you going: a run of five without drawing.', need: 1 }],
+  3: [{ id: 'peak', title: 'TO THE TOP', say: G => peaksCue(G)[0], do: G => peaksCue(G)[1], at: G => peaksCue(G)[2], how: 'Clear a peak: play cards until the top card of a peak is gone.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -88,10 +88,22 @@ const BLIND = { c: G => play(G, (Math.random() * G.tab.length) | 0), s: G => dra
 // plays the key early; draws only when nothing fits
 function runFrom(G, t, depth) { if (depth > 7) return 0; t.gone = true; const prev = G.waste; G.waste = prev.concat([t.card]); let best = 0; for (const q of G.tab) if (!q.gone && free(G, q) && !locked(G, q) && fits(q.card, top(G)) && qFaceUp(G, q, t)) best = Math.max(best, runFrom(G, q, depth + 1)); G.waste = prev; t.gone = false; return 1 + best; }
 const qFaceUp = (G, q, removed) => q.r === 3 || coverOf(q.r, q.i).every(([r, i]) => { const z = at(G, r, i); return !z || z.gone; });
+// THE HAND IS ON THE CARD TO PLAY (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It tapped in a box.
+// Now the robot is asked (dryPlan) and the hand is on its card (one up or one down, the one that leads furthest), or on the pile to draw.
+function peaksCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const L = lay(), P = dryPlan(G, null, { t: -1, cd: -1 }); if (!P) return ['WAIT…', 'wait', false];
+  if (P[0] === 'drawStock') return ['NONE FITS: TAP THE PILE', 'tap', [L.stock.x + L.stock.w / 2, L.stock.y + L.stock.h / 2]];
+  const t = G.tab[P[1]], p = L.pos(t.r, t.i); return [G.lesson && G.lesson.steps[0].id === 'choose' ? 'THIS ONE GOES FURTHER' : 'TAP THIS CARD', 'tap', [p.x, p.y]]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.25 + react * 1.2;
-  const ms = moves(G); if (!ms.length) { drawStock(G); return; }
-  if (R() > acc) { if (R() < 0.3) { drawStock(G); return; } const m = ms[(R() * ms.length) | 0]; play(G, G.tab.indexOf(m)); return; }      // a slip: an early draw, or a careless pick
+  const ms = moves(G); if (!ms.length) { ACT.drawStock(G); return; }
+  if (R() > acc) { if (R() < 0.3) { ACT.drawStock(G); return; } const m = ms[(R() * ms.length) | 0]; ACT.play(G, G.tab.indexOf(m)); return; }      // a slip: an early draw, or a careless pick
   let best = null, bv = -1; for (const m of ms) { const v = runFrom(G, m, 0) + (m.key ? 3 : 0) + (m.r < 3 ? 0.5 : 0) - (top(G).joker ? 0 : 0); if (v > bv) { bv = v; best = m; } }
-  play(G, G.tab.indexOf(best)); }
+  ACT.play(G, G.tab.indexOf(best)); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.tab.forEach(t => t.gone = true); G.cleared = G.tab.length; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { play, drawStock }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

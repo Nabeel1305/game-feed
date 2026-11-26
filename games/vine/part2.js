@@ -146,10 +146,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'go', title: 'LET GO AT THE RIGHT MOMENT', say: 'HOLD… LET GO!', do: 'release', at: G => [W / 2, H * 0.7], how: 'Hold your thumb down: you swing. Lift it as you swing forward and up. Your hand catches the next vine by itself, for now.', need: 3, ok: w => w === 'catch', autoGrab: 1 },
-      { id: 'grab', title: 'CATCH THE VINE', say: 'TOUCH AT THE VINE', do: 'tap', at: G => [W / 2, H * 0.7], how: 'This time you let go by yourself. Put your thumb down when your hand reaches the next vine.', need: 3, ok: w => w === 'catch', autoGo: 1 }],
-  2: [{ id: 'both', title: 'LET GO, THEN CATCH', say: 'LET GO, THEN TOUCH', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Lift your thumb at the top of the forward swing, put it down as you reach the vine.', need: 3, ok: w => w === 'catch' }],
-  3: [{ id: 'lean', title: 'STEER THE SWING', say: 'HOLD, SLIDE TO STEER', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Some vines hang to the side. While you hold on, move your thumb left or right: the swing turns that way. Then let go.', need: 3, ok: w => w === 'catch', side: 1 }],
+  1: [{ id: 'go', title: 'LET GO AT THE RIGHT MOMENT', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'Hold your thumb down: you swing. Lift it as you swing forward and up. Your hand catches the next vine by itself, for now.', need: 3, ok: w => w === 'catch', autoGrab: 1 },
+      { id: 'grab', title: 'CATCH THE VINE', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'This time you let go by yourself. Put your thumb down when your hand reaches the next vine.', need: 3, ok: w => w === 'catch', autoGo: 1 }],
+  2: [{ id: 'both', title: 'LET GO, THEN CATCH', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'Lift your thumb at the top of the forward swing, put it down as you reach the vine.', need: 3, ok: w => w === 'catch' }],
+  3: [{ id: 'lean', title: 'STEER THE SWING', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'Some vines hang to the side. While you hold on, move your thumb left or right: the swing turns that way. Then let go.', need: 3, ok: w => w === 'catch', side: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonVines(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -184,4 +184,15 @@ function honest(G, o, mem) {
   const m = flyMiss(G, p.x, p.y, p.z, p.vx, p.vy, p.vz); if (mem.grab == null) mem.grab = (Math.random() - 0.5) * (1 - acc) * 0.5 + 0.02;
   if (m.d < Math.min(G.cfg.reach, REACH) * 1.1 && m.t <= Math.max(0, mem.grab)) { grab(G); mem.grab = null; }
 }
+// THE TUTORIAL SAYS WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD… LET GO! with a hand
+// lifting all swing long, and TOUCH AT THE VINE with a hand tapping all flight long. Now, as the robot judges it (a moment early, for a thumb):
+// HOLD… SWING, SLIDE LEFT / RIGHT to face the next vine, LET GO! at the gold mark, WAIT… in the air, TOUCH NOW! as the vine comes.
+function vineCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const nv = G.vines[G.on + 1], p = G.p; if (!nv) return ['…', 'wait', false];
+  if (G.held) { const v = G.vines[G.on], want = Math.atan2(nv.x - v.x, v.z - nv.z), err = want - G.phi, x0 = touch.id != null ? touch.x0 : W / 2, y0 = H * 0.7;
+    if (Math.abs(err) > 0.06) { const l = clamp(err * 4, -1, 1); return [l < 0 ? 'SLIDE LEFT' : 'SLIDE RIGHT', 'drag', [x0, y0, x0 + l * W * 0.18, y0]]; }
+    const b = G.best; if (b && b.rel != null && b.d <= REACH * 0.8 && G.om > 0.15 && G.th + G.om * 0.2 >= b.rel) return ['LET GO!', 'release', [x0, y0]];
+    return [touch.id != null ? 'HOLD… SWING' : 'HOLD ON', 'hold', [x0, y0]]; }
+  if (G.down > 0) return ['WAIT…', 'wait', false];
+  const m = flyMiss(G, p.x, p.y, p.z, p.vx, p.vy, p.vz); if (m.d < Math.min(G.cfg.reach, REACH) * 1.1 && m.t <= 0.22) return ['TOUCH NOW!', 'tap', [W / 2, H * 0.7]];
+  return ['WAIT…', 'wait', false]; }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; attach(G, G.vines.length - 1, 0, 0); G.time = Math.max(G.time, 5); }

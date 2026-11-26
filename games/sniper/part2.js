@@ -121,12 +121,23 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.thief) return; const
   // someone in the way: wait for a clear shot (a careful player does; a careless one now and then does not)
   const blocked = G.ppl.some(q => { if (q === p || q.asleep) return false; const dq = Math.hypot(q.x - CAM.x, q.z - CAM.z); if (dq > dist) return false; const wq = aimAt(q.x, 0.9, q.z); return Math.abs(wq[0] - want[0]) < 0.6 / dq && Math.abs(wq[1] - want[1]) < 1.2 / dq; }) && R() < 0.5 + acc * 0.5;
   if (G.hold) { const s = swayNow(G), e = Math.hypot(want[0] - G.yaw - s[0], want[1] - G.pitch - s[1]); if (!blocked && ((e < 0.0035 + (1 - acc) * 0.004 && G.hold > 0.25 + react * 0.3) || G.breath < 0.3)) { fire(G); mem.find = 0.6 + react; mem.err = [(R() - 0.5) * (1 - acc) * 0.01, (R() - 0.5) * (1 - acc) * 0.008]; } } }
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said AIM,
+// HOLD, LET GO (three things) with a hand in a box, and FIND HIM / AIM AHEAD sliding left and right. Now it works out the robot's own aim (where
+// the right man will be when the dart lands, against the wind): DRAG TO AIM the way that is, HOLD FIRE once the sight is on him, LET GO! when the
+// sway is on him too.
+function snipeCue(G) { if (G.over || G.wait > 0 || !G.thief) return ['WAIT…', 'wait', false]; const p = G.thief, P = padAt();
+  const dist = Math.hypot(p.x - CAM.x, p.z - CAM.z, 0.9 - CAM.y), tf = dist / DART, vx = p.asleep ? 0 : p.vx || 0, vz = p.asleep ? 0 : p.vz || 0, still = p.wait > tf || p.still;
+  const fx = still ? p.x : p.x + vx * tf, fz = still ? p.z : p.z + vz * tf, want = aimAt(fx - G.wind * tf * 0.9, 1.0 + 4.9 * tf * tf * 0.15, fz);
+  const sw = G.hold ? swayNow(G) : [0, 0], dy = want[0] - G.yaw - sw[0], dp = want[1] - G.pitch - sw[1], off = Math.hypot(dy, dp);
+  if (off > (G.hold ? 0.006 : 0.04)) { const m = off || 1, L = 80 * k, x0 = W * 0.3, y0 = H * 0.62; return [G.hold ? 'AIM A BIT' : G.N === 3 ? 'AIM AHEAD OF HIM' : 'DRAG TO AIM', 'drag', [x0, y0, x0 + dy / m * L, y0 - dp / m * L]]; }
+  if (!G.hold) return ['HOLD FIRE', 'hold', [P.x, P.y]];
+  return ['LET GO!', 'release', [P.x, P.y]]; }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; if (G.thief) G.thief.asleep = 1; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'aim', title: 'AIM AND FIRE', say: 'AIM, HOLD, LET GO', do: 'hold', how: 'The thief stands still by the fountain. Left thumb: drag to aim. Right thumb: HOLD the FIRE pad (the scope), let go to fire.' }],
-  2: [{ id: 'clue', title: 'READ THE CARD', say: 'FIND HIM', do: 'drag', dir: 'lr', how: 'Only one of these people matches the card. Find him; never hit anyone else.' }],
-  3: [{ id: 'lead', title: 'AIM AHEAD', say: 'AIM AHEAD', do: 'drag', dir: 'lr', how: 'He is walking, and the wind blows. The dart takes a moment to fly: aim a little ahead of him, and into the wind.' }],
+  1: [{ id: 'aim', title: 'AIM AND FIRE', say: G => snipeCue(G)[0], do: G => snipeCue(G)[1], at: G => snipeCue(G)[2], how: 'The thief stands still by the fountain. Left thumb: drag to aim. Right thumb: HOLD the FIRE pad (the scope), let go to fire.' }],
+  2: [{ id: 'clue', title: 'READ THE CARD', say: G => snipeCue(G)[0], do: G => snipeCue(G)[1], at: G => snipeCue(G)[2], how: 'Only one of these people matches the card. Find him; never hit anyone else.' }],
+  3: [{ id: 'lead', title: 'AIM AHEAD', say: G => snipeCue(G)[0], do: G => snipeCue(G)[1], at: G => snipeCue(G)[2], how: 'He is walking, and the wind blows. The dart takes a moment to fly: aim a little ahead of him, and into the wind.' }],
 };
 const LSET = {
   aim: (G, R) => { G.thief = person(G, { thief: true, x: (R() - 0.5) * 6, z: -G.S - 2 - R() * 3, still: true, shirt: 0, hat: 1, bag: 1 }); },

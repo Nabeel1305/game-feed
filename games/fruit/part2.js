@@ -94,10 +94,19 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'aim', title: 'PULL AND LET GO', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Pull back with your thumb: the dotted arc shows where it goes. Let go when it ends on the blob. Splat three blobs.', need: 3 }],
-  2: [{ id: 'melon', title: 'THE WATERMELON', say: 'TAP 🍉, THEN FIRE', do: 'tap', how: 'Tap 🍉, then burst it in the middle of the crowd. Hit two or more with one melon.', need: 1 }],
-  3: [{ id: 'lob', title: 'OVER THE SHIELD', say: 'PULL FURTHER DOWN', do: 'drag', dir: 'down', how: 'The troll\'s board stops a flat shot. Pull further DOWN to lob a fruit high, so it comes down on him. Twice.', need: 2 }],
+  1: [{ id: 'aim', title: 'PULL AND LET GO', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'Pull back with your thumb: the dotted arc shows where it goes. Let go when it ends on the blob. Splat three blobs.', need: 3 }],
+  2: [{ id: 'melon', title: 'THE WATERMELON', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'Tap 🍉, then burst it in the middle of the crowd. Hit two or more with one melon.', need: 1 }],
+  3: [{ id: 'lob', title: 'OVER THE SHIELD', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'The troll\'s board stops a flat shot. Pull further DOWN to lob a fruit high, so it comes down on him. Twice.', need: 2 }],
 };
+// THE TUTORIAL'S HAND MAKES THE SHOT THAT HITS (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It
+// pulled straight down in a box; and TAP 🍉, THEN FIRE was two moves. Now the robot is asked (dryPlan): TAP 🍉 (or the fruit it wants) with
+// the hand on its button, then PULL BACK, LET GO along the pull that lands (sideways for the aim, down for the height: further down lobs).
+function fruitCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const P = dryPlan(G, null, { t: -1 }); if (!P) return ['WAIT…', 'wait', false];
+  if (P[0] === 'setFruit') { const b = fruitBtns(G).find(q => q.f === P[1]); return ['TAP ' + ({ melon: '🍉', banana: '🍌', orange: '🍊' }[P[1]] || 'IT'), 'tap', b ? [b.x + b.w / 2, b.y + b.h / 2] : false]; }
+  { const live = G.mons.filter(m => !m.dead).sort((a, b) => (a.z / a.sp) - (b.z / b.sp)), m = live[0]; if (m) { const M = MON[m.k], lob = M.shield && G.fruit !== 'melon', ty = M.eye ? m.y + M.h * 0.85 : m.y + M.h * 0.5, lead = m.slip > 0 ? 0 : M.hop ? m.sp * 0.8 : m.sp;
+    let a = aimAt(G, G.fruit, m.x, ty, m.z, lob); if (a) { a = aimAt(G, G.fruit, m.x, ty, m.z - lead * (a.tof + 0.8), lob) || a; P[1] = a.yaw; P[2] = a.pitch; } } }      // aimed where it will be when a thumb has pulled and let go (about 0.8 s)
+  const dx = -P[1] / 0.55 * 150 * k, dy = Math.max(30 * k, (P[2] - 0.03) / 0.78 * 170 * k), x0 = W / 2, y0 = H * 0.5;
+  return [P[2] > 0.5 ? 'PULL FURTHER DOWN, LET GO' : 'PULL BACK, LET GO', 'drag', [x0, y0, x0 + dx, y0 + dy]]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSetup(G) { const st = lessonNow(G); G.mons = []; G.shots = []; G.peels = []; G.queue = []; G.hearts = 3;
@@ -127,8 +136,13 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   const live = G.mons.filter(m => !m.dead); if (!live.length) return; live.sort((a, b) => (a.z / a.sp) - (b.z / b.sp)); const m = live[0], M = MON[m.k], fr = G.cfg.fruits;
   const near = live.filter(q => q !== m && Math.hypot(q.x - m.x, q.z - m.z) < 3).length;
   let want = 'orange'; if (fr.includes('melon') && (M.shield || near >= 1 || m.k === 'big') && G.cd.melon <= 0) want = 'melon'; else if (fr.includes('banana') && M.hop && G.cd.banana <= 0) want = 'banana';
-  if (G.fruit !== want) { setFruit(G, want); return; } if (G.cd[G.fruit] > 0) { if (G.fruit !== 'orange' && G.cd[G.fruit] > 0.5) setFruit(G, 'orange'); return; }
+  if (G.fruit !== want) { ACT.setFruit(G, want); return; } if (G.cd[G.fruit] > 0) { if (G.fruit !== 'orange' && G.cd[G.fruit] > 0.5) ACT.setFruit(G, 'orange'); return; }
   const lob = M.shield && G.fruit !== 'melon', ty = M.eye ? m.y + M.h * 0.85 : m.y + M.h * 0.5; let a = aimAt(G, G.fruit, m.x, ty, m.z, lob); if (!a) return;
   const lead = m.slip > 0 ? 0 : M.hop ? m.sp * 0.8 : m.sp; a = aimAt(G, G.fruit, m.x, ty, m.z - lead * a.tof, lob) || a;
-  const e = 1 - acc; shoot(G, a.yaw + (R() - 0.5) * e * 0.7, a.pitch + (R() - 0.5) * e * 0.5, 1); }
+  const e = 1 - acc; ACT.shoot(G, a.yaw + (R() - 0.5) * e * 0.7, a.pitch + (R() - 0.5) * e * 0.5, 1); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setFruit, shoot }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

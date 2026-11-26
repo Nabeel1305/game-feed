@@ -116,10 +116,20 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'grow', title: 'SOW, WATER, HARVEST', say: 'TAP: PLANT, 💧, PICK', do: 'tap', how: 'Tap an empty bed to plant a carrot. When a 💧 drop shows, tap it to water. When it sparkles, tap to pick it. Then tap the CART to sell three carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 3 }] }],
-  2: [{ id: 'careful', title: 'ONLY WHEN THEY ASK', say: '💧 ONLY WHEN IT ASKS', do: 'tap', how: 'Water only crops with a 💧 drop: water a crop that is not thirsty and it rots. Pick a TOMATO in the seed bar too. Sell two carrots and two tomatoes.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 2 }, { kd: 'tomato', want: 2 }] }],
-  3: [{ id: 'hens', title: 'EGGS AND CROWS', say: 'TAP THE EGGS, TAP THE CROW', do: 'tap', how: 'Tap the hen house when eggs are laid (not before: the hens sulk). Tap a crow to shoo it off your crops. Sell three eggs and two carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'egg', want: 3 }, { kd: 'carrot', want: 2 }], eggs: true, crows: true }],
+  1: [{ id: 'grow', title: 'SOW, WATER, HARVEST', say: G => harvCue(G)[0], do: G => harvCue(G)[1], at: G => harvCue(G)[2], how: 'Tap an empty bed to plant a carrot. When a 💧 drop shows, tap it to water. When it sparkles, tap to pick it. Then tap the CART to sell three carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 3 }] }],
+  2: [{ id: 'careful', title: 'ONLY WHEN THEY ASK', say: G => harvCue(G)[0], do: G => harvCue(G)[1], at: G => harvCue(G)[2], how: 'Water only crops with a 💧 drop: water a crop that is not thirsty and it rots. Pick a TOMATO in the seed bar too. Sell two carrots and two tomatoes.', need: 1, ok: w => w === 'done', orders: [{ kd: 'carrot', want: 2 }, { kd: 'tomato', want: 2 }] }],
+  3: [{ id: 'hens', title: 'EGGS AND CROWS', say: G => harvCue(G)[0], do: G => harvCue(G)[1], at: G => harvCue(G)[2], how: 'Tap the hen house when eggs are laid (not before: the hens sulk). Tap a crow to shoo it off your crops. Sell three eggs and two carrots.', need: 1, ok: w => w === 'done', orders: [{ kd: 'egg', want: 3 }, { kd: 'carrot', want: 2 }], eggs: true, crows: true }],
 };
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said TAP: PLANT, 💧, PICK (three moves) with a hand in a box. Now the robot is asked (dryPlan) and the hand is on the bed, the
+// seed, the hen house or the cart, with the word for what the tap does there: PLANT / WATER / PICK / SHOO THE CROW / TAP THE TOMATO SEEDS / EGGS / SELL.
+function harvCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const P = dryPlan(G, null, { t: -1, cd: -1, next: -1 }); if (!P) return ['WAIT… IT IS GROWING', 'wait', false];
+  const at = (x, y, z) => { const v = scr(x, y, z); return [v.x, v.y]; };
+  if (P[0] === 'pickSeed') { const sb = seedBar(G).find(q => q.kd === P[1]); return ['TAP THE ' + String(P[1]).toUpperCase() + ' SEEDS', 'tap', sb ? [sb.x + sb.w / 2, sb.y + sb.h / 2] : false]; }
+  if (P[0] === 'tapCoop') return ['TAP THE EGGS', 'tap', at(COOP[0], 1.3, COOP[1])]; if (P[0] === 'tapCart') return ['TAP THE CART: SELL', 'tap', at(CART[0], 1.4, CART[1])];
+  if (P[0] === 'tapBed') { const b = G.beds[P[1]], [bx, bz] = bedPos(b), crow = G.crows.find(q => q.bed === P[1] && !q.gone);
+    const cr = b.crop, w = crow ? 'SHOO THE CROW' : !cr ? 'TAP TO PLANT' : cr.dead || cr.rot ? 'TAP TO CLEAR IT' : cr.ripe ? 'TAP TO PICK' : cr.thirsty > 0 ? 'TAP TO WATER 💧' : 'TAP HERE'; return [w, 'tap', at(bx, 0.6, bz)]; }
+  return ['WAIT…', 'wait', false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.orders = makeOrders(G); G.eggT = 4; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what) {
@@ -140,17 +150,22 @@ function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg;
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.35 + react * 1.2;
   const slip = () => Math.random() > acc + (1 - acc) * 0.8;
-  if (slip()) { mem.next += 0.6 + react; if (Math.random() < 0.15) tapBed(G, (Math.random() * G.beds.length) | 0); return; }
-  const crow = G.crows.find(q => !q.gone); if (crow) return tapBed(G, crow.bed);
+  if (slip()) { mem.next += 0.6 + react; if (Math.random() < 0.15) ACT.tapBed(G, (Math.random() * G.beds.length) | 0); return; }
+  const crow = G.crows.find(q => !q.gone); if (crow) return ACT.tapBed(G, crow.bed);
   const idx = G.beds.map((b, i) => i);
-  const thirsty = idx.find(i => G.beds[i].crop && G.beds[i].crop.thirsty > 0 && !G.beds[i].crop.dead && !G.beds[i].crop.rot); if (thirsty != null) return tapBed(G, thirsty);
-  const ripe = idx.find(i => G.beds[i].crop && G.beds[i].crop.ripe); if (ripe != null) return tapBed(G, ripe);
-  const bad = idx.find(i => G.beds[i].crop && (G.beds[i].crop.dead || G.beds[i].crop.rot)); if (bad != null) return tapBed(G, bad);
-  if (G.eggs > 0 && G.orders.some(q => q.kd === 'egg' && q.got + (G.basket.egg || 0) < q.want)) return tapCoop(G);
-  if (G.orders.some(q => (G.basket[q.kd] || 0) > 0 && q.got < q.want)) return tapCart(G);
+  const thirsty = idx.find(i => G.beds[i].crop && G.beds[i].crop.thirsty > 0 && !G.beds[i].crop.dead && !G.beds[i].crop.rot); if (thirsty != null) return ACT.tapBed(G, thirsty);
+  const ripe = idx.find(i => G.beds[i].crop && G.beds[i].crop.ripe); if (ripe != null) return ACT.tapBed(G, ripe);
+  const bad = idx.find(i => G.beds[i].crop && (G.beds[i].crop.dead || G.beds[i].crop.rot)); if (bad != null) return ACT.tapBed(G, bad);
+  if (G.eggs > 0 && G.orders.some(q => q.kd === 'egg' && q.got + (G.basket.egg || 0) < q.want)) return ACT.tapCoop(G);
+  if (G.orders.some(q => (G.basket[q.kd] || 0) > 0 && q.got < q.want)) return ACT.tapCart(G);
   // what to plant: what the orders still need, beyond what is in the basket and in the ground
   const inGround = kd => G.beds.filter(b => b.crop && b.crop.kd === kd && !b.crop.dead && !b.crop.rot).length;
   const need = G.orders.filter(q => q.kd !== 'egg').map(q => ({ kd: q.kd, n: q.want - q.got - (G.basket[q.kd] || 0) - inGround(q.kd) })).filter(q => q.n > 0).sort((a, b) => CROPS[b.kd].grow - CROPS[a.kd].grow);
-  const empty = idx.find(i => !G.beds[i].crop); if (need.length && empty != null) { if (G.seed !== need[0].kd) { pickSeed(G, need[0].kd); return; } return tapBed(G, empty); }
+  const empty = idx.find(i => !G.beds[i].crop); if (need.length && empty != null) { if (G.seed !== need[0].kd) { ACT.pickSeed(G, need[0].kd); return; } return ACT.tapBed(G, empty); }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; for (const o of G.orders) G.basket[o.kd] = o.want; tapCart(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { tapBed, pickSeed, tapCoop, tapCart }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

@@ -38,7 +38,7 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Stowaway'], [40, 'Sneak'], [130, 'Shadow'], [320, 'Phantom'], [700, 'Mastermind'], [1500, 'Legend']];
 const placeOf = N => 0, PLACES = [{ name: 'Station Nine' }];
-function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 10 === 0;
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 10 === 0;
   const crew = Math.round(x(5, 9, 25)) + (boss ? 1 : 0);
   return { N, f, help: !!help, place: 0, boss, crew, vis: x(5.6, 7.2, 30), cd: x(10, 15, 30) - 2 * upLv('quick') - (help ? 3 : 0), job: x(3.6, 1.5, 30), need: Math.round(crew * x(4.6, 7.2, 30) * (help ? 1.3 : 1)),
     speed: 2.45 * (1 + 0.06 * upLv('feet')), cspeed: x(2.1, 2.45, 30), buddy: N >= 4 ? x(0, 0.55, 25) : 0, cams: N >= 6, lights: N >= 3, doors: N >= 5, reactor: N >= 8, sheriff: N >= 12,
@@ -218,44 +218,63 @@ const BLIND = { w: G => { const a = Math.random() * TAU; stick(G, Math.cos(a), M
 // points at whoever the crew already doubt most (or skips when it is in doubt itself)
 function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, Y = G.you;
   if (G.meet) { if (G.meet.votes) return; mem.mt = (mem.mt || 0) + 1 / 60; if (mem.mt < 1.5 + react * 3) return; mem.mt = 0; const M = G.meet; let best = -1, bs = -1; for (const k2 in M.sus) { if (+k2 === 0) continue; if (M.sus[k2] > bs) { bs = M.sus[k2]; best = +k2; } }
-    vote(G, (M.sus[0] > 3 && R() < 0.5) || bs < 0.6 ? -1 : best); return; }
+    ACT.vote(G, (M.sus[0] > 3 && R() < 0.5) || bs < 0.6 ? -1 : best); return; }
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) { if (mem.p && mem.p.length) follow(G, mem); return; } mem.t = 0.12 + react * 0.3;
   if (G.inVent >= 0) { // in a vent: come out where no one sees (or hop on)
-    if (witnesses(G, Y.x, Y.z, Y.x, Y.z).length) { vent(G); } else { ventOut(G); mem.p = null; mem.flee = false; } return; }
+    if (witnesses(G, Y.x, Y.z, Y.x, Y.z).length) { ACT.vent(G); } else { ACT.ventOut(G); mem.p = null; mem.flee = false; } return; }
   const c = G.cfg, margin = (1 - acc) * 2.2;   // a sloppy one misjudges how far the crew can see
   const camOn = c.cams && crew(G).some(w => w.cam > 0), onCam = (x, z) => camOn && acc > 0.7 && CAMS.some(cm => Math.hypot(cm[0] - x, cm[1] - z) < cm[2] + 1);
   const watching = (x, z, skip) => onCam(x, z) || onCam(Y.x, Y.z) || crew(G).some(w => w.i !== skip && (los(G, w.x, w.z, x, z, visOf(G, w) - margin + acc) || los(G, w.x, w.z, Y.x, Y.z, visOf(G, w) - margin + acc)));
   // after a knock-out: get away from the body (a vent if close and unseen)
-  if (mem.flee) { const vn = ventNear(G); if (vn >= 0 && !watching(Y.x, Y.z, -1)) { vent(G); return; }
+  if (mem.flee) { const vn = ventNear(G); if (vn >= 0 && !watching(Y.x, Y.z, -1)) { ACT.vent(G); return; }
     if (!mem.vp) { let bv = null, bd = 7 * acc; for (const v of VENTS) { const dd = Math.hypot(v[0] + 0.5 - Y.x, v[1] + 0.5 - Y.z); if (dd < bd) { bd = dd; bv = v; } } if (bv) { mem.p = path(G, Y.x, Y.z, bv[0] + 0.5, bv[1] + 0.5); mem.vp = 1; } } if (!mem.p || !mem.p.length) { const j = JOBS[(R() * JOBS.length) | 0]; if (Math.hypot(j[0] - Y.x, j[1] - Y.z) < 10) return; mem.p = path(G, Y.x, Y.z, j[0] + 0.5, j[1] + 0.5); mem.flee = false; mem.vp = 0; mem.fakeAt = j; } follow(G, mem); return; }
   // keep walking until well clear of the body
   if (mem.away && G.t - mem.away.t < 9 && Math.hypot(Y.x - mem.away.x, Y.z - mem.away.z) < 5) { if (!mem.p || !mem.p.length) { const j = JOBS[(R() * JOBS.length) | 0]; if (Math.hypot(j[0] - Y.x, j[1] - Y.z) > 7) { mem.p = path(G, Y.x, Y.z, j[0] + 0.5, j[1] + 0.5); mem.fakeAt = j; } } follow(G, mem); return; }
   // pretend to work where it stopped (now and then), so the crew see it at a job
-  if (mem.fakeAt && jobNear(G) >= 0 && !G.faking && R() < 0.5) { fake(G, true); stick(G, 0, 0); mem.fakeT = 2 + R() * 3; mem.fakeAt = null; return; }
-  if (G.faking) { mem.fakeT -= mem.t; if (mem.fakeT > 0 && G.cd > 1) return; fake(G, false); }
+  if (mem.fakeAt && jobNear(G) >= 0 && !G.faking && R() < 0.5) { ACT.fake(G, true); ACT.stick(G, 0, 0); mem.fakeT = 2 + R() * 3; mem.fakeAt = null; return; }
+  if (G.faking) { mem.fakeT -= mem.t; if (mem.fakeT > 0 && G.cd > 1) return; ACT.fake(G, false); }
   // be seen working once in a while (the crew notice someone who never does a job)
-  if (acc > 0.5 && G.cd > 3 && !crew(G).some(p => p.sawWork)) { if (jobNear(G) >= 0 && !G.faking && crew(G).some(w => los(G, w.x, w.z, Y.x, Y.z, visOf(G, w)))) { fake(G, true); stick(G, 0, 0); mem.fakeT = 2.2 + R() * 2; mem.p = null; return; }
+  if (acc > 0.5 && G.cd > 3 && !crew(G).some(p => p.sawWork)) { if (jobNear(G) >= 0 && !G.faking && crew(G).some(w => los(G, w.x, w.z, Y.x, Y.z, visOf(G, w)))) { ACT.fake(G, true); ACT.stick(G, 0, 0); mem.fakeT = 2.2 + R() * 2; mem.p = null; return; }
     if (!mem.p || !mem.p.length || !mem.jobGo) { let bj = null, bd = 1e9; for (const j of JOBS) { const d2 = Math.hypot(j[0] + 0.5 - Y.x, j[1] + 0.5 - Y.z); if (d2 < bd && crew(G).some(w => Math.hypot(w.x - j[0], w.z - j[1]) < 6)) { bd = d2; bj = j; } } if (bj) { mem.p = path(G, Y.x, Y.z, bj[0] + 0.5, bj[1] + 0.5); mem.jobGo = 1; } }
     if (mem.p && mem.p.length) { follow(G, mem); return; } }
   mem.jobGo = 0;
   // the target: the crewmate with the fewest others near (and not with a buddy)
   const L = crew(G); if (!L.length) return; if (!mem.tg || !mem.tg.alive || R() < 0.015) { let best = null, bs = 1e9; for (const p of L) { let s = Math.hypot(p.x - Y.x, p.z - Y.z) * 0.15 + (p.moving ? 2 : 0) + (p.cam > 0 ? 6 : 0) + (p.buddy >= 0 && G.ppl[p.buddy].alive ? 4 : 0); for (const q of L) if (q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 8) s += 3; if (s < bs) { bs = s; best = p; } } mem.tg = best; }
   const T = mem.tg, d = Math.hypot(T.x - Y.x, T.z - Y.z); if (d < 3.5 && watching(T.x, T.z, T.i)) mem.exposed = G.t; const fresh = acc > 0.7 && mem.exposed != null && mem.exposedTg === T && G.t - mem.exposed < 6; mem.exposedTg = mem.exposedTg === T ? T : (mem.exposed = null, T);
-  if (G.cd <= 0 && d < 1.3 && canKill(G) === T && !watching(T.x, T.z, T.i) && !fresh) { knock(G); mem.away = { x: T.x, z: T.z, t: G.t }; mem.flee = true; mem.vp = 0; mem.p = null; return; }
+  if (G.cd <= 0 && d < 1.3 && canKill(G) === T && !watching(T.x, T.z, T.i) && !fresh) { ACT.knock(G); mem.away = { x: T.x, z: T.z, t: G.t }; mem.flee = true; mem.vp = 0; mem.p = null; return; }
   // the lights off when stalking (from level 3), if it helps
-  if (c.lights && G.cd < 3 && d < 6 && G.sabCd <= 0 && R() < 0.3) sabotage(G, 'lights');
+  if (c.lights && G.cd < 3 && d < 6 && G.sabCd <= 0 && R() < 0.3) ACT.sabotage(G, 'lights');
   // close in when the cooldown is nearly done; hang back (at a job nearby) when it is not
-  if ((G.cd > 2.5 && d < 3) || (d < 4.5 && acc > 0.7 && watching(T.x, T.z, T.i))) { stick(G, 0, 0); mem.p = null; if (d < 2.5) { const away = path(G, Y.x, Y.z, Y.x + (Y.x - T.x) * 2, Y.z + (Y.z - T.z) * 2); if (away) { mem.p = away.slice(0, 3); follow(G, mem); } } return; }
-  if (d < 2.2 && los(G, Y.x, Y.z, T.x, T.z, 3)) { stick(G, (T.x - Y.x) / d, (T.z - Y.z) / d); mem.p = null; return; }
-  if (!mem.p || !mem.p.length || R() < 0.15) mem.p = path(G, Y.x, Y.z, T.x, T.z); if (mem.p && mem.p.length > 1 || d > 1.0) follow(G, mem); else stick(G, 0, 0); }
-function follow(G, mem) { const Y = G.you; if (!mem.p || !mem.p.length) { stick(G, 0, 0); return; } const [tx, tz] = mem.p[0], dx = tx - Y.x, dz = tz - Y.z, d = Math.hypot(dx, dz); if (d < 0.25) { mem.p.shift(); return follow(G, mem); } stick(G, dx / d, dz / d); }
+  if ((G.cd > 2.5 && d < 3) || (d < 4.5 && acc > 0.7 && watching(T.x, T.z, T.i))) { ACT.stick(G, 0, 0); mem.p = null; if (d < 2.5) { const away = path(G, Y.x, Y.z, Y.x + (Y.x - T.x) * 2, Y.z + (Y.z - T.z) * 2); if (away) { mem.p = away.slice(0, 3); follow(G, mem); } } return; }
+  if (d < 2.2 && los(G, Y.x, Y.z, T.x, T.z, 3)) { ACT.stick(G, (T.x - Y.x) / d, (T.z - Y.z) / d); mem.p = null; return; }
+  if (!mem.p || !mem.p.length || R() < 0.15) mem.p = path(G, Y.x, Y.z, T.x, T.z); if (mem.p && mem.p.length > 1 || d > 1.0) follow(G, mem); else ACT.stick(G, 0, 0); }
+function follow(G, mem) { const Y = G.you; if (!mem.p || !mem.p.length) { ACT.stick(G, 0, 0); return; } const [tx, tz] = mem.p[0], dx = tx - Y.x, dz = tz - Y.z, d = Math.hypot(dx, dz); if (d < 0.25) { mem.p.shift(); return follow(G, mem); } ACT.stick(G, dx / d, dz / d); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.meet = null; finish(G, true, 'last'); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'sneak', title: 'WHEN NO ONE IS LOOKING', say: 'KNOCK OUT WHEN NO ONE LOOKS', do: 'tap', how: 'SKY works alone in Electrical. LIME walks in and out. Slide to walk there; KNOCK OUT SKY only when LIME is gone.' }],
-  2: [{ id: 'vent', title: 'VANISH', say: 'KNOCK OUT, TAP VENT', do: 'tap', how: 'Knock out RUBY in MedBay, then hide in the VENT (stand on it, tap VENT) and come out somewhere else before anyone comes.' }],
-  3: [{ id: 'talk', title: 'THE MEETING', say: 'VOTE FOR THE ONE THEY DOUBT', do: 'tap', how: 'Knock out COCOA in Storage (no one looking). Soon the body is found: at the meeting, vote for the one they already doubt.' }],
+  1: [{ id: 'sneak', title: 'WHEN NO ONE IS LOOKING', say: G => crewCue(G)[0], do: G => crewCue(G)[1], at: G => crewCue(G)[2], how: 'SKY works alone in Electrical. LIME walks in and out. Slide to walk there; KNOCK OUT SKY only when LIME is gone.' }],
+  2: [{ id: 'vent', title: 'VANISH', say: G => crewCue(G)[0], do: G => crewCue(G)[1], at: G => crewCue(G)[2], how: 'Knock out RUBY in MedBay, then hide in the VENT (stand on it, tap VENT) and come out somewhere else before anyone comes.' }],
+  3: [{ id: 'talk', title: 'THE MEETING', say: G => crewCue(G)[0], do: G => crewCue(G)[1], at: G => crewCue(G)[2], how: 'Knock out COCOA in Storage (no one looking). Soon the body is found: at the meeting, vote for the one they already doubt.' }],
 };
+// THE TUTORIAL SHOWS THE NEXT MOVE, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It said KNOCK OUT WHEN NO ONE LOOKS with a hand tapping in a box. Now the robot is asked (dryPlan) and the hand does it: SLIDE TO WALK (the
+// way to go), WAIT: SOMEONE IS LOOKING, TAP KNOCK OUT, TAP VENT, TAP OUT; at the meeting LISTEN…, then the hand on the one they doubt and VOTE.
+const CRC = { t: -1e9, v: null };
+function crewCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const B = id => { const b = buttons(G).find(q => q.id === id); return b ? [b.x, b.y] : false; }, mid = r => [r.x + r.w / 2, r.y + r.h / 2];
+  if (G.meet) { const M = G.meet; if (M.votes) return ['WAIT…', 'wait', false]; if (ui.meetT < saysShown(M) * 0.9 + 0.6) return ['LISTEN…', 'wait', false]; const Lo = meetLayout(G);
+    let best = -1, bs = -1; for (const k2 in M.sus) { if (+k2 === 0) continue; if (M.sus[k2] > bs) { bs = M.sus[k2]; best = +k2; } }
+    if (best < 0 || bs < 0.6) return ['TAP SKIP', 'tap', mid(Lo.skip)]; if (ui.sel === best) return ['TAP VOTE', 'tap', mid(Lo.vote)]; const t = Lo.tiles.find(q => q.p.i === best); return t ? ['TAP THE ONE THEY DOUBT', 'tap', mid(t)] : ['WAIT…', 'wait', false]; }
+  const now = performance.now(); if (now - CRC.t < 300) return CRC.v; CRC.t = now;
+  const Y = G.you, walkTo = (tx, tz) => { const pp = path(G, Y.x, Y.z, tx, tz); if (!pp || !pp.length) return null; let [px, pz] = pp[0]; if (Math.hypot(px - Y.x, pz - Y.z) < 0.3 && pp[1]) [px, pz] = pp[1]; const dx = px - Y.x, dz = pz - Y.z, m = Math.hypot(dx, dz) || 1, x0 = W * 0.35, y0 = H * 0.62; return ['SLIDE TO WALK', 'drag', [x0, y0, x0 + dx / m * 70 * k, y0 + dz / m * 70 * k]]; };
+  const id = G.lesson && lessonNow(G) ? lessonNow(G).id : '';
+  if (id === 'vent' && G.kills > 0 && G.inVent < 0) { const v2 = ventNear(G) >= 0 ? ['TAP VENT', 'tap', B('vent')] : (() => { let bv = null, bd = 1e9; for (const q of VENTS) { const dd = Math.hypot(q[0] + 0.5 - Y.x, q[1] + 0.5 - Y.z); if (dd < bd) { bd = dd; bv = q; } } return bv ? walkTo(bv[0] + 0.5, bv[1] + 0.5) : null; })(); if (v2) { CRC.v = v2; return v2; } }      // after the knock-out: to the vent
+  const P = dryPlan(G); let v = ['WAIT: SOMEONE IS LOOKING', 'wait', false];
+  if (P && P[0] === 'knock') { const T = canKill(G); if (T && crew(G).some(w => w.i !== T.i && los(G, w.x, w.z, T.x, T.z, visOf(G, w) + 2.5))) P[0] = 'wait'; }      // someone could look in before a thumb lands: wait
+  if (P) { const [a, x, z] = P;
+    if (a === 'knock') v = ['TAP KNOCK OUT', 'tap', B('knock')]; else if (a === 'vent') v = ['TAP VENT', 'tap', B(G.inVent >= 0 ? 'next' : 'vent')]; else if (a === 'ventOut') v = ['TAP OUT', 'tap', B('out')];
+    else if (a === 'fake' && x) v = ['HOLD PRETEND', 'hold', B('use')]; else if (a === 'report') v = ['TAP REPORT', 'tap', B('report')];
+    else if (a === 'stick' && (x || z)) { const x0 = W * 0.35, y0 = H * 0.62, m = Math.hypot(x, z) || 1; v = ['SLIDE TO WALK', 'drag', [x0, y0, x0 + x / m * 70 * k, y0 + z / m * 70 * k]]; } }
+  CRC.v = v; return v; }
 const LSET = {
   sneak: (G, R) => { G.ppl.length = 1; G.you.x = 23.5; G.you.z = 12; const s = person(G, 2, 14.5, 22.5); s.job = JOBS[19]; s.path = []; s.work = -999; G.ppl.push(s); const l = person(G, 3, 12.5, 19.5); l.patrol = [[11.5, 20.5], [13, 15.5], [12.5, 11.5], [13, 15.5]]; G.ppl.push(l); G.cd = 0; },
   vent: (G, R) => { G.ppl.length = 1; G.you.x = 13.5; G.you.z = 5.5; const r = person(G, 1, 11.5, 3.5); r.job = JOBS[27]; r.path = []; r.work = -999; G.ppl.push(r); const w = person(G, 4, 20.5, 8.5); w.walker = 7; w.job = JOBS[28]; w.path = path(G, w.x, w.z, JOBS[28][0] + 0.5, JOBS[28][1] + 0.5); w.work = -999; G.ppl.push(w); G.cd = 0; },
@@ -272,3 +291,8 @@ function lessonSee(G, what, n) { const st = lessonNow(G); if (!st || G.wait > 0)
     for (const q of crew(G)) if (q.i !== 2) q.seen[2] = { t: G.t, x: 20, z: 25 }; G.wait = 2.2; G.next = () => meeting(G, 3, G.bodies[0]); return; }
   if (st.id === 'talk' && what === 'vote') { if (n === 2) return lessonDone(G); return lessonMiss(G, n === 0 ? 'They voted YOU out! Point at the one they already doubt: PLUM.' : 'Nobody was voted out, and they still wonder about you. Listen: who did they see near the body?'); } }
 function lessonDone(G) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.6; G.next = () => { G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); G.ev.push({ k: 'deal' }); }; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { knock, vent, ventOut, stick, fake, vote, sabotage }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

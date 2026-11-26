@@ -99,10 +99,20 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'hose', title: 'THE HOSE', say: 'HOLD ON THE FIRE', do: 'hold', how: 'Hold your thumb on a fire: the water lands just above your thumb. Put every fire out.', need: 1 }],
-  2: [{ id: 'ladder', title: 'THE LADDER', say: 'TAP THE PERSON', do: 'tap', how: 'Someone is trapped! Put out the fire in their window, then TAP them to send up the ladder.', need: 1 }],
-  3: [{ id: 'tank', title: 'THE TANK', say: 'LET GO TO REFILL', do: 'release', at: G => [W / 2, H * 0.7], how: 'The tank runs dry if you never stop. Lift your thumb to let it refill. Put every fire out.', need: 1 }],
+  1: [{ id: 'hose', title: 'THE HOSE', say: G => fireCue(G)[0], do: G => fireCue(G)[1], at: G => fireCue(G)[2], how: 'Hold your thumb on a fire: the water lands just above your thumb. Put every fire out.', need: 1 }],
+  2: [{ id: 'ladder', title: 'THE LADDER', say: G => fireCue(G)[0], do: G => fireCue(G)[1], at: G => fireCue(G)[2], how: 'Someone is trapped! Put out the fire in their window, then TAP them to send up the ladder.', need: 1 }],
+  3: [{ id: 'tank', title: 'THE TANK', say: G => fireCue(G)[0], do: G => fireCue(G)[1], at: G => fireCue(G)[2], how: 'The tank runs dry if you never stop. Lift your thumb to let it refill. Put every fire out.', need: 1 }],
 };
+// THE TUTORIAL'S HAND IS ON THE FIRE TO HOSE, OR THE PERSON TO SAVE (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then
+// nothing happens"). It said HOLD ON THE FIRE with the hand in a box. Now the robot is asked (dryPlan): HOLD HERE with the hand just under the
+// fire it would hose (the water lands above the thumb, wind allowed for), TAP THEM with the hand on a person whose window is out, LET GO TO
+// REFILL when the tank is nearly dry, WAIT while it fills.
+function fireCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const cellAt = (c, r) => { const v = wScreen((c - (G.C - 1) / 2) * SX, r * SY + Y0, 0); return [v.x, v.y]; };
+  const P = dryPlan(G, null, { rest: false, wt: 99 }); if (G.tank <= G.tankMax * 0.2 && G.on) return ['LET GO TO REFILL', 'release', false];
+  if (!P) return ['WAIT…', 'wait', false];
+  if (P[0] === 'tapWin') return ['TAP THEM!', 'tap', cellAt(P[1], P[2])];
+  if (P[0] === 'aimAt') { const [x, y] = cellAt(P[1], P[2]); return [G.on ? "KEEP HOLDING" : "HOLD HERE", 'hold', [x, y + AIMUP()]]; }
+  return [G.tank < G.tankMax * 0.5 && !G.on ? "WAIT: IT IS FILLING" : 'WAIT…', 'wait', false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonDeal(G) { const st = lessonNow(G);
@@ -120,17 +130,22 @@ const BLIND = { h: G => hoseOn(G), u: G => hoseOff(G), m: G => { const p = rndPt
 // a person who looks: sends the ladder to anyone it can reach, sprays the fire that matters most (near people, gas, hot windows,
 // the biggest), corrects for the wind after a moment, lifts when the tank runs low, and is a little off aim
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, dt = 1 / 60, c = G.cfg;
-  if (G.over || G.wait > 0) { hoseOff(G); return; }
+  if (G.over || G.wait > 0) { ACT.hoseOff(G); return; }
   mem.t = (mem.t || 0) - dt; mem.wt = G.wind === mem.lw ? (mem.wt || 0) + dt : 0; mem.lw = G.wind;
-  if (mem.rest) { hoseOff(G); if (G.tank >= G.tankMax * (acc > 0.8 ? 0.6 : 0.35)) mem.rest = false; else return; }
-  if (G.tank <= 0.15) { mem.rest = true; hoseOff(G); return; }
-  if (mem.t > 0) { if (mem.tg) { const comp = mem.wt > react ? G.wind * (0.6 + 0.4 * acc) : 0; aimAt(G, mem.tg.c - comp + mem.jx, mem.tg.r + mem.jy); } return; }
+  if (mem.rest) { ACT.hoseOff(G); if (G.tank >= G.tankMax * (acc > 0.8 ? 0.6 : 0.35)) mem.rest = false; else return; }
+  if (G.tank <= 0.15) { mem.rest = true; ACT.hoseOff(G); return; }
+  if (mem.t > 0) { if (mem.tg) { const comp = mem.wt > react ? G.wind * (0.6 + 0.4 * acc) : 0; ACT.aimAt(G, mem.tg.c - comp + mem.jx, mem.tg.r + mem.jy); } return; }
   mem.t = 0.2 + react * 0.6;
-  if (!G.lad) { let best = null; for (const w of G.w) if (w.p && w.p.st === 'in' && w.f <= 0.1 && (!best || w.p.s > best.p.s)) best = w; if (best && R() < acc + 0.1) { hoseOff(G); tapWin(G, best.c, best.r); return; } }
+  if (!G.lad) { let best = null; for (const w of G.w) if (w.p && w.p.st === 'in' && w.f <= 0.1 && (!best || w.p.s > best.p.s)) best = w; if (best && R() < acc + 0.1) { ACT.hoseOff(G); ACT.tapWin(G, best.c, best.r); return; } }
   let tg = null, tv = -1; for (const w of G.w) { if (!(w.f > 0) && !(w.isHot && w.hot > 0)) continue;
     const nearP = [w, ...nbs(G, w)].reduce((a, q) => a + (q.p && q.p.st === 'in' ? 1 + q.p.s * 2 : 0), 0), gasN = nbs(G, w).some(q => q.gas) ? 1.5 : 0;
     const v = w.f + nearP * 0.8 + gasN + (w.isHot ? w.hot * 1.5 : 0) + (w.f >= 1 ? 0.6 : 0) - Math.hypot(w.c - G.land.x, w.r - G.land.y) * 0.15; if (v > tv) { tv = v; tg = w; } }
-  if (!tg) { hoseOff(G); mem.tg = null; return; }
+  if (!tg) { ACT.hoseOff(G); mem.tg = null; return; }
   if (tg !== mem.tg) { mem.jx = (R() - 0.5) * (1 - acc) * 1.6; mem.jy = (R() - 0.5) * (1 - acc) * 1.2; } mem.tg = tg;
-  const comp = mem.wt > react ? G.wind * (0.6 + 0.4 * acc) : 0; aimAt(G, tg.c - comp + mem.jx, tg.r + mem.jy); hoseOn(G); }
+  const comp = mem.wt > react ? G.wind * (0.6 + 0.4 * acc) : 0; ACT.aimAt(G, tg.c - comp + mem.jx, tg.r + mem.jy); ACT.hoseOn(G); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; for (const w of G.w) { w.f = 0; w.isHot = false; w.hot = 0; if (w.p && w.p.st === 'in') { w.p.st = 'safe'; G.rescued++; } } G.lad = null; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { tapWin, aimAt, hoseOff, hoseOn }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

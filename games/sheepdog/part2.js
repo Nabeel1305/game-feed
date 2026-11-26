@@ -131,17 +131,25 @@ function finish(G, win, o = {}) { if (G.over) return true; G.over = win ? 'won' 
     coins: Math.max(1, G.penned + (win ? Math.ceil(G.N / 2) + stars * 3 + G.chased * 2 : 0)) };
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- the robot: a dog who herds the way real ones do (gather the furthest stray, then drive from behind) ----------
+// THE TUTORIAL POINTS WHERE TO SEND THE DOG (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD
+// BEHIND THEM with the hand always in the middle of the screen, behind nothing. Now the robot is asked (dryPlanAll): HOLD HERE with the hand on
+// the very spot of grass it would send the dog to (behind the flock, round the far side of a stray), TAP TO BARK when it would bark.
+const DGC = { t: -1e9, v: null };
+function dogCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - DGC.t < 200) return DGC.v; DGC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), to = all.filter(q => q[0] === 'dogTo' && q[1] != null).pop(); let v = ['WAIT…', 'wait', false];
+  if (all.some(q => q[0] === 'bark')) v = ['TAP TO BARK', 'tap', false];
+  else if (to) { const p3 = scr(to[1], 0, to[2]); v = [G.lesson && G.lesson.steps[G.lesson.i].id === 'gather' ? 'GO ROUND HERE' : 'HOLD HERE', 'hold', [clamp(p3.x, 30, W - 30), clamp(p3.y, 90, H - 60)]]; }
+  DGC.v = v; return v; }
 function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.dog) return; const d = G.dog, acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react;
   mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react * 0.25 * (0.5 + Math.random());
-  const live = G.sheep.filter(s => !s.lost && !s.penned); if (!live.length) { dogTo(G, null); return; }
+  const live = G.sheep.filter(s => !s.lost && !s.penned); if (!live.length) { ACT.dogTo(G, null); return; }
   // a fox: see it off
-  const fox = G.foxes.find(f => f.state === 'creep' && (f.t > 1.2 * (1.5 - acc) || hyp(f.x - d.x, f.z - d.z) < 15)); if (fox && Math.random() < 0.9 + 0.1 * acc) { dogTo(G, fox.x, fox.z); if (hyp(fox.x - d.x, fox.z - d.z) < 6) bark(G); return; }
+  const fox = G.foxes.find(f => f.state === 'creep' && (f.t > 1.2 * (1.5 - acc) || hyp(f.x - d.x, f.z - d.z) < 15)); if (fox && Math.random() < 0.9 + 0.1 * acc) { ACT.dogTo(G, fox.x, fox.z); if (hyp(fox.x - d.x, fox.z - d.z) < 6) ACT.bark(G); return; }
   const P = G.pen, gx = P.gx, gz = P.gz - 1.5, river = G.river;
   // where the flock should go next: the bridge if the river is between, else the gate (then in)
   let cx = 0, cz = 0; for (const s of live) { cx += s.x; cz += s.z; } cx /= live.length; cz /= live.length;
   let tx = gx, tz = gz; if (river && cz < river.z0) { tx = river.bx; tz = river.z1 + 2; } else if (hyp(cx - gx, cz - gz) < 3.5) { tx = P.x; tz = P.z + 2; }
   // the ram stuck at the back: bark at it
-  const ram = live.find(s => s.kind === 'ram'); if (ram && hyp(ram.x - d.x, ram.z - d.z) < 4 && hyp(ram.vx, ram.vz) < 0.3 && Math.random() < acc) bark(G);
+  const ram = live.find(s => s.kind === 'ram'); if (ram && hyp(ram.x - d.x, ram.z - d.z) < 4 && hyp(ram.vx, ram.vz) < 0.3 && Math.random() < acc) ACT.bark(G);
   // gather the furthest, else drive from behind (Strombom's rule)
   const fN = 2.2 * Math.sqrt(live.length) + 1.5; let far = null, fd = 0; for (const s of live) { const dd = hyp(s.x - cx, s.z - cz); if (dd > fd) { fd = dd; far = s; } }
   let px, pz, slow = false; const ux = tx - cx, uz = tz - cz, uL = hyp(ux, uz) || 1;
@@ -155,15 +163,15 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.dog) return; const d
   // its thumb is a little off; it keeps the dog near (a slow walk) when driving
   const err = (1 - acc) * 2.5; px += (Math.random() - 0.5) * err; pz += (Math.random() - 0.5) * err;
   const L2 = hyp(px - d.x, pz - d.z); if (slow && L2 > 2.2) { const k3 = 2.2 / L2; px = d.x + (px - d.x) * k3; pz = d.z + (pz - d.z) * k3; }
-  dogTo(G, px, pz); }
+  ACT.dogTo(G, px, pz); }
 // blind moves: the thumb down somewhere on the field (or let go), a tap (bark)
 const BLIND = { d: G => { if (Math.random() < 0.25) dogTo(G, null); else dogTo(G, (Math.random() - 0.5) * 2 * FR, (Math.random() - 0.5) * 2 * FR); }, b: G => bark(G) };      // (two moves: the blind test plays every string of them, and this game's flock is slow to simulate)
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.penned = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'push', title: 'HOLD TO RUN, PUSH THEM IN', say: 'HOLD BEHIND THEM', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Hold your thumb on the field: your dog runs there. Sheep walk away from her. Get behind them (away from the pen) and walk them in. 3 sheep.', need: 3 }],
-  2: [{ id: 'gather', title: 'GATHER THE STRAYS', say: 'GO ROUND THE FAR SIDE', do: 'hold', at: G => [W / 2, H * 0.7], how: 'They are scattered. Go round the FAR side of a stray to bring it back to the others; then drive them all in. Come in slowly: rushing scatters them. 5 sheep.', need: 5 }],
-  3: [{ id: 'bark', title: 'TAP TO BARK', say: 'TAP TO BARK', do: 'tap', how: 'The black ram ignores you. Get close and TAP quickly: a bark. Bark him into the pen.', need: 1 }],
+  1: [{ id: 'push', title: 'HOLD TO RUN, PUSH THEM IN', say: G => dogCue(G)[0], do: G => dogCue(G)[1], at: G => dogCue(G)[2], how: 'Hold your thumb on the field: your dog runs there. Sheep walk away from her. Get behind them (away from the pen) and walk them in. 3 sheep.', need: 3 }],
+  2: [{ id: 'gather', title: 'GATHER THE STRAYS', say: G => dogCue(G)[0], do: G => dogCue(G)[1], at: G => dogCue(G)[2], how: 'They are scattered. Go round the FAR side of a stray to bring it back to the others; then drive them all in. Come in slowly: rushing scatters them. 5 sheep.', need: 5 }],
+  3: [{ id: 'bark', title: 'TAP TO BARK', say: G => dogCue(G)[0], do: G => dogCue(G)[1], at: G => dogCue(G)[2], how: 'The black ram ignores you. Get close and TAP quickly: a bark. Bark him into the pen.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -176,3 +184,10 @@ function lessonTick(G) { }
 function lessonSee(G, what) { const L = lessonNow(G); if (!L) return;
   if (what === 'pen') { const n = L.id === 'bark' ? (G.sheep.find(s => s.kind === 'ram') || {}).penned ? 1 : 0 : G.penned; G.lesson.n = n; G.ev.push({ k: 'lessonok', n, need: L.need }); }
   if (G.lesson.n >= L.need) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.4; G.next = () => { G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); G.ev.push({ k: 'yard' }); }; } }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { dogTo, bark }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

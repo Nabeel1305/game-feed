@@ -133,10 +133,17 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'putt', title: 'PULL BACK, LET GO', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Put your thumb down anywhere and pull back, away from where you want the ball to go. Let go. Sink it in two strokes or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
-  2: [{ id: 'bank', title: 'OFF THE RAILS', say: 'BOUNCE OFF THE RAIL', do: 'drag', dir: 'down', how: 'The ball bounces off the wooden rails. Play it off a rail round the corner: sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
-  3: [{ id: 'mill', title: 'THE WINDMILL', say: 'WAIT FOR THE GAP', do: 'drag', dir: 'down', how: 'Time your shot between the turning blades. Sand slows the ball. Sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
+  1: [{ id: 'putt', title: 'PULL BACK, LET GO', say: G => golfCue(G)[0], do: G => golfCue(G)[1], at: G => golfCue(G)[2], how: 'Put your thumb down anywhere and pull back, away from where you want the ball to go. Let go. Sink it in two strokes or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
+  2: [{ id: 'bank', title: 'OFF THE RAILS', say: G => golfCue(G)[0], do: G => golfCue(G)[1], at: G => golfCue(G)[2], how: 'The ball bounces off the wooden rails. Play it off a rail round the corner: sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
+  3: [{ id: 'mill', title: 'THE WINDMILL', say: G => golfCue(G)[0], do: G => golfCue(G)[1], at: G => golfCue(G)[2], how: 'Time your shot between the turning blades. Sand slows the ball. Sink it in two or fewer, twice in a row.', need: 2, ok: w => w === 'sink' }],
 };
+// THE TUTORIAL'S HAND PULLS BACK THE PUTT THAT SINKS (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It pulled straight down in a box (straight down from anywhere is a putt straight up the screen, at whatever strength). Now the robot finds
+// the putt (dryPlan) and the hand pulls back exactly that: the way (opposite to where the ball goes) and how far (how hard).
+const GFC = { key: '', v: null };
+function golfCue(G) { if (G.moving || G.gap > 0 || G.over || !G.ball || G.ball.in) return ['WAIT…', 'wait', false]; const key = G.ball.x.toFixed(2) + ',' + G.ball.z.toFixed(2) + ',' + CAM.rot.toFixed(2) + (G.N === 3 ? ',' + Math.round(G.t * 2) : '');
+  if (GFC.key === key) return GFC.v; GFC.key = key; const P = dryPlan(G, null, { at: -1 }); if (!P) return GFC.v = ['WAIT…', 'wait', false];
+  const th = P[1] - CAM.rot, len = Math.max(16 * k, P[2] * 150 * k), x0 = W / 2, y0 = H * 0.55; return GFC.v = [G.N === 3 ? 'PULL BACK, LET GO (MIND THE BLADES)' : 'PULL BACK, LET GO', 'drag', [x0, y0, x0 - len * Math.sin(th), y0 - len * Math.cos(th)]]; }
 function lessonStart(G) { G.cfg.lessonCup = 1.12; const L = { 1: ['straight', []], 2: ['lright', ['bumper']], 3: ['straight', ['windmill', 'sand']] }[G.N]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 };
   const T = TEMPLATES[L[0]], h = { key: L[0], poly: T.poly, tee: T.tee, cup: T.cup, walls: [], obst: [], coins: [], par: T.par }; h.poly.forEach((p, j) => h.walls.push([p, h.poly[(j + 1) % h.poly.length]]));
   L[1].forEach((kd, i) => { const [x, z] = T.slots[kd === 'windmill' ? 1 : kd === 'sand' ? 2 : 0]; const o = { kind: kd, x, z }; if (kd === 'bumper') o.r = 0.4; if (kd === 'sand') o.r = 1; if (kd === 'windmill') Object.assign(o, { len: 1.25, spin: 1.2, a0: 0, blades: 2 }); h.obst.push(o); });
@@ -164,6 +171,11 @@ function honest(G, o, mem) {
   if (G.moving || G.gap > 0 || G.over || !G.ball || G.ball.in) { mem.at = null; return; } if (mem.at == null) mem.at = G.t + 0.6 + react * 3; if (G.t < mem.at) return; mem.at = null;
   let best = null; for (let a = 0; a < 36; a++) for (const p of [0.12, 0.25, 0.4, 0.6, 0.85]) { const ang = a / 36 * TAU, s = trial(G, ang, p) + p * 0.3; if (!best || s < best.s) best = { s, ang, p }; }
   for (let da = -4; da <= 4; da++) for (const dp of [-0.06, -0.03, 0, 0.03, 0.06]) { const ang = best.ang + da * 0.025, p = clamp(best.p + dp, 0.02, 1), s = trial(G, ang, p) + p * 0.3; if (s < best.s) best = { s, ang, p }; }
-  const u = 1 - acc; shoot(G, best.ang + (Math.random() - 0.5) * u * 0.7, best.p * (1 + (Math.random() - 0.5) * u * 1.0));      // a thumb is not a robot: a few degrees out, a little too hard or soft
+  const u = 1 - acc; ACT.shoot(G, best.ang + (Math.random() - 0.5) * u * 0.7, best.p * (1 + (Math.random() - 0.5) * u * 1.0));      // a thumb is not a robot: a few degrees out, a little too hard or soft
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.total = Math.min(G.total, G.par); finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { shoot }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

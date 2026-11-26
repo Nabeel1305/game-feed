@@ -112,10 +112,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'throw', title: 'ROW, THEN THROW', say: 'HOLD TO ROW, LET GO TO THROW', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
-      { id: 'haul', title: 'HAUL WHEN SHE IS CALM', say: 'HOLD… LET GO WHEN SHE FIGHTS', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],
-  2: [{ id: 'bow', title: 'SHE SWERVES', say: 'HOLD, LET GO', do: 'hold', at: G => [W / 2, H * 0.7], how: 'She swerves and runs: your crew keeps the bow on her. Hold to haul, let go when her flukes rise. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
-  3: [{ id: 'lead', title: 'LEAD HER', say: 'THROW AHEAD OF HER', do: 'release', at: G => [W / 2, H * 0.7], how: 'This one is quicker. The harpoon takes a moment to fly: throw a little ahead of where she is going.', need: 1, ok: w => w === 'caught' }],
+  1: [{ id: 'throw', title: 'ROW, THEN THROW', say: G => whaleCue(G)[0], do: G => whaleCue(G)[1], at: G => whaleCue(G)[2], how: 'Steer towards her spout with your left thumb. When she is up and close, hold your right thumb down, move the ring onto her back and let go.', need: 1, ok: w => w === 'hit' },
+      { id: 'haul', title: 'HAUL WHEN SHE IS CALM', say: G => whaleCue(G)[0], do: G => whaleCue(G)[1], at: G => whaleCue(G)[2], how: 'Hold your right thumb down to haul the line in: that tires her. When her flukes rise and the water whitens, LIFT your thumb until she calms.', need: 1, ok: w => w === 'caught' }],
+  2: [{ id: 'bow', title: 'SHE SWERVES', say: G => whaleCue(G)[0], do: G => whaleCue(G)[1], at: G => whaleCue(G)[2], how: 'She swerves and runs: your crew keeps the bow on her. Hold to haul, let go when her flukes rise. Throw, then ride her out.', need: 1, ok: w => w === 'caught' }],
+  3: [{ id: 'lead', title: 'LEAD HER', say: G => whaleCue(G)[0], do: G => whaleCue(G)[1], at: G => whaleCue(G)[2], how: 'This one is quicker. The harpoon takes a moment to fly: throw a little ahead of where she is going.', need: 1, ok: w => w === 'caught' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -137,23 +137,39 @@ const BLIND = {
 };
 // a whaler who looks: steers for where she will be, throws when she is up and in range (leading her), hauls when calm, lets go
 // at the warning (after reacting), keeps the bow on her
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD TO
+// ROW, LET GO TO THROW with a hand holding in the middle all the chase long. Now the robot is asked (dryPlanAll): WAIT FOR HER… until she is up
+// and close, then DRAG THE RING, LET GO along the very throw it would make (its lead and distance); on the line HOLD TO HAUL, LET GO! when her
+// flukes rise, KEEP HAULING.
+const WHC = { t: -1e9, v: null };
+function whaleCue(G) { const w = G.whale; if (G.over || !w || G.ph === 'done') return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - WHC.t < 120) return WHC.v; WHC.t = now; const all = dryPlanAll(G, null, { seenUp: -99, thr: -1, warnAt: -99 }), last = n => all.filter(q => q[0] === n).pop(), x0 = W / 2, y0 = H * 0.7, u = ui.R; let v;
+  if (G.ph === 'chase') { const th = last('throwHarpoon'); if (u && WHC.v && WHC.v[1] === 'drag') v = WHC.v; else if (th) v = ['DRAG THE RING, LET GO', 'drag', [x0, y0, x0 - th[1] * 150 * k, y0 + (15 - th[2]) / 15 * 170 * k]]; else v = [w.up ? 'CLOSER…' : 'WAIT FOR HER…', 'wait', false]; }
+  else { const h = last('haul'), on = h && h[1]; v = on && !G.haul ? ['HOLD TO HAUL', 'hold', [x0, y0]] : !on && G.haul ? ['LET GO!', 'release', [x0, y0]] : G.haul ? ['KEEP HAULING', 'hold', [x0, y0]] : ['WAIT…', 'wait', false]; }
+  WHC.v = v; return v; }
 function honest(G, o, mem) {
-  const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, b = G.boat, w = G.whale; if (!w || G.ph === 'done') { haul(G, false); return; }
+  const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, b = G.boat, w = G.whale; if (!w || G.ph === 'done') { ACT.haul(G, false); return; }
   const bear = Math.atan2(w.x - b.x, w.z - b.z); let err = bear - b.h; while (err > Math.PI) err -= TAU; while (err < -Math.PI) err += TAU;
   if (G.ph === 'chase') {
     const ahead = w.up ? 0 : 12, tx = w.x + Math.sin(w.h) * ahead, tz = w.z + Math.cos(w.h) * ahead; let e2 = Math.atan2(tx - b.x, tz - b.z) - b.h; while (e2 > Math.PI) e2 -= TAU; while (e2 < -Math.PI) e2 += TAU;
-    steer(G, clamp(e2 * 2, -1, 1));
+    ACT.steer(G, clamp(e2 * 2, -1, 1));
     const dist = Math.hypot(w.x - b.x, w.z - b.z); mem.seenUp = w.up ? (mem.seenUp || G.t) : 0;
     if (w.up && G.t - mem.seenUp > react && dist < c.range - 2 && w.t < w.dur - c.fly - 0.2 && !G.darts.length && G.t > (mem.thr || 0)) {
       const lead = c.fly * c.wSpeed * 0.6, px = w.x + Math.sin(w.h) * lead, pz = w.z + Math.cos(w.h) * lead, n = (1 - acc) * 1.4;
       let aim = Math.atan2(px - b.x, pz - b.z) - b.h; while (aim > Math.PI) aim -= TAU; while (aim < -Math.PI) aim += TAU;
-      throwHarpoon(G, aim + (Math.random() - 0.5) * 0.25 * n, Math.hypot(px - b.x, pz - b.z) * (1 + (Math.random() - 0.5) * 0.35 * n)); mem.thr = G.t + 1.2;
+      ACT.throwHarpoon(G, aim + (Math.random() - 0.5) * 0.25 * n, Math.hypot(px - b.x, pz - b.z) * (1 + (Math.random() - 0.5) * 0.35 * n)); mem.thr = G.t + 1.2;
     }
     return;
   }
   // the ride
-  steer(G, clamp(err * 2.5 + (Math.random() - 0.5) * (1 - acc), -1, 1));
-  if (w.warn > 0 || w.surge > 0) { mem.warnAt = mem.warnAt || G.t; if (G.t - mem.warnAt >= react * (0.7 + Math.random() * 0.6)) haul(G, false); }
-  else { mem.warnAt = 0; haul(G, Math.random() < acc + 0.08 ? G.T < 0.9 : !G.haul); }
+  ACT.steer(G, clamp(err * 2.5 + (Math.random() - 0.5) * (1 - acc), -1, 1));
+  if (w.warn > 0 || w.surge > 0) { mem.warnAt = mem.warnAt || G.t; if (G.t - mem.warnAt >= react * (0.7 + Math.random() * 0.6)) ACT.haul(G, false); }
+  else { mem.warnAt = 0; ACT.haul(G, Math.random() < acc + 0.08 ? G.T < 0.9 : !G.haul); }
 }
 function winNow(G) { if (!G || G.over || G.gap > 0) return; G.lesson = null; G.caught = G.cfg.whales - 1; G.lives = G.cfg.lives; G.gap = 0; if (G.ph !== 'ride') { G.ph = 'ride'; G.line = 40; G.T = 0.5; } G.whale.stam = 0.01; G.whale.warn = 0; G.whale.surge = 0; G.whale.next = 99; haul(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { steer, haul, throwHarpoon }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

@@ -377,9 +377,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -570,10 +570,26 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || G.dead) { mem.tap = nul
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.best = 1; finish(G, true); }
 // ---------- LESSONS: short courses ----------
 const LESSONS = {
-  1: [{ id: 'jump', title: 'TAP TO JUMP', say: 'TAP TO JUMP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Tap anywhere to jump over the spikes. Land on the blocks. Reach the end!' }],
-  2: [{ id: 'pad', title: 'PADS AND RINGS', say: 'TAP IN THE YELLOW RING', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Yellow pads throw you high by themselves. Over a gap, tap as you pass through the yellow ring to jump again.' }],
-  3: [{ id: 'ceil', title: 'DON\'T JUMP!', say: 'DON\'T JUMP!', do: 'wait', how: 'Spikes hang low over the floor: do NOT jump under them. Then a blue portal flips you onto the ceiling.' }],
+  1: [{ id: 'jump', title: 'TAP TO JUMP', say: G => dashCue(G)[0], do: G => dashCue(G)[1], at: G => dashCue(G)[2], how: 'Tap anywhere to jump over the spikes. Land on the blocks. Reach the end!' }],
+  2: [{ id: 'pad', title: 'PADS AND RINGS', say: G => dashCue(G)[0], do: G => dashCue(G)[1], at: G => dashCue(G)[2], how: 'Yellow pads throw you high by themselves. Over a gap, tap as you pass through the yellow ring to jump again.' }],
+  3: [{ id: 'ceil', title: 'DON\'T JUMP!', say: G => dashCue(G)[0], do: G => dashCue(G)[1], at: G => dashCue(G)[2], how: 'Spikes hang low over the floor: do NOT jump under them. Then a blue portal flips you onto the ceiling.' }],
 };
+// THE TUTORIAL SHOWS WHERE TO JUMP (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It showed a tap for
+// the whole run. Now the hand taps on the track at the spot where the robot would take off (the middle of the moments that clear what is
+// coming): TAP WHEN YOU REACH THE HAND. Seeing the spot come lets a thumb be on time; a flash saying NOW comes too late for a jump.
+const DSC = { t: -1e9, f: null, x: 0, y: 0 };
+function dashCue(G) { if (G.dead || G.over) DSC.lock = false; if (G.over || G.wait > 0 || G.dead) return ['WAIT…', 'wait', false]; const now = G.t * 1000;
+  if (Math.abs(now - DSC.t) >= 50 || DSC.g !== G) { DSC.t = now; DSC.g = G; const S = snap(G), d0 = sim(S, 44); let f = null;
+    if (d0 >= 0) { let ok = []; for (const dep of [0, 1]) { ok = []; for (let q = 0; q <= Math.min(30, d0); q++) { const S1 = snap(G); if (sim(S1, q) >= 0) break; if (sim(S1, 1, 0) >= 0) continue; if (canLive(S1, Math.max(24, d0 - q + 18), dep)) ok.push(q); else if (ok.length) break; } if (ok.length) break; }
+      f = ok.length ? ok[Math.floor(ok.length / 2)] : Math.max(0, d0 - 22); }      // (nothing clean: the robot jumps when the danger is 22 frames off)
+    if (DSC.lock && (G.x > DSC.x + 0.3 || G.dead)) DSC.lock = false;      // the spot is passed: look for the next
+    if (!DSC.lock && f != null) { const S2 = snap(G); sim(S2, f); DSC.x = S2.x; DSC.y = S2.y; DSC.lock = true; }      // the spot is fixed when first seen (the middle of the moments that work THEN), so it does not creep forward as they pass
+    DSC.f = DSC.lock ? 1 : null; if (DSC.lock) { const S1 = snap(G); sim(S1, 1, 0); G.cueF = Math.round((DSC.x - G.x) / Math.max(0.01, S1.x - G.x)); } else G.cueF = null; }      // (cueF: frames to the spot, for the tests' thumb)
+  const orb = !G.ground && G.orbs.find(o => !G.orbUsed.has(o.x) && o.x > G.x && o.x - G.x < 4.5);      // in the air with a yellow ring ahead: the hand on the ring
+  if (orb) { const S1 = snap(G); sim(S1, 1, 0); G.cueF = Math.round((orb.x - 0.6 - G.x) / Math.max(0.01, S1.x - G.x)); const u = Math.min(W / 11, H / 15), x0 = G.x - W * 0.2 / u, gy = H * 0.7 + CAMY * u; return ['TAP IN THE YELLOW RING', 'tap', [(orb.x - x0) * u, gy - orb.y * u]]; }
+  if (DSC.f == null) return [G.lesson && G.lesson.steps[G.lesson.i].id === 'ceil' ? 'DON\'T JUMP… WAIT' : 'WAIT…', 'wait', false];
+  const u = Math.min(W / 11, H / 15), x0 = G.x - W * 0.2 / u, gy = H * 0.7 + CAMY * u;
+  return ['TAP WHEN YOU REACH THE HAND', 'tap', [(DSC.x - x0) * u, gy - DSC.y * u]]; }
 const LCOURSE = {
   jump: (G, R, b) => { let x = 8; for (const k2 of ['spike1', 'spike1', 'block', 'spike2', 'blockspike', 'spike2', 'spike3']) { const P = piece(G, k2, x, R, b); x += P.len + 5; } return x + 6; },
   pad: (G, R, b) => { let x = 8; const fl = []; for (const k2 of ['spike1', 'pad', 'orb', 'pad', 'orb', 'spike2']) { const P = piece(G, k2, x, R, b); if (P.pit) fl.push([x + P.pit[0], x + P.pit[1]]); x += P.len + 5; } G.pits = fl; return x + 6; },

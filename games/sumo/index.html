@@ -4956,9 +4956,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5425,14 +5425,27 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.me) return; const ac
   mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react * 0.6 * (0.6 + 0.8 * Math.random());
   const st = G.rival.style, open = st === 'charger' && Math.random() < acc ? 'side' : st === 'puller' ? 'brace' : 'charge';
   const out = brain(G, G.me, G.op, { skill: 0.55 + 0.45 * acc, style: 'player', open }); if (Math.random() > 0.85 + 0.15 * acc) { out.I.sx += (Math.random() - 0.5); } applyBrain(G, G.me, out); }
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand sat on
+// PUSH / GRIP / DODGE the whole bout, while the stick (half of each lesson) was never shown. Now the robot's own brain is asked (brain(), what it
+// would do this moment): PUSH THIS WAY on the stick, TAP PUSH!, HOLD GRIP / LET GO, TAP DODGE! when he charges.
+const SMO = { t: -1e9, v: null };
+function sumoCue(G) { if (G.over || G.wait > 0 || !G.me) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SMO.t < 200) return SMO.v; SMO.t = now; const me = G.me, B = btnRects(G), mid = b => [b.x + b.w / 2, b.y + b.h / 2], st = G.rival.style;
+  const out = brain(G, me, G.op, { skill: 1, style: 'player', open: st === 'charger' ? 'side' : st === 'puller' ? 'brace' : 'charge' }), d = ui.drag, x0 = d ? d.x0 : W * 0.24, y0 = d ? d.y0 : H * 0.72, R = 50 * k, sx = out.I.sx, sy = out.I.sy; let v;
+  if (out.dodge) v = ['TAP DODGE!', 'tap', mid(B.dodge)];
+  else if (out.grip && !me.wantGrip) v = ['HOLD GRIP', 'hold', mid(B.grip)];
+  else if (!out.grip && me.wantGrip) v = ['LET GO OF GRIP', 'release', mid(B.grip)];
+  else if (out.push && me.pushCd <= 0) v = ['TAP PUSH!', 'tap', mid(B.push)];
+  else if (Math.hypot(sx, sy) > 0.3) v = [sy > 0.5 ? 'PUSH UP: INTO HIM' : 'PUSH THIS WAY', 'drag', [x0, y0, x0 + sx * R * 0.8, y0 - sy * R * 0.8]];
+  else v = ['WAIT…', 'wait', false];
+  SMO.v = v; return v; }
 // blind moves: the stick a random way (or let go), a shove, grip on or off, a dodge
 const BLIND = { m: G => { if (Math.random() < 0.2) stick(G, 0, 0); else { const a = Math.random() * TAU; stick(G, Math.cos(a), Math.sin(a)); } }, p: G => { act(G, G.me, 'pushDown'); act(G, G.me, 'pushUp'); }, g: G => act(G, G.me, 'grip', !G.me.wantGrip), d: G => act(G, G.me, 'dodge') };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.wins = G.cfg.need; G.log.push({ won: true, how: 'out', tech: 'Yorikiri', counter: true, edge: false, t: 5, rival: G.rival.name }); finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'push', title: 'PRESS IN AND SHOVE', say: 'TAP PUSH', do: 'tap', at: G => { const b = btnRects(G).push; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Left thumb: push the stick UP to press into him. Tap PUSH (right) for a shove. Shove him out of the ring.', need: 1 }],
-  2: [{ id: 'grip', title: 'GRIP AND DRIVE', say: 'HOLD GRIP', do: 'hold', at: G => { const b = btnRects(G).grip; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'Get close and HOLD GRIP: you take his belt. Keep holding and push the stick UP to drive him out.', need: 1 }],
-  3: [{ id: 'tachiai', title: 'SIDESTEP THE CHARGE', say: 'TAP DODGE!', do: 'tap', at: G => { const b = btnRects(G).dodge; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'He will charge at the start. Tap DODGE as the bout begins: he charges into nothing and falls. (Later: DODGE as he lunges, then PUSH him as he stumbles past.)', need: 1 }],
+  1: [{ id: 'push', title: 'PRESS IN AND SHOVE', say: G => sumoCue(G)[0], do: G => sumoCue(G)[1], at: G => sumoCue(G)[2], how: 'Left thumb: push the stick UP to press into him. Tap PUSH (right) for a shove. Shove him out of the ring.', need: 1 }],
+  2: [{ id: 'grip', title: 'GRIP AND DRIVE', say: G => sumoCue(G)[0], do: G => sumoCue(G)[1], at: G => sumoCue(G)[2], how: 'Get close and HOLD GRIP: you take his belt. Keep holding and push the stick UP to drive him out.', need: 1 }],
+  3: [{ id: 'tachiai', title: 'SIDESTEP THE CHARGE', say: G => sumoCue(G)[0], do: G => sumoCue(G)[1], at: G => sumoCue(G)[2], how: 'He will charge at the start. Tap DODGE as the bout begins: he charges into nothing and falls. (Later: DODGE as he lunges, then PUSH him as he stumbles past.)', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, dummy: true }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

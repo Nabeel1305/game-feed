@@ -4708,9 +4708,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4941,9 +4943,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5329,9 +5331,9 @@ function finish(G, win) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'turn', kind: 'ring', trail: 'turn', title: 'TURN', say: 'SLIDE TO TURN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Put your thumb down anywhere and move it left or right: you lean and turn. Fly through the rings.', need: 3, ok: w => w === 'ring' }],
-  2: [{ id: 'updown', kind: 'ring', trail: 'updown', title: 'CLIMB AND DIVE', say: 'SLIDE UP OR DOWN', do: 'drag', dir: 'ud', at: G => [W / 2, H * 0.7], how: 'Move your thumb up to climb, down to dive. Diving is faster. Through the rings, high and low.', need: 3, ok: w => w === 'ring' }],
-  3: [{ id: 'chain', kind: 'ring', trail: 'easy', title: 'A CHAIN OF RINGS', say: 'TURN EARLY', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Look ahead to the next ring and turn early. Three in a row.', need: 3, ok: w => w === 'ring', chain: true }],
+  1: [{ id: 'turn', kind: 'ring', trail: 'turn', title: 'TURN', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Put your thumb down anywhere and move it left or right: you lean and turn. Fly through the rings.', need: 3, ok: w => w === 'ring' }],
+  2: [{ id: 'updown', kind: 'ring', trail: 'updown', title: 'CLIMB AND DIVE', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Move your thumb up to climb, down to dive. Diving is faster. Through the rings, high and low.', need: 3, ok: w => w === 'ring' }],
+  3: [{ id: 'chain', kind: 'ring', trail: 'easy', title: 'A CHAIN OF RINGS', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Look ahead to the next ring and turn early. Three in a row.', need: 3, ok: w => w === 'ring', chain: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); G.rings.length = G.next; makeTrail(G, G.next ? 1 : 0, 6, LESSONS[G.N][0].trail); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5363,6 +5365,15 @@ function honest(G, o, mem) {
   G.stick.x = clamp(dyaw * 2.6 - h.yr * 0.6 + (Math.random() - 0.5) * wob, -1, 1);
   G.stick.y = clamp((want - h.pitch) * 3 + want * 1.2 + (Math.random() - 0.5) * wob, -1, 1);
 }
+// THE TUTORIAL SAYS WHICH WAY TO THE RING (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid left
+// and right (or up and down) in a box. Now it is the robot's own steering, worked out from where the next ring is: TURN LEFT / TURN RIGHT,
+// CLIMB / DIVE, or a slide that does both, from where the thumb went down.
+function soarCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const f = G.f, r = G.rings[G.next]; if (!r) return ['FLY ON…', 'wait', false];
+  const ax = r.x - Math.sin(r.yaw) * 14, az = r.z + Math.cos(r.yaw) * 14, far = Math.hypot(r.x - f.x, r.z - f.z), tx = far > 24 ? ax : r.x, tz = far > 24 ? az : r.z;
+  let dyaw = Math.atan2(tx - f.x, -(tz - f.z)) - f.yaw; while (dyaw > Math.PI) dyaw -= 2 * Math.PI; while (dyaw < -Math.PI) dyaw += 2 * Math.PI;
+  const want = Math.atan2(r.y - f.y, Math.max(8, far)), sx = clamp(dyaw * 2.6 - f.yr * 0.6, -1, 1), sy = clamp((want - f.pitch) * 3 + want * 1.2, -1, 1);
+  const st = ui.stick, x0 = st ? st.x0 : W / 2, y0 = st ? st.y0 : H * 0.7, R = 70 * k, ws = Math.abs(sx) > 0.3 ? (sx < 0 ? 'TURN LEFT' : 'TURN RIGHT') : Math.abs(sy) > 0.3 ? (sy > 0 ? 'SLIDE UP: CLIMB' : 'SLIDE DOWN: DIVE') : 'HOLD IT THERE';
+  return ws === 'HOLD IT THERE' ? [ws, 'hold', [x0, y0]] : [ws, 'drag', [x0, y0, x0 + sx * R * 0.8, y0 - sy * R * 0.8]]; }
 // The shortest real win, for tools/test_controls.py: enough rings counted, the last one just ahead.
 function winNow(G) { if (!G || G.over) return; G.lesson = null; const c = G.cfg, r = G.rings[G.rings.length - 1]; G.got = c.goal; G.next = G.rings.length - 1;
   const f = G.f; f.yaw = r.yaw; f.pitch = 0; f.bank = 0; G.stick.x = G.stick.y = 0; f.x = r.x - Math.sin(r.yaw) * 2; f.z = r.z + Math.cos(r.yaw) * 2; f.y = r.y; }

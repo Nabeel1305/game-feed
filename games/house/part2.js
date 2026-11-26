@@ -112,9 +112,9 @@ function finish(G) { const c = G.cfg, wish = G.list.filter(q => q.star), within 
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'walls', title: 'FLOOR AND WALLS', say: 'DRAG: FLOOR, WALLS', do: 'drag', dir: 'right', how: 'Pick FLOOR and drag over 4 squares. Then pick WALL and drag along the grid lines all round it. Then DOOR: tap one of the walls. Tap MOVE IN.', need: 1 }],
-  2: [{ id: 'roof', title: 'WINDOWS AND A ROOF', say: 'TAP A WALL: WINDOW', do: 'tap', how: 'Turn two walls into WINDOWS (tap them), then tap ROOF. Then MOVE IN.', need: 1 }],
-  3: [{ id: 'room', title: 'FURNISH IT', say: 'PICK, THEN TAP A SQUARE', do: 'tap', how: 'Put a bed, a stove and a table on the floor: pick one, tap a square (tap again to turn it). Then MOVE IN.', need: 1 }],
+  1: [{ id: 'walls', title: 'FLOOR AND WALLS', say: G => houseCue(G)[0], do: G => houseCue(G)[1], at: G => houseCue(G)[2], how: 'Pick FLOOR and drag over 4 squares. Then pick WALL and drag along the grid lines all round it. Then DOOR: tap one of the walls. Tap MOVE IN.', need: 1 }],
+  2: [{ id: 'roof', title: 'WINDOWS AND A ROOF', say: G => houseCue(G)[0], do: G => houseCue(G)[1], at: G => houseCue(G)[2], how: 'Turn two walls into WINDOWS (tap them), then tap ROOF. Then MOVE IN.', need: 1 }],
+  3: [{ id: 'room', title: 'FURNISH IT', say: G => houseCue(G)[0], do: G => houseCue(G)[1], at: G => houseCue(G)[2], how: 'Put a bed, a stove and a table on the floor: pick one, tap a square (tap again to turn it). Then MOVE IN.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -149,6 +149,16 @@ function plan(G) { const b = G.cfg.brief, st = lessonNow(G), steps = [];
   if (!st) (b.items || []).forEach((it, i) => steps.push(['tool', it], ['cell', x0 + w - 1 - i, z0]));
   if (!st) for (const wi of b.wishes) if (wi.k !== 'everyWin') for (let i = 0; i < wi.n; i++) { if (wi.k === 'tree') steps.push(['tool', 'tree'], ['cell', G.pw - 1, i]); else steps.push(['tool', wi.k], ['cell', x0 + i, z0]); }
   if (!st && b.roof) steps.push(['tool', 'roof']); return steps; }
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said DRAG: FLOOR, WALLS (two jobs) with a hand dragging right in a box. Now the robot's own plan (plan(G)) is walked to its
+// first step not yet done, and the hand is on it: TAP FLOOR / WALL / WINDOW / BED... in the tray, then TAP THIS SQUARE or TAP THIS EDGE in the
+// plot, TAP ROOF, and TAP MOVE IN at the end.
+function houseCue(G) { if (G.over || G.wait > 0 || !V3 || V3.none) return ['WAIT…', 'wait', false]; const L = layout(G), mid = r => [r.x + r.w / 2, r.y + r.h / 2], at = (fx, fz) => { const v = wScreen(fx - G.pw / 2, 0, fz - G.pd / 2); return [v.x, v.y]; };
+  let tool = null; for (const s0 of plan(G)) { if (s0[0] === 'tool') { tool = s0[1]; if (tool === 'roof' && !G.roof) return ['TAP ROOF', 'tap', mid(L.tray.find(b => b.id === 'roof') || L.move)]; continue; }
+    const done = s0[0] === 'cell' ? (tool === 'floor' ? !!G.C[ck(s0[1], s0[2])] : !!(G.items[ck(s0[1], s0[2])] && G.items[ck(s0[1], s0[2])].k === tool)) : G.E[ek(s0[1], s0[2], s0[3])] === tool;
+    if (done) continue; const T = TOOLS.find(q => q.id === tool); if (G.tool !== tool) { const b = L.tray.find(q => q.id === tool); return ['TAP ' + String(T ? T.name || tool : tool).toUpperCase(), 'tap', b ? mid(b) : false]; }
+    return s0[0] === 'cell' ? ['TAP THIS SQUARE', 'tap', at(s0[1] + 0.5, s0[2] + 0.5)] : ['TAP THIS EDGE', 'tap', s0[1] === 'h' ? at(s0[2] + 0.5, s0[3]) : at(s0[2], s0[3] + 0.5)]; }
+  return ['TAP MOVE IN', 'tap', mid(L.move)]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.15 + react * 0.6;
   const key = (lessonNow(G) || {}).id || 'main'; if (mem.key !== key) { mem.key = key; mem.steps = plan(G); mem.i = 0; mem.slip = 0; }

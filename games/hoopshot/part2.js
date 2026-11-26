@@ -113,6 +113,11 @@ function idealShot(G) { const sp = spotNow(G), bank = G.cfg.ch === 'bank', key =
     let lo = p, hi = p; while (hi + 0.005 <= 1 && good(hi + 0.005, y)) hi += 0.005; const w = hi - lo; if (!best || w > best.w) best = { p: (lo + hi) / 2, yaw: y, w }; p = hi; }
   if (!best) best = { p: 0.5, yaw: 0, w: 0 }; best.key = key; G.ideal = best; return best; }
 const gauss = () => { let u = 0; for (let i = 0; i < 4; i++) u += Math.random(); return (u - 2) * 1.732; };
+// THE TUTORIAL'S HAND PULLS BACK THE SHOT THAT GOES IN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It pulled straight down in a box: no aim, any strength. Now the hand pulls exactly the robot's ideal shot (idealShot): down for the power,
+// sideways the other way for the aim (left sends the ball right).
+function shotCue(G) { if (G.over || G.wait > 0 || G.state !== 'aim') return ['WAIT…', 'wait', false]; const I = idealShot(G), x0 = W / 2, y0 = H * 0.45, dy = I.p * H * 0.4, dx = -I.yaw * W * 0.42;
+  return [Math.abs(I.yaw) > 0.08 ? 'PULL DOWN AND TO THE SIDE' : 'PULL BACK, LET GO', 'drag', [x0, y0, x0 + dx, y0 + dy]]; }
 function honest(G, o, mem) { if (G.over || G.wait > 0 || G.state !== 'aim') return; const acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react;
   mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = 0.5 + react * 2;
   const I = idealShot(G), pv = G.cfg.prev, sp = spotNow(G), learn = G.shots.filter(s => s.spot === G.si || Math.abs(G.spots[s.spot].d - sp.d) < 0.5).length;
@@ -123,9 +128,9 @@ const BLIND = { f: G => shoot(G, 0.1 + Math.random() * 0.9, Math.random() * 2 - 
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.made = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pull', title: 'PULL BACK, LET GO', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Put your thumb down, pull it back (down the screen) and let go. Pull further for more power: watch the dotted path. Make 2 baskets.', need: 2 }],
-  2: [{ id: 'aim', title: 'AIM SIDEWAYS', say: 'PULL TO THE SIDE', do: 'drag', dir: 'down', how: 'Now the hoop is off to one side. Move your thumb sideways as you pull: left sends the ball right, like a slingshot. Make 2 baskets.', need: 2 }],
-  3: [{ id: 'far', title: 'FURTHER OUT', say: 'PULL HARDER', do: 'drag', dir: 'down', how: 'The further from the hoop, the harder you pull. The path is shorter now: feel it. Make 2 baskets from the long spots.', need: 2 }],
+  1: [{ id: 'pull', title: 'PULL BACK, LET GO', say: G => shotCue(G)[0], do: G => shotCue(G)[1], at: G => shotCue(G)[2], how: 'Put your thumb down, pull it back (down the screen) and let go. Pull further for more power: watch the dotted path. Make 2 baskets.', need: 2 }],
+  2: [{ id: 'aim', title: 'AIM SIDEWAYS', say: G => shotCue(G)[0], do: G => shotCue(G)[1], at: G => shotCue(G)[2], how: 'Now the hoop is off to one side. Move your thumb sideways as you pull: left sends the ball right, like a slingshot. Make 2 baskets.', need: 2 }],
+  3: [{ id: 'far', title: 'FURTHER OUT', say: G => shotCue(G)[0], do: G => shotCue(G)[1], at: G => shotCue(G)[2], how: 'The further from the hoop, the harder you pull. The path is shorter now: feel it. Make 2 baskets from the long spots.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

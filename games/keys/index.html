@@ -147,9 +147,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -380,9 +382,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -536,9 +538,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: slow, no song to lose; a mistake starts the lesson again ----------
 const LESSONS = {
-  1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', say: 'TAP THE BLACK', do: 'tap', how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
-  2: [{ id: 'hold', title: 'LONG TILES', say: 'HOLD THE LONG ONE', do: 'hold', how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
-  3: [{ id: 'double', title: 'TWO AT ONCE', say: 'TAP BOTH', do: 'tap', how: 'Some rows have two black tiles: tap both, one thumb each. Play three double rows.', need: 3 }],
+  1: [{ id: 'tap', title: 'BLACK, NEVER WHITE', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Tap START, then every black tile as it comes down. Never tap the white. Play the whole tune.', need: 1 }],
+  2: [{ id: 'hold', title: 'LONG TILES', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Put your thumb on a long tile and HOLD it until it has passed. Hold three long tiles.', need: 3 }],
+  3: [{ id: 'double', title: 'TWO AT ONCE', say: G => keysCue(G)[0], do: G => keysCue(G)[1], at: G => keysCue(G)[2], how: 'Some rows have two black tiles: tap both, one thumb each. Play three double rows.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -559,6 +561,13 @@ const BLIND = { t: G => { G.lx = Math.random() * 4; press(G, Math.floor(G.lx), M
 // a player who looks: two thumbs, each needing a moment between taps (quicker when sharp); sees a tile once it has been on
 // screen a moment, taps it when it is in the lower part of the screen, a little off centre (more so the faster it goes),
 // holds long tiles until they pass (a careless one lets go early), and taps both tiles of a double row
+// THE HAND IS ON THE NEXT BLACK TILE (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It tapped in a
+// box: the black tile is somewhere else and moving. Now the hand is on the next black tile to play (START at first), and says HOLD IT for a long
+// one and TAP BOTH on a double row.
+function keysCue(G) { if (G.over || G.wait > 0 || G.miss) return ['WAIT…', 'wait', false]; const L = lay(); let r = null, j = -1; for (let k2 = G.go ? G.ri : 0; k2 < G.rows.length && k2 < (G.go ? G.ri : 0) + 4; k2++) { const q = G.rows[k2], jj = q.lanes.findIndex((z, i) => !q.tapped[i]); if (jj >= 0) { r = q; j = jj; break; } }      /* the next row still to tap (the row just tapped stays G.ri a moment) */
+  if (!r) return ['WAIT…', 'wait', false]; const yb = G.go ? r.i - G.pos : 0; if (yb > 2.4) return ['GET READY…', 'wait', false];
+  const at = [(r.lanes[j] + 0.5) * L.lw, H - (Math.max(0.05, yb) + 0.5) * L.rh], long = r.kind === 'long';
+  return [!G.go ? 'TAP START' : long ? 'HOLD IT' : r.lanes.length > 1 ? 'TAP BOTH' : 'TAP THE BLACK', long ? 'hold' : 'tap', at]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, dt = 1 / 60;
   if (G.over || G.wait > 0 || G.miss) { mem.th = null; return; } if (!mem.th) mem.th = [{ free: 0, hold: null }, { free: 0, hold: null }]; mem.t = (mem.t || 0) + dt;
   const gap = 0.12 + react * 0.35;

@@ -4708,9 +4708,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4941,9 +4943,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5366,10 +5368,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'go', title: 'LET GO AT THE RIGHT MOMENT', say: 'HOLD… LET GO!', do: 'release', at: G => [W / 2, H * 0.7], how: 'Hold your thumb down: you swing. Lift it as you swing forward and up. Your hand catches the next vine by itself, for now.', need: 3, ok: w => w === 'catch', autoGrab: 1 },
-      { id: 'grab', title: 'CATCH THE VINE', say: 'TOUCH AT THE VINE', do: 'tap', at: G => [W / 2, H * 0.7], how: 'This time you let go by yourself. Put your thumb down when your hand reaches the next vine.', need: 3, ok: w => w === 'catch', autoGo: 1 }],
-  2: [{ id: 'both', title: 'LET GO, THEN CATCH', say: 'LET GO, THEN TOUCH', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Lift your thumb at the top of the forward swing, put it down as you reach the vine.', need: 3, ok: w => w === 'catch' }],
-  3: [{ id: 'lean', title: 'STEER THE SWING', say: 'HOLD, SLIDE TO STEER', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Some vines hang to the side. While you hold on, move your thumb left or right: the swing turns that way. Then let go.', need: 3, ok: w => w === 'catch', side: 1 }],
+  1: [{ id: 'go', title: 'LET GO AT THE RIGHT MOMENT', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'Hold your thumb down: you swing. Lift it as you swing forward and up. Your hand catches the next vine by itself, for now.', need: 3, ok: w => w === 'catch', autoGrab: 1 },
+      { id: 'grab', title: 'CATCH THE VINE', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'This time you let go by yourself. Put your thumb down when your hand reaches the next vine.', need: 3, ok: w => w === 'catch', autoGo: 1 }],
+  2: [{ id: 'both', title: 'LET GO, THEN CATCH', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'Lift your thumb at the top of the forward swing, put it down as you reach the vine.', need: 3, ok: w => w === 'catch' }],
+  3: [{ id: 'lean', title: 'STEER THE SWING', say: G => vineCue(G)[0], do: G => vineCue(G)[1], at: G => vineCue(G)[2], how: 'Some vines hang to the side. While you hold on, move your thumb left or right: the swing turns that way. Then let go.', need: 3, ok: w => w === 'catch', side: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonVines(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5404,6 +5406,17 @@ function honest(G, o, mem) {
   const m = flyMiss(G, p.x, p.y, p.z, p.vx, p.vy, p.vz); if (mem.grab == null) mem.grab = (Math.random() - 0.5) * (1 - acc) * 0.5 + 0.02;
   if (m.d < Math.min(G.cfg.reach, REACH) * 1.1 && m.t <= Math.max(0, mem.grab)) { grab(G); mem.grab = null; }
 }
+// THE TUTORIAL SAYS WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD… LET GO! with a hand
+// lifting all swing long, and TOUCH AT THE VINE with a hand tapping all flight long. Now, as the robot judges it (a moment early, for a thumb):
+// HOLD… SWING, SLIDE LEFT / RIGHT to face the next vine, LET GO! at the gold mark, WAIT… in the air, TOUCH NOW! as the vine comes.
+function vineCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const nv = G.vines[G.on + 1], p = G.p; if (!nv) return ['…', 'wait', false];
+  if (G.held) { const v = G.vines[G.on], want = Math.atan2(nv.x - v.x, v.z - nv.z), err = want - G.phi, x0 = touch.id != null ? touch.x0 : W / 2, y0 = H * 0.7;
+    if (Math.abs(err) > 0.06) { const l = clamp(err * 4, -1, 1); return [l < 0 ? 'SLIDE LEFT' : 'SLIDE RIGHT', 'drag', [x0, y0, x0 + l * W * 0.18, y0]]; }
+    const b = G.best; if (b && b.rel != null && b.d <= REACH * 0.8 && G.om > 0.15 && G.th + G.om * 0.2 >= b.rel) return ['LET GO!', 'release', [x0, y0]];
+    return [touch.id != null ? 'HOLD… SWING' : 'HOLD ON', 'hold', [x0, y0]]; }
+  if (G.down > 0) return ['WAIT…', 'wait', false];
+  const m = flyMiss(G, p.x, p.y, p.z, p.vx, p.vy, p.vz); if (m.d < Math.min(G.cfg.reach, REACH) * 1.1 && m.t <= 0.22) return ['TOUCH NOW!', 'tap', [W / 2, H * 0.7]];
+  return ['WAIT…', 'wait', false]; }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; attach(G, G.vines.length - 1, 0, 0); G.time = Math.max(G.time, 5); }
 // ===================== A PERSON WITH JOINTS (Vine first, 23 Nov 2026; copied to the games that need it) =====================
 // His review of Vine: "do better on the animation... hands and the person holding the vines and swinging". The swinger was a pill

@@ -162,42 +162,51 @@ function path(G, x0, z0, x1, z1, avoid) { const N = navGrid(G), ci = x => clamp(
   while (H.length && iter++ < 6000) { const [f0, n] = pop(); if (n === g) break; const i = n % GX, j = Math.floor(n / GX); if (f0 > D[n] + Math.hypot(i - gi, j - gj) + 1e-3) continue;
     for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) { const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= GX || b >= GZ) continue; const m2 = a + b * GX; if (m2 !== g) { if (!badC[m2]) badC[m2] = bad(m2) ? 1 : 2; if (badC[m2] === 1) continue; } const nd = D[n] + Math.hypot(di, dj) * N.cost[m2]; if (nd < D[m2]) { D[m2] = nd; P[m2] = n; push(nd + Math.hypot(a - gi, b - gj), m2); } } }
   if (P[g] < 0 && g !== s) return null; const out = []; let n = g; while (n >= 0 && n !== s) { out.unshift({ x: (n % GX + 0.5) * CELL, z: (Math.floor(n / GX) + 0.5) * CELL }); n = P[n]; } return out; }
+// THE TUTORIAL SAYS WHICH WAY TO RUN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand pushed up or
+// slid in a box. Now the robot is asked (dryPlan): RUN THIS WAY (the push it would make: to a crumb, home, away from the shadow; all the way to
+// SPRINT), TAP HIDE when a hiding place is near and the can comes, TAP DROP for a crumb too big.
+const RCC = { t: -1e9, v: null };
+function roachCue(G) { if (G.over || G.wait > 0 || !G.me) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RCC.t < 180) return RCC.v; RCC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), B = btnRects(G), mid = b => [b.x + b.w / 2, b.y + b.h / 2]; let v = ['STAY STILL…', 'wait', false];
+  const hd = all.find(q => q[0] === 'hideBtn'), dr = all.find(q => q[0] === 'dropBtn'), st = all.filter(q => q[0] === 'stick').pop(), run = all.filter(q => q[0] === 'sprint').pop();
+  if (hd && B.hide) v = [G.me.hidden ? 'TAP: COME OUT' : 'TAP HIDE!', 'tap', mid(B.hide)]; else if (dr && B.drop) v = ['TAP DROP', 'tap', mid(B.drop)];
+  else if (st && (st[1] || st[2])) { const R = 46 * k, m = Math.hypot(st[1], st[2]) || 1, f = run && run[1] ? 1 : 0.75, x0 = W * 0.3, y0 = H * 0.7; v = [run && run[1] ? 'PUSH ALL THE WAY: SPRINT' : 'RUN THIS WAY', 'drag', [x0, y0, x0 + st[1] / m * R * f, y0 - st[2] / m * R * f]]; }
+  RCC.v = v; return v; }
 function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.me) return; const m = G.me, c = G.cfg, acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react;
   mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react * 0.3 * (0.5 + Math.random());
   const need = c.need - G.stash, load = loadOf(m);
   // threats: a slipper about to land where I will be; a cloud (or a can aiming) on my way
   for (const s of G.slips) { if (s.land) continue; const left = s.T - s.t, px = m.x + m.vx * left, pz = m.z + m.vz * left; if (Math.hypot(px - s.x, pz - s.z) < s.r + 7 || Math.hypot(m.x - s.x, m.z - s.z) < s.r + 4) {
-      if (mem.seen !== s) { mem.seen = s; mem.see = Math.random() < 0.8 + 0.2 * acc; mem.rt = react * 1.2 * (0.7 + 0.6 * Math.random()); } if (s.t < mem.rt) continue; if (mem.seenOnce !== s) { mem.seenOnce = s; mem.big = m.load.some(q => q.big) && left < 0.6 && Math.random() < acc; } if (!mem.see) continue; if (mem.big) { dropBtn(G); mem.big = false; }
+      if (mem.seen !== s) { mem.seen = s; mem.see = Math.random() < 0.8 + 0.2 * acc; mem.rt = react * 1.2 * (0.7 + 0.6 * Math.random()); } if (s.t < mem.rt) continue; if (mem.seenOnce !== s) { mem.seenOnce = s; mem.big = m.load.some(q => q.big) && left < 0.6 && Math.random() < acc; } if (!mem.see) continue; if (mem.big) { ACT.dropBtn(G); mem.big = false; }
       let ax = m.x - s.x, az = m.z - s.z; if (Math.hypot(ax, az) < 2) { ax = -m.vz; az = m.vx; } const L = Math.hypot(ax, az) || 1; let dx = ax / L, dz = az / L;
       if (blocked(G, m.x + dx * 10, m.z + dz * 10, 2)) { const alt = [[-dz, dx], [dz, -dx], [-dx, -dz]].find(([a, b]) => !blocked(G, m.x + a * 10, m.z + b * 10, 2)); if (alt) [dx, dz] = alt; }
-      stick(G, dx, dz); sprint(G, m.stam > 0.15); mem.path = null; return; } }
+      ACT.stick(G, dx, dz); ACT.sprint(G, m.stam > 0.15); mem.path = null; return; } }
   const danger = (x, z) => G.puffs.some(p => p.a > 0.2 && Math.hypot(x - p.x, z - p.z) < p.R + 4) || G.sprays.some(s => s.t < s.raise + 0.7 && lineD(s, x, z) < 20) || G.slips.some(s => !s.land && Math.hypot(x - s.x, z - s.z) < s.r + 5);
   if (danger(m.x, m.z) && Math.random() < 0.85 + 0.15 * acc) { // out of the way: the nearest safe step
     let best = null; for (let a = 0; a < 16; a++) { const dx = Math.cos(a / 16 * TAU), dz = Math.sin(a / 16 * TAU); if (blocked(G, m.x + dx * 8, m.z + dz * 8, 2)) continue; let d = 0; while (d < 60 && danger(m.x + dx * d, m.z + dz * d)) d += 4; if (d < 60 && (!best || d < best.d)) best = { d, dx, dz }; }
-    if (best) { stick(G, best.dx, best.dz); sprint(G, m.stam > 0.15); mem.path = null; return; } }
+    if (best) { ACT.stick(G, best.dx, best.dz); ACT.sprint(G, m.stam > 0.15); mem.path = null; return; } }
   // being watched: hide if a hiding place is close
   const watch = Math.max(0, ...G.people.map(p => p.notice)), hn = hideNear(G);
-  if (m.hidden) { if (watch < 0.15 && !G.sprays.length && !G.puffs.some(p => p.a > 0.2)) { hideBtn(G); } else { stick(G, 0, 0); return; } }
-  if (hn && watch > 0.7 && Math.random() < acc) { hideBtn(G); stick(G, 0, 0); return; }
+  if (m.hidden) { if (watch < 0.15 && !G.sprays.length && !G.puffs.some(p => p.a > 0.2)) { ACT.hideBtn(G); } else { ACT.stick(G, 0, 0); return; } }
+  if (hn && watch > 0.7 && Math.random() < acc) { ACT.hideBtn(G); ACT.stick(G, 0, 0); return; }
   // where to: home when carrying enough; otherwise food (near and on the safe side first)
   let goal = null; if (load >= need || load >= c.cap - 0 || (load && !G.food.some(f => f.wait <= 0 && loadOf(m) + f.v <= c.cap))) goal = { x: CX, z: 1, home: true };
   else { let bf = 1e9; for (const f of G.food) { if (f.wait > 0 || load + f.v > c.cap) continue; const d = Math.hypot(f.x - m.x, f.z - m.z) + Math.hypot(f.x - CX, f.z) * 0.5 + (f.big ? (need >= 3 ? -40 : 30) : 0) + (lit(G, f.x, f.z) ? 25 : 0); if (d < bf) { bf = d; goal = f; } } }
-  if (!goal) { stick(G, 0, 0); return; }
+  if (!goal) { ACT.stick(G, 0, 0); return; }
   if (!mem.path || mem.goal !== goal || G.t - (mem.pt || 0) > 0.5) { mem.goal = goal; mem.pt = G.t; mem.path = path(G, m.x, m.z, goal.x, goal.z, (x, z) => danger(x, z)) || path(G, m.x, m.z, goal.x, goal.z); mem.pi = 0; }
-  const P = mem.path; if (!P || !P.length) { stick(G, goal.x - m.x, goal.z - m.z); return; }
+  const P = mem.path; if (!P || !P.length) { ACT.stick(G, goal.x - m.x, goal.z - m.z); return; }
   while (mem.pi < P.length - 1 && Math.hypot(P[mem.pi].x - m.x, P[mem.pi].z - m.z) < 6) mem.pi++;
   const w = P[Math.min(P.length - 1, mem.pi + 1)], dx = w.x - m.x, dz = (goal.home && mem.pi >= P.length - 2 ? goal.z - 6 : w.z) - m.z, L = Math.hypot(dx, dz) || 1;
-  const wob = (1 - acc) * 0.5 * (Math.random() - 0.5); stick(G, dx / L + wob, dz / L - wob);
-  sprint(G, m.stam > 0.6 * c.stam && (watch > 0.4 || goal.home && load >= need)); }
+  const wob = (1 - acc) * 0.5 * (Math.random() - 0.5); ACT.stick(G, dx / L + wob, dz / L - wob);
+  ACT.sprint(G, m.stam > 0.6 * c.stam && (watch > 0.4 || goal.home && load >= need)); }
 function lineD(s, x, z) { const ex = s.ox + s.dx * 150, ez = s.oz + s.dz * 150, vx = ex - s.ox, vz = ez - s.oz, t = clamp(((x - s.ox) * vx + (z - s.oz) * vz) / (vx * vx + vz * vz), 0, 1); return Math.hypot(x - s.ox - vx * t, z - s.oz - vz * t); }
 // blind moves (no looking): push the stick a random way (or let go), sprint on or off, the HIDE button
 const BLIND = { m: G => { if (Math.random() < 0.2) stick(G, 0, 0); else { const a = Math.random() * TAU; stick(G, Math.cos(a), Math.sin(a)); } }, s: G => sprint(G, !G.me.run), h: G => hideBtn(G) };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.stash = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'eat', title: 'RUN, GRAB, GET HOME', say: 'PUSH TO RUN', do: 'drag', dir: 'up', how: 'Left thumb: push the stick to run. Touch the crumbs to pick them up, then bring them back to your crack (the glowing gap). 3 crumbs.', need: 3 }],
-  2: [{ id: 'slip', title: 'DODGE THE SLIPPER', say: 'RUN AWAY FROM THE SHADOW', do: 'drag', dir: 'lr', how: 'A shadow on the floor: a slipper is coming, aimed where you are heading. Turn away, or push the stick all the way to SPRINT. Dodge 3.', need: 3, force: true }],
-  3: [{ id: 'hide', title: 'HIDE FROM THE SPRAY', say: 'HIDE!', do: 'tap', how: 'The can comes down and aims: get out of its line, under furniture, or into a hiding place with HIDE. Live through 2 sprays.', need: 2, force: true }],
+  1: [{ id: 'eat', title: 'RUN, GRAB, GET HOME', say: G => roachCue(G)[0], do: G => roachCue(G)[1], at: G => roachCue(G)[2], how: 'Left thumb: push the stick to run. Touch the crumbs to pick them up, then bring them back to your crack (the glowing gap). 3 crumbs.', need: 3 }],
+  2: [{ id: 'slip', title: 'DODGE THE SLIPPER', say: G => roachCue(G)[0], do: G => roachCue(G)[1], at: G => roachCue(G)[2], how: 'A shadow on the floor: a slipper is coming, aimed where you are heading. Turn away, or push the stick all the way to SPRINT. Dodge 3.', need: 3, force: true }],
+  3: [{ id: 'hide', title: 'HIDE FROM THE SPRAY', say: G => roachCue(G)[0], do: G => roachCue(G)[1], at: G => roachCue(G)[2], how: 'The can comes down and aims: get out of its line, under furniture, or into a hiding place with HIDE. Live through 2 sprays.', need: 2, force: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, force: !!LESSONS[G.N][0].force }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -215,3 +224,10 @@ function lessonSee(G, what) { const L = lessonNow(G); if (!L || G.wait > 0) retu
   if (L.id === 'slip' && what === 'dodge') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
   if (G.lesson.n >= L.need) lessonEnd(G); }
 function lessonEnd(G) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.4; G.next = () => { G.rnd = rng(G.seed); G.cfg = makeCfg(G.N, G.cfg.help); setup(G); G.ev.push({ k: 'start' }); G.ev.push({ k: 'yard' }); }; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { stick, sprint, hideBtn, dropBtn }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

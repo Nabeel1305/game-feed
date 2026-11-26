@@ -185,10 +185,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', say: 'CREEP… FREEZE!', do: 'drag', dir: 'up', how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
-      { id: 'throw', title: 'THROW AT THE CHEST', say: 'AIM, TAP THROW', do: 'tap', at: G => { const b = layout().fire; return [b.x, b.y]; }, how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
-  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', say: 'CLOSER, THEN THROW', do: 'tap', at: G => { const b = layout().fire; return [b.x, b.y]; }, how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
-  3: [{ id: 'lion', title: 'A LION!', say: 'SWIPE! THEN TAP TAP TAP', do: 'swipe', dir: 'lr', how: 'Tap the side the growl comes from to face it. When it leaps, SWIPE to dodge. Then TAP, TAP, TAP to spear it. It comes again until it is dead.', need: 1, ok: w => w === 'lion', lion: 1 }],
+  1: [{ id: 'freeze', title: 'CREEP, AND FREEZE WHEN IT LOOKS', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Push the stick gently (left thumb) to creep. When its ears flick and its head comes up, let go and keep still.', need: 2, ok: w => w === 'froze', creepNeeded: true },
+      { id: 'throw', title: 'THROW AT THE CHEST', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Drag your right thumb to put the crosshair on its chest, just behind the front legs (it turns green). Tap THROW.', need: 1, ok: w => w === 'kill', near: 1 }],
+  2: [{ id: 'close', title: 'GET CLOSE, THEN THROW', say: G => huntCue(G)[0], do: G => huntCue(G)[1], at: G => huntCue(G)[2], how: 'Creep in, freezing each time it looks, then throw while the metres are green. Go too close (red) and it runs.', need: 2, ok: w => w === 'kill' }],
+  3: [{ id: 'lion', title: 'A LION!', say: G => huntCue(G)[0], do: G => huntCue(G)[1], dir: 'lr', at: G => huntCue(G)[2], how: 'Tap the side the growl comes from to face it. When it leaps, SWIPE to dodge. Then TAP, TAP, TAP to spear it. It comes again until it is dead.', need: 1, ok: w => w === 'lion', lion: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); if (lessonNow(G).near) newAnimal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -210,6 +210,22 @@ const BLIND = {
 };
 // HONEST: creeps while it grazes, freezes on the tell (late by react), throws at the chest from a comfortable range, faces a growl
 // and braces on the leap (late by react).
+// THE TUTORIAL SHOWS THE ONE THING TO DO NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said
+// CREEP… FREEZE! (two things) with a drag up in a box, and AIM, TAP THROW. Now, as the robot judges it: PUSH TO CREEP on the stick, FREEZE! LET GO
+// when its head comes up, KEEP STILL…, DRAG TO AIM (the crosshair onto the chest, on the right), TAP THROW, SLIDE TO DODGE a charge; with the lion
+// TAP THIS SIDE (the growl), SWIPE! as it leaps, TAP! TAP! TAP! when it is open.
+function huntCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const a = G.a, Ln = G.lion, S = stickBase(), L = layout();
+  if (Ln && Ln.st !== 'gone') { if (Ln.st === 'stalk') return G.me.face !== Ln.side ? ['TAP THIS SIDE', 'tap', [W / 2 + Ln.side * W * 0.3, H * 0.45]] : ['WAIT FOR IT…', 'wait', false];
+    if (Ln.st === 'leap') return ['SWIPE!', 'swipe', [W * 0.35, H * 0.5, W * 0.7, H * 0.5]]; if (Ln.st === 'open') return ['TAP! TAP! TAP!', 'tap', [W / 2, H * 0.45]]; return ['WAIT…', 'wait', false]; }
+  if (!a) return ['WAIT…', 'wait', false];
+  if (a.st === 'threat' || a.st === 'charge') return a.locked ? ['SLIDE TO DODGE', 'drag', [S.x, S.y, S.x + S.r * 0.8, S.y]] : ['KEEP STILL…', G.me.creep ? 'release' : 'wait', false];
+  if (a.st === 'flee' || a.st === 'dead' || a.st === 'pass' || G.spears.some(q => !q.done)) return ['WAIT…', 'wait', false];
+  if (a.st === 'tell' || a.st === 'look') return G.me.creep ? ['FREEZE! LET GO', 'release', [S.x, S.y - S.r * 0.5]] : ['KEEP STILL…', 'wait', false];
+  if (distA(G) > 13) return [G.me.creep ? 'KEEP CREEPING' : 'PUSH TO CREEP', 'drag', [S.x, S.y, S.x, S.y - S.r * 0.5]];
+  if (!V3 || V3.none) return ['TAP THROW', 'tap', [L.fire.x, L.fire.y]];
+  const kd = a.kind, c0 = W3.screen(g2w(a.x, a.z, HGT(a.x, a.z) + 0.75 * kd.body)), vx = a.x + Math.sin(a.face) * kd.body * 0.5, vz = a.z + Math.cos(a.face) * kd.body * 0.5, v = W3.screen(g2w(vx, vz, HGT(vx, vz) + 0.6 * kd.body)), ch = ui.ch || { x: 0, y: 0 }, ex = v.x - c0.x - ch.x, ey = v.y - c0.y - ch.y;
+  if (Math.hypot(ex, ey) > 16 * k) { const x0 = W * 0.72, y0 = H * 0.42; return ['DRAG TO AIM', 'drag', [x0, y0, x0 + ex / 0.9, y0 + ey / 0.9]]; }
+  return ['TAP THROW', 'tap', [L.fire.x, L.fire.y]]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, a = G.a, Ln = G.lion, t = G.t;
   const seen = (key, cond) => { if (!cond) { mem[key] = null; return false; } if (mem[key] == null) mem[key] = t; return t - mem[key] >= react; };

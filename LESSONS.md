@@ -256,6 +256,25 @@ note first") is also a press that does nothing: the button he presses wins, and 
 - **Keep what the player has learnt.** Haggle's maker names tell him what a thing is worth; they were not varied. The vet's, plumber's and dentist's
   new work uses the tools already taught.
 
+### 26 Nov 2026: tutorials that work when you follow the hand, and only level 1 given (the record is `specs/tutorials-2026-11-26.md`)
+His words: "it tells me to swipe. I swipe up and then nothing happens, and then I just skip the tutorials... make sure the tutorial is correct for each
+game and is actually working for each game"; and "the first level should be the only one that is given, but after that it should actually engage the players".
+- **A lesson shows the one move that works this moment, where it works.** Three faults were in nearly every game: two or three moves in one
+  line (STEER, HOLD GAS), a hand sliding in a box nowhere near what matters (left and right over a round dial), and a hand shown all the time
+  when the move only works at one moment (TAP AS IT TOUCHES the whole flight). The fix, game by game: `say`, `do` and `at` are functions of
+  one `xCue(G)` that returns `[words, gesture, place]` for now.
+- **Ask the robot, don't guess.** `python3 tools/dry_plan.py <game> <actions...>` lets the cue run the game's own honest robot without moving
+  anything (`dryPlan`, `dryPlanAll`: luck 0.5, no reaction delay; pass a ready `mem` such as `{ t: -1 }`). The hand then goes to the jar, the
+  side, the unit, the line the robot would use. A helper the robot calls that itself moves things (Splash's `aimJump`) is split into a pure
+  plan (`aimPlan`) first, or it is listed as an action.
+- **Prove it with a thumb.** `python3 tools/test_lesson_touch.py <ids>` follows the coach with real touches (two thumbs for BOTH) and records,
+  per step, whether the move answered (moved / nothing / TRY AGAIN) and who finished the step. Steering and balancing games (Rope, Rex, On the
+  Run) are not finished by its one discrete thumb; there the measure is that each shown move does something.
+- **Words in one-line code: `/* */`, never `//`** (a `//` in a one-line cue swallowed the rest of Drumline's line).
+- **A sideways game draws its coach inside `#stage`** (the kit's `coachLayer`), or the hand is upright over a sideways picture.
+- **Only level 1 is given.** `easyOf(L)` is 1 at level 1, a third at 2, a little at 3, and 0 from 4 (it was 0 only from 7). `tools/level_rates.py`
+  measures each game's ordinary and sloppy players on levels 1, 2, 3, 5 and 10.
+
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.
 1. **Spamming cannot win. On any level, the first included.** (15 Nov 2026, of Plunder's first build: "Spamming cannot win... Just repeatedly doing something cannot win. There needs to be a little bit of skill. This is why I love the boxing game.") Any repeated move, **at any speed**, must lose on **every** level: mashing, a slow steady beat of one move, a short string of moves on a beat, a control held over or wiggled, a button pressed on a count. "Early levels are for learning" (rule 0) means generous windows and soft punishment for someone who is trying to do the right thing; it never means a rhythm works. How to get there (all of it learned the hard way on Plunder, see its notes):

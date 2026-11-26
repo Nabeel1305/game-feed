@@ -133,14 +133,25 @@ function finish(G) { const c = G.cfg, win = G.score >= c.target; G.over = win ? 
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'roll', title: 'ROLL', say: 'PULL BACK, LET GO', do: 'drag', dir: 'down', how: 'Touch to line the ball up, pull back toward you and let go. Knock down 6 pins or more, twice in a row.', need: 2 }],
-  2: [{ id: 'pocket', title: 'THE POCKET', say: 'AIM BESIDE THE FRONT PIN', do: 'drag', dir: 'down', how: 'Roll just beside the front pin, not straight at it. Get a strike, or 9 pins.', need: 1 }],
-  3: [{ id: 'spare', title: 'A SPARE', say: 'HIT WHAT IS LEFT', do: 'drag', dir: 'down', how: 'Knock down what is left with your second ball. Aim at the middle of the pins still standing.', need: 1 }],
+  1: [{ id: 'roll', title: 'ROLL', say: 'PULL BACK, LET GO', do: G => G.phase === 'aim' && G.wait <= 0 ? 'drag' : 'wait', at: G => G.phase === 'aim' && G.wait <= 0 ? bowlCue(G) : false, how: 'Touch to line the ball up, pull back toward you and let go. Knock down 6 pins or more, twice in a row.', need: 2 }],
+  2: [{ id: 'pocket', title: 'THE POCKET', say: 'AIM BESIDE THE FRONT PIN', do: G => G.phase === 'aim' && G.wait <= 0 ? 'drag' : 'wait', at: G => G.phase === 'aim' && G.wait <= 0 ? bowlCue(G) : false, how: 'Roll just beside the front pin, not straight at it. Get a strike, or 9 pins.', need: 1 }],
+  3: [{ id: 'spare', title: 'A SPARE', say: 'HIT WHAT IS LEFT', do: G => G.phase === 'aim' && G.wait <= 0 ? 'drag' : 'wait', at: G => G.phase === 'aim' && G.wait <= 0 ? bowlCue(G) : false, how: 'Knock down what is left with your second ball. Aim at the middle of the pins still standing.', need: 1 }],
 };
+// THE TUTORIAL'S HAND MAKES THE THROW THAT WORKS (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The
+// hand pulled straight down from the middle of a little box; from the middle of the lane that hits the head pin full on, and the pocket and
+// spare lessons want something else. Now the hand starts on the line the robot would take and pulls back with the angle it would give (the
+// controls: where you touch lines the ball up; the pull is the power; sideways in the pull is the angle).
+const BWCUE = { key: '', v: null };
+function bowlCue(G) { const up = G.pins.filter(p => p.up), key = up.map(p => p.x.toFixed(2)).join(',') + '|' + G.ball.hook; if (BWCUE.key === key) return BWCUE.v;
+  let tx; if (up.length === 10) tx = G.ball.hook > 0.2 ? 0.065 : 0.06; else if (!up.length) tx = 0; else { const xs = up.map(p => p.x), front = up.reduce((a, b) => a.z < b.z ? a : b); tx = up.length === 1 ? front.x : (Math.min(...xs) + Math.max(...xs)) / 2 * 0.5 + front.x * 0.5; }
+  const P = 0.85, xs = [-0.3, -0.15, 0, 0.15, 0.3]; let best = null, bd = 1e9;
+  for (const x of xs) for (let a = -0.08; a <= 0.08; a += 0.004) { const lx = landX(G, x, a, P), d = Math.abs(lx - tx); if (d < bd) { bd = d; best = { x, a }; } }
+  const A = scr(-LANE_W / 2, 0, 0.6), B = scr(LANE_W / 2, 0, 0.6), x0 = A.x + (best.x + LANE_W / 2) / LANE_W * (B.x - A.x), y0 = H * 0.6, dy = P * 170 * k, dx = -best.a * Math.max(40 * k, dy) / 0.22;
+  BWCUE.key = key; BWCUE.v = [x0, y0, x0 + dx, y0 + dy]; return BWCUE.v; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonResult(G, kind, n, upLeft) { const st = lessonNow(G); if (!st) return; let ok = null;
-  if (st.id === 'roll') ok = n >= 6; if (st.id === 'pocket') ok = kind === 'strike' || (G.roll === 0 && n >= 9) ? true : (G.roll === 0 ? false : null);
+  if (st.id === 'roll') ok = G.roll === 0 ? n >= 6 : null;      /* only a first ball is judged (26 Nov 2026: a second ball, with three pins left, can never knock down six, and it broke the streak of a player doing it right) */ if (st.id === 'pocket') ok = kind === 'strike' || (G.roll === 0 && n >= 9) ? true : (G.roll === 0 ? false : null);
   if (st.id === 'spare') ok = G.roll === 1 ? kind === 'spare' : null;
   if (ok === null) return; if (!ok) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); return; }
   G.lesson.n++; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }

@@ -161,9 +161,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -394,9 +396,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -570,9 +572,9 @@ function finish(G, win, why) { const c = G.cfg; if (G.lesson) return; G.over = w
 // ---------- LESSONS ----------
 const holds = (G, k2) => G.me.carry.some(it => it.k === k2);
 const LESSONS = {
-  1: [{ id: 'bags', title: 'BAGS UP', say: G => holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', how: 'Tap the guest\'s bags, then a clean room.', need: 2 }],
-  2: [{ id: 'food', title: 'ROOM SERVICE', say: G => holds(G, 'food') ? 'TAP THE 🍝 ROOM' : 'TAP THE KITCHEN', do: 'tap', how: 'Tap the kitchen, then the room that rang.', need: 2 }],
-  3: [{ id: 'clean', title: 'A CLEAN ROOM', say: G => G.rooms.some(r => r.state === 'dirty') ? 'TAP THE 🧹 ROOM' : holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', how: 'Clean the dirty room, then take the guest up.', need: 2 }],
+  1: [{ id: 'bags', title: 'BAGS UP', say: G => holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', at: G => hotelAt(G), how: 'Tap the guest\'s bags, then a clean room.', need: 2 }],
+  2: [{ id: 'food', title: 'ROOM SERVICE', say: G => holds(G, 'food') ? 'TAP THE 🍝 ROOM' : 'TAP THE KITCHEN', do: 'tap', at: G => hotelAt(G), how: 'Tap the kitchen, then the room that rang.', need: 2 }],
+  3: [{ id: 'clean', title: 'A CLEAN ROOM', say: G => G.rooms.some(r => r.state === 'dirty') ? 'TAP THE 🧹 ROOM' : holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', at: G => hotelAt(G), how: 'Clean the dirty room, then take the guest up.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -596,10 +598,13 @@ const BLIND = { t: G => tapAt(G, Math.random() * (G.cfg.floors + 0.5) - 0.25, Ma
 // an attendant who looks: with something in the hands, takes it where it is wanted (the one that will run out first, if it can be
 // reached in time); with empty hands, goes for what the most pressing guest needs (the kitchen, the laundry, the desk, a dirty
 // room when a guest is waiting for one). One stop at a time, as a person does.
+// THE HAND IS ON THE PLACE TO TAP (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The words already
+// changed with the moment; the hand tapped in a box. Now it taps on the place the robot would go next (dryPlan: the desk, a room, the kitchen).
+function hotelAt(G) { if (G.over || G.wait > 0 || G.route.length || G.me.work > 0) return false; const P = dryPlan(G, null, { t: -1 }); if (!P || !P[1]) return false; const L = lay(), q = P[1]; return [L.sx(q.x), L.fy(q.f) - L.fh * 0.45]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc;
   if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; if (G.route.length || G.me.work > 0) return; mem.t = 0.15 + react * 1.2;
   const me = G.me, c = G.cfg, open = G.reqs.filter(q => !q.gone), tt = (f1, x1) => me.f === f1 ? Math.abs(x1 - me.x) / c.sp : (Math.abs(me.x - LIFT) + Math.abs(x1 - LIFT)) / c.sp + Math.abs(f1 - me.f) / c.lift + 0.3;
-  const go = st => { if (Math.random() > acc) { if (Math.random() < 0.3) BLIND.t(G); else mem.t += 0.5; return; } goTo(G, st); },      /* a tap that misses mostly lands on nothing (the places are big); sometimes on the wrong door */ roomStop = r => ({ place: 'room', f: r.f, x: r.x, room: r.id, key: 'room' + r.id }), left = q => q.pat - q.t;
+  const go = st => { if (Math.random() > acc) { if (Math.random() < 0.3) BLIND.t(G); else mem.t += 0.5; return; } ACT.goTo(G, st); },      /* a tap that misses mostly lands on nothing (the places are big); sometimes on the wrong door */ roomStop = r => ({ place: 'room', f: r.f, x: r.x, room: r.id, key: 'room' + r.id }), left = q => q.pat - q.t;
   const cleanRooms = G.rooms.filter(r => r.state === 'clean'), dirty = G.rooms.filter(r => r.state === 'dirty');
   const src = k2 => ({ place: k2 === 'food' ? 'kitchen' : 'laundry', f: 0, x: srcX(k2), key: k2 === 'food' ? 'kitchen' : 'laundry' }), nHold = k2 => me.carry.filter(it => it.k === k2).length, bag = me.carry.find(it => it.k === 'bags');
   // what is wanted that is not yet in the hands (a plate for each room ringing, a guest at the desk when there is a room to give)
@@ -620,6 +625,11 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   pool.sort((a, b) => a.left - b.left); go((room > 0 ? pool : pool.filter(n => n.clean))[0].st); }
 function srcX(k2) { return k2 === 'food' ? KITCHEN : k2 === 'towels' ? LAUNDRY : DESK; }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.tips = G.cfg.target + 10; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { goTo }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 // ===================== DRAW + JUICE: the hotel as a doll's house (2D on purpose: every room, bubble and ring must read at once) =====================
 // A cutaway of the hotel at dusk: the lobby at the bottom (the front desk with its bell, the kitchen with a steaming pot, the
 // laundry with a turning drum), floors of rooms above (beds, lamps that glow when someone is in, mess when a room is dirty),

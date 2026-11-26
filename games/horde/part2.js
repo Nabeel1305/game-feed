@@ -179,9 +179,9 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'move', title: 'MOVE, AND LET HIM FIGHT', say: 'DRAG TO MOVE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drag anywhere to move. Your sword swings by itself. Walk over the blue crystals the monsters drop. Fill the bar.', need: 1, ok: w => w === 'pick', kinds: ['zombie', 'bat'], rate: 0.8 }],
-  2: [{ id: 'pick', title: 'PICK YOUR POWER', say: 'PICK ONE', do: 'tap', how: 'Each level-up, pick one of three: a new weapon, a better one, or a blessing. Level up twice.', need: 2, ok: w => w === 'pick', kinds: ['zombie', 'skel', 'bat'], rate: 1 }],
-  3: [{ id: 'arrows', title: 'ARCHERS AND THE BOSS', say: 'STEP OUT OF THE RED', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Archers draw first: a red line shows where the arrow will fly. Step out of it. Then beat the boss.', need: 1, ok: w => w === 'boss', kinds: ['archer', 'zombie'], rate: 0.8, boss: 12 }],
+  1: [{ id: 'move', title: 'MOVE, AND LET HIM FIGHT', say: G => hordeCue(G)[0], do: G => hordeCue(G)[1], at: G => hordeCue(G)[2], how: 'Drag anywhere to move. Your sword swings by itself. Walk over the blue crystals the monsters drop. Fill the bar.', need: 1, ok: w => w === 'pick', kinds: ['zombie', 'bat'], rate: 0.8 }],
+  2: [{ id: 'pick', title: 'PICK YOUR POWER', say: G => hordeCue(G)[0], do: G => hordeCue(G)[1], at: G => hordeCue(G)[2], how: 'Each level-up, pick one of three: a new weapon, a better one, or a blessing. Level up twice.', need: 2, ok: w => w === 'pick', kinds: ['zombie', 'skel', 'bat'], rate: 1 }],
+  3: [{ id: 'arrows', title: 'ARCHERS AND THE BOSS', say: G => hordeCue(G)[0], do: G => hordeCue(G)[1], at: G => hordeCue(G)[2], how: 'Archers draw first: a red line shows where the arrow will fly. Step out of it. Then beat the boss.', need: 1, ok: w => w === 'boss', kinds: ['archer', 'zombie'], rate: 0.8, boss: 12 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -201,13 +201,22 @@ const _lessonBoss = G => { const L = lessonNow(G); if (L && L.boss && !G.boss &&
 const BLIND = { n: G => stick(G, 0, -1), s: G => stick(G, 0, 1), e: G => stick(G, 1, 0), w: G => stick(G, -1, 0), o: G => stick(G, 0, 0), c: G => choose(G, (Math.random() * 3) | 0) };
 // a hero who looks: keeps out of the crowd and out of arrows' lines, goes for crystals at the crowd's edge, circles the boss
 // out of its slam, and picks powers in a sensible order (weapons first, then might and haste)
+// THE TUTORIAL SHOWS WHICH WAY TO GO, AND WHAT TO PICK (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). The hand slid left and right for ever, and PICK ONE was a tap in a box. Now the robot is asked (dryPlan): MOVE THIS WAY (the way
+// it would go: to the crystals, out of the red), and at a level-up the hand on the card it would take: TAP THIS ONE.
+const HDC = { t: -1e9, v: null };
+function hordeCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const now = performance.now(); if (!G.choice && now - HDC.t < 250) return HDC.v; HDC.t = now;
+  const P = dryPlan(G, null, { next: -1, slip: -1 }); let v = ['WAIT…', 'wait', false];
+  if (P && P[0] === 'choose') { const r = cardRects(G)[P[1]]; v = ['TAP THIS ONE', 'tap', r ? [r.x + r.w / 2, r.y + r.h / 2] : false]; }
+  else if (P && P[0] === 'stick') { const R = 46 * k * 0.8, x0 = W / 2, y0 = H * 0.66, m = Math.hypot(P[1], P[2]) || 1; v = [G.lesson && G.lesson.steps[G.lesson.i].id === 'arrows' ? 'STEP THIS WAY' : 'MOVE THIS WAY', 'drag', [x0, y0, x0 + P[1] / m * R, y0 + P[2] / m * R]]; }
+  HDC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, me = G.me, c = G.cfg;
   if (G.choice) {
     const order = ['bolt', 'orbit', 'bolt2', 'aura', 'axe', 'sword', 'might', 'haste', 'heart', 'armour', 'swift', 'magnet'], sc = op => { const key = op.w || op.p; return order.indexOf(key) + (op.w && G.weapons[op.w] ? -3 : 0); };
-    const opts = G.choice.opts.map((q, i) => [sc(q), i]).sort((a, b) => a[0] - b[0]); const i = Math.random() > acc ? (Math.random() * opts.length) | 0 : opts[0][1]; choose(G, i); return; }
+    const opts = G.choice.opts.map((q, i) => [sc(q), i]).sort((a, b) => a[0] - b[0]); const i = Math.random() > acc ? (Math.random() * opts.length) | 0 : opts[0][1]; ACT.choose(G, i); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.06 + react * 0.35;
-  if (mem.slip > G.t) return; if (Math.random() > acc + (1 - acc) * 0.85) { mem.slip = G.t + 0.2 + react * 0.5; const a = Math.random() * TAU; stick(G, Math.sin(a), Math.cos(a)); return; }
+  if (mem.slip > G.t) return; if (Math.random() > acc + (1 - acc) * 0.85) { mem.slip = G.t + 0.2 + react * 0.5; const a = Math.random() * TAU; ACT.stick(G, Math.sin(a), Math.cos(a)); return; }
   let bx = 0, bz = 0, bs = -1e9;
   for (let i = 0; i < 16; i++) { const a = i / 16 * TAU, ux = Math.sin(a), uz = Math.cos(a), px = me.x + ux * c.speed * 0.6, pz = me.z + uz * c.speed * 0.6; let sc = 0;
     for (const f of G.foes) { const d0 = Math.hypot(f.x - px, f.z - pz), d = Math.max(0.05, d0 - Math.min(d0 * 0.8, f.v * 0.5)) - f.r; if (FOES[f.k].boss) { if (d < 1.5) sc -= 15 / Math.max(0.3, d); if (!(f.slam > 0)) sc -= Math.abs(d - 2.4) * 0.6; continue; } if (d < 6) sc -= (f.elite ? 6 : 2) / Math.max(0.3, d) ** 1.5; }
@@ -218,6 +227,11 @@ function honest(G, o, mem) {
     const w = HALF - Math.max(Math.abs(px), Math.abs(pz)); if (w < 6) sc -= (6 - w) * 2;
     const bc = !G.boss && G.beacons.filter(q => !q.lit).sort((a, b) => Math.hypot(a.x - me.x, a.z - me.z) - Math.hypot(b.x - me.x, b.z - me.z))[0]; if (bc && me.hp > me.max * 0.25 && me.lv >= Math.min(4, 1 + G.beacons.filter(q => q.lit).length)) { const d = Math.hypot(px - bc.x, pz - bc.z); sc -= d * 1.4; if (d < 2.2) sc += 6; }
     if (sc > bs) { bs = sc; bx = ux; bz = uz; } }
-  stick(G, bx, bz);
+  ACT.stick(G, bx, bz);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.choice = null; G.bossDown = true; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { choose, stick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

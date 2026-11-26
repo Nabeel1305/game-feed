@@ -315,11 +315,22 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'pass', title: 'PASS', say: 'RUN, THEN TAP PASS', do: 'tap', how: 'Run with your LEFT thumb. Point at a team-mate (a white ring shows who) and tap PASS. Three passes.', need: 3 },
-    { id: 'goal', title: 'SHOOT', say: 'TAP SHOOT', do: 'tap', how: 'Run at goal and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
-  2: [{ id: 'tackle', title: 'WIN IT BACK', say: 'TAP TACKLE', do: 'tap', how: 'Without the ball, run at the man with it and tap TACKLE when you are close (SLIDE reaches further). Win it twice.', need: 2 }],
-  3: [{ id: 'lob', title: 'OVER THE TOP', say: 'TAP LOB', do: 'tap', how: 'Tap LOB to lift the ball over the defenders to a runner. Two lobs that reach a team-mate.', need: 2 }],
+  1: [{ id: 'pass', title: 'PASS', say: G => elevenCue(G)[0], do: G => elevenCue(G)[1], at: G => elevenCue(G)[2], how: 'Run with your LEFT thumb. Point at a team-mate (a white ring shows who) and tap PASS. Three passes.', need: 3 },
+    { id: 'goal', title: 'SHOOT', say: G => elevenCue(G)[0], do: G => elevenCue(G)[1], at: G => elevenCue(G)[2], how: 'Run at goal and tap SHOOT. Point up or down to pick the corner. Score once.', need: 1 }],
+  2: [{ id: 'tackle', title: 'WIN IT BACK', say: G => elevenCue(G)[0], do: G => elevenCue(G)[1], at: G => elevenCue(G)[2], how: 'Without the ball, run at the man with it and tap TACKLE when you are close (SLIDE reaches further). Win it twice.', need: 2 }],
+  3: [{ id: 'lob', title: 'OVER THE TOP', say: G => elevenCue(G)[0], do: G => elevenCue(G)[1], at: G => elevenCue(G)[2], how: 'Tap LOB to lift the ball over the defenders to a runner. Two lobs that reach a team-mate.', need: 2 }],
 };
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said RUN, THEN TAP PASS (two moves) with the hand in a box. Now the robot is asked (dryPlan) and the hand does it: RUN THIS WAY
+// (a drag on the left, the way to run), TAP PASS / TAP SHOOT / TAP LOB on the button, TAP TACKLE or SLIDE when close, TAP SWITCH.
+const ELC = { t: -1e9, v: null };
+function elevenCue(G) { if (G.over || G.pause > 0 || G.lessonWait) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - ELC.t < 250) return ELC.v; ELC.t = now;
+  const B = k2 => { const b = buttons(G).find(q => q.k === k2); return b ? [b.x, b.y] : false; }, P = dryPlan(G); let v = ['WAIT…', 'wait', false];
+  if (P) { const a = P[0];
+    if (a === 'pass') v = ['TAP PASS', 'tap', B('pass')]; else if (a === 'lob') v = ['TAP LOB', 'tap', B('lob')]; else if (a === 'shoot') v = ['TAP SHOOT', 'tap', B('shoot')];
+    else if (a === 'tackle') v = P[2] ? ['TAP SLIDE', 'tap', B('lob')] : ['TAP TACKLE', 'tap', B('shoot')]; else if (a === 'switchNear') v = ['TAP SWITCH', 'tap', B('pass')];
+    else if (a === 'setStick' && (P[1] || P[2])) { const m = Math.hypot(P[1], P[2]) || 1, x0 = W * 0.24, y0 = H * 0.62; v = ['RUN THIS WAY', 'drag', [x0, y0, x0 + P[1] / m * 44 * k, y0 + P[2] / m * 44 * k]]; } }
+  ELC.v = v; return v; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSetup(G) {      // a quiet practice: their players stroll, nothing counts on the scoreboard
@@ -343,27 +354,32 @@ const BLIND = { m: G => { const R = Math.random; setSprint(G, R() < 0.5); if (R(
 // a player who looks: plays your man with the team's own football brain, a moment late and a little off (react, acc)
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, b = G.ball, p = me(G), c = G.cfg;
-  if (G.over || G.pause > 0 || G.lessonWait) { setStick(G, 0, 0); setSprint(G, false); return; }
+  if (G.over || G.pause > 0 || G.lessonWait) { ACT.setStick(G, 0, 0); setSprint(G, false); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.08 + react * 0.4;
   if (b.own === p) {      // on the ball
-    if (p.role === 'gk') { const q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q) pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; }
+    if (p.role === 'gk') { const q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q) ACT.pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; }
     const gx = HL, dg = Math.hypot(gx - p.x, p.z), nf = nearestFoe(G, p), st = lessonNow(G);
-    if (st && st.id === 'pass') { const q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q) { pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } }
-    if (st && st.id === 'lob') { lob(G, p, { x: 1, z: 0 }); return; }
+    if (st && st.id === 'pass') { const q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q) { ACT.pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } }
+    if (st && st.id === 'lob') { ACT.lob(G, p, { x: 1, z: 0 }); return; }
     const keeper = G.P[11];
-    if (dg > 12 && dg < 24 && Math.abs(keeper.x - gx) > 6 && Math.abs(keeper.x - p.x) > 4 && R() < 0.6) { lob(G, p, { x: 1, z: (R() - 0.5) * 2 }); return; }
-    if (dg < 19 && Math.abs(p.z) < 15 && (nf > 1.6 || dg < 11) && G.t - (p.gotAt || 0) > 0.8) { const kz = keeper.z, aim = (kz > p.z * 0.1 ? -1 : 1) * (R() < acc ? 1 : -1); shoot(G, p, aim); return; }
-    if (nf < 2.6 || (nf < 4 && R() < 0.3)) { let q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q && R() > acc) q = null; if (q) { pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } if (R() < 0.3) { const lq = bestTarget(G, p, { x: 1, z: 0 }, true); if (lq) { lob(G, p, { x: lq.x - p.x, z: lq.z - p.z }); return; } } }
+    if (dg > 12 && dg < 24 && Math.abs(keeper.x - gx) > 6 && Math.abs(keeper.x - p.x) > 4 && R() < 0.6) { ACT.lob(G, p, { x: 1, z: (R() - 0.5) * 2 }); return; }
+    if (dg < 19 && Math.abs(p.z) < 15 && (nf > 1.6 || dg < 11) && G.t - (p.gotAt || 0) > 0.8) { const kz = keeper.z, aim = (kz > p.z * 0.1 ? -1 : 1) * (R() < acc ? 1 : -1); ACT.shoot(G, p, aim); return; }
+    if (nf < 2.6 || (nf < 4 && R() < 0.3)) { let q = bestTarget(G, p, { x: 1, z: 0 }, false); if (q && R() > acc) q = null; if (q) { ACT.pass(G, p, { x: q.x - p.x, z: q.z - p.z }); return; } if (R() < 0.3) { const lq = bestTarget(G, p, { x: 1, z: 0 }, true); if (lq) { ACT.lob(G, p, { x: lq.x - p.x, z: lq.z - p.z }); return; } } }
     let ax = 0, az = 0; for (const f of team(G, 1)) { const d = dist(f, p); if (d < 7 && f.x > p.x - 2) { ax += (p.x - f.x) / (d * d); az += (p.z - f.z) / (d * d); } }
-    const tx = 1 + ax * 3, tz = az * 6 - p.z * 0.03 * (1 + (R() - 0.5) * (1 - acc)); setSprint(G, nf > 4.5 && p.st > 0.35 && dg > 20); setStick(G, tx, tz); return; }
+    const tx = 1 + ax * 3, tz = az * 6 - p.z * 0.03 * (1 + (R() - 0.5) * (1 - acc)); setSprint(G, nf > 4.5 && p.st > 0.35 && dg > 20); ACT.setStick(G, tx, tz); return; }
   if (b.own && b.own.t === 1) {      // defending: be the nearest man, then go and win it
     const o2 = b.own; let near = null, nd = 1e9; for (const q of team(G, 0)) { if (q.role === 'gk') continue; const d = dist(q, o2); if (d < nd) { nd = d; near = q; } }
-    if (near && near !== p && dist(p, o2) > nd + 4) { switchNear(G); return; }
-    const d = dist(p, o2), gx = -HL; if (d < (R() < 0.3 ? 2.6 : 1.5) && R() < acc) { tackle(G, p, d > 1.6); return; }
-    const tx = o2.x + o2.vx * 0.25 + (gx - o2.x) * 0.04, tz = o2.z + o2.vz * 0.25; setSprint(G, d > 5 && p.st > 0.2); setStick(G, tx - p.x, tz - p.z); return; }
+    if (near && near !== p && dist(p, o2) > nd + 4) { ACT.switchNear(G); return; }
+    const d = dist(p, o2), gx = -HL; if (d < (R() < 0.3 ? 2.6 : 1.5) && R() < acc) { ACT.tackle(G, p, d > 1.6); return; }
+    const tx = o2.x + o2.vx * 0.25 + (gx - o2.x) * 0.04, tz = o2.z + o2.vz * 0.25; setSprint(G, d > 5 && p.st > 0.2); ACT.setStick(G, tx - p.x, tz - p.z); return; }
   if (!b.own) { const d = Math.hypot(b.x - p.x, b.z - p.z); let near = null, nd = 1e9; for (const q of team(G, 0)) { if (q.role === 'gk') continue; const dd = Math.hypot(q.x - b.x, q.z - b.z); if (dd < nd) { nd = dd; near = q; } }
-    if (b.to && b.to.t === 0 && b.to !== p) { G.ctrl = b.to.i; return; } if (b.to === p) { setStick(G, 0, 0); setSprint(G, d > 8); return; } if (near && near !== p && d > nd + 5) { switchNear(G); return; }
-    setSprint(G, d > 6 && p.st > 0.2); setStick(G, b.x + b.vx * 0.3 - p.x, b.z + b.vz * 0.3 - p.z); return; }
-  setStick(G, 0, 0);
+    if (b.to && b.to.t === 0 && b.to !== p) { G.ctrl = b.to.i; return; } if (b.to === p) { ACT.setStick(G, 0, 0); setSprint(G, d > 8); return; } if (near && near !== p && d > nd + 5) { ACT.switchNear(G); return; }
+    setSprint(G, d > 6 && p.st > 0.2); ACT.setStick(G, b.x + b.vx * 0.3 - p.x, b.z + b.vz * 0.3 - p.z); return; }
+  ACT.setStick(G, 0, 0);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.score[0] = G.score[1] + 1; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { pass, lob, shoot, tackle, switchNear, setStick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

@@ -101,6 +101,11 @@ const BLIND = { s: G => blindSpell(G), h: G => hint(G), f: G => shuffle(G) };
 // a player who looks: knows most everyday words (the very common ones nearly always), takes a moment to see each one, and
 // now and then tries one that is not a word; when it sees none left, it uses a hint (if it has the coins)
 function indexes(G, w) { const used = [], idx = []; for (const ch of w) { const i = G.letters.findIndex((l, j) => l === ch && !used.includes(j)); if (i < 0) return null; used.push(i); idx.push(i); } return idx; }
+// THE FIRST LESSON SHOWS A REAL WORD (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). SLIDE ACROSS LETTERS
+// slid right across nothing: a slide that spells no word does nothing. Now it names the shortest word still to find (SPELL HAT) and the hand
+// starts on its first letter and slides to the next. Later lessons leave the finding to him (the hint lesson points at the bulb).
+function wordsCue(G) { const L = lay(), q = (G.words || []).filter(z => !z.found).sort((a, b) => a.w.length - b.w.length)[0], ix = q && indexes(G, q.w);
+  if (!ix || ix.length < 2) return ['SLIDE ACROSS LETTERS', false]; const A = L.pts[ix[0]], B = L.pts[ix[1]]; return ['SPELL ' + q.w.toUpperCase(), [A.x, A.y, B.x, B.y]]; }
 function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (mem.page !== G.words) { mem.page = G.words; mem.know = {}; mem.t = 1 + react * 2; for (const q of G.words) mem.know[q.w] = R() < (WORDS.rank[q.w] === 2 ? 0.5 : q.w.length <= 4 ? 0.97 : q.w === G.base ? 0.75 : 0.88) * (0.85 + acc * 0.15); mem.extra = G.subs.filter(w => !G.words.some(q => q.w === w) && R() < 0.4); }
   mem.t -= 1 / 60; if (mem.t > 0) return;
@@ -117,7 +122,7 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.r
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; for (const q of G.words) q.found = true; G.found = G.words.length; finish(G, true); }
 // ---------- LESSONS: little pages ----------
 const LESSONS = {
-  1: [{ id: 'spell', title: 'SLIDE TO SPELL', say: 'SLIDE ACROSS LETTERS', do: 'drag', dir: 'right', how: 'Put your thumb on a letter and slide through the others to spell a word. Lift to try it. Fill the crossword!', page: { base: 'heart', words: ['heart', 'earth', 'hate', 'tear', 'hat'] } }],
+  1: [{ id: 'spell', title: 'SLIDE TO SPELL', say: G => wordsCue(G)[0], do: 'drag', dir: 'right', at: G => wordsCue(G)[1], how: 'Put your thumb on a letter and slide through the others to spell a word. Lift to try it. Fill the crossword!', page: { base: 'heart', words: ['heart', 'earth', 'hate', 'tear', 'hat'] } }],
   2: [{ id: 'hint', title: 'STUCK? A HINT', say: 'STUCK? TAP 💡', do: 'tap', at: G => { const L = lay(); return [L.bulb.x, L.bulb.y]; }, how: 'Find the words. Stuck? Tap the 💡 bulb: it shows a letter (two free in this lesson). Made-up words spill ink!', page: { base: 'stone', words: ['stone', 'notes', 'tone', 'nest', 'one', 'set'] } }],
   3: [{ id: 'bonus', title: 'BONUS WORDS', say: 'FIND A BONUS WORD', do: 'drag', dir: 'right', how: 'Real words that are not in the crossword are BONUS words: a coin each. Find one bonus word, and fill the crossword.', page: { base: 'plane', words: ['plane', 'panel', 'lane', 'plan', 'pal'] } }],
 };

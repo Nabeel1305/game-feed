@@ -4738,9 +4738,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4971,9 +4973,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5433,9 +5435,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, 'finish'); }
 // ---------- lessons (levels 1-3): one obstacle each, no clock; then the timed run ----------
 const LESSONS = {
-  1: [{ id: 'balls', title: 'HOLD, THEN LET GO', say: 'HOLD JUMP, LET GO', do: 'hold', at: G => { const b = layout(G).jump; return [b.x, b.y]; }, how: 'Left thumb: push towards the next ball. Hold JUMP and let go: the longer you hold, the farther (the ring shows where you will land). Cross all four balls.', need: 5 }],
-  2: [{ id: 'sweep', title: 'JUMP THE SWEEPER', say: 'TAP JUMP!', do: 'tap', at: G => { const b = layout(G).jump; return [b.x, b.y]; }, how: 'Jump onto the round platform. Tap JUMP just before the arm reaches you (no direction: straight up). Keep it up until the gate opens, then jump across.', need: 3 }],
-  3: [{ id: 'wall', title: 'STOP AND GO', say: 'WAIT… GO!', do: 'drag', dir: 'right', how: 'Walk along the ledge and wait in the gaps. A glove flashes red and pulls back before it punches: go just after it.', need: 0 }],
+  1: [{ id: 'balls', title: 'HOLD, THEN LET GO', say: G => splashCue(G)[0], do: G => splashCue(G)[1], at: G => splashCue(G)[2], how: 'Left thumb: push towards the next ball. Hold JUMP and let go: the longer you hold, the farther (the ring shows where you will land). Cross all four balls.', need: 5 }],
+  2: [{ id: 'sweep', title: 'JUMP THE SWEEPER', say: G => splashCue(G)[0], do: G => splashCue(G)[1], at: G => splashCue(G)[2], how: 'Jump onto the round platform. Tap JUMP just before the arm reaches you (no direction: straight up). Keep it up until the gate opens, then jump across.', need: 3 }],
+  3: [{ id: 'wall', title: 'STOP AND GO', say: G => splashCue(G)[0], do: G => splashCue(G)[1], at: G => splashCue(G)[2], how: 'Walk along the ledge and wait in the gaps. A glove flashes red and pulls back before it punches: go just after it.', need: 0 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.id === 'wall' ? G.C.obs[0].gloves.length : st.id === 'sweep' ? G.C.obs[0].need : st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, s) { const D = G.lesson; if (!D || D.done) return; const id = D.id; let good = false;
@@ -5461,71 +5463,94 @@ const BLIND = {
 };
 // HONEST: a runner who looks: knows where each jump will land (as well as acc allows), waits for the gaps, times the
 // sweeper and the hurdles (later or earlier by react), and goes round the barriers.
-function aimJump(G, mem, tx, tz, th, err) {   // choose a direction and a power so the jump lands at (tx, tz) on height th; hold it that long
+function aimPlan(G, tx, tz, th, err) {   // choose a direction and a power so the jump lands at (tx, tz) on height th; hold it that long
   const P = G.p, cv = carryV(G, P.on, P.x, P.z); let T = 0.85, pw = 0.5, ux = 0, uz = 1;
   for (let it = 0; it < 3; it++) { const ax = tx - cv.x * T - P.x, az = tz - cv.z * T - P.z, D = Math.hypot(ax, az) || 1e-6; ux = ax / D; uz = az / D; let lo = 0, hi = 1;
     for (let i = 0; i < 18; i++) { const m = (lo + hi) / 2, L = landAt(G, m, ux, uz, th); const d = L ? Math.hypot(L.x - cv.x * L.T - P.x, L.z - cv.z * L.T - P.z) : 0; if (d < D) lo = m; else hi = m; }
     pw = (lo + hi) / 2; const L = landAt(G, pw, ux, uz, th); if (L) T = L.T; }
-  pw = clamp(pw + err, 0, 1); setStick(G, ux, uz); jumpOn(G, true); mem.hold = pw * CH; mem.jx = ux; mem.jz = uz; }
+  return { ux, uz, pw: clamp(pw + err, 0, 1) }; }
+function aimJump(G, mem, tx, tz, th, err) { const A = aimPlan(G, tx, tz, th, err); setStick(G, A.ux, A.uz); jumpOn(G, true); mem.hold = A.pw * CH; mem.jx = A.ux; mem.jz = A.uz; }
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD
+// JUMP, LET GO with the hand on JUMP all along (which way? how long?), and WAIT… GO! with a hand sliding right. Now the robot is asked
+// (dryPlanAll; aimPlan says how long it would hold): PUSH THIS WAY on the stick, HOLD JUMP, LET GO! at the right length, TAP JUMP! as the arm
+// comes, WALK ON / WAIT… in the gaps, HOLD DUCK.
+const SPX = { t: -1e9, v: null, hold: null };
+function splashCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SPX.t < 80) return SPX.v; SPX.t = now; const P = G.p, L = layout(G), J = [L.jump.x, L.jump.y], f = ui.phi || 0, R = 56 * k, s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.24, y0 = s2 ? s2.y0 : H * 0.72;
+  const toScr = (wx, wz) => { const sx = wx * Math.cos(f) - wz * Math.sin(f), sy = wx * Math.sin(f) + wz * Math.cos(f); return [x0, y0, x0 + sx * R * 0.8, y0 - sy * R * 0.8]; }; let v;
+  if (G.jumpHeld) { v = SPX.hold != null && G.charge >= SPX.hold - 0.02 ? ['LET GO!', 'release', J] : ['KEEP HOLDING', 'hold', J]; SPX.v = v; return v; }
+  const m = {}, all = dryPlanAll(G, null, m), last = n => all.filter(q => q[0] === n).pop(), aj = last('aimJump'), jo = last('jumpOn'), st = last('setStick'), dk = last('duckOn');
+  if (aj) { const A = aimPlan(G, aj[2], aj[3], aj[4], 0), ok = Math.hypot(G.stick.x - A.ux, G.stick.z - A.uz) < 0.45; SPX.hold = A.pw * CH; v = ok ? ['HOLD JUMP', 'hold', J] : ['PUSH THIS WAY', 'drag', toScr(A.ux, A.uz)]; }
+  else if (jo && jo[1]) { SPX.hold = m.hold != null ? m.hold : 0; v = SPX.hold < 0.05 ? ['TAP JUMP!', 'tap', J] : ['HOLD JUMP', 'hold', J]; }
+  else if (dk && dk[1]) v = ['HOLD DUCK', 'hold', [L.duck.x, L.duck.y]];
+  else if (st && Math.hypot(st[1], st[2]) > 0.2) v = [G.lesson && G.lesson.id === 'wall' ? 'GO NOW!' : 'WALK THIS WAY', 'drag', toScr(st[1], st[2])];
+  else v = G.duckHeld ? ['LET GO', 'release', [L.duck.x, L.duck.y]] : s2 ? ['LET GO: WAIT…', 'release', [s2.x, s2.y]] : ['WAIT…', 'wait', false];
+  SPX.v = v; return v; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, P = G.p, t = G.t;
-  if (P.state === 'fall' || P.stun > 0) { if (G.jumpHeld) jumpOn(G, false); duckOn(G, false); setStick(G, 0, 0); mem.wait = null; return; }
-  if (G.jumpHeld) { setStick(G, mem.jx || 0, mem.jz || 0); if (G.charge >= mem.hold - 1e-9 || !G.charging) jumpOn(G, false); return; }
-  if (P.state === 'air') { setStick(G, 0, 0); return; }
-  if (mem.wait != null && t < mem.wait) { setStick(G, 0, 0); return; }
+  if (P.state === 'fall' || P.stun > 0) { if (G.jumpHeld) ACT.jumpOn(G, false); ACT.duckOn(G, false); ACT.setStick(G, 0, 0); mem.wait = null; return; }
+  if (G.jumpHeld) { ACT.setStick(G, mem.jx || 0, mem.jz || 0); if (G.charge >= mem.hold - 1e-9 || !G.charging) ACT.jumpOn(G, false); return; }
+  if (P.state === 'air') { ACT.setStick(G, 0, 0); return; }
+  if (mem.wait != null && t < mem.wait) { ACT.setStick(G, 0, 0); return; }
   const s = P.on, err = () => (R() - 0.5) * (1 - acc) * 1.25, late = () => (R() - 0.5) * react * 0.6, C = G.C;
-  const go = (x, z, sp = 1) => { const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz), m = Math.min(sp, d * 1.6); setStick(G, d > 0.05 ? dx / d * m : 0, d > 0.05 ? dz / d * m : 0); return d; };
+  const go = (x, z, sp = 1) => { const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz), m = Math.min(sp, d * 1.6); ACT.setStick(G, d > 0.05 ? dx / d * m : 0, d > 0.05 ? dz / d * m : 0); return d; };
   const nextPlat = i => C.plats[i];
-  if (s.kind === 'plat') { const pl = s.pl, ob = C.obs[pl.i]; duckOn(G, false);
+  if (s.kind === 'plat') { const pl = s.pl, ob = C.obs[pl.i]; ACT.duckOn(G, false);
     if (!ob) { go(0, P.z + 3); return; }
     const edge = pl.z1 - 0.45; if (P.z < edge - 0.15 && ob.kind !== 'wall') { go(0, edge); return; }
     if (ob.kind === 'wall') { go(0, pl.z1 + 1); return; }
-    setStick(G, 0, 0); if (Math.hypot(P.vx, P.vz) > 0.6) return;
-    if (ob.kind === 'balls') { const b = ob.balls[0], L0 = landAt(G, 0.5, 0, b.cz - P.z, b.top); const tt = (L0 ? L0.T : 0.9) + 0.25; aimJump(G, mem, ballX(b, t + tt), b.cz, b.top, err()); return; }
-    if (ob.kind === 'sweep') { const dx = -ob.pivot.x, ang = Math.atan2(ob.pz - ob.pivot.z, dx), da = (((ang - ob.th) % TAU) + TAU) % TAU, tA = da / Math.max(0.01, ob.w); const per = TAU / Math.max(0.01, ob.w); if (!ob.open && (tA < 1.25 || tA > per - 0.25)) return; if (!ob.open && ob.high) { const db = (((ang - ob.th - Math.PI) % TAU) + TAU) % TAU / Math.max(0.01, ob.w); if (db < 1.25 || db > per - 0.25) return; } aimJump(G, mem, 0, ob.pz, TOP, err()); return; }
-    if (ob.kind === 'belt') { const lz = ob.b0 + 1.4; if (ob.items.some(it => { for (let k = 0; k <= 10; k++) { const tt = 0.25 + 0.95 * k / 10, iz = beltItemZ(ob, it) - ob.v * tt, pz = P.z + (lz - P.z) * k / 10; if (iz < ob.z1 && Math.abs(iz - pz) < 1.0) return true; } const iz = beltItemZ(ob, it) - ob.v * 1.2; return it.type === 'barrier' && iz > lz && iz < lz + 2.4 && iz < ob.z1; })) return; aimJump(G, mem, 0, ob.b0 + 1.4, TOP, err() * 0.5); return; }
+    ACT.setStick(G, 0, 0); if (Math.hypot(P.vx, P.vz) > 0.6) return;
+    if (ob.kind === 'balls') { const b = ob.balls[0], L0 = landAt(G, 0.5, 0, b.cz - P.z, b.top); const tt = (L0 ? L0.T : 0.9) + 0.25; ACT.aimJump(G, mem, ballX(b, t + tt), b.cz, b.top, err()); return; }
+    if (ob.kind === 'sweep') { const dx = -ob.pivot.x, ang = Math.atan2(ob.pz - ob.pivot.z, dx), da = (((ang - ob.th) % TAU) + TAU) % TAU, tA = da / Math.max(0.01, ob.w); const per = TAU / Math.max(0.01, ob.w); if (!ob.open && (tA < 1.25 || tA > per - 0.25)) return; if (!ob.open && ob.high) { const db = (((ang - ob.th - Math.PI) % TAU) + TAU) % TAU / Math.max(0.01, ob.w); if (db < 1.25 || db > per - 0.25) return; } ACT.aimJump(G, mem, 0, ob.pz, TOP, err()); return; }
+    if (ob.kind === 'belt') { const lz = ob.b0 + 1.4; if (ob.items.some(it => { for (let k = 0; k <= 10; k++) { const tt = 0.25 + 0.95 * k / 10, iz = beltItemZ(ob, it) - ob.v * tt, pz = P.z + (lz - P.z) * k / 10; if (iz < ob.z1 && Math.abs(iz - pz) < 1.0) return true; } const iz = beltItemZ(ob, it) - ob.v * 1.2; return it.type === 'barrier' && iz > lz && iz < lz + 2.4 && iz < ob.z1; })) return; ACT.aimJump(G, mem, 0, ob.b0 + 1.4, TOP, err() * 0.5); return; }
     if (ob.kind === 'cross') { const D = ob.cz - ob.L + 1.0 - P.z; let pw = 0, lo = 0, hi = 1; for (let i = 0; i < 16; i++) { const m = (lo + hi) / 2, L = landAt(G, m, 0, 1, TOP); if (L && L.z - P.z < D) lo = m; else hi = m; } pw = (lo + hi) / 2;
       const L = landAt(G, pw, 0, 1, TOP); if (!L) return; const T = pw * CH + L.T; let ok = true; for (const fz of [-0.3, 0, 0.3]) if (!crossHas(ob, 0, L.z + fz, ob.th + ob.w * T)) ok = false;
       if (ob.bar) { const r = Math.abs(L.z - ob.cz), ang = -Math.PI / 2; for (let k = 0; k <= 10; k++) { const tt = T - 0.3 + k * 0.15, bt = ob.bth - ob.w * 1.3 * tt; if (Math.abs(Math.atan2(Math.sin(ang - bt), Math.cos(ang - bt))) * r < 0.7) ok = false; } }
-      if (ok && R() < 0.5 + acc * 0.5) { setStick(G, 0, 1); jumpOn(G, true); mem.hold = clamp(pw + err(), 0, 1) * CH; mem.jx = 0; mem.jz = 1; } return; }
+      if (ok && R() < 0.5 + acc * 0.5) { ACT.setStick(G, 0, 1); ACT.jumpOn(G, true); mem.hold = clamp(pw + err(), 0, 1) * CH; mem.jx = 0; mem.jz = 1; } return; }
     return; }
   if (s.kind === 'ball') { const ob = s.o, bi = s.bi, b = s.b, bx = ballX(b, t), d = Math.hypot(P.x - bx, P.z - b.cz);
-    if (d > 0.25) { go(bx, b.cz); return; } setStick(G, 0, 0);
-    if (bi < 3) { const nb = ob.balls[bi + 1], L0 = landAt(G, 0.6, 0, nb.cz - P.z, nb.top), tt = (L0 ? L0.T : 0.9) + 0.3; aimJump(G, mem, ballX(nb, t + tt), nb.cz, nb.top, err()); }
-    else aimJump(G, mem, 0, ob.z1 + 1.4, TOP, err());
+    if (d > 0.25) { go(bx, b.cz); return; } ACT.setStick(G, 0, 0);
+    if (bi < 3) { const nb = ob.balls[bi + 1], L0 = landAt(G, 0.6, 0, nb.cz - P.z, nb.top), tt = (L0 ? L0.T : 0.9) + 0.3; ACT.aimJump(G, mem, ballX(nb, t + tt), nb.cz, nb.top, err()); }
+    else ACT.aimJump(G, mem, 0, ob.z1 + 1.4, TOP, err());
     return; }
-  if (s.kind === 'ped') { const ob = s.o; if (ob.open) { aimJump(G, mem, 0, ob.z1 + 1.3, TOP, err() * 0.5); return; }
-    if (Math.hypot(P.x, P.z - ob.pz) > 0.2) { go(0, ob.pz, 0.6); } else setStick(G, 0, 0);
+  if (s.kind === 'ped') { const ob = s.o; if (ob.open) { ACT.aimJump(G, mem, 0, ob.z1 + 1.3, TOP, err() * 0.5); return; }
+    if (Math.hypot(P.x, P.z - ob.pz) > 0.2) { go(0, ob.pz, 0.6); } else ACT.setStick(G, 0, 0);
     const ang = Math.atan2(P.z - ob.pivot.z, P.x - ob.pivot.x), w = Math.max(0.01, ob.w), tA = ((((ang - ob.th) % TAU) + TAU) % TAU) / w;
     if (mem.jt == null || mem.jfor !== Math.floor(ob.th / TAU)) { mem.jfor = Math.floor(ob.th / TAU); mem.jt = 0.36 + late(); }
-    if (tA < mem.jt && tA > 0.05) { setStick(G, 0, 0); jumpOn(G, true); mem.hold = 0; mem.jx = 0; mem.jz = 0; mem.jt = -1; return; }
-    if (ob.high) { const tB = ((((ang - ob.th - Math.PI) % TAU) + TAU) % TAU) / w; duckOn(G, tB < 0.45 + react * 0.2 || tB > TAU / w - 0.2); } return; }
-  if (s.kind === 'ledge') { const ob = s.o; duckOn(G, false); const ahead = ob.gloves.find(g => g.z + 0.6 + PR > P.z - 0.02);
+    if (tA < mem.jt && tA > 0.05) { ACT.setStick(G, 0, 0); ACT.jumpOn(G, true); mem.hold = 0; mem.jx = 0; mem.jz = 0; mem.jt = -1; return; }
+    if (ob.high) { const tB = ((((ang - ob.th - Math.PI) % TAU) + TAU) % TAU) / w; ACT.duckOn(G, tB < 0.45 + react * 0.2 || tB > TAU / w - 0.2); } return; }
+  if (s.kind === 'ledge') { const ob = s.o; ACT.duckOn(G, false); const ahead = ob.gloves.find(g => g.z + 0.6 + PR > P.z - 0.02);
     if (!ahead) { go(0, ob.z1 + 1.5); return; }
     const z0 = ahead.z - 0.6 - PR, z1 = ahead.z + 0.6 + PR, near = z0 - P.z;
-    if (P.z > z0 - 0.08) { setStick(G, -P.x, 1); return; }                       // committed: keep going through
+    if (P.z > z0 - 0.08) { ACT.setStick(G, -P.x, 1); return; }                       // committed: keep going through
     if (near > 0.45) { go(0, z0 - 0.2); return; }
     // in the gap: go only if the glove ahead stays in while we pass it
     const pass = (z1 + 0.1 - P.z) / 3.0, start = t + Math.max(0, react * 0.25 + late() * 0.5); let safe = true;
     for (let k = 0; k <= 12; k++) { const tt = start + (pass + 0.15) * k / 12; if (glove(ahead, tt).st === 'out') safe = false; }
-    if (safe && (mem.gw == null || t >= mem.gw)) { mem.gw = null; go(0, z1 + 0.4); } else { if (!safe) mem.gw = null; setStick(G, -P.x, 0); }
+    if (safe && (mem.gw == null || t >= mem.gw)) { mem.gw = null; go(0, z1 + 0.4); } else { if (!safe) mem.gw = null; ACT.setStick(G, -P.x, 0); }
     return; }
   if (s.kind === 'belt') { const ob = s.o; let sx = Math.abs(P.x) > 1.5 ? -Math.sign(P.x) * 0.5 : 0, sz = 1, duck = false;
     for (const it of ob.items) { const iz = beltItemZ(ob, it), dz = iz - P.z; if (dz < -0.8 || dz > 3.4) continue;
       if (it.type === 'barrier' && dz < 3.0) { const want = it.side < 0 ? 1.35 : -1.35; sx = clamp((want - P.x) * 2, -1, 1); if (Math.abs(want - P.x) > 0.5 && dz < 0.9) sz = 0.2; }
-      else if (it.type === 'hurdle' && dz > 0) { if (mem.hj !== it) { mem.hj = it; mem.hd = 1.63 + late() * 4.2; } if (dz < mem.hd && dz > 0.7) { setStick(G, sx, 1); jumpOn(G, true); mem.hold = 0; mem.jx = sx; mem.jz = 1; return; } }
+      else if (it.type === 'hurdle' && dz > 0) { if (mem.hj !== it) { mem.hj = it; mem.hd = 1.63 + late() * 4.2; } if (dz < mem.hd && dz > 0.7) { ACT.setStick(G, sx, 1); ACT.jumpOn(G, true); mem.hold = 0; mem.jx = sx; mem.jz = 1; return; } }
       else if (it.type === 'bar' && dz < 0.8 + react * 0.4 && dz > -0.72) duck = true; }
-    duckOn(G, duck); setStick(G, sx, sz); return; }
+    ACT.duckOn(G, duck); ACT.setStick(G, sx, sz); return; }
   if (s.kind === 'cross') { const ob = s.o, dx = P.x, dz = P.z - ob.cz, r = Math.hypot(dx, dz), w = ob.w;
     // the opposing bar: jump it in place
     if (ob.bar && r > 0.85) { const ang = Math.atan2(dz, dx), da = Math.atan2(Math.sin(ob.bth - ang), Math.cos(ob.bth - ang)), rel = -w * 1.3 - w, tA = rel !== 0 ? -da / rel : 99;
-      if (tA > 0.05 && tA < 0.34 + late()) { setStick(G, 0, 0); jumpOn(G, true); mem.hold = 0; mem.jx = 0; mem.jz = 0; return; } }
+      if (tA > 0.05 && tA < 0.34 + late()) { ACT.setStick(G, 0, 0); ACT.jumpOn(G, true); mem.hold = 0; mem.jx = 0; mem.jz = 0; return; } }
     const goal = Math.PI / 2, Tw = (ob.L - 1.2) / RUN;
-    if (mem.arm == null) { if (r > 0.45) { go(0, ob.cz); return; } setStick(G, 0, 0);
+    if (mem.arm == null) { if (r > 0.45) { go(0, ob.cz); return; } ACT.setStick(G, 0, 0);
       for (let k = 0; k < 4; k++) { const a = ob.th + k * Math.PI / 2 + w * (Tw + 0.15); if (Math.abs(Math.atan2(Math.sin(a - goal), Math.cos(a - goal))) < 0.18) { if (ob.bar) { const a0 = ob.th + k * Math.PI / 2; let clash = false; for (let q = 0; q <= 12; q++) { const tt = (Tw + 0.35) * q / 12, d2 = Math.atan2(Math.sin(ob.bth - ob.w * 1.3 * tt - a0 - w * tt), Math.cos(ob.bth - ob.w * 1.3 * tt - a0 - w * tt)); if (Math.abs(d2) < 0.22) clash = true; } if (clash) continue; } mem.arm = k; break; } } return; }
     const a = ob.th + mem.arm * Math.PI / 2, ux = Math.cos(a), uz = Math.sin(a);
-    if (r < ob.L - 1.0) { setStick(G, ux, uz); return; }
+    if (r < ob.L - 1.0) { ACT.setStick(G, ux, uz); return; }
     const off = Math.atan2(Math.sin(a - goal), Math.cos(a - goal)); if (Math.abs(off) > 0.4) { mem.arm = null; go(0, ob.cz); return; }
-    mem.arm = null; aimJump(G, mem, 0, ob.z1 + 1.4, TOP, err() * 0.5); return; } }
+    mem.arm = null; ACT.aimJump(G, mem, 0, ob.z1 + 1.4, TOP, err() * 0.5); return; } }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick, jumpOn, duckOn, aimJump }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }
 // ===================== THE VIEW: Splash Course (sideways; the camera picks a clear angle for each obstacle) =====================
 // Sparkling pools under bright padded equipment; stands of spectators and umbrellas along the sides; the finish arch at the
 // end. Game x is drawn mirrored (X = -x) so that + x is the right of the screen when the camera looks down the course.

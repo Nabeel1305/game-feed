@@ -204,11 +204,17 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'hire', title: 'FIND THE JOB IT FITS', say: 'DRAG IT TO ITS JOB', do: 'drag', dir: 'up', how: 'Read the CV. Which job at the top does it fit? Drag the CV onto that job.', need: 2, ok: w => w === 'hire', want: 'job' },
-      { id: 'bin', title: 'FITS NONE? THE BIN', say: 'NO JOB? DRAG TO THE BIN', do: 'drag', dir: 'down', how: 'This one fits none of the three jobs. Drag it down into the bin.', need: 1, ok: w => w === 'bin', want: 'bin' }],
-  2: [{ id: 'two', title: 'EVERYTHING IT ASKS FOR', say: 'IT NEEDS BOTH', do: 'drag', dir: 'up', how: 'Jobs now need two things. The CV must have both. Drag it onto the job, or the bin.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
-  3: [{ id: 'dates', title: 'IN DATE?', say: 'CHECK THE DATE', do: 'drag', dir: 'up', how: 'Certificates run out. Look at the date it runs until, and today\'s date at the top right. Out of date: it does not count.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
+  1: [{ id: 'hire', title: 'FIND THE JOB IT FITS', say: G => hireCue(G)[0], do: G => hireCue(G)[1], at: G => hireCue(G)[2], how: 'Read the CV. Which job at the top does it fit? Drag the CV onto that job.', need: 2, ok: w => w === 'hire', want: 'job' },
+      { id: 'bin', title: 'FITS NONE? THE BIN', say: G => hireCue(G)[0], do: G => hireCue(G)[1], at: G => hireCue(G)[2], how: 'This one fits none of the three jobs. Drag it down into the bin.', need: 1, ok: w => w === 'bin', want: 'bin' }],
+  2: [{ id: 'two', title: 'EVERYTHING IT ASKS FOR', say: G => hireCue(G)[0], do: G => hireCue(G)[1], at: G => hireCue(G)[2], how: 'Jobs now need two things. The CV must have both. Drag it onto the job, or the bin.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
+  3: [{ id: 'dates', title: 'IN DATE?', say: G => hireCue(G)[0], do: G => hireCue(G)[1], at: G => hireCue(G)[2], how: 'Certificates run out. Look at the date it runs until, and today\'s date at the top right. Out of date: it does not count.', need: 3, ok: w => w === 'hire' || w === 'bin' }],
 };
+// THE TUTORIAL'S HAND DRAGS THE CV TO WHERE IT BELONGS (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It drew a drag up in a box, which lands on no job. Now the hand drags from the CV to the job it fits (or down to the bin), and the words
+// say why in a few: IT FITS THIS JOB / IT HAS BOTH / FITS NONE: THE BIN / OUT OF DATE: THE BIN.
+function hireCue(G) { const cv = G.cv; if (G.over || !cv) return ['WAIT…', 'wait', false]; const L = layout(G), P = L.paper, to = cv.fit.length ? cv.fit[0] : -1, id = G.lesson && G.lesson.steps[G.lesson.i] ? G.lesson.steps[G.lesson.i].id : '';
+  const x0 = P.x + P.w / 2, y0 = P.y + P.h * 0.4; if (to < 0) { const b = L.bin; return [id === 'dates' ? 'OUT OF DATE? THE BIN' : 'FITS NONE: THE BIN', 'drag', [x0, y0, b.x + b.w / 2, b.y + 10 * k]]; }
+  const c = L.cards[to]; return [id === 'two' ? 'IT HAS BOTH: THIS JOB' : id === 'dates' ? 'IN DATE: THIS JOB' : 'IT FITS THIS JOB', 'drag', [x0, y0, c.x + c.w / 2, c.y + c.h / 2]]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what) {

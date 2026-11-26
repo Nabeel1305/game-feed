@@ -87,10 +87,20 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: rigged boards; every placement must clear a line, or the lesson starts again ----------
 const LESSONS = {
-  1: [{ id: 'line', title: 'FILL A LINE', say: 'DRAG TO THE GAP', do: 'drag', dir: 'up', how: 'Drag a piece from the tray into the gap: a full row or column clears! Clear three times in a row.', need: 3 }],
-  2: [{ id: 'two', title: 'TWO AT ONCE', say: 'FILL A ROW AND A COLUMN', do: 'drag', dir: 'up', how: 'Place the piece where it fills a row AND a column: both clear, for far more points. Do it twice.', need: 2 }],
-  3: [{ id: 'gem', title: 'GEMS', say: 'CLEAR THE 💎', do: 'drag', dir: 'up', how: 'Clear the rows and columns with gems 💎 in them to collect the gems. Collect three.', need: 3 }],
+  1: [{ id: 'line', title: 'FILL A LINE', say: G => blockCue(G) ? blockCue(G).say : 'NO ROOM: TAP 🔄', do: 'drag', at: G => blockCue(G) ? blockCue(G).at : false, how: 'Drag a piece from the tray into the gap: a full row or column clears! Clear three times in a row.', need: 3 }],
+  2: [{ id: 'two', title: 'TWO AT ONCE', say: G => blockCue(G) ? blockCue(G).say : 'NO ROOM: TAP 🔄', do: 'drag', at: G => blockCue(G) ? blockCue(G).at : false, how: 'Place the piece where it fills a row AND a column: both clear, for far more points. Do it twice.', need: 2 }],
+  3: [{ id: 'gem', title: 'GEMS', say: G => blockCue(G) ? blockCue(G).say : 'NO ROOM: TAP 🔄', do: 'drag', at: G => blockCue(G) ? blockCue(G).at : false, how: 'Clear the rows and columns with gems 💎 in them to collect the gems. Collect three.', need: 3 }],
 };
+// THE TUTORIAL'S HAND DRAGS THE RIGHT PIECE TO THE RIGHT SPOT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It drew a drag upward in a little box; a drag up from the tray seldom clears anything. Now the hand starts on the piece that
+// clears (two lines for TWO AT ONCE, a gem for GEMS) and ends where the finger must let go (the piece rides above the finger: liftOf).
+const BCUE = { key: '', v: null };
+function blockCue(G) { const key = G.b.join('') + '|' + G.tray.map(p => p ? p.cells.join(';') : '-').join('/') + '|' + (G.lesson ? G.lesson.i : 'x'); if (BCUE.key === key) return BCUE.v;
+  const id = G.lesson && lessonNow(G) ? lessonNow(G).id : 'line'; let best = null, bv = -1e9;
+  for (let ti = 0; ti < 3; ti++) { const p = G.tray[ti]; if (!p) continue; for (let r = 0; r < GRID; r++) for (let c = 0; c < GRID; c++) { if (!fits(G, p, r, c)) continue; const T = tryPlace(G, p, r, c), v = (id === 'two' ? (T.n >= 2 ? 100 : T.n * 10) : id === 'gem' ? T.gems * 100 + T.n * 10 : T.n * 100) + boardScore(T.B) * 0.01; if (v > bv) { bv = v; best = { ti, r, c, p, T }; } } }
+  let v = null; if (best) { const L = lay(), w = 1 + Math.max(...best.p.cells.map(q => q[1])), h = 1 + Math.max(...best.p.cells.map(q => q[0]));
+    v = { say: best.T.n ? (id === 'gem' && best.T.gems ? 'DRAG IT HERE: 💎' : 'DRAG IT HERE') : 'DRAG ONE ON', at: [L.slot(best.ti), (L.ty + L.py) / 2, L.bx + best.c * L.cs + w * L.cs / 2, L.by + best.r * L.cs + liftOf(L) + h * L.cs / 2] }; }
+  BCUE.key = key; BCUE.v = v; return v; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 // a board with one row (and for "two" a row and a column) nearly full, the tray holding the piece that finishes it and two others

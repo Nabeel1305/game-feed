@@ -4956,9 +4956,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5323,9 +5323,9 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'rescue', title: 'BRING THEM IN', say: 'TAP THEM, TAP THE BEACH', do: 'tap', how: 'Someone is in trouble: low in the water, struggling. TAP THEM to swim out. Then TAP THE BEACH beside the rip, not straight back through it.', need: 2 }],
-  2: [{ id: 'whistle', title: 'WHISTLE THEM BACK', say: 'TAP THEM BACK', do: 'tap', how: 'A swimmer is drifting into the rip (the dark gap in the waves). TAP THEM to whistle them back before it turns to trouble. Three times.', need: 3 }],
-  3: [{ id: 'flag', title: 'FLAG THE RIPS', say: 'TAP THE DARK GAP', do: 'tap', how: 'Spot each rip: the dark, calm-looking gap where the waves do not break. TAP THE GAP to plant a red flag. Two rips, two flags.', need: 2 }],
+  1: [{ id: 'rescue', title: 'BRING THEM IN', say: G => lgCue(G)[0], do: G => lgCue(G)[1], at: G => lgCue(G)[2], how: 'Someone is in trouble: low in the water, struggling. TAP THEM to swim out. Then TAP THE BEACH beside the rip, not straight back through it.', need: 2 }],
+  2: [{ id: 'whistle', title: 'WHISTLE THEM BACK', say: G => lgCue(G)[0], do: G => lgCue(G)[1], at: G => lgCue(G)[2], how: 'A swimmer is drifting into the rip (the dark gap in the waves). TAP THEM to whistle them back before it turns to trouble. Three times.', need: 3 }],
+  3: [{ id: 'flag', title: 'FLAG THE RIPS', say: G => lgCue(G)[0], do: G => lgCue(G)[1], at: G => lgCue(G)[2], how: 'Spot each rip: the dark, calm-looking gap where the waves do not break. TAP THE GAP to plant a red flag. Two rips, two flags.', need: 2 }],
 };
 function lessonStart(G) { const id = LESSONS[G.N][0].id; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, id, noTrouble: id === 'whistle', spawnT: 1.5 }; G.ev.push({ k: 'lessonnext', first: true });
   const free = []; for (let x = -XW + 0.8; x <= XW - 0.8; x += 0.5) if (!G.rips.some(r => Math.abs(x - r.x) < r.w + 1.2)) free.push(x);
@@ -5349,15 +5349,30 @@ const BLIND = {
   s: G => { const live = G.sw.filter(s => ['ok', 'risk', 'trouble'].includes(s.st) && s.z > 0.3); const s = live[(Math.random() * live.length) | 0]; if (s) tap(G, s.x, s.z); else if (G.lg.st === 'tow') tap(G, (Math.random() * 2 - 1) * XW, 0); },
 };
 // HONEST: a lifeguard who watches. react: seconds to act; acc: how early they read the signs and how well they choose the way in
+// THE HAND IS ON THE ONE TO TAP (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said TAP THEM, TAP THE
+// BEACH (two taps) with a hand in a box. Now the robot is asked (dryPlan tap) and the hand is there: on the swimmer in trouble (TAP THEM: SWIM
+// OUT), on the beach beside the rip (TAP THE BEACH HERE), on a drifting swimmer (TAP THEM BACK), on the dark gap (TAP THE DARK GAP).
+const LGC = { t: -1e9, v: null };
+function lgCue(G) { if (G.over || busy(G)) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - LGC.t < 200) return LGC.v; LGC.t = now; const P = dryPlan(G, null, { cd: -1 }); let v = ['WATCH THE WATER…', 'wait', false];
+  if (P && P[0] === 'tap') { const sp = scrOf(P[1], 0, P[2]), L = G.lg, s = G.sw.find(q => Math.hypot(q.x - P[1], q.z - P[2]) < 1.1 && ['ok', 'risk', 'trouble'].includes(q.st));
+    const w = L.st === 'tow' && !L.land ? 'TAP THE BEACH HERE' : s ? (s.st === 'trouble' ? 'TAP THEM: SWIM OUT' : 'TAP THEM BACK') : 'TAP THE DARK GAP'; if (sp) v = [w, 'tap', [sp.x, sp.y]]; }
+  LGC.v = v; return v; }
 function honest(G, o, mem) { if (G.over || busy(G)) return; const acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.35 : o.react, R = Math.random, L = G.lg;
   mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react * (0.8 + R() * 0.4);
-  if (L.st === 'tow' && !L.land) { if (L.towT < react) return; const r = ripAt(G, L.x, L.z) || ripBetween(G, L, { x: L.x, z: 0.4 }); let lx = L.x; if (r && R() < acc) lx = r.x + (L.x < r.x ? -1 : 1) * (r.w + 1.6); tap(G, clamp(lx, -XW, XW), -1); return; }
+  if (L.st === 'tow' && !L.land) { if (L.towT < react) return; const r = ripAt(G, L.x, L.z) || ripBetween(G, L, { x: L.x, z: 0.4 }); let lx = L.x; if (r && R() < acc) lx = r.x + (L.x < r.x ? -1 : 1) * (r.w + 1.6); ACT.tap(G, clamp(lx, -XW, XW), -1); return; }
   const see = s => s.st === 'trouble' ? s.tr > react * 1.5 + (1 - acc) * Math.min(s.T, G.cfg.T) * 0.45 : s.st === 'risk' ? s.rt > react * 2 + (1 - acc) * 5 : false;
   const tr = G.sw.filter(s => s.st === 'trouble' && see(s)).sort((a, b) => (a.T - a.tr) - (b.T - b.tr))[0];
-  if (tr && (L.st === 'tower' || L.st === 'back') && L.lock <= 0) { tap(G, tr.x + (R() < (1 - acc) * 0.15 ? 1.5 : 0), tr.z); return; }
-  const rk = G.sw.find(s => s.st === 'risk' && see(s)); if (rk) { tap(G, rk.x, rk.z); return; }
-  if (G.flags > 0 && (G.lesson || G.t - G.t0 > 5 + (1 - acc) * 15)) { const r = G.rips.find(q => !q.flag); if (r && R() < acc * 0.3 + (G.lesson ? 0.5 : 0)) { tap(G, r.x, 13); return; } } }
+  if (tr && (L.st === 'tower' || L.st === 'back') && L.lock <= 0) { ACT.tap(G, tr.x + (R() < (1 - acc) * 0.15 ? 1.5 : 0), tr.z); return; }
+  const rk = G.sw.find(s => s.st === 'risk' && see(s)); if (rk) { ACT.tap(G, rk.x, rk.z); return; }
+  if (G.flags > 0 && (G.lesson || G.t - G.t0 > 5 + (1 - acc) * 15)) { const r = G.rips.find(q => !q.flag); if (r && R() < acc * 0.3 + (G.lesson ? 0.5 : 0)) { ACT.tap(G, r.x, 13); return; } } }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { tap }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }
 // ===================== THE VIEW: Beach Watch in 3D (three.js; sky, light, sea from tools/world3d.js) =====================
 // From the top of the lifeguard tower: the sand, umbrellas and towels below, the surf, the breaking waves (with a dark gap
 // where each rip runs out), a line of orange buoys (past them is too far), the swimmers. You in red and yellow with a rescue

@@ -122,9 +122,9 @@ function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lo
   G.res = { win, stars, why: o.why || null, done: G.done, failed: G.failed, perfect, log: G.log, coins: win ? G.coins + Math.ceil(G.N / 2) + stars * 3 : Math.max(1, G.coins >> 1) }; G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS: notch and saw; aim; the wedge ----------
 const LESSONS = {
-  1: [{ id: 'cut', title: 'NOTCH, THEN SAW', say: G => G.tree && G.tree.nd > 0.05 ? 'NOW HOLD SAW' : 'HOLD NOTCH', do: 'hold', at: G => { const b = G.tree && G.tree.nd > 0.05 ? layout(G).saw : layout(G).notch; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'The felling line already points at the strip. HOLD NOTCH until the ring shows about a third, let go. Then HOLD SAW and let go while a green strip of wood is left.' }],
-  2: [{ id: 'aim', title: 'AIM THE FALL', say: 'DRAG TO AIM', do: 'drag', dir: 'lr', how: 'DRAG across the picture to turn the felling line into the open strip, away from the fence. Then NOTCH and SAW.' }],
-  3: [{ id: 'wedge', title: 'THE WEDGE', say: 'TAP WEDGE', do: 'tap', how: 'This tree leans back: it will sit on its hinge. Stop SAW with green left, then TAP WEDGE until it tips.' }],
+  1: [{ id: 'cut', title: 'NOTCH, THEN SAW', say: G => timberCue(G)[0], do: G => timberCue(G)[1], at: G => timberCue(G)[2], how: 'The felling line already points at the strip. HOLD NOTCH until the ring shows about a third, let go. Then HOLD SAW and let go while a green strip of wood is left.' }],
+  2: [{ id: 'aim', title: 'AIM THE FALL', say: G => timberCue(G)[0], do: G => timberCue(G)[1], at: G => timberCue(G)[2], how: 'DRAG across the picture to turn the felling line into the open strip, away from the fence. Then NOTCH and SAW.' }],
+  3: [{ id: 'wedge', title: 'THE WEDGE', say: G => timberCue(G)[0], do: G => timberCue(G)[1], at: G => timberCue(G)[2], how: 'This tree leans back: it will sit on its hinge. Stop SAW with green left, then TAP WEDGE until it tips.' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); nextTree(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -138,17 +138,38 @@ const BLIND = {
 // HONEST: a faller who looks. Aims at the strip (against the lean by what experience says), holds NOTCH to about a third and
 // SAW to the green, with a thumb's reaction; taps wedges; waits for a lull (sharp ones) and for the path to clear.
 function expectAim(G, T, c = 0.85) { const S = T.spec; let a = S.t; for (let i = 0; i < 6; i++) { const side = S.lm * Math.sin(angDiff(S.la, a)); a = S.t - side * (1 - 0.7 * c) * 2.2; } return a; }
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). DRAG TO AIM slid
+// both ways in a box (which way is the strip?), TAP WEDGE pointed nowhere, and no lesson said when to LET GO. Now the robot is asked
+// (dryPlanAll, its own aim and depths): DRAG LEFT / DRAG RIGHT to the strip, HOLD NOTCH, LET GO! at a third, HOLD SAW, LET GO! with green left,
+// TAP WEDGE (the left button) until it tips.
+const TBC = { t: -1e9, v: null };
+function timberCue(G) { const T = G.tree; if (G.over || G.wait > 0 || !T || T.phase === 'down') return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - TBC.t < 60) return TBC.v; TBC.t = now; const K = KINDS[T.spec.kind], L = layout(G), mid = b => [b.x + b.w / 2, b.y + b.h / 2];
+  const all = dryPlanAll(G, null, { T, cd: -1, aim: expectAim(G, T), nd: 0.29, hg: K.brittle ? 0.16 : 0.11, lag: 99, patient: true }), q = all[all.length - 1]; let v;
+  if (!q) v = T.notching ? ['KEEP HOLDING', 'hold', mid(L.notch)] : T.sawing ? ['KEEP HOLDING', 'hold', mid(L.saw)] : ['WAIT…', 'wait', false];
+  else if (q[0] === 'release') v = ['LET GO!', 'release', mid(T.notching ? L.notch : L.saw)];
+  else if (q[0] === 'notchOn') v = ['HOLD NOTCH', 'hold', mid(L.notch)];
+  else if (q[0] === 'sawOn') v = ['HOLD SAW', 'hold', mid(L.saw)];
+  else if (q[0] === 'wedge') v = ['TAP WEDGE', 'tap', mid(L.notch)];
+  else { const d = angDiff(q[1], T.aim), dx = clamp(d * W / 1.5, -W * 0.35, W * 0.35); v = [dx < 0 ? 'DRAG LEFT TO AIM' : 'DRAG RIGHT TO AIM', 'drag', [W / 2, H * 0.42, W / 2 + dx, H * 0.42]]; }
+  TBC.v = v; return v; }
 function honest(G, o, mem) { const T = G.tree; if (G.over || G.wait > 0 || !T || T.phase === 'down') return; const acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react, S = T.spec, K = KINDS[S.kind];
   if (mem.T !== T) { mem.T = T; mem.cd = react; mem.aim = expectAim(G, T) + (Math.random() - 0.5) * 2 * (1 - acc) * 0.25 * (G.cfg.guide === 'none' ? 1.6 : 1); mem.nd = 0.29 + (Math.random() - 0.5) * 2 * (1 - acc) * 0.12; mem.hg = (K.brittle ? 0.16 : 0.11) + (Math.random() - 0.5) * 2 * (1 - acc) * 0.06; mem.lag = 0; mem.patient = Math.random() < 0.3 + 0.7 * acc; }
-  if (T.phase === 'fall') { if (T.sawing) { mem.lag += 1 / 60; if (mem.lag > react * 0.8) release(G); } return; }
-  if (T.notching) { if (T.nd >= mem.nd) { mem.lag += 1 / 60; if (mem.lag > react * 0.25) { release(G); mem.lag = 0; } } return; }
-  if (T.sawing) { if (hingeOf(T) <= mem.hg) { mem.lag += 1 / 60; if (mem.lag > react * 0.25) { release(G); mem.lag = 0; } } return; }
+  if (T.phase === 'fall') { if (T.sawing) { mem.lag += 1 / 60; if (mem.lag > react * 0.8) ACT.release(G); } return; }
+  if (T.notching) { if (T.nd >= mem.nd) { mem.lag += 1 / 60; if (mem.lag > react * 0.25) { ACT.release(G); mem.lag = 0; } } return; }
+  if (T.sawing) { if (hingeOf(T) <= mem.hg) { mem.lag += 1 / 60; if (mem.lag > react * 0.25) { ACT.release(G); mem.lag = 0; } } return; }
   mem.cd -= 1 / 60; if (mem.cd > 0) return; mem.cd = react * (0.6 + 0.8 * Math.random());
-  if (T.nd === 0 && Math.abs(angDiff(T.aim, mem.aim)) > 0.01) { aimSet(G, mem.aim); return; }
-  if (T.nd === 0) { notchOn(G); return; }
+  if (T.nd === 0 && Math.abs(angDiff(T.aim, mem.aim)) > 0.01) { ACT.aimSet(G, mem.aim); return; }
+  if (T.nd === 0) { ACT.notchOn(G); return; }
   const hk = hikerAt(T, G.t + 3), F = forces(G, T);
   if (mem.patient && hk && Math.hypot(hk.x - Math.cos(S.t) * S.h * 0.8, hk.z - Math.sin(S.t) * S.h * 0.8) < S.h * 0.5 + 4) return;      // the hiker would be under it
   if (mem.patient && acc > 0.9 && F.w > S.wind * 0.6 && S.wind > 3) return;      // wait for a lull
-  if (hingeOf(T) > mem.hg + 0.02) { sawOn(G); return; }
-  wedge(G); }
+  if (hingeOf(T) > mem.hg + 0.02) { ACT.sawOn(G); return; }
+  ACT.wedge(G); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.done = G.cfg.trees; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { aimSet, notchOn, sawOn, release, wedge }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

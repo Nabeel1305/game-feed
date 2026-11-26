@@ -4964,9 +4964,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5348,9 +5348,9 @@ function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, 'goal
 function goalText(cfg) { return cfg.kind === 'skips' ? `Skip a stone ${cfg.skips} times` : cfg.kind === 'far' ? `Skip a stone past the buoy (${cfg.far} m)` : cfg.kind === 'rings' ? `Skip through ${cfg.rings === 1 ? 'the floating ring' : `all ${cfg.rings} floating rings`}` : 'Skip a stone onto the old jetty'; }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'throw', title: 'DRAG BACK, LET GO', say: 'DRAG BACK, LET GO', do: 'drag', dir: 'down', how: 'Put your thumb on the stone and drag back down the screen: the line shows where it goes. Let go to throw. Then tap each time it kisses the water. Three good taps in a row.', need: 3 }],
-  2: [{ id: 'perfect', title: 'RIGHT ON TIME', say: 'TAP AS IT TOUCHES', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Watch the ring close on the stone as it comes down: tap just as it touches. Three PERFECT kisses.', need: 3 }],
-  3: [{ id: 'chain', title: 'KEEP IT GOING', say: 'TAP EVERY SKIP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Throw hard and tap every kiss: each perfect tap keeps its speed. Six skips on one stone.', need: 6 }],
+  1: [{ id: 'throw', title: 'DRAG BACK, LET GO', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Put your thumb on the stone and drag back down the screen: the line shows where it goes. Let go to throw. Then tap each time it kisses the water. Three good taps in a row.', need: 3 }],
+  2: [{ id: 'perfect', title: 'RIGHT ON TIME', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Watch the ring close on the stone as it comes down: tap just as it touches. Three PERFECT kisses.', need: 3 }],
+  3: [{ id: 'chain', title: 'KEEP IT GOING', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Throw hard and tap every kiss: each perfect tap keeps its speed. Six skips on one stone.', need: 6 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, q) { const D = G.lesson; if (!D || D.done) return; let good = false;
@@ -5369,26 +5369,44 @@ const BLIND = {
 };
 // HONEST: a skimmer who looks: picks the flat stone (the heavy one in a strong wind), aims at what the lake asks for (allowing
 // for the wind), throws as hard as the goal needs, and taps each kiss with a little error (react, acc).
+// THE TUTORIAL SHOWS THE THROW AND THE MOMENT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand
+// dragged straight down whatever the target, and TAP AS IT TOUCHES pointed the whole flight long. Now the robot is asked (dryPlanAll): TAP THIS
+// STONE when it would pick another, DRAG BACK, LET GO along the very line it would throw (aim and strength), then WAIT… and TAP NOW! only as the
+// stone comes down.
+const SMC = { t: -1e9, v: null };
+function skimCue(G) { if (G.over) return ['WAIT…', 'wait', false]; if (G.phase === 'fly') { const s2 = G.s; return s2 && s2.tdT != null && s2.tdT < 0.3 ? ['TAP AS IT LANDS!', 'tap', false] : ['WATCH THE STONE…', 'wait', false]; }
+  if (G.phase !== 'aim') return ['WAIT…', 'wait', false]; if (ui.drag && SMC.v) return SMC.v; const now = performance.now(); if (now - SMC.t < 300) return SMC.v; SMC.t = now;
+  const all = dryPlanAll(G, null, { wait: -1e9 }), cs = all.find(q => q[0] === 'chooseStone'), am = all.find(q => q[0] === 'setAim'), L = layout(G); let v = ['WAIT…', 'wait', false];
+  if (cs && cs[1] !== G.stone && L.picks[cs[1]]) v = ['TAP THIS STONE', 'tap', [L.picks[cs[1]].x, L.picks[cs[1]].y]];
+  else if (am) { const x0 = W / 2, y0 = H * 0.42; v = ['DRAG BACK, LET GO', 'drag', [x0, y0, x0 - am[1] / 0.7 * W * 0.42, y0 + Math.max(0.15, am[2]) * H * 0.3]]; }
+  SMC.v = v; return v; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, cfg = G.cfg;
   if (G.phase === 'aim') { if (mem.wait == null) mem.wait = G.t + 0.4 + R() * 0.4; if (G.t < mem.wait) return; mem.wait = null;
-    chooseStone(G, Math.abs(cfg.wind) > 2 ? 2 : 0); let tx = 0, tz = 40, pow = 1;
+    ACT.chooseStone(G, Math.abs(cfg.wind) > 2 ? 2 : 0); let tx = 0, tz = 40, pow = 1;
     if (cfg.kind === 'rings') { const r = G.L.rings.find(q => !q.done); if (r) { tx = r.x; tz = r.z; } }
     if (cfg.kind === 'far' && G.L.buoy) { tx = G.L.buoy.x; tz = G.L.buoy.z; }
     if (cfg.kind === 'jetty') { tx = G.L.jetty.x; tz = G.L.jetty.z; pow = planPow(G, tx, tz + 2.5); }
     const drift = cfg.wind / STONES[G.stone].heavy * 0.35 * Math.pow(tz / 16, 2) * 0.5, ang = Math.atan2(tx - drift, tz) + (R() - 0.5) * (1 - acc) * 0.25;
     let a2 = ang, clear = !pathHit(G, ang, pow); if (!clear && (cfg.kind === 'skips' || cfg.kind === 'far')) { for (const off of [0.07, -0.07, 0.14, -0.14, 0.21, -0.21, 0.3, -0.3]) if (!pathHit(G, ang + off, pow)) { a2 = ang + off; clear = true; break; } }      // steer clear of lily pads and ducks
     if (!clear && (mem.waited || 0) < 5) { mem.waited = (mem.waited || 0) + 0.3; mem.wait = G.t + 0.3; return; } mem.waited = 0;      // or wait for the duck to paddle out of the way
-    setAim(G, a2, clamp(pow + (R() - 0.5) * (1 - acc) * 0.2, 0.1, 1)); release(G); mem.tap = null; return; }
+    ACT.setAim(G, a2, clamp(pow + (R() - 0.5) * (1 - acc) * 0.2, 0.1, 1)); ACT.release(G); mem.tap = null; return; }
   if (G.phase !== 'fly') return; const s = G.s;
-  if (mem.tap != null && mem.hop !== s.skips && !mem.tapped && mem.hop === s.skips - 1) { mem.tapped = true; tap(G); }      // a moment late: it still counts
+  if (mem.tap != null && mem.hop !== s.skips && !mem.tapped && mem.hop === s.skips - 1) { mem.tapped = true; ACT.tap(G); }      // a moment late: it still counts
   if (mem.tap == null || mem.hop !== s.skips) { mem.hop = s.skips; mem.tap = G.t + s.tdT - 0.022 + (R() - 0.5) * react * 0.2 + (R() < (1 - acc) * 0.5 ? (R() - 0.5) * 0.4 : 0); mem.tapped = false; }
-  if (!mem.tapped && G.t >= mem.tap) { mem.tapped = true; tap(G); } }
+  if (!mem.tapped && G.t >= mem.tap) { mem.tapped = true; ACT.tap(G); } }
 // does the stone (good taps, with the wind) come down on a lily pad, or meet a duck?
 function pathHit(G, ang, pow) { const st = STONES[G.stone], v = 7 + 17 * pow; let x = 0, z = 0.8, y = H0, vx = Math.sin(ang) * v, vz = Math.cos(ang) * v, vy = 0.5 + 2.5 * pow, n = 0;
   for (let i = 0; i < 3000; i++) { const dt = 1 / 60; vy -= GRAV * dt; vx += G.cfg.wind / st.heavy * 0.35 * dt; x += vx * dt; z += vz * dt; y += vy * dt; if (y < 0.5 && G.L.ducks.some(d => { const q = duckPos(d, G.t + i * dt); return Math.hypot(q.x - x, q.z - z) < d.r + 0.8; })) return true; if (y <= 0) { if (G.L.pads.some(p => Math.hypot(p.x - x, p.z - z) < p.r + 0.6)) return true; const k = kissK('good', st); vx *= k; vz *= k; if (Math.hypot(vx, vz) < VMIN || n++ > 30) return false; y = 0; vy = Math.hypot(vx, vz) * Math.tan(0.16 * st.flat + 0.04); } } return false; }
 // the power that lands a stone near (tx, tz) with good taps (for the jetty)
 function planPow(G, tx, tz) { let best = 1, bd = 1e9; for (let p = 0.2; p <= 1.001; p += 0.05) { const z = simFar(G, p); const d = Math.abs(z - tz); if (d < bd) { bd = d; best = p; } } return best; }
 function simFar(G, pow) { const st = STONES[G.stone], v = 7 + 17 * pow; let x = 0, z = 0.8, y = H0, vz = v, vy = 0.5 + 2.5 * pow, n = 0; for (let i = 0; i < 4000; i++) { const dt = 1 / 60; vy -= GRAV * dt; z += vz * dt; y += vy * dt; if (y <= 0) { y = 0; let k = 0.9; k = 1 - (1 - k) / st.flat; vz *= k; if (vz < VMIN || n++ > 60) return z; vy = vz * Math.tan(0.16 * st.flat + 0.04); } } return z; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setAim, release, chooseStone, tap }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }
 // ===================== THE VIEW: Skimming Stones (upright: you stand on the pebbly shore, the lake goes away up the screen) =====================
 // A calm lake at golden hour (then sunset, mist, a lilac dusk), pines on the far banks, reeds that lean in the wind, a little
 // flag on the shore. The stone flies out from your hand; a ring on the water closes on the spot where it will touch, and turns

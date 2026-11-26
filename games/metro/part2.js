@@ -115,9 +115,9 @@ function inspect(G, sid) { const s = st(G, sid); if (!s) return null; const want
   if (s.closed > 0) reasons.unshift('Closed for repairs.'); return { s, want, lines: lines.length, reasons }; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'line', title: 'DRAW A LINE', say: 'DRAG STATION TO STATION', do: 'drag', dir: 'right', how: 'Drag from one station to another, then on to the third, without lifting your finger. A train starts on it.', need: 1 }],
-  2: [{ id: 'extend', title: 'REACH THE NEW STATIONS', say: 'DRAG FROM THE END', do: 'drag', dir: 'right', how: 'New stations keep appearing. Drag from the END of your line to each one. Three of them.', need: 3 }],
-  3: [{ id: 'train', title: 'MORE TRAINS', say: 'TAP YOUR LINE', do: 'tap', how: 'A crowd is growing. TAP your line to put a second train on it.', need: 1 }],
+  1: [{ id: 'line', title: 'DRAW A LINE', say: G => metroCue(G)[0], do: G => metroCue(G)[1], at: G => metroCue(G)[2], how: 'Drag from one station to another, then on to the third, without lifting your finger. A train starts on it.', need: 1 }],
+  2: [{ id: 'extend', title: 'REACH THE NEW STATIONS', say: G => metroCue(G)[0], do: G => metroCue(G)[1], at: G => metroCue(G)[2], how: 'New stations keep appearing. Drag from the END of your line to each one. Three of them.', need: 3 }],
+  3: [{ id: 'train', title: 'MORE TRAINS', say: G => metroCue(G)[0], do: G => metroCue(G)[1], at: G => metroCue(G)[2], how: 'A crowd is growing. TAP your line to put a second train on it.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, rate: 0.5 }; G.ev.push({ k: 'lessonnext', first: true }); firstStations(G); const st0 = lessonNow(G); G.lesson.setup = true;
   if (st0.id !== 'line') { const [a, b, c] = G.S; G.free.lines = Math.max(G.free.lines, 1); newLine(G, a.id, b.id); extendLine(G, G.L[0].id, true, c.id); }
@@ -151,22 +151,40 @@ const BLIND = {
 // HONEST: a planner who looks: links every station into the network (nearest line end, or the cheapest stretch to pass through),
 // opens a new line where the city has grown, and puts spare trains where the crowds are. react: seconds between moves; acc:
 // how often it picks the best option rather than a nearby one.
+// THE HAND DRAWS THE LINE STATION TO STATION (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It drew a
+// drag to the right in a box, which joins nothing. Now the robot is asked (dryPlan) and the hand drags from the station (or the line's end) to
+// the station it would join: DRAG FROM HERE TO HERE / DRAG FROM THE END TO HERE; TAP YOUR LINE for a train.
+function metroCue(G) { if (G.over || busy(G)) return ['WAIT…', 'wait', false]; const L = layout(G), sc = q => [L.ox + q.x * L.s, L.oy + q.y * L.s];
+  if (G.choice) { const P0 = dryPlan(G, null, { cd: -1 }); const r = P0 && P0[0] === 'choose' ? L.ch[P0[1]] : null; return r ? ['TAP THIS ONE', 'tap', [r.x + r.w / 2, r.y + r.h / 2]] : ['WAIT…', 'wait', false]; }
+  const P = dryPlan(G, null, { cd: -1 }); if (!P) return ['WAIT…', 'wait', false];
+  if (P[0] === 'newLine') { const a = st(G, P[1]), b = st(G, P[2]); return ['DRAG FROM HERE TO HERE', 'drag', [...sc(a), ...sc(b)]]; }
+  if (P[0] === 'extendLine') { const l = G.L.find(q => q.id === P[1]), e = st(G, P[2] ? l.st[l.st.length - 1] : l.st[0]), b = st(G, P[3]); return ['DRAG FROM THE END TO HERE', 'drag', [...sc(e), ...sc(b)]]; }
+  if (P[0] === 'insertStation') { const l = G.L.find(q => q.id === P[1]), a = st(G, l.st[P[2]]), c = st(G, l.st[P[2] + 1]), b = st(G, P[3]), m = { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 }; return ['DRAG THE LINE TO HERE', 'drag', [...sc(m), ...sc(b)]]; }
+  if (P[0] === 'addTrain') { const l = G.L.find(q => q.id === P[1]), a = st(G, l.st[0]), c = st(G, l.st[1] || l.st[0]); return ['TAP YOUR LINE', 'tap', sc({ x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 })]; }
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) { if (G.over) return; const acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react, R = Math.random;
-  if (G.choice) { mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react; const longest = Math.max(0, ...G.L.map(l => l.st.length)), pref = (!G.free.lines && longest > 6) ? ['line', 'train', 'carriage', 'platform', 'bridge'] : bridgesLeft(G) <= 0 && G.river ? ['bridge', 'train', 'line', 'carriage', 'platform'] : ['train', 'carriage', 'line', 'platform', 'bridge']; let best = 0, br = 99; G.choice.opts.forEach((p, i) => { const r = pref.indexOf(p); if (r < br) { br = r; best = i; } }); choose(G, R() < acc ? best : 1 - best); return; }
+  if (G.choice) { mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react; const longest = Math.max(0, ...G.L.map(l => l.st.length)), pref = (!G.free.lines && longest > 6) ? ['line', 'train', 'carriage', 'platform', 'bridge'] : bridgesLeft(G) <= 0 && G.river ? ['bridge', 'train', 'line', 'carriage', 'platform'] : ['train', 'carriage', 'line', 'platform', 'bridge']; let best = 0, br = 99; G.choice.opts.forEach((p, i) => { const r = pref.indexOf(p); if (r < br) { br = r; best = i; } }); ACT.choose(G, R() < acc ? best : 1 - best); return; }
   if (busy(G)) return; mem.cd = (mem.cd || 0) - 1 / 60 * G.speed; if (mem.cd > 0) return; mem.cd = react * (1.5 + R()) * 2;
   const L = G.lesson && lessonNow(G);
-  if (L && L.id === 'train') { if (G.L[0]) addTrain(G, G.L[0].id); return; }
+  if (L && L.id === 'train') { if (G.L[0]) ACT.addTrain(G, G.L[0].id); return; }
   // the first line: the three stations
-  if (!G.L.length) { const [a, b, c] = G.S; const l = newLine(G, a.id, b.id); if (l && c) extendLine(G, l.id, true, c.id); return; }
+  if (!G.L.length) { const [a, b, c] = G.S; const l = ACT.newLine(G, a.id, b.id); if (l && c) ACT.extendLine(G, l.id, true, c.id); return; }
   // a station left out: join it
   const lone = G.S.filter(s => !lineOf(G, s.id).length).sort((a, b) => a.born - b.born)[0];
   if (lone) { let best = null; for (const l of G.L) { for (const end of [false, true]) { const e = st(G, end ? l.st[l.st.length - 1] : l.st[0]), cost = Math.hypot(e.x - lone.x, e.y - lone.y) + crossings(G, e, lone) * 3; if (crossings(G, e, lone) <= bridgesLeft(G) && (!best || cost < best.cost)) best = { kind: 'ext', l, end, cost }; }
         for (let i = 0; i < l.st.length - 1; i++) { const a = st(G, l.st[i]), b = st(G, l.st[i + 1]), extra = Math.hypot(a.x - lone.x, a.y - lone.y) + Math.hypot(b.x - lone.x, b.y - lone.y) - Math.hypot(a.x - b.x, a.y - b.y), cr = crossings(G, a, lone) + crossings(G, lone, b) - crossings(G, a, b); if (cr <= bridgesLeft(G) && (!best || extra * 1.3 < best.cost)) best = { kind: 'ins', l, i, cost: extra * 1.3 }; } }
     // a long line, or a station far from everything: a new line if one is free
-    if (G.free.lines > 0 && (!best || best.cost > 3.5 || (best.l && best.l.st.length > 5 && R() < acc))) { let near = null, nd = 1e9; for (const s of G.S) if (s !== lone && s.type !== lone.type) { const d = Math.hypot(s.x - lone.x, s.y - lone.y) + crossings(G, s, lone) * 3; if (d < nd && crossings(G, s, lone) <= bridgesLeft(G)) { nd = d; near = s; } } if (near && newLine(G, lone.id, near.id)) return; }
-    if (best) { if (R() > acc && best.kind === 'ins') return; if (best.kind === 'ext') extendLine(G, best.l.id, best.end, lone.id); else insertStation(G, best.l.id, best.i, lone.id); return; } }
+    if (G.free.lines > 0 && (!best || best.cost > 3.5 || (best.l && best.l.st.length > 5 && R() < acc))) { let near = null, nd = 1e9; for (const s of G.S) if (s !== lone && s.type !== lone.type) { const d = Math.hypot(s.x - lone.x, s.y - lone.y) + crossings(G, s, lone) * 3; if (d < nd && crossings(G, s, lone) <= bridgesLeft(G)) { nd = d; near = s; } } if (near && ACT.newLine(G, lone.id, near.id)) return; }
+    if (best) { if (R() > acc && best.kind === 'ins') return; if (best.kind === 'ext') ACT.extendLine(G, best.l.id, best.end, lone.id); else ACT.insertStation(G, best.l.id, best.i, lone.id); return; } }
   // spare trains: to the line with the biggest crowd
-  if (G.free.trains > 0) { let bl = null, bw = -1; for (const l of G.L) { const w = l.st.reduce((n, id) => n + st(G, id).q.length, 0) / (1 + G.trains.filter(t => t.line === l.id).length); if (w > bw) { bw = w; bl = l; } } if (bl) { addTrain(G, bl.id); return; } }
+  if (G.free.trains > 0) { let bl = null, bw = -1; for (const l of G.L) { const w = l.st.reduce((n, id) => n + st(G, id).q.length, 0) / (1 + G.trains.filter(t => t.line === l.id).length); if (w > bw) { bw = w; bl = l; } } if (bl) { ACT.addTrain(G, bl.id); return; } }
   // a free line: link the two busiest stations that are not yet linked directly
-  if (G.free.lines > 0 && R() < acc * 0.5) { const busy2 = G.S.slice().sort((a, b) => b.q.length - a.q.length).slice(0, 4); for (const a of busy2) { const want = a.q.map(p => p.dest).find(t => distTo(G, t, a.id) > 2); if (!want) continue; let near = null, nd = 1e9; for (const s of G.S) if (s.type === want) { const d = Math.hypot(s.x - a.x, s.y - a.y); if (d < nd && crossings(G, s, a) <= bridgesLeft(G)) { nd = d; near = s; } } if (near && newLine(G, a.id, near.id)) return; } } }
+  if (G.free.lines > 0 && R() < acc * 0.5) { const busy2 = G.S.slice().sort((a, b) => b.q.length - a.q.length).slice(0, 4); for (const a of busy2) { const want = a.q.map(p => p.dest).find(t => distTo(G, t, a.id) > 2); if (!want) continue; let near = null, nd = 1e9; for (const s of G.S) if (s.type === want) { const d = Math.hypot(s.x - a.x, s.y - a.y); if (d < nd && crossings(G, s, a) <= bridgesLeft(G)) { nd = d; near = s; } } if (near && ACT.newLine(G, a.id, near.id)) return; } } }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.delivered = G.cfg.target; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { newLine, extendLine, insertStation, addTrain, choose }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

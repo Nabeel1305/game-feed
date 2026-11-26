@@ -104,9 +104,9 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS: a small lawn each ----------
 const LESSONS = {
-  1: [{ id: 'mow', title: 'MOW IN STRIPES', say: 'SLIDE UP AND DOWN', do: 'drag', dir: 'ud', at: G => [W / 2, H * 0.7], how: 'Slide your thumb: the mower goes that way; lift it to stop. Mow this lawn in long straight lines, up and down: 2 STRIPES and most of the grass.', need: 1, lawn: { w: 6, h: 9, beds: 0, trees: 0, gnomes: 0, nodog: true } }],
-  2: [{ id: 'flowers', title: 'MIND THE FLOWERS', say: 'MISS THE FLOWERS', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Mow round the flower bed without touching it. Drive over it and the lesson starts again.', need: 1, lawn: { w: 6, h: 8, beds: 1, bed: [1.5, 1.2], trees: 0, gnomes: 0, nodog: true } }],
-  3: [{ id: 'bin', title: 'EMPTY THE BAG', say: 'GO TO THE BIN', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'The bag is full: drive to the compost bin (top right) to empty it, then mow the rest.', need: 1, lawn: { w: 6, h: 8, beds: 0, trees: 1, gnomes: 0, nodog: true }, full: true }],
+  1: [{ id: 'mow', title: 'MOW IN STRIPES', say: G => mowCue(G)[0], do: G => mowCue(G)[1], at: G => mowCue(G)[2], how: 'Slide your thumb: the mower goes that way; lift it to stop. Mow this lawn in long straight lines, up and down: 2 STRIPES and most of the grass.', need: 1, lawn: { w: 6, h: 9, beds: 0, trees: 0, gnomes: 0, nodog: true } }],
+  2: [{ id: 'flowers', title: 'MIND THE FLOWERS', say: G => mowCue(G)[0], do: G => mowCue(G)[1], at: G => mowCue(G)[2], how: 'Mow round the flower bed without touching it. Drive over it and the lesson starts again.', need: 1, lawn: { w: 6, h: 8, beds: 1, bed: [1.5, 1.2], trees: 0, gnomes: 0, nodog: true } }],
+  3: [{ id: 'bin', title: 'EMPTY THE BAG', say: G => mowCue(G)[0], do: G => mowCue(G)[1], at: G => mowCue(G)[2], how: 'The bag is full: drive to the compost bin (top right) to empty it, then mow the rest.', need: 1, lawn: { w: 6, h: 8, beds: 0, trees: 1, gnomes: 0, nodog: true }, full: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -129,9 +129,16 @@ function pathTo(G, tx, ty, binOk) { const gw = Math.ceil(G.W / PG), gh = Math.ce
   if (prev[tj * gw + ti] < 0) return null; const out = []; let c = tj * gw + ti; while (c !== prev[c]) { out.push([(c % gw + 0.5) * PG, ((c / gw | 0) + 0.5) * PG]); c = prev[c]; } out.reverse(); if (out.length) out[out.length - 1] = [tx, ty]; return out; }
 // a gardener who looks: mows in lanes up and down the lawn, finding the way round beds, trees and the dog, goes to the bin
 // when the bag is full, then hunts down what is left; a careless one wobbles off the line now and then
+// THE TUTORIAL SAYS WHICH WAY TO MOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid up and
+// down in a box whatever the lawn needed. Now the robot is asked (dryPlan setStick: its stripes, round the flowers, to the bin) and the hand
+// slides that way and keeps holding: MOW THIS WAY / TO THE BIN.
+const MWC = { t: -1e9, v: null, m: {} };
+function mowCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - MWC.t < 200) return MWC.v; MWC.t = now; MWC.m.t = -1; const P = dryPlan(G, null, MWC.m), id = G.lesson && G.lesson.steps[G.lesson.i] ? G.lesson.steps[G.lesson.i].id : ''; let v = ['WAIT…', 'wait', false];
+  if (P && P[0] === 'setStick' && P[2] > 0.05) { const R = 50 * lay(G).s * 0.9, x0 = W / 2, y0 = H * 0.7; v = [id === 'bin' && G.bag >= (G.bagMax || 1) ? 'DRIVE TO THE BIN' : 'MOW THIS WAY', 'drag', [x0, y0, x0 + Math.cos(P[1]) * R, y0 + Math.sin(P[1]) * R]]; }
+  MWC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, m = G.m, c = G.cfg;
   if (G.over || G.wait > 0) { mem.lane = null; mem.path = null; return; }
-  if (!G.lesson && cutShare(G) >= c.need && (G.fuel < G.fuelMax * 0.12 || cutShare(G) > c.need + 0.05)) { done(G); return; }
+  if (!G.lesson && cutShare(G) >= c.need && (G.fuel < G.fuelMax * 0.12 || cutShare(G) > c.need + 0.05)) { ACT.done(G); return; }
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.06 + react * 0.12;
   const gid = G.seed + ':' + G.W + ':' + G.total; if (mem.gid !== gid) { mem.gid = gid; mem.lane = 0; mem.dirUp = true; mem.path = null; }
   const full = G.bag >= G.bagMax * 0.98, lw = c.deck * 1.75, free = (x, y) => !G.obst.some(b => inside(b, x, y, b.kind === 'bed' ? 0.85 : 0.6));
@@ -144,7 +151,7 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
         // grass hard against a bed or a tree: aim just clear of it (the deck reaches the rest)
         for (const b of G.obst) { const pad = b.kind === 'bed' ? 0.9 : 0.65; if (!inside(b, x, y, pad)) continue; if (b.r) { const a = Math.atan2(y - b.y, x - b.x); x = b.x + Math.cos(a) * (b.r + pad + 0.05); y = b.y + Math.sin(a) * (b.r + pad + 0.05); } else { const ox = Math.abs(x - b.x) - b.w / 2, oy = Math.abs(y - b.y) - b.h / 2; if (ox > oy) x = b.x + Math.sign(x - b.x || 1) * (b.w / 2 + pad + 0.05); else y = b.y + Math.sign(y - b.y || 1) * (b.h / 2 + pad + 0.05); } }
         x = clamp(x, 0.45, G.W - 0.45); y = clamp(y, 0.45, G.H - 0.45); if (!free(x, y)) continue; const d = Math.hypot(x - m.x, y - m.y) + (mem.skip && mem.skip[k] ? 50 : 0); if (d < bd) { bd = d; tx = x; ty = y; mem.hk = k; } }
-      if (bd === 1e9) { done(G); return; }
+      if (bd === 1e9) { ACT.done(G); return; }
       // a spot it cannot get at after a while: try another
       if (mem.hk === mem.lastHk) { mem.hT = (mem.hT || 0) + 1; if (mem.hT > 40) { mem.skip = mem.skip || {}; mem.skip[mem.hk] = 1; mem.hT = 0; } } else { mem.lastHk = mem.hk; mem.hT = 0; } }
     else { // the far end of this lane (or the last free point before it)
@@ -161,5 +168,12 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   // near flowers a gardener slows down and is careful
   const nearBed = G.obst.some(b => b.kind === 'bed' && !b.crushed && inside(b, m.x, m.y, 1.4));
   let ang = Math.atan2(py - m.y, px - m.x); if (R() > acc && !nearBed) ang += (R() - 0.5) * 0.9;
-  setStick(G, ang, clamp(Math.hypot(tx - m.x, ty - m.y) / 1.6, 0.3, nearBed ? 0.6 : 1)); }
+  ACT.setStick(G, ang, clamp(Math.hypot(tx - m.x, ty - m.y) / 1.6, 0.3, nearBed ? 0.6 : 1)); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.done = G.total; finish(G, true, 'all'); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick, done }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

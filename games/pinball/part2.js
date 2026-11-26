@@ -46,7 +46,7 @@ const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.g
 const RANKS = [[0, 'Rookie'], [40, 'Flipper'], [130, 'Wizard'], [320, 'Table king'], [700, 'Legend'], [1500, 'Hall of fame']];
 const THEMES = [{ name: 'Neon Nights', a: 0xff3ab0, b: 0x3ad8ff }, { name: 'Space Station', a: 0x8a5aff, b: 0x5affc8 }, { name: 'Haunted Pier', a: 0x5aff6a, b: 0xff8a2a }, { name: 'Deep Jungle', a: 0xffd03a, b: 0x3aff8a }];
 const themeOf = N => Math.floor((N - 1) / 5) % THEMES.length;
-function makeCfg(N, help) {
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
   return { N, f, help: !!help, theme: themeOf(N),
     goal: Math.min(4, 2 + Math.floor((N - 1) / 8)), balls: (N <= 1 ? 5 : 4) + upLv('extra') + (help ? 1 : 0),
@@ -147,9 +147,9 @@ function finish(G, win) { G.over = win ? 'won' : 'lost'; const stars = win ? (G.
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'keep', title: 'FLIP', say: 'HOLD LEFT OR RIGHT', do: 'hold', how: 'Hold the left side of the screen for the left flipper, the right side for the right. Hit the ball up the table 6 times without losing it.', need: 6 }],
-  2: [{ id: 'drop', title: 'AIM', say: 'FLIP TO THE LEFT', do: 'hold', how: 'Flip late to send the ball up its own side, early to send it across. Knock down three drop targets (on the left).', need: 3 }],
-  3: [{ id: 'ramp', title: 'THE RAMP', say: 'UP THE RAMP', do: 'hold', how: 'Catch the ball on the right flipper (hold it up), let it roll, flip: up the ramp on the left. Once.', need: 1 }],
+  1: [{ id: 'keep', title: 'FLIP', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Hold the left side of the screen for the left flipper, the right side for the right. Hit the ball up the table 6 times without losing it.', need: 6 }],
+  2: [{ id: 'drop', title: 'AIM', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Flip late to send the ball up its own side, early to send it across. Knock down three drop targets (on the left).', need: 3 }],
+  3: [{ id: 'ramp', title: 'THE RAMP', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Catch the ball on the right flipper (hold it up), let it roll, flip: up the ramp on the left. Once.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, t: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -180,6 +180,15 @@ function bestShot(G, b, side, want, maxD) { let best = null, bs = -1e9;
 // a player who looks: catches the ball on a raised flipper when it can, lets it roll and shoots at the moment that sends it at
 // the mission's target (a player's feel: here, trying the moments in a quick look ahead); otherwise hits it at the best moment
 // as it comes down; a thumb is a little early or late
+// THE TUTORIAL SAYS WHICH SIDE AND WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD
+// LEFT OR RIGHT with a hand in a box. Now: TAP TO LAUNCH, WATCH THE BALL…, and FLIP LEFT! / FLIP RIGHT! on that side a fifth of a second before the
+// robot's best moment to flip (the shot it wants: across, its own side, the ramp), held a quarter of a second so it can be seen.
+const PBC = { lit: -1e9, side: 1 };
+function pinCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = G.t * 1000;
+  if (G.balls.some(b => b.lane && b.y < 1 && Math.abs(b.vy) < 0.05)) return ['TAP TO LAUNCH', 'tap', [W / 2, H * 0.7]];
+  const ls = lessonNow(G), want = ls && ls.id !== 'keep' ? ls.id : 'ramp', b = G.balls.filter(q => !q.lane && q.vy < 2 && q.y < 6.5 && q.y > 1.2 && Math.abs(q.x) < 4).sort((p, q) => p.y - q.y)[0];
+  if (b) { const side = b.x < 0 ? -1 : 1, w = tryFlip(G, b, 0, 0, 1.2); if (w.low) { const d = bestShot(G, b, side, want, 36); if (d != null && d <= 14) { PBC.lit = now; PBC.side = side; } } }
+  return now - PBC.lit < 250 && now >= PBC.lit ? [PBC.side < 0 ? 'FLIP LEFT!' : 'FLIP RIGHT!', 'tap', [PBC.side < 0 ? W * 0.2 : W * 0.8, H * 0.72]] : ['WATCH THE BALL…', 'wait', false]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0) { flip(G, -1, false); flip(G, 1, false); return; }

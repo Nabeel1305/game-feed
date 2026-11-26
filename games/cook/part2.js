@@ -155,12 +155,27 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'flip', title: 'GOLDEN, THEN FLIP', say: 'DRAG IT TO A PAN, TAP TO FLIP', do: 'drag', dir: 'up', how: 'Drag a pancake into a pan. When the underside turns golden, tap the pan to flip it. Do it twice.', need: 2, ok: (w, s) => w === 'flip' && s >= GOLD[0] - 0.06 && s <= GOLD[1] + 0.06 },
-      { id: 'serve', title: 'PLATE IT AND SERVE', say: 'DRAG TO THE PLATE, THEN UP', do: 'drag', dir: 'up', how: 'Golden both sides? Drag it to the plate, then drag the plate up to the pass.', need: 1, ok: w => w === 'served', dish: 'pancakes' }],
-  2: [{ id: 'chop', title: 'CHOP', say: 'TAP TO CHOP', do: 'tap', how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
-      { id: 'burger', title: 'A WHOLE BURGER', say: 'MAKE THE BURGER', do: 'none', how: 'Patty in the pan (flip when golden), chop lettuce and tomato, a bun on the plate, everything on, then serve.', need: 1, ok: w => w === 'served', dish: 'burger' }],
-  3: [{ id: 'two', title: 'TWO AT ONCE', say: 'TWO AT ONCE', do: 'none', how: 'While one thing cooks, chop or start the next. Serve two orders.', need: 2, ok: w => w === 'served', dish: null, two: true }],
+  1: [{ id: 'flip', title: 'GOLDEN, THEN FLIP', say: G => cookCue(G)[0], do: G => cookCue(G)[1], at: G => cookCue(G)[2], how: 'Drag a pancake into a pan. When the underside turns golden, tap the pan to flip it. Do it twice.', need: 2, ok: (w, s) => w === 'flip' && s >= GOLD[0] - 0.06 && s <= GOLD[1] + 0.06 },
+      { id: 'serve', title: 'PLATE IT AND SERVE', say: G => cookCue(G)[0], do: G => cookCue(G)[1], at: G => cookCue(G)[2], how: 'Golden both sides? Drag it to the plate, then drag the plate up to the pass.', need: 1, ok: w => w === 'served', dish: 'pancakes' }],
+  2: [{ id: 'chop', title: 'CHOP', say: G => cookCue(G)[0], do: G => cookCue(G)[1], at: G => cookCue(G)[2], how: 'Drag a tomato onto the board and swipe across it until it is chopped.', need: 2, ok: w => w === 'chopped' },
+      { id: 'burger', title: 'A WHOLE BURGER', say: G => cookCue(G)[0], do: G => cookCue(G)[1], at: G => cookCue(G)[2], how: 'Patty in the pan (flip when golden), chop lettuce and tomato, a bun on the plate, everything on, then serve.', need: 1, ok: w => w === 'served', dish: 'burger' }],
+  3: [{ id: 'two', title: 'TWO AT ONCE', say: G => cookCue(G)[0], do: G => cookCue(G)[1], at: G => cookCue(G)[2], how: 'While one thing cooks, chop or start the next. Serve two orders.', need: 2, ok: w => w === 'served', dish: null, two: true }],
 };
+// THE TUTORIAL SHOWS THE NEXT MOVE, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It said DRAG IT TO A PAN, TAP TO FLIP (two moves) with a hand dragging up in a box, and TAP TO CHOP for a chop that is a SWIPE. Now the
+// robot is asked what it would do (dryPlan, tools/dry_plan.py) and the hand does that: drags the pancake from the tray to the pan, taps the
+// pan to flip, drags the pan to the plate, swipes across the board, drags the plate up to the pass. WAIT… while it cooks.
+function cookCue(G) { if (G.over || !V3 || V3.none) return ['WAIT…', 'wait', false]; const P = dryPlan(G); if (!P) return ['WAIT… IT IS COOKING', 'wait', false];
+  const S = spots(G), at = q => { const v = q.pass ? scr(0, -0.72, TOP + 0.22) : scr(q.x, q.z, q.y); return [v.x, v.y - (q.pass ? 20 * k : 0)]; }, pan = i => S.pans[i], tray = f => S.tray.find(t => t.food === f), [a, b, c] = P;
+  const nm = f => (FOOD[f] && FOOD[f].name || '').toUpperCase(), drag = (w, p, q) => [w, 'drag', [...at(p), ...at(q)]];
+  if (a === 'flip') return ['TAP TO FLIP', 'tap', at(pan(b))];
+  if (a === 'panToPlate') return drag('DRAG IT TO THE PLATE', pan(b), S.plate);
+  if (a === 'boardToPlate') return drag('DRAG IT TO THE PLATE', S.board, S.plate);
+  if (a === 'serve') return drag('DRAG THE PLATE UP', S.plate, { pass: true });
+  if (a === 'chop') return ['TAP TO CHOP', 'tap', at(S.board)];      // a tap on the board is a chop (and so is a swipe across it)
+  if (a === 'trash') return drag(b === 'pan' && G.pans[c] && G.pans[c].sides.some(q => q > BURNT) ? 'BURNT! DRAG IT TO THE BIN' : 'DRAG IT TO THE BIN', b === 'pan' ? pan(c) : b === 'board' ? S.board : S.plate, S.bin);
+  if (a === 'take') { const t = tray(b); if (!t) return ['WAIT…', 'wait', false]; const dest = c === 'pan' ? (S.pans[G.pans.findIndex(q => !q)] || S.pans[0]) : c === 'board' ? S.board : S.plate; return drag('DRAG THE ' + nm(b) + (c === 'pan' ? ' TO A PAN' : c === 'board' ? ' TO THE BOARD' : ' TO THE PLATE'), t, dest); }
+  return ['WAIT…', 'wait', false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what, arg) {
@@ -183,25 +198,30 @@ const BLIND = {
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc;
   // a flip is only a tap: he can do it between drags
-  mem.tap = mem.tap || 0; if (G.t >= mem.tap) for (let i = 0; i < G.pans.length; i++) { const p = G.pans[i]; if (p && FOOD[p.food].sides === 2 && p.sides[1 - p.down] < G.cfg.gold[0] && p.sides[p.down] + 0.12 * G.cfg.heat * react / 5 >= G.cfg.gold[0] + 0.1 - (1 - acc) * (Math.random() - 0.5)) { flip(G, i); mem.tap = G.t + react; return; }
+  mem.tap = mem.tap || 0; if (G.t >= mem.tap) for (let i = 0; i < G.pans.length; i++) { const p = G.pans[i]; if (p && FOOD[p.food].sides === 2 && p.sides[1 - p.down] < G.cfg.gold[0] && p.sides[p.down] + 0.12 * G.cfg.heat * react / 5 >= G.cfg.gold[0] + 0.1 - (1 - acc) * (Math.random() - 0.5)) { ACT.flip(G, i); mem.tap = G.t + react; return; }
     // and he watches the ring: the drag to the plate starts as it turns golden
-    if (p && cookedOk(G, p) && (FOOD[p.food].sides === 1 || p.sides[1 - p.down] >= G.cfg.gold[0]) && p.sides[p.down] >= G.cfg.gold[0] + 0.04 && G.tickets[0] && G.tickets[0].dish.items.includes(p.food) && G.plate.filter(q => q.food === p.food).length < G.tickets[0].dish.items.filter(q => q === p.food).length) { panToPlate(G, i); mem.tap = G.t + react; mem.next = Math.max(mem.next || 0, G.t + 0.4); return; } }
+    if (p && cookedOk(G, p) && (FOOD[p.food].sides === 1 || p.sides[1 - p.down] >= G.cfg.gold[0]) && p.sides[p.down] >= G.cfg.gold[0] + 0.04 && G.tickets[0] && G.tickets[0].dish.items.includes(p.food) && G.plate.filter(q => q.food === p.food).length < G.tickets[0].dish.items.filter(q => q === p.food).length) { ACT.panToPlate(G, i); mem.tap = G.t + react; mem.next = Math.max(mem.next || 0, G.t + 0.4); return; } }
   mem.next = mem.next || 0; if (G.t < mem.next) return; mem.next = G.t + 0.55 + react * 1.2;      // a drag across the counter takes a thumb most of a second
   const g = G.cfg.gold, L = lessonNow(G), early = (s) => s + 0.12 * G.cfg.heat * react / 5;
   // pans first: flip at golden, plate when done, bin when burnt
   for (let i = 0; i < G.pans.length; i++) { const p = G.pans[i]; if (!p) continue; const F = FOOD[p.food], d = p.sides[p.down];
-    if (p.sides.some(s => s > BURNT)) { trash(G, 'pan', i); return; }
-    if (F.sides === 2 && p.sides[1 - p.down] < g[0] && early(d) >= (g[0] + 0.12) - (1 - acc) * (Math.random() - 0.5)) { flip(G, i); return; }
-    if (cookedOk(G, p) && early(d) >= g[0] + 0.08 && (F.sides === 1 || p.sides[1 - p.down] >= g[0])) { const tk = G.tickets[0]; if (tk && tk.dish.items.includes(p.food)) { panToPlate(G, i); return; } } }
-  if (L && L.id === 'flip' && !G.pans.some(Boolean)) { take(G, 'pancake', 'pan'); return; }
-  if (L && L.id === 'chop') { if (!G.board) { take(G, 'tomato', 'board'); return; } if (G.board.chops < FOOD[G.board.food].chops) { chop(G); return; } trash(G, 'board'); return; }
+    if (p.sides.some(s => s > BURNT)) { ACT.trash(G, 'pan', i); return; }
+    if (F.sides === 2 && p.sides[1 - p.down] < g[0] && early(d) >= (g[0] + 0.12) - (1 - acc) * (Math.random() - 0.5)) { ACT.flip(G, i); return; }
+    if (cookedOk(G, p) && early(d) >= g[0] + 0.08 && (F.sides === 1 || p.sides[1 - p.down] >= g[0])) { const tk = G.tickets[0]; if (tk && tk.dish.items.includes(p.food)) { ACT.panToPlate(G, i); return; } } }
+  if (L && L.id === 'flip' && !G.pans.some(Boolean)) { ACT.take(G, 'pancake', 'pan'); return; }
+  if (L && L.id === 'chop') { if (!G.board) { ACT.take(G, 'tomato', 'board'); return; } if (G.board.chops < FOOD[G.board.food].chops) { ACT.chop(G); return; } ACT.trash(G, 'board'); return; }
   const tk = G.tickets[0]; if (!tk) return;
-  const need = tk.dish.items.slice(); for (const p of G.plate) { const k2 = need.indexOf(p.food); if (k2 >= 0) need.splice(k2, 1); else { trash(G, 'plate'); return; } }
-  if (!need.length) { serve(G); return; }
-  if (G.board) { if (G.board.chops < FOOD[G.board.food].chops) { chop(G); return; } if (need.includes(G.board.food)) { boardToPlate(G); return; } trash(G, 'board'); return; }
+  const need = tk.dish.items.slice(); for (const p of G.plate) { const k2 = need.indexOf(p.food); if (k2 >= 0) need.splice(k2, 1); else { ACT.trash(G, 'plate'); return; } }
+  if (!need.length) { ACT.serve(G); return; }
+  if (G.board) { if (G.board.chops < FOOD[G.board.food].chops) { ACT.chop(G); return; } if (need.includes(G.board.food)) { ACT.boardToPlate(G); return; } ACT.trash(G, 'board'); return; }
   for (const fd of need) { const F = FOOD[fd], inPan = G.pans.filter(p => p && p.food === fd).length, wanted = need.filter(q => q === fd).length;
-    if (F.to === 'pan' && inPan < wanted && G.pans.some(p => !p)) { take(G, Math.random() < acc * 1.05 ? fd : trayOf(G.N)[(Math.random() * trayOf(G.N).length) | 0], 'pan'); return; }
-    if (F.to === 'board') { take(G, fd, 'board'); return; }
-    if (F.to === 'plate') { take(G, fd, 'plate'); return; } }
+    if (F.to === 'pan' && inPan < wanted && G.pans.some(p => !p)) { ACT.take(G, Math.random() < acc * 1.05 ? fd : trayOf(G.N)[(Math.random() * trayOf(G.N).length) | 0], 'pan'); return; }
+    if (F.to === 'board') { ACT.take(G, fd, 'board'); return; }
+    if (F.to === 'plate') { ACT.take(G, fd, 'plate'); return; } }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.served = G.cfg.orders - 1; G.lost = 0; G.tickets.length = 0; if (!G.tickets.length) newTicket(G); const tk = G.tickets[0]; G.plate = tk.dish.items.map(f => ({ food: f, q: 'perfect' })); serve(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { flip, panToPlate, trash, take, chop, serve, boardToPlate }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

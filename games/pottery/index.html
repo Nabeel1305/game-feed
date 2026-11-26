@@ -4723,9 +4723,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4956,9 +4958,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5373,9 +5375,9 @@ function finish(G, win, why, o = {}) { if (G.over) return; G.over = win ? 'won' 
 
 // ---------- LESSONS: centre, pull, shape ----------
 const LESSONS = {
-  1: [{ id: 'center', title: 'CENTRE THE CLAY', say: 'HOLD, PRESS DOWN', do: 'drag', dir: 'down', how: 'Hold your thumb on the clay and drag down a little to press. Keep the pressure needle in the green until the wobble stops. Twice.', need: 2 }],
-  2: [{ id: 'pull', title: 'PULL THE WALLS UP', say: 'DRAG UP SLOWLY', do: 'drag', dir: 'up', how: 'Drag upwards along the wall, from the bottom to the top, steadily (the trail turns red if too fast). Make three good pulls.', need: 3 }],
-  3: [{ id: 'shape', title: 'SHAPE TO THE ORDER', say: 'MOVE IN AND OUT', do: 'drag', dir: 'lr', how: 'Tap SHAPE, then touch the pot and move in or out to follow the dotted outline. Tap DONE when it matches (70% or more), glaze, and fire it.', need: 1 }],
+  1: [{ id: 'center', title: 'CENTRE THE CLAY', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Hold your thumb on the clay and drag down a little to press. Keep the pressure needle in the green until the wobble stops. Twice.', need: 2 }],
+  2: [{ id: 'pull', title: 'PULL THE WALLS UP', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Drag upwards along the wall, from the bottom to the top, steadily (the trail turns red if too fast). Make three good pulls.', need: 3 }],
+  3: [{ id: 'shape', title: 'SHAPE TO THE ORDER', say: G => clayCue(G)[0], do: G => clayCue(G)[1], at: G => clayCue(G)[2], how: 'Tap SHAPE, then touch the pot and move in or out to follow the dotted outline. Tap DONE when it matches (70% or more), glaze, and fire it.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true });
   if (st.id !== 'center') { G.phase = 'pull'; G.wob = 0; } if (st.id === 'shape') { for (let k2 = 0; k2 < 3; k2++) { G.phase = 'pull'; pullStart(G); pullMove(G, G.h, 10); pullEnd(G); } G.phase = 'pull'; } }
@@ -5401,6 +5403,19 @@ const BLIND = {
 // HONEST: a potter who looks: presses in the green (with a wobbly thumb), pulls steadily until the pot is the order's height,
 // then shapes slice by slice towards the dotted line (as accurately as acc), checks the match and the wall gauge, glazes
 // the colour asked for. react: seconds behind; acc: how steady.
+// THE HAND DOES THE MOVE ON THE CLAY ITSELF (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It dragged
+// down, up or sideways in a box. Now: HOLD, PRESS DOWN on the clay (to the green pressure), DRAG UP SLOWLY along the wall from its foot to its
+// top, TAP SHAPE, then MOVE IN / MOVE OUT where the pot is furthest from the dotted line, TAP DONE when it matches, TAP THIS GLAZE.
+function clayCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const m = potMap(), S = (r, z) => [m.ax + r * m.px, m.ay - z * m.py], L = layout(G), mid = b => [b.x + b.w / 2, b.y + b.h / 2];
+  if (G.phase === 'center') { const p = S(0, (G.h || 6) * 0.6); return [ui.touch ? 'KEEP IT IN THE GREEN' : 'HOLD, PRESS DOWN', 'drag', [p[0], p[1], p[0], p[1] + 42 * k]]; }
+  if (G.phase === 'glaze') { const b = L.glaze.find(q => q.i === G.ord.glaze); return ['TAP THIS GLAZE', 'tap', b ? [b.x, b.y] : false]; }
+  const shapeL = G.lesson && G.lesson.id === 'shape';
+  if (G.phase === 'pull' && !shapeL) { const r0 = G.r[0] || 3, a = S(r0, 0.5), b = S(G.r[Math.floor(G.h / DZ)] || r0, G.h); return ['DRAG UP SLOWLY', 'drag', [a[0], a[1], b[0], b[1]]]; }
+  if (G.phase === 'pull' && shapeL) { const b = L.modes.find(q => q.m === 'shape'); return ['TAP SHAPE', 'tap', mid(b)]; }
+  if (G.phase === 'shape') { if (match(G) >= G.cfg.goal) { const b = L.modes.find(q => q.m === 'done'); return ['TAP DONE', 'tap', mid(b)]; }
+    const n = Math.floor(G.h / DZ); let bi = 0, bd = 0; for (let i = 0; i <= n; i++) { const d = Math.abs((G.target[i] || G.r[i]) - G.r[i]); if (d > bd) { bd = d; bi = i; } } const z = bi * DZ, a = S(G.r[bi], z), b = S(G.target[bi] || G.r[bi], z);
+    return [b[0] < a[0] ? 'MOVE IN' : 'MOVE OUT', 'drag', [a[0], a[1], b[0], b[1]]]; }
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) {
   if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.phase === 'center') { mem.trimmed = 0; mem.passes = 0; mem.si = 0; mem.bias = null; if (G.t < (mem.nh || 0)) return; mem.nh = G.t + 0.15 + react * 0.3; hold(G, 0.6 + (R() - 0.5) * (1 - acc) * 0.9); return; }

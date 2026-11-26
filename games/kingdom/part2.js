@@ -401,10 +401,10 @@ function finish(G) { const c = G.cfg, me = G.me, place = me.place, win = place <
   G.ev.push({ k: win ? 'won' : 'lost', place }); return true; }
 // ---------- LESSONS: the course to yourself (and a few slow karts to aim at) ----------
 const LESSONS = {
-  1: [{ id: 'boost', title: 'STEER AND DRIFT', say: 'HOLD ◀ ▶, HOLD DRIFT', do: 'hold', how: 'Hold ◀ or ▶ to steer. In a bend, steer AND hold DRIFT: you slide and the sparks go blue, orange, purple. Let go of DRIFT for a BOOST. Twice.', need: 2 },
-      { id: 'nitro', title: 'NITRO!', say: 'TAP NITRO!', do: 'tap', how: 'Drifts, tricks and slipstreams fill your NITRO. It is full now: tap NITRO (above DRIFT) for a big boost!', need: 1 }],
-  2: [{ id: 'trick', title: 'JUMP AND TRICK', say: 'IN THE AIR: TAP DRIFT', do: 'tap', how: 'Off a ramp, tap DRIFT once in the air for a trick, and land after it has finished. Twice. Only in the air!', need: 2 }],
-  3: [{ id: 'item', title: 'TURTLE SHELLS', say: 'GET BEHIND, TAP ITEM', do: 'tap', how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap ITEM to fire ahead (swipe it down to fire behind). Hit two karts.', need: 2 }],
+  1: [{ id: 'boost', title: 'STEER AND DRIFT', say: G => kingCue(G)[0], do: G => kingCue(G)[1], at: G => kingCue(G)[2], how: 'Hold ◀ or ▶ to steer. In a bend, steer AND hold DRIFT: you slide and the sparks go blue, orange, purple. Let go of DRIFT for a BOOST. Twice.', need: 2 },
+      { id: 'nitro', title: 'NITRO!', say: G => kingCue(G)[0], do: G => kingCue(G)[1], at: G => kingCue(G)[2], how: 'Drifts, tricks and slipstreams fill your NITRO. It is full now: tap NITRO (above DRIFT) for a big boost!', need: 1 }],
+  2: [{ id: 'trick', title: 'JUMP AND TRICK', say: G => kingCue(G)[0], do: G => kingCue(G)[1], at: G => kingCue(G)[2], how: 'Off a ramp, tap DRIFT once in the air for a trick, and land after it has finished. Twice. Only in the air!', need: 2 }],
+  3: [{ id: 'item', title: 'TURTLE SHELLS', say: G => kingCue(G)[0], do: G => kingCue(G)[1], at: G => kingCue(G)[2], how: 'Drive through the ? boxes: three shells. Line up BEHIND a kart, then tap ITEM to fire ahead (swipe it down to fire behind). Hit two karts.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); grid(G); G.count = 0; G.hz = [];
   if (lessonNow(G).id === 'item') { const S = G.T.S, n = S.length; for (let q = 0; q < 3; q++) { const i = (G.me.i + 30 + q * 26) % n, p = S[i], lat = [-3, 3, 0][q]; const d = newKart(G, { x: p.x - Math.sin(p.h) * lat, z: p.z + Math.cos(p.h) * lat, h: p.h, i }, DRIVERS[1 + q], false, 0); d.dummy = true; d.line = lat; d.skill = 0.55; d.lap = 0; d.prog = G.me.prog + (30 + q * 26) * G.T.ds; d.last = i; d.y = p.y; G.karts.push(d); } } }
@@ -432,13 +432,23 @@ const BLIND = { s: G => { const r = Math.random(); setBtn(G, 'L', r < 0.37); set
 // lasts), tricks as many as a jump allows, steers through the glider rings and round the dangers, throws items the right way
 // (ahead at a kart in its lane, a peel back at one close behind), fires NITRO on straights, tries a rocket start; a person's
 // hands: a beat late, now and then a wobble
+// THE TUTORIAL SHOWS THE ONE BUTTON FOR NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said
+// HOLD ◀ ▶, HOLD DRIFT (two things) with a hand in a box. Now from the robot's driving (dryPlanAll): HOLD ◀ / HOLD ▶ while it steers, HOLD DRIFT
+// as a long bend starts, LET GO! as it ends, TAP DRIFT in the air for a trick, TAP NITRO!, TAP ITEM when lined up behind a kart.
+const KGC = { t: -1e9, v: null };
+function kingCue(G) { const me = G.me, B = btnLayout(), at = b => [b.x, b.y]; if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; if (G.count > 0) return ['WAIT FOR GO…', 'wait', false];
+  const now = performance.now(); if (now - KGC.t < 150) return KGC.v; KGC.t = now; const all = dryPlanAll(G, null, { t: -1, wait: 9, it: 99 }), has = n => all.find(q => q[0] === n), st = all.filter(q => q[0] === 'setSteer').pop(); let v;
+  if (has('startTrick')) v = ['TAP DRIFT: A TRICK!', 'tap', at(B.D)]; else if (has('useNitro')) v = ['TAP NITRO!', 'tap', at(B.N)]; else if (has('useItem')) v = ['TAP ITEM', 'tap', at(B.I)];
+  else if (has('driftDown')) v = ['HOLD DRIFT', 'hold', at(B.D)]; else if (has('driftUp') && G.driftBtn) v = ['LET GO!', 'release', at(B.D)]; else if (G.driftBtn) v = ['KEEP HOLDING DRIFT', 'hold', at(B.D)];
+  else if (st && Math.abs(st[1]) > 0.3) v = st[1] > 0 ? ['HOLD ▶', 'hold', at(B.R)] : ['HOLD ◀', 'hold', at(B.L)]; else v = ['STRAIGHT ON…', 'wait', false];
+  KGC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, k = G.me, T = G.T, S = T.S, n = S.length;
-  if (G.over || G.wait > 0) { setSteer(G, 0); return; }
-  if (G.count > 0) { setSteer(G, 0); if (mem.rs == null) mem.rs = 1.95 - R() * 0.9 * (1 - acc) - react * 0.4 + (R() < (1 - acc) * 0.6 ? 0.6 : 0); if (G.count < mem.rs && !G.hold) setHold(G, true); return; }
-  if (G.hold) { setHold(G, false); G.driftBtn = false; } mem.rs = null;
+  if (G.over || G.wait > 0) { ACT.setSteer(G, 0); return; }
+  if (G.count > 0) { ACT.setSteer(G, 0); if (mem.rs == null) mem.rs = 1.95 - R() * 0.9 * (1 - acc) - react * 0.4 + (R() < (1 - acc) * 0.6 ? 0.6 : 0); if (G.count < mem.rs && !G.hold) ACT.setHold(G, true); return; }
+  if (G.hold) { ACT.setHold(G, false); G.driftBtn = false; } mem.rs = null;
   if (k.air) { if (!k.trick) { mem.wait = (mem.wait || 0) + 1 / 60; const tl = landPred(G, k), margin = 0.04 + react * 0.15 + (1 - acc) * 0.2;
-      if (mem.wait > 0.04 + react * 0.2 && tl > TRICK + margin) { startTrick(G, k); mem.wait = 0; } else if (mem.wait > 0.04 + react * 0.2 && tl > TRICK - 0.05 && R() < (1 - acc) * 0.04) { startTrick(G, k); mem.wait = 0; } } } else mem.wait = 0;
+      if (mem.wait > 0.04 + react * 0.2 && tl > TRICK + margin) { ACT.startTrick(G, k); mem.wait = 0; } else if (mem.wait > 0.04 + react * 0.2 && tl > TRICK - 0.05 && R() < (1 - acc) * 0.04) { ACT.startTrick(G, k); mem.wait = 0; } } } else mem.wait = 0;
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.05 + react * 0.15;
   const look = Math.round(8 + k.v * 0.3), p = S[(k.i + look) % n]; let bend = 0; for (let q = 4; q < 26; q += 2) bend += S[(k.i + q) % n].curve; bend /= 11;
   let want = clamp(-Math.sign(bend) * Math.min(2.5, Math.abs(bend) * 5), -3, 3);
@@ -456,17 +466,24 @@ function honest(G, o, mem) {
   let dh = Math.atan2(tz - k.z, tx - k.x) - (k.h + (k.slip || 0)); dh = Math.atan2(Math.sin(dh), Math.cos(dh)); let s = clamp(dh * 2.6, -1, 1);
   // the drift: press DRIFT as a long bend starts (steering into it), hold, and let go as it ends
   const long = Math.abs(bend) > 0.13;
-  if (!k.drift && !G.driftBtn && long && k.v > 16 && Math.sign(dh) === Math.sign(bend) && !avoid && !k.air) { s = Math.sign(bend); setSteer(G, s); G.steer = s; driftDown(G); }
-  else if (G.driftBtn && !k.drift && !(k.wantDrift > 0)) driftUp(G);
+  if (!k.drift && !G.driftBtn && long && k.v > 16 && Math.sign(dh) === Math.sign(bend) && !avoid && !k.air) { s = Math.sign(bend); ACT.setSteer(G, s); G.steer = s; ACT.driftDown(G); }
+  else if (G.driftBtn && !k.drift && !(k.wantDrift > 0)) ACT.driftUp(G);
   if (k.drift) { const end = Math.abs(bend) < 0.1 || (k.tier >= 2 && Math.abs(bend) < 0.16) || Math.sign(bend) !== k.drift || Math.abs(k.lat || 0) > TW / 2 - (T.info.edge === 'void' ? 2.2 : 0.5) || avoid;
-    const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = (need - 0.78) / 0.6; s = k.drift * clamp(u, -1, 1); if (end) driftUp(G); }
+    const need = dh * 2.6 * k.drift / Math.max(0.3, Math.min(1, k.v / 12)), u = (need - 0.78) / 0.6; s = k.drift * clamp(u, -1, 1); if (end) ACT.driftUp(G); }
   if (R() > acc) s += (R() - 0.5) * 0.8;
-  setSteer(G, s);
-  if ((k.nitro || 0) >= 1 && !k.air && Math.abs(bend) < 0.12 && !k.drift && R() < 0.3 + acc * 0.5) useNitro(G);
+  ACT.setSteer(G, s);
+  if ((k.nitro || 0) >= 1 && !k.air && Math.abs(bend) < 0.12 && !k.drift && R() < 0.3 + acc * 0.5) ACT.useNitro(G);
   const it = k.item || (k.orbit ? 'triple' : k.peppers ? 'pepper' : null);
   if (it && !k.air && !k.drift) { mem.it = (mem.it || 0) + 0.1; const behind = G.karts.some(q => q !== k && race(k) - race(q) > 0 && race(k) - race(q) < 20 && Math.abs((q.lat || 0) - (k.lat || 0)) < 2.5);
     let dir = 1, go3 = true; if (it === 'pepper' || it === 'pepper3') go3 = Math.abs(bend) < 0.2; else if (it === 'shell' || it === 'triple') { go3 = mem.lined || (behind && R() < 0.5) || (mem.it > 12 && !G.lesson); if (!mem.lined && behind) dir = -1; }
     else if (it === 'peel') { go3 = mem.lined || behind || mem.it > 6; if (!mem.lined) dir = -1; }
-    if (go3 && useItem(G, k, dir)) mem.it = 0; }
+    if (go3 && ACT.useItem(G, k, dir)) mem.it = 0; }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.count = 0; G.me.place = 1; G.me.done = true; finish(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setSteer, driftDown, driftUp, startTrick, useNitro, useItem, setHold }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

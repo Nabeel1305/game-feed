@@ -118,9 +118,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: fly the freefall, open between the marks, flare to land soft ----------
 const LESSONS = {
-  1: [{ id: 'fly', title: 'FLY YOUR BODY', say: 'DRAG TO FLY', do: 'drag', dir: 'up', how: 'Drag the left thumb: forward to fly forward, left or right to turn. Fly through three gold rings.', need: 3 }],
-  2: [{ id: 'open', title: 'OPEN BETWEEN THE MARKS', say: 'TAP CHUTE ON YELLOW', do: 'tap', at: G => { const b = layout(G).a; return [b.x, b.y]; }, how: 'Watch the altimeter on the right. When the needle is between the yellow marks, tap CHUTE. Twice.', need: 2 }],
-  3: [{ id: 'flare', title: 'FLARE', say: 'HOLD FLARE', do: 'hold', at: G => { const b = layout(G).a; return [b.x, b.y]; }, how: 'Turn to face the wind arrow, then hold FLARE when the ground is close (the ring turns green). Land softly twice.', need: 2 }],
+  1: [{ id: 'fly', title: 'FLY YOUR BODY', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Drag the left thumb: forward to fly forward, left or right to turn. Fly through three gold rings.', need: 3 }],
+  2: [{ id: 'open', title: 'OPEN BETWEEN THE MARKS', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Watch the altimeter on the right. When the needle is between the yellow marks, tap CHUTE. Twice.', need: 2 }],
+  3: [{ id: 'flare', title: 'FLARE', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Turn to face the wind arrow, then hold FLARE when the ground is close (the ring turns green). Land softly twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 function lessonSetup(G) { const D = G.lesson, p = G.p, T = G.T; G.deployCue = G.flareCue = false; p.aad = false;
@@ -158,6 +158,19 @@ const BLIND = {
 // HONEST: a jumper who looks: in freefall flies towards a point upwind of the X and opens at the marks (a little early or
 // late); under the canopy picks the heading and brakes whose straight-line landing comes nearest, turning to face the wind
 // for the last part; flares near the ground. react: seconds behind; acc: how steady the thumb is.
+// THE TUTORIAL SHOWS THE MOVE AND THE MOMENT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand
+// pushed up whatever the ring, and TAP CHUTE / HOLD FLARE pointed at the button long before it was time. Now the robot is asked (dryPlanAll):
+// FLY THIS WAY on the stick (to the ring, into the wind), TAP CHUTE! / HOLD FLARE! only when it would, HOLD TUCK, LET GO, and WAIT… between.
+const SKY = { t: -1e9, v: null };
+function skyCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SKY.t < 120) return SKY.v; SKY.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => all.filter(q => q[0] === n).pop(), L = layout(G);
+  const ch = last('chute'), fl = last('flareOn'), tk = last('tuckOn'), st = last('setStick'), sx = st ? st[1] : 0, sy = st ? st[2] : 0, s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.25, y0 = s2 ? s2.y0 : H * 0.7, R = 56 * k; let v;
+  if (ch) v = ['TAP CHUTE!', 'tap', [L.a.x, L.a.y]];
+  else if (fl && fl[1] && !G.flareOn) v = ['HOLD FLARE!', 'hold', [L.a.x, L.a.y]];
+  else if (tk && tk[1] && !G.tuck) v = ['HOLD TUCK', 'hold', [L.b.x, L.b.y]];
+  else if (Math.hypot(sx, sy) > 0.25) v = ['FLY THIS WAY', 'drag', [x0, y0, x0 + sx * R * 0.8, y0 - sy * R * 0.8]];
+  else if ((G.tuck && !(tk && tk[1])) || (G.flareOn && fl && !fl[1])) v = ['LET GO', 'release', G.tuck ? [L.b.x, L.b.y] : [L.a.x, L.a.y]];
+  else v = G.flareOn ? ['KEEP HOLDING', 'hold', [L.a.x, L.a.y]] : ['WAIT…', 'wait', false];
+  SKY.v = v; return v; }
 function honest(G, o, mem) {
   if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, p = G.p, R = Math.random;
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.08 + react * 0.3; const h = agl(G), T = G.T;
@@ -167,8 +180,8 @@ function honest(G, o, mem) {
     let goal = { x: T.x - G.W.lo.x * 25, z: T.z - G.W.lo.z * 25, y: surfAt(G, T.x, T.z) + mem.openH };   // upwind of the X: the canopy will drift back
     const nr = G.rings.find(r => !r.done && !r.miss && r.y < p.y - 20); if (nr && (G.cfg.course || (G.lesson && G.lesson.id === 'fly'))) goal = nr;
     const tR = Math.max(1.5, (p.y - goal.y) / 44), w = windAt(G, h), ax = (goal.x - p.x) / tR - w.x, az = (goal.z - p.z) / tR - w.z, need = Math.hypot(ax, az);   // the air speed that gets there in time
-    setStick(G, turnTo(Math.atan2(az, ax)), clamp((need - 4) / 18, 0, 1)); tuckOn(G, false);
-    if (h < mem.openH && !(G.lesson && G.lesson.id === 'fly')) chute(G);
+    ACT.setStick(G, turnTo(Math.atan2(az, ax)), clamp((need - 4) / 18, 0, 1)); ACT.tuckOn(G, false);
+    if (h < mem.openH && !(G.lesson && G.lesson.id === 'fly')) ACT.chute(G);
     return; }
   if (p.phase !== 'canopy') return;
   // under the canopy: fly a pattern. Above 60 m, aim to be downwind of the X at 60 m (heading and brakes whose straight flight
@@ -178,8 +191,15 @@ function honest(G, o, mem) {
     if (h > FH + 5) { const P = predictLand(G, yaw, br, FH); cost = Math.hypot(P.x - A.x, P.z - A.z); }
     else { const P = predictLand(G, yaw, br); cost = Math.hypot(P.x - T.x, P.z - T.z); let dd = yaw - upw; while (dd > Math.PI) dd -= TAU; while (dd < -Math.PI) dd += TAU; if (h < 25) cost += Math.abs(dd) * 12; }
     if (!best || cost < best.cost) best = { yaw, br, cost }; }
-  setStick(G, turnTo(best.yaw, 2), -best.br);
+  ACT.setStick(G, turnTo(best.yaw, 2), -best.br);
   if (mem.flareH == null) mem.flareH = 3 + R() * 2.5 + (1 - acc) * (R() - 0.5) * 8 + react * 3;
-  flareOn(G, h < mem.flareH);
+  ACT.flareOn(G, h < mem.flareH);
 }
 function winNow(G) { if (!G || G.over || G.lesson) return; G.landed = { d: 0, q: 'soft', vs: 1, hs: 2 }; G.p.phase = 'landed'; G.score = 1300; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick, tuckOn, chute, flareOn }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

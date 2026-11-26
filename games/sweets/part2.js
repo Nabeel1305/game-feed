@@ -228,9 +228,9 @@ function progress(G) { const g = G.cfg.goal; if (g === 'score') return Math.min(
   if (g === 'collect') { if (!G.collect || !G.collect.length) return 0; const a = G.collect.reduce((s, x) => s + Math.min(x.got, x.n), 0), b = G.collect.reduce((s, x) => s + x.n, 0); return a / b; } if (g === 'cherry') return G.cherOut / G.cherT; return 0; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'match', title: 'MAKE A LINE', say: 'SWIPE TO SWAP', do: 'swipe', dir: 'right', how: 'Swipe a sweet into its neighbour to swap them. Three of a colour in a line pop! Pop three lines.', need: 3 }],
-  2: [{ id: 'four', title: 'FOUR IN A ROW', say: 'MAKE FOUR', do: 'swipe', dir: 'right', how: 'Line up FOUR of a colour to make a STRIPED sweet. Then put it in a line: it clears a whole row or column!', need: 1 }],
-  3: [{ id: 'jelly', title: 'THE JELLY', say: 'POP THE PINK', do: 'swipe', dir: 'right', how: 'Pop the sweets sitting on the pink jelly. Clear all the jelly.', need: 1 }],
+  1: [{ id: 'match', title: 'MAKE A LINE', say: G => sweetCue(G)[0], do: G => sweetCue(G)[1], at: G => sweetCue(G)[2], how: 'Swipe a sweet into its neighbour to swap them. Three of a colour in a line pop! Pop three lines.', need: 3 }],
+  2: [{ id: 'four', title: 'FOUR IN A ROW', say: G => sweetCue(G)[0], do: G => sweetCue(G)[1], at: G => sweetCue(G)[2], how: 'Line up FOUR of a colour to make a STRIPED sweet. Then put it in a line: it clears a whole row or column!', need: 1 }],
+  3: [{ id: 'jelly', title: 'THE JELLY', say: G => sweetCue(G)[0], do: G => sweetCue(G)[1], at: G => sweetCue(G)[2], how: 'Pop the sweets sitting on the pink jelly. Clear all the jelly.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -262,9 +262,24 @@ function moveValue(G, i, j) { const a = G.b[i].k, b = G.b[j].k; let v = 0;
       if (goal === 'frost') for (const m of nbrs(n)) if (G.b[m].frost) v += 3; if (goal === 'cherry') { let r = rowOf(n) - 1; while (r >= 0) { const k = G.b[idx(r, colOf(n))].k; if (k && k.sp === 'cherry') { v += 7; break; } r--; } } }
     v += (rowOf(cells[0]) / R) * 1.5; }      /* lower is better: more falls, more cascades */
   return v; }
+// THE TUTORIAL SHOWS WHICH SWEET TO SWIPE, AND WHERE (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The
+// hand swiped right in a box, over whatever sweet was there, which mostly swaps nothing useful. Now the robot is asked (dryPlan swap, its best
+// move): the hand swipes that very sweet into that very neighbour. SWIPE THIS ONE.
+const SWC = { t: -1e9, v: null, k: null };
+function sweetCue(G) { if (G.over || G.wait > 0 || G.phase !== 'idle' || G.done) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SWC.t < 300 && SWC.k === G.moves) return SWC.v; SWC.t = now; SWC.k = G.moves;
+  const P = dryPlan(G, null, { t: 99 }), L = lay(); let v = ['NO MOVES…', 'wait', false];
+  if (P) { const a = P[1], b = P[2], xy = i => [L.bx + ((i % C) + 0.5) * L.cs, L.by + (Math.floor(i / C) + 0.5) * L.cs], A = xy(a), B = xy(b); v = ['SWIPE THIS ONE', 'swipe', [A[0], A[1], B[0], B[1]]]; }
+  SWC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, Rr = Math.random;
   if (G.over || G.wait > 0 || G.phase !== 'idle' || G.done) { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.5 + react * 2) return; mem.t = 0;
   const ms = findMoves(G); if (!ms.length) return; let best = ms[0], bv = -1;
   if (Rr() > acc) best = ms[(Rr() * ms.length) | 0]; else for (const [i, j] of ms) { const v = moveValue(G, i, j) + Rr() * (1 - acc) * 6; if (v > bv) { bv = v; best = [i, j]; } }
-  swap(G, best[0], best[1]); }
+  ACT.swap(G, best[0], best[1]); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; if (!G.collect) G.collect = [];      /* (a lesson board has no collect list: the test's shortcut must not leave the level half set up) */ G.movesAtGoal = G.moves; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { swap }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

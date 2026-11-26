@@ -74,9 +74,9 @@ function finish(G, place) { if (G.over) return; const win = place === 1; G.over 
   G.ev.push({ k: win ? 'won' : 'lost', place }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'together', title: 'TOGETHER', say: 'TAP BOTH ON GREEN', do: 'tap', how: 'Tap left and right at the same time, each time both rings turn green. Six perfect strokes together.', need: 6 }],
-  2: [{ id: 'steer', title: 'STEER', say: 'LEFT OAR TURNS RIGHT', do: 'tap', how: 'One oar turns you: the LEFT oar turns you RIGHT, the right oar turns you left. Row 150 m down the bends without touching the bank.', need: 1 }],
-  3: [{ id: 'race', title: 'RHYTHM', say: 'KEEP THE RHYTHM', do: 'tap', how: 'Keep stroking together on the green: your RHYTHM grows and so does your speed. Reach a rhythm of 5.', need: 1 }],
+  1: [{ id: 'together', title: 'TOGETHER', say: G => rowCue(G)[0], do: G => rowCue(G)[1], at: G => rowCue(G)[2], how: 'Tap left and right at the same time, each time both rings turn green. Six perfect strokes together.', need: 6 }],
+  2: [{ id: 'steer', title: 'STEER', say: G => rowCue(G)[0], do: G => rowCue(G)[1], at: G => rowCue(G)[2], how: 'One oar turns you: the LEFT oar turns you RIGHT, the right oar turns you left. Row 150 m down the bends without touching the bank.', need: 1 }],
+  3: [{ id: 'race', title: 'RHYTHM', say: G => rowCue(G)[0], do: G => rowCue(G)[1], at: G => rowCue(G)[2], how: 'Keep stroking together on the green: your RHYTHM grows and so does your speed. Reach a rhythm of 5.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -95,6 +95,14 @@ function lessonSee(G, what, d) { const st = lessonNow(G); if (!st) return; let o
 const BLIND = { l: G => stroke(G, 0), r: G => stroke(G, 1), b: G => { stroke(G, 0); stroke(G, 1); } };
 // a rower who looks: strokes both oars together on the green, a little early or late (react, acc); steers by stroking one oar
 // a moment ahead of the other or alone, aiming down the river past the rocks and logs
+// THE TUTORIAL SAYS WHICH OAR, NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said LEFT OAR TURNS
+// RIGHT with a hand tapping in a box. Now the robot is asked (dryPlanAll stroke, on time): TAP BOTH SIDES when both rings are green, TAP LEFT /
+// TAP RIGHT with the hand on that half to turn, WAIT FOR GREEN between strokes.
+const RWC = { t: -1e9, v: null };
+function rowCue(G) { if (G.over || G.wait > 0 || G.go > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RWC.t < 60) return RWC.v; RWC.t = now;
+  const all = dryPlanAll(G, null, { due: CYCLE }), l = all.some(q => q[1] === 0), r = all.some(q => q[1] === 1); let v;
+  if (l && r) v = ['TAP BOTH SIDES!', 'tap', false]; else if (l) v = ['TAP LEFT', 'tap', [W * 0.25, H * 0.7]]; else if (r) v = ['TAP RIGHT', 'tap', [W * 0.75, H * 0.7]]; else v = ['WAIT FOR GREEN', 'wait', false];
+  RWC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, m = G.me, R = Math.random, c = G.cfg;
   if (G.over || G.wait > 0 || G.go > 0) return;
   // where to point: down the river, round what is ahead
@@ -103,7 +111,14 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   if (!mem.due) mem.due = CYCLE + (R() - 0.3) * (1 - acc) * 0.9 + react * 0.12;
   const t0 = m.oars[0].t, t1 = m.oars[1].t;
   if (Math.min(t0, t1) >= mem.due) { mem.due = 0;
-    if (Math.abs(err) > 0.12 && R() < 0.5 + acc * 0.5) { stroke(G, err > 0 ? 1 : 0); return; }      // one oar to turn (the right oar turns you to +x)
-    stroke(G, 0); if (R() < 0.55 + acc * 0.45) stroke(G, 1); else mem.late = 0.2 + R() * 0.2; return; }
-  if (mem.late) { mem.late -= 1 / 60; if (mem.late <= 0) { mem.late = 0; stroke(G, 1); } } }
+    if (Math.abs(err) > 0.12 && R() < 0.5 + acc * 0.5) { ACT.stroke(G, err > 0 ? 1 : 0); return; }      // one oar to turn (the right oar turns you to +x)
+    ACT.stroke(G, 0); if (R() < 0.55 + acc * 0.45) ACT.stroke(G, 1); else mem.late = 0.2 + R() * 0.2; return; }
+  if (mem.late) { mem.late -= 1 / 60; if (mem.late <= 0) { mem.late = 0; ACT.stroke(G, 1); } } }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.me.z = G.len; finish(G, 1); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { stroke }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

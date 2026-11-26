@@ -247,10 +247,24 @@ function finish(G, win) {
 
 // ---------- LESSONS: reach (three gold holds in a row), rest (on the ledge until the grip is full), the rope (two bolts) ----------
 const LESSONS = {
-  1: [{ id: 'reach', title: 'REACH', say: 'DRAG A HAND TO GOLD', do: 'drag', dir: 'up', how: 'Drag a hand onto the GOLD hold. Let go near it and you grab it. Three gold holds in a row.', need: 3 }],
-  2: [{ id: 'rest', title: 'REST', say: 'BOTH HANDS ON THE LEDGE', do: 'drag', dir: 'up', how: 'Your grip is low (the bar). Get BOTH hands onto the big ledge and hang there until the bar is full.', need: 1 }],
-  3: [{ id: 'clip', title: 'THE ROPE', say: 'KEEP CLIMBING', do: 'drag', dir: 'up', how: 'Climb past two bolts. The rope clips in as you go, and catches you there if you slip.', need: 2 }],
+  1: [{ id: 'reach', title: 'REACH', say: G => climbCue(G)[0], do: G => climbCue(G)[1], at: G => climbCue(G)[2], how: 'Drag a hand onto the GOLD hold. Let go near it and you grab it. Three gold holds in a row.', need: 3 }],
+  2: [{ id: 'rest', title: 'REST', say: G => climbCue(G)[0], do: G => climbCue(G)[1], at: G => climbCue(G)[2], how: 'Your grip is low (the bar). Get BOTH hands onto the big ledge and hang there until the bar is full.', need: 1 }],
+  3: [{ id: 'clip', title: 'THE ROPE', say: G => climbCue(G)[0], do: G => climbCue(G)[1], at: G => climbCue(G)[2], how: 'Climb past two bolts. The rope clips in as you go, and catches you there if you slip.', need: 2 }],
 };
+// THE TUTORIAL'S HAND DRAGS THE RIGHT LIMB TO THE RIGHT HOLD (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It drew a drag upward in a little box; a drag that does not start ON a hand or foot only moves the view. Now the hand starts on
+// the limb the robot would move and ends on the hold (asked of the robot itself, dry: it does nothing, with its slips switched off);
+// REST… HANG ON when it would rest; WAIT while the climber moves.
+const CLC = { t: -1e9, v: null };
+function climbCue(G) { if (G.over || (G.phase !== 'climb' && G.phase !== 'slip') || G.look) return ['WAIT…', 'wait', false];
+  if (G.dyno) return ['LET GO TO JUMP', 'release', false];
+  const now = performance.now(); if (now - CLC.t < 350 && CLC.g === G) return CLC.v; CLC.t = now; CLC.g = G;
+  const save = Math.random, mem = { dry: true }; Math.random = () => 0.5; try { honest(G, { acc: 1, react: 0.3 }, mem); } finally { Math.random = save; }
+  let v = ['WAIT…', 'wait', false]; const P = mem.plan;
+  if (P === 'rest') v = ['REST… HANG ON', 'wait', false];
+  else if (P && P.t) { const hs = G.route.holds, c = at(G, P.l), h = hs[P.t.i], a = scrOf(G, c.x, c.y), b = scrOf(G, h.x, h.y);
+    if (a && b) v = [G.lesson && G.lesson.id === 'reach' && P.t.i === G.gold ? 'DRAG IT TO THE GOLD' : isHand(P.l) ? 'DRAG THIS HAND' : 'DRAG THIS FOOT', 'drag', [a.x, a.y, b.x, b.y]]; }
+  CLC.v = v; return v; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: LESSONS[G.N][0].id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSetup(G) { const D = G.lesson; setup(G, D.id); if (D.id === 'reach') pickGold(G); if (D.id === 'rest') G.st = 0.3; }
@@ -287,10 +301,10 @@ function honest(G, o, mem) {
   if (G.look) { preview(G); return; }
   if (G.dyno) { if (mem.rel == null) mem.rel = G.dyno.g0 + G.dyno.gw * (0.5 + (R() - 0.5) * (1.6 - acc)); if (dynoP(G) >= mem.rel) { mem.rel = null; dynoGo(G); } return; }
   if (G.phase !== 'climb' && G.phase !== 'slip') { mem.next = G.t + 0.4; return; }
-  if (G.t < (mem.next || 0)) return;
+  if (G.t < (mem.next || 0) && !mem.dry) return;
   mem.next = G.t + 0.45 + react * 1.6 + R() * 0.3;
   const S = G.S, fs = footSup(G, S), good = ['lh', 'rh'].every(l => S[l] >= 0 && HT[hs[S[l]].ty].good), resting = good && fs >= 0.5 && G.body.strain < 1.0;
-  if (resting && G.st < (mem.restTo || 0.9) && !(G.lesson && G.lesson.id === 'reach')) { mem.restTo = 0.88 + R() * 0.1; return; }
+  if (resting && G.st < (mem.restTo || 0.9) && !(G.lesson && G.lesson.id === 'reach')) { mem.restTo = 0.88 + R() * 0.1; if (mem.dry) mem.plan = 'rest'; return; }
   const ls = G.cfg.feet === 'auto' && !G.lesson ? ['lh', 'rh'] : LIMBS; let best = null, bv = -1e9;
   const hy = Math.max(hs[S.lh] ? hs[S.lh].y : 0, hs[S.rh] ? hs[S.rh].y : 0);
   if (mem.D == null || mem.Dfor !== G.route) { mem.D = toTop(G); mem.Dfor = G.route; }
@@ -305,6 +319,7 @@ function honest(G, o, mem) {
         v = (dNow - dT) * 2.2 - HT[h.ty].hand * 10 - b2.strain * 0.8 + (h.ty === 'top' ? 9 : 0) + (G.st < 0.6 && ok2 && footSup(G, S2) >= 0.5 ? 3 : 0) + (dT < (mem.D.get(S[l]) ?? 99) - 0.1 ? 0.6 : -0.6); }
       else { const S2 = tryStance(G, l, t.i), b2 = solve(G, S2); v = (mem.gain < 0.3 ? (b2.y - G.body.y) * 5 + (footSup(G, S2) - footSup(G, S)) * 3 : (footSup(G, S2) - footSup(G, S)) * 14 - 0.7) - (b2.strain - G.body.strain) * 2 - (mem.prev && mem.prev[l] === t.i ? 2.5 : 0); }
       v += R() * 0.25; if (v > bv) { bv = v; best = { l, t }; } } }
+  if (mem.dry) { mem.plan = best && bv >= -2 ? best : null; return; }      // the tutorial asks what the robot would do, and does nothing (climbCue)
   if (!best || bv < -2) { mem.next = G.t + 0.8; return; }
   const h = hs[best.t.i];
   if (best.t.dyno) { if (G.st > 0.5) dynoStart(G, best.l, h.i); return; }

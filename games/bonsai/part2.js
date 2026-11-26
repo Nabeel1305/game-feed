@@ -160,7 +160,7 @@ function finish(G) { const c = G.cfg, win = G.match >= c.need; G.over = win ? 'w
 const LESSONS = {
   1: [{ id: 'grow', title: 'GROW', say: 'TAP THIS BUD', do: 'tap', how: 'Tap a bud (a pink dot at a branch tip) whose branch would grow into the outline. Grow three.', need: 3 }],
   2: [{ id: 'prune', title: 'PRUNE', say: 'CUT THIS BRANCH', do: 'tap', how: 'Some branches grew wild, out of the outline. Tap each one to cut it off. Cut two.', need: 2 }],
-  3: [{ id: 'flick', title: 'CATERPILLARS', say: 'TAP THE CATERPILLAR', do: 'tap', how: 'A caterpillar is on the leaves. Tap it to flick it off before it eats. Three times.', need: 3 }],
+  3: [{ id: 'flick', title: 'CATERPILLARS', say: G => G.pests.length ? 'TAP THE CATERPILLAR' : 'WAIT FOR ONE…', do: G => G.pests.length ? 'tap' : 'wait', how: 'A caterpillar is on the leaves. Tap it to flick it off before it eats. Three times.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

@@ -109,9 +109,9 @@ function finish(G, win) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'turn', kind: 'ring', trail: 'turn', title: 'TURN', say: 'SLIDE TO TURN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Put your thumb down anywhere and move it left or right: you lean and turn. Fly through the rings.', need: 3, ok: w => w === 'ring' }],
-  2: [{ id: 'updown', kind: 'ring', trail: 'updown', title: 'CLIMB AND DIVE', say: 'SLIDE UP OR DOWN', do: 'drag', dir: 'ud', at: G => [W / 2, H * 0.7], how: 'Move your thumb up to climb, down to dive. Diving is faster. Through the rings, high and low.', need: 3, ok: w => w === 'ring' }],
-  3: [{ id: 'chain', kind: 'ring', trail: 'easy', title: 'A CHAIN OF RINGS', say: 'TURN EARLY', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Look ahead to the next ring and turn early. Three in a row.', need: 3, ok: w => w === 'ring', chain: true }],
+  1: [{ id: 'turn', kind: 'ring', trail: 'turn', title: 'TURN', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Put your thumb down anywhere and move it left or right: you lean and turn. Fly through the rings.', need: 3, ok: w => w === 'ring' }],
+  2: [{ id: 'updown', kind: 'ring', trail: 'updown', title: 'CLIMB AND DIVE', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Move your thumb up to climb, down to dive. Diving is faster. Through the rings, high and low.', need: 3, ok: w => w === 'ring' }],
+  3: [{ id: 'chain', kind: 'ring', trail: 'easy', title: 'A CHAIN OF RINGS', say: G => soarCue(G)[0], do: G => soarCue(G)[1], at: G => soarCue(G)[2], how: 'Look ahead to the next ring and turn early. Three in a row.', need: 3, ok: w => w === 'ring', chain: true }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); G.rings.length = G.next; makeTrail(G, G.next ? 1 : 0, 6, LESSONS[G.N][0].trail); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -143,6 +143,15 @@ function honest(G, o, mem) {
   G.stick.x = clamp(dyaw * 2.6 - h.yr * 0.6 + (Math.random() - 0.5) * wob, -1, 1);
   G.stick.y = clamp((want - h.pitch) * 3 + want * 1.2 + (Math.random() - 0.5) * wob, -1, 1);
 }
+// THE TUTORIAL SAYS WHICH WAY TO THE RING (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid left
+// and right (or up and down) in a box. Now it is the robot's own steering, worked out from where the next ring is: TURN LEFT / TURN RIGHT,
+// CLIMB / DIVE, or a slide that does both, from where the thumb went down.
+function soarCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const f = G.f, r = G.rings[G.next]; if (!r) return ['FLY ON…', 'wait', false];
+  const ax = r.x - Math.sin(r.yaw) * 14, az = r.z + Math.cos(r.yaw) * 14, far = Math.hypot(r.x - f.x, r.z - f.z), tx = far > 24 ? ax : r.x, tz = far > 24 ? az : r.z;
+  let dyaw = Math.atan2(tx - f.x, -(tz - f.z)) - f.yaw; while (dyaw > Math.PI) dyaw -= 2 * Math.PI; while (dyaw < -Math.PI) dyaw += 2 * Math.PI;
+  const want = Math.atan2(r.y - f.y, Math.max(8, far)), sx = clamp(dyaw * 2.6 - f.yr * 0.6, -1, 1), sy = clamp((want - f.pitch) * 3 + want * 1.2, -1, 1);
+  const st = ui.stick, x0 = st ? st.x0 : W / 2, y0 = st ? st.y0 : H * 0.7, R = 70 * k, ws = Math.abs(sx) > 0.3 ? (sx < 0 ? 'TURN LEFT' : 'TURN RIGHT') : Math.abs(sy) > 0.3 ? (sy > 0 ? 'SLIDE UP: CLIMB' : 'SLIDE DOWN: DIVE') : 'HOLD IT THERE';
+  return ws === 'HOLD IT THERE' ? [ws, 'hold', [x0, y0]] : [ws, 'drag', [x0, y0, x0 + sx * R * 0.8, y0 - sy * R * 0.8]]; }
 // The shortest real win, for tools/test_controls.py: enough rings counted, the last one just ahead.
 function winNow(G) { if (!G || G.over) return; G.lesson = null; const c = G.cfg, r = G.rings[G.rings.length - 1]; G.got = c.goal; G.next = G.rings.length - 1;
   const f = G.f; f.yaw = r.yaw; f.pitch = 0; f.bank = 0; G.stick.x = G.stick.y = 0; f.x = r.x - Math.sin(r.yaw) * 2; f.z = r.z + Math.cos(r.yaw) * 2; f.y = r.y; }

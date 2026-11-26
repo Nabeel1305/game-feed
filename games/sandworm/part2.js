@@ -158,9 +158,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: steer through waystones, surge into a breach, brace for the knocks ----------
 const LESSONS = {
-  1: [{ id: 'steer', title: 'STEER', say: 'DRAG TO TURN', do: 'drag', dir: 'lr', how: 'Left thumb: drag to turn. The worm is heavy: start the turn early, ease it back to go straight. Pass between three pairs of waystones.', need: 3 }],
-  2: [{ id: 'breach', title: 'SURGE AND BREACH', say: 'HOLD SURGE', do: 'hold', at: G => { const b = layout(G).surge; return [b.x, b.y]; }, how: 'Hold SURGE (right) to speed up. Fast over a dune crest and the worm leaps out of the sand. Breach twice.', need: 2 }],
-  3: [{ id: 'brace', title: 'BRACE', say: 'HOLD BRACE', do: 'hold', at: G => { const b = layout(G).brace; return [b.x, b.y]; }, how: 'Hold BRACE before you land from a breach, hit cracked sand or turn hard: braced, you hardly wobble. Three braced knocks or landings.', need: 3 }],
+  1: [{ id: 'steer', title: 'STEER', say: G => wormCue(G)[0], do: G => wormCue(G)[1], at: G => wormCue(G)[2], how: 'Left thumb: drag to turn. The worm is heavy: start the turn early, ease it back to go straight. Pass between three pairs of waystones.', need: 3 }],
+  2: [{ id: 'breach', title: 'SURGE AND BREACH', say: G => wormCue(G)[0], do: G => wormCue(G)[1], at: G => wormCue(G)[2], how: 'Hold SURGE (right) to speed up. Fast over a dune crest and the worm leaps out of the sand. Breach twice.', need: 2 }],
+  3: [{ id: 'brace', title: 'BRACE', say: G => wormCue(G)[0], do: G => wormCue(G)[1], at: G => wormCue(G)[2], how: 'Hold BRACE before you land from a breach, hit cracked sand or turn hard: braced, you hardly wobble. Three braced knocks or landings.', need: 3 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); if (st.id !== 'steer') { G.cfg = Object.assign({}, G.cfg, { dunes: 1.6 }); } if (st.id === 'brace') { for (let i = 0; i < 6; i++) { const s = G.route.line[4 + i * 5]; if (s) G.route.cracks.push({ x: s.x, z: s.z, r: 16, done: false }); } } }
 function lessonSee(G, what, braced) { const D = G.lesson; if (!D || D.done) return; const id = D.id;
@@ -179,9 +179,21 @@ const BLIND = {
 };
 // HONEST: a rider who looks: aims at a point ahead on the route (past rocks), eases into turns, surges on straights, braces for
 // landings, cracks, rocks it cannot miss and hard turns. react: seconds behind; acc: how steady the thumb is.
+// THE TUTORIAL SAYS WHICH WAY AND WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said DRAG TO TURN
+// with a hand sliding both ways in a box; HOLD SURGE stayed up when surging was wrong. Now the robot is asked (dryPlanAll): TURN LEFT / TURN
+// RIGHT (the way it would steer), HOLD SURGE, HOLD BRACE when it would, LET GO, GO STRAIGHT.
+const WMC = { t: -1e9, v: null };
+function wormCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - WMC.t < 120) return WMC.v; WMC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => all.filter(q => q[0] === n).pop(), L = layout(G);
+  const st = last('setStick'), su = last('surgeOn'), br = last('braceOn'), sx = st ? st[1] : 0, x0 = W * 0.22, y0 = H * 0.7; let v;
+  if (br && br[1]) v = ['HOLD BRACE', 'hold', [L.brace.x, L.brace.y]];
+  else if (Math.abs(sx) > 0.2) v = [sx < 0 ? 'TURN RIGHT' : 'TURN LEFT', 'drag', [x0, y0, x0 - sx * 56 * k, y0]];
+  else if (su && su[1]) v = ['HOLD SURGE', 'hold', [L.surge.x, L.surge.y]];
+  else if (G.surge || G.brace) v = ['LET GO', 'release', G.brace ? [L.brace.x, L.brace.y] : [L.surge.x, L.surge.y]];
+  else v = ['GO STRAIGHT', 'wait', false];
+  WMC.v = v; return v; }
 function honest(G, o, mem) {
   if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, w = G.w, R = Math.random;
-  if (G.phase !== 'ride') { setStick(G, 0, 0); surgeOn(G, false); braceOn(G, false); return; }
+  if (G.phase !== 'ride') { ACT.setStick(G, 0, 0); ACT.surgeOn(G, false); ACT.braceOn(G, false); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.06 + react * 0.25;
   const L = G.route.line; let iBest = 0, dB = 1e9; for (let i = 0; i < L.length; i++) { const d = Math.hypot(L[i].x - w.x, L[i].z - w.z); if (d < dB && L[i].leg >= G.wp - 1) { dB = d; iBest = i; } }
   const look = 45 + w.v * 1.2; let tgt = L[Math.min(L.length - 1, iBest + 1)]; for (let i = iBest; i < L.length; i++) { tgt = L[i]; if (Math.hypot(L[i].x - w.x, L[i].z - w.z) > look) break; }
@@ -193,11 +205,18 @@ function honest(G, o, mem) {
   tx = w.x + Math.cos(dh) * 50; tz = w.z + Math.sin(dh) * 50;
   let da = Math.atan2(tz - w.z, tx - w.x) - w.h; while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU;
   const turnMax = G.W.turn * (1.15 - 0.45 * clamp((w.v - 10) / 25, 0, 1)) * (G.brace ? 0.6 : 1), omT = clamp(da * 1.4, -turnMax, turnMax);
-  setStick(G, clamp(-(omT / turnMax) * 1.0 + (1 - acc) * (R() - 0.5) * 0.6, -1, 1), 0);
+  ACT.setStick(G, clamp(-(omT / turnMax) * 1.0 + (1 - acc) * (R() - 0.5) * 0.6, -1, 1), 0);
   const sharp = Math.abs(da) > 0.5, nearCrack = G.route.cracks.some(cr => !cr.done && Math.hypot(cr.x - w.x, cr.z - w.z) < cr.r + w.v * 0.6), nearRock = G.route.rocks.some(r => Math.hypot(r.x - w.x, r.z - w.z) < r.r + 6 + w.v * 0.3);
   const lim = 13; const lat = Math.abs(w.v * w.om);
   if (R() > acc * 0.35 + 0.65 && !mem.miss) { mem.miss = G.t + 0.8; } if (mem.miss && G.t > mem.miss) mem.miss = 0;
-  braceOn(G, !mem.miss && (w.air || nearCrack || nearRock || lat > lim * 0.8 || G.bal < 0.45 || (G.lesson && G.lesson.id === 'brace' && w.air)));
-  surgeOn(G, !sharp && G.bal > 0.55 && !nearRock && Math.abs(w.om) < 0.3 || (G.lesson && G.lesson.id === 'breach' && !sharp));
+  ACT.braceOn(G, !mem.miss && (w.air || nearCrack || nearRock || lat > lim * 0.8 || G.bal < 0.45 || (G.lesson && G.lesson.id === 'brace' && w.air)));
+  ACT.surgeOn(G, !sharp && G.bal > 0.55 && !nearRock && Math.abs(w.om) < 0.3 || (G.lesson && G.lesson.id === 'breach' && !sharp));
 }
 function winNow(G) { if (!G || G.over || G.lesson) return; G.phase = 'end'; G.endT = 0.01; step(G, 0.02); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick, surgeOn, braceOn }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

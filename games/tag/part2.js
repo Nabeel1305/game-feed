@@ -173,10 +173,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'YOU ARE IT!', say: 'DRAG TO RUN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Put your thumb down anywhere and drag: you run that way. Tag all three kids.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 3 },
-      { id: 'dash', title: 'DASH', say: 'TAP DASH', do: 'tap', at: G => { const b = dashBtn(); return [b.x, b.y]; }, how: 'Tap the DASH button: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
-  2: [{ id: 'flee', title: 'THEY ARE IT!', say: 'RUN AWAY!', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'The kid in red is IT. Keep away from him for 15 seconds. Dash when he gets close.', need: 1, ok: w => w === 'survived', mode: 'run', kids: 1, survive: 15 }],
-  3: [{ id: 'freeze', title: 'FREEZE TAG', say: 'TOUCH TO FREEZE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Freeze all four. Free kids can unfreeze a friend with a touch: get them all.', need: 1, ok: w => w === 'all', mode: 'freeze', kids: 4 }],
+  1: [{ id: 'run', title: 'YOU ARE IT!', say: G => tagCue(G)[0], do: G => tagCue(G)[1], at: G => tagCue(G)[2], how: 'Put your thumb down anywhere and drag: you run that way. Tag all three kids.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 3 },
+      { id: 'dash', title: 'DASH', say: G => tagCue(G)[0], do: G => tagCue(G)[1], at: G => tagCue(G)[2], how: 'Tap the DASH button: a burst of speed. Dash to tag the last two.', need: 1, ok: w => w === 'all', mode: 'chase', kids: 2, dashOnly: true }],
+  2: [{ id: 'flee', title: 'THEY ARE IT!', say: G => tagCue(G)[0], do: G => tagCue(G)[1], at: G => tagCue(G)[2], how: 'The kid in red is IT. Keep away from him for 15 seconds. Dash when he gets close.', need: 1, ok: w => w === 'survived', mode: 'run', kids: 1, survive: 15 }],
+  3: [{ id: 'freeze', title: 'FREEZE TAG', say: G => tagCue(G)[0], do: G => tagCue(G)[1], at: G => tagCue(G)[2], how: 'Freeze all four. Free kids can unfreeze a friend with a touch: get them all.', need: 1, ok: w => w === 'all', mode: 'freeze', kids: 4 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0, dashed: 0 }; setup(G); G.lstart = G.t; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -196,18 +196,26 @@ function lessonMiss(G, why) { const D = G.lesson; if (!D) return; D.miss++; if (
 const BLIND = { n: G => stick(G, 0, -1), s: G => stick(G, 0, 1), e: G => stick(G, 1, 0), w: G => stick(G, -1, 0), o: G => stick(G, 0, 0), d: G => dash(G) };
 // a kid who looks: chasing, runs at the nearest free kid where he is going (cuts him off), dashes when close; running away,
 // keeps the chasers behind him, out of corners, round the frame, dashes when one is on him; picks up power-ups on the way
+// THE TUTORIAL SAYS WHICH WAY TO RUN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid left
+// and right in a box whoever was where. Now the robot is asked (dryPlanAll): RUN THIS WAY (to the nearest kid, away from the one who is IT, to a
+// friend to unfreeze), TAP DASH! when it would dash.
+const TGC = { t: -1e9, v: null };
+function tagCue(G) { if (G.over || G.wait > 0 || !G.me) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - TGC.t < 150) return TGC.v; TGC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), st = all.filter(q => q[0] === 'stick').pop(), s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.3, y0 = s2 ? s2.y0 : H * 0.7, R = 46 * k, b = dashBtn(); let v = ['WAIT…', 'wait', false];
+  if (all.some(q => q[0] === 'dash')) v = ['TAP DASH!', 'tap', [b.x, b.y]];
+  else if (st && Math.hypot(st[1], st[2]) > 0.15) { const m = Math.hypot(st[1], st[2]); v = [G.lesson && G.lesson.steps[G.lesson.i].id === 'flee' ? 'RUN AWAY THIS WAY' : 'RUN THIS WAY', 'drag', [x0, y0, x0 + st[1] / m * R * 0.9, y0 + st[2] / m * R * 0.9]]; }
+  TGC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, me = G.me, c = G.cfg, mode = G.mode;
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.08 + react * 0.5;
-  if (mem.slip > G.t) return; if (Math.random() > acc + (1 - acc) * 0.75) { mem.slip = G.t + 0.25 + react; const a = Math.random() * TAU; stick(G, Math.sin(a), Math.cos(a)); return; }
+  if (mem.slip > G.t) return; if (Math.random() > acc + (1 - acc) * 0.75) { mem.slip = G.t + 0.25 + react; const a = Math.random() * TAU; ACT.stick(G, Math.sin(a), Math.cos(a)); return; }
   const it = mode === 'chase' || mode === 'freeze', near = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
   if (it) {
     let best = null, bs = 1e9; for (const k of G.kids) { if (k.out || k.frozen) continue; let s = near(k, me); if (mode === 'freeze') { const thawing = G.kids.some(q => q.frozen && near(q, k) < 2); if (thawing) s -= 6; } if (s < bs) { bs = s; best = k; } }
     if (!best) return; const lead = Math.min(0.9, bs / c.me) ; let tx = best.x + best.vx * lead, tz = best.z + best.vz * lead;
     // a kid by a wall cannot go further: aim a little inside to cut him off
     const p = G.powers.find(q => near(q, me) < 3 && q.k !== 'ghost'); if (p && bs > 4) { tx = p.x; tz = p.z; }
-    const dx = tx - me.x, dz = tz - me.z, d = Math.hypot(dx, dz) || 1; stick(G, dx / d, dz / d);
-    if (bs < 3.2 && bs > 0.9 && me.cd <= 0) { me.h = Math.atan2(dx, dz); dash(G); }
+    const dx = tx - me.x, dz = tz - me.z, d = Math.hypot(dx, dz) || 1; ACT.stick(G, dx / d, dz / d);
+    if (bs < 3.2 && bs > 0.9 && me.cd <= 0) { me.h = Math.atan2(dx, dz); ACT.dash(G); }
   } else {
     const ch = G.kids.filter(k => k.it && !k.out && !(k.stun > 0.6));
     // look at sixteen ways to run: where would I be in 0.7 s, how near would they be, how near a wall or a prop?
@@ -218,8 +226,15 @@ function honest(G, o, mem) {
       for (const p of PROPS) if (Math.hypot(px - p.x, pz - p.z) < p.r + 0.8) sc -= 6; if (Math.hypot(px - SAND.x, pz - SAND.z) < SAND.r) sc -= 2;
       if (sc > bs) { bs = sc; fx = ux; fz = uz; } }
     const p = G.powers.find(q => near(q, me) < 6); if (p && ch.every(k => near(k, p) > near(me, p) + 2)) { fx = (fx * 0.5) + (p.x - me.x) * 0.3; fz = fz * 0.5 + (p.z - me.z) * 0.3; }
-    const m = Math.hypot(fx, fz) || 1; stick(G, fx / m, fz / m);
-    const close = ch.some(k => near(k, me) < 2.6 && k.stun <= 0); if (close && me.cd <= 0) { me.h = Math.atan2(fx, fz); dash(G); }
+    const m = Math.hypot(fx, fz) || 1; ACT.stick(G, fx / m, fz / m);
+    const close = ch.some(k => near(k, me) < 2.6 && k.stun <= 0); if (close && me.cd <= 0) { me.h = Math.atan2(fx, fz); ACT.dash(G); }
   }
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; const mode = G.mode; if (mode === 'chase' || mode === 'freeze') { for (const k of G.kids) { if (mode === 'chase') k.out = true; else k.frozen = true; } } else G.left = 0.001; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { stick, dash }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

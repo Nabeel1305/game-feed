@@ -4736,9 +4736,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4969,9 +4971,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5270,7 +5272,7 @@ const PLACES = [{ name: 'Park court' }, { name: 'School gym' }, { name: 'City ar
 const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
 const STYLES = { even: 'a steady team', lock: 'strong defence: they stay close', pass: 'quick passing', range: 'deadly from long range' };
 function styleOf(N) { if (N <= 3) return 'even'; return ['lock', 'even', 'pass', 'range'][(N - 4) % 4]; }
-function makeCfg(N, help, o = {}) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), style = o.style || styleOf(N);
+function makeCfg(N, help, o = {}) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), style = o.style || styleOf(N);
   return { N, f, help: !!help, style, len: Math.round(x(140, 170, 20)), uSpd: 4.9 * (1 + 0.05 * upLv('shoes')), oSpd: x(4.3, 5.0, 25), oSkill: x(1.1, 1.45, 25) * (help ? 0.8 : 1) * (style === 'range' ? 1.05 : 1),
     oThree: style === 'range' ? 1.35 : 1, oPassy: style === 'pass' ? 1.8 : 1, oD: x(0.6, 1.15, 25) * (style === 'lock' ? 1.25 : 1) * (help ? 0.8 : 1), oSteal: x(0.05, 0.16, 25) * (style === 'lock' ? 1.4 : 1) * (help ? 0.7 : 1),
     green: 0.16 * (1 + 0.15 * upLv('touch')) * (help ? 1.3 : 1), mate: x(0.75, 0.95, 25), oHandle: x(1, 1.6, 25) * (style === 'pass' ? 1.2 : 1) }; }
@@ -5406,10 +5408,21 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'shoot', title: 'SHOOT IN THE GREEN', say: 'HOLD, LET GO IN GREEN', do: 'hold', how: 'HOLD SHOOT. The meter fills: let go when it is in the GREEN. Three good releases.', need: 3 }],
-  2: [{ id: 'pass', title: 'GIVE AND GO', say: 'PASS, RUN, SHOOT', do: 'tap', how: 'Tap PASS (or drag from it towards a teammate), then RUN TO THE BASKET with the stick. The ball comes back to you: tap SHOOT for the layup.', need: 2 }],
-  3: [{ id: 'steal', title: 'TAKE IT OFF THEM', say: 'GET CLOSE, TAP STEAL', do: 'tap', how: 'Move close to the player with the ball and tap STEAL. Stay between them and the basket. Tap it twice too fast and you lose your balance.', need: 2 }],
+  1: [{ id: 'shoot', title: 'SHOOT IN THE GREEN', say: G => hoopsCue(G)[0], do: G => hoopsCue(G)[1], at: G => hoopsCue(G)[2], how: 'HOLD SHOOT. The meter fills: let go when it is in the GREEN. Three good releases.', need: 3 }],
+  2: [{ id: 'pass', title: 'GIVE AND GO', say: G => hoopsCue(G)[0], do: G => hoopsCue(G)[1], at: G => hoopsCue(G)[2], how: 'Tap PASS (or drag from it towards a teammate), then RUN TO THE BASKET with the stick. The ball comes back to you: tap SHOOT for the layup.', need: 2 }],
+  3: [{ id: 'steal', title: 'TAKE IT OFF THEM', say: G => hoopsCue(G)[0], do: G => hoopsCue(G)[1], at: G => hoopsCue(G)[2], how: 'Move close to the player with the ball and tap STEAL. Stay between them and the basket. Tap it twice too fast and you lose your balance.', need: 2 }],
 };
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said PASS, RUN, SHOOT (three moves) with a hand in a box. Now the robot is asked (dryPlan): HOLD SHOOT, then LET GO! the
+// moment the meter is a fifth of a second from the green's middle; TAP PASS; RUN THIS WAY (the stick); TAP STEAL when close.
+const H3C = { t: -1e9, v: null };
+function hoopsCue(G) { if (G.over || G.pause > 0) return ['WAIT…', 'wait', false]; const L = layout(G), at = b => [b.x, b.y], p = me(G);
+  if (p.holding) { const [g0, g1] = greenZone(G, p), mid = (g0 + g1) / 2, ahead = p.meter + (p.mRate || 1) * 0.2; return ahead >= mid - (g1 - g0) * 0.25 ? ['LET GO!', 'release', at(L.shoot)] : ['KEEP HOLDING', 'hold', at(L.shoot)]; }
+  const now = performance.now(); if (now - H3C.t < 250) return H3C.v; H3C.t = now; const P = dryPlan(G, null, { next: -1, cd: -1, t: -1 }); let v = ['WAIT…', 'wait', false];
+  if (P) { const a = P[0], mine = G.ball.own === p;
+    if (a === 'shootDown') v = mine ? ['HOLD SHOOT', 'hold', at(L.shoot)] : ['TAP STEAL', 'tap', at(L.shoot)]; else if (a === 'btnPass') v = [mine ? 'TAP PASS' : 'TAP SWITCH', 'tap', at(L.pass)];
+    else if (a === 'setStick') { const R = 56 * k * 0.8, x0 = W * 0.22, y0 = H * 0.6; v = ['RUN THIS WAY', 'drag', [x0, y0, x0 + P[1] * R, y0 + P[2] * R]]; } }
+  H3C.v = v; return v; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, youMove: true, aiMove: false }; G.ev.push({ k: 'lessonnext', first: true }); lessonReset(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonReset(G) { const st0 = lessonNow(G), D = G.lesson; if (!st0) return; const y = G.P[0];
@@ -5435,28 +5448,33 @@ function lessonSee(G, what) { const st0 = lessonNow(G); if (!st0 || G.lesson.don
 const BLIND = { m: G => { const R = Math.random; if (R() < 0.2) setStick(G, 0, 0); else { const a = R() * TAU; setStick(G, Math.cos(a), Math.sin(a)); } }, p: G => btnPass(G), s: G => shootDown(G), u: G => shootUp(G), b: G => sprintOn(G, !me(G).sprint) };
 // HONEST: a player who looks. react: seconds to act; acc: timing and choices
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, b = G.ball, p = me(G), hx = HX;
-  if (p.holding) { if (mem.let == null) { const [g0, g1] = greenZone(G, p); mem.let = (g0 + g1) / 2 + (R() - 0.5) * (g1 - g0) * 2.4 * (1.12 - acc); } if (p.meter >= mem.let) { shootUp(G); mem.let = null; } return; }
-  mem.cd = (mem.cd || 0) - 1 / 60; const go = (x, z) => { const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz); setStick(G, d > 0.3 ? dx / d : 0, d > 0.3 ? dz / d : 0); };
+  if (p.holding) { if (mem.let == null) { const [g0, g1] = greenZone(G, p); mem.let = (g0 + g1) / 2 + (R() - 0.5) * (g1 - g0) * 2.4 * (1.12 - acc); } if (p.meter >= mem.let) { ACT.shootUp(G); mem.let = null; } return; }
+  mem.cd = (mem.cd || 0) - 1 / 60; const go = (x, z) => { const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz); ACT.setStick(G, d > 0.3 ? dx / d : 0, d > 0.3 ? dz / d : 0); };
   const L = lessonNow(G);
   if (b.own === p) { const d = dHoop(p, 0), o = openness(G, p), lane = laneRisk(G, p, hx, 0, 0);
     if (mem.cd > 0) return; mem.cd = react * (0.7 + R() * 0.6);
-    if (L && L.id === 'pass') { if (!G.lesson.passed) btnPass(G); else if (d < 1.8) shootDown(G); else go(hx - 0.9, 0); return; }
-    if (L && L.id === 'shoot') { setStick(G, 0, 0); shootDown(G); mem.let = null; return; }
-    if (d < 1.9) { shootDown(G); return; }
-    if ((o > 2.2 && d < R3 - 0.3) || (o > 2.8 && d < R3 + 0.6) || G.sc < 2.5 + react * 3 || (contest(G, p) > 0.85 && d < 4.2)) { setStick(G, 0, 0); shootDown(G); mem.let = null; return; }
-    const q = bestTarget(G, p); if (q && openness(G, q) > o + 0.8 && laneRisk(G, p, q.x, q.z, 0) < 0.3 && R() < 0.5 * acc) { btnPass(G); return; }
+    if (L && L.id === 'pass') { if (!G.lesson.passed) ACT.btnPass(G); else if (d < 1.8) ACT.shootDown(G); else go(hx - 0.9, 0); return; }
+    if (L && L.id === 'shoot') { ACT.setStick(G, 0, 0); ACT.shootDown(G); mem.let = null; return; }
+    if (d < 1.9) { ACT.shootDown(G); return; }
+    if ((o > 2.2 && d < R3 - 0.3) || (o > 2.8 && d < R3 + 0.6) || G.sc < 2.5 + react * 3 || (contest(G, p) > 0.85 && d < 4.2)) { ACT.setStick(G, 0, 0); ACT.shootDown(G); mem.let = null; return; }
+    const q = bestTarget(G, p); if (q && openness(G, q) > o + 0.8 && laneRisk(G, p, q.x, q.z, 0) < 0.3 && R() < 0.5 * acc) { ACT.btnPass(G); return; }
     if (lane < 0.35) go(hx - 0.8, p.z * 0.5); else go(hx - 4.8, p.z > 0 ? -3.5 : 3.5); return; }
   if (L && L.id === 'pass' && b.kind !== 'loose') { go(hx - 0.9, 0); return; }
-  if (b.own && b.own.t === 0) { setStick(G, 0, 0); return; }
+  if (b.own && b.own.t === 0) { ACT.setStick(G, 0, 0); return; }
   if (b.kind === 'loose') { go(b.x, b.z); return; }
-  if (b.kind === 'pass' || (b.kind === 'shot' && b.shot.t === 0)) { setStick(G, 0, 0); return; }
+  if (b.kind === 'pass' || (b.kind === 'shot' && b.shot.t === 0)) { ACT.setStick(G, 0, 0); return; }
   // defending
   if (mem.cd > 0) return; mem.cd = react * 0.4; const h = b.own || (b.kind === 'shot' ? b.from : b.to);
-  if (h && h.t === 1 && dist(p, h) > 2.8 && R() < acc) { const nb = team(G, 0).sort((a, q) => dist(a, h) - dist(q, h))[0]; if (nb !== p) { btnPass(G); return; } }
+  if (h && h.t === 1 && dist(p, h) > 2.8 && R() < acc) { const nb = team(G, 0).sort((a, q) => dist(a, h) - dist(q, h))[0]; if (nb !== p) { ACT.btnPass(G); return; } }
   if (!h) return; const myHoop = -HX, dx = myHoop - h.x, dz = -h.z, dd = Math.hypot(dx, dz) || 1; go(h.x + dx / dd * 1.0, h.z + dz / dd * 1.0);
-  if (b.kind === 'shot' && b.t < 0.2 && dist(p, b.from) < 1.3 && R() < acc) { shootDown(G); return; }
-  if (b.own === h && dist(p, h) < 1.25 && G.t - p.lastSteal > 1.1 + (1 - acc) && R() < 0.25 * acc) shootDown(G); }
+  if (b.kind === 'shot' && b.t < 0.2 && dist(p, b.from) < 1.3 && R() < acc) { ACT.shootDown(G); return; }
+  if (b.own === h && dist(p, h) < 1.25 && G.t - p.lastSteal > 1.1 + (1 - acc) && R() < 0.25 * acc) ACT.shootDown(G); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.score[0] = G.score[1] + 2; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { shootDown, shootUp, btnPass, setStick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 // ===================== THE VIEW: Hoops 3v3 (sideways; a raised camera along the near sideline follows the ball) =====================
 // A compact court: polished wood with the key and the three-point arc painted on, two hoops (pole, glass board, orange rim, white
 // net), a park court with a fence and trees at first, then gyms and arenas with a crowd. Six players in vests and shorts who

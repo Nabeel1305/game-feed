@@ -160,10 +160,23 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: steer and ping, depth charges, guard the convoy ----------
 const LESSONS = {
-  1: [{ id: 'find', title: 'FIND THE SUBMARINE', say: 'STEER TO IT, PING', do: 'tap', how: 'Steer towards the marker and PING. A ring shows where he may be; ping again and it tightens to a sure contact (red). Then steer right over the red ring. Twice.', need: 2 }],
-  2: [{ id: 'charge', title: 'DEPTH CHARGES', say: 'PING, THEN DROP', do: 'tap', how: 'Ping to find him, steer over the ring, set the depth the report gives (he is at MEDIUM), and DROP. Hit him twice.', need: 2 }],
-  3: [{ id: 'intercept', title: 'GUARD THE CONVOY', say: 'GET CLOSE TO IT', do: 'drag', dir: 'up', how: 'A submarine is closing on the merchant. Get close to it (ping to see where) before it can fire: it will go deep and run. Scare it off twice.', need: 2 }],
+  1: [{ id: 'find', title: 'FIND THE SUBMARINE', say: G => convoyCue(G)[0], do: G => convoyCue(G)[1], at: G => convoyCue(G)[2], how: 'Steer towards the marker and PING. A ring shows where he may be; ping again and it tightens to a sure contact (red). Then steer right over the red ring. Twice.', need: 2 }],
+  2: [{ id: 'charge', title: 'DEPTH CHARGES', say: G => convoyCue(G)[0], do: G => convoyCue(G)[1], at: G => convoyCue(G)[2], how: 'Ping to find him, steer over the ring, set the depth the report gives (he is at MEDIUM), and DROP. Hit him twice.', need: 2 }],
+  3: [{ id: 'intercept', title: 'GUARD THE CONVOY', say: G => convoyCue(G)[0], do: G => convoyCue(G)[1], at: G => convoyCue(G)[2], how: 'A submarine is closing on the merchant. Get close to it (ping to see where) before it can fire: it will go deep and run. Scare it off twice.', need: 2 }],
 };
+// THE TUTORIAL SHOWS ONE THING AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said STEER TO IT, PING with the hand in a box. Now: TAP FULL SPEED, TAP PING (on the button), SLIDE RIGHT / LEFT to turn
+// towards the marker or the red ring (a drag on the left of the screen), TAP DEPTH until it matches, TAP DROP when right over him; WAIT…
+function convoyCue(G) { const me = G.me, L = layout(G), D = G.lesson, c = (q, r) => [q.x, q.y], R = q => [q.x + q.w / 2, q.y + q.h / 2];
+  if (G.over || !D) return ['WAIT…', 'wait', false];
+  const sure = G.contacts.find(q => q.sure && G.t - q.t < 40), ct = sure || G.contacts.filter(q => G.t - q.t < 40).sort((a, b) => a.r - b.r)[0];
+  let tgt = D.id === 'find' ? (sure || G.marker) : ct || (D.id === 'charge' ? G.lessonSub : null) || G.marker;
+  if (me.thr < 2 && tgt) return ['TAP FULL SPEED', 'tap', R(L.speed)];
+  if (me.pingCd <= 0 && (!ct || ct.r > 70)) return ['TAP PING', 'tap', c(L.ping)];
+  if (D.id === 'charge' && ct) { const dd = dist(me, ct), sub = G.subs[ct.sub]; if (dd < 60 + ct.r * 0.3 && ct.r < 70 && me.reload <= 0 && me.charges > 0) { if (sub && me.depth !== sub.band) return ['TAP DEPTH: ' + ['SHALLOW', 'MEDIUM', 'DEEP'][sub.band], 'tap', R(L.depthBtn)]; return ['TAP DROP!', 'tap', c(L.drop)]; } }
+  if (tgt) { let d = Math.atan2(tgt.z - me.z, tgt.x - me.x) - me.h; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU;
+    if (Math.abs(d) > 0.25) { const x0 = W * 0.3, y0 = H * 0.68, r = d > 0 ? 1 : -1; return [r > 0 ? 'SLIDE RIGHT TO TURN' : 'SLIDE LEFT TO TURN', 'drag', [x0, y0, x0 + r * 70 * k, y0]]; } }
+  return ['WAIT… STEAMING ON', 'wait', false]; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 function lessonSetup(G) { const D = G.lesson, me = G.me, R = G.rnd; G.torps = []; G.subs.forEach(s => s.gone = true); G.contacts = []; G.lessonNoFire = true;
   const a = me.h + (R() - 0.5) * 1.2, d = D.id === 'find' ? 600 : D.id === 'charge' ? 450 : 0, x = me.x + Math.cos(a) * d, z = me.z + Math.sin(a) * d;

@@ -117,9 +117,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.score = Math.max(G.score, G.cfg.target); finish(G, true, 'target'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'ride', title: 'CATCH AND RIDE', say: 'HOLD, LET GO ON GREEN', do: 'hold', how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
-  2: [{ id: 'snap', title: 'SNAP OFF THE LIP', say: 'TOP, THEN TURN DOWN', do: 'drag', dir: 'ud', how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],
-  3: [{ id: 'barrel', title: 'GET BARRELLED', say: 'HOLD CROUCH', do: 'hold', how: 'Where the wave throws over (the dark hollow), drop low on the face and hold CROUCH: ride through the tube and out the other end.', need: 1 }],
+  1: [{ id: 'ride', title: 'CATCH AND RIDE', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
+  2: [{ id: 'snap', title: 'SNAP OFF THE LIP', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],
+  3: [{ id: 'barrel', title: 'GET BARRELLED', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Where the wave throws over (the dark hollow), drop low on the face and hold CROUCH: ride through the tube and out the other end.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what, id) { const D = G.lesson; if (!D || D.done) return; let good = false;
@@ -141,24 +141,46 @@ const BLIND = {
 };
 // HONEST: a surfer who looks: paddles as the wave comes and stands when it lifts (later or earlier by react); pumps up and
 // down the face to stay ahead of the curl; snaps at the lip; flies and spins when fast; crouches through barrels.
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD,
+// LET GO ON GREEN with a hand holding nowhere in particular, and TOP, THEN TURN DOWN sliding up and down in a box. Now the robot is asked
+// (dryPlanAll): WAIT FOR THE WAVE, HOLD PADDLE (the hand on it), LET GO! as the ring turns green, then RIDE UP / RIDE DOWN the face on the stick
+// (up to the lip, down for the snap), HOLD CROUCH in the tube, SWIPE: SPIN in the air.
+const SFC = { t: -1e9, v: null };
+function surfCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SFC.t < 100) return SFC.v; SFC.t = now; const L = layout(G), C = [L.cr.x, L.cr.y], s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.24, y0 = s2 ? s2.y0 : H * 0.7, R = 56 * k;
+  const all = dryPlanAll(G, null, { ride: G.ride, pt: -1, st: G.tL }), last = n => all.filter(q => q[0] === n).pop(), cr = last('crouchOn'), sw = last('swipe'), st = last('setStick'); let v;
+  if (G.phase === 'wait') v = sw ? ['LET GO!', 'release', C] : cr && cr[1] ? ['HOLD PADDLE', 'hold', C] : ['WAIT FOR THE WAVE', 'wait', false];
+  else if (G.phase !== 'ride') v = ['WAIT…', 'wait', false];
+  else if (sw) v = ['SWIPE: SPIN!', 'swipe', [W * 0.72, H * 0.6, W * 0.72 + 90 * k, H * 0.6]];
+  else if (cr && cr[1] && !G.crouch) v = ['HOLD CROUCH', 'hold', C];
+  else if (cr && !cr[1] && G.crouch) v = ['LET GO OF CROUCH', 'release', C];
+  else if (st && Math.hypot(st[1], st[2]) > 0.15) v = [st[2] > 0.3 ? 'RIDE UP THE WAVE' : st[2] < -0.3 ? 'TURN DOWN!' : 'RIDE ALONG', 'drag', [x0, y0, x0 + st[1] * R * 0.8, y0 - st[2] * R * 0.8]];
+  else v = G.crouch ? ['KEEP HOLDING', 'hold', C] : ['RIDE…', 'wait', false];
+  SFC.v = v; return v; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, P = G.p, cfg = G.cfg;
-  if (G.phase === 'wait') { setStick(G, 0, 0); if (mem.ride !== G.ride || mem.pt > G.pt) { mem.ride = G.ride; mem.st = G.tL + (R() - 0.3) * react * 0.8; } mem.pt = G.pt;
-    crouchOn(G, G.pt > G.tL - 1.2); if (G.pt >= mem.st) { swipe(G, 0, -1); mem.st = 1e9; } return; }
-  if (G.phase !== 'ride') { crouchOn(G, false); setStick(G, 0, 0); mem.mode = null; return; }
-  if (P.air) { crouchOn(G, false); if (mem.spin == null) { mem.spin = acc > 0.9 && cfg.N >= 5 ? 2 : 0; mem.bad = R() < (1 - acc) * 1.5; } if (P.spins + (P.spinTo != null ? 1 : 0) < mem.spin && P.vy > -2) swipe(G, 1, 0);
-    setStick(G, 0.6, P.vy < 1.5 && !mem.bad ? -1 : 0.2); return; }
+  if (G.phase === 'wait') { ACT.setStick(G, 0, 0); if (mem.ride !== G.ride || mem.pt > G.pt) { mem.ride = G.ride; mem.st = G.tL + (R() - 0.3) * react * 0.8; } mem.pt = G.pt;
+    ACT.crouchOn(G, G.pt > G.tL - 1.2); if (G.pt >= mem.st) { ACT.swipe(G, 0, -1); mem.st = 1e9; } return; }
+  if (G.phase !== 'ride') { ACT.crouchOn(G, false); ACT.setStick(G, 0, 0); mem.mode = null; return; }
+  if (P.air) { ACT.crouchOn(G, false); if (mem.spin == null) { mem.spin = acc > 0.9 && cfg.N >= 5 ? 2 : 0; mem.bad = R() < (1 - acc) * 1.5; } if (P.spins + (P.spinTo != null ? 1 : 0) < mem.spin && P.vy > -2) ACT.swipe(G, 1, 0);
+    ACT.setStick(G, 0.6, P.vy < 1.5 && !mem.bad ? -1 : 0.2); return; }
   mem.spin = null; const gap = P.x - G.xb, w = G.w, ahead = secAt(w, G.xb + 2), tubeSoon = ahead.type === 'barrel' || secAt(w, G.xb + 8).type === 'barrel';
   // a barrel: low in the face, crouched, riding just ahead of the curl
   const inBarrel = cfg.barrels && (secAt(w, P.x).type === 'barrel' || secAt(w, P.x + 6).type === 'barrel') && (secAt(w, G.xb + 1).type === 'barrel' || secAt(w, G.xb + 16).type === 'barrel');
-  if (inBarrel) { crouchOn(G, true); const ty = clamp((0.38 - P.s) * 3, -0.6, 0.6), tx = gap > 9 ? 0.45 : gap < 3 ? 1 : 0.85; setStick(G, tx, ty); return; }
-  crouchOn(G, false);
+  if (inBarrel) { ACT.crouchOn(G, true); const ty = clamp((0.38 - P.s) * 3, -0.6, 0.6), tx = gap > 9 ? 0.45 : gap < 3 ? 1 : 0.85; ACT.setStick(G, tx, ty); return; }
+  ACT.crouchOn(G, false);
   // a fast section: race it in the pocket with small, flat pumps (no tricks)
-  if (secAt(w, G.xb + 4).type === 'fast' || secAt(w, G.xb + 10).type === 'fast' && gap < 8) { mem.mode = 'down'; mem.fp = mem.fp == null ? -1 : mem.fp; if (P.s < 0.25) mem.fp = 1; if (P.s > 0.55) mem.fp = -1; setStick(G, 1, 0.35 * mem.fp); return; }
+  if (secAt(w, G.xb + 4).type === 'fast' || secAt(w, G.xb + 10).type === 'fast' && gap < 8) { mem.mode = 'down'; mem.fp = mem.fp == null ? -1 : mem.fp; if (P.s < 0.25) mem.fp = 1; if (P.s > 0.55) mem.fp = -1; ACT.setStick(G, 1, 0.35 * mem.fp); return; }
   // pumping: down to the base for speed, back up to the lip; at the lip a snap (or an air when fast)
   if (mem.mode == null) mem.mode = 'down';
   const late = (R() - 0.5) * react * 0.25;
   
-  if (mem.mode === 'back') { if (!mem.turned && (Math.cos(P.th) < -0.45 || G.t - mem.backT > 1.0)) mem.turned = G.t; setStick(G, mem.turned ? 1 : -1, mem.turned ? -0.45 : 0.25); if (mem.turned && Math.cos(P.th) > 0.6 || gap < 5 || G.t - mem.backT > 2.2) { mem.turned = null; mem.mode = 'down'; } return; }
-  if (mem.mode === 'down') { setStick(G, 0.7, -0.75); if (P.s < 0.14 + late || gap < 4 && P.s < 0.3) { mem.mode = 'up'; mem.tryAir = R() < (acc > 0.9 ? 0.6 : 0.3); } return; }
-  if (mem.mode === 'up') { const goAir = mem.tryAir && cfg.N >= 5 && P.v > 10 && acc > 0.8 && gap > 8 && secAt(w, G.xb + 4).type !== 'fast' && secAt(w, P.x + 10).type !== 'barrel'; const fastNow = secAt(w, G.xb + 4).type === 'fast'; setStick(G, goAir ? 0.35 : 0.7, goAir ? 1 : 0.7); if (P.s > (fastNow && !goAir ? 0.6 : 0.88) + late * 0.2) { mem.mode = 'snap'; } return; }
-  if (mem.mode === 'snap') { setStick(G, 0.25, -1); if (P.th < -0.6) { mem.mode = 'down'; if (gap > 13 && P.v > 7.5 && secAt(w, G.xb + 4).type !== 'fast' && R() < 0.5 + acc * 0.3) { mem.mode = 'back'; mem.backT = G.t; mem.turned = null; } } return; } }
+  if (mem.mode === 'back') { if (!mem.turned && (Math.cos(P.th) < -0.45 || G.t - mem.backT > 1.0)) mem.turned = G.t; ACT.setStick(G, mem.turned ? 1 : -1, mem.turned ? -0.45 : 0.25); if (mem.turned && Math.cos(P.th) > 0.6 || gap < 5 || G.t - mem.backT > 2.2) { mem.turned = null; mem.mode = 'down'; } return; }
+  if (mem.mode === 'down') { ACT.setStick(G, 0.7, -0.75); if (P.s < 0.14 + late || gap < 4 && P.s < 0.3) { mem.mode = 'up'; mem.tryAir = R() < (acc > 0.9 ? 0.6 : 0.3); } return; }
+  if (mem.mode === 'up') { const goAir = mem.tryAir && cfg.N >= 5 && P.v > 10 && acc > 0.8 && gap > 8 && secAt(w, G.xb + 4).type !== 'fast' && secAt(w, P.x + 10).type !== 'barrel'; const fastNow = secAt(w, G.xb + 4).type === 'fast'; ACT.setStick(G, goAir ? 0.35 : 0.7, goAir ? 1 : 0.7); if (P.s > (fastNow && !goAir ? 0.6 : 0.88) + late * 0.2) { mem.mode = 'snap'; } return; }
+  if (mem.mode === 'snap') { ACT.setStick(G, 0.25, -1); if (P.th < -0.6) { mem.mode = 'down'; if (gap > 13 && P.v > 7.5 && secAt(w, G.xb + 4).type !== 'fast' && R() < 0.5 + acc * 0.3) { mem.mode = 'back'; mem.backT = G.t; mem.turned = null; } } return; } }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick, crouchOn, swipe }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

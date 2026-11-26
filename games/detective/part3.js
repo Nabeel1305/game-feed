@@ -109,7 +109,8 @@ function draw(now, dt) {
   ctx.globalAlpha = 1;
   if (hint) { const al = Math.min(1, hint.t / 0.2, (hint.secs - hint.t) / 0.4); ctx.globalAlpha = Math.max(0, al); ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; const lines = wrapText(hint.txt, W - 60), lh = 18 * k, h = lines.length * lh + 16 * k, w = Math.max(...lines.map(l => ctx.measureText(l).width)) + 30, hy = SH() - 70 * k - h / 2;
     ctx.fillStyle = 'rgba(30,22,30,.94)'; rrect(W / 2 - w / 2, hy - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#ffe6a8'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
-  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
+  if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); }
+  if (G && G.lesson && !G.over) coachPanel(G); }      /* the hand (26 Nov 2026: this game showed the lesson only as words in the panel; the coach draws over the panel too, so the hand can point at its buttons) */
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function layout(G) { return { scene: { x: 0, y: 0, w: W, h: SH() } }; }
 // over the room: a ring under every object you have not looked at yet; when examining, the hint to turn it

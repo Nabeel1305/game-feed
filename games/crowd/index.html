@@ -4956,9 +4956,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5354,7 +5354,7 @@ const BLIND = { l: G => slide(G, -(0.5 + Math.random() * 3)), r: G => slide(G, 0
 // a player who looks: for the next gate takes the better side; dodges what is coming by trying places across the track
 // and keeping the one where the fewest would be hit when the crowd gets there; follows a bridge; picks up grey runners
 function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
-  mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return mem.slide && slide(G, clamp(mem.goal - G.wantX, -0.12, 0.12)); mem.t = react * 0.5 + 0.03;
+  mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return mem.slide && ACT.slide(G, clamp(mem.goal - G.wantX, -0.12, 0.12)); mem.t = react * 0.5 + 0.03;
   const br = blobR(G); let goal = G.cx;
   const ahead = G.items.filter(q => !q.done && (q.z1 || q.z) > G.d - br && q.z < G.d + 16 && q.type !== 'coin');
   const gate = ahead.find(q => q.type === 'gate'), danger = ahead.filter(q => ['saw', 'bar', 'hammer', 'wall'].includes(q.type)), brg = ahead.find(q => q.type === 'bridge'), rec = ahead.find(q => q.type === 'recruit');
@@ -5366,14 +5366,23 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const react = o.r
   else if (gate && gate.z - G.d < 12 && gate.z < dz0) { const v0 = apply(gate.ops[0], G.n), v1 = apply(gate.ops[1], G.n); let side = v0 >= v1 ? 0 : 1; if (R() > acc && R() < 0.3) side = 1 - side; goal = side ? Math.max(br * 0.5, 1.8) : -Math.max(br * 0.5, 1.8); }
   else if (danger.length) { let bx = G.cx, bc = 1e9; for (let x = -HW + 0.4; x <= HW - 0.4; x += 0.3) { const c = cost(x) + Math.abs(x - G.cx) * 0.05; if (c < bc) { bc = c; bx = x; } } goal = bx; }
   else if (rec) goal = rec.x * 0.7; else if (gate) { const v0 = apply(gate.ops[0], G.n), v1 = apply(gate.ops[1], G.n); goal = v0 >= v1 ? -1.8 : 1.8; }
-  goal += (R() - 0.5) * (1 - acc) * 1.4; mem.goal = clamp(goal, -HW + 0.3, HW - 0.3); mem.slide = true; slide(G, clamp(mem.goal - G.wantX, -0.12, 0.12)); }
+  goal += (R() - 0.5) * (1 - acc) * 1.4; mem.goal = clamp(goal, -HW + 0.3, HW - 0.3); mem.slide = true; ACT.slide(G, clamp(mem.goal - G.wantX, -0.12, 0.12)); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.left = G.n; G.stair = 0; finish(G, true); }
 // ---------- LESSONS: short tracks ----------
 const LESSONS = {
-  1: [{ id: 'gates', title: 'PICK THE BETTER GATE', say: 'SLIDE TO THE BIG NUMBER', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Slide left and right. Run through the gate that makes your crowd BIGGER. Beat the giant at the end!' }],
-  2: [{ id: 'dodge', title: 'DODGE THE SAWS', say: 'SLIDE AWAY FROM SAWS', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Saws and bars knock runners off. Slide to where they are not. Keep enough runners to beat the giant!' }],
-  3: [{ id: 'fight', title: 'BIGGER CROWD WINS', say: 'GET BIGGER, WIN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Red crowds fight you one for one. Take the best gates first, grab the grey runners, then beat them all!' }],
+  1: [{ id: 'gates', title: 'PICK THE BETTER GATE', say: G => crowdCue(G)[0], do: G => crowdCue(G)[1], at: G => crowdCue(G)[2], how: 'Slide left and right. Run through the gate that makes your crowd BIGGER. Beat the giant at the end!' }],
+  2: [{ id: 'dodge', title: 'DODGE THE SAWS', say: G => crowdCue(G)[0], do: G => crowdCue(G)[1], at: G => crowdCue(G)[2], how: 'Saws and bars knock runners off. Slide to where they are not. Keep enough runners to beat the giant!' }],
+  3: [{ id: 'fight', title: 'BIGGER CROWD WINS', say: G => crowdCue(G)[0], do: G => crowdCue(G)[1], at: G => crowdCue(G)[2], how: 'Red crowds fight you one for one. Take the best gates first, grab the grey runners, then beat them all!' }],
 };
+// THE TUTORIAL SAYS WHICH WAY, AND HOW FAR (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand
+// slid left and right for ever, whatever was coming. Now the robot is asked where it would run (dryPlan; its goal) and the hand slides that
+// way, that far (the slide moves the crowd by the finger's movement): SLIDE LEFT / SLIDE RIGHT, or STAY when it is already there.
+const CWC = { t: -1e9, v: null };
+function crowdCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - CWC.t < 250) return CWC.v; CWC.t = now;
+  const mem = {}; dryPlan(G, null, mem); let v = ['STAY', 'wait', false];
+  if (mem.goal != null && Math.abs(mem.goal - G.wantX) > 0.35) { const dx = (mem.goal - G.wantX) / (HW * 2) * Math.max(260, W * 0.75), x0 = clamp(W / 2 - dx / 2, 30, W - 30), y0 = H * 0.72;
+    v = [dx > 0 ? 'SLIDE RIGHT' : 'SLIDE LEFT', 'drag', [x0, y0, x0 + dx, y0]]; }
+  CWC.v = v; return v; }
 const LTRACK = {
   gates: G => { const p = [[{ op: '+', v: 10 }, { op: '-', v: 5 }], [{ op: '/', v: 2 }, { op: 'x', v: 2 }], [{ op: '+', v: 8 }, { op: '-', v: 10 }], [{ op: '-', v: 20 }, { op: '+', v: 20 }], [{ op: 'x', v: 2 }, { op: '/', v: 3 }], [{ op: '+', v: 30 }, { op: '/', v: 2 }], [{ op: '-', v: 40 }, { op: 'x', v: 2 }], [{ op: '/', v: 2 }, { op: '+', v: 50 }], [{ op: 'x', v: 2 }, { op: '-', v: 30 }], [{ op: '-', v: 60 }, { op: '+', v: 100 }], [{ op: 'x', v: 2 }, { op: '/', v: 2 }], [{ op: '+', v: 150 }, { op: '-', v: 100 }]];
     p.forEach((ops, i) => G.items.push({ type: 'gate', z: 22 + i * 13, ops: G.rnd() < 0.5 ? ops : [ops[1], ops[0]] })); return 1870; },
@@ -5388,6 +5397,11 @@ function lessonDeal(G) { const st = lessonNow(G); G.rnd = rng(G.seed + (G.deals 
 function lessonMiss(G, why) { const st = lessonNow(G); G.ev.push({ k: 'lessonmiss', how: st.how }); G.wait = 1.2; G.next = () => lessonDeal(G); }
 function lessonSee(G, what) { const st = lessonNow(G); if (!st || G.wait > 0) return; if (what !== 'giant') return;
   G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.4; G.next = () => { G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); G.ev.push({ k: 'track' }); }; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { slide }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 
 // ===================== THE VIEW: Crowd Run in 3D (three.js; sky, light, shadows from tools/world3d.js) =====================
 // A white track over the sea (or a canyon, ice, lava), seen from behind the crowd: the track runs away up the screen. Gates

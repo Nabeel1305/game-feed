@@ -78,9 +78,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
 // each lesson target is full of knives except for a few gaps, so only a throw timed for a gap gets in (blind tapping cannot)
 const gapsAt = (n, off) => { const out = [], arc = TAU / n, m = Math.ceil((arc - 0.8) / 0.48) + 1; for (let k = 0; k < n; k++) for (let j = 0; j < m; j++) out.push(off + k * arc + 0.4 + j * (arc - 0.8) / (m - 1)); return out; };      /* knives no more than 0.48 apart: nothing fits between them */
 const LESSONS = {
-  1: [{ id: 'gap', title: 'THROW INTO THE GAPS', say: 'TAP AT THE GAP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Knives are already in this target. Tap when a GAP is at the bottom: one knife into each of the 3 gaps.', need: 1, log: { need: 3, items: gapsAt(3, 0), moves: [{ v: 1.15, d: 99, ease: 0.5 }] } }],
-  2: [{ id: 'apple', title: 'APPLES', say: 'TAP AT THE APPLE', do: 'tap', at: G => [W / 2, H * 0.7], how: 'An apple sits in each gap. Throw when one is at the bottom to slice it: slice both.', need: 1, log: { need: 2, items: gapsAt(2, 0.3), appleAt: [0.3, 0.3 + Math.PI], moves: [{ v: -1.2, d: 99, ease: 0.5 }] } }],
-  3: [{ id: 'turn', title: 'IT TURNS BACK', say: 'WAIT… TAP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'This one stops and turns back. Watch it, wait for a gap to settle at the bottom, then throw. Fill the 3 gaps.', need: 1, log: { need: 3, items: gapsAt(3, 1), moves: [{ v: 1.3, d: 2.6, ease: 0.4 }, { v: 0, d: 0.6, ease: 0.3 }, { v: -1.1, d: 1.1, ease: 0.4 }, { v: 0, d: 0.6, ease: 0.3 }] } }],
+  1: [{ id: 'gap', title: 'THROW INTO THE GAPS', say: G => knifeCue(G)[0], do: G => knifeCue(G)[1], at: G => knifeCue(G)[2], how: 'Knives are already in this target. Tap when a GAP is at the bottom: one knife into each of the 3 gaps.', need: 1, log: { need: 3, items: gapsAt(3, 0), moves: [{ v: 1.15, d: 99, ease: 0.5 }] } }],
+  2: [{ id: 'apple', title: 'APPLES', say: G => knifeCue(G)[0], do: G => knifeCue(G)[1], at: G => knifeCue(G)[2], how: 'An apple sits in each gap. Throw when one is at the bottom to slice it: slice both.', need: 1, log: { need: 2, items: gapsAt(2, 0.3), appleAt: [0.3, 0.3 + Math.PI], moves: [{ v: -1.2, d: 99, ease: 0.5 }] } }],
+  3: [{ id: 'turn', title: 'IT TURNS BACK', say: G => knifeCue(G)[0], do: G => knifeCue(G)[1], at: G => knifeCue(G)[2], how: 'This one stops and turns back. Watch it, wait for a gap to settle at the bottom, then throw. Fill the 3 gaps.', need: 1, log: { need: 3, items: gapsAt(3, 1), moves: [{ v: 1.3, d: 2.6, ease: 0.4 }, { v: 0, d: 0.6, ease: 0.3 }, { v: -1.1, d: 1.1, ease: 0.4 }, { v: 0, d: 0.6, ease: 0.3 }] } }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -94,6 +94,13 @@ function lessonSee(G) { const st = lessonNow(G), L = G.log; if (L.stuck < L.need
 const BLIND = { t: G => throwKnife(G) };
 // a player who looks: watches the bottom of the target and throws when the gap that will be there when the knife lands is
 // wide enough (wider for a careful one), a beat late now and then, and goes for an apple when it comes round
+// THE TUTORIAL SAYS WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It showed a tap all the time.
+// Now: WAIT… while a knife or no gap would be at the bottom, TAP NOW! when a gap (an apple in lesson 2) will be at the bottom as the knife lands
+// after a thumb's time (0.22 s) plus the knife's flight; held a quarter of a second so it can be seen.
+const KNC = { lit: -1e9 };
+function knifeCue(G) { if (G.over || G.wait > 0 || !G.log || G.fly) return ['WAIT…', 'wait', false]; const L = G.log, now = G.t * 1000, a = angd(HIT - (L.rot + L.w * (G.cfg.fly + 0.22)), 0), id = G.lesson && G.lesson.steps[G.lesson.i] ? G.lesson.steps[G.lesson.i].id : '';
+  let near = 1e9; for (const q of L.items) near = Math.min(near, Math.abs(angd(q.a, a))); const apple = L.apples.some(q => Math.abs(angd(q.a, a)) < 0.2);
+  if (near > KW * 1.4 && (id !== 'apple' || apple)) KNC.lit = now; return now - KNC.lit < 250 && now >= KNC.lit ? ['TAP NOW!', 'tap', [W / 2, H * 0.72]] : [id === 'apple' ? 'WAIT FOR THE APPLE…' : 'WAIT FOR A GAP…', 'wait', false]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0 || !G.log || G.fly) { mem.t = 0; mem.go = null; return; }
   if (mem.go != null) { mem.go -= 1 / 60; if (mem.go <= 0) { mem.go = null; throwKnife(G); mem.t = 0; } return; }      /* the thumb moves a moment after the eye decides */

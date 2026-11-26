@@ -112,6 +112,20 @@ const BUILD = [
 ];
 function mth(n) { return n >= 24 && n % 12 === 0 ? `${n / 12} years` : n === 12 ? '12 months' : `${n} month${n === 1 ? '' : 's'}`; }
 let built = {};
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It showed no hand at all, and TAP TO BUILD, THEN PASS. Now the hand is on the next button of a fair sentence (the one the robot
+// aims at: the case's centre): + PRISON / + FINE / + UNPAID WORK..., then − or + until the amount is right, + COMPENSATION when someone lost
+// money (lesson 3), then ⚖ PASS SENTENCE, then ⚖ CONFIRM.
+function judgeCue(G) { const el = q => { const e = document.querySelector(q); if (!e || e.offsetParent === null) return false; const r = e.getBoundingClientRect(); return r.width ? [r.x + r.width / 2, r.y + r.height / 2] : false; };
+  if (G.over || G.wait > 0 || !G.case) return ['WAIT…', 'wait', false]; if (el('#confBtn')) return ['TAP ⚖ CONFIRM', 'tap', el('#confBtn')];
+  const K = G.case, p = K.centre, want = {}, near = (id, v) => { const st = BUILD.find(b => b.id === id).steps; let bi = 0; st.forEach((q, i) => { if (Math.abs(q - v) < Math.abs(st[bi] - v)) bi = i; }); return bi; };
+  if (p >= 40.5) want.prison = near('prison', Math.min(ptsToMonths(p), K.max || 1e9)); else if (p >= 30) { want.prison = near('prison', Math.max(1, Math.min(K.max || 24, Math.round((p - 30) / 10 * 24)))); want.susp = 1; }
+  else if (p >= 16) want.hours = near('hours', Math.round((p - 15) / 15 * 300 / 10) * 10); else if (p >= 7) want.fine = near('fine', Math.max(50, Math.round((Math.pow(2, (p - 6) / 6) - 1) * 100 / 10) * 10)); else want.disch = 0;
+  if (K.money && K.loss) want.comp = near('comp', K.loss);
+  for (const id in want) { const b = BUILD.find(q => q.id === id); if (!(id in built)) return ['TAP + ' + b.label.toUpperCase(), 'tap', el(`[data-b="${id}"]`)];
+    if (b.steps && built[id] !== want[id]) { const d = built[id] < want[id] ? 1 : -1; return [d > 0 ? 'TAP + : MORE' : 'TAP − : LESS', 'tap', el(`[data-s="${id}"][data-d="${d}"]`)]; } }
+  for (const id in built) if (!(id in want)) return ['TAP ✓ ' + BUILD.find(q => q.id === id).label.toUpperCase() + ' TO TAKE IT OFF', 'tap', el(`[data-b="${id}"]`)];
+  return ['TAP ⚖ PASS SENTENCE', 'tap', el('#passBtn')]; }
 function builderReset() { built = {}; builderDraw(); }
 function builderText() { const out = []; for (const b of BUILD) { if (!(b.id in built) || b.id === 'susp') continue; let t = b.say(b.steps ? b.steps[built[b.id]] : 0); if (b.id === 'prison' && 'susp' in built) t += ' ' + BUILD[1].say(BUILD[1].steps[built.susp]); out.push(t); } return out.join(', '); }
 function builderDraw() { const C = $('chips'), B = $('built'); if (!C) return;
@@ -166,7 +180,7 @@ function frame(now) {
     G.ev.length = 0;
     if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
   }
-  fxStep(rdt); draw(now / 1000);
+  fxStep(rdt); draw(now / 1000); if (G && G.lesson && !G.over && !paused) coachPanel(G);      /* the hand (26 Nov 2026: this game showed no hand at all) */
   requestAnimationFrame(frame);
 }
 // ---------- the test hook (robots, tests, card clips) ----------

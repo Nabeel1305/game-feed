@@ -111,9 +111,9 @@ function finish(G, win) { const c = G.cfg; G.over = win ? 'won' : 'lost'; const 
 function press(G, side, secs = 0.3) { if (side === 'l') G.tl = secs; else if (side === 'r') G.tr = secs; else if (side === 'bl') G.tbl = secs; else G.tbr = secs; }      // l, r: the FLIP buttons; bl, br: the LEAN buttons
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'land', title: 'STICK IT', say: 'LEAN FWD IN THE AIR', do: 'hold', at: G => { const q = padRects().br; return [q.x + q.w / 2, q.y + q.h / 2]; }, how: 'Off the ramp the bike points up. Hold LEAN FWD in the air to tip it forward, so it lands flat on the slope. Three clean landings in a row.', need: 3 }],
-  2: [{ id: 'flip', title: 'FLIP', say: 'HOLD BACK FLIP', do: 'hold', at: G => { const q = padRects().l; return [q.x + q.w / 2, q.y + q.h / 2]; }, how: 'Big ramp. Hold BACK FLIP in the air to spin a backflip, let go as it comes round, and land it. Twice.', need: 2 }],
-  3: [{ id: 'perfect', title: 'PERFECT', say: 'LAND FLAT', do: 'hold', how: 'Land so the wheels meet the slope exactly: a PERFECT gives a boost. Two perfect landings in a row.', need: 2 }],
+  1: [{ id: 'land', title: 'STICK IT', say: G => rampCue(G)[0], do: G => rampCue(G)[1], at: G => rampCue(G)[2], how: 'Off the ramp the bike points up. Hold LEAN FWD in the air to tip it forward, so it lands flat on the slope. Three clean landings in a row.', need: 3 }],
+  2: [{ id: 'flip', title: 'FLIP', say: G => rampCue(G)[0], do: G => rampCue(G)[1], at: G => rampCue(G)[2], how: 'Big ramp. Hold BACK FLIP in the air to spin a backflip, let go as it comes round, and land it. Twice.', need: 2 }],
+  3: [{ id: 'perfect', title: 'PERFECT', say: G => rampCue(G)[0], do: G => rampCue(G)[1], at: G => rampCue(G)[2], how: 'Land so the wheels meet the slope exactly: a PERFECT gives a boost. Two perfect landings in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonTrack(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -134,6 +134,15 @@ function lessonSee(G, what, d) { const st = lessonNow(G); if (!st) return; let o
 const BLIND = { l: G => press(G, Math.random() < 0.5 ? 'l' : 'bl', 0.15 + Math.random() * 0.4), r: G => press(G, Math.random() < 0.5 ? 'r' : 'br', 0.15 + Math.random() * 0.4), b: G => { press(G, Math.random() < 0.5 ? 'l' : 'bl', 0.3); press(G, Math.random() < 0.5 ? 'r' : 'br', 0.3); } };      /* a thumb that does not look lands on either button of that side (so the test's list of blind strings stays the size it was) */
 // a rider who looks: in the air, works out where it will land and turns the bike to that slope (a flip too if there is
 // time), letting go early enough for the spin to die; on the ground leans forward down hills
+// THE TUTORIAL SHOWS WHICH BUTTON, AND WHEN TO LET GO (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It showed one button for the whole lesson. Now the robot is asked which button it would hold this moment (run dry: its buttons are read and
+// put back): HOLD LEAN FWD / LEAN BACK / BACK FLIP / FRONT FLIP with the hand on that button, LET GO! when it would let go, WAIT… otherwise.
+const RPC = { t: -1e9, v: null, was: null };
+function rampCue(G) { const b = G.b; if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RPC.t < 100) return RPC.v; RPC.t = now;
+  const h0 = Object.assign({}, G.hold), sr = Math.random, mem = { t: -1 }; Math.random = () => 0.5; let want = null; try { honest(G, { acc: 1, react: 0.15 }, mem); want = Object.assign({}, G.hold); } catch (e) {} finally { Math.random = sr; Object.assign(G.hold, h0); }
+  const P = padRects(), mid = q => [q.x + q.w / 2, q.y + q.h / 2], name = { l: 'BACK FLIP', r: 'FRONT FLIP', bl: 'LEAN BACK', br: 'LEAN FWD' }, on = want && ['br', 'bl', 'l', 'r'].find(q => want[q]); let v;
+  if (on) { v = ['HOLD ' + name[on], 'hold', mid(P[on])]; RPC.was = on; } else if (RPC.was && b.air) { v = ['LET GO!', 'release', mid(P[RPC.was])]; } else { RPC.was = null; v = [b.air ? 'WAIT… LAND IT' : 'RIDE…', 'wait', false]; }
+  RPC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, b = G.b; G.hold.l = G.hold.r = G.hold.bl = G.hold.br = false;
   if (G.over || G.wait > 0) { mem.plan = null; return; }
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) { G.hold.l = mem.l; G.hold.r = mem.r; G.hold.br = mem.br; G.hold.bl = mem.bl; return; } mem.t = 0.05 + react * 0.22;

@@ -123,9 +123,9 @@ function finish(G, win, why) { const c = G.cfg; G.over = win ? 'won' : 'lost';
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'scoop', title: 'FLY AND MINE', say: 'DRAG TO FLY', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Put your thumb down anywhere and drag to fly. Fly near a rock: your laser cracks it. Scoop up 3 ore in a row, quickly.', need: 3 }],
-  2: [{ id: 'dock', title: 'HOME', say: 'FLY INTO THE GREEN', do: 'drag', dir: 'up', how: 'You carry ore. Fly into the green ring under the mothership to unload it. Twice.', need: 2 }],
-  3: [{ id: 'dodge', title: 'DODGE', say: 'MOVE OUT OF THE RED', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'A red line warns where a meteor will fly. Get out of its way. Dodge 2 in a row.', need: 2 }],
+  1: [{ id: 'scoop', title: 'FLY AND MINE', say: G => minerCue(G)[0], do: G => minerCue(G)[1], at: G => minerCue(G)[2], how: 'Put your thumb down anywhere and drag to fly. Fly near a rock: your laser cracks it. Scoop up 3 ore in a row, quickly.', need: 3 }],
+  2: [{ id: 'dock', title: 'HOME', say: G => minerCue(G)[0], do: G => minerCue(G)[1], at: G => minerCue(G)[2], how: 'You carry ore. Fly into the green ring under the mothership to unload it. Twice.', need: 2 }],
+  3: [{ id: 'dodge', title: 'DODGE', say: G => minerCue(G)[0], do: G => minerCue(G)[1], at: G => minerCue(G)[2], how: 'A red line warns where a meteor will fly. Get out of its way. Dodge 2 in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -145,9 +145,15 @@ function lessonMiss(G) { const st = lessonNow(G); if (!st) return; G.lesson.n = 
 const BLIND = { d: G => { const R = Math.random; if (R() < 0.2) setStick(G, 0, 0); else { const a = R() * TAU, L = R() < 0.4 ? 1 : 0.4 + R() * 0.5; setStick(G, Math.cos(a) * L, Math.sin(a) * L); } } };
 // a pilot who looks: goes for ore, then rocks, home when the hold is full (or time is short); dodges what is coming, a beat late
 // and now and then not at all (react, acc); fights a pirate only with the hull to spare
+// THE TUTORIAL SAYS WHICH WAY TO FLY (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand dragged
+// up, whatever was where. Now the robot is asked (dryPlan setStick): FLY THIS WAY to the rock, to the green ring, out of the red line.
+const MNC = { t: -1e9, v: null };
+function minerCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - MNC.t < 200) return MNC.v; MNC.t = now; const P = dryPlan(G, null, { t: -1 }), id = G.lesson && G.lesson.steps[G.lesson.i] ? G.lesson.steps[G.lesson.i].id : ''; let v = ['WAIT…', 'wait', false];
+  if (P && P[0] === 'setStick' && (P[1] || P[2])) { const R = 70 * k, x0 = W / 2, y0 = H * 0.66, m = Math.max(0.5, Math.hypot(P[1], P[2])); v = [id === 'dock' ? 'FLY INTO THE GREEN' : id === 'dodge' ? 'FLY OUT OF THE RED' : 'FLY THIS WAY', 'drag', [x0, y0, x0 + P[1] / m * R, y0 + P[2] / m * R]]; }
+  MNC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, c = G.cfg, m = G.me;
-  if (G.over || G.wait > 0) { setStick(G, 0, 0); return; }
+  if (G.over || G.wait > 0) { ACT.setStick(G, 0, 0); return; }
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.12 + react * 0.4;
   const to = (x, z, slow) => { const dx = x - m.x, dz = z - m.z, d = Math.hypot(dx, dz) || 1; let p = slow ? Math.min(1, d / 3) : 1; return { x: dx / d * p, z: dz / d * p, d }; };
   let goal; const st = lessonNow(G), dDock = Math.hypot(m.x - DOCK.x, m.z - DOCK.z), need = c.goal - G.delivered;
@@ -165,6 +171,13 @@ function honest(G, o, mem) {
   if (R() < acc) { let th = null, tc = 1e9; for (const q of G.mets.concat(G.bolts)) { const rx = q.x - m.x, rz = q.z - m.z, vx = q.vx - m.vx, vz = q.vz - m.vz, vv = vx * vx + vz * vz; if (vv < 1e-6) continue; const tt = -(rx * vx + rz * vz) / vv; if (tt < 0 || tt > 1.5) continue; const cx = rx + vx * tt, cz = rz + vz * tt; if (Math.hypot(cx, cz) < 1.6 && tt < tc) { tc = tt; th = { q, cx, cz }; } }
     for (const w of G.warn) { const L = Math.hypot(w.vx, w.vz), ux = w.vx / L, uz = w.vz / L, rx = m.x - w.x, rz = m.z - w.z, along = rx * ux + rz * uz, cx = -(rx - ux * along), cz = -(rz - uz * along); if (Math.hypot(cx, cz) < 1.8 && along > 0) { th = { q: w, cx, cz }; tc = 0; break; } }
     if (th) { const L = Math.hypot(th.cx, th.cz) || 1; let ax = -th.cx / L, az = -th.cz / L; if (L < 0.05) { ax = -th.q.vz; az = th.q.vx; const l2 = Math.hypot(ax, az) || 1; ax /= l2; az /= l2; } goal = { x: ax, z: az }; } }
-  setStick(G, goal.x, goal.z);
+  ACT.setStick(G, goal.x, goal.z);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.delivered = G.cfg.goal; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

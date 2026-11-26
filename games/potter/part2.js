@@ -91,10 +91,10 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'press', title: 'THE CLAY FOLLOWS YOUR FINGER', say: 'TOUCH THE SIDE, MOVE IN', do: 'drag', dir: 'right', how: 'Touch the side of the spinning clay and slowly move your finger in towards the middle. Watch it narrow.', need: 1, ok: (w, m) => w === 'shaped' },
-      { id: 'fire', title: 'MATCH, THEN FIRE', say: 'MATCH THE LINE, TAP FIRE', do: 'drag', dir: 'up', how: 'Shape it to the dotted outline, bottom to top, slowly. When the match reaches the mark, tap FIRE.', need: 1, ok: w => w === 'fired', ctrl: 2 }],
-  2: [{ id: 'curve', title: 'IN AND OUT', say: 'IN… AND OUT', do: 'drag', dir: 'up', how: 'This one curves. Move your finger in where it narrows and out where it swells, slowly, all the way up.', need: 1, ok: w => w === 'fired', ctrl: 3 }],
-  3: [{ id: 'two', title: 'TWO ORDERS', say: 'SLOW AND STEADY', do: 'drag', dir: 'up', how: 'Two pots to make. Slow, steady hands: too fast and the pot wobbles.', need: 2, ok: w => w === 'fired', ctrl: 3 }],
+  1: [{ id: 'press', title: 'THE CLAY FOLLOWS YOUR FINGER', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Touch the side of the spinning clay and slowly move your finger in towards the middle. Watch it narrow.', need: 1, ok: (w, m) => w === 'shaped' },
+      { id: 'fire', title: 'MATCH, THEN FIRE', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Shape it to the dotted outline, bottom to top, slowly. When the match reaches the mark, tap FIRE.', need: 1, ok: w => w === 'fired', ctrl: 2 }],
+  2: [{ id: 'curve', title: 'IN AND OUT', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'This one curves. Move your finger in where it narrows and out where it swells, slowly, all the way up.', need: 1, ok: w => w === 'fired', ctrl: 3 }],
+  3: [{ id: 'two', title: 'TWO ORDERS', say: G => potCue(G)[0], do: G => potCue(G)[1], at: G => potCue(G)[2], how: 'Two pots to make. Slow, steady hands: too fast and the pot wobbles.', need: 2, ok: w => w === 'fired', ctrl: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -120,6 +120,13 @@ const BLIND = {
   f: G => fire(G),
 };
 // a potter who looks: sweeps up the side, finger on the order's line (a little off, as a thumb is), slowly; fires at the mark
+// THE HAND SHAPES WHERE THE POT IS WRONG (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It dragged right
+// or up in a box, and MATCH THE LINE, TAP FIRE was two things. Now the hand takes the wall where it is furthest from the dotted line and moves it
+// to the line (MOVE IN / MOVE OUT), sweeps slowly up the line when it is nearly there, and TAP FIRE when the match is enough.
+function potCue(G) { if (G.over || G.gap > 0) return ['WAIT…', 'wait', false]; const c = G.cfg; if (G.match >= c.pass + 0.01) { const r = fireRect(); return ['TAP FIRE', 'tap', [r.x + r.w / 2, r.y + r.h / 2]]; }
+  let bi = 0, bd = 0; for (let i = 0; i < NR; i++) { const d = Math.abs(G.target[i] - G.r[i]); if (d > bd) { bd = d; bi = i; } } const u = bi / (NR - 1);
+  if (bd > 0.05) { const a = potScreen(u, G.r[bi]), b = potScreen(u, G.target[bi]); return [G.target[bi] < G.r[bi] ? 'MOVE IN SLOWLY' : 'MOVE OUT SLOWLY', 'drag', [a.x, a.y, b.x, b.y]]; }
+  const a = potScreen(0.05, G.target[Math.round(0.05 * (NR - 1))]), b = potScreen(0.95, G.target[Math.round(0.95 * (NR - 1))]); return ['SLIDE UP THE LINE SLOWLY', 'drag', [a.x, a.y, b.x, b.y]]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg;
   if (G.gap > 0) { mem.sw = null; return; }

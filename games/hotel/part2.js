@@ -118,9 +118,9 @@ function finish(G, win, why) { const c = G.cfg; if (G.lesson) return; G.over = w
 // ---------- LESSONS ----------
 const holds = (G, k2) => G.me.carry.some(it => it.k === k2);
 const LESSONS = {
-  1: [{ id: 'bags', title: 'BAGS UP', say: G => holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', how: 'Tap the guest\'s bags, then a clean room.', need: 2 }],
-  2: [{ id: 'food', title: 'ROOM SERVICE', say: G => holds(G, 'food') ? 'TAP THE 🍝 ROOM' : 'TAP THE KITCHEN', do: 'tap', how: 'Tap the kitchen, then the room that rang.', need: 2 }],
-  3: [{ id: 'clean', title: 'A CLEAN ROOM', say: G => G.rooms.some(r => r.state === 'dirty') ? 'TAP THE 🧹 ROOM' : holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', how: 'Clean the dirty room, then take the guest up.', need: 2 }],
+  1: [{ id: 'bags', title: 'BAGS UP', say: G => holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', at: G => hotelAt(G), how: 'Tap the guest\'s bags, then a clean room.', need: 2 }],
+  2: [{ id: 'food', title: 'ROOM SERVICE', say: G => holds(G, 'food') ? 'TAP THE 🍝 ROOM' : 'TAP THE KITCHEN', do: 'tap', at: G => hotelAt(G), how: 'Tap the kitchen, then the room that rang.', need: 2 }],
+  3: [{ id: 'clean', title: 'A CLEAN ROOM', say: G => G.rooms.some(r => r.state === 'dirty') ? 'TAP THE 🧹 ROOM' : holds(G, 'bags') ? 'TAP THE GREEN ROOM' : 'TAP THE 🧳', do: 'tap', at: G => hotelAt(G), how: 'Clean the dirty room, then take the guest up.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -144,10 +144,13 @@ const BLIND = { t: G => tapAt(G, Math.random() * (G.cfg.floors + 0.5) - 0.25, Ma
 // an attendant who looks: with something in the hands, takes it where it is wanted (the one that will run out first, if it can be
 // reached in time); with empty hands, goes for what the most pressing guest needs (the kitchen, the laundry, the desk, a dirty
 // room when a guest is waiting for one). One stop at a time, as a person does.
+// THE HAND IS ON THE PLACE TO TAP (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The words already
+// changed with the moment; the hand tapped in a box. Now it taps on the place the robot would go next (dryPlan: the desk, a room, the kitchen).
+function hotelAt(G) { if (G.over || G.wait > 0 || G.route.length || G.me.work > 0) return false; const P = dryPlan(G, null, { t: -1 }); if (!P || !P[1]) return false; const L = lay(), q = P[1]; return [L.sx(q.x), L.fy(q.f) - L.fh * 0.45]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc;
   if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; if (G.route.length || G.me.work > 0) return; mem.t = 0.15 + react * 1.2;
   const me = G.me, c = G.cfg, open = G.reqs.filter(q => !q.gone), tt = (f1, x1) => me.f === f1 ? Math.abs(x1 - me.x) / c.sp : (Math.abs(me.x - LIFT) + Math.abs(x1 - LIFT)) / c.sp + Math.abs(f1 - me.f) / c.lift + 0.3;
-  const go = st => { if (Math.random() > acc) { if (Math.random() < 0.3) BLIND.t(G); else mem.t += 0.5; return; } goTo(G, st); },      /* a tap that misses mostly lands on nothing (the places are big); sometimes on the wrong door */ roomStop = r => ({ place: 'room', f: r.f, x: r.x, room: r.id, key: 'room' + r.id }), left = q => q.pat - q.t;
+  const go = st => { if (Math.random() > acc) { if (Math.random() < 0.3) BLIND.t(G); else mem.t += 0.5; return; } ACT.goTo(G, st); },      /* a tap that misses mostly lands on nothing (the places are big); sometimes on the wrong door */ roomStop = r => ({ place: 'room', f: r.f, x: r.x, room: r.id, key: 'room' + r.id }), left = q => q.pat - q.t;
   const cleanRooms = G.rooms.filter(r => r.state === 'clean'), dirty = G.rooms.filter(r => r.state === 'dirty');
   const src = k2 => ({ place: k2 === 'food' ? 'kitchen' : 'laundry', f: 0, x: srcX(k2), key: k2 === 'food' ? 'kitchen' : 'laundry' }), nHold = k2 => me.carry.filter(it => it.k === k2).length, bag = me.carry.find(it => it.k === 'bags');
   // what is wanted that is not yet in the hands (a plate for each room ringing, a guest at the desk when there is a room to give)
@@ -168,3 +171,8 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   pool.sort((a, b) => a.left - b.left); go((room > 0 ? pool : pool.filter(n => n.clean))[0].st); }
 function srcX(k2) { return k2 === 'food' ? KITCHEN : k2 === 'towels' ? LAUNDRY : DESK; }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.tips = G.cfg.target + 10; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { goTo }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

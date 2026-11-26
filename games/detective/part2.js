@@ -219,10 +219,29 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: turn things over, challenge a story, accuse with proof ----------
 const LESSONS = {
-  1: [{ id: 'search', title: 'LOOK CLOSELY', say: 'TAP IT, TURN IT', do: 'drag', dir: 'lr', how: 'Tap an object to look at it. Drag to turn it round: some clues are only on the back. Tap what you notice. Find three hidden marks.', need: 3 }],
-  2: [{ id: 'challenge', title: 'CHALLENGE A STORY', say: 'ASK, THEN SHOW A CLUE', do: 'tap', how: 'In People, ask where they were. Then Show a clue that is about them: a liar cracks, someone with a secret owns up. Do it twice. (A clue about someone else starts the count again.)', need: 2 }],
-  3: [{ id: 'accuse', title: 'PROVE IT', say: 'WHO, HOW, WHEN: ACCUSE', do: 'tap', how: 'In Accuse, choose who, how and when, and the two clues that prove it (one puts them at the scene, one shows how). Everything you need is already in the Notebook.', need: 1 }],
+  1: [{ id: 'search', title: 'LOOK CLOSELY', say: G => detCue(G)[0], do: G => detCue(G)[1], at: G => detCue(G)[2], how: 'Tap an object to look at it. Drag to turn it round: some clues are only on the back. Tap what you notice. Find three hidden marks.', need: 3 }],
+  2: [{ id: 'challenge', title: 'CHALLENGE A STORY', say: G => detCue(G)[0], do: G => detCue(G)[1], at: G => detCue(G)[2], how: 'In People, ask where they were. Then Show a clue that is about them: a liar cracks, someone with a secret owns up. Do it twice. (A clue about someone else starts the count again.)', need: 2 }],
+  3: [{ id: 'accuse', title: 'PROVE IT', say: G => detCue(G)[0], do: G => detCue(G)[1], at: G => detCue(G)[2], how: 'In Accuse, choose who, how and when, and the two clues that prove it (one puts them at the scene, one shows how). Everything you need is already in the Notebook.', need: 1 }],
 };
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said TAP IT, TURN IT with a hand dragging in a box, and ASK, THEN SHOW A CLUE. Now the hand is on the thing: the object with a
+// hidden mark (TAP THIS), DRAG TO TURN IT until the marked side faces you, TAP THE MARK, TAP DONE; in lesson 2 the People tab, the person a
+// clue names, the where-were-you question, then the clue; in lesson 3 the Accuse tab, then who, how, when and the two clues, then ACCUSE.
+function detCue(G) { const el = q => { const e = document.querySelector(q); if (!e) return false; let r = e.getBoundingClientRect(); if (r.width && (r.bottom > innerHeight - 4 || r.top < SH())) { e.scrollIntoView({ block: 'nearest' }); r = e.getBoundingClientRect(); } return r.width ? [r.x + r.width / 2, r.y + r.height / 2] : false; },      /* (a button below the fold of the panel is scrolled into sight: the hand never points off the screen) */ D = G.lesson; if (!D || G.over) return ['WAIT…', 'wait', false];
+  const tab = t => ui.tab === t ? null : ['TAP ' + { people: '👥 PEOPLE', accuse: '⚖ ACCUSE', scene: '🔍 CASE' }[t], 'tap', el(`#dTabs [data-tab="${t}"]`)];
+  if (D.id === 'search' || G.insp || (D.id === 'challenge' && !found(G).some(q => q.sus != null))) { if (G.insp) { const it = G.insp.it, cl = it.clue != null ? clue(G, it.clue) : null;
+      if (cl && !cl.found && (cl.hidden || D.id !== 'search')) { if (cl.hidden && faceNow(G) !== cl.face) return ['DRAG TO TURN IT', 'drag', [W * 0.3, SH() * 0.55, W * 0.7, SH() * 0.55]]; const [x, y] = faceXY(cl.spot[0], cl.spot[1]); return ['TAP THE MARK', 'tap', [x, y]]; }
+      return ['TAP DONE', 'tap', el('#dInspDone')]; }
+    const want = cl => D.id === 'search' ? cl.hidden && !cl.found : !cl.found && cl.sus != null, has = r => r.items.findIndex(it => it.clue != null && want(clue(G, it.clue))), here = has(G.rooms[G.room]);
+    if (here >= 0) { const it = G.rooms[G.room].items[here], sp = scrOf(it.x, 0.6, it.z); return ['TAP THIS', 'tap', sp ? [sp.x, sp.y] : false]; }
+    const ri = G.rooms.findIndex(r => has(r) >= 0); if (ri >= 0) return ['TAP ' + G.rooms[ri].name.toUpperCase(), 'tap', el(`#dRooms [data-room="${ri}"]`)]; return ['WAIT…', 'wait', false]; }
+  if (D.id === 'challenge') { const c = found(G).find(q => q.sus != null && !G.S[q.sus].cracked && !G.S[q.sus].admitted) || found(G).find(q => q.sus != null); if (!c) return ['WAIT…', 'wait', false];
+    const t = tab('people'); if (t) return t; if (ui.sus !== c.sus) return ui.sus == null ? ['TAP ' + G.S[c.sus].name.toUpperCase(), 'tap', el(`[data-sus="${c.sus}"]`)] : ['TAP ‹ ALL', 'tap', el('[data-back]')];
+    if (!G.S[c.sus].asked.where) return ['ASK WHERE THEY WERE', 'tap', el('[data-ask="where"]')]; return ['SHOW THEM THIS CLUE', 'tap', el(`[data-show="${c.id}"]`)]; }
+  if (D.id === 'accuse') { const t = tab('accuse'); if (t) return t; const A = ui.acc, T = G.truth, pr = found(G).filter(c => c.proof).map(c => c.id);
+    if (A.who !== T.who) return ['WHO? TAP ' + G.S[T.who].name.toUpperCase(), 'tap', el(`[data-who="${T.who}"]`)]; if (A.how !== T.how) return ['HOW? TAP THIS', 'tap', el(`[data-how="${T.how}"]`)]; if (A.when !== T.when) return ['WHEN? TAP THIS', 'tap', el(`[data-when="${T.when}"]`)];
+    const pp = pr.find(id => !A.proof.includes(id)); if (pp != null && A.proof.length < 2) return ['TAP THIS CLUE', 'tap', el(`[data-proof="${pp}"]`)]; return ['TAP ⚖ ACCUSE', 'tap', el('#goAccuse')]; }
+  return ['WAIT…', 'wait', false]; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true });
   if (st.id === 'search') { G.clues.forEach(c => { if (!c.hidden && c.room === 0) { c.hidden = true; c.face = 1 + (c.id % 3); c.spot = [((c.id * 37) % 9 - 4) / 10, ((c.id * 53) % 9 - 4) / 10]; } }); }
   if (st.id === 'accuse') { G.clues.forEach(c => { if (c.key || c.proof || c.kind === 'clears') { c.found = true; addNote(G, c.text, 'clue', { id: c.id }); } }); } }

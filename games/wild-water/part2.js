@@ -17,7 +17,7 @@ const WEATHERS = ['morning', 'noon', 'golden', 'overcast', 'rain', 'mist', 'suns
 function weatherOf(N) { if (N <= 2) return ['morning', 'golden'][N - 1]; const R = rng(N * 4099 + 11); R(); return WEATHERS[(R() * WEATHERS.length) | 0]; }
 
 function makeCfg(N, help) {
-  const f = curve(N), e = easyOf(N), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+  const f = curve(N), e = N <= 1 ? 1 : clamp((6 - N) / 8, 0, 1), boss = N % 10 === 0, x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));      /* 26 Nov 2026: level 1 has all the kit's help (more let blind paddling win: measured), then a gentler climb than the kit's, because a river punishes a slip at once */
   return { N, f, e, boss, help: !!help,
     len: Math.round(x(430, 950, 30) + (boss ? 250 : 0)),          // metres of river
     w: x(19, 13, 45) + 3 * e,                                    // river width in the rapids
@@ -166,9 +166,9 @@ function finish(G, win, why) {
 const LESSONS = {
   1: [{ id: 'left', title: 'A STROKE ON THE LEFT', say: 'SWIPE DOWN ON THE LEFT', do: 'swipe', dir: 'down', at: G => [W * 0.27, H * 0.72], how: 'Swipe down on the left half of the screen. The bow swings to the right.', need: 3, ok: w => w === 'stroke-1', slow: 1 },
       { id: 'right', title: 'A STROKE ON THE RIGHT', say: 'SWIPE DOWN ON THE RIGHT', do: 'swipe', dir: 'down', at: G => [W * 0.73, H * 0.72], how: 'Swipe down on the right half. The bow swings to the left.', need: 3, ok: w => w === 'stroke1', slow: 1 },
-      { id: 'line', title: 'FIND THE GAP', say: 'AIM FOR THE GAP', do: 'swipe', dir: 'down', how: 'Steer for the gap in each row of rocks. Left stroke to go right, right stroke to go left.', need: 3, ok: w => w === 'line', slow: 1 }],
-  2: [{ id: 'back', title: 'BACK-PADDLE', say: 'SWIPE UP TO BRAKE', do: 'swipe', dir: 'up', how: 'Swipe UP on a side to brake. It turns you toward that side.', need: 2, ok: w => w === 'back', slow: 1 },
-      { id: 'gate', title: 'THROUGH THE GATES', say: 'BETWEEN THE POLES', do: 'swipe', dir: 'down', how: 'Go between the two poles of a gate. Line up early: the river carries you.', need: 2, ok: w => w === 'gate' }],
+      { id: 'line', title: 'FIND THE GAP', say: G => wwCue(G)[0], do: G => wwCue(G)[1], at: G => wwCue(G)[2], how: 'Steer for the gap in each row of rocks. Left stroke to go right, right stroke to go left.', need: 3, ok: w => w === 'line', slow: 1 }],
+  2: [{ id: 'back', title: 'BACK-PADDLE', say: 'SWIPE UP: BRAKE', do: 'swipe', dir: 'up', at: G => [W * 0.27, H * 0.72], how: 'Swipe UP on a side to brake. It turns you toward that side.', need: 2, ok: w => w === 'back', slow: 1 },
+      { id: 'gate', title: 'THROUGH THE GATES', say: G => wwCue(G)[0], do: G => wwCue(G)[1], at: G => wwCue(G)[2], how: 'Go between the two poles of a gate. Line up early: the river carries you.', need: 2, ok: w => w === 'gate' }],
   3: [{ id: 'drop', title: 'OVER THE LEDGE, STRAIGHT', say: 'GO STRAIGHT', do: 'swipe', dir: 'down', how: 'Go over a ledge through the smooth tongue, pointing straight down the river, or you roll.', need: 2, ok: w => w === 'drop', slow: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonRiver(G); }
@@ -210,6 +210,13 @@ function lineAhead(G, look = 26) {
 }
 function lineAhead2(G, t) { let best = null; for (const r of G.river.rocks) if (r.gap && r.s > t.s + 1 && (!best || r.s < best.s)) best = r; return best; }
 // HONEST: a person who looks: steers for the next gap, straightens up before a ledge; react = seconds late, acc = how often right.
+// THE TUTORIAL SAYS WHICH SIDE (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). AIM FOR THE GAP and BETWEEN
+// THE POLES swiped down in a box, on whichever side. Now the robot is asked (dryPlan paddle): SWIPE DOWN ON THE LEFT / RIGHT (the side it would
+// stroke to line up for the gap or the gate), SWIPE UP ON THE LEFT / RIGHT: BRAKE, STRAIGHT ON… when the line is good.
+const WWC = { t: -1e9, v: null };
+function wwCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - WWC.t < 150) return WWC.v; WWC.t = now; const b = G.b; let v = ['STRAIGHT ON…', 'wait', false];
+  if (!(b.stroke > 0.05 || G.queue.length || b.roll > 0)) { const P = dryPlan(G, null, { next: -1, alt: 1 }); if (P) { const sd = P[1], bk = P[2], x = W * (sd < 0 ? 0.27 : 0.73), y = H * 0.72, L = 80 * k; v = [(bk ? 'SWIPE UP ON THE ' : 'SWIPE DOWN ON THE ') + (sd < 0 ? 'LEFT' : 'RIGHT'), 'swipe', [x, bk ? y + L / 2 : y - L / 2, x, bk ? y - L / 2 : y + L / 2]]; } }
+  WWC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, b = G.b, c = G.cfg;
   if (b.stroke > 0.05 || G.queue.length || b.roll > 0) return;
@@ -226,8 +233,15 @@ function honest(G, o, mem) {
   if (!side) { mem.next = G.t + 0.12; return; }
   if (Math.abs(err) > 0.6 && b.v > 2.4) { back = true; side = -side; }
   if (Math.random() > acc) side = -side;
-  paddle(G, side, back, back ? 1 : clamp(Math.abs(err) / 0.32, 0.45, 1));      // a light stroke for a small correction
+  ACT.paddle(G, side, back, back ? 1 : clamp(Math.abs(err) / 0.32, 0.45, 1));      // a light stroke for a small correction
   mem.next = G.t + react * 0.5 + Math.random() * 0.12;
 }
 // The shortest real win, for tools/test_controls.py: to just before the end, nothing ahead.
 function winNow(G) { if (!G || G.over) return; G.lesson = null; const RV = G.river; RV.len = G.cfg.len; G.b.s = RV.len - 0.05; G.b.d = 0; G.b.h = 0; RV.rocks = RV.rocks.filter(r => r.s < G.b.s - 3); RV.trees = []; RV.drops.forEach(d => d.done = true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { paddle }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

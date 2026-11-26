@@ -4956,9 +4956,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5342,15 +5342,28 @@ function honest(G, o, mem) { if (G.over || G.wait > 0) return; const acc = o.acc
   if (mem.i >= mem.plan.length) { if (G.thumb) lift(G); mem.round = (mem.round || 0) + 1; if (mem.round < 3 && cover(G) < 0.995) { mem.plan = plan(G, acc).filter(p => { const j = Math.round(p.y) * GW + Math.round(p.x); return true; }).filter(p => needs(G, p)); mem.i = 0; if (mem.plan.length) return; } press(G, { done: true }); return; }
   const p = mem.plan[mem.i]; if (G.colour !== p.v) { press(G, { pot: G.colours.indexOf(p.v) }); return; } if (G.tool !== p.tool) { press(G, { tool: p.tool }); return; }
   const j = (1 - acc) * (p.tool === 'roller' ? 3.2 : 1.6); press(G, { x: p.x + gauss() * j, y: p.y + gauss() * j }); lift(G); mem.i++; }
+// THE TUTORIAL POINTS AT THE PAINT STILL TO DO (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid
+// in a box wherever it was. Now it takes the robot's own plan (plan, acc 1): the first patch still needing paint; TAP THIS POT if the colour is
+// wrong, TAP THE BRUSH / ROLLER if the tool is, else PAINT HERE: a drag over that patch and the next one in the plan.
+const RLC = { t: -1e9, v: null, g: null, plan: null };
+// a patch still to paint: at least three cells of its colour unpainted inside its circle (the robot's needs() counts the square's corners too,
+// which a round roller never reaches, so the hand stayed on one patch)
+const rollNeeds = (G, p) => { const r = (p.tool === 'roller' ? G.cfg.rr : G.cfg.br) * 0.8; let n = 0; for (let y = Math.floor(p.y - r); y <= p.y + r; y++) for (let x = Math.floor(p.x - r); x <= p.x + r; x++) { if (x < 0 || y < 0 || x >= GW || y >= GH || Math.hypot(x - p.x, y - p.y) > r) continue; const j = y * GW + x; if (G.grid[j] === p.v && G.paint[j] !== p.v && ++n >= 3) return true; } return false; };
+function rollCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RLC.t < 250) return RLC.v; RLC.t = now; if (RLC.g !== G.grid) { RLC.g = G.grid; RLC.plan = plan(G, 1); }
+  const P = RLC.plan, i = P.findIndex(q => rollNeeds(G, q)), L = uiLayout(G); let v = ['ALL PAINTED!', 'wait', false];
+  if (i >= 0) { const q = P[i], pot = L.find(b => b.pot === G.colours.indexOf(q.v)), tl = L.find(b => b.tool === q.tool), at = (x, y) => { const s3 = cellScr(x, y); return [s3.x, s3.y]; };
+    if (G.colour !== q.v && pot) v = ['TAP THIS POT', 'tap', [pot.x, pot.y]]; else if (G.tool !== q.tool && tl) v = [q.tool === 'brush' ? 'TAP THE BRUSH' : 'TAP THE ROLLER', 'tap', [tl.x, tl.y]];
+    else { const n = P.slice(i + 1).find(r => r.v === q.v && r.tool === q.tool && rollNeeds(G, r) && Math.hypot(r.x - q.x, r.y - q.y) < G.cfg.rr * 3), a = at(q.x, q.y), b = n ? at(n.x, n.y) : at(q.x + 2, q.y); v = ['PAINT HERE', 'drag', [a[0], a[1], b[0], b[1]]]; } }
+  RLC.v = v; return v; }
 // blind moves: a thumb put down anywhere (the board is about half the screen), dragged anywhere, lifted; a tap on a pot
 const blindAt = () => ({ x: Math.random() * 120 - 30, y: Math.random() * 168 - 42 });
 const BLIND = { d: G => press(G, Math.random() < 0.08 ? { done: true } : blindAt()), m: G => move(G, blindAt()), u: G => { lift(G); if (Math.random() < 0.3) press(G, { pot: (Math.random() * 3) | 0 }); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.score = 100; G.parts = []; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'roll', title: 'DRAG TO PAINT', say: 'DRAG TO PAINT', do: 'drag', dir: 'lr', how: 'Drag your thumb over the fence plank to roll paint on. Cover it all; keep off the grass.', need: 1 }],
-  2: [{ id: 'pots', title: 'TWO COLOURS', say: 'TAP A POT, PAINT', do: 'tap', how: 'Tap a pot to change colour. Paint each part the colour its faint pattern shows.', need: 1 }],
-  3: [{ id: 'tape', title: 'TAPE IS SAFE', say: 'BRUSH NEAR THE GLASS', do: 'drag', dir: 'lr', how: 'Use the BRUSH near the window. The blue tape is safe to paint over: it peels off at the end. Keep paint off the glass!', need: 1 }],
+  1: [{ id: 'roll', title: 'DRAG TO PAINT', say: G => rollCue(G)[0], do: G => rollCue(G)[1], at: G => rollCue(G)[2], how: 'Drag your thumb over the fence plank to roll paint on. Cover it all; keep off the grass.', need: 1 }],
+  2: [{ id: 'pots', title: 'TWO COLOURS', say: G => rollCue(G)[0], do: G => rollCue(G)[1], at: G => rollCue(G)[2], how: 'Tap a pot to change colour. Paint each part the colour its faint pattern shows.', need: 1 }],
+  3: [{ id: 'tape', title: 'TAPE IS SAFE', say: G => rollCue(G)[0], do: G => rollCue(G)[1], at: G => rollCue(G)[2], how: 'Use the BRUSH near the window. The blue tape is safe to paint over: it peels off at the end. Keep paint off the glass!', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

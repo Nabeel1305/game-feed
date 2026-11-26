@@ -126,9 +126,9 @@ function finish(G, win, acc = 0) { if (G.over) return; G.over = win ? 'won' : 'l
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS: one way of answering at a time ----------
 const LESSONS = {
-  1: [{ id: 'which', type: 'which', title: 'WHICH WERE THERE?', say: 'LOOK… TAP THE 3', do: 'tap', how: 'Look at the three things. When they are covered, tap the three you saw (twice in a row).', need: 2 }],
-  2: [{ id: 'place', type: 'place', title: 'PUT THEM BACK', say: 'DRAG BACK TO ITS PLACE', do: 'drag', dir: 'up', how: 'Remember where each thing sits. Then drag each one back to its place (or tap it, then tap the place).', need: 2 }],
-  3: [{ id: 'order', type: 'order', title: 'IN ORDER', say: 'TAP IN ORDER', do: 'tap', how: 'Watch them light up one by one (each has its own note). Then tap them in the same order.', need: 2 }],
+  1: [{ id: 'which', type: 'which', title: 'WHICH WERE THERE?', say: G => memCue(G)[0], do: G => memCue(G)[1], at: G => memCue(G)[2], how: 'Look at the three things. When they are covered, tap the three you saw (twice in a row).', need: 2 }],
+  2: [{ id: 'place', type: 'place', title: 'PUT THEM BACK', say: G => memCue(G)[0], do: G => memCue(G)[1], at: G => memCue(G)[2], how: 'Remember where each thing sits. Then drag each one back to its place (or tap it, then tap the place).', need: 2 }],
+  3: [{ id: 'order', type: 'order', title: 'IN ORDER', say: G => memCue(G)[0], do: G => memCue(G)[1], at: G => memCue(G)[2], how: 'Watch them light up one by one (each has its own note). Then tap them in the same order.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); G.ri = -1; nextRound(G); G.ri = -1; }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -148,16 +148,33 @@ const BLIND = { a: G => anyAnswer(G, false), f: G => anyAnswer(G, true), c: G =>
 function memChance(G, o) { const r = G.round, acc = o.acc == null ? 0.85 : o.acc, cap = 2.6 + 6.2 * acc, view = r.view, need = r.type === 'order' ? 0.9 * r.n : 0.5 * r.n + 1.5;
   const load = r.n * (1 + 0.4 * G.cfg.sim * (G.lesson ? 0 : 1)) * (1 + 0.45 * Math.max(0, (need - view) / need)) * (r.type === 'place' ? 1.15 : r.type === 'order' ? 1.2 : 1);
   return clamp(Math.pow(Math.min(1, cap / load), 1.1), 0.08, 1); }
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said LOOK… TAP THE 3 with a hand in a box. Now: LOOK… while they show, then the hand on each right one in turn (a lesson shows
+// the answer: it teaches the game, the levels test the memory), DRAG IT BACK HERE from the tray to its place, TAP NEXT on the button.
+function memCue(G) { const r = G.round; if (!r || G.over) return ['WAIT…', 'wait', false]; if (r.phase === 'show' && r.type !== 'order') return ['LOOK…', 'wait', false]; if (r.phase === 'show') return ['WATCH…', 'wait', false];
+  const L = lay(G), mid = q => q ? [q.x + q.w / 2, q.y + q.h / 2] : false, P = dryPlan(G, null, { r, cd: -1, know: r.items.map(() => true), notice: true, seqOk: 99 }); if (!P) return ['WAIT…', 'wait', false];
+  if (P[0] === 'cont') return [r.phase === 'brief' ? 'TAP GO' : 'TAP NEXT', 'tap', mid(L.btn)];
+  if (P[0] === 'choose') return ['TAP ONE YOU SAW', 'tap', mid(L.opts[P[1]])];
+  if (P[0] === 'tapSlot') { const j = r.slots.findIndex(q => q.i === P[1]), q = L.slots[j]; return [r.type === 'order' ? 'TAP THIS ONE NEXT' : 'TAP THE ONE THAT CHANGED', 'tap', q ? [q.x, q.y] : false]; }
+  if (P[0] === 'place') { const t = L.tray[P[1]], j = r.slots.findIndex(q => q.i === P[2]), q = L.slots[j]; return ['DRAG IT BACK HERE', 'drag', t && q ? [t.x + t.w / 2, t.y + t.h / 2, q.x, q.y] : false]; }
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) { const r = G.round; if (!r || G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.85 : o.acc;
   if (mem.r !== r) { mem.r = r; mem.cd = react; const p = memChance(G, o); mem.know = r.items.map(() => Math.random() < p); mem.notice = Math.random() < Math.pow(p, 0.8); mem.seqOk = r.type === 'order' ? (() => { let k = 0; while (k < r.n && Math.random() < Math.pow(p, 0.5 + 0.12 * k)) k++; return k; })() : 0; }
   mem.cd -= 1 / 60; if (mem.cd > 0) return; mem.cd = react * (0.7 + 0.6 * Math.random());
-  if (r.phase === 'brief') { cont(G); return; } if (r.phase === 'show') { if (r.type !== 'order' && r.t > r.view * 0.85) cont(G); return; }
-  if (r.phase === 'review') { cont(G); return; } if (r.phase !== 'ask') return;
+  if (r.phase === 'brief') { ACT.cont(G); return; } if (r.phase === 'show') { if (r.type !== 'order' && r.t > r.view * 0.85) ACT.cont(G); return; }
+  if (r.phase === 'review') { ACT.cont(G); return; } if (r.phase !== 'ask') return;
   const slip = Math.random() > acc + (1 - acc) * 0.75;      // a thumb that misses now and then (most are caught before they count)
   if (r.type === 'which') { const want = r.opts.map((q, k) => k).filter(k => !r.opts[k].on && r.opts[k].yes && mem.know[r.items.findIndex(it => same(it, r.opts[k].it))]); const left = r.opts.map((q, k) => k).filter(k => !r.opts[k].on);
-    const k = !slip && want.length ? want[0] : left[(Math.random() * left.length) | 0]; choose(G, k); return; }
-  if (r.type === 'missing') { const yes = r.opts.findIndex(q => q.yes); const k = !slip && mem.know[r.items.indexOf(r.gone)] ? yes : (Math.random() * r.opts.length) | 0; choose(G, k); return; }
-  if (r.type === 'changed') { tapSlot(G, !slip && mem.notice ? r.changed[0] : r.slots[(Math.random() * r.slots.length) | 0].i); return; }
-  if (r.type === 'order') { const k = r.picks.length, want = r.seq[k], s = r.slots.find(q => same(q.it, want)).i, others = r.slots.filter(q => q.it && !r.picks.includes(q.i)).map(q => q.i); tapSlot(G, !slip && k < mem.seqOk ? s : others[(Math.random() * others.length) | 0]); return; }
-  if (r.type === 'place') { const k = r.items.findIndex((it, q) => r.placed[q] == null); if (k < 0) return; const free = r.slots.map(q => q.i).filter(s => !Object.values(r.placed).includes(s)); place(G, k, !slip && mem.know[k] ? r.items[k].slot : free[(Math.random() * free.length) | 0]); } }
+    const k = !slip && want.length ? want[0] : left[(Math.random() * left.length) | 0]; ACT.choose(G, k); return; }
+  if (r.type === 'missing') { const yes = r.opts.findIndex(q => q.yes); const k = !slip && mem.know[r.items.indexOf(r.gone)] ? yes : (Math.random() * r.opts.length) | 0; ACT.choose(G, k); return; }
+  if (r.type === 'changed') { ACT.tapSlot(G, !slip && mem.notice ? r.changed[0] : r.slots[(Math.random() * r.slots.length) | 0].i); return; }
+  if (r.type === 'order') { const k = r.picks.length, want = r.seq[k], s = r.slots.find(q => same(q.it, want)).i, others = r.slots.filter(q => q.it && !r.picks.includes(q.i)).map(q => q.i); ACT.tapSlot(G, !slip && k < mem.seqOk ? s : others[(Math.random() * others.length) | 0]); return; }
+  if (r.type === 'place') { const k = r.items.findIndex((it, q) => r.placed[q] == null); if (k < 0) return; const free = r.slots.map(q => q.i).filter(s => !Object.values(r.placed).includes(s)); ACT.place(G, k, !slip && mem.know[k] ? r.items[k].slot : free[(Math.random() * free.length) | 0]); } }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.scores = [1, 1, 1, 1]; G.log = [1, 2, 3, 4].map(() => ({ type: 'which', n: 3, score: 1, bonus: 0 })); G.ri = 4; G.scores.push(1); G.log.push({ type: 'which', n: 3, score: 1, bonus: 0 }); finishLevel(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { cont, choose, tapSlot, place }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

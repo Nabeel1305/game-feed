@@ -144,9 +144,9 @@ function finish(G, win, why) { const c = G.cfg; G.over = win ? 'won' : 'lost';
   G.ev.push({ k: win ? 'won' : 'lost', why }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'light', title: 'LIGHT IT', say: 'DRAG TO TURN', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Drag a little to turn your lantern without walking. Hold the ghost in the beam until the lantern pulls it in. Catch 2.', need: 2 }],
-  2: [{ id: 'behind', title: 'FROST', say: 'TURN TO THE FROST', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Frost at the edge of the screen: a ghost is close, that way. Turn to it and catch it. Twice.', need: 2 }],
-  3: [{ id: 'shy', title: 'SHY GHOSTS', say: 'LOOK, THEN WALK CLOSER', do: 'drag', dir: 'up', at: G => [W / 2, H * 0.7], how: 'Shy ghosts move only when you look away. Turn to it, then walk closer and hold it in the light. Catch 2.', need: 2 }],
+  1: [{ id: 'light', title: 'LIGHT IT', say: G => lanternCue(G)[0], do: G => lanternCue(G)[1], at: G => lanternCue(G)[2], how: 'Drag a little to turn your lantern without walking. Hold the ghost in the beam until the lantern pulls it in. Catch 2.', need: 2 }],
+  2: [{ id: 'behind', title: 'FROST', say: G => lanternCue(G)[0], do: G => lanternCue(G)[1], at: G => lanternCue(G)[2], how: 'Frost at the edge of the screen: a ghost is close, that way. Turn to it and catch it. Twice.', need: 2 }],
+  3: [{ id: 'shy', title: 'SHY GHOSTS', say: G => lanternCue(G)[0], do: G => lanternCue(G)[1], at: G => lanternCue(G)[2], how: 'Shy ghosts move only when you look away. Turn to it, then walk closer and hold it in the light. Catch 2.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -166,16 +166,23 @@ function pathTo(G, from, to) { if (from === to || from < 0 || to < 0) return nul
   if (prev[to] == null) return null; let cur = to, step = null; while (prev[cur] !== -1) { step = prev[cur]; if (step.a === from) return step.d; cur = step.a; } return step && step.d; }
 // a person who looks: sees ghosts in the beam, the shimmer of one near, the frost of one close; turns to the most pressing
 // one and holds it; walks to the next room (or a jar when the oil is low) when there is nothing to catch here
+// THE TUTORIAL SAYS WHICH WAY (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand slid left and
+// right for ever. Now the robot is asked (dryPlan setStick): the hand slides the way it would (a little to turn, further to walk); HOLD IT IN
+// THE LIGHT when the ghost is in the beam.
+const LTC = { t: -1e9, v: null };
+function lanternCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - LTC.t < 200) return LTC.v; LTC.t = now; const P = dryPlan(G, null, { t: -1 }); let v;
+  if (P && P[0] === 'setStick' && (P[1] || P[2])) { const R = 70 * k, x0 = W / 2, y0 = H * 0.66, m = Math.hypot(P[1], P[2]); v = [m < 0.45 ? 'SLIDE A LITTLE TO TURN' : 'SLIDE TO WALK', 'drag', [x0, y0, x0 + P[1] * R, y0 + P[2] * R]]; }
+  else v = ['HOLD IT IN THE LIGHT…', 'wait', false]; LTC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, m = G.me, c = G.cfg;
-  if (G.over || G.wait > 0) { setStick(G, 0, 0); return; }
+  if (G.over || G.wait > 0) { ACT.setStick(G, 0, 0); return; }
   mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.1 + react * 0.35;
   const known = G.ghosts.filter(g => !g.hid && (g.lit > 0.3 || Math.hypot(g.x - m.x, g.z - m.z) < 5.5 + (g.lit ? 2 : 0)) && (g.room === roomAt(G, m.x, m.z) || Math.hypot(g.x - m.x, g.z - m.z) < 3.5));
   // the most pressing ghost: the nearest, the one being caught kept on
   let tg = null, tv = 1e9; for (const g of known) { const d = Math.hypot(g.x - m.x, g.z - m.z), v = d - g.cap * 3 - (g.kind === 'gold' ? 2 : 0) - (mem.tid === g.id ? 1 : 0); if (v < tv) { tv = v; tg = g; } }
   if (tg && R() < acc + 0.05) { mem.tid = tg.id; const dx = tg.x - m.x, dz = tg.z - m.z, d = Math.hypot(dx, dz), lead = (KINDS[tg.kind].zig ? 0.25 : 0.1); const ax = dx + tg.vx * lead, az = dz + tg.vz * lead, L = Math.hypot(ax, az) || 1, a = Math.atan2(az, ax);
     let da = a - m.face; da = Math.atan2(Math.sin(da), Math.cos(da)); const far = d > 3.6 || (KINDS[tg.kind].shy && d > 2.8 && Math.abs(da) < 0.3) || (tg.kind === 'gold' && d > 2.5) || (Math.abs(da) < 0.3 && tg.lit < 0.3 && d > 1.2);
-    const mag = far && Math.abs(da) < 0.35 ? 0.85 : 0.3; setStick(G, ax / L * mag, az / L * mag); return; }
+    const mag = far && Math.abs(da) < 0.35 ? 0.85 : 0.3; ACT.setStick(G, ax / L * mag, az / L * mag); return; }
   mem.tid = null;
   // nothing to catch here: a jar if the oil is low, else the nearest room with ghosts left (or not yet seen)
   const here = roomAt(G, m.x, m.z); let goal = null;
@@ -183,9 +190,16 @@ function honest(G, o, mem) {
   if (!goal) { const left = G.ghosts.filter(g => g.kind !== 'gold'), hops = roomHops(G, here); let gr = mem.gid != null ? left.find(g => g.id === mem.gid) : null;
     if (!gr) { let bv = 1e9; for (const g of left) { const rm = g.hid ? g.hid.room : g.room, v = (hops[rm] == null ? 99 : hops[rm]) * 10 + Math.hypot(g.x - m.x, g.z - m.z) * 0.1; if (v < bv) { bv = v; gr = g; } } }
     if (gr) { mem.gid = gr.id; goal = { x: gr.hid ? gr.hid.x : gr.x, z: gr.hid ? gr.hid.z : gr.z, room: gr.hid ? gr.hid.room : gr.room }; } }
-  if (!goal) { setStick(G, 0, 0); return; }
+  if (!goal) { ACT.setStick(G, 0, 0); return; }
   let wx = goal.x, wz = goal.z; if (goal.room !== here) { const d = pathTo(G, here, goal.room); if (d) { const horiz = Math.abs(d.x - Math.round(d.x / RS) * RS) < 0.01 && G.rooms[d.a].j === G.rooms[d.b].j; wx = d.x; wz = d.z; const dd = Math.hypot(d.x - m.x, d.z - m.z); if (dd < 0.9) { const to = G.rooms[d.a] && roomAt(G, m.x, m.z) === d.a ? d.b : d.a, rr = roomRect(G, G.rooms[to].i, G.rooms[to].j); wx = rr.cx; wz = rr.cz; } } }
-  else if (Math.hypot(goal.x - m.x, goal.z - m.z) < 2.2) { const a = Math.atan2(goal.z - m.z, goal.x - m.x); setStick(G, Math.cos(a) * 0.3, Math.sin(a) * 0.3); return; }
-  const dx = wx - m.x, dz = wz - m.z, L = Math.hypot(dx, dz) || 1; setStick(G, dx / L, dz / L);
+  else if (Math.hypot(goal.x - m.x, goal.z - m.z) < 2.2) { const a = Math.atan2(goal.z - m.z, goal.x - m.x); ACT.setStick(G, Math.cos(a) * 0.3, Math.sin(a) * 0.3); return; }
+  const dx = wx - m.x, dz = wz - m.z, L = Math.hypot(dx, dz) || 1; ACT.setStick(G, dx / L, dz / L);
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.caught = G.total; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

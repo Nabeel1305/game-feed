@@ -249,12 +249,12 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'calm', title: 'CALM HER FIRST', say: 'STROKE SLOWLY', do: 'drag', dir: 'right', how: 'With your hand, stroke slowly along her back. Slow, gentle strokes: three of them.', need: 3, ok: w => w === 'calm', prob: 'thorn', animal: 'dog', nervous: 0.6 },
-      { id: 'thorn', title: 'THE THORN', say: 'TWEEZERS, PULL SLOWLY', do: 'drag', dir: 'down', how: 'She is limping: find the thorn in her paw. Pick the tweezers, put them on it, then pull away slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'thorn', prob: 'thorn', animal: 'dog' }],
-  2: [{ id: 'hoof', title: 'TRIM THE HOOF', say: 'RASP DOWN TO THE LINE', do: 'drag', dir: 'down', how: 'One hoof is too long. Pick the rasp and stroke along the hoof down to the line. Short strokes near the end.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'hoof', prob: 'hoof', animal: 'cow' },
-      { id: 'mud', title: 'BRUSH WITH THE HAIR', say: 'BRUSH HEAD TO TAIL', do: 'drag', dir: 'right', how: 'Pick the brush. Stroke the mud off the way the hair lies: from her head towards her tail.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'mud', prob: 'mud', animal: 'sheep' }],
-  3: [{ id: 'cut', title: 'CLEAN AND WRAP', say: 'SPRAY, THEN WRAP', do: 'hold', how: 'Hold the spray on the cut until it is clean. Then the bandage: circle round the leg, slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'cut', prob: 'cut', animal: 'horse' },
-      { id: 'shot', title: 'THE INJECTION', say: 'HOLD… LIFT WHEN SHE SHIVERS', do: 'hold', how: 'Hold the needle on her neck. When she starts to shiver, lift off at once, then hold it in again.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'shot', prob: 'shot', animal: 'pig' }],
+  1: [{ id: 'calm', title: 'CALM HER FIRST', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'With your hand, stroke slowly along her back. Slow, gentle strokes: three of them.', need: 3, ok: w => w === 'calm', prob: 'thorn', animal: 'dog', nervous: 0.6 },
+      { id: 'thorn', title: 'THE THORN', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'She is limping: find the thorn in her paw. Pick the tweezers, put them on it, then pull away slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'thorn', prob: 'thorn', animal: 'dog' }],
+  2: [{ id: 'hoof', title: 'TRIM THE HOOF', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'One hoof is too long. Pick the rasp and stroke along the hoof down to the line. Short strokes near the end.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'hoof', prob: 'hoof', animal: 'cow' },
+      { id: 'mud', title: 'BRUSH WITH THE HAIR', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'Pick the brush. Stroke the mud off the way the hair lies: from her head towards her tail.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'mud', prob: 'mud', animal: 'sheep' }],
+  3: [{ id: 'cut', title: 'CLEAN AND WRAP', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'Hold the spray on the cut until it is clean. Then the bandage: circle round the leg, slowly.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'cut', prob: 'cut', animal: 'horse' },
+      { id: 'shot', title: 'THE INJECTION', say: G => vetCue(G)[0], do: G => vetCue(G)[1], at: G => vetCue(G)[2], how: 'Hold the needle on her neck. When she starts to shiver, lift off at once, then hold it in again.', need: 1, ok: (w, k2) => w === 'fixed' && k2 === 'shot', prob: 'shot', animal: 'pig' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -279,35 +279,63 @@ const BLIND = {
   d: G => { if (!G.hold) touch(G, rs()); drop(G); }, l: G => lift(G),
 };
 // a person who looks: o.react seconds to see and act, o.acc how often the thumb lands where it meant to
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW, ON THE ANIMAL (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It said TWEEZERS, PULL SLOWLY or SPRAY, THEN WRAP (two things) with a hand sliding in a box, nowhere near the paw. Now the robot is asked
+// (dryPlanAll): TAP THE TWEEZERS (the hand on it in the tray), STROKE SLOWLY head to tail along her, then on the very spot: PULL IT OUT SLOWLY,
+// RASP DOWN, BRUSH HEAD TO TAIL, HOLD THE SPRAY ON IT, CIRCLE ROUND, HOLD THE NEEDLE IN / LIFT OFF! as she shivers, TAP A DROP.
+const VTC = { t: -1e9, v: null };
+function vetCue(G) { const p = G.pt; if (G.over || G.wait > 0 || !p || p.phase !== 'treat') return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - VTC.t < 150) return VTC.v; VTC.t = now;
+  const all = dryPlanAll(G, null, { next: -1 }), q = all.filter(z => z[0] !== 'endHold').pop(), h = G.hold, want = p.probs.find(z => !z.done), tr = trayRect(), trayAt = t => [tr.x + (TOOLS.indexOf(t) + 0.5) * tr.w / TOOLS.length, tr.y + tr.h / 2];
+  const sp = h ? spotScreen(h.spot) : want ? spotScreen(want.spot) : { x: W / 2, y: H / 2 }, [hd, tl] = headTail(), gx = tl.x - hd.x, gy = tl.y - hd.y, gl = Math.hypot(gx, gy) || 1; let v;
+  if (h && h.kind === 'press') v = q && q[0] === 'lift' ? ['LIFT OFF!', 'release', [sp.x, sp.y]] : ['HOLD THE NEEDLE IN', 'hold', [sp.x, sp.y]];
+  else if (h && h.kind === 'spray') v = ['HOLD THE SPRAY ON IT', 'hold', [sp.x, sp.y]];
+  else if (!q) v = ['WAIT…', 'wait', false];
+  else if (q[0] === 'pickTool') v = ['TAP THE ' + String(q[1]).toUpperCase(), 'tap', trayAt(q[1])];
+  else if (q[0] === 'stroke') v = ['STROKE SLOWLY', 'drag', [hd.x + gx * 0.15, hd.y + gy * 0.15, hd.x + gx * 0.85, hd.y + gy * 0.85]];
+  else { const t = G.tool, L = 70 * k;
+    if (t === 'tweezers') { const ox = (sp.x - W / 2) || 1, oy = (sp.y - H / 2) || 1, om = Math.hypot(ox, oy); v = ['PULL IT OUT SLOWLY', 'drag', [sp.x, sp.y, sp.x + ox / om * L, sp.y + oy / om * L]]; }
+    else if (t === 'rasp') v = ['RASP DOWN', 'drag', [sp.x, sp.y - L * 0.5, sp.x, sp.y + L * 0.5]];
+    else if (t === 'brush') v = ['BRUSH HEAD TO TAIL', 'drag', [sp.x - gx / gl * L * 0.5, sp.y - gy / gl * L * 0.5, sp.x + gx / gl * L * 0.5, sp.y + gy / gl * L * 0.5]];
+    else if (t === 'bandage') v = ['CIRCLE ROUND', 'drag', [sp.x + L * 0.5, sp.y, sp.x, sp.y + L * 0.5]];
+    else if (t === 'drops') v = ['TAP A DROP', 'tap', [sp.x, sp.y]];
+    else v = [t === 'syringe' ? 'HOLD THE NEEDLE IN' : t === 'spray' ? 'HOLD THE SPRAY ON IT' : 'HOLD IT ON HERE', 'hold', [sp.x, sp.y]]; }
+  VTC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, p = G.pt, L = lessonNow(G);
   if (!p || p.phase !== 'treat') { mem.next = G.t + react; mem.pressAt = null; return; }
   const h = G.hold;
   // holding the needle: watch for the shiver, lift off in time
-  if (h && h.kind === 'press') { if (p.tele) { mem.seenTele = mem.seenTele || G.t; if (G.t - mem.seenTele >= react * (0.6 + Math.random() * 0.8)) { lift(G); mem.seenTele = null; mem.next = G.t + react; } } else mem.seenTele = null; return; }
+  if (h && h.kind === 'press') { if (p.tele) { mem.seenTele = mem.seenTele || G.t; if (G.t - mem.seenTele >= react * (0.6 + Math.random() * 0.8)) { ACT.lift(G); mem.seenTele = null; mem.next = G.t + react; } } else mem.seenTele = null; return; }
   if (h && h.kind === 'spray') return;      // keep the spray on until it is clean
-  if (h && h.kind === 'pull') { if (!mem.pullV) mem.pullV = c.pullMax * (Math.random() < acc ? 0.5 + Math.random() * 0.4 : 1.05 + Math.random() * 0.3); pull(G, mem.pullV / 60, 1 / 60); return; }
+  if (h && h.kind === 'pull') { if (!mem.pullV) mem.pullV = c.pullMax * (Math.random() < acc ? 0.5 + Math.random() * 0.4 : 1.05 + Math.random() * 0.3); ACT.pull(G, mem.pullV / 60, 1 / 60); return; }
   mem.pullV = 0;
   if (G.t < (mem.next || 0)) return;
   const pace = 0.5 + react * 1.2;
   // frightened: stroke her first (a slow stroke takes most of a second)
   const want = p.probs.find(q => !q.done), lessonCalm = L && L.id === 'calm';
   if (p.stress > c.still - 0.12 || lessonCalm || (p.stress > 0.45 && Math.random() < 0.15)) {
-    if (G.tool !== 'hand') { endHold(G); pickTool(G, 'hand'); mem.next = G.t + react; return; }
-    stroke(G, Math.random() < acc ? 0.4 + Math.random() * 0.6 : 1.3 + Math.random() * 0.6); mem.next = G.t + 0.75 + react; return; }
+    if (G.tool !== 'hand') { ACT.endHold(G); ACT.pickTool(G, 'hand'); mem.next = G.t + react; return; }
+    ACT.stroke(G, Math.random() < acc ? 0.4 + Math.random() * 0.6 : 1.3 + Math.random() * 0.6); mem.next = G.t + 0.75 + react; return; }
   if (!want) return;
   const tool = nowStep(want);
-  if (G.tool !== tool) { endHold(G); pickTool(G, Math.random() < acc + 0.08 ? tool : TOOLS[1 + ((Math.random() * 7) | 0)]); mem.next = G.t + react * 0.8; return; }
+  if (G.tool !== tool) { ACT.endHold(G); ACT.pickTool(G, Math.random() < acc + 0.08 ? tool : TOOLS[1 + ((Math.random() * 7) | 0)]); mem.next = G.t + react * 0.8; return; }
   if (!h) { // put the tool on it (a miss lands on nothing, now and then on the wrong part)
     const r = Math.random(), spot = r < acc ? want.spot : r < acc + (1 - acc) * 0.8 ? null : pick(Math.random, SPOTS);
     if (tool === 'syringe') { if (p.tele || G.t < (mem.waitTwitch || 0)) return; }
     if (tool === 'drops' && p.shaking > 0) return;
-    touch(G, spot); mem.next = G.t + react * 0.5; return; }
+    ACT.touch(G, spot); mem.next = G.t + react * 0.5; return; }
   // gestures
-  if (tool === 'rasp') { const left = want.len; rasp(G, left > 0.32 ? 0.16 + Math.random() * 0.1 : Math.max(0.02, left * (Math.random() < acc ? 0.85 + Math.random() * 0.2 : 1.4 + Math.random() * 0.6) + 0.01)); mem.next = G.t + pace * 0.6; return; }
-  if (tool === 'bandage') { wrap(G, c.wrapMin * (Math.random() < acc ? 1.15 + Math.random() * 0.6 : 0.6 + Math.random() * 0.3)); mem.next = G.t + c.wrapMin * 1.4; return; }
-  if (tool === 'brush') { brush(G, Math.random() < acc + 0.08 ? 1 : -1); mem.next = G.t + pace * 0.8; return; }
-  if (tool === 'drops') { if (p.shaking > 0) return; mem.dropAt = mem.dropAt || G.t + react * 0.7; if (G.t >= mem.dropAt) { drop(G); mem.dropAt = null; mem.next = G.t + 0.35 + react * 0.5; } return; }
+  if (tool === 'rasp') { const left = want.len; ACT.rasp(G, left > 0.32 ? 0.16 + Math.random() * 0.1 : Math.max(0.02, left * (Math.random() < acc ? 0.85 + Math.random() * 0.2 : 1.4 + Math.random() * 0.6) + 0.01)); mem.next = G.t + pace * 0.6; return; }
+  if (tool === 'bandage') { ACT.wrap(G, c.wrapMin * (Math.random() < acc ? 1.15 + Math.random() * 0.6 : 0.6 + Math.random() * 0.3)); mem.next = G.t + c.wrapMin * 1.4; return; }
+  if (tool === 'brush') { ACT.brush(G, Math.random() < acc + 0.08 ? 1 : -1); mem.next = G.t + pace * 0.8; return; }
+  if (tool === 'drops') { if (p.shaking > 0) return; mem.dropAt = mem.dropAt || G.t + react * 0.7; if (G.t >= mem.dropAt) { ACT.drop(G); mem.dropAt = null; mem.next = G.t + 0.35 + react * 0.5; } return; }
 }
 function winNow(G) { if (!G || G.over || (G.pt && G.pt.phase === 'out')) return; G.lesson = null; G.seen = Math.max(G.seen, G.cfg.patients); G.lives = G.cfg.lives; if (!G.pt) newPatient(G); const p = G.pt; p.phase = 'treat';
   p.probs.forEach((q, i) => { if (i) { q.done = true; q.step = PROBS[q.kind].steps.length; } else { q.done = false; q.step = PROBS[q.kind].steps.length - 1; } }); stepDone(G, p.probs[0]); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { pickTool, endHold, stroke, touch, lift, pull, rasp, wrap, brush, drop }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

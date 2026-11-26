@@ -159,9 +159,9 @@ function think(G, d, dt, noise) { const K = KINDS[d.k], c = G.cfg, m = G.me, dd 
     if (R() < dt * 0.3) d.wh = R() * TAU; moveTo(dist(d, SPOTS.nest) > 10 ? angTo(d, SPOTS.nest) : d.wh || d.h, 1); } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'creep', title: 'CREEP AND BITE', say: 'WALK UP, TAP BITE', do: 'tap', at: G => { const b = btnRects().bite; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A runner is grazing ahead. Walk to it (don\'t charge: it hears you), and BITE when it is in front of your jaws. Twice.', need: 2 }],
-  2: [{ id: 'roar', title: 'ROAR', say: 'TAP ROAR, THEN BITE', do: 'tap', at: G => { const b = btnRects().roar; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'A runner darts off as you come. ROAR when you are close to freeze it, then BITE. Twice.', need: 2 }],
-  3: [{ id: 'dodge', title: 'STEP ASIDE', say: 'STEP ASIDE, TAP BITE', do: 'tap', at: G => { const b = btnRects().bite; return [b.x + b.w / 2, b.y + b.h / 2]; }, how: 'The rival rears up before it lunges. Step out of its line, then BITE it while it recovers. Land three bites.', need: 3 }],
+  1: [{ id: 'creep', title: 'CREEP AND BITE', say: G => rexCue(G)[0], do: G => rexCue(G)[1], at: G => rexCue(G)[2], how: 'A runner is grazing ahead. Walk to it (don\'t charge: it hears you), and BITE when it is in front of your jaws. Twice.', need: 2 }],
+  2: [{ id: 'roar', title: 'ROAR', say: G => rexCue(G)[0], do: G => rexCue(G)[1], at: G => rexCue(G)[2], how: 'A runner darts off as you come. ROAR when you are close to freeze it, then BITE. Twice.', need: 2 }],
+  3: [{ id: 'dodge', title: 'STEP ASIDE', say: G => rexCue(G)[0], do: G => rexCue(G)[1], at: G => rexCue(G)[2], how: 'The rival rears up before it lunges. Step out of its line, then BITE it while it recovers. Land three bites.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -186,22 +186,37 @@ const BLIND = { s: G => { const a = Math.random() * TAU, r = Math.random(); stic
 // a rex that looks: picks the nearest thing the goal needs (or the nearest food when hungry), creeps up, charges the last
 // stretch, roars at bolting small prey when close, bites when it is in front; steps out of a rival's or a hornface's line when
 // it warns, bites it while it recovers; comes round to a spikeback's head
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said WALK UP,
+// TAP BITE (two things) with the hand on BITE all along. Now the robot is asked (dryPlan): WALK THIS WAY on the stick (the way it would go: up to
+// the prey, aside from a rival), TAP ROAR, TAP BITE when it would bite.
+const RXC = { t: -1e9, v: null };
+function rexCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RXC.t < 200) return RXC.v; RXC.t = now; const P = dryPlan(G, null, { t: -1, next: -1 }), B = btnRects(), mid = b => [b.x + b.w / 2, b.y + b.h / 2]; let v = ['WAIT…', 'wait', false];
+  if (P && P[0] === 'bite') v = ['TAP BITE!', 'tap', mid(B.bite)]; else if (P && P[0] === 'roar') v = ['TAP ROAR!', 'tap', mid(B.roar)];
+  else if (P && P[0] === 'go') { const m = G.me, x = Math.sin(P[1] - m.h) * P[2], z = Math.cos(P[1] - m.h) * P[2], sb = stickBase(), r = sb.r * 0.8; v = [G.lesson && G.lesson.steps[G.lesson.i].id === 'dodge' && Math.abs(x) > 0.6 ? 'STEP ASIDE' : 'WALK THIS WAY', 'drag', [sb.x, sb.y, sb.x - x * r, sb.y - z * r]]; }
+  RXC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, m = G.me, R = Math.random;
   if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.08 + react * 0.3;
   const live = G.dinos.filter(d => !d.dead), need = G.lesson ? live.map(d => d.k) : goalLeft(G).map(g => g.k), hungry = m.hunger < 35;
   // danger first: a warning aimed at me
   const threat = live.find(d => (d.state === 'tell' && (KINDS[d.k].rival || KINDS[d.k].charger) && dist(d, m) < 26) || ((d.state === 'lunge' || d.state === 'charge') && dist(d, m) < 30) || (KINDS[d.k].armour && (d.state === 'tell' || d.state === 'swing') && dist(d, m) < 9));
-  if (threat && KINDS[threat.k].armour && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), turn = wrapA(away - m.h); go(G, away, 1); return; }
-  if (threat && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), side = wrapA(m.h - away) > 0 ? 1 : -1; const h = away + side * Math.PI / 2; go(G, h, 1); return; }
+  if (threat && KINDS[threat.k].armour && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), turn = wrapA(away - m.h); ACT.go(G, away, 1); return; }
+  if (threat && R() < 0.4 + acc * 0.6) { const away = angTo(threat, m), side = wrapA(m.h - away) > 0 ? 1 : -1; const h = away + side * Math.PI / 2; ACT.go(G, h, 1); return; }
   const cands = live.filter(d => need.includes(d.k) || (hungry && KINDS[d.k].food && d.k !== 'horns'));
-  let t = null, bd = 1e9; for (const d of cands) { const dd = dist(d, m) + (d.cave ? 30 : 0); if (dd < bd) { bd = dd; t = d; } } if (!t) { go(G, m.h + 0.6, 0.75); return; }
+  let t = null, bd = 1e9; for (const d of cands) { const dd = dist(d, m) + (d.cave ? 30 : 0); if (dd < bd) { bd = dd; t = d; } } if (!t) { ACT.go(G, m.h + 0.6, 0.75); return; }
   const K = KINDS[t.k], dd = dist(t, m); let aim = { x: t.x, z: t.z };
   if (K.armour) { const atHead = Math.abs(wrapA(angTo(t, m) - t.h)) < 1.0; if (t.recover > 0 || atHead) aim = { x: t.x + Math.sin(t.h) * 4.5, z: t.z + Math.cos(t.h) * 4.5 }; else if (dd > 14) aim = { x: t.x, z: t.z }; else aim = { x: t.x - Math.sin(t.h) * 6, z: t.z - Math.cos(t.h) * 6 }; }      /* tempt the swing from behind, then run round to the head while it recovers */
   if ((K.rival || K.charger) && !(t.tired > 0 || t.state === 'stuck') && dd < 7) aim = { x: t.x + Math.sin(angTo(t, m)) * 8, z: t.z + Math.cos(angTo(t, m)) * 8 };      // keep a distance until it commits
   const ha = dist(aim, m) < 3 ? angTo(m, t) : angTo(m, aim), turn = wrapA(ha - m.h), da = Math.abs(wrapA(angTo(m, t) - m.h)), reach = 4.8 + K.size * 1.6;
   const open = K.rival ? t.tired > 0 : K.charger ? t.state === 'stuck' : K.armour ? Math.abs(wrapA(angTo(t, m) - t.h)) < 1.0 : true;
-  if (dd < reach - 0.3 && da < 0.8 && open && m.bcd <= 0 && R() < 0.5 + acc * 0.5) { bite(G); }
-  if (K.flee && t.state === 'flee' && dd < G.cfg.roarR * 0.7 && m.roarCD <= 0 && R() < acc) roar(G);
+  if (dd < reach - 0.3 && da < 0.8 && open && m.bcd <= 0 && R() < 0.5 + acc * 0.5) { ACT.bite(G); }
+  if (K.flee && t.state === 'flee' && dd < G.cfg.roarR * 0.7 && m.roarCD <= 0 && R() < acc) ACT.roar(G);
   const fleeing = K.flee && t.state === 'flee', creep = K.flee && !fleeing && dd < K.alert * G.cfg.alertK * 1.6, sprint = (fleeing && dd < 30) || ((K.rival || K.charger) && open && dd > 4) || (K.armour && t.recover > 0);
-  const err = (R() - 0.5) * (1 - acc) * 0.8; go(G, m.h + turn + err, dist(aim, m) < 2 || Math.abs(turn) > 1.4 ? 0.25 : sprint ? 1 : creep ? 0.55 : dd < 6 ? 0.58 : 1); }
+  const err = (R() - 0.5) * (1 - acc) * 0.8; ACT.go(G, m.h + turn + err, dist(aim, m) < 2 || Math.abs(turn) > 1.4 ? 0.25 : sprint ? 1 : creep ? 0.55 : dd < 6 ? 0.58 : 1); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; for (const g of G.cfg.goals) G.got[g.k] = g.n; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { go, bite, roar }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

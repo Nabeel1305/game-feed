@@ -4956,9 +4956,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5406,12 +5406,12 @@ function practiceFeed(G) { const d = DRILLS[G.drill].id, b = G.ball, m = G.me, o
 function setDrill(G, i) { if (!G.cfg.practice) return; G.drill = (i + DRILLS.length) % DRILLS.length; G.wait = 0.3; G.next = () => practiceFeed(G); G.ball.live = false; G.ev.push({ k: 'drill', name: DRILLS[G.drill].name }); }
 // ---------- LESSONS (and later, short practice challenges for new shots) ----------
 const LESSONS = {
-  1: [{ id: 'rally', title: 'RALLY', say: 'SWIPE UP', do: 'swipe', dir: 'up', how: 'Move under the ball with your LEFT thumb. As it reaches you, SWIPE UP with your right thumb. Hit 4 back over the net.', need: 4 }],
-  2: [{ id: 'serve', title: 'SERVE', say: 'TAP, THEN SWIPE UP', do: 'swipe', dir: 'up', how: 'TAP to toss the ball. SWIPE UP when the ring turns green, at the top. Land 4 good serves in the box (swipe while the ring is green).', need: 4 }],
-  3: [{ id: 'open', title: 'THE OPEN COURT', say: 'SWIPE TO THE CORNER', do: 'swipe', dir: 'up', how: 'Swipe a little LEFT or RIGHT to aim. Hit 2 balls into the glowing corner, away from them.', need: 2 }],
-  5: [{ id: 'lob', title: 'NEW SHOT: THE LOB', say: 'LONG SWIPE UP', do: 'swipe', dir: 'up', how: 'They come to the net. A very LONG swipe up (until it says LOB) lifts it over their head. 2 lobs that land in.', need: 2 }],
-  7: [{ id: 'slice', title: 'NEW SHOT: THE SLICE', say: 'SWIPE DOWN', do: 'swipe', dir: 'down', how: 'SWIPE DOWN (toward you) to slice: low and skidding. 2 slices that land in.', need: 2 }],
-  9: [{ id: 'volley', title: 'NEW SHOT: THE VOLLEY', say: 'SWIPE BEFORE IT BOUNCES', do: 'swipe', dir: 'up', how: 'At the net, swipe before the ball bounces. 3 volleys that land in.', need: 3 }],
+  1: [{ id: 'rally', title: 'RALLY', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'Move under the ball with your LEFT thumb. As it reaches you, SWIPE UP with your right thumb. Hit 4 back over the net.', need: 4 }],
+  2: [{ id: 'serve', title: 'SERVE', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'TAP to toss the ball. SWIPE UP when the ring turns green, at the top. Land 4 good serves in the box (swipe while the ring is green).', need: 4 }],
+  3: [{ id: 'open', title: 'THE OPEN COURT', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'Swipe a little LEFT or RIGHT to aim. Hit 2 balls into the glowing corner, away from them.', need: 2 }],
+  5: [{ id: 'lob', title: 'NEW SHOT: THE LOB', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'They come to the net. A very LONG swipe up (until it says LOB) lifts it over their head. 2 lobs that land in.', need: 2 }],
+  7: [{ id: 'slice', title: 'NEW SHOT: THE SLICE', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'SWIPE DOWN (toward you) to slice: low and skidding. 2 slices that land in.', need: 2 }],
+  9: [{ id: 'volley', title: 'NEW SHOT: THE VOLLEY', say: G => tenCue(G)[0], do: G => tenCue(G)[1], at: G => tenCue(G)[2], how: 'At the net, swipe before the ball bounces. 3 volleys that land in.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonFeed(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5436,22 +5436,40 @@ const BLIND = {
   t: G => toss(G),
 };
 // HONEST: runs to where the ball can be met, swings at the right moment (react, acc), aims at the open court
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said SWIPE UP
+// with a hand swiping the whole rally, when a swipe only hits as the ball reaches you, and moving under the ball (the left thumb) was never
+// shown. Now the robot is asked (dryPlanAll): MOVE THIS WAY on the left (under the ball), TAP: TOSS for a serve, then SWIPE UP! / LONG SWIPE UP:
+// LOB / SWIPE DOWN: SLICE along the very swipe it would make (its aim and length), only when it would hit.
+const TNC = { t: -1e9, v: null };
+function tenCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - TNC.t < 80) return TNC.v; TNC.t = now; const all = dryPlanAll(G, null, { cd: -1 }), last = n => all.filter(q => q[0] === n).pop(), sw = last('swing'), ts = last('toss'), st = last('setStick'), s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.24, y0 = s2 ? s2.y0 : H * 0.72, R = 54 * k; let v;
+  if (ts || (sw && G.phase === 'serve' && G.server === 0 && !G.toss)) v = ['TAP: TOSS', 'tap', [W * 0.75, H * 0.66]];
+  else if (sw) { const q = sw[1], L = Math.max(30 * k, q.len * SWL()), x1 = W * 0.74, y1 = q.ay > 0 ? H * 0.55 : H * 0.8, kind = shotOf(q.ax * L, q.ay * L); v = [kind === 'LOB' ? 'LONG SWIPE UP: LOB' : kind === 'SLICE' ? 'SWIPE DOWN: SLICE' : Math.abs(q.ax) > 0.25 ? 'SWIPE TO THE CORNER' : 'SWIPE UP!', 'swipe', [x1, y1, x1 + q.ax * L, y1 + q.ay * L]]; }
+  else if (st && Math.hypot(st[1], st[2]) > 0.15) v = ['MOVE THIS WAY', 'drag', [x0, y0, x0 + st[1] * R * 0.8, y0 + st[2] * R * 0.8]];
+  else v = s2 ? ['LET GO: STAY', 'release', [s2.x, s2.y]] : ['WAIT FOR IT…', 'wait', false];
+  TNC.v = v; return v; }
 function honest(G, o, mem) { const acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react, R = Math.random, b = G.ball, m = G.me, op = G.op;
-  if (G.over || G.wait > 0) { setStick(G, 0, 0); return; }
-  if (G.phase === 'serve' && G.server === 0) { setStick(G, 0, 0); if (!G.toss) { mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd <= 0) { toss(G); mem.cd = 0.5; mem.err0 = (R() - 0.5) * (1 - acc) * 2.5; } return; }
-    if (G.ball.vy < 0.25 + (mem.err0 || 0)) { const side = G.side, st = lessonNow(G); swing(G, { ax: side * (st ? -0.18 : -0.18 - R() * 0.2), ay: -1, len: 0.65 + (R() - 0.5) * 0.2, speed: R() < 0.4 * acc ? 3.5 : 2.6 }); } return; }
-  if (G.phase !== 'rally') { setStick(G, 0, 0); return; }
+  if (G.over || G.wait > 0) { ACT.setStick(G, 0, 0); return; }
+  if (G.phase === 'serve' && G.server === 0) { ACT.setStick(G, 0, 0); if (!G.toss) { mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd <= 0) { ACT.toss(G); mem.cd = 0.5; mem.err0 = (R() - 0.5) * (1 - acc) * 2.5; } return; }
+    if (G.ball.vy < 0.25 + (mem.err0 || 0)) { const side = G.side, st = lessonNow(G); ACT.swing(G, { ax: side * (st ? -0.18 : -0.18 - R() * 0.2), ay: -1, len: 0.65 + (R() - 0.5) * 0.2, speed: R() < 0.4 * acc ? 3.5 : 2.6 }); } return; }
+  if (G.phase !== 'rally') { ACT.setStick(G, 0, 0); return; }
   if (b.live && b.by === 1) { if (mem.ball !== b.id) { mem.ball = b.id; mem.seen = G.t + react; mem.pc = null; }
     if (G.t >= mem.seen && !mem.pc) { mem.pc = contactFor(G, 0); if (mem.pc) { mem.pc.x += (R() - 0.5) * (1 - acc) * 1.2; mem.err = (R() - 0.5) * (1 - acc) * 0.5; } }
-    if (mem.pc) { const tx = mem.pc.x + 0.45, tz = mem.pc.z + 0.25, dx = tx - m.x, dz = tz - m.z, d = Math.hypot(dx, dz); setStick(G, d > 0.15 ? dx / Math.max(d, 0.6) : 0, d > 0.15 ? dz / Math.max(d, 0.6) : 0);
+    if (mem.pc) { const tx = mem.pc.x + 0.45, tz = mem.pc.z + 0.25, dx = tx - m.x, dz = tz - m.z, d = Math.hypot(dx, dz); ACT.setStick(G, d > 0.15 ? dx / Math.max(d, 0.6) : 0, d > 0.15 ? dz / Math.max(d, 0.6) : 0);
       const r = reachOf(G, m, 0); if (r && r.dz + 0.35 > -0.25 + mem.err && m.swing <= 0) { const st = lessonNow(G), open = st && st.id === 'open' ? G.lessonOpen : op.x > 0.4 ? -1 : op.x < -0.4 ? 1 : (R() < 0.5 ? -1 : 1), aim = open * 0.36 * (R() < acc ? 1 : -0.5);
         let sw = { ax: aim, ay: -1, len: 0.6 + R() * 0.3, speed: 3.6 };
         if (st && st.id === 'lob' || (op.z > -6 && R() < 0.6)) sw = { ax: aim * 0.5, ay: -1, len: 0.95, speed: 1.6 }; else if (st && st.id === 'slice') sw = { ax: aim, ay: 0.9, len: 0.7, speed: 3 };
-        swing(G, sw); } }
-    else setStick(G, 0, 0); return; }
+        ACT.swing(G, sw); } }
+    else ACT.setStick(G, 0, 0); return; }
   // after your shot: back to the middle of the baseline
-  const hz = HZ + 0.3, dx = -m.x, dz = hz - m.z, d = Math.hypot(dx, dz); setStick(G, d > 0.4 ? dx / Math.max(d, 1) : 0, d > 0.4 ? dz / Math.max(d, 1) : 0); }
+  const hz = HZ + 0.3, dx = -m.x, dz = hz - m.z, d = Math.hypot(dx, dz); ACT.setStick(G, d > 0.4 ? dx / Math.max(d, 1) : 0, d > 0.4 ? dz / Math.max(d, 1) : 0); }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.pts[0] = 7; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick, swing, toss }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }
 // ===================== THE VIEW: Tennis (3D, behind your baseline; the stick on the left, swipes on the right) =====================
 // The court with its lines, the net, windscreens, the far player, you in front. The ball is drawn a little bigger than life,
 // with its shadow on the court (so you can judge how high it is) and a short trail. Bounce marks fade where it landed.

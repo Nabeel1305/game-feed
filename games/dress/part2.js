@@ -179,10 +179,23 @@ const BLIND = { t: G => { if (Math.random() < 0.6) choose(G, (Math.random() * (c
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.judges = [5, 5, 5]; G.notes = []; G.met = G.wish.length; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'design', title: 'TAP TO DESIGN', say: 'TAP WHAT SHE WANTS', do: 'tap', how: 'Her card says what she wants. Tap the options that match: the dress changes as you tap. NEXT when it matches. Meet all 3 wishes.', need: 1 }],
-  2: [{ id: 'style', title: 'DOES IT GO TOGETHER?', say: 'NO CLASHING', do: 'tap', how: 'STYLE judges what clashes. Sequins with a pattern is too busy. Meet her wishes AND keep it clean.', need: 1 }],
-  3: [{ id: 'trim', title: 'FINISHING TOUCHES', say: 'TAP WHERE IT GOES', do: 'tap', how: 'Pick a trim, then tap where it goes on the dress: pearls at the neck, a belt at the waist, lace at the hem.', need: 1 }],
+  1: [{ id: 'design', title: 'TAP TO DESIGN', say: G => dressCue(G)[0], do: G => dressCue(G)[1], at: G => dressCue(G)[2], how: 'Her card says what she wants. Tap the options that match: the dress changes as you tap. NEXT when it matches. Meet all 3 wishes.', need: 1 }],
+  2: [{ id: 'style', title: 'DOES IT GO TOGETHER?', say: G => dressCue(G)[0], do: G => dressCue(G)[1], at: G => dressCue(G)[2], how: 'STYLE judges what clashes. Sequins with a pattern is too busy. Meet her wishes AND keep it clean.', need: 1 }],
+  3: [{ id: 'trim', title: 'FINISHING TOUCHES', say: G => dressCue(G)[0], do: G => dressCue(G)[1], at: G => dressCue(G)[2], how: 'Pick a trim, then tap where it goes on the dress: pearls at the neck, a belt at the waist, lace at the hem.', need: 1 }],
 };
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said TAP WHAT SHE WANTS with the hand in a box. Now: the hand on an option that meets her wish and clashes with nothing
+// (TAP THIS), on NEXT once the part is right, on ASK when a wish is hidden, and for a trim on the trim and then on its place on the dress.
+function dressCue(G) { if (G.over || G.wait > 0 || G.stage !== 'design') return ['WAIT…', 'wait', false]; const L = panel(G), mid = r => r ? [r.x + r.w / 2, r.y + r.h / 2] : false;
+  if (G.hiddenWish && !G.asked) return ['TAP ASK', 'tap', mid(L.ask)];
+  const p = curPart(G), ok = G.ok[p], known = G.wish.includes(p), opt = j => L.find(b => b.i === j);
+  if (p === 'trim') { const tr = PARTS.trim.opts.find(q => !known || ok.includes(q.id)); if (G.trims.some(q => tr && q.id === tr.id && tr.spots.includes(q.at))) return ['TAP NEXT', 'tap', mid(L.next)];      // the right trim is on, in its place
+    if (!G.pick || (tr && G.pick !== tr.id)) return ['TAP THIS TRIM', 'tap', mid(opt(PARTS.trim.opts.indexOf(tr)))];
+    const t = PARTS.trim.opts.find(q => q.id === G.pick), sp = spotScreen(t.spots[0]); return ['TAP WHERE IT GOES', 'tap', sp ? [sp.x, sp.y] : false]; }
+  const ids = PARTS[p].opts.map(q => q.id), fits = id => !known || meets(p, id, ok), clean = id => !CLASHES.some(c => c[0](Object.assign({}, G.d, { [p]: id }))) && !(G.no && G.no.p === p && G.no.id === id);
+  let j = ids.findIndex(id => fits(id) && clean(id)); if (j < 0) j = ids.findIndex(fits); if (j < 0) j = 0;
+  if (G.d[p] === ids[j] || (G.d[p] != null && fits(G.d[p]) && clean(G.d[p]))) return ['TAP NEXT', 'tap', mid(L.next)];
+  return [known ? 'TAP WHAT SHE WANTS' : 'TAP ONE THAT GOES', 'tap', mid(opt(j))]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonDeal(G) { const st = lessonNow(G); G.rnd = rng(G.seed + (G.deals = (G.deals | 0) + 1)); G.lesson.n = 0;

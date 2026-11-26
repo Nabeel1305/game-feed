@@ -105,11 +105,18 @@ function brain(G, r, dt) { const c = G.cfg, y = G.you; r.mt -= dt;
   r.pull = steerTo(r, tx, ty, 0.35 + 0.5 * (1 - c.rskill), dt) && Math.hypot(tx - r.x, ty - r.y) > 4; }
 // ---------- the robot: a flyer who looks ----------
 const gauss = () => { let u = 0; for (let i = 0; i < 4; i++) u += Math.random(); return (u - 2) * 1.732; };
+// THE TUTORIAL SAYS HOLD OR LET GO, NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said LET GO TO
+// TURN, HOLD TO GO (both at once) with a hand holding. Now the robot is asked (dryPlan: it holds or lets go): HOLD TO GO when the nose points
+// where to go, LET GO TO TURN when it does not, KEEP HOLDING while the lines cross.
+const KIC = { t: -1e9, v: null, m: {} };
+function kiteCue(G) { if (G.over || G.wait > 0 || !G.you) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - KIC.t < 120) return KIC.v; KIC.t = now; KIC.m.cd = -1;
+  const P = dryPlan(G, null, KIC.m), on = P && P[0] === 'hold' ? !!P[1] : !!G.you.pull, crossed = Object.keys(G.crosses).length > 0;
+  KIC.v = on ? [crossed ? 'KEEP HOLDING!' : 'HOLD TO GO', 'hold', [W / 2, H * 0.66]] : ['LET GO TO TURN', 'release', [W / 2, H * 0.66]]; return KIC.v; }
 function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.you) return; const y = G.you, acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.3 : o.react;
   mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = 0.03 + react * 0.12 * Math.random();
   const tol = 0.22 + (1 - acc) * 0.7, crossed = Object.keys(G.crosses).length > 0;
-  if (y.y < SKY.y0 + 9 + (1 - acc) * 6 && Math.sin(y.th) < 0.35) { hold(G, false); return; }      // low: turn the nose up first
-  if (crossed) { if (Math.random() < 0.15 + 0.85 * acc) hold(G, Math.sin(y.th) > -0.5 || y.y > SKY.y0 + 14); return; }      // crossed from above: pull, unless it would dive into the roofs
+  if (y.y < SKY.y0 + 9 + (1 - acc) * 6 && Math.sin(y.th) < 0.35) { ACT.hold(G, false); return; }      // low: turn the nose up first
+  if (crossed) { if (Math.random() < 0.15 + 0.85 * acc) ACT.hold(G, Math.sin(y.th) > -0.5 || y.y > SKY.y0 + 14); return; }      // crossed from above: pull, unless it would dive into the roofs
   let tx, ty; const g = G.rings.find(q => !q.got);
   if (g) { tx = g.x; ty = g.y; }
   else { const live = G.rivals.filter(r => r.alive); if (!live.length) { tx = 0; ty = 60; } else { const r = live.reduce((a, b) => Math.hypot(a.x - y.x, a.y - y.y) < Math.hypot(b.x - y.x, b.y - y.y) ? a : b);
@@ -117,15 +124,15 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.you) return; const y
       const fx = r.ax * 0.5 + (r.x - r.ax * 0.5) * 0.7, fy = r.ay + (r.y - r.ay) * 0.7; if (mem.side == null || mem.r !== r) { mem.r = r; mem.side = Math.sign(y.x - fx) || 1; mem.ph = 0; }
       if (y.y < r.y + 4 && mem.ph === 0) { tx = y.x + (fx > y.x ? -6 : 6); ty = Math.min(SKY.y1 - 4, r.y + 14); } else { mem.ph = 1; tx = fx - mem.side * 16; ty = fy - 2; if (Math.hypot(tx - y.x, ty - y.y) < 8) { mem.side = -mem.side; mem.ph = 0; } } } }
   tx += gauss() * (1 - acc) * 10; ty += gauss() * (1 - acc) * 10; ty = Math.max(ty, SKY.y0 + 14);
-  hold(G, steerTo(y, tx, ty, tol) && Math.hypot(tx - y.x, ty - y.y) > 3); }
+  ACT.hold(G, steerTo(y, tx, ty, tol) && Math.hypot(tx - y.x, ty - y.y) > 3); }
 // blind moves: thumb down (pull), thumb up (slack), a quick tap
 const BLIND = { h: G => hold(G, true), r: G => hold(G, false), t: G => { hold(G, true); hold(G, false); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.cuts = G.cfg.need; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'steer', title: 'LET GO TO TURN, HOLD TO GO', say: 'LET GO TO TURN, HOLD TO GO', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Let go and the kite turns on the spot. When its nose (the arrow) points at a ring, HOLD to dart through it. Fly through all 4 rings.', need: 4 }],
-  2: [{ id: 'cut', title: 'CROSS AND CUT', say: 'CROSS LINES, HOLD', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Fly so your line crosses the practice kite\'s line, then HOLD while they cross: you saw through it. Cut it!', need: 1 }],
-  3: [{ id: 'fight', title: 'PULL HARDER', say: 'KEEP HOLDING', do: 'hold', at: G => [W / 2, H * 0.7], how: 'This one fights back. When the lines cross, keep HOLDING (nose up): whoever pulls harder cuts the other.', need: 1 }],
+  1: [{ id: 'steer', title: 'LET GO TO TURN, HOLD TO GO', say: G => kiteCue(G)[0], do: G => kiteCue(G)[1], at: G => kiteCue(G)[2], how: 'Let go and the kite turns on the spot. When its nose (the arrow) points at a ring, HOLD to dart through it. Fly through all 4 rings.', need: 4 }],
+  2: [{ id: 'cut', title: 'CROSS AND CUT', say: G => kiteCue(G)[0], do: G => kiteCue(G)[1], at: G => kiteCue(G)[2], how: 'Fly so your line crosses the practice kite\'s line, then HOLD while they cross: you saw through it. Cut it!', need: 1 }],
+  3: [{ id: 'fight', title: 'PULL HARDER', say: G => kiteCue(G)[0], do: G => kiteCue(G)[1], at: G => kiteCue(G)[2], how: 'This one fights back. When the lines cross, keep HOLDING (nose up): whoever pulls harder cuts the other.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -137,3 +144,10 @@ function lessonMiss(G, how) { G.ev.push({ k: 'lessonmiss', how }); G.wait = 1.5;
 function lessonSee(G, what) { const L = lessonNow(G); if (!L || G.wait > 0) return; if ((L.id === 'steer' && what === 'ring') || (L.id !== 'steer' && what === 'cut')) { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
   if (G.lesson.n < L.need) return;
   G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.wait = 1.4; G.next = () => { G.cfg = makeCfg(G.N); G.rnd = rng(G.seed); setup(G); G.ev.push({ k: 'start' }); G.ev.push({ k: 'yard' }); }; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { hold }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

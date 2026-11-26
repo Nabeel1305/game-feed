@@ -93,9 +93,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'fold', title: 'YOUR FIRST FOX', say: 'DRAG THE CORNER TO THE DOT', do: 'drag', dir: 'up', how: 'Put your thumb on the glowing corner and drag it onto the dot: the paper follows your thumb. Let go on the dot. Three folds make a fox.', need: 1 }],
-  2: [{ id: 'ghost', title: 'MATCH THE OUTLINE', say: 'MATCH THE LINES', do: 'drag', dir: 'up', how: 'Drag the glowing corner until the paper fits the dashed outline, then let go. Make a whole puppy.', need: 1 }],
-  3: [{ id: 'neat', title: 'NEAT AND PERFECT', say: 'RIGHT ON THE LINE', do: 'drag', dir: 'up', how: 'Land a fold right on the outline for a PERFECT. Make two perfect folds.', need: 2 }],
+  1: [{ id: 'fold', title: 'YOUR FIRST FOX', say: G => oriCue(G)[0], do: G => oriCue(G)[1], at: G => oriCue(G)[2], how: 'Put your thumb on the glowing corner and drag it onto the dot: the paper follows your thumb. Let go on the dot. Three folds make a fox.', need: 1 }],
+  2: [{ id: 'ghost', title: 'MATCH THE OUTLINE', say: G => oriCue(G)[0], do: G => oriCue(G)[1], at: G => oriCue(G)[2], how: 'Drag the glowing corner until the paper fits the dashed outline, then let go. Make a whole puppy.', need: 1 }],
+  3: [{ id: 'neat', title: 'NEAT AND PERFECT', say: G => oriCue(G)[0], do: G => oriCue(G)[1], at: G => oriCue(G)[2], how: 'Land a fold right on the outline for a PERFECT. Make two perfect folds.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -113,6 +113,10 @@ const rp = () => [(Math.random() * 2 - 1) * 1.3, (Math.random() * 2 - 1) * 1.3];
 const BLIND = { d: G => { const a = rp(), b = rp(); grab(G, a[0], a[1]); pull(G, b[0], b[1]); release(G); }, s: G => { const a = rp(), b = [a[0] + (Math.random() - 0.5) * 1.2, a[1] + (Math.random() - 0.5) * 1.2]; grab(G, a[0], a[1]); pull(G, b[0], b[1]); release(G); }, t: G => { const a = rp(); grab(G, a[0], a[1]); release(G); } };
 // a player who looks: takes a moment, puts the thumb on the corner (a little off) and lets go near the right place; how near
 // depends on how steady they are, and on whether a dot shows the place (without one, they judge it from the outline)
+// THE HAND DRAGS THE GLOWING CORNER ONTO ITS PLACE (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It
+// dragged up in a box; the fold starts on the glowing corner. Now the hand starts on that corner and ends where it must be let go (stepNow).
+function oriCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const st = stepNow(G); if (!st) return ['WAIT…', 'wait', false]; const L = lay(), a = L.toS(st.P), b = L.toS(st.Q);
+  return ['DRAG THE CORNER HERE', 'drag', [a[0], a[1], b[0], b[1]]]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, c = G.cfg;
   if (G.over || G.wait > 0) { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.6 + react * 2.5) return; mem.t = 0;
   const st = stepNow(G); if (!st) return; const gs = () => { let s = 0; for (let i = 0; i < 4; i++) s += R(); return (s - 2) / 1.15; };

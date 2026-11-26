@@ -33,7 +33,7 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Pebble'], [40, 'Stacker'], [130, 'Balancer'], [320, 'Stone whisperer'], [700, 'Cairn keeper'], [1500, 'Mountain of calm']];
 const BASE = 0.6;
-function makeCfg(N, help) {
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
   return { N, f, help: !!help, place: placeOf(N), sky: PLACES[placeOf(N)].sky,
     goal: Math.round(x(6, 11, 30)),                                          // stones high
@@ -74,7 +74,7 @@ function land(G, f) {
   st.y = topY(G); S.push(st); const bal = balance(G);
   if (bal.m < 0) { topple(G, bal.at, 'tip'); after(G); return; }
   if (bal.m < G.cfg.edge) { G.teeter = { at: bal.at, t: 0.9 }; G.ev.push({ k: 'teeter', at: bal.at }); G.inRow = 0; G.settle = 1; return; }      // right on the edge: it rocks, and goes
-  const off = Math.abs(st.x - perfectX(G, S.length - 1)), perfect = off < G.cfg.perfect * (G.lesson ? 1.6 : 1);
+  const off = Math.abs(st.x - perfectX(G, S.length - 1)), perfect = off < G.cfg.perfect * (G.lesson ? 3.5 : 1);      /* (the lesson's JUST RIGHT was 1.6 times the level's: three in a row was hard to learn from; 26 Nov 2026) */
   G.best = Math.max(G.best, S.length);
   if (perfect) { G.perfects++; G.inRow++; G.coins += 1; G.ev.push({ k: 'perfect', n: G.inRow, x: st.x, y: st.y + st.h }); if (G.inRow % 3 === 0) { G.left++; G.found++; G.ev.push({ k: 'found' }); } }
   else { G.inRow = 0; G.ev.push({ k: 'place', x: st.x, y: st.y + st.h, m: bal.m }); }
@@ -115,10 +115,23 @@ function finish(G, win) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'place', title: 'DROP', say: 'TAP OVER THE MIDDLE', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Tap when the stone is right over the middle of the stack. Four in a row, each near the middle.', need: 4 }],
-  2: [{ id: 'perfect', title: 'JUST RIGHT', say: 'WAIT… TAP!', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Wait for the stone to come right over the middle, then tap. Three perfect drops in a row.', need: 3 }],
-  3: [{ id: 'pick', title: 'CHOOSE', say: 'TAP THE WIDE STONE', do: 'tap', how: 'Your stack leans. Tap the wide slab in your basket to take it, and drop it to steady the stack. Twice.', need: 2 }],
+  1: [{ id: 'place', title: 'DROP', say: G => cairnCue(G)[0], do: G => cairnCue(G)[1], at: G => cairnCue(G)[2], how: 'Tap when the stone is right over the middle of the stack. Four in a row, each near the middle.', need: 4 }],
+  2: [{ id: 'perfect', title: 'JUST RIGHT', say: G => cairnCue(G)[0], do: G => cairnCue(G)[1], at: G => cairnCue(G)[2], how: 'Wait for the stone to come right over the middle, then tap. Three perfect drops in a row.', need: 3 }],
+  3: [{ id: 'pick', title: 'CHOOSE', say: G => cairnCue(G)[0], do: G => cairnCue(G)[1], at: G => cairnCue(G)[2], how: 'Your stack leans. Tap the wide slab in your basket to take it, and drop it to steady the stack. Twice.', need: 2 }],
 };
+// THE TUTORIAL SAYS WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It showed a tap all the time,
+// so a tap at a wrong moment was the tutorial's fault, not his. Now: WAIT… while the stone swings, TAP NOW! for the moment it will be over the
+// spot (a fifth of a second ahead, the time a thumb takes), and in the choosing lesson the hand is on the stone in the basket to take.
+const CCUE = { key: null, pick: -1, x: 0 };
+function cairnCue(G) { if (G.over || G.wait > 0 || !G.hang || G.falling.length || G.settle > 0) return ['WAIT…', 'wait', false];
+  const c = G.cfg, S = G.stack, h = G.hang; if (CCUE.key !== h.st || CCUE.n !== S.length) { const opts = [h.st, ...G.basket]; let bi = 0, bm = -1e9, bx = 0;
+    opts.forEach((st, i) => { const y0 = st.y, x0 = st.x; st.y = topY(G); S.push(st); const px = perfectX(G, S.length - 1); st.x = px; const m = balanceUpTo(G, S.length - 1) - (i ? 0.02 : 0); S.pop(); st.y = y0; st.x = x0; if (m > bm) { bm = m; bi = i; bx = px; } });
+    CCUE.key = h.st; CCUE.n = S.length; CCUE.pick = bi - 1; CCUE.x = bx; }
+  if (CCUE.pick >= 0 && ui.basket && ui.basket[CCUE.pick]) { const r = ui.basket[CCUE.pick]; return ['TAP THE WIDE STONE', 'tap', [r.x + r.w / 2, r.y + r.h / 2]]; }
+  const sp = c.swing * c.calm * (h.sp || 1) * (1 + 0.04 * S.length) * Math.PI, xs = Math.sin(h.ph + sp * 0.24) * c.amp;      // where it will be when a thumb that sees TAP NOW! lands (about a quarter of a second)
+  const id = lessonNow(G) ? lessonNow(G).id : '', band = (id === 'place' ? 0.32 : c.perfect * 3.5) * 0.5, now = G.t * 1000;
+  if (Math.abs(xs - CCUE.x) < band) CCUE.lit = now;      // the TAP NOW! stays up a third of a second, so it can be seen: tap as it appears
+  return now - (CCUE.lit || -1e9) < 250 ? ['TAP NOW!', 'tap', [W / 2, H * 0.62]] : ['WAIT…', 'wait', false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSetup(G) { const st = lessonNow(G); G.stack = []; G.falling = []; G.hang = null; G.basket = [];
@@ -126,7 +139,7 @@ function lessonSetup(G) { const st = lessonNow(G); G.stack = []; G.falling = [];
   G.left = 99; G.basket = [newStone(G, 'flat'), newStone(G, 'slab')]; G.hang = { st: newStone(G, 'slab'), ph: 0, t: 0 }; }
 function lessonTick(G) { if (!G.hang && !G.falling.length) { if (!G.basket.length) G.basket = [newStone(G, 'flat'), newStone(G, 'slab')]; nextHang(G); } }
 function lessonSee(G, what, perfect, off, kind, mg) { const st = lessonNow(G); if (!st) return; let ok = false;
-  if (st.id === 'place' && what === 'place') { if (off > 0.22) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); return; } ok = true; } if (st.id === 'perfect' && what === 'place') { if (!perfect) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); return; } ok = true; }
+  if (st.id === 'place' && what === 'place') { if (off > 0.32) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); return; } ok = true; } if (st.id === 'perfect' && what === 'place') { if (!perfect) { G.lesson.n = 0; G.ev.push({ k: 'lessonmiss', how: st.how }); return; } ok = true; }
   if (st.id === 'pick' && what === 'place') { if (mg < 0.09 && !perfect) { lessonMiss(G); return; } ok = true; }
   if (!ok) return; G.lesson.n++; if (G.lesson.n < st.need) { G.ev.push({ k: 'lessonok', n: G.lesson.n, need: st.need }); return; }
   G.lesson.i++; G.lesson.n = 0; if (G.lesson.i >= G.lesson.steps.length) { G.lesson = null; G.ev.push({ k: 'lessondone', N: G.N }); G.lessonEnd = true; G.wait = 1.4; } else lessonSetup(G); }

@@ -4723,9 +4723,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4956,9 +4958,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5395,7 +5397,7 @@ function finish(G) { const c = G.cfg, win = G.match >= c.need; G.over = win ? 'w
 const LESSONS = {
   1: [{ id: 'grow', title: 'GROW', say: 'TAP THIS BUD', do: 'tap', how: 'Tap a bud (a pink dot at a branch tip) whose branch would grow into the outline. Grow three.', need: 3 }],
   2: [{ id: 'prune', title: 'PRUNE', say: 'CUT THIS BRANCH', do: 'tap', how: 'Some branches grew wild, out of the outline. Tap each one to cut it off. Cut two.', need: 2 }],
-  3: [{ id: 'flick', title: 'CATERPILLARS', say: 'TAP THE CATERPILLAR', do: 'tap', how: 'A caterpillar is on the leaves. Tap it to flick it off before it eats. Three times.', need: 3 }],
+  3: [{ id: 'flick', title: 'CATERPILLARS', say: G => G.pests.length ? 'TAP THE CATERPILLAR' : 'WAIT FOR ONE…', do: G => G.pests.length ? 'tap' : 'wait', how: 'A caterpillar is on the leaves. Tap it to flick it off before it eats. Three times.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5736,6 +5738,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 function tapAt() {}
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const x = e.clientX, y = e.clientY, nb = ui.nextBtn;
   if (nb && x > nb.x - 6 && x < nb.x + nb.w + 6 && y > nb.y - 6 && y < nb.y + nb.h + 6) { if (nextSeason(G)) { sfx.click(); vibe(HAP.light); } return; }
+  { let pb = null, pd = 40 * k; for (const c of G.pests) { const q = scr(c.x, c.y, 0.16), d = Math.hypot(q.x - x, q.y - y); if (d < pd) { pd = d; pb = c; } } if (pb) { if (tap(G, pb.x, pb.y)) vibe(HAP.light); return; } }      /* a caterpillar is hit where it is DRAWN (it sits in front of the tree: tapped through to the tree's plane, a finger on it missed half the time; 26 Nov 2026) */
   const p = worldAt(x, y); if (!p) return; if (tap(G, p.x, p.y)) vibe(HAP.light); });
 // your garden: every level you win leaves its tree there; and the trees you can grow (unlocked by stars)
 const treeCount = () => Object.keys(store.get('trees', {}) || {}).length;

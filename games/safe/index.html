@@ -161,9 +161,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -394,9 +396,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -530,9 +532,9 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
   while (G.wave.length && G.t - G.wave[0].t > 3) G.wave.shift(); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'feel', title: 'FEEL THE CLICK', say: 'TURN SLOWLY… TAP SET', do: 'drag', dir: 'lr', how: 'Drag round the dial, slowly. When it CLICKS, a chalk mark appears. Turn back until the mark is under the pointer, then tap SET.', need: 1 }],
-  2: [{ id: 'quiet', title: 'SOFTLY', say: 'SLOWLY!', do: 'drag', dir: 'lr', how: 'Too fast and you miss the click, and you make noise. Open both bolts without the noise bar filling up.', need: 1 }],
-  3: [{ id: 'freeze', title: 'KEEP STILL', say: 'LET GO! KEEP STILL', do: 'release', at: G => [W / 2, H * 0.7], how: 'Footsteps! When the torch comes, lift your thumb and keep perfectly still until it has gone.', need: 1 }],
+  1: [{ id: 'feel', title: 'FEEL THE CLICK', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Drag round the dial, slowly. When it CLICKS, a chalk mark appears. Turn back until the mark is under the pointer, then tap SET.', need: 1 }],
+  2: [{ id: 'quiet', title: 'SOFTLY', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Too fast and you miss the click, and you make noise. Open both bolts without the noise bar filling up.', need: 1 }],
+  3: [{ id: 'freeze', title: 'KEEP STILL', say: G => safeCue(G)[0], do: G => safeCue(G)[1], at: G => safeCue(G)[2], how: 'Footsteps! When the torch comes, lift your thumb and keep perfectly still until it has gone.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -548,6 +550,16 @@ function lessonSee(G, what) { const st = lessonNow(G); if (!st) return; let ok =
 const BLIND = { r: G => turnDial(G, 1), l: G => turnDial(G, -1), s: G => setNum(G) };
 // a player who looks and listens: turns at a steady pace under the feel limit (a little too fast now and then), notices a click
 // after `react`, turns back to the chalk mark, slowing as it gets near, and sets it (sometimes one off); freezes for the torch
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said TURN
+// SLOWLY… TAP SET (two things) with a hand sliding left and right in a box, which does not turn a round dial. Now: TURN SLOWLY round the dial
+// (the hand goes round it) until the click; TURN BACK TO THE MARK (the way to the chalk mark); TAP SET when the mark is under the pointer;
+// LET GO! / KEEP STILL while the torch is on the door.
+function safeCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const L = lay(), c = G.cfg, arc = (dir) => { const r = L.R * 0.8, a0 = -Math.PI / 2 + 0.5 * dir, a1 = a0 - 0.4 * dir; return [L.cx + Math.cos(a0) * r, L.cy + Math.sin(a0) * r, L.cx + Math.cos(a1) * r, L.cy + Math.sin(a1) * r]; };
+  if (G.gd.s === 'warn' || G.gd.s === 'torch') return ui.drag ? ['LET GO!', 'release', [W / 2, H * 0.7]] : ['KEEP STILL', 'wait', false];
+  if (G.mark == null) return ['TURN SLOWLY', 'drag', arc(1)];
+  const M = c.M, diff = ((((G.mark - G.pos) % M) + M * 1.5) % M - M / 2);
+  if (Math.abs(diff) > 0.3) return ['TURN TO THE MARK', 'drag', arc(Math.sign(diff))];
+  return ['TAP SET', 'tap', [L.set.x + L.set.w / 2, L.set.y + L.set.h / 2]]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, dt = 1 / 60, c = G.cfg;
   if (G.over || G.wait > 0) { mem.markT = 0; return; }
   if (G.gd.s === 'warn' || G.gd.s === 'torch') { mem.seen = (mem.seen || 0) + dt; if (mem.seen > react) return; } else mem.seen = 0;

@@ -90,10 +90,17 @@ function finish(G, win) { G.over = win ? 'won' : 'lost'; const tot = G.notes.len
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'hit', title: 'ON THE BEAT', say: 'TAP AS IT HITS', do: 'tap', how: 'Tap the left half for the left drum, the right half for the right, as each note reaches its drum. Eight in a row.', need: 8 }],
-  2: [{ id: 'both', title: 'BOTH DRUMS', say: 'GOLD: TAP BOTH', do: 'tap', how: 'Gold notes: tap both halves at once. Three in a row.', need: 3 }],
-  3: [{ id: 'roll', title: 'DRUM ROLL', say: 'KEEP TAPPING', do: 'tap', how: 'A long note: tap it, then keep tapping that drum till it ends. Two rolls.', need: 2 }],
+  1: [{ id: 'hit', title: 'ON THE BEAT', say: G => drumCue(G)[0], do: G => drumCue(G)[1], at: G => drumCue(G)[2], how: 'Tap the left half for the left drum, the right half for the right, as each note reaches its drum. Eight in a row.', need: 8 }],
+  2: [{ id: 'both', title: 'BOTH DRUMS', say: G => drumCue(G)[0], do: G => drumCue(G)[1], at: G => drumCue(G)[2], how: 'Gold notes: tap both halves at once. Three in a row.', need: 3 }],
+  3: [{ id: 'roll', title: 'DRUM ROLL', say: G => drumCue(G)[0], do: G => drumCue(G)[1], at: G => drumCue(G)[2], how: 'A long note: tap it, then keep tapping that drum till it ends. Two rolls.', need: 2 }],
 };
+// THE TUTORIAL'S HAND IS ON THE DRUM THE NEXT NOTE FALLS TO (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It showed a tap in a box: which side was his to work out. Now the hand taps on that drum (left or right; both for gold; again and
+// again for a roll) as the note comes down to it, and says so: TAP LEFT / TAP RIGHT / GOLD: TAP BOTH SIDES / KEEP TAPPING.
+function drumCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const rl = G.notes.find(q => q.roll && !q.done && q.hit && q.hit[0] && G.t <= q.t + q.roll); if (rl) { const p = drumAt(rl.lane === 2 ? 0 : rl.lane); return ['KEEP TAPPING!', 'tap', [p.x, p.y]]; }      /* a drum roll under way */ const n = G.notes.find(q => !q.done && q.t > G.t - 0.15); if (!n || n.t > G.t + 1.6) return ['GET READY…', 'wait', false];
+  if (n.lane === 2) { const a = drumAt(0), b = drumAt(1); if (n.t - G.t > 0.24) return ['GOLD: BOTH SIDES…', 'wait', false]; return ['GOLD: TAP BOTH SIDES', 'tap', [(a.x + b.x) / 2, (a.y + b.y) / 2]]; }
+  const p = drumAt(n.lane); if (n.t - G.t > 0.24 && !(n.roll && G.t > n.t)) return [n.lane ? 'RIGHT DRUM…' : 'LEFT DRUM…', 'wait', false];      // the tap shows as the note reaches the drum (a fifth of a second ahead: a thumb's time)
+  return [n.roll && G.t > n.t ? 'KEEP TAPPING' : n.lane ? 'TAP RIGHT' : 'TAP LEFT', 'tap', [p.x, p.y]]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSong(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSong(G) { const st = lessonNow(G), beat = 60 / 80, notes = []; let t = G.t + 2.2;

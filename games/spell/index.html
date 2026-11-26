@@ -395,9 +395,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -777,9 +777,9 @@ function step(G, dt) { if (G.over) return; G.t += dt; if (G.wait > 0) { G.wait -
   if (G.phase === 'seal') G.sealT += dt; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'read', title: 'READ THE STORY', say: 'PICK, BREW, STIR', do: 'drag', dir: 'right', how: 'Their words point to the jar: "love" is 🌹, "sleep" is 🌙... Pick it, BREW, stir round, then tap the rune for what it acts on (♥ heart, 👁 mind, ✋ body). Three spells in a row that are just right.', need: 3 }],
-  2: [{ id: 'dose', title: 'IN OR OUT, AND HOW MUCH', say: 'STIR, THEN HOLD', do: 'hold', how: 'Stir clockwise to draw it IN, anticlockwise to drive it OUT. Hold to pour: one line for "a little", two for usual, three for "strong". Two good spells in a row.', need: 2 }],
-  3: [{ id: 'seal', title: 'SEAL IT', say: 'TAP SEAL WHEN IT GLOWS', do: 'tap', how: 'Last of all, tap SEAL when the brew glows the colour of the ring round it. Two good spells in a row.', need: 2 }],
+  1: [{ id: 'read', title: 'READ THE STORY', say: G => spellCue(G)[0], do: G => spellCue(G)[1], at: G => spellCue(G)[2], how: 'Their words point to the jar: "love" is 🌹, "sleep" is 🌙... Pick it, BREW, stir round, then tap the rune for what it acts on (♥ heart, 👁 mind, ✋ body). Three spells in a row that are just right.', need: 3 }],
+  2: [{ id: 'dose', title: 'IN OR OUT, AND HOW MUCH', say: G => spellCue(G)[0], do: G => spellCue(G)[1], at: G => spellCue(G)[2], how: 'Stir clockwise to draw it IN, anticlockwise to drive it OUT. Hold to pour: one line for "a little", two for usual, three for "strong". Two good spells in a row.', need: 2 }],
+  3: [{ id: 'seal', title: 'SEAL IT', say: G => spellCue(G)[0], do: G => spellCue(G)[1], at: G => spellCue(G)[2], how: 'Last of all, tap SEAL when the brew glows the colour of the ring round it. Two good spells in a row.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonNext(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -798,16 +798,40 @@ const BLIND = { j: G => { const ing = G.cfg.ings; pickJar(G, ing[(Math.random() 
   b: G => { if (G.phase === 'pick') brew(G); else if (G.phase === 'pour') { if (!G.pouring) pourHold(G, true); else pourHold(G, false); } else if (G.phase === 'stir') stirBy(G, (Math.random() < 0.5 ? -1 : 1) * TAU * 2.1); else if (G.phase === 'rune') { const r = G.cfg.runes; drawRune(G, r[(Math.random() * r.length) | 0].id); } else if (G.phase === 'seal') seal(G); else if (G.phase === 'back') retryBack(G); } };
 // a magician who looks: reads the clue words (acc: how surely), picks the jars, pours to the line, stirs the right way, the rune,
 // seals near the colour; for a funny return, brews it again
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said PICK,
+// BREW, STIR (three things) with a hand sliding right in a box. Now the robot is asked (dryPlanAll) and the hand goes where its move is: TAP THIS
+// JAR, TAP BREW, STIR THIS WAY round the pot (clockwise draws IN, anticlockwise drives OUT), HOLD TO POUR / LET GO at the line, TAP THIS RUNE then
+// DRAW IT dot to dot, TAP SEAL! when the glow is right, TAP TRY AGAIN.
+const SPC = { t: -1e9, v: null };
+function spellCue(G) { if (G.over || G.wait > 0 || !G.cur) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SPC.t < 120) return SPC.v; SPC.t = now; const L = lay(), C = L.C, mid = b => [b.x + b.w / 2, b.y + b.h / 2], P = G.phase; let v = ['WAIT…', 'wait', false];
+  const tr = typeof trace !== 'undefined' && trace;
+  if (P === 'rune' && tr) { const ru = runeOf(tr.id), a = ru.pts[Math.max(0, tr.i - 1)], b = ru.pts[tr.i], at = q => [C.x + q[0] * C.r * 1.6, C.y - C.r * 0.8 + q[1] * C.r * 1.6]; if (b) { const A = at(tr.i ? a : b), B = at(b); v = ['DRAW IT', 'drag', tr.i ? [A[0], A[1], B[0], B[1]] : [A[0], A[1], A[0] + 1, A[1] + 1]]; } SPC.v = v; return v; }
+  const all = dryPlanAll(G, null, { t: -1 }), q = all[all.length - 1];
+  if (P === 'seal') v = all.some(z => z[0] === 'seal') ? ['TAP SEAL!', 'tap', mid(L.act)] : ['WAIT FOR THE GLOW', 'wait', false];
+  else if (!q) v = P === 'pour' && G.pouring ? ['KEEP HOLDING', 'hold', [W / 2, H * 0.75]] : ['WAIT…', 'wait', false];
+  else if (q[0] === 'pickJar') { const J = L.jars.find(j => j.id === q[1]); v = J ? ['TAP THIS JAR', 'tap', mid(J)] : v; }
+  else if (q[0] === 'brew' || q[0] === 'retryBack') v = [q[0] === 'brew' ? 'TAP BREW' : 'TAP TRY AGAIN', 'tap', mid(L.act)];
+  else if (q[0] === 'pourHold') v = q[1] ? ['HOLD TO POUR', 'hold', [W / 2, H * 0.75]] : ['LET GO!', 'release', [W / 2, H * 0.75]];
+  else if (q[0] === 'stirBy') { const cw = q[1] > 0, r = C.r * 0.3, pt = a => [C.x + Math.cos(a) * r / 0.35, C.y + Math.sin(a) * r], A = pt(-Math.PI / 2), B = pt(cw ? 0.2 : -Math.PI - 0.2); v = [cw ? 'STIR THIS WAY: IN' : 'STIR THIS WAY: OUT', 'drag', [A[0], A[1], B[0], B[1]]]; }
+  else if (q[0] === 'drawRune') { const R2 = L.runes.find(r => r.id === q[1]); v = R2 ? ['TAP THIS RUNE', 'tap', mid(R2)] : v; }
+  SPC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, v = G.cur, R = Math.random;
   if (G.over || G.wait > 0 || !v) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0 && G.phase !== 'pour' && G.phase !== 'seal') return; if (mem.t <= 0) mem.t = 0.5 + react * 1.5;
   if (mem.vid !== v.id + ':' + G.phase.slice(0, 1) + (v.returning ? 'r' : '')) { mem.vid = v.id + ':' + G.phase.slice(0, 1) + (v.returning ? 'r' : ''); mem.err = (R() - 0.5) * (1 - acc) * 0.8; }
-  if (G.phase === 'back') { retryBack(G); return; }
-  if (G.phase === 'pick') { const want = v.need.map(n => R() < 0.45 + acc * 0.55 - (G.cfg.ings.length - 6) * 0.012 ? n : G.cfg.ings[(R() * G.cfg.ings.length) | 0].id); for (const w of want) if (!G.pick.includes(w)) { pickJar(G, w); return; } brew(G); return; }
-  if (G.phase === 'pour') { const target = [0, 0.33, 1, 1.67][v.amt] + mem.err; if (!G.pouring && G.amount < target) { pourHold(G, true); return; } if (G.pouring && G.amount >= target) pourHold(G, false); return; }
-  if (G.phase === 'stir') { const right = R() < 0.6 + acc * 0.4 ? v.dir : (v.dir === 'in' ? 'out' : 'in'); stirBy(G, (right === 'in' ? 1 : -1) * TAU * 2.05); return; }
-  if (G.phase === 'rune') { drawRune(G, R() < 0.6 + acc * 0.4 ? v.rune : pick(R, G.cfg.runes).id); return; }
-  if (G.phase === 'seal') { const ph = sealPhase(G), d = Math.min(Math.abs(ph - G.sealWant), 1 - Math.abs(ph - G.sealWant)); if (d < 0.03 + (1 - acc) * 0.12 + react * 0.04) seal(G); } }
+  if (G.phase === 'back') { ACT.retryBack(G); return; }
+  if (G.phase === 'pick') { const want = v.need.map(n => R() < 0.45 + acc * 0.55 - (G.cfg.ings.length - 6) * 0.012 ? n : G.cfg.ings[(R() * G.cfg.ings.length) | 0].id); for (const w of want) if (!G.pick.includes(w)) { ACT.pickJar(G, w); return; } ACT.brew(G); return; }
+  if (G.phase === 'pour') { const target = [0, 0.33, 1, 1.67][v.amt] + mem.err; if (!G.pouring && G.amount < target) { ACT.pourHold(G, true); return; } if (G.pouring && G.amount >= target) ACT.pourHold(G, false); return; }
+  if (G.phase === 'stir') { const right = R() < 0.6 + acc * 0.4 ? v.dir : (v.dir === 'in' ? 'out' : 'in'); ACT.stirBy(G, (right === 'in' ? 1 : -1) * TAU * 2.05); return; }
+  if (G.phase === 'rune') { ACT.drawRune(G, R() < 0.6 + acc * 0.4 ? v.rune : pick(R, G.cfg.runes).id); return; }
+  if (G.phase === 'seal') { const ph = sealPhase(G), d = Math.min(Math.abs(ph - G.sealWant), 1 - Math.abs(ph - G.sealWant)); if (d < 0.03 + (1 - acc) * 0.12 + react * 0.04) ACT.seal(G); } }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.done = [{ v: { who: 'x', need: [] }, J: { s: 100 }, grade: 'perfect' }]; G.total = 1; G.queue = []; endDay(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { pickJar, brew, pourHold, stirBy, drawRune, seal, retryBack }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }
 // ===================== DRAW + JUICE: the magician's shop (2D on purpose: words, jars and runes read best flat) =====================
 // Candlelit shop: the customer across the counter (their face shows how they feel), their story in a parchment bubble with the
 // clue words in bold, the cauldron bubbling on its fire in the middle (its brew takes the colour of what is in it), and below it

@@ -189,9 +189,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -422,9 +424,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -689,7 +691,7 @@ const optAdult = () => (typeof HEADLESS !== 'undefined' && HEADLESS) ? false : !
 const optFree = () => (typeof HEADLESS !== 'undefined' && HEADLESS) ? false : store.get('council', true) === false;
 const PLACES = [{ name: 'The Magistrates\' Court' }, { name: 'The County Court' }, { name: 'The Crown Court' }, { name: 'The Old Bailey' }];
 const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
-function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, help: !!help, place: placeOf(N), cases: 5, pass: Math.round(x(69, 87, 30) - (help ? 6 : 0)), factors: [Math.round(x(1, 3, 25)), Math.round(x(2, 5, 25))], complex: x(0.1, 0.35, 30), repeat: x(0, 0.45, 30), adult: optAdult(), free: optFree() }; }
 // ---------- a case ----------
 function makeCase(G, forceOff, opts = {}) { const R = G.rnd, c = G.cfg;
@@ -754,9 +756,9 @@ function judgeDocket(G) { const c = G.cfg, avg = Math.round(G.done.reduce((a, e)
   G.ev.push({ k: 'council', avg }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'write', title: 'PASS SENTENCE', say: 'TAP TO BUILD, THEN PASS', do: 'tap', how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
-  2: [{ id: 'weigh', title: 'WEIGH IT UP', say: 'WEIGH IT UP', do: 'tap', how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],
-  3: [{ id: 'right', title: 'PUT IT RIGHT', say: 'ADD COMPENSATION', do: 'tap', how: 'A victim lost money: add + Compensation as well as the punishment. Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
+  1: [{ id: 'write', title: 'PASS SENTENCE', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: 'Read the case, then tap the buttons to build a sentence (try + Fine, then − or + to change it), or write your own. Tap PASS SENTENCE. Three fair sentences in a row.', need: 3, off: 'shoplift', nf: 0 }],
+  2: [{ id: 'weigh', title: 'WEIGH IT UP', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: '⚠ things make it worse and ✓ things help them. The same crime, different people: weigh each one. Three fair sentences in a row.', need: 3, off: 'bike', nf: 2 }],
+  3: [{ id: 'right', title: 'PUT IT RIGHT', say: G => judgeCue(G)[0], do: G => judgeCue(G)[1], at: G => judgeCue(G)[2], how: 'A victim lost money: add + Compensation as well as the punishment. Three in a row.', need: 3, off: 'pickpocket', nf: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonCase(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -807,7 +809,7 @@ function renderCase(G) { if (HEADLESS || !G || !G.case) return; const K = G.case
   const w = d => guide ? ` <small>(${Math.abs(d) >= 9 ? 'big' : Math.abs(d) >= 6 ? 'real' : 'small'})</small>` : '';
   const ch = K.facts.map(f => `<span class="chip ${f.d > 0 ? 'agg' : 'mit'}">${f.d > 0 ? '⚠' : '✓'} ${esc(f.t)}${w(f.d)}</span>`).join('');
   const lo = Math.max(1, K.centre - K.facts.reduce((a, f) => a + f.d, 0)), off = OFF.find(o => o.id === K.off);
-  $('caseCard').innerHTML = (st ? `<div class="lesson" style="text-align:center"><span style="font-size:12px">LESSON · ${'●'.repeat(G.lesson.n)}${'○'.repeat(Math.max(0, st.need - G.lesson.n))}</span><br><b style="font-size:22px;line-height:1.15">👆 ${esc(st.say || st.title)}</b></div>` : '')
+  $('caseCard').innerHTML = (st ? `<div class="lesson" style="text-align:center"><span style="font-size:12px">LESSON · ${'●'.repeat(G.lesson.n)}${'○'.repeat(Math.max(0, st.need - G.lesson.n))}</span><br><b style="font-size:22px;line-height:1.15">👆 ${esc((typeof st.say === 'function' ? st.say(G) : st.say) || st.title)}</b></div>` : '')
     + `<h3>R v ${esc(K.who)}</h3><div class="off">${esc(K.name)}${K.complex ? ' · a hard case' : ''}</div><div class="meta">${K.age}, ${esc(K.job)} · ${esc(K.plea)}${c.free ? '' : ` · case ${Math.min(c.cases, G.done.length + 1)} of ${c.cases}`}</div>`
     + `<p>${esc(K.first)} ${esc(K.what)}.</p>` + (ch ? `<div>${ch}</div>` : '<div class="chip mit" style="opacity:.7">Nothing special either way</div>')
     + (K.victim ? `<p class="vic">${esc(K.victim)}</p>` : '')
@@ -1017,6 +1019,20 @@ const BUILD = [
 ];
 function mth(n) { return n >= 24 && n % 12 === 0 ? `${n / 12} years` : n === 12 ? '12 months' : `${n} month${n === 1 ? '' : 's'}`; }
 let built = {};
+// THE TUTORIAL SHOWS ONE TAP AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It showed no hand at all, and TAP TO BUILD, THEN PASS. Now the hand is on the next button of a fair sentence (the one the robot
+// aims at: the case's centre): + PRISON / + FINE / + UNPAID WORK..., then − or + until the amount is right, + COMPENSATION when someone lost
+// money (lesson 3), then ⚖ PASS SENTENCE, then ⚖ CONFIRM.
+function judgeCue(G) { const el = q => { const e = document.querySelector(q); if (!e || e.offsetParent === null) return false; const r = e.getBoundingClientRect(); return r.width ? [r.x + r.width / 2, r.y + r.height / 2] : false; };
+  if (G.over || G.wait > 0 || !G.case) return ['WAIT…', 'wait', false]; if (el('#confBtn')) return ['TAP ⚖ CONFIRM', 'tap', el('#confBtn')];
+  const K = G.case, p = K.centre, want = {}, near = (id, v) => { const st = BUILD.find(b => b.id === id).steps; let bi = 0; st.forEach((q, i) => { if (Math.abs(q - v) < Math.abs(st[bi] - v)) bi = i; }); return bi; };
+  if (p >= 40.5) want.prison = near('prison', Math.min(ptsToMonths(p), K.max || 1e9)); else if (p >= 30) { want.prison = near('prison', Math.max(1, Math.min(K.max || 24, Math.round((p - 30) / 10 * 24)))); want.susp = 1; }
+  else if (p >= 16) want.hours = near('hours', Math.round((p - 15) / 15 * 300 / 10) * 10); else if (p >= 7) want.fine = near('fine', Math.max(50, Math.round((Math.pow(2, (p - 6) / 6) - 1) * 100 / 10) * 10)); else want.disch = 0;
+  if (K.money && K.loss) want.comp = near('comp', K.loss);
+  for (const id in want) { const b = BUILD.find(q => q.id === id); if (!(id in built)) return ['TAP + ' + b.label.toUpperCase(), 'tap', el(`[data-b="${id}"]`)];
+    if (b.steps && built[id] !== want[id]) { const d = built[id] < want[id] ? 1 : -1; return [d > 0 ? 'TAP + : MORE' : 'TAP − : LESS', 'tap', el(`[data-s="${id}"][data-d="${d}"]`)]; } }
+  for (const id in built) if (!(id in want)) return ['TAP ✓ ' + BUILD.find(q => q.id === id).label.toUpperCase() + ' TO TAKE IT OFF', 'tap', el(`[data-b="${id}"]`)];
+  return ['TAP ⚖ PASS SENTENCE', 'tap', el('#passBtn')]; }
 function builderReset() { built = {}; builderDraw(); }
 function builderText() { const out = []; for (const b of BUILD) { if (!(b.id in built) || b.id === 'susp') continue; let t = b.say(b.steps ? b.steps[built[b.id]] : 0); if (b.id === 'prison' && 'susp' in built) t += ' ' + BUILD[1].say(BUILD[1].steps[built.susp]); out.push(t); } return out.join(', '); }
 function builderDraw() { const C = $('chips'), B = $('built'); if (!C) return;
@@ -1071,7 +1087,7 @@ function frame(now) {
     G.ev.length = 0;
     if (G.over) { endT += rdt; if (endT > (G.res.win ? 1.0 : 0.7)) { endT = -1e9; showEnd(); } }      // a short moment, then the card (P23)
   }
-  fxStep(rdt); draw(now / 1000);
+  fxStep(rdt); draw(now / 1000); if (G && G.lesson && !G.over && !paused) coachPanel(G);      /* the hand (26 Nov 2026: this game showed no hand at all) */
   requestAnimationFrame(frame);
 }
 // ---------- the test hook (robots, tests, card clips) ----------

@@ -160,9 +160,9 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 function winNow(G) { if (!G || G.over || G.lesson) return; G.done = G.V.map(h => h.i); finish(G, true, 'all'); }
 // ---------- lessons (levels 1-3) ----------
 const LESSONS = {
-  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => overNext(G) ? 'STICK DOWN: LAND' : 'HOLD FORWARD, STEER', do: G => overNext(G) ? 'drag' : 'hold', dir: 'down', at: G => { const L = layout(G); return overNext(G) ? [L.stick.x, L.stick.y] : [L.btn.x, L.btn.y]; }, how: 'Hold FORWARD and steer with the stick towards the glowing house. Over its marker, let go of FORWARD and push the stick down: the sleigh comes down onto the roof. Land once.', need: 1 }],
-  2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', say: 'TAP A PRESENT, ACT', do: 'tap', how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],
-  3: [{ id: 'sneak', title: 'TIPTOE', say: 'PUSH GENTLY', do: 'drag', dir: 'up', how: 'Push gently to tiptoe. Go round furniture and the dark creaky boards; watch the noise meter. Deliver one house without waking anyone.', need: 1 }],
+  1: [{ id: 'land', title: 'LAND ON THE ROOF', say: G => santaCue(G)[0], do: G => santaCue(G)[1], at: G => santaCue(G)[2], how: 'Hold FORWARD and steer with the stick towards the glowing house. Over its marker, let go of FORWARD and push the stick down: the sleigh comes down onto the roof. Land once.', need: 1 }],
+  2: [{ id: 'gifts', title: 'THE RIGHT PRESENTS', say: G => santaCue(G)[0], do: G => santaCue(G)[1], at: G => santaCue(G)[2], how: 'Inside, read the wish list. Tap a present in your sack, walk to the tree and press ACT. Fill each stocking (ACT by it), then ACT at the fireplace. Deliver one house.', need: 1 }],
+  3: [{ id: 'sneak', title: 'TIPTOE', say: G => santaCue(G)[0], do: G => santaCue(G)[1], at: G => santaCue(G)[2], how: 'Push gently to tiptoe. Go round furniture and the dark creaky boards; watch the noise meter. Deliver one house without waking anyone.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
 function lessonSee(G, what) { const D = G.lesson; if (!D || D.done) return; let good = false;
@@ -185,36 +185,50 @@ const BLIND = {
 // HONEST: a Santa who looks: flies to the nearest house left (above the roofs), stops over its marker (a little off, by acc) and comes down, wriggles down
 // narrow chimneys, inside walks the quiet way round (furniture, creaky boards and the cat), reads the wish list (sometimes
 // picks a wrong present and puts it right), fills the stockings and goes back up.
+// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). Inside, it said
+// TAP A PRESENT, ACT (which present? where?) and PUSH GENTLY with a hand pushing up in a box. Now the robot is asked (dryPlanAll): TAP THIS
+// PRESENT (the hand on it in the sack), TAP ACT, HOLD FORWARD, STEER / WALK / TIPTOE THIS WAY on the stick, STICK DOWN: LAND, LET GO OF FORWARD.
+const SNC = { t: -1e9, v: null };
+function santaCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SNC.t < 150) return SNC.v; SNC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => all.filter(q => q[0] === n).pop(), L = layout(G);
+  const hg = last('holdGift'), ac = last('act'), go = last('goOn'), st = last('setStick'), sx = st ? st[1] : 0, sy = st ? st[2] : 0, S2 = L.stick, r = S2.r * 0.8, inside = G.phase === 'in', sneak = G.lesson && G.lesson.id === 'sneak'; let v = ['WAIT…', 'wait', false];
+  const gift = hg && ui.sackR.find(q => q.id === hg[1]);
+  if (gift) v = ['TAP THIS PRESENT', 'tap', [gift.x, gift.y]];
+  else if (ac) v = ['TAP ACT', 'tap', [L.btn.x, L.btn.y]];
+  else if (go && go[1] && !G.go) v = ['HOLD FORWARD', 'hold', [L.btn.x, L.btn.y]];
+  else if (Math.hypot(sx, sy) > 0.25) v = [!inside && sy < -0.5 && !G.go ? 'STICK DOWN: LAND' : inside ? (sneak ? 'TIPTOE THIS WAY' : 'WALK THIS WAY') : 'STEER THIS WAY', 'drag', [S2.x, S2.y, S2.x + sx * r, S2.y - sy * r]];
+  else if (go && !go[1] && G.go) v = ['LET GO OF FORWARD', 'release', [L.btn.x, L.btn.y]];
+  else if (G.go) v = ['KEEP HOLDING', 'hold', [L.btn.x, L.btn.y]];
+  SNC.v = v; return v; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.phase === 'fly') { const s = G.s; if (mem.tgt == null || G.done.includes(mem.tgt)) { const left = G.V.filter(h => !G.done.includes(h.i)); left.sort((a, b) => Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z)); mem.tgt = left.length ? left[0].i : null; mem.off = { x: (R() - 0.5) * (1 - acc) * 9, z: (R() - 0.5) * (1 - acc) * 9 }; }
-    if (mem.tgt == null) { setStick(G, 0, 0); return; } const H = G.V[mem.tgt], tx = H.mx + mem.off.x, tz = H.mz + mem.off.z, dx = tx - s.x, dz = tz - s.z, d = Math.hypot(dx, dz);
+    if (mem.tgt == null) { ACT.setStick(G, 0, 0); return; } const H = G.V[mem.tgt], tx = H.mx + mem.off.x, tz = H.mz + mem.off.z, dx = tx - s.x, dz = tz - s.z, d = Math.hypot(dx, dz);
     // turn to it, hold FORWARD until it is time to slow, keep above the roofs on the way, and over the marker come down
     const want = Math.atan2(dx, dz), rel = Math.atan2(Math.sin(want - s.yaw), Math.cos(want - s.yaw)), overR = Math.max(0.7, G.cfg.marker * 0.5), over = d < overR, near = d < 9, wantY = over ? H.top - 1 : near ? H.top + 3.2 : 13;
-    goOn(G, !over && Math.abs(rel) < 1.1 && d > Math.max(overR * 0.9, s.v * 0.44 + react * 1.2));      /* (from a stop he creeps on until he is over it: there is no gap between 'still coming' and 'over it') */
-    setStick(G, clamp(rel * 1.7, -1, 1) * (d < 1 ? 0.3 : 1), over && s.v < 2.6 ? -1 : over ? 0 : clamp((wantY - s.y) * 0.5, -1, 1));
+    ACT.goOn(G, !over && Math.abs(rel) < 1.1 && d > Math.max(overR * 0.9, s.v * 0.44 + react * 1.2));      /* (from a stop he creeps on until he is over it: there is no gap between 'still coming' and 'over it') */
+    ACT.setStick(G, clamp(rel * 1.7, -1, 1) * (d < 1 ? 0.3 : 1), over && s.v < 2.6 ? -1 : over ? 0 : clamp((wantY - s.y) * 0.5, -1, 1));
     if (d < 0.6 || (s.bump > 0 && d < 4)) mem.off = { x: 0, z: 0 };      /* bounced off the roof beside the marker: he looks again and aims at the marker itself */
     return; }
-  if (G.phase === 'roof') { goOn(G, false); setStick(G, 0, 1); if (G.roof.narrow) act(G); return; }
-  if (G.phase !== 'in') { goOn(G, false); setStick(G, 0, 0); return; }
-  goOn(G, false); const I = G.in, Rm = I.H.room;
+  if (G.phase === 'roof') { ACT.goOn(G, false); ACT.setStick(G, 0, 1); if (G.roof.narrow) ACT.act(G); return; }
+  if (G.phase !== 'in') { ACT.goOn(G, false); ACT.setStick(G, 0, 0); return; }
+  ACT.goOn(G, false); const I = G.in, Rm = I.H.room;
   // what next: a present in hand to the tree; else pick the next wanted present; else a stocking; else the fireplace
   if (mem.house !== I.H.i || mem.inT > G.t || mem.entered !== G.in) { mem.house = I.H.i; mem.entered = G.in; mem.path = null; mem.goal = null; mem.rush = R() < (1 - acc) * 0.9; mem.careless = R() < (1 - acc) * 1.2; } mem.inT = G.t;
   const left = wantsLeft(I), wrong = I.placed.length - (I.H.mem.length - left.length);
   let goal, todo;
-  if (Rm.cat && Rm.cat.calm <= 0 && Math.hypot(I.x - Rm.cat.x, I.z - Rm.cat.z) < 1.7) { act(G); return; }
+  if (Rm.cat && Rm.cat.calm <= 0 && Math.hypot(I.x - Rm.cat.x, I.z - Rm.cat.z) < 1.7) { ACT.act(G); return; }
   if (I.hold && !left.includes(I.hold) && wrong === 0 && mem.erredHeld !== I.hold) { mem.erredHeld = I.hold; goal = treeSpot(Rm, I); todo = 'tree'; }      // (an honest mistake: it goes under the tree, then gets noticed)
-  else if (I.hold && !left.includes(I.hold)) { holdGift(G, left.length ? left[0] : null); return; }      // a wrong present in hand: swap it for the right one
+  else if (I.hold && !left.includes(I.hold)) { ACT.holdGift(G, left.length ? left[0] : null); return; }      // a wrong present in hand: swap it for the right one
   else if (I.hold) { goal = treeSpot(Rm, I); todo = 'tree'; }
   else if (wrong > 0) { goal = treeSpot(Rm, I); todo = 'pick'; }
-  else if (left.length) { const pickWrong = R() < (1 - acc) * 0.25 && !mem.erred; const id = pickWrong ? I.sack.find(q => !I.H.mem.some(m => m.wish === q)) : left[0]; if (pickWrong) mem.erred = true; holdGift(G, id); return; }
+  else if (left.length) { const pickWrong = R() < (1 - acc) * 0.25 && !mem.erred; const id = pickWrong ? I.sack.find(q => !I.H.mem.some(m => m.wish === q)) : left[0]; if (pickWrong) mem.erred = true; ACT.holdGift(G, id); return; }
   else { const st = Rm.stock.find(s => !s.full); if (st) { goal = spotNear(Rm, I, st.x, st.z + 1, 1.5); todo = 'stock'; } else { goal = spotNear(Rm, I, Rm.fire.x, Rm.fire.z + 1, 1.5); todo = 'fire'; } }
   const atGoal = Math.hypot(I.x - goal.x, I.z - goal.z) < 0.35;
-  if (atGoal) { setStick(G, 0, 0); if (mem.actT == null) mem.actT = G.t + 0.1 + R() * react * 0.5; if (G.t >= mem.actT) { mem.actT = null; act(G); } return; }
+  if (atGoal) { ACT.setStick(G, 0, 0); if (mem.actT == null) mem.actT = G.t + 0.1 + R() * react * 0.5; if (G.t >= mem.actT) { mem.actT = null; ACT.act(G); } return; }
   mem.actT = null;
   if (!mem.path || mem.goalKey !== goal.x + ',' + goal.z || !mem.path.length) { mem.goalKey = goal.x + ',' + goal.z; mem.path = findPath(Rm, I, goal, mem.careless); }
-  if (!mem.path || !mem.path.length) { setStick(G, 0, 0); return; }
+  if (!mem.path || !mem.path.length) { ACT.setStick(G, 0, 0); return; }
   const wp = mem.path[0], dx = wp.x - I.x, dz = wp.z - I.z, d = Math.hypot(dx, dz); if (d < 0.18) { mem.path.shift(); return; }
-  const sp = mem.rush ? 1 : 0.5; setStick(G, -dx / d * sp, -dz / d * sp); }      /* (the stick's right is the screen's right: the rules' x runs the other way indoors) */
+  const sp = mem.rush ? 1 : 0.5; ACT.setStick(G, -dx / d * sp, -dz / d * sp); }      /* (the stick's right is the screen's right: the rules' x runs the other way indoors) */
 function treeSpot(R, I) { return spotNear(R, I, R.tree.x, R.tree.z, 1.6); }
 // the nearest quiet cell you can walk to (no furniture, no creaky board) from which ACT reaches (tx, tz)
 function spotNear(R, I, tx, tz, r) { const sx = Math.round(I.x), sz = Math.round(I.z), key = (x, z) => x + ',' + z, seen = new Set([key(sx, sz)]), q = [[sx, sz]], bad = new Set(R.creak.map(c => key(c.x, c.z)));
@@ -225,3 +239,10 @@ function findPath(R, I, goal, careless) { const sx = Math.round(I.x), sz = Math.
   const ok = (x, z) => R.g[z] && R.g[z][x] === 0 && !bad.has(key(x, z));
   while (q.length) { const [x, z] = q.shift(); if (x === goal.x && z === goal.z) break; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, nz = z + dz, k = key(nx, nz); if (prev.has(k) || !ok(nx, nz) && !(nx === goal.x && nz === goal.z)) continue; prev.set(k, [x, z]); q.push([nx, nz]); } }
   if (!prev.has(key(goal.x, goal.z))) return null; const out = []; let c = [goal.x, goal.z]; while (c) { out.unshift({ x: c[0], z: c[1] }); c = prev.get(key(c[0], c[1])); } if (out.length > 1 && Math.hypot(out[0].x - I.x, out[0].z - I.z) < 0.6) out.shift(); return out; }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setStick, goOn, act, holdGift }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

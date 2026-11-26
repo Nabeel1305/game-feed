@@ -117,10 +117,20 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 
 // ---------- LESSONS: rise to the ring, sink to the ring, drop on the X ----------
 const LESSONS = {
-  1: [{ id: 'rise', title: 'BURN TO RISE', say: 'HOLD TO GO UP', do: 'hold', at: G => [W / 2, H * 0.7], how: 'Hold anywhere: the burner warms the balloon and it rises, a little late. Let go before the ring: it keeps going a moment. Stop inside the gold ring, twice.', need: 2 }],
-  2: [{ id: 'wind', title: 'STEER BY HEIGHT', say: 'GO UP OR DOWN TO THE WIND', do: 'hold', at: G => [W / 2, H * 0.7], how: 'The winds blow different ways at different heights (the arrows on the right). Climb or sink into the one that blows you to the gold flag.', need: 2 }],
-  3: [{ id: 'drop', title: 'DROP ON THE X', say: 'TAP 🎯 ON THE X', do: 'tap', how: 'The ring on the ground shows where a marker would land. When it crosses the X, tap 🎯. Get within 40 m, twice.', need: 2 }],
+  1: [{ id: 'rise', title: 'BURN TO RISE', say: G => heightCue(G, G.lesson.y)[0], do: G => heightCue(G, G.lesson.y)[1], at: G => heightCue(G, G.lesson.y)[2], how: 'Hold anywhere: the burner warms the balloon and it rises, a little late. Let go before the ring: it keeps going a moment. Stop inside the gold ring, twice.', need: 2 }],
+  2: [{ id: 'wind', title: 'STEER BY HEIGHT', say: G => heightCue(G, G.winds[G.lesson.layer].y + 8)[0], do: G => heightCue(G, G.winds[G.lesson.layer].y + 8)[1], at: G => heightCue(G, G.winds[G.lesson.layer].y + 8)[2], how: 'The winds blow different ways at different heights (the arrows on the right). Climb or sink into the one that blows you to the gold flag.', need: 2 }],
+  3: [{ id: 'drop', title: 'DROP ON THE X', say: G => dropCue(G) ? 'TAP 🎯 NOW!' : 'WAIT FOR THE X…', do: G => dropCue(G) ? 'tap' : 'wait', at: G => dropCue(G) ? [layout(G).drop.x, layout(G).drop.y] : false, how: 'The ring on the ground shows where a marker would land. When it crosses the X, tap 🎯. Get within 40 m, twice.', need: 2 }],
 };
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, the move for this moment (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said HOLD TO GO UP for the whole lesson, but the lesson is done by STOPPING in the ring: hold, then let go early (the balloon
+// keeps rising a moment), wait, or vent if too high. Where the balloon will stop if he lets go now: its height, plus what its climb and its
+// spare heat will still give.
+function heightCue(G, want) { const b = G.b, agl = b.y - groundAt(G, b.x, b.z), spare = b.heat - neutral(agl), fut = agl + b.vy * 2.2 + Math.max(0, spare) * 70, L = layout(G);
+  if (fut < want - 8) return [b.burn ? 'KEEP HOLDING' : 'HOLD TO GO UP', 'hold', [W / 2, H * 0.55]];
+  if (b.burn) return ['LET GO', 'release', [W / 2, H * 0.55]];
+  if (fut > want + 22 && b.vy > -1.5) return ['TAP VENT TO GO DOWN', 'tap', [L.vent.x, L.vent.y]];
+  return ['WAIT…', 'wait', false]; }
+function dropCue(G) { const t = G.F.T[G.ti]; if (!t || G.b.landed || G.markers.some(m => m.falling)) return false; const p = predictDrop(G); return Math.hypot(p.x - t.x, p.z - t.z) < 32; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); G.fuel = G.fuel0 = 1e9;
   const b = G.b; b.y = groundAt(G, b.x, b.z) + 45; b.heat = neutral(45); b.landed = false; b.air = true; lessonGoal(G); }      // the lessons start in the air
 function lessonGoal(G) { const D = G.lesson, b = G.b, R = G.rnd;

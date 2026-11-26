@@ -4723,9 +4723,11 @@ const easeOut = t => 1 - Math.pow(1 - t, 3);
 const TAU = Math.PI * 2;
 const pick = (R, a) => a[(R() * a.length) | 0];
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1 falling to 0 at level 7 (LESSONS rule 0).
+// Difficulty: curve(L) keeps rising for ever but slows after 60; easyOf(L) is 1 at level 1, a third at 2, a little at 3, 0 from 4 (LESSONS rule 0).
 const curve = L => L <= 60 ? L : 60 + 15 * Math.log1p((L - 60) / 15);
-const easyOf = L => clamp((7 - L) / 6, 0, 1);
+// 26 Nov 2026, his words: "after the tutorial, the first level should be the only one that is given, but after that it should actually engage the
+// players, because if early wins are given, then the player gets bored". Level 1 has all the help; level 2 a third, level 3 a little; none from 4.
+const easyOf = L => L <= 1 ? 1 : clamp((4 - L) / 6, 0, 1);
 
 // ---------- juice kit (PLAYBOOK S1-S11, P11) : copied into each game; keep in sync ----------
 // Sound: one bus -> master -> compressor. Every play is pitch/volume varied. Ambience beds can be ducked.
@@ -4956,9 +4958,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5281,7 +5283,7 @@ const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.g
 const RANKS = [[0, 'Rookie'], [40, 'Flipper'], [130, 'Wizard'], [320, 'Table king'], [700, 'Legend'], [1500, 'Hall of fame']];
 const THEMES = [{ name: 'Neon Nights', a: 0xff3ab0, b: 0x3ad8ff }, { name: 'Space Station', a: 0x8a5aff, b: 0x5affc8 }, { name: 'Haunted Pier', a: 0x5aff6a, b: 0xff8a2a }, { name: 'Deep Jungle', a: 0xffd03a, b: 0x3aff8a }];
 const themeOf = N => Math.floor((N - 1) / 5) % THEMES.length;
-function makeCfg(N, help) {
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */
   const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
   return { N, f, help: !!help, theme: themeOf(N),
     goal: Math.min(4, 2 + Math.floor((N - 1) / 8)), balls: (N <= 1 ? 5 : 4) + upLv('extra') + (help ? 1 : 0),
@@ -5382,9 +5384,9 @@ function finish(G, win) { G.over = win ? 'won' : 'lost'; const stars = win ? (G.
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'keep', title: 'FLIP', say: 'HOLD LEFT OR RIGHT', do: 'hold', how: 'Hold the left side of the screen for the left flipper, the right side for the right. Hit the ball up the table 6 times without losing it.', need: 6 }],
-  2: [{ id: 'drop', title: 'AIM', say: 'FLIP TO THE LEFT', do: 'hold', how: 'Flip late to send the ball up its own side, early to send it across. Knock down three drop targets (on the left).', need: 3 }],
-  3: [{ id: 'ramp', title: 'THE RAMP', say: 'UP THE RAMP', do: 'hold', how: 'Catch the ball on the right flipper (hold it up), let it roll, flip: up the ramp on the left. Once.', need: 1 }],
+  1: [{ id: 'keep', title: 'FLIP', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Hold the left side of the screen for the left flipper, the right side for the right. Hit the ball up the table 6 times without losing it.', need: 6 }],
+  2: [{ id: 'drop', title: 'AIM', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Flip late to send the ball up its own side, early to send it across. Knock down three drop targets (on the left).', need: 3 }],
+  3: [{ id: 'ramp', title: 'THE RAMP', say: G => pinCue(G)[0], do: G => pinCue(G)[1], at: G => pinCue(G)[2], how: 'Catch the ball on the right flipper (hold it up), let it roll, flip: up the ramp on the left. Once.', need: 1 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, t: 0 }; G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -5415,6 +5417,15 @@ function bestShot(G, b, side, want, maxD) { let best = null, bs = -1e9;
 // a player who looks: catches the ball on a raised flipper when it can, lets it roll and shoots at the moment that sends it at
 // the mission's target (a player's feel: here, trying the moments in a quick look ahead); otherwise hits it at the best moment
 // as it comes down; a thumb is a little early or late
+// THE TUTORIAL SAYS WHICH SIDE AND WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD
+// LEFT OR RIGHT with a hand in a box. Now: TAP TO LAUNCH, WATCH THE BALL…, and FLIP LEFT! / FLIP RIGHT! on that side a fifth of a second before the
+// robot's best moment to flip (the shot it wants: across, its own side, the ramp), held a quarter of a second so it can be seen.
+const PBC = { lit: -1e9, side: 1 };
+function pinCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = G.t * 1000;
+  if (G.balls.some(b => b.lane && b.y < 1 && Math.abs(b.vy) < 0.05)) return ['TAP TO LAUNCH', 'tap', [W / 2, H * 0.7]];
+  const ls = lessonNow(G), want = ls && ls.id !== 'keep' ? ls.id : 'ramp', b = G.balls.filter(q => !q.lane && q.vy < 2 && q.y < 6.5 && q.y > 1.2 && Math.abs(q.x) < 4).sort((p, q) => p.y - q.y)[0];
+  if (b) { const side = b.x < 0 ? -1 : 1, w = tryFlip(G, b, 0, 0, 1.2); if (w.low) { const d = bestShot(G, b, side, want, 36); if (d != null && d <= 14) { PBC.lit = now; PBC.side = side; } } }
+  return now - PBC.lit < 250 && now >= PBC.lit ? [PBC.side < 0 ? 'FLIP LEFT!' : 'FLIP RIGHT!', 'tap', [PBC.side < 0 ? W * 0.2 : W * 0.8, H * 0.72]] : ['WATCH THE BALL…', 'wait', false]; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0) { flip(G, -1, false); flip(G, 1, false); return; }

@@ -19,7 +19,7 @@ function renderCase(G) { if (HEADLESS || !G || !G.case) return; const K = G.case
   const w = d => guide ? ` <small>(${Math.abs(d) >= 9 ? 'big' : Math.abs(d) >= 6 ? 'real' : 'small'})</small>` : '';
   const ch = K.facts.map(f => `<span class="chip ${f.d > 0 ? 'agg' : 'mit'}">${f.d > 0 ? '⚠' : '✓'} ${esc(f.t)}${w(f.d)}</span>`).join('');
   const lo = Math.max(1, K.centre - K.facts.reduce((a, f) => a + f.d, 0)), off = OFF.find(o => o.id === K.off);
-  $('caseCard').innerHTML = (st ? `<div class="lesson" style="text-align:center"><span style="font-size:12px">LESSON · ${'●'.repeat(G.lesson.n)}${'○'.repeat(Math.max(0, st.need - G.lesson.n))}</span><br><b style="font-size:22px;line-height:1.15">👆 ${esc(st.say || st.title)}</b></div>` : '')
+  $('caseCard').innerHTML = (st ? `<div class="lesson" style="text-align:center"><span style="font-size:12px">LESSON · ${'●'.repeat(G.lesson.n)}${'○'.repeat(Math.max(0, st.need - G.lesson.n))}</span><br><b style="font-size:22px;line-height:1.15">👆 ${esc((typeof st.say === 'function' ? st.say(G) : st.say) || st.title)}</b></div>` : '')
     + `<h3>R v ${esc(K.who)}</h3><div class="off">${esc(K.name)}${K.complex ? ' · a hard case' : ''}</div><div class="meta">${K.age}, ${esc(K.job)} · ${esc(K.plea)}${c.free ? '' : ` · case ${Math.min(c.cases, G.done.length + 1)} of ${c.cases}`}</div>`
     + `<p>${esc(K.first)} ${esc(K.what)}.</p>` + (ch ? `<div>${ch}</div>` : '<div class="chip mit" style="opacity:.7">Nothing special either way</div>')
     + (K.victim ? `<p class="vic">${esc(K.victim)}</p>` : '')

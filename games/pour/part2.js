@@ -89,9 +89,9 @@ function finish(G, win, why) { if (G.over) return true; G.over = win ? 'won' : '
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: small rigged glasses; in a lesson a second wrong pour starts it again, and so does wandering ----------
 const LESSONS = {
-  1: [{ id: 'pour', title: 'POUR', say: 'TAP ONE, TAP ANOTHER', do: 'tap', how: 'Tap a glass, then another: the top colour pours onto the same colour, or into an empty glass. Fill two glasses with one colour each.', need: 2 }],
-  2: [{ id: 'plan', title: 'MAKE ROOM', say: 'USE THE EMPTY ONE', do: 'tap', how: 'Use the empty glass to make room, then sort all three colours. Every move counts!', need: 1 }],
-  3: [{ id: 'undo', title: 'UNDO', say: 'TAP UNDO', do: 'tap', how: 'Stuck? Tap UNDO to take back a pour. Sort the colours: there is a trap, so think first.', need: 1 }],
+  1: [{ id: 'pour', title: 'POUR', say: G => pourCue(G)[0], do: G => pourCue(G)[1], at: G => pourCue(G)[2], how: 'Tap a glass, then another: the top colour pours onto the same colour, or into an empty glass. Fill two glasses with one colour each.', need: 2 }],
+  2: [{ id: 'plan', title: 'MAKE ROOM', say: G => pourCue(G)[0], do: G => pourCue(G)[1], at: G => pourCue(G)[2], how: 'Use the empty glass to make room, then sort all three colours. Every move counts!', need: 1 }],
+  3: [{ id: 'undo', title: 'UNDO', say: G => pourCue(G)[0], do: G => pourCue(G)[1], at: G => pourCue(G)[2], how: 'Stuck? Tap UNDO to take back a pour. Sort the colours: there is a trap, so think first.', need: 1 }],
 };
 const LRIG = { pour: { T: [[0, 1, 0, 1], [1, 0, 1, 0], [], []], par: 6 }, plan: { T: [[0, 1, 2, 0], [1, 2, 0, 1], [2, 0, 1, 2], [], []], par: 0 }, undo: { T: [[0, 1, 2, 3], [3, 2, 1, 0], [2, 0, 3, 1], [1, 3, 0, 2], [], []], par: 0 } };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
@@ -109,14 +109,21 @@ const BLIND = { t: G => tapGlass(G, (Math.random() * G.T.length) | 0), u: G => u
 // a player who looks and thinks: plans with what it can see (hidden layers are unknowns), takes the first pour of its plan;
 // a careless one now and then pours something that looked good on its own
 function seenT(G) { let u = 100; return G.T.map((t, i) => t.map((c, k) => G.hide[i][k] ? u++ : c)); }
+// THE HAND IS ON THE GLASS TO TAP (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said TAP ONE, TAP
+// ANOTHER (two taps) with a hand in a box. Now the robot is asked (dryPlan) and the hand is on its glass: TAP THIS GLASS, then POUR IT HERE on the
+// one it goes into; TAP UNDO when the robot would take one back.
+function pourCue(G) { const now = performance.now(); if (pourCue.v && now - pourCue.t < 250 && pourCue.sel === G.sel) return pourCue.v; pourCue.t = now; pourCue.sel = G.sel; return (pourCue.v = pourCue0(G)); }
+function pourCue0(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const L = lay(); if (G.phase !== 'idle') return ['WAIT…', 'wait', false]; let P; if (G.sel >= 0 && pourCue.to != null) P = ['tapGlass', pourCue.to]; else { const m = { t: 99, cd: -1 }; P = dryPlan(G, null, m); pourCue.to = m.to; } if (!P) return ['WAIT…', 'wait', false];
+  if (P[0] === 'undo') return ['TAP UNDO', 'tap', [L.undo.x + L.undo.w / 2, L.undo.y + L.undo.h / 2]];
+  const p = L.pos(P[1]); return [G.sel >= 0 ? 'POUR IT HERE' : 'TAP THIS GLASS', 'tap', [p.x + L.tw / 2, p.y + L.th * 0.45]]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0 || G.phase !== 'idle') { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60; if (mem.t < 0.4 + react * 2) return; mem.t = 0;
-  if (G.sel >= 0) { tapGlass(G, mem.to); return; }
+  if (G.sel >= 0) { ACT.tapGlass(G, mem.to); return; }
   const S = seenT(G); let mv = null;
   if (R() < acc) { const p = solveSeen(S, G.caps, 1500 + acc * 2500); if (p && p.length) mv = p[0]; }
   if (!mv) { const ms = []; for (let a = 0; a < S.length; a++) for (let b = 0; b < S.length; b++) { const m = canPour(S, a, b, G.caps[b]); if (m && !(S[b].length === 0 && topRun(S[a]) === S[a].length)) ms.push([a, b, (S[b].length ? 3 : 1) + m]); }
-    if (!ms.length) { if (G.undos > 0) undo(G); return; } ms.sort((x, y) => y[2] - x[2]); mv = R() < 0.6 ? ms[0] : ms[(R() * ms.length) | 0]; }
-  mem.to = mv[1]; tapGlass(G, mv[0]); }
+    if (!ms.length) { if (G.undos > 0) ACT.undo(G); return; } ms.sort((x, y) => y[2] - x[2]); mv = R() < 0.6 ? ms[0] : ms[(R() * ms.length) | 0]; }
+  mem.to = mv[1]; ACT.tapGlass(G, mv[0]); }
 // planning when some layers are unknown: aim for the state where every glass is one colour as far as it can see
 function solveSeen(S, caps, limit) { if (!S.some(t => t.some(c => c >= 100))) return solve(S, limit, caps); const cp = T => T.map(t => t.slice());
   const open = Heap(), seen = new Set([key(S)]); open.push({ T: cp(S), g: 0, path: [] }, 2 * hOf(S)); let best = null, bh = hOf(S), n = 0;
@@ -124,3 +131,10 @@ function solveSeen(S, caps, limit) { if (!S.some(t => t.some(c => c >= 100))) re
     for (let a = 0; a < cur.T.length; a++) for (let b = 0; b < cur.T.length; b++) { const m = canPour(cur.T, a, b, caps[b]); if (!m) continue; if (!cur.T[b].length && topRun(cur.T[a]) === cur.T[a].length) continue; const T = cp(cur.T); for (let i = 0; i < m; i++) T[b].push(T[a].pop()); const k = key(T); if (seen.has(k)) continue; seen.add(k); open.push({ T, g: cur.g + 1, path: cur.path.concat([[a, b]]) }, cur.g + 1 + 2 * hOf(T)); } }
   return best; }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { tapGlass, undo }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

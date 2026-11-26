@@ -129,9 +129,11 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.bus) return; const b
   if (mem.err == null || mem.errFor !== (nextStop(G) || {}).s) { mem.errFor = (nextStop(G) || {}).s; mem.err = gauss() * (1 - acc) * 2.2; }
   const st = nextStop(G);
   if (b.doors > 0) { pedal(G, 'br', false); const D = b.dwell; const ready = D && D.ready != null && D.on >= D.off + D.board; if (ready && !G.runner && (st.due < 0 || G.t >= st.due - 0.2)) pedal(G, 'go', true); else pedal(G, 'go', false); return; }
-  // how far to the next thing to stop for
+  const P = busPlan(G, acc, mem.err, st); pedal(G, 'go', P.go); pedal(G, 'br', P.br); }
+// what a careful driver's feet do now (the robot's, and the tutorial's cue): { go, br }
+function busPlan(G, acc, err, st) { const b = G.bus, c = G.cfg, out = { go: false, br: false };
   let stopAt = Infinity; const dec = 2.0 + acc * 0.6;
-  if (st) stopAt = st.s + mem.err;
+  if (st) stopAt = st.s + err;
   for (const L of G.lights) { if (L.passed) continue; const d = L.s - b.s; if (d < 0) continue; const tArr = d / Math.max(1, b.v), col = lightAt(L, G.t + Math.min(tArr, 3)), now = lightAt(L, G.t); if (now !== 'g' && !(now === 'a' && d < b.v * 0.9) || (now === 'g' && col !== 'g' && d > b.v * b.v / (2 * dec) + 3)) stopAt = Math.min(stopAt, L.s - 1.5); }
   for (const Z of G.zebras) { if (Z.done) continue; const d = Z.s - b.s; if (Z.ped && G.t < Z.ped.t0 + Z.ped.dur && d > 0) stopAt = Math.min(stopAt, Z.s - 3); }
   for (const car of G.cars) if (!car.gone && car.s > b.s) stopAt = Math.min(stopAt, car.s - CARLEN - 4 - b.v * 0.6);
@@ -139,19 +141,26 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.bus) return; const b
   for (const l of G.legs) { if (l.kind !== 'T') continue; const d0 = l.s0 - 2 - b.s; if (b.s > l.s0 + l.L + 2) continue; vlim = Math.min(vlim, d0 <= 0 ? vt0 : Math.sqrt(vt0 * vt0 + 2 * dec * 0.8 * d0)); }
   const d = stopAt - b.s, vt = Math.min(vlim, d > 0 ? Math.sqrt(2 * dec * Math.max(0, d)) : 0);
   const need = d > 0.3 ? b.v * b.v / (2 * Math.max(0.3, d)) : 9;
-  if (b.v > vt + 0.25 || need > dec * 0.9) { pedal(G, 'go', false); pedal(G, 'br', b.br * c.brake < Math.max(need, 0.8) + 0.2); }
-  else if (b.v < vt - 0.6 && d > 0.4) { pedal(G, 'br', false); pedal(G, 'go', b.go < 0.55 + 0.45 * acc || b.v > 3); }
-  else { pedal(G, 'go', false); pedal(G, 'br', false); }
-  if (b.v < 0.3 && d < 0.6 && d > -1.5 && st && Math.abs(st.s - b.s) <= 1.6) { pedal(G, 'go', false); pedal(G, 'br', true); } }
+  if (b.v > vt + 0.25 || need > dec * 0.9) { out.go = false; out.br = b.br * c.brake < Math.max(need, 0.8) + 0.2; }
+  else if (b.v < vt - 0.6 && d > 0.4) { out.br = false; out.go = b.go < 0.55 + 0.45 * acc || b.v > 3; }
+  else { out.go = false; out.br = false; }
+  if (b.v < 0.3 && d < 0.6 && d > -1.5 && st && Math.abs(st.s - b.s) <= 1.6) { out.go = false; out.br = true; }
+  return out; }
 // blind moves (no looking): GO down/up, BRAKE down/up
 const BLIND = { g: G => pedal(G, 'go', !G.bus.goH), b: G => pedal(G, 'br', !G.bus.brH), n: G => { pedal(G, 'go', false); pedal(G, 'br', false); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.stops.forEach(s => { s.served = true; s.at = s.at || G.t; }); G.late = G.stops.map(() => 0); G.lateEnd = 0; finish(G, true); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'stop', title: 'GO, BRAKE, STOP ON THE MARK', say: 'HOLD GO, STOP ON YELLOW', do: 'hold', how: 'Hold GO (right) to drive. Hold BRAKE (left) to slow. Stop with the front door on the yellow mark: the doors open by themselves. Serve 2 stops.', need: 2 }],
-  2: [{ id: 'time', title: 'KEEP TO TIME', say: 'WAIT FOR THE TIME, THEN GO', do: 'wait', how: 'Every stop has a time. When everyone is on, wait for the time, then press GO to leave. Not before it! Leave 2 stops on time.', need: 2 }],
-  3: [{ id: 'light', title: 'RED LIGHTS AND ZEBRAS', say: 'STOP ON RED', do: 'hold', how: 'Stop at a red light and go on green. Stop for people on a zebra crossing. Get past 3 of them safely.', need: 3 }],
+  1: [{ id: 'stop', title: 'GO, BRAKE, STOP ON THE MARK', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Hold GO (right) to drive. Hold BRAKE (left) to slow. Stop with the front door on the yellow mark: the doors open by themselves. Serve 2 stops.', need: 2 }],
+  2: [{ id: 'time', title: 'KEEP TO TIME', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Every stop has a time. When everyone is on, wait for the time, then press GO to leave. Not before it! Leave 2 stops on time.', need: 2 }],
+  3: [{ id: 'light', title: 'RED LIGHTS AND ZEBRAS', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Stop at a red light and go on green. Stop for people on a zebra crossing. Get past 3 of them safely.', need: 3 }],
 };
+// THE TUTORIAL SHOWS THE PEDAL FOR THIS MOMENT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said
+// HOLD GO, STOP ON YELLOW for the whole lesson; now it is what a careful driver's feet do this second (busPlan, the robot's own driving):
+// HOLD GO on the right, HOLD BRAKE on the left, LET GO, WAIT while people get on, and at the stop's time TAP GO.
+function busCue(G) { const b = G.bus; if (!b || G.wait > 0) return ['WAIT…', 'wait', false]; const R = [W * 0.76, H * 0.72], Lf = [W * 0.24, H * 0.72], st = nextStop(G);
+  if (b.doors > 0) { const D = b.dwell, ready = D && D.ready != null && D.on >= D.off + D.board; if (!ready || G.runner) return ['WAIT: PEOPLE GETTING ON', 'wait', false]; if (st && st.due >= 0 && G.t < st.due - 0.2) return ['WAIT FOR THE TIME…', 'wait', false]; return ['HOLD GO', 'hold', R]; }
+  const P = busPlan(G, 1, 0, st); if (P.br) return [b.v < 0.3 ? 'KEEP HOLDING BRAKE' : 'HOLD BRAKE', 'hold', Lf]; if (P.go) return ['HOLD GO', 'hold', R]; return [b.goH || b.brH ? 'LET GO' : 'ROLL…', b.goH || b.brH ? 'release' : 'wait', b.goH ? R : b.brH ? Lf : false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonDeal(G) { const st = lessonNow(G); G.rnd = rng(G.seed + (G.deals = (G.deals | 0) + 1)); const n = G.lesson.n; setup(G, { yard: st.id }); G.lesson.n = st.id === 'stop' ? 0 : n; G.ev.push({ k: 'yard' }); }

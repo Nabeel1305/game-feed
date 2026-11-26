@@ -235,10 +235,18 @@ function finish(G, win, why) {
 
 // ---------- LESSONS: brush (three teeth clean, gently), scrape (three teeth of tartar), polish (three stained teeth) ----------
 const LESSONS = {
-  1: [{ id: 'brush', title: 'BRUSH', say: 'TAP 🪥, RUB SLOWLY', do: 'drag', dir: 'lr', tool: 'brush', how: 'Take the 🪥 brush. Drag it calmly over the dirty teeth until they shine. Three teeth. Scrubbing fast starts the count again.', need: 3 }],
-  2: [{ id: 'scaler', title: 'SCRAPE', say: 'TAP 🪝, SCRAPE THE YELLOW', do: 'drag', dir: 'lr', tool: 'scaler', how: 'The yellow crust at the gum is tartar. Take the 🪝 scaler and drag it slowly along the crust. Three teeth.', need: 3 }],
-  3: [{ id: 'polish', title: 'POLISH', say: 'HOLD ✨ ON THE BROWN', do: 'hold', tool: 'polish', how: 'Brown stains: hold the ✨ polisher on them and move it slowly. Three teeth.', need: 3 }],
+  1: [{ id: 'brush', title: 'BRUSH', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'brush', how: 'Take the 🪥 brush. Drag it calmly over the dirty teeth until they shine. Three teeth. Scrubbing fast starts the count again.', need: 3 }],
+  2: [{ id: 'scaler', title: 'SCRAPE', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'scaler', how: 'The yellow crust at the gum is tartar. Take the 🪝 scaler and drag it slowly along the crust. Three teeth.', need: 3 }],
+  3: [{ id: 'polish', title: 'POLISH', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'polish', how: 'Brown stains: hold the ✨ polisher on them and move it slowly. Three teeth.', need: 3 }],
 };
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, ON THE TOOTH (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
+// It said TAP 🪥, RUB SLOWLY (two moves) with a hand swiping in a box. Now: the hand on the tool in the tray (TAP 🪥), then a slow drag over
+// the dirt of the tooth the robot would clean next, from its first dirty patch to its last (the finger sits a little below what it cleans).
+function dentCue(G) { if (G.phase !== 'work' || !G.lesson) return ['WAIT…', 'wait', false]; const st = G.lesson.steps[0], L = layout(G), icon = { brush: '🪥', scaler: '🪝', polish: '✨' }[st.tool] || '';
+  if (G.tool !== st.tool) { const b = L.tray.find(q => q.id === st.tool); return b ? ['TAP ' + icon, 'tap', [b.x, b.y]] : ['WAIT…', 'wait', false]; }
+  const lay = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain', A = archOf(G), t = A.teeth.find(q => q.cells.some(c => c[lay] > CLEAN || (lay === 'plaque' && c.food > CLEAN))); if (!t) return ['WAIT…', 'wait', false];
+  const cl = t.cells.filter(c => c[lay] > CLEAN || (lay === 'plaque' && c.food > CLEAN)).sort((a, b) => a.y - b.y || a.x - b.x), p0 = cl[0], p1 = cl.length > 1 ? cl[cl.length - 1] : { x: p0.x + 0.04, y: p0.y }, a = m2s(G, p0.x, p0.y), b = m2s(G, p1.x, p1.y);
+  return [st.id === 'brush' ? 'RUB SLOWLY' : st.id === 'scaler' ? 'SCRAPE THE YELLOW SLOWLY' : 'POLISH THE BROWN SLOWLY', 'drag', [a.x, a.y + LIFT * k, b.x, b.y + LIFT * k]]; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, seen: [] }; G.ev.push({ k: 'lessonnext', first: true });
   const P = G.pts[0], A = P.arches[0], R = rng(G.seed + 77), L = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain';
   for (const B of P.arches) for (const t of B.teeth) for (const cl of t.cells) { cl.food = cl.plaque = cl.tartar = cl.stain = 0; cl.decay = 0; cl.chip = 0; cl.jag = 0; }

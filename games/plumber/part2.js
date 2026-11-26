@@ -241,9 +241,9 @@ function finish(G, win) { if (G.over) return true; G.over = win ? 'won' : 'lost'
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS: a single rigged job; any slip starts it again ----------
 const LESSONS = {
-  1: [{ id: 'washer', title: 'A DRIPPING TAP', say: 'TAP THE TAP, HOLD… LET GO', do: 'hold', how: 'Tap the dripping kitchen tap to look at it. Pick NEW WASHER, then HOLD and let go in the green. Twice.', need: 2, job: 'drip' }],
-  2: [{ id: 'plunge', title: 'PLUNGE IT', say: 'TAP AS THE RING CLOSES', do: 'tap', how: 'Tap the toilet, pick PLUNGE, then TAP each time the ring closes on the circle. Off-beat taps push the water back.', need: 1, job: 'wcclog' }],
-  3: [{ id: 'burst', title: 'BURST PIPE!', say: 'SHUT OFF THE WATER FIRST', do: 'tap', how: 'Water everywhere! First SHUT OFF the main (the stopcock by the meter, downstairs), then fit a new section and solder it.', need: 1, job: 'burst' }],
+  1: [{ id: 'washer', title: 'A DRIPPING TAP', say: G => plumbCue(G)[0], do: G => plumbCue(G)[1], at: G => plumbCue(G)[2], how: 'Tap the dripping kitchen tap to look at it. Pick NEW WASHER, then HOLD and let go in the green. Twice.', need: 2, job: 'drip' }],
+  2: [{ id: 'plunge', title: 'PLUNGE IT', say: G => plumbCue(G)[0], do: G => plumbCue(G)[1], at: G => plumbCue(G)[2], how: 'Tap the toilet, pick PLUNGE, then TAP each time the ring closes on the circle. Off-beat taps push the water back.', need: 1, job: 'wcclog' }],
+  3: [{ id: 'burst', title: 'BURST PIPE!', say: G => plumbCue(G)[0], do: G => plumbCue(G)[1], at: G => plumbCue(G)[2], how: 'Water everywhere! First SHUT OFF the main (the stopcock by the meter, downstairs), then fit a new section and solder it.', need: 1, job: 'burst' }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -268,6 +268,23 @@ const BLIND = {
 };
 // a player who looks: picks a good call, goes to the part the complaint points at (or straight to the real one, if they know
 // the trade), reads what the look says, picks the fix, and does it with a human hand (late, early, shaky)
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said TAP THE TAP, HOLD… LET GO (three moves) with a hand holding in a box. Now the job's next step (curStep) with the hand on it:
+// TAP THE <PART>, then the fix to pick (TAP NEW WASHER...), then the fix itself: HOLD and LET GO! in the green, TAP NOW! as the ring closes,
+// SLIDE TO HERE on the dial, DRAG THE PIPE IN; TAP ✕ when the wrong part is open.
+const PLC = { lit: -1e9 };
+function plumbCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const L = lay(), J = G.job, mid = r => [r.x + r.w / 2, r.y + r.h / 2], now = G.t * 1000; if (!J || G.phase === 'paid') return ['WAIT…', 'wait', false];
+  if (G.phase === 'job') { if (J.walk || J.busy > 0) return ['WAIT…', 'wait', false]; const st = curStep(G); if (!st) return ['WAIT…', 'wait', false];
+    if (!J.look) { const [px, py] = spot(G, st[0]); return ['TAP THE ' + String(FIX[st[0]] ? FIX[st[0]].name : st[0]).toUpperCase(), 'tap', [L.X(px), L.Y(py)]]; }
+    if (J.look.id !== st[0]) return ['NOT THIS ONE: TAP ✕', 'tap', mid(closeRect(L))];
+    const acts = FIX[st[0]].acts, kk = acts.indexOf(st[1]); return ['TAP ' + String(st[1]).toUpperCase(), 'tap', mid(actRect(kk, acts.length, L))]; }
+  if (G.phase === 'fix' && J.fix) { const F = J.fix, sheet = [W / 2, L.sy + L.sheetH * 0.6];
+    if (F.kind === 'hold' || F.kind === 'end') { if (!F.held) return ['HOLD', 'hold', sheet]; return F.m >= (F.a + F.b) / 2 - (F.b - F.a) * 0.15 ? ['LET GO!', 'release', sheet] : ['KEEP HOLDING…', 'hold', sheet]; }
+    if (F.kind === 'pump') { if ((1 - F.p) * F.T < 0.22) PLC.lit = now; return now - PLC.lit < 220 && now >= PLC.lit ? ['TAP NOW!', 'tap', sheet] : ['WAIT FOR THE RING…', 'wait', false]; }
+    if (F.kind === 'feed') return F.st === 'ok' ? ['HOLD', 'hold', sheet] : ['LET GO!', 'release', sheet];
+    if (F.kind === 'set') { const r = sliderRect(L), x1 = r.x + F.tgt * r.w; return ['SLIDE TO HERE', 'drag', [r.x + (F.v != null ? F.v : 0.5) * r.w, r.y + r.h / 2, x1, r.y + r.h / 2]]; }
+    if (F.kind === 'fit') { const a = fitStart(L), b = fitTarget(L); return ['DRAG THE PIPE IN', 'drag', [a[0], a[1], b[0], b[1]]]; } }
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0) { mem.t = 0; return; } mem.t = (mem.t || 0) + 1 / 60;
   if (G.phase === 'board') { if (mem.t < 1.6 + react * 4) return;      /* reading the calls */ mem.t = 0; let bi = -1, bv = -1e9; G.calls.forEach((c, i) => { const v = c.pay / (c.dist + 8 + c.steps.length * 5) + (c.ttl - c.age < 6 ? -2 : 0) + (R() - 0.5) * (1 - acc) * 4; if (v > bv) { bv = v; bi = i; } }); if (bi >= 0) takeCall(G, bi); return; }

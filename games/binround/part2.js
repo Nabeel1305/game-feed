@@ -113,10 +113,20 @@ function finish(G, win, o = {}) { if (G.over) return; G.over = win ? 'won' : 'lo
   G.ev.push({ k: win ? 'won' : 'rest' }); }
 // ---------- LESSONS: the first three levels each start with one ----------
 const LESSONS = {
-  1: [{ id: 'empty', title: 'EMPTY A BIN', say: 'TAP THE BIN, HOLD', do: 'tap', how: 'Tap the bin: you fetch it. HOLD COLLECT. Let go when the ring reaches the GREEN. Two bins.', need: 2 }],
-  2: [{ id: 'pickout', title: 'KEEP THE RECYCLING CLEAN', say: 'TAP THE BAG OUT', do: 'tap', how: 'A bin bag is on top of the recycling. Fetch it, tap PICK OUT, then empty the box.', need: 1 }],
-  3: [{ id: 'house', title: 'FINISH THE HOUSE', say: 'EMPTY THEM, THEN NEXT', do: 'tap', how: 'Empty the bag and the garden bin, then tap NEXT HOUSE.', need: 1 }],
+  1: [{ id: 'empty', title: 'EMPTY A BIN', say: G => binCue(G)[0], do: G => binCue(G)[1], at: G => binCue(G)[2], how: 'Tap the bin: you fetch it. HOLD COLLECT. Let go when the ring reaches the GREEN. Two bins.', need: 2 }],
+  2: [{ id: 'pickout', title: 'KEEP THE RECYCLING CLEAN', say: G => binCue(G)[0], do: G => binCue(G)[1], at: G => binCue(G)[2], how: 'A bin bag is on top of the recycling. Fetch it, tap PICK OUT, then empty the box.', need: 1 }],
+  3: [{ id: 'house', title: 'FINISH THE HOUSE', say: G => binCue(G)[0], do: G => binCue(G)[1], at: G => binCue(G)[2], how: 'Empty the bag and the garden bin, then tap NEXT HOUSE.', need: 1 }],
 };
+// THE TUTORIAL SHOWS THE ONE MOVE FOR THIS MOMENT, WITH THE HAND ON THE THING (26 Nov 2026, his words: "it tells me to swipe. I swipe up and
+// then nothing happens"). It said TAP THE BIN, HOLD for the whole lesson with the hand in a box: now the hand is on the bin, then on COLLECT
+// (hold), then it says LET GO on the green; PICK OUT when a bag is on the recycling; NEXT HOUSE at the end. The robot's order, as cues.
+function binCue(G) { const L = layout(G), w = G.wk, it = carried(G), mid = r => [r.x + r.w / 2, r.y + r.h / 2];
+  if (G.nextOk) return ['TAP NEXT HOUSE', 'tap', mid(L.next)];
+  if (G.hold && it && w.st === 'lift') return it.p >= 1.02 ? ['LET GO!', 'release', [L.collect.x, L.collect.y]] : ['KEEP HOLDING', 'hold', [L.collect.x, L.collect.y]];
+  if (w.st === 'ready' && it && G.compact <= 0) return it.wrong ? ['TAP PICK OUT', 'tap', mid(L.pick)] : ['HOLD COLLECT', 'hold', [L.collect.x, L.collect.y]];
+  if (atStop(G) && (w.st === 'idle' || w.st === 'return' || w.st === 'hop') && !G.queue) { const hp = hopper(G); let best = null, bd = 1e9; for (const q of G.items) if (q.st === 'wait') { const d = Math.hypot(q.x - hp.x, q.z - hp.z); if (d < bd) { bd = d; best = q; } }
+    const sp = best && typeof itemScreen === 'function' ? itemScreen(best) : null; if (best) return [best.kind === 'bag' ? 'TAP THE BAG' : 'TAP THE BIN', 'tap', sp ? [sp.x, sp.y] : false]; }
+  return ['WAIT…', 'wait', false]; }
 function lessonStart(G) { const st0 = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0 };
   G.stops = [makeStop(G, 0, st0.id === 'empty' ? ['bin', 'bin', 'bin'] : st0.id === 'pickout' ? ['recycle', 'bag'] : ['bag', 'garden'])]; G.stops[0].note = -1;
   G.lorry.z = G.stops[0].z + 2.5 - 6; G.ev.push({ k: 'lessonnext', first: true }); }

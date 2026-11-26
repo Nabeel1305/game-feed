@@ -107,10 +107,18 @@ function finish(G, win, why) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'fly', title: 'FORWARDS AND TURN', say: 'HOLD, SLIDE TO TURN', do: 'drag', dir: 'lr', how: 'Hold your thumb down: the drone flies forwards. Slide it left or right to turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
-  2: [{ id: 'climb', title: 'UP AND DOWN', say: 'SLIDE UP OR DOWN', do: 'drag', dir: 'ud', how: 'These hoops are high and low. Slide your thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
-  3: [{ id: 'slide', title: 'LIFT TO BRAKE', say: 'LET GO TO STOP', do: 'release', at: G => [W / 2, H * 0.7], how: 'Lift your thumb and the drone brakes to a hover. It drifts: lift early before a tight hoop, line up, then hold again. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
+  1: [{ id: 'fly', title: 'FORWARDS AND TURN', say: G => droneCue(G)[0], do: G => droneCue(G)[1], at: G => droneCue(G)[2], how: 'Hold your thumb down: the drone flies forwards. Slide it left or right to turn. Fly through the glowing hoops, three of them.', need: 3, ok: w => w === 'hoop', hoops: 3, flat: true }],
+  2: [{ id: 'climb', title: 'UP AND DOWN', say: G => droneCue(G)[0], do: G => droneCue(G)[1], at: G => droneCue(G)[2], how: 'These hoops are high and low. Slide your thumb up to climb, down to sink. Three hoops.', need: 3, ok: w => w === 'hoop', hoops: 3 }],
+  3: [{ id: 'slide', title: 'LIFT TO BRAKE', say: G => droneCue(G)[0], do: G => droneCue(G)[1], at: G => droneCue(G)[2], how: 'Lift your thumb and the drone brakes to a hover. It drifts: lift early before a tight hoop, line up, then hold again. Four hoops.', need: 4, ok: w => w === 'hoop', hoops: 4 }],
 };
+// THE TUTORIAL SHOWS WHICH WAY TO SLIDE, NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). The hand
+// slid left and right in a box for ever. Now the robot is asked how it would steer (dryPlan) and the hand holds and slides that way: HOLD TO
+// FLY when straight on, SLIDE RIGHT / LEFT to turn, SLIDE UP / DOWN to climb or sink, LET GO TO STOP when the hoop is sharply to the side.
+function droneCue(G) { const h = G.hoops[G.next]; if (G.over || !h || G.respawn > 0 || G.down > 0) return ['WAIT…', 'wait', false];
+  const P = dryPlan(G); if (!P) return ['HOLD TO FLY', 'hold', [W / 2, H * 0.68]]; const [, climb, yaw, pitch] = P, r = 54 * k;
+  if (pitch < 0.2 && G.lesson && G.lesson.steps[G.lesson.i].id === 'slide') return ['LET GO TO STOP', 'release', [W / 2, H * 0.68]];
+  const dx = -yaw * r * 0.8, dy = -climb * r * 0.8; if (Math.abs(dx) < 0.15 * r && Math.abs(dy) < 0.15 * r) return [ui.sticks.L ? 'KEEP HOLDING' : 'HOLD TO FLY', 'hold', [W / 2, H * 0.68]];
+  const word = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'SLIDE RIGHT' : 'SLIDE LEFT') : (dy < 0 ? 'SLIDE UP' : 'SLIDE DOWN'); return [word, 'drag', [W / 2, H * 0.68, W / 2 + dx, H * 0.68 + dy]]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, miss: 0 }; makeCourse(G); G.ev.push({ k: 'lessonnext', first: true }); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSee(G, what) {
@@ -132,7 +140,7 @@ const BLIND = {
 // a pilot who looks: aims for a point just in front of the next hoop, then through its middle; eases off before it
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, c = G.cfg, d = G.d, h = G.hoops[G.next];
-  if (!h || G.respawn > 0 || G.down > 0) { sticks(G, 0, 0, 0, 0); return; }
+  if (!h || G.respawn > 0 || G.down > 0) { ACT.sticks(G, 0, 0, 0, 0); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.05 + react * 0.25;
   const nx = Math.sin(h.yaw), nz = Math.cos(h.yaw), along = (d.x - h.x) * nx + (d.z - h.z) * nz, lead = clamp(-along * 0.45, 0, 9);
   const n = (1 - acc), j = () => (Math.random() - 0.5) * 2 * n;
@@ -141,6 +149,11 @@ function honest(G, o, mem) {
   const dist = Math.hypot(ax - d.x, az - d.z), s = Math.sin(d.yaw), co = Math.cos(d.yaw), vf = d.vx * s + d.vz * co, vs = d.vx * co - d.vz * s;
   const lat = (ax - d.x) * co - (az - d.z) * s, wantV = clamp(dist * 0.9, 3, c.vmax * (0.55 + acc * 0.4));
   const pitch = Math.abs(err) > 0.8 ? 0.1 : clamp((wantV - vf) * 0.35 + 0.5, -1, 1);
-  sticks(G, clamp((ay - d.y) * 0.9 - d.vy * 0.25, -1, 1), clamp(err * 2.2, -1, 1), pitch, clamp(lat * 0.35 - vs * 0.25, -1, 1));
+  ACT.sticks(G, clamp((ay - d.y) * 0.9 - d.vy * 0.25, -1, 1), clamp(err * 2.2, -1, 1), pitch, clamp(lat * 0.35 - vs * 0.25, -1, 1));
 }
 function winNow(G) { if (!G || G.over) return; G.down = 0; G.lesson = null; G.next = G.hoops.length - 1; G.lives = G.cfg.lives; G.clock = Math.max(G.clock, 10); const h = G.hoops[G.next]; Object.assign(G.d, { x: h.x - Math.sin(h.yaw) * 1.2, y: h.y, z: h.z - Math.cos(h.yaw) * 1.2, vx: Math.sin(h.yaw) * 6, vy: 0, vz: Math.cos(h.yaw) * 6, yaw: h.yaw }); G.respawn = 0; sticks(G, 0, 0, 0.6, 0); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { sticks }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }

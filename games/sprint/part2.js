@@ -37,7 +37,7 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Rookie'], [60, 'Club runner'], [200, 'County champ'], [500, 'National star'], [1100, 'World class'], [2500, 'Legend']];
 const PLACE_TXT = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th'];
-function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 5 === 0, ev = eventOf(N);
+function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 5 === 0, ev = eventOf(N);
   return { ev, E: EVENTS[ev], boss, round: roundOf(N), rivals: 7, need: N <= 12 ? 3 : 2, help: !!help,
     rv: x(8.7, 11.6, 30) * (1 - 0.15 * easyOf(N)) * (boss ? 1.015 : 1) * (help ? 0.955 : 1), spread: 0.08,
     vcap: 10.9 * (1 + 0.02 * upLv('spikes')), perfW: 0.05 + 0.01 * upLv('rhythm'), blocks: upLv('blocks'), spring: upLv('spring'), setT: [1.3, 2.6] }; }
@@ -162,15 +162,24 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.you) return; const y
   else if (G.D - y.s < 1.8 + gauss() * 0.2 * (1 - acc) * 4 && !mem.dipped && G.D < 1e8) { mem.dipped = true; tap(G, 'L'); tap(G, 'R'); return; }
   if (mem.for !== y.due) { mem.for = y.due; mem.at = y.due - 0.006 + gauss() * sd; }
   if (mem.at != null && G.t >= mem.at) { mem.at = null; mem.for = -1; tap(G, y.side || 'L'); } }
+// THE TUTORIAL SAYS WHICH SIDE AND WHEN (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said TAP THE
+// CLOSING RING with a hand tapping in a box, whichever side was due. Now, as the robot sees it: WAIT FOR BANG! (no hand: keep still), TAP NOW!
+// at the bang, TAP LEFT / TAP RIGHT with the hand on the side that is due, TAP BOTH! when the hurdle reaches the mark (and for the dip).
+function sprintCue(G) { const y = G.you; if (G.over || G.wait > 0 || !y || G.phase !== 'run' || y.fin != null) return ['WAIT…', 'wait', false];
+  if (!y.started) return G.t >= G.gunT ? ['TAP NOW!', 'tap', false] : ['WAIT FOR BANG!', 'wait', false];
+  if (y.air > 0 || y.stag > 0 || y.dip > 0) return ['…', 'wait', false];
+  const h = nextHurdle(G); if (h != null) { const at = h - y.v * JT(G) * 0.5; if (y.s >= at - y.v * 0.12 && h - y.s < 9) return ['TAP BOTH!', 'tap', false]; }
+  else if (G.D - y.s < 1.8 + y.v * 0.12 && G.D < 1e8) return ['TAP BOTH: DIP!', 'tap', false];
+  const sd = y.side || 'L'; return [sd === 'L' ? 'TAP LEFT' : 'TAP RIGHT', 'tap', [W * (sd === 'L' ? 0.25 : 0.75), H * 0.72]]; }
 // blind moves (no looking): a left tap, a right tap, both together
 const BLIND = { l: G => tap(G, 'L'), r: G => tap(G, 'R'), b: G => { tap(G, 'L'); tap(G, 'R'); } };
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; const y = G.you; if (G.phase !== 'run') { G.phase = 'run'; G.gunT = G.t; }
   y.started = true; y.fin = G.t; y.s = G.D; y.react = y.react || 0.18; y.place = 1; finish(G, true, { place: 1 }); }
 // ---------- LESSONS: the first three levels ----------
 const LESSONS = {
-  1: [{ id: 'stride', title: 'LEFT, RIGHT, IN TIME', say: 'TAP THE CLOSING RING', do: 'tap', how: 'Tap the side whose ring is closing, just as it closes. Left, right, left... Too soon, or the same side twice, and you trip. Run 10 strides without tripping!', need: 10 }],
-  2: [{ id: 'gun', title: 'WAIT FOR THE GUN', say: 'WAIT FOR BANG!', do: 'wait', at: G => [W / 2, H * 0.7], how: 'On SET keep still. Tap the moment you hear BANG! Tap before it and it is a false start. Make 2 clean starts.', need: 2 }],
-  3: [{ id: 'hurdle', title: 'BOTH THUMBS: JUMP', say: 'TAP BOTH!', do: 'tap', how: 'Keep striding. When a hurdle reaches the GREEN mark, tap BOTH sides together to jump it. Clear 3 in a row!', need: 3 }],
+  1: [{ id: 'stride', title: 'LEFT, RIGHT, IN TIME', say: G => sprintCue(G)[0], do: G => sprintCue(G)[1], at: G => sprintCue(G)[2], how: 'Tap the side whose ring is closing, just as it closes. Left, right, left... Too soon, or the same side twice, and you trip. Run 10 strides without tripping!', need: 10 }],
+  2: [{ id: 'gun', title: 'WAIT FOR THE GUN', say: G => sprintCue(G)[0], do: G => sprintCue(G)[1], at: G => sprintCue(G)[2], how: 'On SET keep still. Tap the moment you hear BANG! Tap before it and it is a false start. Make 2 clean starts.', need: 2 }],
+  3: [{ id: 'hurdle', title: 'BOTH THUMBS: JUMP', say: G => sprintCue(G)[0], do: G => sprintCue(G)[1], at: G => sprintCue(G)[2], how: 'Keep striding. When a hurdle reaches the GREEN mark, tap BOTH sides together to jump it. Clear 3 in a row!', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];

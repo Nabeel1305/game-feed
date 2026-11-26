@@ -4969,9 +4969,9 @@ if (typeof window !== 'undefined' && !BAND.timer) { BAND.timer = setInterval(ban
 const COACH = { miss: -9, ok: -9, n: -1, i: -1, t0: 0, drawn: 0, shown: false };
 // The coach draws on its own see-through layer above everything (a game's HTML buttons too), so the hand is never hidden under a button.
 let CCX = null, COACHCV = null; function coachRR(x, y, w, h, r) { CCX.beginPath(); CCX.moveTo(x + r, y); CCX.arcTo(x + w, y, x + w, y + h, r); CCX.arcTo(x + w, y + h, x, y + h, r); CCX.arcTo(x, y + h, x, y, r); CCX.arcTo(x, y, x + w, y, r); CCX.closePath(); }
-function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; COACHCV.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; document.body.appendChild(COACHCV); CCX = COACHCV.getContext('2d');
+function coachLayer() { if (!COACHCV) { COACHCV = document.createElement('canvas'); COACHCV.id = 'coachCv'; const host = document.getElementById('stage') || document.body; COACHCV.style.cssText = (host === document.body ? 'position:fixed;' : 'position:absolute;') + 'left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:3'; host.appendChild(COACHCV); CCX = COACHCV.getContext('2d');      /* inside the game's #stage, so a game turned sideways on a portrait phone has its tutorial turned with it (26 Nov 2026: in eleven games the words and the hand were drawn upright over a sideways picture, the hand in the wrong place) */
     const loop = () => { if (COACH.shown && performance.now() - COACH.drawn > 120) { CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, COACHCV.width, COACHCV.height); COACH.shown = false; } requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
-  const d = Math.min(2, window.devicePixelRatio || 1), w = Math.round(innerWidth * d), h = Math.round(innerHeight * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
+  const d = Math.min(2, window.devicePixelRatio || 1), inStage = COACHCV.parentNode !== document.body, w = Math.round((inStage ? W : innerWidth) * d), h = Math.round((inStage ? H : innerHeight) * d); if (COACHCV.width !== w || COACHCV.height !== h) { COACHCV.width = w; COACHCV.height = h; }
   CCX.setTransform(1, 0, 0, 1, 0, 0); CCX.clearRect(0, 0, w, h); const sx = w / W, sy = h / H; CCX.setTransform(sx, 0, 0, sy, 0, 0); COACH.drawn = performance.now(); COACH.shown = true; }
 
 function coachMiss() { COACH.miss = performance.now(); }
@@ -5417,10 +5417,24 @@ function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; con
   G.ev.push({ k: win ? 'won' : 'lost' }); }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'run', title: 'RUN IT', say: 'SNAP, HANDOFF, RUN', do: 'tap', how: 'Pick DIVE, tap SNAP, then HANDOFF. Run with the stick: get past the yellow line (ten yards). DODGE just before a tackle.', need: 1 }],
-  2: [{ id: 'pass', title: 'THROW IT', say: 'TAP THE GREEN ONE', do: 'tap', how: 'Pick SLANTS and SNAP. Wait for a receiver to turn GREEN (open), then tap his button. Three catches in a row.', need: 3 }],
-  3: [{ id: 'tackle', title: 'STOP THEM', say: 'RUN AT HIM, TACKLE', do: 'tap', how: 'You defend now. SWITCH to the player nearest the ball, run at the carrier, tap TACKLE when you are close.', need: 1 }],
+  1: [{ id: 'run', title: 'RUN IT', say: G => gridCue(G)[0], do: G => gridCue(G)[1], at: G => gridCue(G)[2], how: 'Pick DIVE, tap SNAP, then HANDOFF. Run with the stick: get past the yellow line (ten yards). DODGE just before a tackle.', need: 1 }],
+  2: [{ id: 'pass', title: 'THROW IT', say: G => gridCue(G)[0], do: G => gridCue(G)[1], at: G => gridCue(G)[2], how: 'Pick SLANTS and SNAP. Wait for a receiver to turn GREEN (open), then tap his button. Three catches in a row.', need: 3 }],
+  3: [{ id: 'tackle', title: 'STOP THEM', say: G => gridCue(G)[0], do: G => gridCue(G)[1], at: G => gridCue(G)[2], how: 'You defend now. SWITCH to the player nearest the ball, run at the carrier, tap TACKLE when you are close.', need: 1 }],
 };
+// THE TUTORIAL SHOWS ONE MOVE AT A TIME, WITH THE HAND ON IT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing
+// happens"). It said SNAP, HANDOFF, RUN (three moves) with a hand in a box. Now the robot is asked (dryPlan) and the hand does it: TAP DIVE /
+// SLANTS on the play card, TAP SNAP, TAP HANDOFF, RUN THIS WAY (the stick), TAP DODGE, TAP HIM (the open receiver's button), TAP SWITCH, TAP TACKLE.
+const GRC = { t: -1e9, v: null };
+function gridCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - GRC.t < 250) return GRC.v; GRC.t = now;
+  const L = layout(G), mid = r => [r.x + r.w / 2, r.y + r.h / 2], P = dryPlan(G, null, { cd: -1 }); let v = ['WAIT…', 'wait', false];
+  if (P) { const a = P[0], lab = btnLabels(G);
+    if (a === 'pickPlay' && G.play === P[1]) v = ['TAP SNAP', 'tap', mid(L.snap)];      // (the play is already picked: the robot would snap next)
+    else if (a === 'pickPlay') { const c = L.cards.find(q => q.key === P[1]); v = ['TAP ' + String(PLAYS[P[1]] && PLAYS[P[1]].name || P[1]).toUpperCase(), 'tap', c ? mid(c) : false]; }
+    else if (a === 'snap') v = ['TAP SNAP', 'tap', mid(L.snap)]; else if (a === 'throwTo') { const r = recvButtons(G).find(q => q.id === P[1]); v = ['TAP HIM: HE IS OPEN', 'tap', r ? [r.x, r.y] : false]; }
+    else if (a === 'handoff' || a === 'tackleBtn') v = ['TAP ' + lab.a, 'tap', [L.a.x, L.a.y]]; else if (a === 'switchNear') v = ['TAP ' + lab.b, 'tap', [L.b.x, L.b.y]];
+    else if (a === 'dodge') v = lab.a === 'DODGE' ? ['TAP DODGE', 'tap', [L.a.x, L.a.y]] : ['TAP DODGE', 'tap', [L.b.x, L.b.y]];
+    else if (a === 'setStick' && (P[1] || P[2])) { const R = 56 * k * 0.8, x0 = W * 0.24, y0 = H * 0.62; v = ['RUN THIS WAY', 'drag', [x0, y0, x0 - P[1] * R, y0 - P[2] * R]]; } }
+  GRC.v = v; return v; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, wait: 0, id: LESSONS[G.N][0].id, dSlow: 0.55 }; G.ev.push({ k: 'lessonnext', first: true }); lessonReset(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonReset(G) { const D = G.lesson; if (!D || D.done) return; G.cfg = Object.assign({}, G.cfg, { plays: D.id === 'run' ? ['dive'] : D.id === 'pass' ? ['slant'] : G.cfg.plays }); G.att = D.id === 'tackle' ? 1 : 0; G.los = 30; G.down = 1; G.togo = 10; G.fdl = 40; G.plan = [G.att]; G.drive = 0; toPick(G); if (G.att === 1) G.play = 'dive'; }
@@ -5436,21 +5450,26 @@ const BLIND = { m: G => { const R = Math.random; if (R() < 0.2) setStick(G, 0, 0
   r: G => { const el = eligible(G); const q = el[(Math.random() * el.length) | 0]; if (q) throwTo(G, q.id); handoff(G); },
   d: G => { dodge(G); tackleBtn(G); }, s: G => { sprintOn(G, !me(G).sprint); switchNear(G); } };
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, b = G.ball, p = me(G);
-  mem.cd = (mem.cd || 0) - 1 / 60; const go = (x, z) => { const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz); setStick(G, d > 0.3 ? dx / d : 0, d > 0.3 ? dz / d : 0); };
+  mem.cd = (mem.cd || 0) - 1 / 60; const go = (x, z) => { const dx = x - p.x, dz = z - p.z, d = Math.hypot(dx, dz); ACT.setStick(G, d > 0.3 ? dx / d : 0, d > 0.3 ? dz / d : 0); };
   if (G.phase === 'pick') { if (G.att === 1 || mem.cd > 0) return; mem.cd = react * 2; const ks = G.cfg.plays, st = G.cfg.style; let k2 = ks[(R() * ks.length) | 0];
     if (R() < acc) k2 = G.togo <= 3 ? 'dive' : st === 'blitz' && ks.includes('slant') ? 'slant' : st === 'deep' ? (ks.includes('curl') ? 'curl' : ks.includes('slant') ? 'slant' : 'dive') : st === 'wall' && ks.includes('slant') ? 'slant' : ks[(R() * ks.length) | 0];
-    pickPlay(G, k2); snap(G); return; }
-  if (G.phase !== 'live') { setStick(G, 0, 0); return; }
-  if (G.att === 0) { if (b.own === p && p.role === 'QB') { setStick(G, 0, 0); if (mem.cd > 0) return; mem.cd = react * 0.5; if (PLAYS[G.play].kind === 'run') { if (G.liveT > 0.4) handoff(G); return; }
-      let best = null, bo = 0; for (const q of eligible(G)) { const o2 = openness(G, q) + (q.z - G.los) * 0.05; if (o2 > bo) { bo = o2; best = q; } } if (best && G.liveT > 0.9 && (bo > 2.6 - (1 - acc) || G.liveT > 2.4)) throwTo(G, best.id); return; }
-    if (b.own === p) { let ax = 0; for (const d of team(G, 1)) { const dx = p.x - d.x, dz = d.z - p.z, dd = Math.hypot(dx, dz); if (dd < 5 && dz > -1) ax += Math.sign(dx || 1) * (5 - dd); if (dd < 1.4 && p.dodgeCd <= 0 && R() < acc * 0.6) dodge(G); }
+    ACT.pickPlay(G, k2); ACT.snap(G); return; }
+  if (G.phase !== 'live') { ACT.setStick(G, 0, 0); return; }
+  if (G.att === 0) { if (b.own === p && p.role === 'QB') { ACT.setStick(G, 0, 0); if (mem.cd > 0) return; mem.cd = react * 0.5; if (PLAYS[G.play].kind === 'run') { if (G.liveT > 0.4) ACT.handoff(G); return; }
+      let best = null, bo = 0; for (const q of eligible(G)) { const o2 = openness(G, q) + (q.z - G.los) * 0.05; if (o2 > bo) { bo = o2; best = q; } } if (best && G.liveT > 0.9 && (bo > 2.6 - (1 - acc) || G.liveT > 2.4)) ACT.throwTo(G, best.id); return; }
+    if (b.own === p) { let ax = 0; for (const d of team(G, 1)) { const dx = p.x - d.x, dz = d.z - p.z, dd = Math.hypot(dx, dz); if (dd < 5 && dz > -1) ax += Math.sign(dx || 1) * (5 - dd); if (dd < 1.4 && p.dodgeCd <= 0 && R() < acc * 0.6) ACT.dodge(G); }
       go(clamp(p.x + ax * 2, -HW + 1, HW - 1), p.z + 5); if (p.st > 0.5 && !p.sprint && R() < 0.05) sprintOn(G, true); return; }
-    setStick(G, 0, 0); return; }
+    ACT.setStick(G, 0, 0); return; }
   // defending: the defender nearest the ball, at the carrier (or where the pass is going)
-  const t2 = b.own && b.own.t === 1 ? b.own : null, aim = t2 || (b.kind === 'air' ? { x: b.tx, z: b.tz } : null); if (!aim) { setStick(G, 0, 0); return; }
-  if (mem.cd <= 0 && dist(p, aim) > 4 && R() < acc) { mem.cd = react; switchNear(G); } go(aim.x, aim.z - (t2 ? 0 : 0.5));
-  if (t2 && dist(p, t2) < 1.1 && mem.cd <= 0) { mem.cd = react; tackleBtn(G); } }
+  const t2 = b.own && b.own.t === 1 ? b.own : null, aim = t2 || (b.kind === 'air' ? { x: b.tx, z: b.tz } : null); if (!aim) { ACT.setStick(G, 0, 0); return; }
+  if (mem.cd <= 0 && dist(p, aim) > 4 && R() < acc) { mem.cd = react; ACT.switchNear(G); } go(aim.x, aim.z - (t2 ? 0 : 0.5));
+  if (t2 && dist(p, t2) < 1.1 && mem.cd <= 0) { mem.cd = react; ACT.tackleBtn(G); } }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.score[0] = G.score[1] + 7; finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { pickPlay, snap, throwTo, handoff, dodge, switchNear, tackleBtn, setStick }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 // ===================== THE VIEW: Gridiron (sideways; from behind the attacking team) =====================
 // A green field with white yard lines every five yards and numbers every ten, end zones in the teams' colours, the blue line
 // of scrimmage and the yellow first-down line drawn across. Ten players in helmets and pads; the ball carrier stands on a

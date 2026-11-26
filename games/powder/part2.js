@@ -118,9 +118,9 @@ function finish(G) {
 }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'gate', title: 'CARVE', say: 'HOLD, SLIDE TO CARVE', do: 'drag', dir: 'lr', at: G => [W / 2, H * 0.7], how: 'Hold your thumb and slide it left or right to carve. Ride between the flags of three gates in a row.', need: 3 }],
-  2: [{ id: 'rock', title: 'JUMP', say: 'TAP TO JUMP', do: 'tap', at: G => [W / 2, H * 0.7], how: 'Tap to jump. Hop over two rocks in a row.', need: 2 }],
-  3: [{ id: 'trick', title: 'SPIN', say: 'HOLD A SIDE TO SPIN', do: 'hold', how: 'Ride over the kicker. In the air hold a side to spin, let go when the board faces down the hill again. Land two spins.', need: 2 }],
+  1: [{ id: 'gate', title: 'CARVE', say: G => powderCue(G)[0], do: G => powderCue(G)[1], at: G => powderCue(G)[2], how: 'Hold your thumb and slide it left or right to carve. Ride between the flags of three gates in a row.', need: 3 }],
+  2: [{ id: 'rock', title: 'JUMP', say: G => powderCue(G)[0], do: G => powderCue(G)[1], at: G => powderCue(G)[2], how: 'Tap to jump. Hop over two rocks in a row.', need: 2 }],
+  3: [{ id: 'trick', title: 'SPIN', say: G => powderCue(G)[0], do: G => powderCue(G)[1], at: G => powderCue(G)[2], how: 'Ride over the kicker. In the air hold a side to spin, let go when the board faces down the hill again. Land two spins.', need: 2 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -141,14 +141,24 @@ function lessonCrash(G, why) { const st = lessonNow(G); if (!st) return; if (st.
 // BLIND: a thumb that does not look: slides some way (or lets go), or taps
 const BLIND = { l: G => { const R = Math.random; setLean(G, R() < 0.3 ? 0 : (R() * 2 - 1)); }, t: G => { setLean(G, 0); jump(G); } };
 // a rider who looks: aims through the next gate, steers round trees, hops rocks, spins off kickers and stops in time to land
+// THE TUTORIAL SHOWS THE ONE MOVE FOR NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It slid left and
+// right for ever. Now from the robot's riding (dryPlanAll): HOLD, SLIDE LEFT / RIGHT to carve (how far), TAP TO JUMP! as a rock comes (a thumb's
+// time early), in the air HOLD RIGHT TO SPIN and LET GO! as the board faces down the hill.
+const PWC = { t: -1e9, v: null };
+function powderCue(G) { const m = G.me, C = G.course; if (G.over || G.wait > 0 || m.crashT > 0) return ['WAIT…', 'wait', false];
+  if (m.air) { if (!m.kick || !(G.lesson && G.lesson.steps[G.lesson.i].id === 'trick')) return ['WAIT… LAND IT', 'wait', false]; const tl = (m.vy + Math.sqrt(m.vy * m.vy + 2 * GRAV * Math.max(0, m.y))) / GRAV, goal = Math.max(1, Math.floor((tl - 0.3) * 7.5 / Math.PI)) * Math.PI;
+    return Math.abs(m.rot) < goal - 0.5 ? ['SLIDE RIGHT, HOLD: SPIN', 'drag', [W / 2, H * 0.62, W / 2 + 60 * k, H * 0.62]] : ['LET GO!', 'release', [W / 2 + 60 * k, H * 0.62]]; }      /* (a spin is a slide held to one side: a thumb that does not move does not lean) */
+  for (const ob of C.obs) { if (ob.s < m.s + 1) continue; const ds = ob.s - m.s; if (ds > Math.max(6, m.v * 1.6)) break; const px = m.x + Math.tan(m.a) * ds; if (ob.k === 'rock' && Math.abs(px - ob.x) <= ob.r + 1.1 && ds / Math.max(1, m.v) < 0.62 && ds / Math.max(1, m.v) > 0.3) return ['TAP TO JUMP!', 'tap', [W / 2, H * 0.62]]; }
+  const now = performance.now(); if (now - PWC.t < 150) return PWC.v; PWC.t = now; const all = dryPlanAll(G, null, { next: -1 }), l = all.filter(q => q[0] === 'setLean').pop(); let v = ['RIDE…', 'wait', false];
+  if (l && Math.abs(l[1]) > 0.2) { const x0 = W / 2, y0 = H * 0.7; v = [l[1] > 0 ? 'HOLD, SLIDE RIGHT' : 'HOLD, SLIDE LEFT', 'drag', [x0, y0, x0 + l[1] * 60 * k, y0]]; } PWC.v = v; return v; }
 function honest(G, o, mem) {
   const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, m = G.me, c = G.cfg, C = G.course;
-  if (G.over || G.wait > 0) { setLean(G, 0); return; }
+  if (G.over || G.wait > 0) { ACT.setLean(G, 0); return; }
   if (m.air) {      // spin: as many half turns as the air allows; let go in time
     if (mem.spins == null) { const tl = (m.vy + Math.sqrt(m.vy * m.vy + 2 * GRAV * m.y)) / GRAV, can = Math.floor((tl - 0.12 - react * 0.3) * 7.5 / Math.PI); mem.spins = m.kick ? Math.max(0, Math.min(4, can)) : 0; mem.dir = R() < 0.5 ? -1 : 1; mem.slip = R() > acc; }
-    const goal = mem.spins * Math.PI + (mem.slip ? 0.5 + 0.4 * R() : 0); setLean(G, Math.abs(m.rot) < goal - 0.06 ? mem.dir : 0); return; }
+    const goal = mem.spins * Math.PI + (mem.slip ? 0.5 + 0.4 * R() : 0); ACT.setLean(G, Math.abs(m.rot) < goal - 0.06 ? mem.dir : 0); return; }
   mem.spins = null;
-  if (m.crashT > 0) { setLean(G, 0); return; }
+  if (m.crashT > 0) { ACT.setLean(G, 0); return; }
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.04 + react * 0.2;
   // the line: through the next gate (aim a little inside its flags), else down the middle; a kicker if one is near
   const g = C.gates.find(q => !q.done && q.s > m.s + 0.5), k = C.kicks.find(q => q.s > m.s + 4 && q.s < m.s + 45);
@@ -158,9 +168,16 @@ function honest(G, o, mem) {
   // something in the way? jump a rock when it is close; ride round a tree
   const look = Math.max(6, m.v * 1.6);
   for (const ob of C.obs) { if (ob.s < m.s + 1) continue; if (ob.s > m.s + look) break; const ds = ob.s - m.s, px = m.x + Math.tan(m.a) * ds; if (Math.abs(px - ob.x) > ob.r + 1.1) continue;
-    if (ob.k === 'rock' && ds / Math.max(1, m.v) < 0.5) { if (ds / Math.max(1, m.v) > 0.22 && R() < acc) jump(G); }
+    if (ob.k === 'rock' && ds / Math.max(1, m.v) < 0.5) { if (ds / Math.max(1, m.v) > 0.22 && R() < acc) ACT.jump(G); }
     else if (ob.k === 'tree' || ds > m.v * 0.6) { const free = sd => !C.obs.some(q => q !== ob && Math.abs(q.s - ob.s) < 4 && Math.abs(q.x - (ob.x + sd * (ob.r + 2.4))) < q.r + 1.3); let sd = px >= ob.x ? 1 : -1; if (!free(sd) && free(-sd)) sd = -sd; else if (!free(sd)) { sd *= 2; } tx = ob.x + sd * (ob.r + 2.4); ts = ob.s; } break; }
   const ds = Math.max(4, ts - m.s), want = Math.atan2(tx - m.x, ds);
-  setLean(G, clamp(want / 1.15 + (want - m.a) * 0.9, -1, 1) * (R() > acc ? 0.4 : 1));
+  ACT.setLean(G, clamp(want / 1.15 + (want - m.a) * 0.9, -1, 1) * (R() > acc ? 0.4 : 1));
 }
 function winNow(G) { if (!G || G.over) return; G.lesson = null; G.t = 0; G.pen = 0; G.me.s = G.cfg.len; finish(G); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setLean, jump }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

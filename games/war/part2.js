@@ -147,9 +147,9 @@ function finish(G, win) { const mine0 = G.units.filter(u => u.side === 0), kept 
   G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
-  1: [{ id: 'order', title: 'ORDERS', say: 'TAP BLUE, TAP RED', do: 'tap', how: 'Tap one of your units (blue), then tap a red unit to attack it: men you send in yourself fight twice as hard. Break two enemy units.', need: 2 }],
-  2: [{ id: 'match', title: 'SPEARS STOP HORSES', say: 'SPEARS AT HORSES', do: 'tap', how: 'Horsemen are coming for your archers. Send your SPEARMEN at them. Break two with spears.', need: 2 }],
-  3: [{ id: 'flank', title: 'THE FLANK', say: 'HIT THEM FROM THE SIDE', do: 'tap', how: 'Send your horsemen round the side of the red unit that is fighting, and hit it from the side or behind. Three flank blows.', need: 3 }],
+  1: [{ id: 'order', title: 'ORDERS', say: G => warCue(G)[0], do: G => warCue(G)[1], at: G => warCue(G)[2], how: 'Tap one of your units (blue), then tap a red unit to attack it: men you send in yourself fight twice as hard. Break two enemy units.', need: 2 }],
+  2: [{ id: 'match', title: 'SPEARS STOP HORSES', say: G => warCue(G)[0], do: G => warCue(G)[1], at: G => warCue(G)[2], how: 'Horsemen are coming for your archers. Send your SPEARMEN at them. Break two with spears.', need: 2 }],
+  3: [{ id: 'flank', title: 'THE FLANK', say: G => warCue(G)[0], do: G => warCue(G)[1], at: G => warCue(G)[2], how: 'Send your horsemen round the side of the red unit that is fighting, and hit it from the side or behind. Three flank blows.', need: 3 }],
 };
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
@@ -175,12 +175,25 @@ function tapField(G, x, z) { const u = G.units.find(q => !q.gone && Math.hypot(q
   if (u && u.side === 0) return select(G, u.id); if (u && u.side === 1 && G.sel) return orderAttack(G, u.id); if (G.sel) return orderTo(G, x, z); return false; }
 const BLIND = { t: G => tapField(G, (Math.random() * 2 - 1) * FW, (Math.random() * 2 - 1) * FZ), f: G => { if (G.phase === 'deploy') { if (Math.random() < 0.5) setForm(G, FORMS[(Math.random() * FORMS.length) | 0].id); else battle(G); } else rally(G); } };
 // a general who looks: picks a formation for what he sees, then every second or so gives each unit the job its kind is for
+// THE TUTORIAL POINTS AT THE VERY UNIT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said TAP BLUE, TAP
+// RED with a hand tapping in a box, on no unit. Now the robot is asked (dryPlanAll, its best order this moment): TAP THIS BLUE (the hand on the
+// unit it would send: the spearmen for horses, the horsemen for a flank), then TAP THIS RED (the enemy to hit) or TAP HERE (the ground to ride
+// round to first), TAP THE HORN to rally, TAP BATTLE.
+const WRC = { t: -1e9, v: null };
+function warCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - WRC.t < 250) return WRC.v; WRC.t = now; const all = dryPlanAll(G, null, { t: -1, formed: true }), has = n => all.find(q => q[0] === n), B = id => (ui.btn || []).find(b => b.id === id), mid = b => [b.x + b.w / 2, b.y + b.h / 2], at = u => { const p = scr(u.x, 4, u.z); return [p.x, p.y]; }; let v = ['WATCH…', 'wait', false];
+  const sel = has('select'), oa = has('orderAttack'), ot = has('orderTo');
+  if (has('battle') && B('battle')) v = ['TAP BATTLE', 'tap', mid(B('battle'))];
+  else if (has('rally') && B('horn')) v = ['TAP THE HORN', 'tap', mid(B('horn'))];
+  else if (sel && G.sel !== sel[1]) { const u = G.units.find(q => q.id === sel[1]); if (u) v = ['TAP THIS BLUE', 'tap', at(u)]; }
+  else if (oa) { const e = G.units.find(q => q.id === oa[1]); if (e) v = ['TAP THIS RED', 'tap', at(e)]; }
+  else if (ot) { const p = scr(ot[1], 0, ot[2]); v = ['TAP HERE: GO', 'tap', [p.x, p.y]]; }
+  WRC.v = v; return v; }
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
   if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.25 + react * 1.2;
   if (G.phase === 'deploy') { const en = G.units.filter(u => u.side === 1), horse = en.filter(u => UT[u.type].charge).length, shoot = en.filter(u => UT[u.type].range).length;
-    if (!mem.formed) { mem.formed = true; setForm(G, horse >= 2 ? 'wall' : shoot >= 2 ? 'wedge' : 'hammer'); return; } battle(G); return; }
+    if (!mem.formed) { mem.formed = true; ACT.setForm(G, horse >= 2 ? 'wall' : shoot >= 2 ? 'wedge' : 'hammer'); return; } ACT.battle(G); return; }
   const mine = G.units.filter(u => u.side === 0 && !u.gone && !u.rout), foes = G.units.filter(u => u.side === 1 && !u.gone && !u.rout); if (!foes.length) return;
-  if (G.rally > 0 && mine.filter(u => u.morale < 30).length >= 2) { rally(G); return; }
+  if (G.rally > 0 && mine.filter(u => u.morale < 30).length >= 2) { ACT.rally(G); return; }
   const engaged = q => G.units.some(m => m.side !== q.side && !m.gone && !m.rout && dist(m, q) < R_(m) + R_(q) + 1), inf = mine.filter(u => !UT[u.type].range && !UT[u.type].charge);
   mem.jobs = mem.jobs || {}; const want = [];
   for (const u of mine) { const U = UT[u.type]; if ((u.fight > 0 && engaged(u)) || u.cd > 0) continue;      // never pull a unit out of a fight
@@ -195,5 +208,12 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
     if (G.bt < 3) continue; const helpOut = foes.filter(q => engaged(q) && u.tgt !== q.id && dist(u, q) < 22), t2 = u.type === 'spear' && UT[t.type].charge ? t : helpOut.length && !engaged(u) ? nearest(u, helpOut) : t; want.push({ u, t: t2, v: u.type === 'spear' && UT[t2.type].charge ? 2.8 : 1.5 }); }
   // one order per look: the most needed that is not already being done
   let best = null; for (const w of want) { const done = w.t ? w.u.tgt === w.t.id : w.u.order && Math.hypot(w.u.order.x - w.go.x, w.u.order.z - w.go.z) < 3; if (done) continue; if (!best || w.v > best.v) best = w; }
-  if (!best || R() > acc) return; select(G, best.u.id); if (best.go) orderTo(G, best.go.x, best.go.z); else orderAttack(G, best.t.id); }
+  if (!best || R() > acc) return; ACT.select(G, best.u.id); if (best.go) ACT.orderTo(G, best.go.x, best.go.z); else ACT.orderAttack(G, best.t.id); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; for (const u of G.units) if (u.side === 1) u.gone = true; if (G.phase === 'deploy') { G.phase = 'battle'; G.bt = 0; } finish(G, true); }
+
+// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
+const ACT_REAL = { setForm, battle, rally, select, orderTo, orderAttack }; let ACT = ACT_REAL;
+function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
+function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
+  const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return all; }

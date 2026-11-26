@@ -94,6 +94,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 function tapAt() {}
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; const x = e.clientX, y = e.clientY, nb = ui.nextBtn;
   if (nb && x > nb.x - 6 && x < nb.x + nb.w + 6 && y > nb.y - 6 && y < nb.y + nb.h + 6) { if (nextSeason(G)) { sfx.click(); vibe(HAP.light); } return; }
+  { let pb = null, pd = 40 * k; for (const c of G.pests) { const q = scr(c.x, c.y, 0.16), d = Math.hypot(q.x - x, q.y - y); if (d < pd) { pd = d; pb = c; } } if (pb) { if (tap(G, pb.x, pb.y)) vibe(HAP.light); return; } }      /* a caterpillar is hit where it is DRAWN (it sits in front of the tree: tapped through to the tree's plane, a finger on it missed half the time; 26 Nov 2026) */
   const p = worldAt(x, y); if (!p) return; if (tap(G, p.x, p.y)) vibe(HAP.light); });
 // your garden: every level you win leaves its tree there; and the trees you can grow (unlocked by stars)
 const treeCount = () => Object.keys(store.get('trees', {}) || {}).length;
