@@ -247,6 +247,12 @@ note first") is also a press that does nothing: the button he presses wins, and 
   fixture does not have), the longest line against the old longest, and for anything with rules (a dress with no clash, a drink that fits its glass)
   that at least one good answer exists.
 - **A rare rate needs a big sample; a ceiling needs another measure.** (The Bench's blind test; Detective's "it gets harder".)
+- **`.sort(() => R() - 0.5)` is not a shuffle, and it is not repeatable** (found 26 Nov 2026 in Haggle: the same seed gave a different day from its
+  151st start, because the browser sorts differently once it has warmed up; two robots "on the same days" were on different days, and a test could
+  pass or fail by how busy the computer was). Shuffle with a loop (`for (i = n - 1; i > 0; i--) swap(i, (R() * (i + 1)) | 0)`). Haggle has it. Fifteen
+  more games still sort: bowling, cake, castle, dress, fruit, golf, harvest, hotel, lantern, peaks, roller, spell, sprint, spy, zenith. Nothing a
+  player meets is wrong in them; their measured games are not perfectly repeatable. Changing one changes its dice, so each must be measured again
+  when it is next opened (not done).
 - **Keep what the player has learnt.** Haggle's maker names tell him what a thing is worth; they were not varied. The vet's, plumber's and dentist's
   new work uses the tools already taught.
 
@@ -709,6 +715,16 @@ note first") is also a press that does nothing: the button he presses wins, and 
   seller kinds, shuffled; and the target is a share of what the day could make. Random days made the target luck.
 - Patience is spent only by offers under what the seller would really take, or the robot walked every seller out.
   Asks are never under the worth and a first offer is always countered, or blind buys of big items won.
+- **The day's money (26 Nov 2026, his idea: "every level you had a limited amount of money... make as much profit as you could out of that")**:
+  `planDay` sets `G.cash0` (a share `purse` of what every good thing would cost at the sellers' lowest: 0.85 falling to 0.45) and `G.best` (the profit
+  of the good things that money could buy, best margin first); the target is `keen` of that best (0.25 rising to 0.44), with a floor on days of thin
+  margins. Lessons have no purse (`Infinity`). The end sheet shows had, spent, sold for and "the best that money could have made" (PLAYBOOK L10).
+- **A purse makes blind play stronger**: the money runs out before the bad buys can eat the one lucky one (random moves: 0.5 wins in a thousand before
+  the money, 1.5 to 2.5 with it). What brought it back to 0.8: an offer of more than he has is a bluff and a WALK-OUT (nothing happening: 6 in a
+  thousand; patience lost: 1.2 to 1.7), and a deal below their price takes THREE offers (two rising taps often landed; three rarely do), which costs
+  a player who looks one more tap. A lower target, or more money, did nothing for the robots who look and helped the ones who do not.
+- **All of it**: the dial catches on the post that marks his money, and an offer of exactly that is taken at once if it is at least their lowest
+  (else they go, with no walk-out). The robot must try it: it walked past a £1,340 thing with £580 in hand.
 ### 47. Battle Lines (`games/war/`): formations, then orders
 - **Blind play won through the openings** until: openings stop at striking distance; the enemy holds until provoked;
   a unit standing in a fight turns frontal blows (firm, 1/1.8); flank and rear blows count 2.2 and 3.4; pulling out of a

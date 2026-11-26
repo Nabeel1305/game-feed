@@ -647,13 +647,17 @@
    "status": "verified",
    "problems": [],
    "changes": [
-    "25 Nov night, 0.2.1 (his general fix: way more combinations): 40 reasons for selling, 48 names, things from the deck; the deck that remembers (nothing returns until its list is through)."
+    "25 Nov night, 0.2.1 (his general fix: way more combinations): 40 reasons for selling, 48 names, things from the deck; the deck that remembers (nothing returns until its list is through).",
+    "26 Nov, 0.3.0 (his idea, said in the chat: a limited amount of money every level): THE DAY'S MONEY. Each day opens with a purse that cannot buy everything worth buying (85% of it on level 1 falling to about 45%); purchases come out of it; the target is a share (25% rising to 44%) of the best profit that purse could make; the day closes when it is spent; the end sheet shows had, spent, sold for and the best possible. A post on the dial marks his money; OFFER is red beyond it and pressing it is a bluff they walk out on; all of it is taken if at least their lowest. A deal below their price takes three offers. A true shuffle replaces .sort(() => R() - 0.5)."
    ],
    "checks": [
     "22 Nov: loads with no errors; its robot played level 1's first seconds and 20 s of level 5 with the real picture (no errors; pictures looked at); pause, resume, restart, levels and a win pass (test_controls); its real-touch test passes (5 passed, 0 failed).",
-    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length."
+    "25 Nov night: tools/test_decks.py passes (loads, runs, the deck never repeats before its list is through, is kept on the phone, and takes no dice in the robots' games); check_game and the tutorial test pass; lists checked by script for duplicates, broken references and length.",
+    "26 Nov: check_game (build, play, 19 real-touch checks, controls), the tutorial test, test_decks and speed pass. Robots over 30 days a level: ordinary 0.87, 0.93, 1.00, 0.93, 0.87, 0.90, 0.70 on levels 1, 2, 3, 5, 10, 20, 40; sloppy 0.73 on level 1; sharp 0.73 on 40, 0.50 on 80. Blind play: random moves won 5 of 6,000 (the game before the money: 3), blind strings 2 of 17,088. Nine stills looked at (opening, counter, deal, the post on the dial, red OFFER, all of it, not enough, a bluff, money spent, the end sheet)."
    ],
-   "remaining": [],
+   "remaining": [
+    "The day's money has not been played on a phone: whether the first levels feel fair with it, and whether three offers a deal feels like haggling or like waiting, is his to say."
+   ],
    "note": "fine (2D)."
   },
   "war": {

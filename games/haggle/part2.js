@@ -5,11 +5,23 @@
 // (their patience drops, and they may walk out); high enough and they counter or take it; pay more than it is worth and you
 // lose. At closing time everything you bought sells for what it is really worth: the day's profit against the target. Every
 // sale teaches the Price Book what things fetch, so you slowly learn the value of everything, as a pawnbroker does.
+// THE DAY'S MONEY (26 Nov 2026, his words: "don't you think it would be better if every level you had a limited amount of money and you had to make
+// purchases and make as much profit as you could out of that amount of money... And the higher you go, the kind of harder it gets and the more you learn").
+// Until now the till was bottomless: every bargain was a yes, so the only question was "is this under its worth?". Now each day opens with a float
+// (G.cash) that will not buy everything worth buying: a share (cfg.purse: about 70% on day 1, falling towards 40%) of what the day's good things would
+// cost at the sellers' lowest. So every yes is a no to something later: the money has to go where the margin is biggest, and every pound haggled off
+// buys something else. The target is a share (cfg.keen: 28% rising to 42%) of the best that could be made with THAT money on THAT day's customers
+// (G.best: everything good bought at the seller's lowest, which nobody does; the robot dealers make 35 to 75% of it, by how well they read the seller), so skill decides it, not the
+// luck of who walks in. An offer of more than you have is a bluff: they walk out (the dial marks where your money ends, and OFFER turns red beyond it). Offering exactly all you have: they take it if
+// it is at least their lowest (rather than lose the sale), and if it is not, they leave without ill feeling (not a walk-out). The first build stopped the
+// dial AT his money, and "slam the dial to the end" became a winning move without looking (133 blind wins in 5,696: an offer of everything he had landed
+// between their lowest and their price on the dearest thing of the day). When nothing left to come could be afforded, the shop closes early.
 const RULES = [
   'Someone brings in an item and names a price. Look at <b>what it is, who made it, the state it is in</b>.',
   'In doubt? <b>🔍 Loupe</b> checks signatures and hallmarks, <b>🔦 UV</b> spots fakes. Each look tries their patience.',
-  '<b>Drag the dial</b> to your offer and tap <b>OFFER</b>. Too low insults them; they may walk. They will counter.',
+  '<b>Drag the dial</b> to your offer and tap <b>OFFER</b>. Too low insults them; they may walk. They counter twice and come down each time; a fair third offer, or their own price, makes the deal.',
   'Pay less than it is worth: at <b>closing</b> it sells for its real value. Make the day\'s profit target.',
+  'You open with <b>only so much money</b>, and it will not buy everything. Spend it where the profit is biggest; every pound you haggle off buys something else.',
   'If <b>two</b> customers walk out on you, the shop shuts for the day.',
   'Every sale fills your <b>Price Book</b>: you learn what things are worth.',
 ];
@@ -83,7 +95,7 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Junk dealer'], [40, 'Pawnbroker'], [130, 'Antiques dealer'], [320, 'Auction house'], [700, 'Collector'], [1500, 'Tycoon']];
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
-  return { N, f, help: !!help, place: placeOf(N), people: Math.round(x(7, 9, 25)), target: 0, share: x(0.13, 0.25, 30), vs: x(1, 3.2, 30),
+  return { N, f, help: !!help, place: placeOf(N), people: Math.round(x(7, 9, 25)), target: 0, purse: x(0.85, 0.42, 22) * (help ? 1.12 : 1), keen: x(0.25, 0.44, 25) * (help ? 0.8 : 1), vs: x(1, 3.2, 30),
     fakes: N >= 3 ? x(0.12, 0.3, 30) : 0, claims: N >= 2 ? x(0.25, 0.5, 30) : 0, hot: N >= 4, types: TYPES.filter(t => t.n <= N), sell: 1 + 0.1 * upLv('window'), pat: upLv('charm') + (N <= 4 ? 1 : 0) }; }      // (two walk-outs now end the day: on the first four levels everyone has one more patience)
 // one customer and the thing they bring
 function makeVisit(G, opts = {}) { const R = G.rnd, c = G.cfg, T = opts.type ? TYPES.find(t => t.id === opts.type) : dealIf('thing', TYPES, t => c.types.includes(t), R);
@@ -96,7 +108,7 @@ function makeVisit(G, opts = {}) { const R = G.rnd, c = G.cfg, T = opts.type ? T
   const walk = Math.round(believed * wl / 5) * 5, ask = Math.round(Math.max(walk * 1.3, believed * (sl.ask[0] + R() * (sl.ask[1] - sl.ask[0]))) / 5) * 5;
   return { id: G.nid++, T, tier, maker: T.makers[tier], cond, sl, fake, claim, claimTrue, V, walk, ask, cur: ask, pat: sl.pat + c.pat, maxPat: sl.pat + c.pat, offers: 0, seen: {}, mood: 0, why: (typeof HEADLESS !== 'undefined' && HEADLESS) ? sl.name : WHY[sl.id][deal('why.' + sl.id, WHY[sl.id].length, R)],      /* (the robots' games take no dice for it: they stay as they were measured) */ name: dealOf('who', ['Dave', 'Mrs Patel', 'Gary', 'Joyce', 'Kemi', 'Old Tom', 'Chantelle', 'Ivan', 'Bea', 'Mo', 'Lucy', 'Mr Grant', 'Abdul', 'Mrs Okoro', 'Shaz', 'Big Phil', 'Nana Rose', 'Tariq', 'Miss Chen', 'Dotun', 'Wendy', 'Uncle Sola', 'Fliss', 'Mr Novak', 'Jaz', 'Mrs Bimpe', 'Rhys', 'Doreen', 'Segun', 'Mrs Rao', 'Callum', 'Mrs Ferry', 'Tobi', 'Marge', 'Kwesi', 'Lady Ann', 'Stan', 'Yetunde', 'Mr Singh', 'Pat', 'Emeka', 'Nan Pearl', 'Vince', 'Miss Mary', 'Lekan', 'Mrs Bailey', 'Dr Hart', 'Young Ade'], R), lastOffer: 0 }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
-  const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, nid: 1, bought: [], passed: 0, walked: 0, visit: null, n: 0, wait: 0, hot: null };
+  const G = { N, cfg, seed, cash: Infinity, cash0: Infinity, best: 0, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, nid: 1, bought: [], passed: 0, walked: 0, visit: null, n: 0, wait: 0, hot: null };
   if (cfg.hot) { const h = cfg.types[(G.rnd() * cfg.types.length) | 0]; G.hot = h.id; }
   planDay(G);
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else { G.visit = G.queue[0]; G.ev.push({ k: 'start' }); G.ev.push({ k: 'enter' }); }
@@ -104,9 +116,14 @@ function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != n
 // the whole day is dealt in the morning; the target is a share of what today's things are really worth (so a day of junk asks
 // less, and a lucky day of treasures asks more: skill decides it, not the mix)
 function planDay(G) { G.deck = dealDay(G); G.queue = []; for (let i = 0; i < G.cfg.people; i++) { G.n = i; G.queue.push(makeVisit(G)); } G.n = 0;
-  const pot = G.queue.reduce((a, v) => a + (v.fake ? 0 : v.V), 0); G.cfg.target = Math.max(100, Math.round(pot * G.cfg.share * (G.cfg.help ? 0.8 : 1) / 10) * 10); }
+  // the float, and the best that could be made of it: the good things (real, and to be had for less than they fetch), dearest margin first, bought at
+  // the sellers' lowest until the money will not stretch to the next
+  const c = G.cfg, good = G.queue.filter(v => !v.fake && v.walk < v.V * c.sell), cost = good.reduce((a, v) => a + v.walk, 0), cheapest = good.reduce((a, v) => Math.min(a, v.walk), 1e9);
+  G.cash0 = G.cash = Math.max(good.length ? cheapest : 50, Math.round(cost * c.purse / 10) * 10);
+  let left = G.cash, best = 0; for (const v of good.slice().sort((a, b) => (b.V * c.sell - b.walk) / b.walk - (a.V * c.sell - a.walk) / a.walk)) if (v.walk <= left) { left -= v.walk; best += v.V * c.sell - v.walk; }
+  G.best = Math.round(best); c.target = Math.max(20, Math.round(Math.max(best * c.keen, Math.min(best * 0.35, G.cash0 * 0.14 * (c.help ? 0.8 : 1))) / 10) * 10); }      /* (a day of thin margins, where the best is small beside the money, still asks for a seventh of the money or a third of its best, whichever is less: one lucky buy does not make such a day) */
 // a day's customers are dealt, not drawn: fine, middling and cheap things, their states and the sellers in fixed shares, shuffled
-function dealDay(G) { const R = G.rnd, n = G.cfg.people, share = (arr, w) => { const out = []; w.forEach((f, i) => { for (let q = 0; q < Math.round(f * n); q++) out.push(arr[i]); }); while (out.length < n) out.push(arr[1]); return out.slice(0, n).sort(() => R() - 0.5); };
+function dealDay(G) { const R = G.rnd, n = G.cfg.people, share = (arr, w) => { const out = []; w.forEach((f, i) => { for (let q = 0; q < Math.round(f * n); q++) out.push(arr[i]); }); while (out.length < n) out.push(arr[1]); const sh = out.slice(0, n); for (let i = sh.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0, t = sh[i]; sh[i] = sh[j]; sh[j] = t; } return sh; };      /* a true shuffle (26 Nov 2026). It was .sort(() => R() - 0.5): the browser sorts differently once it has warmed up (the same seed gave a different day from its 151st start), so the measured games were not repeatable */
   const tiers = share([0, 1, 2], [0.28, 0.44, 0.28]), conds = share([0, 1, 2, 3], [0.14, 0.43, 0.29, 0.14]), sellers = share([0, 1, 2, 3], [0.25, 0.25, 0.25, 0.25]);
   return tiers.map((t, i) => ({ tier: t, cond: conds[i], seller: sellers[i] })); }
 function step(G, dt) { if (G.over) return; G.t += dt; if (G.wait > 0) { G.wait -= dt; if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } } }
@@ -116,24 +133,30 @@ function inspect(G, tool) { const v = G.visit; if (!v || G.over || G.wait > 0 ||
   const find = tool === 'uv' ? (v.fake ? 'fake' : 'real') : (v.claim ? (v.claimTrue ? 'true' : 'false') : (v.fake ? 'odd' : 'nothing'));
   G.ev.push({ k: 'inspect', tool, find }); if (v.pat <= 0) return walkOut(G, 'You kept poking at it. They have had enough.'); return true; }
 // make an offer (in pounds)
-function offer(G, amt) { const v = G.visit; if (!v || G.over || G.wait > 0) return false; amt = Math.max(0, Math.round(amt / 5) * 5); v.offers++;
+function offer(G, amt) { const v = G.visit; if (!v || G.over || G.wait > 0) return false; amt = Math.max(0, Math.round(amt / 5) * 5);
+  if (isFinite(G.cash) && amt > G.cash) { v.mood = -2; G.ev.push({ k: 'nomoney', amt, cash: G.cash }); return walkOut(G, `You offered £${amt}. You have £${G.cash}. They left.`); }      /* an offer of more than he has is a bluff, and they walk out on it (the dial marks where his money ends and OFFER turns red beyond it). Measured over 6,000 random games and 17,088 blind ones: nothing happening = 6 and 12 wins in a thousand; patience lost = 1.2 to 1.7; walking out = 0.7 and 0.5 */
+  const allIn = isFinite(G.cash) && amt === G.cash; v.offers++;
   if (amt >= v.cur) return buy(G, amt);
+  if (allIn) { if (amt >= v.walk) { G.ev.push({ k: 'allin', amt }); return buy(G, amt); }      /* everything he has: they take it rather than lose the sale, if it is at least their lowest */
+    G.passed++; G.ev.push({ k: 'short', amt }); lessonSee(G, 'pass', v); return nextVisit(G); }      /* and if it is not, they go elsewhere, with no ill feeling: not a walk-out */
   if (amt < v.walk * 0.62 || amt < v.lastOffer) { v.pat -= 2; v.mood = -2; G.ev.push({ k: 'insult', amt }); if (v.pat <= 0) return walkOut(G, 'Insulted, they walk out.'); return true; }
   v.lastOffer = amt;
-  if (amt >= v.walk) { const take = (amt - v.walk) / Math.max(1, v.cur - v.walk); if (take > 0.6 || v.offers >= 3 || G.rnd() < take * 0.5) return buy(G, amt); }      // a first offer is countered, as a rule
+  if (amt >= v.walk && v.offers >= 3) return buy(G, amt);      // A DEAL BELOW THEIR PRICE TAKES THREE OFFERS (26 Nov 2026): they counter the first two, whatever they are, and take the third if it is at least their lowest (or he meets their price at any time). It was the second offer, by a chance; with money that runs out, taps made without looking then won 1.5 days in a thousand (the old game: 0.5), because the money ran out before the bad buys could eat the one lucky one
   // a counter: they come down part of the way, never below what they will take
   v.cur = Math.max(v.walk, Math.round((v.cur - (v.cur - amt) * (0.25 + G.rnd() * 0.2)) / 5) * 5); if (amt < v.walk) v.pat -= 1; v.mood = amt >= v.walk ? 1 : -1;
   if (v.pat <= 0) return walkOut(G, 'They shake their head and leave.'); G.ev.push({ k: 'counter', amt, cur: v.cur }); return true; }
-function buy(G, P) { const v = G.visit; G.bought.push({ name: v.T.name, maker: v.maker, type: v.T.id, cond: v.cond, P, V: v.V, fake: v.fake, claim: v.claim, claimTrue: v.claimTrue, id: v.id });
+function buy(G, P) { const v = G.visit; G.bought.push({ name: v.T.name, maker: v.maker, type: v.T.id, cond: v.cond, P, V: v.V, fake: v.fake, claim: v.claim, claimTrue: v.claimTrue, id: v.id }); if (isFinite(G.cash)) G.cash -= P;
   G.ev.push({ k: 'deal', P }); lessonSee(G, 'deal', v, P); return nextVisit(G); }
 function pass(G) { const v = G.visit; if (!v || G.over || G.wait > 0) return false; G.passed++; G.ev.push({ k: 'pass' }); lessonSee(G, 'pass', v); return nextVisit(G); }
 function walkOut(G, why) { G.walked++; G.ev.push({ k: 'walk', why, n: G.walked }); lessonSee(G, 'walk', G.visit); if (!G.lesson && G.walked >= WALKS) { G.visit = null; G.wait = 1.6; G.next = () => closing(G, 'walked'); return true; } return nextVisit(G); }
 function nextVisit(G) { G.n++; const v = G.visit; G.visit = null; G.wait = 1.3;
-  G.next = () => { if (G.lesson) { lessonVisit(G); return; } if (G.n >= G.cfg.people) return closing(G); G.visit = G.queue[G.n]; G.ev.push({ k: 'enter' }); }; return true; }
+  G.next = () => { if (G.lesson) { lessonVisit(G); return; } if (G.n >= G.cfg.people) return closing(G);
+    if (isFinite(G.cash) && !G.queue.slice(G.n).some(q => !q.fake && q.walk < q.V * G.cfg.sell && q.walk <= G.cash)) { G.ev.push({ k: 'spent' }); G.wait = 1.5; G.next = () => closing(G); return; }      /* nothing still to come could be afforded: the shop closes early, and the day is counted */
+    G.visit = G.queue[G.n]; G.ev.push({ k: 'enter' }); }; return true; }
 // closing time: everything bought sells for what it is worth
 function closing(G, why) { const c = G.cfg, sales = G.bought.map(b => ({ ...b, sold: Math.round(b.V * c.sell) })), profit = sales.reduce((a, b) => a + b.sold - b.P, 0), win = !why && profit >= c.target;
-  G.over = win ? 'won' : 'lost'; const stars = win ? (profit >= c.target * 1.6 ? 3 : profit >= c.target * 1.25 ? 2 : 1) : 0;
-  G.res = { win, stars, why: why || (win ? '' : 'profit'), profit, target: c.target, sales, passed: G.passed, walked: G.walked, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
+  G.over = win ? 'won' : 'lost'; const best = Math.max(G.best || 0, c.target * 1.3), stars = win ? (profit >= c.target + (best - c.target) * 0.6 ? 3 : profit >= c.target + (best - c.target) * 0.3 ? 2 : 1) : 0;      /* stars: how near the best that money could have made */
+  G.res = { win, stars, why: why || (win ? '' : 'profit'), profit, target: c.target, cash0: isFinite(G.cash0) ? G.cash0 : 0, left: isFinite(G.cash) ? G.cash : 0, best: Math.round(G.best || 0), sales, passed: G.passed, walked: G.walked, coins: win ? 4 + Math.ceil(G.N / 3) + stars * 2 : 1 };
   G.ev.push({ k: 'closing', profit }); G.ev.push({ k: win ? 'won' : 'lost' }); return true; }
 // ---------- LESSONS ----------
 const LESSONS = {
@@ -141,7 +164,7 @@ const LESSONS = {
   2: [{ id: 'haggle', title: 'HAGGLE', say: 'START LOW', do: 'drag', dir: 'lr', how: 'Open low but not insulting, then come up a little each time. Buy two for under 70% of their worth, in a row.', need: 2 }],
   3: [{ id: 'fake', title: 'SPOT THE FAKE', say: 'SHINE THE 🔦', do: 'tap', how: 'Shine the 🔦 UV lamp on fine things. Pass on fakes, buy the real ones cheaply. Three right calls in a row.', need: 3 }],
 };
-function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonVisit(G); }
+function lessonStart(G) { G.cash = G.cash0 = Infinity;      /* a lesson is about the bargaining: the till is open */ G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonVisit(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonVisit(G) { const st = lessonNow(G), R = G.rnd; G.visit = st.id === 'fake' ? makeVisit(G, { type: R() < 0.5 ? 'watch' : 'handbag', tier: 2, cond: 1, fake: R() < 0.5, seller: 3, claim: null }) : makeVisit(G, { tier: 1, cond: 1, seller: st.id === 'buy' ? 1 : 0, claim: null, fake: false }); G.ev.push({ k: 'enter' }); }
 function lessonSee(G, what, v, P) { const st = lessonNow(G); if (!st) return; let ok = null;
@@ -157,15 +180,25 @@ function lessonSee(G, what, v, P) { const st = lessonNow(G); if (!st) return; le
 const BLIND = { o: G => { const v = G.visit; if (v) offer(G, Math.random() * v.cur * 2); }, p: G => { pass(G); }, i: G => { inspect(G, Math.random() < 0.5 ? 'uv' : 'loupe'); } };
 // a dealer who looks: knows roughly what things fetch (acc: how well), checks fine things and claims, opens at about half,
 // comes up step by step, never past about 85% of the worth; passes a fake
+const HAGGLE = { desperate: [0.36, 0.42, 0.48, 0.54, 0.6, 0.68], shady: [0.32, 0.4, 0.48, 0.55, 0.62, 0.7], casual: [0.46, 0.52, 0.58, 0.64, 0.7, 0.78], savvy: [0.66, 0.72, 0.78, 0.82, 0.85, 0.85] };
 function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, v = G.visit;
   if (G.over || G.wait > 0 || !v) { mem.t0 = null; mem.vid = null; return; }
-  if (mem.vid !== v.id) { mem.vid = v.id; const g = () => { let s = 0; for (let i = 0; i < 6; i++) s += Math.random(); return (s - 3) / 0.707; }; mem.err = 1 + g() * (0.04 + (1 - acc) * 0.5); mem.t0 = G.t + 0.8 + react * 2; mem.step = v.sl.id === 'savvy' ? 3 : v.sl.id === 'casual' ? 1 : 0; }
+  if (mem.vid !== v.id) { mem.vid = v.id; const g = () => { let s = 0; for (let i = 0; i < 6; i++) s += Math.random(); return (s - 3) / 0.707; }; mem.err = 1 + g() * (0.04 + (1 - acc) * 0.5); mem.t0 = G.t + 0.8 + react * 2; mem.step = 0; mem.i = 0; }
   if (G.t < mem.t0) return; mem.t0 = G.t + 0.6 + react * 1.5;
   const lux = v.T.lux && v.tier === 2; if (lux && !v.seen.uv && G.cfg.fakes) { inspect(G, 'uv'); return; } if (v.claim && !v.seen.loupe) { inspect(G, 'loupe'); return; }
   if (v.seen.uv && v.fake) { pass(G); return; }
   let est = v.T.base * G.cfg.vs * TIER[v.tier] * COND[v.cond].m * (v.claim && v.claimTrue && v.seen.loupe ? 1.7 : 1) * (G.hot === v.T.id ? 1.35 : 1) * mem.err;
   if (lux && !v.seen.uv) est *= 0.6;      // could be fake: bid as if it might be
-  if (v.cur <= est * 0.6) { offer(G, v.cur); return; }
-  const want = est * [0.5, 0.6, 0.68, 0.75, 0.8, 0.85][Math.min(5, mem.step++)]; if (want >= v.cur) { offer(G, v.cur); return; }
-  if (mem.step > 6 || (want < v.lastOffer)) { pass(G); return; } offer(G, Math.max(want, v.lastOffer + 5)); }
+  // his money: he never offers more than he has, and when it is going faster than the day he is choosier (it must go on the best bargains); near
+  // closing he spends what is left on anything with a profit in it
+  const cash = isFinite(G.cash) ? G.cash : 1e9, dayLeft = 1 - G.n / G.cfg.people, moneyLeft = isFinite(G.cash) ? G.cash / G.cash0 : 1, top = G.n >= G.cfg.people - 2 ? 0.88 : moneyLeft < dayLeft * 0.8 ? 0.68 : moneyLeft < dayLeft * 1.1 ? 0.76 : 0.85;
+  if (v.offers >= 1 && v.cur <= cash && v.cur <= est * 0.6) { offer(G, v.cur); return; }
+  if (v.offers >= 1 && (v.pat <= 2 || (G.walked >= 1 && v.pat <= 3))) { if (v.cur <= cash && v.cur <= est * Math.min(top, 0.85)) offer(G, v.cur); else pass(G); return; }      // their patience is nearly gone (and a second walk-out shuts the shop): he pays their price if it still leaves a profit, or lets them go politely
+  // how he bargains: the better he is (acc), the more he goes by what kind of seller this is (someone who needs the money today takes far less than
+  // someone who knows what it is worth): his own ladder of offers for each, instead of one ladder from half its worth for everybody
+  const k2 = clamp((acc - 0.6) / 0.37, 0, 1), st = Math.min(5, mem.i == null ? (mem.i = 0) : mem.i), plain = [0.5, 0.6, 0.68, 0.75, 0.8, 0.85][Math.min(5, st + (v.sl.id === 'savvy' ? 3 : v.sl.id === 'casual' ? 1 : 0))], wise = HAGGLE[v.sl.id][st]; mem.i++; mem.step = mem.i;
+  let want = est * Math.min(top, plain * (1 - k2) + wise * k2); if (!v.offers) want = Math.min(want, Math.floor(v.cur * 0.8 / 5) * 5);      // nobody pays the first price asked: one offer under it costs nothing (a first offer is always countered)
+  if (want >= cash) { if (cash >= est * 0.2 && cash <= est * top) offer(G, cash); else pass(G); return; }      /* all he has, when the thing is worth clearly more: it costs nothing to try (it was only tried from 45% of its worth, and the robot walked past a £1,340 thing with £580 in hand) */      // all he has, if that is still a bargain
+  if (want >= v.cur) { offer(G, v.cur); return; }
+  if (mem.step > 6 || want <= v.lastOffer) { pass(G); return; } offer(G, Math.max(want, v.lastOffer + 5)); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; G.bought = [{ name: 'x', maker: 'x', type: 'watch', cond: 1, P: 0, V: G.cfg.target * 2, fake: false }]; closing(G); }

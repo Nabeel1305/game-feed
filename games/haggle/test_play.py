@@ -59,7 +59,7 @@ with sync_playwright() as p:
         d = pg.evaluate("([pat, P]) => { let w = 0; for (let s = 0; s < 100; s++) w += __B.blindBeat(1 + s % 3, 7000 + s * 17, pat, P).won ? 1 : 0; return w; }", [worst['pat'], worst['P']])
         print(f"    closest: {worst['pat']} every {worst['P']} s, 100 more on levels 1-3: won {d}")
         ok(d <= 100 * TARGETS['blind_one'], 'the blind string that came closest wins under one in ten', str(d))
-    r = pg.evaluate("() => { let w = 0, n = 0; for (const m of [0.1, 0.25, 0.5, 1]) for (const N of [1, 2, 3]) for (let s = 0; s < 40; s++) { n++; w += __B.blindRandom(N, 4000 + s * 7 + N, m).won ? 1 : 0; } return [w, n]; }")
+    r = pg.evaluate("() => { let w = 0, n = 0; for (const m of [0.1, 0.25, 0.5, 1]) for (const N of [1, 2, 3]) for (let s = 0; s < 250; s++) { n++; w += __B.blindRandom(N, 4000 + s * 7 + N, m).won ? 1 : 0; } return [w, n]; }")      # 250 a cell, not 40 (26 Nov 2026, the day's money): two in a thousand cannot be read from 480 games; over 6,000 it measured 0.67
     print(f'  random moves at random gaps: {r[1]} games, won {r[0]}'); ok(r[0] <= r[1] * TARGETS['blind_rate'] * 2, 'SPAM: random moves do not win', str(r))
     print('Lessons')
     for N in (1, 2, 3):

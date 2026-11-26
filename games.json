@@ -1571,7 +1571,7 @@
       "id": "haggle",
       "name": "Haggle",
       "status": "testing",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "added": "2026-11-18",
       "path": "games/haggle/index.html",
       "artifact": "https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5",

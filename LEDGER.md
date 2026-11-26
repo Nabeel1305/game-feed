@@ -53,7 +53,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 43 | **Ghost Lantern** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/PwJQKnzTmyULwZCjM9TWmD) | `games/lantern/index.html` |
 | 44 | **Drift Kings** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/5DAwjMJKDhcBymgLyyfNZy) | `games/kart/index.html` |
 | 45 | **The Bench** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/YCgzobKcQ8zkpCULKaBShb) | `games/judge/index.html` |
-| 46 | **Haggle** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5) | `games/haggle/index.html` |
+| 46 | **Haggle** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/6wqCchU83ukAF2LmKKvUk5) | `games/haggle/index.html` |
 | 47 | **Battle Lines** | testing | not yet (he has not said so) | 0.3.0 | [play](https://claude.ai/artifact/Dxurc2KCKBwA5BaEWBBjXj) | `games/war/index.html` |
 | 48 | **Grand Hotel** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/5F7Hwjcmx4qek6qvs3rzfA) | `games/hotel/index.html` |
 | 49 | **Ramp Riders** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/4c5jxbbj1PNPSZCDFaQQxm) | `games/ramp/index.html` |
