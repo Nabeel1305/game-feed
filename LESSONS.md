@@ -274,6 +274,7 @@ game and is actually working for each game"; and "the first level should be the 
 - **A sideways game draws its coach inside `#stage`** (the kit's `coachLayer`), or the hand is upright over a sideways picture.
 - **Only level 1 is given.** `easyOf(L)` is 1 at level 1, a third at 2, a little at 3, and 0 from 4 (it was 0 only from 7). `tools/level_rates.py`
   measures each game's ordinary and sloppy players on levels 1, 2, 3, 5 and 10.
+- **Easing level 1 must not let mashing win.** The help of a loss on level 1 made blind play win in Wild Water, Splash and Hoops 3v3, and more cards let blind tapping finish Peaks' lesson: each was taken back or narrowed. Ease level 1, then run the game's test_play.
 
 ## Rules for every game
 0. **Early levels are for learning, tuned for real people.** Bots react perfectly; people don't. Make levels 1-5 clearly easy (slower, bigger targets/windows, softer hits, hints), then ramp.

@@ -22,8 +22,8 @@ const UPGRADES = [
 ];
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Newcomer'], [40, 'Card player'], [130, 'Card sharp'], [320, 'High roller'], [700, 'Dealer'], [1500, 'Grand master']];
-function makeCfg(N, help) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
-  return { N, f, help: !!help, place: placeOf(N), stock: Math.round(x(36, 22, 25) + 6 * e + (help ? 4 : 0) + (N === 1 ? 4 : 0)) + upLv('extra'), jokers: N >= 2 ? Math.round(x(2, 0.6, 30)) : 1, locks: N >= 4 ? Math.round(x(2, 6, 30)) : 0, undo: upLv('undo'), streakJ: 6 }; }
+function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  return { N, f, help: !!help, place: placeOf(N), stock: Math.round(x(36, 22, 25) + 6 * e + (help ? 4 : 0)) + upLv('extra'), jokers: N >= 2 ? Math.round(x(2, 0.6, 30)) : 1, locks: N >= 4 ? Math.round(x(2, 6, 30)) : 0, undo: upLv('undo'), streakJ: 6 }; }
 // the layout: rows of 3, 6, 9, 10; who covers whom
 const ROWS = [3, 6, 9, 10];
 function coverOf(r, i) { if (r === 0) return [[1, 2 * i], [1, 2 * i + 1]]; if (r === 1) { const b = i + Math.floor(i / 2); return [[2, b], [2, b + 1]]; } if (r === 2) return [[3, i], [3, i + 1]]; return []; }

@@ -2080,7 +2080,7 @@
    "round": "2026-11-26",
    "general": true,
    "said": "After the tutorial, the first level should be the only one that is given, but after that it should actually engage the players, because if early wins are given, then the player gets bored... You can play indefinitely and it just keeps on getting harder incrementally.",
-   "did": "Level 1 is now a sure win for anyone who plays it properly (measured with the game's own careful and careless players), and from level 2 the extra help is mostly gone, so it starts to ask for skill. It still never ends and keeps getting harder."
+   "did": "From level 2 the extra help is mostly gone, so it starts to ask for skill. Level 1 stays as it was (won about 8 times in 10 by a careful player): a deal of cards can be unwinnable, and giving more cards on level 1 let blind tapping win its lesson, so I left it. It never ends and keeps getting harder."
   }
  ],
  "war": [

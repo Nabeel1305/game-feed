@@ -5272,9 +5272,9 @@ const PLACES = [{ name: 'Park court' }, { name: 'School gym' }, { name: 'City ar
 const placeOf = N => Math.min(3, Math.floor((N - 1) / 6));
 const STYLES = { even: 'a steady team', lock: 'strong defence: they stay close', pass: 'quick passing', range: 'deadly from long range' };
 function styleOf(N) { if (N <= 3) return 'even'; return ['lock', 'even', 'pass', 'range'][(N - 4) % 4]; }
-function makeCfg(N, help, o = {}) { help = help || N === 1;      /* 26 Nov 2026, his words: "the first level should be the only one that is given": level 1 always has the help a loss gives */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), style = o.style || styleOf(N);
-  return { N, f, help: !!help, style, len: Math.round(x(140, 170, 20)), uSpd: 4.9 * (1 + 0.05 * upLv('shoes')), oSpd: x(4.3, 5.0, 25), oSkill: x(1.1, 1.45, 25) * (help ? 0.8 : 1) * (style === 'range' ? 1.05 : 1),
-    oThree: style === 'range' ? 1.35 : 1, oPassy: style === 'pass' ? 1.8 : 1, oD: x(0.6, 1.15, 25) * (style === 'lock' ? 1.25 : 1) * (help ? 0.8 : 1), oSteal: x(0.05, 0.16, 25) * (style === 'lock' ? 1.4 : 1) * (help ? 0.7 : 1),
+function makeCfg(N, help, o = {}) {      /* 26 Nov 2026: level 1 given: weaker defenders on level 1 only (the full help of a loss let random play win) */ const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), style = o.style || styleOf(N);
+  return { N, f, help: !!help, style, len: Math.round(x(140, 170, 20)), uSpd: 4.9 * (1 + 0.05 * upLv('shoes')), oSpd: x(4.3, 5.0, 25), oSkill: x(1.1, 1.45, 25) * (help ? 0.8 : 1) * (N === 1 ? 0.85 : 1) * (style === 'range' ? 1.05 : 1),
+    oThree: style === 'range' ? 1.35 : 1, oPassy: style === 'pass' ? 1.8 : 1, oD: x(0.6, 1.15, 25) * (style === 'lock' ? 1.25 : 1) * (help ? 0.8 : 1) * (N === 1 ? 0.85 : 1), oSteal: x(0.05, 0.16, 25) * (style === 'lock' ? 1.4 : 1) * (help ? 0.7 : 1),
     green: 0.16 * (1 + 0.15 * upLv('touch')) * (help ? 1.3 : 1), mate: x(0.75, 0.95, 25), oHandle: x(1, 1.6, 25) * (style === 'pass' ? 1.2 : 1) }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0, R = rng(seed + 11);
   const G = { N, cfg, seed, rnd: R, t: 0, clock: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, mini: !!o.mini, foe: o.foe || TEAMS[(N - 1) % TEAMS.length], kit: KITS[(N - 1) % KITS.length], place: placeOf(N),
