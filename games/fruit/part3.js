@@ -11,10 +11,12 @@ function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Mat
   for (const t of TXT) t.t += dt; while (TXT.length && TXT[0].t > 1.3) TXT.shift(); if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
 const ui = { drag: null };
 const groundH = (x, z) => Math.sin(x * 0.15) * 0.25 + Math.cos(z * 0.08) * 0.3 + Math.max(0, z - 40) * 0.08;
-function monster(T, k) { const g = new T.Group(), M = MON[k], col = { blob: 0x6ac84a, scut: 0xd84a3a, shield: 0x8a5ac8, hop: 0x4a8ad8, big: 0x8a6a4a }[k], skin = new T.MeshStandardMaterial({ color: col, roughness: 0.6 }), white = new T.MeshStandardMaterial({ color: 0xffffff }), black = new T.MeshStandardMaterial({ color: 0x111111 });
+function monster(T, k) { const g = new T.Group(), M = MON[k], col = { blob: 0x4e9a38, scut: 0xb0362a, shield: 0x6a4a9a, hop: 0x3a6aa8, big: 0x6a5038 }[k], skin = new T.MeshStandardMaterial({ color: col, roughness: 0.75 }), white = new T.MeshStandardMaterial({ color: 0xffffff }), black = new T.MeshStandardMaterial({ color: 0x111111 });
   const body = new T.Group(); g.add(body); const b = new T.Mesh(new T.SphereGeometry(M.r, 18, 14), skin); b.scale.y = M.h / (M.r * 2); b.position.y = M.h / 2; b.castShadow = true; body.add(b);
-  for (const s of [-1, 1]) { const e = new T.Mesh(new T.SphereGeometry(M.r * 0.22, 10, 8), white); e.position.set(s * M.r * 0.35, M.h * 0.68, M.r * 0.82); body.add(e); const p = new T.Mesh(new T.SphereGeometry(M.r * 0.1, 8, 6), black); p.position.set(s * M.r * 0.35, M.h * 0.68, M.r * 1.0); body.add(p); }
-  const mouth = new T.Mesh(new T.TorusGeometry(M.r * 0.3, M.r * 0.05, 6, 12, Math.PI), black); mouth.rotation.z = Math.PI; mouth.position.set(0, M.h * 0.45, M.r * 0.92); body.add(mouth);
+  for (const s of [-1, 1]) { const e = new T.Mesh(new T.SphereGeometry(M.r * 0.22, 10, 8), white); e.position.set(s * M.r * 0.35, M.h * 0.68, M.r * 0.82); body.add(e); const p = new T.Mesh(new T.SphereGeometry(M.r * 0.1, 8, 6), black); p.scale.set(0.45, 1.3, 1); p.position.set(s * M.r * 0.35, M.h * 0.68, M.r * 1.0); body.add(p);
+    const brow = new T.Mesh(new T.BoxGeometry(M.r * 0.42, M.r * 0.09, M.r * 0.12), black); brow.position.set(s * M.r * 0.33, M.h * 0.68 + M.r * 0.22, M.r * 0.98); brow.rotation.z = s * 0.45; body.add(brow); }      // (27 Nov 2026, his review: "Make the monsters less cute just a little": cross brows, slit pupils, a toothy frown, darker skins)
+  const mouth = new T.Mesh(new T.TorusGeometry(M.r * 0.3, M.r * 0.05, 6, 12, Math.PI), black); mouth.position.set(0, M.h * 0.36, M.r * 0.92); body.add(mouth);
+  for (const s of [-1, 1]) { const tooth = new T.Mesh(new T.ConeGeometry(M.r * 0.06, M.r * 0.16, 5), white); tooth.rotation.x = Math.PI; tooth.position.set(s * M.r * 0.14, M.h * 0.36 + M.r * 0.25, M.r * 0.95); body.add(tooth); }
   if (k === 'shield') { const sh = new T.Mesh(new T.BoxGeometry(M.r * 2.2, M.h * 0.95, 0.12), new T.MeshStandardMaterial({ color: 0x8a5a2a, roughness: 0.9 })); sh.position.set(0, M.h * 0.5, M.r + 0.25); sh.castShadow = true; body.add(sh); g.userData.shield = sh; }
   if (k === 'big') { const eye = new T.Mesh(new T.SphereGeometry(0.42, 14, 10), new T.MeshStandardMaterial({ color: 0xffe040, emissive: 0xffa000, emissiveIntensity: 1.2 })); eye.position.set(0, M.h * 0.95, M.r * 0.3); body.add(eye); for (const s of [-1, 1]) { const horn = new T.Mesh(new T.ConeGeometry(0.25, 0.9, 8), white); horn.position.set(s * M.r * 0.6, M.h * 0.9, 0); horn.rotation.z = -s * 0.5; body.add(horn); } }
   if (k === 'scut' || k === 'hop') for (const s of [-1, 1]) { const leg = new T.Mesh(new T.CylinderGeometry(0.07, 0.05, k === 'hop' ? 0.8 : 0.5, 6), skin); leg.position.set(s * M.r * 0.5, 0.15, 0); body.add(leg); }
@@ -25,7 +27,7 @@ function buildWorld() { if (V3) return V3; const T = THREE; if (!W3 || !W3.init(
   const fenceM = new T.MeshStandardMaterial({ color: 0xc8a878, roughness: 0.9 }); for (const s of [-1, 1]) for (let z = 2; z < 50; z += 2) { const p = new T.Mesh(new T.BoxGeometry(0.12, 0.9, 0.12), fenceM); p.position.set(s * 10, groundH(s * 10, z) + 0.45, z); p.castShadow = true; S.add(p); const r = new T.Mesh(new T.BoxGeometry(0.06, 0.08, 2), fenceM); r.position.set(s * 10, groundH(s * 10, z) + 0.7, z + 1); S.add(r); }
   const NP = 160, pG = new T.BufferGeometry(); pG.setAttribute('position', new T.BufferAttribute(new Float32Array(NP * 3), 3)); pG.setAttribute('color', new T.BufferAttribute(new Float32Array(NP * 3), 3)); const juice = new T.Points(pG, new T.PointsMaterial({ size: 0.16, vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false })); juice.frustumCulled = false; S.add(juice);
   V3 = { T, S, juice, P: Array.from({ length: NP }, () => ({ t: 9, life: 1, x: 0, y: -99, z: 0, vx: 0, vy: 0, vz: 0, c: [1, 1, 1] })), mons: new Map(), shots: new Map(), decals: [], peels: new Map() }; W3.setQuality(stepN); return V3; }
-const FCOL = { orange: 0xff8a1a, melon: 0x3aa83a, banana: 0xffe040 }, JCOL = { orange: [1, 0.55, 0.1], melon: [1, 0.3, 0.45], banana: [1, 0.95, 0.4] };
+const FCOL = { orange: 0xff8a1a, melon: 0x3aa83a, banana: 0xffe040, grapes: 0x8a3ac8, coconut: 0x6a4424, pineapple: 0xe8b830 }, JCOL = { orange: [1, 0.55, 0.1], melon: [1, 0.3, 0.45], banana: [1, 0.95, 0.4], grapes: [0.6, 0.2, 0.8], coconut: [0.95, 0.95, 0.9], pineapple: [1, 0.85, 0.3] };
 function fruitMesh(T, f) { if (f === 'banana') { const m = new T.Mesh(new T.TorusGeometry(0.16, 0.06, 8, 12, Math.PI * 0.8), new T.MeshStandardMaterial({ color: FCOL[f], roughness: 0.5 })); return m; }
   const m = new T.Mesh(new T.SphereGeometry(FRUITS[f].r, 14, 10), new T.MeshStandardMaterial({ color: FCOL[f], roughness: 0.5 })); if (f === 'melon') m.scale.z = 1.25; m.castShadow = true; return m; }
 function splashP(V, x, y, z, f, n) { for (let i = 0; i < n; i++) for (const q of V.P) if (q.t >= q.life) { const a = Math.random() * TAU; Object.assign(q, { t: 0, life: 0.5 + Math.random() * 0.4, x, y, z, vx: Math.cos(a) * (1 + Math.random() * 4), vy: 2 + Math.random() * 4, vz: Math.sin(a) * (1 + Math.random() * 4), c: JCOL[f] }); break; } }
@@ -33,7 +35,7 @@ function setWeather(G) { const V = V3; if (!V || V.none || V.sky === G.weather) 
 const VW = new (window.THREE ? THREE.Vector3 : Object)();
 function wScreen(x, y, z) { W3.cam.updateMatrixWorld(); VW.set(x, y, z); return W3.screen(VW); }
 // the pull: from the thumb's drag to an aim
-function pullAim(d) { const dx = d.x - d.x0, dy = d.y - d.y0, len = Math.hypot(dx, dy); return { yaw: clamp(-dx / (150 * k), -1, 1) * 0.55, pitch: clamp(dy / (170 * k), 0, 1) * 0.78 + 0.03, power: len > 22 * k ? 1 : 0, len }; }
+function pullAim(d) { const dx = d.x - d.x0, dy = d.y - d.y0, len = Math.hypot(dx, dy), u = clamp(dy / (PULL_LEN * k), 0, 1), yaw = clamp(-dx / (150 * k), -1, 1) * 0.55; if (len <= 22 * k || dy < 8 * k) return { yaw, pitch: 0, power: 0, len }; const p = pullShot(G, G.fruit, u, yaw); return { yaw, pitch: p.pitch, power: p.power, len }; }
 function onEvent(G, e) { const cx = W / 2, cy = H * 0.3, V = V3 && !V3.none ? V3 : null;
   switch (e.k) {
     case 'start': say(PLACES[G.place].name.toUpperCase(), cx, cy, '#fff', 20); break;
@@ -42,7 +44,7 @@ function onEvent(G, e) { const cx = W / 2, cy = H * 0.3, V = V3 && !V3.none ? V3
     case 'notready': if (!gate('nr', 400)) break; sfx.no(); break;
     case 'fire': sfx.twang(e.f); FX.shake = 3; break;
     case 'hit': { if (V) splashP(V, e.x, e.y, e.z, 'orange', 6); sfx.splat(e.dmg); FX.stop = 0.04; const s = wScreen(e.x, e.y + 1.4, e.z); if (e.why === 'eye') say('EYE! ×3', s.x, s.y, '#ffe040', 22); else if (e.why === 'air') say('IN THE AIR!', s.x, s.y, '#9be3ff', 18); break; }
-    case 'block': { sfx.thunk(); const s = wScreen(e.x, 2.2, e.z); say('BLOCKED', s.x, s.y, '#ffd0c4', 18); tip('shield', 'The board stops a flat shot. Pull further down to lob it over, or burst a melon by him.', 3.2); break; }
+    case 'block': { sfx.thunk(); const s = wScreen(e.x, 2.2, e.z); say('BLOCKED', s.x, s.y, '#ffd0c4', 18); tip('shield', 'The board stops a low shot. Hit him from far away (it falls on him), burst a melon, or throw a coconut.', 3.2); break; }
     case 'splash': if (V) splashP(V, e.x, 0.3, e.z, 'melon', 30); sfx.melon(); FX.shake = 6; if (V) V.decals.push({ x: e.x, z: e.z, t: 0 }); break;
     case 'slip': { sfx.slip(); const s = wScreen(e.x, 2, e.z); say('SLIP!', s.x, s.y, '#ffe040', 18); break; }
     case 'pop': if (V) splashP(V, e.x, 0.8, e.z, 'banana', 10); sfx.pop(); break;
@@ -85,7 +87,7 @@ function draw(now, dt) {
   if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,40,${FX.red * 0.2})`; ctx.fillRect(0, 0, W, H); }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 let IG = null; function idleG() { if (!IG || IG.over) { IG = newGame(4, { seed: (Math.random() * 1e6) | 0 }); IG.mem = {}; } honest(IG, { react: 0.2, acc: 0.95 }, IG.mem); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
-function fruitBtns(G) { const fr = G.cfg.fruits, w = 64 * k, gap = 12 * k, y = H - w - 18 * k, x0 = W / 2 - (fr.length * w + (fr.length - 1) * gap) / 2; return fr.map((f, i) => ({ f, x: x0 + i * (w + gap), y, w, h: w })); }
+function fruitBtns(G) { const fr = G.cfg.fruits, w = Math.min(64 * k, (W - 24 - 12 * k * (fr.length - 1)) / fr.length), gap = 12 * k, y = H - w - 18 * k, x0 = W / 2 - (fr.length * w + (fr.length - 1) * gap) / 2; return fr.map((f, i) => ({ f, x: x0 + i * (w + gap), y, w, h: w })); }
 function hud(G, t) { const c = G.cfg;
   if (G.lesson) lessonPanel(G);
   if (!G.lesson) { ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.font = `${Math.round(15 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.5)'; const s = `WAVE ${G.wave}/${c.waves}`; ctx.strokeText(s, 14, 44 * k); ctx.fillText(s, 14, 44 * k);
@@ -97,7 +99,7 @@ function hud(G, t) { const c = G.cfg;
   // the arc while pulling
   const B = fruitBtns(G);
   if (ui.drag) { const a = pullAim(ui.drag); if (a.power) { const pts = arc(G, a.yaw, a.pitch, a.power); ctx.fillStyle = 'rgba(255,255,255,.85)'; pts.forEach((p, i) => { if (i % 2) return; const s = wScreen(p[0], p[1], p[2]); if (s.front) { ctx.beginPath(); ctx.arc(s.x, s.y, Math.max(1.5, 4 - i * 0.03) * k, 0, TAU); ctx.fill(); } });
-      const e = pts[pts.length - 1], se = wScreen(e[0], 0.05, e[2]); if (se.front) { ctx.strokeStyle = G.fruit === 'melon' ? '#ff6a8a' : '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(se.x, se.y, (G.fruit === 'melon' ? 40 : 14) * k, (G.fruit === 'melon' ? 14 : 5) * k, 0, 0, TAU); ctx.stroke(); } } }
+      const e = pts[pts.length - 1], se = wScreen(e[0], 0.05, e[2]); if (se.front) { const sp2 = FRUITS[G.fruit].splash; ctx.strokeStyle = sp2 ? '#ff6a8a' : '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(se.x, se.y, (sp2 ? 15 * sp2 : 14) * k, (sp2 ? 5.4 * sp2 : 5) * k, 0, 0, TAU); ctx.stroke(); } } }
   // the slingshot's fork and band
   const fx = W / 2, fy = H - 118 * k, bx = ui.drag ? clamp(fx + (ui.drag.x - ui.drag.x0) * 0.5, fx - 60 * k, fx + 60 * k) : fx, by = ui.drag ? clamp(fy + (ui.drag.y - ui.drag.y0) * 0.5 + 20 * k, fy, fy + 80 * k) : fy + 10 * k;
   ctx.strokeStyle = '#6a4424'; ctx.lineWidth = 14 * k; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(fx, fy + 120 * k); ctx.lineTo(fx, fy + 30 * k); ctx.lineTo(fx - 40 * k, fy - 20 * k); ctx.moveTo(fx, fy + 30 * k); ctx.lineTo(fx + 40 * k, fy - 20 * k); ctx.stroke();

@@ -85,9 +85,12 @@ window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contai
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (one thumb, a floating stick): sideways swings the pole, up walks, the middle stands, down crouches; lifting the thumb
 // stands you still with the pole level
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; ui.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} hold(G, true); });
-cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const R = 48 * k, dy = (d.y - d.y0) / R;
-  lean(G, clamp((d.x - d.x0) / R, -1, 1)); walk(G, dy < -0.3); crouch(G, dy > 0.45); });
+// (27 Nov 2026, his review: "Make the joystick in a single place then actually make it playable"): the stick has ONE place, bottom middle, and is bigger;
+// a thumb anywhere on the lower part of the screen works it from that place (the picture shows the stick where it is)
+const stickBase = () => ({ x: W / 2, y: H - 130 * k, R: STICK_R * k }); const STICK_R = 66;
+function stickTo(d) { const b = stickBase(), dy = (d.y - b.y) / b.R; lean(G, clamp((d.x - b.x) / b.R, -1, 1)); walk(G, dy < -0.3); crouch(G, dy > 0.45); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; if (e.clientY < H * 0.38) return; ui.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} hold(G, true); stickTo(ui.drag); });
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; stickTo(d); });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) hold(G, false); }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------

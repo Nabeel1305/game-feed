@@ -11,7 +11,7 @@ const RULES = [
   'Someone drifting into danger? <b>Tap them to whistle</b> them back before it turns to trouble.',
   'A <b>rip</b> is the dark, calm-looking gap in the breaking waves. <b>Tap it</b> to plant a red flag: swimmers keep out.',
   'Tap someone who is fine and you swim out for nothing, then need a moment back up the tower. Look first.',
-  'Miss two and the beach closes. Get through the shift to win.',
+  'Miss three (two on the first beach) and the beach closes. Get through the shift to win.',
 ];
 const ZB = 13, XW = 7.5, TOWER = { x: 0, z: -7 };
 const BEACHES = ['Sandy Cove', 'Gull Point', 'Long Strand', 'Coral Bay', 'Shell Beach', 'Pebble Reach', 'Surfers\' Bay', 'Driftwood Shore'];
@@ -22,14 +22,14 @@ const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.g
 const RANKS = [[0, 'Cadet'], [60, 'Junior guard'], [200, 'Lifeguard'], [500, 'Senior guard'], [1100, 'Head of the beach'], [2500, 'Legend of the surf']];
 const beachOf = N => BEACHES[(N - 1) % BEACHES.length];
 function makeCfg(N, help, o = {}) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
-  return { N, f, help: !!help, practice: !!o.practice, shift: o.practice ? 1e9 : Math.round(x(70, 115, 25)), crowd: Math.round(x(8, 15, 25)), rips: N <= 1 ? 1 : N <= 5 ? 2 : 2 + (N % 2),
-    T: x(19, 11, 40) * (help ? 1.3 : 1), riskT: x(9.5, 5, 30) * (help ? 1.25 : 1), far: x(0.08, 0.2, 30), wind: N >= 3, tired: Math.round(x(4, 12, 35)), flags: N >= 2 ? 2 : 0, lives: 2,
-    swim: 2.4 * (1 + 0.1 * upLv('fins')), tow: 1.7 * (1 + 0.15 * upLv('board')) }; }
+  const c = { N, f, help: !!help, practice: !!o.practice, shift: o.practice ? 1e9 : Math.round(x(70, 115, 25)), crowd: Math.round(x(8, 15, 25)), rips: N <= 1 ? 1 : N <= 12 ? 2 : 2 + (N % 2),
+    T: x(25, 15, 45) * (help ? 1.3 : 1), riskT: x(12, 7, 35) * (help ? 1.25 : 1), far: x(0.08, 0.2, 30), wind: N >= 3, tired: Math.round(x(4, 12, 35)), flags: N >= 2 ? 2 : 0, lives: N === 1 ? 2 : 3,
+    swim: 2.4 * (1 + 0.1 * upLv('fins')), tow: 1.7 * (1 + 0.15 * upLv('board')) }; if (c.rips === 3) { c.T *= 1.3; c.riskT *= 1.25; c.crowd = Math.round(c.crowd * 0.8); } return c; }      // three rips to watch: a little longer before anyone is lost (27 Nov 2026)
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0, R = rng(seed);
   const G = { N, cfg, seed, rnd: R, t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, mini: !!o.mini, beach: o.practice ? 'Practice beach' : beachOf(N), sky: SKIES[(N - 1) % SKIES.length],
     rips: [], sw: [], sid: 0, lg: { x: TOWER.x, z: TOWER.z, st: 'tower', target: null, land: null, towT: 0, lock: 0 }, lives: cfg.lives, flags: cfg.flags, fog: 0, wind: 0, windT: 0, next: 1, saved: 0, whistles: 0, falses: 0, missed: 0, resp: [], coins: 0, t0: 0, tired: [] };
   for (let i = 0; i < cfg.tired && !cfg.practice; i++) G.tired.push(8 + (cfg.shift - 25) * (i + 0.2 + R() * 0.6) / cfg.tired);
-  const xs = [-4.2, 3.6, 0.2]; for (let i = 0; i < cfg.rips; i++) G.rips.push({ x: xs[i] + (R() - 0.5) * 1.2, w: 1.3 + R() * 0.6, v: 0.9 + R() * 0.5 + Math.min(0.4, cfg.f * 0.01), flag: false });
+  const three = cfg.rips === 3, xs = three ? [-4.9, 4.7, -0.1] : [-4.2, 3.6, 0.2]; for (let i = 0; i < cfg.rips; i++) G.rips.push({ x: xs[i] + (R() - 0.5) * (three ? 0.6 : 1.2), w: three ? 1.05 + R() * 0.35 : 1.3 + R() * 0.6, v: 0.9 + R() * 0.5 + Math.min(0.4, cfg.f * 0.01), flag: false });
   if (G.teach && LESSONS[N] && G.taught < N && !cfg.practice) { lessonStart(G); return G; }
   for (let i = 0; i < Math.ceil(cfg.crowd * 0.6); i++) addSwimmer(G, true); G.ev.push({ k: 'start' }); return G; }
 const ripAt = (G, x, z) => z > 0.8 && z < 24 ? G.rips.find(r => Math.abs(x - r.x) < r.w) : null;
@@ -78,10 +78,10 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; const c = G.c
   const sp = (z) => z < 0 ? 6 : z < 1.8 ? 3 : c.swim, moveL = (tx, tz, v) => { const dx = tx - L.x, dz = tz - L.z, d = Math.hypot(dx, dz); if (d > 0.05) { L.x += dx / d * Math.min(d, v * dt); L.z += dz / d * Math.min(d, v * dt); } L.face = Math.atan2(dx, dz); const r = ripAt(G, L.x, L.z); if (r && L.z > 1) L.z += r.v * 0.75 * dt; return d < 0.8; };
   if (L.st === 'go') { const s = G.sw.find(q => q.id === L.target); if (!s || !['ok', 'risk', 'trouble'].includes(s.st)) { L.st = 'back'; L.target = null; }
     else if (moveL(s.x, s.z, sp(L.z))) { if (s.st === 'trouble') { s.st = 'towed'; L.st = 'tow'; L.land = null; L.towT = 0; G.resp.push(s.tr); G.ev.push({ k: 'grab', id: s.id }); lessonSee(G, 'grab'); }
-      else { G.falses++; L.st = 'back'; L.target = null; L.lock = 4; L.wasted = true; G.ev.push({ k: 'false', id: s.id }); lessonSee(G, 'false'); if (s.st === 'risk') whistle(G, s); } } }
+      else { G.falses++; L.st = 'back'; L.target = null; L.lock = 6; L.wasted = true; G.ev.push({ k: 'false', id: s.id }); lessonSee(G, 'false'); if (s.st === 'risk') whistle(G, s); } } }
   else if (L.st === 'tow') { L.towT += dt; if (!L.land && L.towT > 3.5) { L.land = { x: L.x, z: 0.4 }; G.ev.push({ k: 'land', x: L.x, through: landThrough(G, L, L.x), auto: true }); }
     if (L.land && moveL(L.land.x, L.land.z, L.z < 1.8 ? 2.4 : c.tow)) { const s = G.sw.find(q => q.id === L.target); if (s) { s.st = 'safe'; s.tx = s.x + (G.rnd() - 0.5) * 3; s.tz = -5; } G.saved++; G.coins += 6; L.st = 'back'; L.target = null; G.ev.push({ k: 'saved', x: L.x }); lessonSee(G, 'saved'); } }
-  else if (L.st === 'back') { if (L.wasted) { G.fog = Math.max(G.fog, 0.2); L.lock = 4; } if (moveL(TOWER.x, TOWER.z + 1.5, sp(L.z) * 0.8)) { L.st = 'tower'; if (L.wasted) { L.wasted = false; G.fog = 4; } } }      // a false alarm: all the way back up the tower before you can whistle or go again
+  else if (L.st === 'back') { if (L.wasted) { G.fog = Math.max(G.fog, 0.2); L.lock = 6; } if (moveL(TOWER.x, TOWER.z + 1.5, sp(L.z) * 0.8)) { L.st = 'tower'; if (L.wasted) { L.wasted = false; G.fog = 4; } } }      // a false alarm: all the way back up the tower before you can whistle or go again
   if (!G.lesson && !c.practice && G.t - G.t0 >= c.shift && !G.sw.some(s => s.st === 'trouble' || s.st === 'towed') && L.st !== 'tow') finish(G, true); }
 function finish(G, win) { if (G.over) return; G.over = win ? 'won' : 'lost'; const avg = G.resp.length ? G.resp.reduce((a, b) => a + b, 0) / G.resp.length : 0, stars = win ? (G.missed === 0 && G.falses <= 1 ? 3 : G.missed <= 1 ? 2 : 1) : 0;
   G.res = { win, stars, saved: G.saved, whistles: G.whistles, falses: G.falses, missed: G.missed, avg: +avg.toFixed(1), flags: G.cfg.flags - G.flags, coins: G.coins + (win ? 8 + Math.ceil(G.N / 2) + stars * 3 : 0), beach: G.beach };
@@ -125,7 +125,7 @@ function lgCue(G) { if (G.over || busy(G)) return ['WAIT…', 'wait', false]; co
   LGC.v = v; return v; }
 function honest(G, o, mem) { if (G.over || busy(G)) return; const acc = o.acc == null ? 0.85 : o.acc, react = o.react == null ? 0.35 : o.react, R = Math.random, L = G.lg;
   mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = react * (0.8 + R() * 0.4);
-  if (L.st === 'tow' && !L.land) { if (L.towT < react) return; const r = ripAt(G, L.x, L.z) || ripBetween(G, L, { x: L.x, z: 0.4 }); let lx = L.x; if (r && R() < acc) lx = r.x + (L.x < r.x ? -1 : 1) * (r.w + 1.6); ACT.tap(G, clamp(lx, -XW, XW), -1); return; }
+  if (L.st === 'tow' && !L.land) { if (L.towT < react) return; const r = ripAt(G, L.x, L.z) || ripBetween(G, L, { x: L.x, z: 0.4 }); let lx = L.x; if (r && R() < acc) { const sd = L.x < r.x ? -1 : 1, a1 = r.x + sd * (r.w + 1.6), a2 = r.x - sd * (r.w + 1.6); lx = !G.rips.some(q => q !== r && Math.abs(a1 - q.x) < q.w + 0.3) ? a1 : a2; } ACT.tap(G, clamp(lx, -XW, XW), -1); return; }
   const see = s => s.st === 'trouble' ? s.tr > react * 1.5 + (1 - acc) * Math.min(s.T, G.cfg.T) * 0.45 : s.st === 'risk' ? s.rt > react * 2 + (1 - acc) * 5 : false;
   const tr = G.sw.filter(s => s.st === 'trouble' && see(s)).sort((a, b) => (a.T - a.tr) - (b.T - b.tr))[0];
   if (tr && (L.st === 'tower' || L.st === 'back') && L.lock <= 0) { ACT.tap(G, tr.x + (R() < (1 - acc) * 0.15 ? 1.5 : 0), tr.z); return; }

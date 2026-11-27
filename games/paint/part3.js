@@ -92,8 +92,8 @@ function onEvent(G, e) { const L = lay(G), s = L.s;
     case 'start': say(`Make a ${TIERS[G.cfg.goal].n}!`, W / 2, H * 0.36, TIERS[G.cfg.goal].c, 30); sfx.start(); if (G.N <= 1) tip('how', 'Slide to aim, let go to drop. Wet paint squashes into its own colour.', 3.2); break;
     case 'drop': sfx.plop(e.t); break;
     case 'squash': { const x = L.sx(e.x), y = L.sy(e.y), T = TIERS[Math.min(10, e.t)]; const nb = G.b[G.b.length - 1]; if (nb) POP.set(nb.id, 0);
-      sparks(x, y, 10 + e.t * 2, T.c, (140 + e.t * 20) * s); RINGS.push({ x, y, r: T.r * L.u, t: 0, life: 0.45, col: T.c }); sfx.squash(e.t, e.chain); vibe(e.t >= 5 ? HAP.light : HAP.tick);
-      if (e.t >= 3 || e.chain >= 2) say(e.chain >= 2 ? `${T.n.toUpperCase()}! ×${e.chain}` : `${T.n.toUpperCase()}!`, x, y - T.r * L.u - 12, T.c === '#ffffff' ? '#ff6ac8' : shade(T.c, 0.85), 16 + e.t * 1.5 + e.chain * 2); if (e.t >= 6) FX.shake = 4 + e.t; break; }
+      sparks(x, y, 10 + e.t * 2, T.c, (140 + e.t * 20) * s); RINGS.push({ x, y, r: T.r * L.u, t: 0, life: 0.45, col: T.c }); if (e.group) { sfx.trio(e.t, e.group); vibe(HAP.light); RINGS.push({ x, y, r: T.r * L.u * 1.6, t: 0, life: 0.7, col: '#ffffff' }); sparks(x, y, 14 + e.group * 3, T.c, 220 * s); } else sfx.squash(e.t, e.chain); if (!e.group) vibe(e.t >= 5 ? HAP.light : HAP.tick);
+      if (e.group) say(`${e.group} TOGETHER! ${T.n.toUpperCase()}`, x, y - T.r * L.u - 12, T.c === '#ffffff' ? '#ff6ac8' : shade(T.c, 0.85), 18 + e.group * 2); else if (e.t >= 3 || e.chain >= 2) say(e.chain >= 2 ? `${T.n.toUpperCase()}! ×${e.chain}` : `${T.n.toUpperCase()}!`, x, y - T.r * L.u - 12, T.c === '#ffffff' ? '#ff6ac8' : shade(T.c, 0.85), 16 + e.t * 1.5 + e.chain * 2); if (e.t >= 6) FX.shake = 4 + e.t; break; }
     case 'masterpiece': FX.flash = 1; FX.shake = 14; say('MASTERPIECE!', W / 2, H * 0.4, '#ff6ac8', 36); sfx.goal(); break;
     case 'crack': sparks(L.sx(e.x), L.sy(e.y), 12, '#8a8680', 180 * s); sfx.crack(); break;
     case 'dry': sfx.dry(e.n, e.of); if (e.n === 1) tip('dry', 'A drop that squashes nothing dries one paint drop of your palette. Squash to refill it!', 3.4); break;

@@ -108,7 +108,7 @@ let IG = null; function idleG() { if (!IG || IG.over) { IG = newGame(4, { seed: 
 function hud(G, t) { const c = G.cfg, m = G.me;
   if (G.lesson) lessonPanel(G);
   // the balance arc
-  const ax = W / 2, ay = G.lesson ? H * 0.32 : 112 * k, R = 88 * k, span = 1.0; ctx.lineWidth = 10 * k; ctx.lineCap = 'butt';
+  const ax = W / 2, ay = G.lesson ? H * 0.32 : 150 * k, R = 88 * k, span = 1.0; ctx.lineWidth = 10 * k; ctx.lineCap = 'butt';
   const arc = (a0, a1, col) => { ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(ax, ay, R, -Math.PI / 2 + a0 * span, -Math.PI / 2 + a1 * span); ctx.stroke(); };
   arc(-1, -0.62, 'rgba(255,70,50,.8)'); arc(-0.62, -0.3, 'rgba(255,200,60,.6)'); arc(-0.3, 0.3, 'rgba(120,230,150,.55)'); arc(0.3, 0.62, 'rgba(255,200,60,.6)'); arc(0.62, 1, 'rgba(255,70,50,.8)');
   const nd = clamp(m.th / c.fall, -1.1, 1.1); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + Math.sin(nd * span) * (R + 8 * k), ay - Math.cos(nd * span) * (R + 8 * k)); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ax, ay, 5 * k, 0, TAU); ctx.fill();
@@ -118,9 +118,10 @@ function hud(G, t) { const c = G.cfg, m = G.me;
     const bx = 14, bw = W - 28, by = H - 24 * k; ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(bx, by, bw, 7 * k, 3); ctx.fill(); ctx.fillStyle = '#ff6a5a'; rrect(bx, by, bw * clamp(m.s / G.len, 0, 1), 7 * k, 3); ctx.fill(); for (const cp of G.cps) { ctx.fillStyle = '#9be3b5'; ctx.fillRect(bx + bw * cp / G.len - 1, by - 3, 3, 13 * k); } }
   if (G.gustWarn) { ctx.fillStyle = '#cfe6ff'; ctx.font = `${Math.round(22 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(G.gustWarn.dir > 0 ? 'WIND →' : '← WIND', W / 2, ay + 26 * k); }
   // the thumb
-  if (ui.drag) { const d2 = ui.drag, R2 = 48 * k, dx = clamp(d2.x - d2.x0, -R2, R2), dy = clamp(d2.y - d2.y0, -R2, R2); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(d2.x0, d2.y0, R2, 0, TAU); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('WALK', d2.x0, d2.y0 - R2 - 8 * k); ctx.fillText('CROUCH', d2.x0, d2.y0 + R2 + 10 * k);
-    ctx.fillStyle = m.crouch ? '#ffb030' : m.walking ? '#9be3b5' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(d2.x0 + dx, d2.y0 + dy, 20 * k, 0, TAU); ctx.fill(); }
+  { const sb = stickBase(), d2 = ui.drag, R2 = sb.R, dx = d2 ? clamp(d2.x - sb.x, -R2, R2) : 0, dy = d2 ? clamp(d2.y - sb.y, -R2, R2) : 0; ctx.globalAlpha = d2 ? 1 : 0.55; ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(sb.x, sb.y, R2, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.5; ctx.stroke();      // the stick, always in its one place
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('WALK', sb.x, sb.y - R2 - 9 * k); ctx.fillText('CROUCH', sb.x, sb.y + R2 + 13 * k);
+    ctx.fillStyle = m.crouch ? '#ffb030' : m.walking ? '#9be3b5' : 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(sb.x + dx, sb.y + dy, 24 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+  if (false) {}
   else if ((G && G.lesson) && !G.lesson && G.t < 5) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('THUMB DOWN · SLIDE TO BALANCE · PUSH UP TO WALK', W / 2, H * 0.7); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }

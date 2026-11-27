@@ -29,8 +29,8 @@ const RANKS = [[0, 'Dabbler'], [40, 'Painter'], [130, 'Colourist'], [320, 'Artis
 const GRAV = 30, WET = 1.2, DRYN = 6;      /* wet: seconds a blob stays wet after it is dropped or made; the palette holds six drops */      /* how long a blob stays wet after it is dropped or made */
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
   const goal = N <= 9 ? 6 : 7, jw = (N <= 4 ? 10.5 : 10.5 - Math.min(1.1, f / 35)) + 0.6 * upLv('wide') + (help ? 0.5 : 0), par = goal === 6 ? 56 : 96;
-  return { N, f, help: !!help, place: placeOf(N), goal, spawnTop: N <= 9 ? 3 : 4, jw, line: jw - 1.3, stones: N >= 6 ? x(0.03, 0.1, 30) : 0, par,
-    drops: Math.round(par * 1.6) + 4 * upLv('paint'), dry: DRYN + (help ? 1 : 0), shake: upLv('shake') }; }
+  return { N, f, help: !!help, place: placeOf(N), goal, spawnTop: N <= 9 ? 3 : 4, jw, line: jw - 1.8, stones: N >= 6 ? x(0.03, 0.1, 30) : 0, par,
+    drops: Math.round(par * 1.45) + 4 * upLv('paint'), dry: DRYN + (help ? 1 : 0), shake: upLv('shake') }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, wait: 0, next: null };
   setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
@@ -71,9 +71,25 @@ function squash(G, a, b) { const t = a.t + 1, x = (a.x * a.r * a.r + b.x * b.r *
   // stones right beside a squash crack away
   for (const s of G.b) if (s.t < 0 && !s.gone && Math.hypot(s.x - x, s.y - y) < nb.r + s.r + 0.35) { s.gone = true; G.ev.push({ k: 'crack', x: s.x, y: s.y }); }
   G.best = Math.max(G.best, t); G.made = Math.max(G.made, t); G.ev.push({ k: 'squash', t, x, y, chain: G.chain, pts, from: a.t }); lessonSee(G, 'squash', t); }
+// THREE TOUCHING (27 Nov 2026, his review: "when i don't drop two same colors on top of one another but rather they meet naturally in the pile... if three
+// reds or more are touching each other shouldn't they combine to make whatever color with a nice sound effect"). Two DRY blobs of one colour that touch still
+// sit side by side (that is what lets a pile build), but three or more of one colour all touching (a chain of them counts) squash together once they have settled in the pile, into
+// one blob of the next colour, with their own chord and a bonus; five or more jump two colours.
+function groups(G) { const B = G.b.filter(b => b.t >= 0 && !b.gone && b.age > 1.0 && b.wet <= 0 && Math.abs(b.vx) + Math.abs(b.vy) < 1.5), n = B.length, adj = B.map(() => []);
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const a = B[i], b = B[j]; if (a.t !== b.t) continue; const rr = a.r + b.r + 0.06; if ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 < rr * rr) { adj[i].push(j); adj[j].push(i); } }
+  const seen = new Array(n).fill(false), out = []; for (let i = 0; i < n; i++) { if (seen[i] || !adj[i].length) continue; const g = [], st = [i]; seen[i] = true; while (st.length) { const k = st.pop(); g.push(B[k]); for (const m of adj[k]) if (!seen[m]) { seen[m] = true; st.push(m); } } if (g.length >= 3) out.push(g); }
+  return out.filter(g => g[0].t <= TRIO_MAX); }
+const TRIO_MAX = 99;      // (a group that forms by itself scores and climbs a colour, but does not refill the palette: only squashes you make do)
+function squashGroup(G, g) { const t0 = g[0].t, up = g.length >= 5 ? 2 : 1, t = t0 + up; let m = 0, x = 0, y = 0; for (const b of g) { const w = b.r * b.r; m += w; x += b.x * w; y += b.y * w; b.gone = true; }
+  x /= m; y /= m; G.chain = G.chainT > 0 ? G.chain + 1 : 1; G.chainT = 0.9; G.merges++;
+  const pts = (t + 1) * (t + 2) / 2 * 10 * G.chain * g.length; G.score += pts; G.b = G.b.filter(b => !b.gone);
+  if (t > 10) { G.ev.push({ k: 'masterpiece', x, y }); G.score += 2000; return; }
+  const nb = { id: BID++, t, x, y, vx: 0, vy: 2, r: TIERS[t].r, age: 0, sq: 1, wet: 0 };      /* made by a group: dry (it does not set off a chain by itself) */ nb.x = clamp(nb.x, nb.r, G.jw - nb.r); nb.y = Math.max(nb.r, nb.y); G.b.push(nb);
+  for (const s2 of G.b) if (s2.t < 0 && !s2.gone && Math.hypot(s2.x - x, s2.y - y) < nb.r + s2.r + 0.35) { s2.gone = true; G.ev.push({ k: 'crack', x: s2.x, y: s2.y }); } G.b = G.b.filter(b => !b.gone);
+  G.best = Math.max(G.best, t); G.made = Math.max(G.made, t); G.ev.push({ k: 'squash', t, x, y, chain: G.chain, pts, from: t0, group: g.length }); lessonSee(G, 'squash', t); }
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt;
   if (G.wait > 0) { G.wait -= dt; physicsSteps(G, dt); if (G.wait <= 0) { G.wait = 0; const f = G.next; G.next = null; if (f) f(); } return; }
-  G.cool = Math.max(0, G.cool - dt); G.chainT = Math.max(0, G.chainT - dt); G.idle += dt; physicsSteps(G, dt);
+  G.cool = Math.max(0, G.cool - dt); G.chainT = Math.max(0, G.chainT - dt); G.idle += dt; physicsSteps(G, dt); if (G.idle > 1.3) for (const g of groups(G)) squashGroup(G, g);      /* groups form when the jar has a moment's calm (no drop for 1.3 s) */
   // the line: a blob resting above it too long ends it
   const over = G.b.some(b => b.age > 1.2 && b.y + b.r > G.line && Math.abs(b.vy) < 3); G.danger = over ? G.danger + dt : Math.max(0, G.danger - dt * 2);
   if (G.danger > 0 && !G.warned) { G.warned = true; G.ev.push({ k: 'warn' }); } if (!G.danger) G.warned = false;

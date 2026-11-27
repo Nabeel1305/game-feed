@@ -8,6 +8,8 @@ const sfx = {
   start() { [0, 2, 4].forEach((q, j) => pluck(note(392, q + 2), 0.5, 0.06, j * 0.07)); },
   plop(t = 0) { const f = 900 - Math.max(0, t) * 70; tone(f, 0.09, 0.05, 'sine', 0, f * 0.6); noise(0.04, 1800, 0.02, 'bandpass', 2); },
   squash(t = 1, chain = 1) { tone(140 - Math.min(8, t) * 6, 0.22, 0.12, 'sine', 0, 70); noise(0.16, 700, 0.06, 'lowpass', 1.2, 0, 0.01); pluck(note(392, Math.min(16, t + (chain - 1) * 2)), 0.6, 0.08, 0.02); if (chain >= 2) tone(note(784, Math.min(14, t + chain)), 0.25, 0.03, 'sine', 0.06); },
+  // three or more touching squash together: a deeper splosh, then a rising sparkly chord (one note per blob)
+  trio(t = 1, n = 3) { tone(120 - Math.min(8, t) * 5, 0.3, 0.14, 'sine', 0, 55); noise(0.24, 900, 0.07, 'lowpass', 1.4, 0, 0.01); for (let i = 0; i < Math.min(6, n); i++) pluck(note(392, Math.min(18, t + [0, 4, 7, 12, 16, 19][i])), 0.55, 0.07, 0.05 + i * 0.06); tone(note(1568, Math.min(12, t)), 0.35, 0.025, 'sine', 0.08 + n * 0.06); },
   dry(n = 1, of = 6) { tone(500 - n * 40, 0.08, 0.04, 'triangle', 0, 420 - n * 40); },
   refill() { if (!gate('refill', 200)) return; [0, 4, 7].forEach((q, j) => tone(note(1046, q), 0.12, 0.025, 'sine', j * 0.03)); },
   warn() { tone(110, 0.4, 0.06, 'sine', 0, 90); },

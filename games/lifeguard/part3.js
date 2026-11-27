@@ -50,6 +50,10 @@ function buildWorld() {
   V.me = makeGuard(V); V.S.add(V.me.g);
   V.flags = []; for (let i = 0; i < 3; i++) { const g = new T.Group(), pole = new T.Mesh(V.cylG, M(0xdddddd)); pole.scale.set(0.03, 1.6, 0.03); pole.position.y = 0.8; g.add(pole); const f = new T.Mesh(V.boxG, M(0xe8201a, { emissive: 0x400000 })); f.scale.set(0.5, 0.32, 0.02); f.position.set(0.25, 1.4, 0); g.add(f); g.visible = false; V.S.add(g); V.flags.push(g); }
   V.ringM = new T.MeshBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.0, depthWrite: false }); V.help = []; for (let i = 0; i < 6; i++) { const r = new T.Mesh(new T.RingGeometry(0.45, 0.55, 24).rotateX(-Math.PI / 2), V.ringM); r.visible = false; V.S.add(r); V.help.push(r); }
+  // (27 Nov 2026, his review: "Way too hard check if a person can actually win") every swimmer in trouble gets a pulsing red ring and a red "!" over them, every one
+  // drifting into danger a yellow ring: what is happening is always shown (who to save is still yours to judge and reach in time)
+  V.trM = new T.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.95, depthWrite: false }); V.rkM = new T.MeshBasicMaterial({ color: 0xffe23a, transparent: true, opacity: 0.95, depthWrite: false });
+  V.marks = []; for (let i = 0; i < 14; i++) { const r = new T.Mesh(new T.RingGeometry(0.62, 0.86, 28).rotateX(-Math.PI / 2), V.trM); r.visible = false; V.S.add(r); V.marks.push(r); }
   V.landMark = new T.Mesh(new T.RingGeometry(0.4, 0.6, 24).rotateX(-Math.PI / 2), new T.MeshBasicMaterial({ color: 0x7cf07a, transparent: true, opacity: 0.8, depthWrite: false })); V.landMark.visible = false; V.S.add(V.landMark);
   V.splash = []; for (let i = 0; i < 40; i++) { const m = new T.Mesh(V.sphG, V.foamM); m.scale.setScalar(0.06); m.visible = false; V.S.add(m); V.splash.push({ m, t: 9, vx: 0, vy: 0, vz: 0 }); }
   V.ray = new T.Raycaster(); V.plane = new T.Plane(new T.Vector3(0, 1, 0), -0.05);
@@ -81,17 +85,20 @@ function sync(V, G, dt) { V.t += dt; const T = V.T;
   G.rips.forEach((r, i) => { const f = V.flags[i]; f.visible = !!r.flag; if (f.visible) f.position.set(r.x * VX, sandY(-1), -1); });
   // the swimmers
   const live = G.sw.filter(s => s.st !== 'out'); let hi = 0;
+  let mi = 0; const mark = (s, red) => { if (mi >= V.marks.length) return; const r = V.marks[mi++], u = 1 + 0.18 * Math.sin(V.t * (red ? 9 : 5)); r.visible = true; r.material = red ? V.trM : V.rkM; r.position.set(s.x * VX, 0.07, s.z); r.scale.setScalar(u * (red ? 1.25 : 1)); };
   V.pp.forEach((p, i) => { const s = live[i]; p.g.visible = !!s; if (!s) return; const inW = s.z > 0.4, y0 = inW ? 0.02 : sandY(s.z) + 2.35, ph = s.ph;
     p.legs.visible = !inW; p.body.visible = true; p.ring.visible = !!s.float && inW; p.g.position.set(s.x * VX, y0, s.z); p.g.rotation.set(0, Math.PI, 0); p.armL.rotation.set(0, 0, 0); p.armR.rotation.set(0, 0, 0);
     if (!inW) { p.g.position.y += Math.abs(Math.sin(ph * 8)) * 0.05; p.armL.rotation.x = Math.sin(ph * 8) * 0.5 + Math.PI; p.armR.rotation.x = -Math.sin(ph * 8) * 0.5 + Math.PI; return; }
     p.body.position.y = -0.5; p.head.position.y = 0;
-    if (s.st === 'trouble') { const u = s.tr / Math.min(s.T, G.cfg.T), quiet = 0.42 - 0.12 * upLv('bino');
+    if (s.st === 'risk') mark(s, false);
+    if (s.st === 'trouble') { mark(s, true); const u = s.tr / Math.min(s.T, G.cfg.T), quiet = G.N >= 8 ? 0.3 - 0.1 * upLv('bino') : 0;
       if (u < quiet) { p.g.position.y = -0.1 + Math.sin(ph * 2) * 0.04; p.head.rotation.x = -0.5; }      // low in the water, head tilted back: easy to miss
       else if (u < 0.78) { p.g.position.y = -0.06 + Math.abs(Math.sin(ph * 5)) * 0.12; p.armL.rotation.z = 1.2 + Math.sin(ph * 9) * 0.6; p.armR.rotation.z = -1.2 - Math.sin(ph * 9 + 1) * 0.6; if (Math.random() < 0.25) splash(V, s.x * VX, s.z); }
       else { p.g.position.y = Math.abs(Math.sin(ph * 6)) * 0.1; p.armL.rotation.z = Math.PI * 0.95 + Math.sin(ph * 10) * 0.25; if (Math.random() < 0.35) splash(V, s.x * VX, s.z); }
       if (G.cfg.help && hi < V.help.length) { const r = V.help[hi++]; r.visible = true; r.position.set(s.x * VX, 0.06, s.z); } }
     else if (s.st === 'towed') { p.g.position.y = -0.05; p.head.rotation.x = -0.6; }
     else { p.head.rotation.x = 0; p.g.position.y = Math.sin(ph * 1.7) * 0.05; const sw = Math.sin(ph * 3); p.armL.rotation.x = sw * 1.2; p.armR.rotation.x = -sw * 1.2; } });
+  for (let i = mi; i < V.marks.length; i++) V.marks[i].visible = false;
   for (let i = hi; i < V.help.length; i++) V.help[i].visible = false; V.ringM.opacity = G.cfg.help ? 0.5 + Math.sin(V.t * 5) * 0.2 : 0;
   // you
   const L = G.lg, me = V.me, onT = L.st === 'tower'; me.g.visible = !onT; me.g.position.set(L.x * VX, onT ? sandY(TOWER.z) + 3.28 : (L.z > 1.2 ? -1.9 : sandY(L.z)), onT ? TOWER.z + 0.8 : L.z); me.g.rotation.y = onT ? 0 : (L.face != null ? Math.atan2(Math.sin(L.face) * VX, Math.cos(L.face)) : 0);
@@ -109,7 +116,7 @@ function worldAt(px, py) { const V = V3; if (!V || V.none) return null; const T 
 // ---------- events ----------
 function onEvent(G, e) { const at = (x, z) => scrOf(x, 0.6, z) || { x: W / 2, y: H / 2 };
   switch (e.k) {
-    case 'start': if (!G.lesson) { ui.banner = { txt: G.beach.toUpperCase(), sub: G.cfg.practice ? 'practice: no clock' : `a ${G.cfg.shift}-second shift · miss two and the beach closes`, t: 0, secs: 2.8 }; tip('start', 'Watch the water. Trouble starts quietly: low in the water, head back.', 3.6); } ui.snap = true; break;
+    case 'start': if (!G.lesson) { ui.banner = { txt: G.beach.toUpperCase(), sub: G.cfg.practice ? 'practice: no clock' : `a ${G.cfg.shift}-second shift · miss ${G.cfg.lives === 2 ? "two" : "three"} and the beach closes`, t: 0, secs: 2.8 }; tip('start', 'Watch the water. Trouble starts quietly: low in the water, head back.', 3.6); } ui.snap = true; break;
     case 'risk': if (e.cause === 'rip') tip('risk', 'Someone is in a rip. Tap them to whistle them back.', 3.2); else if (e.cause === 'far') tip('far', 'Past the orange buoys is too far. Tap to whistle them in.', 3.2); else tip('windrisk', 'Offshore wind: inflatables drift out. Whistle them in.', 3.2); break;
     case 'trouble': if (!G.lesson) sfx.tense(); break;
     case 'whistle': sfx.whistle(); vibe(HAP.tick); { const p = at(e.x, e.z); say('📣', p.x, p.y - 20 * k, '#fff', 22); } break;
@@ -124,7 +131,7 @@ function onEvent(G, e) { const at = (x, z) => scrOf(x, 0.6, z) || { x: W / 2, y:
     case 'flag': sfx.flag(); vibe(HAP.light); say('RIP FLAGGED', W / 2, H * 0.45, '#ff9a8a', 20); break;
     case 'noflag': sfx.no(); say('NO FLAGS LEFT', W / 2, H * 0.45, '#ffd0a0', 16); break;
     case 'wind': ui.banner = { txt: 'OFFSHORE WIND', sub: 'Inflatables will drift out', t: 0, secs: 2.4, small: true }; sfx.wind(); break;
-    case 'missed': sfx.missed(); FX.red = 0.6; ui.banner = { txt: 'THE JET SKI GOT THEM', sub: G.lives > 0 ? `One more miss and the beach closes` : '', t: 0, secs: 2.6, small: true }; break;
+    case 'missed': sfx.missed(); FX.red = 0.6; ui.banner = { txt: 'THE JET SKI GOT THEM', sub: G.lives === 1 ? `One more miss and the beach closes` : G.lives > 1 ? `${G.lives} more misses and the beach closes` : '', t: 0, secs: 2.6, small: true }; break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.36, '#ffd36a', 24); sfx.whistle(); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.36, '#9be3b5', 24); sfx.coin(e.n); break;
     case 'lessonmiss': coachMiss(); break;

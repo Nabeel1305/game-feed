@@ -5281,7 +5281,7 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Rookie'], [40, 'Wire walker'], [130, 'Funambulist'], [320, 'Daredevil'], [700, 'Sky walker'], [1500, 'Legend of the wire']];
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
-  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), len: Math.round(x(30, 110, 30)), tip: x(2.2, 3.1, 30) * (1 - 0.15 * e) * (help ? 0.85 : 1), jolt: x(0.25, 0.42, 30) * (1 - 0.15 * upLv('shoes')) * (help ? 0.8 : 1),
+  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), len: Math.round(x(30, 110, 30)), tip: x(1.8, 2.8, 30) * (1 - 0.15 * e) * (help ? 0.85 : 1), jolt: x(0.22, 0.38, 30) * (1 - 0.15 * upLv('shoes')) * (help ? 0.8 : 1),
     wind: N >= 2 ? x(0.35, 1.1, 30) : 0, birds: N >= 3 ? x(0.5, 2, 30) : 0, banners: N >= 4 ? x(0.5, 2, 30) : 0, bags: N >= 5 ? x(0.5, 2.2, 30) : 0, stars: Math.round(x(2, 5, 25)),
     pull: 7 * (1 + 0.1 * upLv('pole')), fall: 0.72 + 0.04 * upLv('nerve') + (help ? 0.05 : 0), lives: 3, cp: 40 }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -5364,7 +5364,7 @@ const BLIND = { d: G => { hold(G, true); lean(G, Math.random() * 2 - 1); walk(G,
 // SLIDE LEFT / SLIDE RIGHT (the way it would lean, from where the thumb went down), THUMB TO THE MIDDLE, PULL DOWN: CROUCH.
 const RPC = { t: -1e9, v: null };
 function ropeCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RPC.t < 120) return RPC.v; RPC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => (all.filter(q => q[0] === n).pop() || [])[1];
-  const d = ui.drag, x0 = d ? d.x0 : W / 2, y0 = d ? d.y0 : H * 0.7, R = 48 * k, u = last('lean') || 0, wk = last('walk'), cr = last('crouch'); let v;
+  const d = ui.drag, sb = stickBase(), x0 = sb.x, y0 = sb.y, R = sb.R, u = last('lean') || 0, wk = last('walk'), cr = last('crouch'); let v;
   if (!d && !wk && Math.abs(u) < 0.2 && !cr) v = ['THUMB DOWN', 'hold', [x0, y0]];
   else if (cr) v = ['PULL DOWN: CROUCH', 'drag', [x0, y0, x0 + u * R * 0.8, y0 + R * 0.7]];
   else if (Math.abs(u) > 0.25) v = [u < 0 ? 'SLIDE LEFT' : 'SLIDE RIGHT', 'drag', [x0, y0, x0 + u * R * 0.8, y0 + (wk ? -R * 0.5 : 0)]];
@@ -5549,7 +5549,7 @@ let IG = null; function idleG() { if (!IG || IG.over) { IG = newGame(4, { seed: 
 function hud(G, t) { const c = G.cfg, m = G.me;
   if (G.lesson) lessonPanel(G);
   // the balance arc
-  const ax = W / 2, ay = G.lesson ? H * 0.32 : 112 * k, R = 88 * k, span = 1.0; ctx.lineWidth = 10 * k; ctx.lineCap = 'butt';
+  const ax = W / 2, ay = G.lesson ? H * 0.32 : 150 * k, R = 88 * k, span = 1.0; ctx.lineWidth = 10 * k; ctx.lineCap = 'butt';
   const arc = (a0, a1, col) => { ctx.strokeStyle = col; ctx.beginPath(); ctx.arc(ax, ay, R, -Math.PI / 2 + a0 * span, -Math.PI / 2 + a1 * span); ctx.stroke(); };
   arc(-1, -0.62, 'rgba(255,70,50,.8)'); arc(-0.62, -0.3, 'rgba(255,200,60,.6)'); arc(-0.3, 0.3, 'rgba(120,230,150,.55)'); arc(0.3, 0.62, 'rgba(255,200,60,.6)'); arc(0.62, 1, 'rgba(255,70,50,.8)');
   const nd = clamp(m.th / c.fall, -1.1, 1.1); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + Math.sin(nd * span) * (R + 8 * k), ay - Math.cos(nd * span) * (R + 8 * k)); ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(ax, ay, 5 * k, 0, TAU); ctx.fill();
@@ -5559,9 +5559,10 @@ function hud(G, t) { const c = G.cfg, m = G.me;
     const bx = 14, bw = W - 28, by = H - 24 * k; ctx.fillStyle = 'rgba(0,0,0,.4)'; rrect(bx, by, bw, 7 * k, 3); ctx.fill(); ctx.fillStyle = '#ff6a5a'; rrect(bx, by, bw * clamp(m.s / G.len, 0, 1), 7 * k, 3); ctx.fill(); for (const cp of G.cps) { ctx.fillStyle = '#9be3b5'; ctx.fillRect(bx + bw * cp / G.len - 1, by - 3, 3, 13 * k); } }
   if (G.gustWarn) { ctx.fillStyle = '#cfe6ff'; ctx.font = `${Math.round(22 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(G.gustWarn.dir > 0 ? 'WIND →' : '← WIND', W / 2, ay + 26 * k); }
   // the thumb
-  if (ui.drag) { const d2 = ui.drag, R2 = 48 * k, dx = clamp(d2.x - d2.x0, -R2, R2), dy = clamp(d2.y - d2.y0, -R2, R2); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(d2.x0, d2.y0, R2, 0, TAU); ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('WALK', d2.x0, d2.y0 - R2 - 8 * k); ctx.fillText('CROUCH', d2.x0, d2.y0 + R2 + 10 * k);
-    ctx.fillStyle = m.crouch ? '#ffb030' : m.walking ? '#9be3b5' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(d2.x0 + dx, d2.y0 + dy, 20 * k, 0, TAU); ctx.fill(); }
+  { const sb = stickBase(), d2 = ui.drag, R2 = sb.R, dx = d2 ? clamp(d2.x - sb.x, -R2, R2) : 0, dy = d2 ? clamp(d2.y - sb.y, -R2, R2) : 0; ctx.globalAlpha = d2 ? 1 : 0.55; ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(sb.x, sb.y, R2, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.5; ctx.stroke();      // the stick, always in its one place
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('WALK', sb.x, sb.y - R2 - 9 * k); ctx.fillText('CROUCH', sb.x, sb.y + R2 + 13 * k);
+    ctx.fillStyle = m.crouch ? '#ffb030' : m.walking ? '#9be3b5' : 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(sb.x + dx, sb.y + dy, 24 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+  if (false) {}
   else if ((G && G.lesson) && !G.lesson && G.t < 5) { ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('THUMB DOWN · SLIDE TO BALANCE · PUSH UP TO WALK', W / 2, H * 0.7); } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
@@ -5682,9 +5683,12 @@ window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contai
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
 // input (one thumb, a floating stick): sideways swings the pole, up walks, the middle stands, down crouches; lifting the thumb
 // stands you still with the pole level
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; ui.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} hold(G, true); });
-cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; const R = 48 * k, dy = (d.y - d.y0) / R;
-  lean(G, clamp((d.x - d.x0) / R, -1, 1)); walk(G, dy < -0.3); crouch(G, dy > 0.45); });
+// (27 Nov 2026, his review: "Make the joystick in a single place then actually make it playable"): the stick has ONE place, bottom middle, and is bigger;
+// a thumb anywhere on the lower part of the screen works it from that place (the picture shows the stick where it is)
+const stickBase = () => ({ x: W / 2, y: H - 130 * k, R: STICK_R * k }); const STICK_R = 66;
+function stickTo(d) { const b = stickBase(), dy = (d.y - b.y) / b.R; lean(G, clamp((d.x - b.x) / b.R, -1, 1)); walk(G, dy < -0.3); crouch(G, dy > 0.45); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused || ui.drag) return; if (e.clientY < H * 0.38) return; ui.drag = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} hold(G, true); stickTo(ui.drag); });
+cv.addEventListener('pointermove', e => { const d = ui.drag; if (!d || e.pointerId !== d.id || !G) return; d.x = e.clientX; d.y = e.clientY; stickTo(d); });
 function endTouch(e) { const d = ui.drag; if (!d || e.pointerId !== d.id) return; ui.drag = null; if (G) hold(G, false); }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 // ---------- keeping it smooth (rule 12): ease the picture off a notch at a time if the phone is not keeping up ----------

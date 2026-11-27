@@ -26,7 +26,7 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Rookie'], [40, 'Wire walker'], [130, 'Funambulist'], [320, 'Daredevil'], [700, 'Sky walker'], [1500, 'Legend of the wire']];
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
-  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), len: Math.round(x(30, 110, 30)), tip: x(2.2, 3.1, 30) * (1 - 0.15 * e) * (help ? 0.85 : 1), jolt: x(0.25, 0.42, 30) * (1 - 0.15 * upLv('shoes')) * (help ? 0.8 : 1),
+  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), len: Math.round(x(30, 110, 30)), tip: x(1.8, 2.8, 30) * (1 - 0.15 * e) * (help ? 0.85 : 1), jolt: x(0.22, 0.38, 30) * (1 - 0.15 * upLv('shoes')) * (help ? 0.8 : 1),
     wind: N >= 2 ? x(0.35, 1.1, 30) : 0, birds: N >= 3 ? x(0.5, 2, 30) : 0, banners: N >= 4 ? x(0.5, 2, 30) : 0, bags: N >= 5 ? x(0.5, 2.2, 30) : 0, stars: Math.round(x(2, 5, 25)),
     pull: 7 * (1 + 0.1 * upLv('pole')), fall: 0.72 + 0.04 * upLv('nerve') + (help ? 0.05 : 0), lives: 3, cp: 40 }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -109,7 +109,7 @@ const BLIND = { d: G => { hold(G, true); lean(G, Math.random() * 2 - 1); walk(G,
 // SLIDE LEFT / SLIDE RIGHT (the way it would lean, from where the thumb went down), THUMB TO THE MIDDLE, PULL DOWN: CROUCH.
 const RPC = { t: -1e9, v: null };
 function ropeCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - RPC.t < 120) return RPC.v; RPC.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => (all.filter(q => q[0] === n).pop() || [])[1];
-  const d = ui.drag, x0 = d ? d.x0 : W / 2, y0 = d ? d.y0 : H * 0.7, R = 48 * k, u = last('lean') || 0, wk = last('walk'), cr = last('crouch'); let v;
+  const d = ui.drag, sb = stickBase(), x0 = sb.x, y0 = sb.y, R = sb.R, u = last('lean') || 0, wk = last('walk'), cr = last('crouch'); let v;
   if (!d && !wk && Math.abs(u) < 0.2 && !cr) v = ['THUMB DOWN', 'hold', [x0, y0]];
   else if (cr) v = ['PULL DOWN: CROUCH', 'drag', [x0, y0, x0 + u * R * 0.8, y0 + R * 0.7]];
   else if (Math.abs(u) > 0.25) v = [u < 0 ? 'SLIDE LEFT' : 'SLIDE RIGHT', 'drag', [x0, y0, x0 + u * R * 0.8, y0 + (wk ? -R * 0.5 : 0)]];

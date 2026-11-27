@@ -10,13 +10,17 @@
 //  - big ones: slow, tough; a glowing eye on top takes triple damage.
 // A monster that reaches you takes a heart. Three hearts. Clear every wave. A shot that hits two or more at once is a combo.
 const RULES = [
-  '<b>Pull back</b> with your thumb and <b>let go</b>. Pull further down to shoot further, sideways to aim. The arc shows where it lands.',
+  '<b>Pull back</b> with your thumb and <b>let go</b>. Pull further back to throw further, sideways to aim. The arc shows where it lands.',
   '<b>Tap a fruit</b> to load it. 🍊 Oranges: quick, light. 🍉 Watermelon: slow to reload, bursts over a crowd. 🍌 Banana: they slip and fall.',
-  'Shield-trolls: <b>lob</b> it over the board, or burst a melon by them. Hoppers: a banana where they land. Big ones: hit the glowing <b>eye</b>.',
+  'Shield-trolls: hit them while they are <b>far</b> (the fruit drops on them), burst a melon, or throw a <b>coconut</b>. Hoppers: a banana where they land. Big ones: hit the glowing <b>eye</b>. New fruits: 🍇 grapes (level 6), 🥥 coconut (10), 🍍 pineapple (15).',
   'A monster that reaches you takes a <b>heart</b>. Clear every wave.',
   'Hit two or more at once for a <b>combo</b>.',
 ];
-const FRUITS = { orange: { name: 'Orange', icon: '🍊', sp: 34, dmg: 1, reload: 0.55, r: 0.18 }, melon: { name: 'Watermelon', icon: '🍉', sp: 26, dmg: 2.2, reload: 2.2, r: 0.32, splash: 2.6 }, banana: { name: 'Banana', icon: '🍌', sp: 30, dmg: 0.6, reload: 1.1, r: 0.2, slip: true } };
+const FRUITS = { orange: { name: 'Orange', icon: '🍊', sp: 34, dmg: 1, reload: 0.55, r: 0.18 }, melon: { name: 'Watermelon', icon: '🍉', sp: 26, dmg: 2.2, reload: 2.2, r: 0.32, splash: 2.6 }, banana: { name: 'Banana', icon: '🍌', sp: 30, dmg: 0.6, reload: 1.1, r: 0.2, slip: true },
+  // (27 Nov 2026, his review: "As the levels go up give more and more fruits") a new fruit at level 6, 10 and 15:
+  grapes: { name: 'Grapes', icon: '🍇', sp: 32, dmg: 0.7, reload: 0.9, r: 0.13, spread: 3 },      // three at once, fanned out: for a crowd of small ones
+  coconut: { name: 'Coconut', icon: '🥥', sp: 28, dmg: 2.6, reload: 1.6, r: 0.24, crush: true },      // heavy: goes straight through a shield-troll's board
+  pineapple: { name: 'Pineapple', icon: '🍍', sp: 26, dmg: 1.4, reload: 2.8, r: 0.28, splash: 3.6 } };      // bursts wider than a melon, but softer
 const MON = {
   blob: { name: 'Blob', hp: 2, sp: 2.2, r: 0.8, h: 1.4, n: 1 },
   scut: { name: 'Scuttler', hp: 1, sp: 4.6, r: 0.5, h: 0.8, n: 2 },
@@ -36,8 +40,8 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Fruit picker'], [40, 'Grocer'], [130, 'Sharpshooter'], [320, 'Melon master'], [700, 'Orchard guard'], [1500, 'Fruit legend']];
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N), boss = N % 10 === 0;
-  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), boss, waves: N <= 2 ? 2 : Math.round(x(2, 5, 25)), per: Math.round(x(5, 13, 30)), sp: x(0.95, 1.6, 30) * (1 - 0.1 * e) * (help ? 0.85 : 1), gap: x(2.4, 0.8, 30) * (help ? 1.25 : 1),
-    kinds: Object.keys(MON).filter(k => MON[k].n <= N), hearts: 3 + upLv('fence'), band: 1 + 0.08 * upLv('band'), reloadK: 1 - 0.18 * upLv('crate'), far: 46, fruits: N >= 3 ? ['orange', 'melon', 'banana'] : N >= 2 ? ['orange', 'melon'] : ['orange'] }; }
+  return { N, f, help: !!help, place: placeOf(N), weather: weatherOf(N), boss, waves: N <= 2 ? 2 : Math.round(x(2, 5, 25)), per: Math.round(x(5, 13, 30)), sp: x(0.95, 1.45, 30) * (1 - 0.1 * e) * (help ? 0.85 : 1), gap: x(2.4, 0.8, 30) * (help ? 1.25 : 1),
+    kinds: Object.keys(MON).filter(k => MON[k].n <= N), hearts: 3 + upLv('fence'), band: 1 + 0.08 * upLv('band'), reloadK: 1 - 0.18 * upLv('crate'), far: 46, fruits: ['orange', 'melon', 'banana', 'grapes', 'coconut', 'pineapple'].slice(0, N >= 15 ? 6 : N >= 10 ? 5 : N >= 6 ? 4 : N >= 3 ? 3 : N >= 2 ? 2 : 1) }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, place: cfg.place, weather: cfg.weather, wait: 0, nid: 1,
     mons: [], shots: [], peels: [], splats: [], fruit: 'orange', cd: { orange: 0, melon: 0, banana: 0 }, hearts: cfg.hearts, wave: 0, queue: [], kills: 0, shotsN: 0, hitsN: 0, combos: 0, best: 0 };
@@ -52,10 +56,10 @@ function spawn(G, k, x, z) { const M = MON[k]; const m = { id: G.nid++, k, x, z:
 function setFruit(G, f) { if (!G.cfg.fruits.includes(f) || G.over) return false; G.fruit = f; G.ev.push({ k: 'load', f }); return true; }
 // fire: yaw (left/right, radians), pitch (up), power 0..1
 function shoot(G, yaw, pitch, power) { if (G.over || G.wait > 0) return false; const f = G.fruit, F = FRUITS[f]; if (G.cd[f] > 0 || power < 0.12) { G.ev.push({ k: 'notready' }); return false; }
-  const v = F.sp * G.cfg.band * (0.35 + 0.65 * power); G.cd[f] = F.reload * (f === 'orange' ? 1 : G.cfg.reloadK);
-  G.shots.push({ f, x: 0, y: 1.5, z: 0.5, vx: Math.sin(yaw) * Math.cos(pitch) * v, vy: Math.sin(pitch) * v, vz: Math.cos(yaw) * Math.cos(pitch) * v, t: 0, hit: [] }); G.shotsN++; G.ev.push({ k: 'fire', f }); return true; }
+  const v = F.sp * G.cfg.band * (0.15 + 0.85 * power); G.cd[f] = F.reload * (f === 'orange' ? 1 : G.cfg.reloadK);
+  for (let j = 0; j < (F.spread || 1); j++) { const yw = yaw + (F.spread ? (j - (F.spread - 1) / 2) * 0.07 : 0); G.shots.push({ f, x: 0, y: 1.5, z: 0.5, vx: Math.sin(yw) * Math.cos(pitch) * v, vy: Math.sin(pitch) * v, vz: Math.cos(yw) * Math.cos(pitch) * v, t: 0, hit: [] }); } G.shotsN++; G.ev.push({ k: 'fire', f }); return true; }
 // where a shot goes (for the arc and for the robots)
-function arc(G, yaw, pitch, power, f) { const F = FRUITS[f || G.fruit], v = F.sp * G.cfg.band * (0.35 + 0.65 * power), pts = []; let x = 0, y = 1.5, z = 0.5, vx = Math.sin(yaw) * Math.cos(pitch) * v, vy = Math.sin(pitch) * v, vz = Math.cos(yaw) * Math.cos(pitch) * v;
+function arc(G, yaw, pitch, power, f) { const F = FRUITS[f || G.fruit], v = F.sp * G.cfg.band * (0.15 + 0.85 * power), pts = []; let x = 0, y = 1.5, z = 0.5, vx = Math.sin(yaw) * Math.cos(pitch) * v, vy = Math.sin(pitch) * v, vz = Math.cos(yaw) * Math.cos(pitch) * v;
   for (let i = 0; i < 160; i++) { const dt = 1 / 30; vy -= 12 * dt; x += vx * dt; y += vy * dt; z += vz * dt; pts.push([x, y, z, vy]); if (y <= 0) break; } return pts; }
 function hurt(G, m, dmg, why) { if (m.dead) return false; m.hp -= dmg; G.ev.push({ k: 'hit', id: m.id, x: m.x, y: MON[m.k].h * 0.6, z: m.z, why, dmg });
   if (m.hp <= 0.001) { m.dead = true; m.deadT = 0.8; G.kills++; G.ev.push({ k: 'pop', kind: m.k, x: m.x, z: m.z }); lessonSee(G, 'kill', m); return true; } return false; }
@@ -68,14 +72,14 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.wait > 
     for (const p of G.peels) if (!p.used && Math.hypot(p.x - m.x, p.z - m.z) < M.r + 0.5 && !(M.hop && m.y > 0.3)) { p.used = true; m.slip = 1.6; G.ev.push({ k: 'slip', x: m.x, z: m.z }); lessonSee(G, 'slip', m); }
     if (M.hop) { m.hopT -= dt; if (m.y <= 0 && m.hopT <= 0) { m.vy = 6.5; m.hopT = 1.6; } m.vy -= 14 * dt; m.y = Math.max(0, m.y + m.vy * dt); m.z -= (m.y > 0 ? m.sp * 2.2 : 0) * dt; }
     else m.z -= m.sp * dt;
-    m.x += Math.sin(m.wob * 0.4) * dt * 0.3; m.x = clamp(m.x, -9, 9);
+    m.x += Math.sin(m.wob * 0.4) * dt * 0.3; { const lim = Math.min(9, 0.22 * (m.z + 2) + 0.5); if (Math.abs(m.x) > lim) m.x += (Math.sign(m.x) * lim - m.x) * Math.min(1, dt * 3); }      /* (27 Nov 2026, his review: "Make all the monsters that approach in view") they close in on you as they come: never outside the picture */
     if (m.z <= 1.2) { m.dead = true; m.deadT = 0.3; G.hearts--; G.ev.push({ k: 'reached', kind: m.k }); lessonSee(G, 'reached'); if (G.hearts <= 0 && !G.lesson) return finish(G, false); } }
   G.mons = G.mons.filter(m => !m.dead || m.deadT > 0); G.peels = G.peels.filter(p => !p.used && (p.t = (p.t || 0) + dt) < 10);
   // the fruit flies
   for (const s of G.shots) { const F = FRUITS[s.f]; s.t += dt; const n = 3; for (let i = 0; i < n && !s.done; i++) { const h = dt / n; s.vy -= 12 * h; s.x += s.vx * h; s.y += s.vy * h; s.z += s.vz * h;
       for (const m of G.mons) { if (m.dead || s.hit.includes(m.id)) continue; const M = MON[m.k], dy = s.y - (m.y + M.h * 0.55), d = Math.hypot(s.x - m.x, s.z - m.z, dy * 0.8); if (d > M.r + F.r) continue;
         s.hit.push(m.id); let dmg = F.dmg, why = null;
-        if (M.shield && s.vy > -7 && !F.splash) { dmg = 0; why = 'shield'; }      // the board stops a flat shot; a lob comes down over it
+        if (M.shield && s.vy > -6 && !F.splash && !F.crush) { dmg = 0; why = 'shield'; }      // the board stops a flat shot; a lob comes down over it
         if (M.eye && s.y > m.y + M.h * 0.78 && Math.abs(s.x - m.x) < 0.6) { dmg *= 3; why = 'eye'; }
         if (M.hop && m.y > 0.3) { dmg *= 1.5; why = why || 'air'; }
         if (F.slip && dmg > 0) { m.slip = 1.8; G.ev.push({ k: 'slip', x: m.x, z: m.z }); lessonSee(G, 'slip', m); }
@@ -97,7 +101,7 @@ const AIMCARD = {"pic": "🍉", "win": "STOP EVERY MONSTER", "lose": "MONSTERS R
 const LESSONS = {
   1: [{ id: 'aim', title: 'PULL AND LET GO', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'Pull back with your thumb: the dotted arc shows where it goes. Let go when it ends on the blob. Splat three blobs.', need: 3 }],
   2: [{ id: 'melon', title: 'THE WATERMELON', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'Tap 🍉, then burst it in the middle of the crowd. Hit two or more with one melon.', need: 1 }],
-  3: [{ id: 'lob', title: 'OVER THE SHIELD', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'The troll\'s board stops a flat shot. Pull further DOWN to lob a fruit high, so it comes down on him. Twice.', need: 2 }],
+  3: [{ id: 'lob', title: 'OVER THE SHIELD', say: G => fruitCue(G)[0], do: G => fruitCue(G)[1], at: G => fruitCue(G)[2], how: 'The troll\'s board stops a low shot. Hit him while he is far away: the fruit comes down on him, so it comes down on him. Twice.', need: 2 }],
 };
 // THE TUTORIAL'S HAND MAKES THE SHOT THAT HITS (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It
 // pulled straight down in a box; and TAP 🍉, THEN FIRE was two moves. Now the robot is asked (dryPlan): TAP 🍉 (or the fruit it wants) with
@@ -105,9 +109,10 @@ const LESSONS = {
 function fruitCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const P = dryPlan(G, null, { t: -1 }); if (!P) return ['WAIT…', 'wait', false];
   if (P[0] === 'setFruit') { const b = fruitBtns(G).find(q => q.f === P[1]); return ['TAP ' + ({ melon: '🍉', banana: '🍌', orange: '🍊' }[P[1]] || 'IT'), 'tap', b ? [b.x + b.w / 2, b.y + b.h / 2] : false]; }
   { const live = G.mons.filter(m => !m.dead).sort((a, b) => (a.z / a.sp) - (b.z / b.sp)), m = live[0]; if (m) { const M = MON[m.k], lob = M.shield && G.fruit !== 'melon', ty = M.eye ? m.y + M.h * 0.85 : m.y + M.h * 0.5, lead = m.slip > 0 ? 0 : M.hop ? m.sp * 0.8 : m.sp;
-    let a = aimAt(G, G.fruit, m.x, ty, m.z, lob); if (a) { a = aimAt(G, G.fruit, m.x, ty, m.z - lead * (a.tof + 0.8), lob) || a; P[1] = a.yaw; P[2] = a.pitch; } } }      // aimed where it will be when a thumb has pulled and let go (about 0.8 s)
-  const dx = -P[1] / 0.55 * 150 * k, dy = Math.max(30 * k, (P[2] - 0.03) / 0.78 * 170 * k), x0 = W / 2, y0 = H * 0.5;
-  return [P[2] > 0.5 ? 'PULL FURTHER DOWN, LET GO' : 'PULL BACK, LET GO', 'drag', [x0, y0, x0 + dx, y0 + dy]]; }
+    let a = aimPull(G, G.fruit, m.x, ty, m.z); if (a) { a = aimPull(G, G.fruit, m.x, ty, m.z - lead * (a.tof + 0.8)) || a; P[1] = a.yaw; P[2] = a.u; } } }      // aimed where it will be when a thumb has pulled and let go (about 0.8 s)
+  const u = P[2] != null && P[2] <= 1 ? P[2] : 0.5, dx = -P[1] / 0.55 * 150 * k, dy = Math.max(30 * k, u * PULL_LEN * k), x0 = W / 2, y0 = H * 0.42;
+  return [u > 0.6 ? 'PULL FAR BACK, LET GO' : 'PULL BACK, LET GO', 'drag', [x0, y0, x0 + dx, y0 + dy]]; }
+const PULL_LEN = 220;
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
 function lessonSetup(G) { const st = lessonNow(G); G.mons = []; G.shots = []; G.peels = []; G.queue = []; G.hearts = 3;
@@ -129,6 +134,16 @@ const _hurt = hurt; hurt = function (G, m, dmg, why) { const r = _hurt(G, m, dmg
 // BLIND: a thumb that does not look: pulls some way and lets go (anywhere from a dribble to full), or taps a fruit
 const BLIND = { s: G => shoot(G, (Math.random() - 0.5) * 1.0, Math.random() * 0.9 - 0.1, Math.random()), f: G => setFruit(G, G.cfg.fruits[(Math.random() * G.cfg.fruits.length) | 0]) };
 // aim at a point: the pitch that lands a shot there at this power (the low arc, or the high one for a lob)
+// THE PULL (27 Nov 2026, his review: "the aiming mechanism is bad its shooting straight"). A pull back sets how FAR (0 = at your feet, 1 = the far
+// end of the meadow); sideways sets left or right. Every shot flies in an arc, a little higher the further it goes (it used to be a flat, straight
+// shot at full speed). pullShot turns a pull (u: 0..1 how far, yaw) into the rules' shot; aimPull finds the pull that lands on a spot.
+const RANGE0 = 3, RANGE1 = 50, pitchOf = u => 0.26 + 0.24 * u;
+function pullShot(G, f, u, yaw) { const F = FRUITS[f], th = pitchOf(u), R = RANGE0 + (RANGE1 - RANGE0) * u, v = Math.sqrt(R * 12 / Math.sin(2 * th)), base = F.sp * G.cfg.band;
+  return { yaw, pitch: th, power: clamp((v / base - 0.15) / 0.85, 0.12, 1) }; }
+function aimPull(G, f, x, y, z) { const d = Math.hypot(x, z - 0.5), yaw = Math.atan2(x, z - 0.5); let lo = 0, hi = 1, s = null;
+  for (let it = 0; it < 18; it++) { const u = (lo + hi) / 2, p = pullShot(G, f, u, 0), pts = arc(G, 0, p.pitch, p.power, f); let hitD = null;
+    for (const q of pts) { const dd = q[2] - 0.5; if (dd >= d) { hitD = q[1]; break; } } if (hitD == null || hitD < y) lo = u; else hi = u; s = { u, ...p }; }
+  if (!s) return null; const v = FRUITS[f].sp * G.cfg.band * (0.15 + 0.85 * s.power); return { yaw, pitch: s.pitch, power: s.power, u: s.u, tof: d / (v * Math.cos(s.pitch)) }; }
 function aimAt(G, f, x, y, z, high) { const F = FRUITS[f], v = F.sp * G.cfg.band, d = Math.hypot(x, z - 0.5), h = y - 1.5, g = 12, k2 = v ** 4 - g * (g * d * d + 2 * h * v * v);
   if (k2 < 0) return null; const p = Math.atan((v * v + (high ? 1 : -1) * Math.sqrt(k2)) / (g * d)); return { yaw: Math.atan2(x, z - 0.5), pitch: p, power: 1, tof: d / (v * Math.cos(p)) }; }
 // a defender who looks: takes the nearest threat, picks the right fruit for it, leads it, and lets fly (with a little error)
@@ -136,11 +151,11 @@ function honest(G, o, mem) { const react = o.react == null ? 0.3 : o.react, acc 
   if (G.over || G.wait > 0) return; mem.t = (mem.t || 0) - 1 / 60; if (mem.t > 0) return; mem.t = 0.12 + react * 0.5;
   const live = G.mons.filter(m => !m.dead); if (!live.length) return; live.sort((a, b) => (a.z / a.sp) - (b.z / b.sp)); const m = live[0], M = MON[m.k], fr = G.cfg.fruits;
   const near = live.filter(q => q !== m && Math.hypot(q.x - m.x, q.z - m.z) < 3).length;
-  let want = 'orange'; if (fr.includes('melon') && (M.shield || near >= 1 || m.k === 'big') && G.cd.melon <= 0) want = 'melon'; else if (fr.includes('banana') && M.hop && G.cd.banana <= 0) want = 'banana';
+  let want = 'orange'; if (fr.includes('coconut') && (M.shield || m.k === 'big') && G.cd.coconut <= 0) want = 'coconut'; else if (fr.includes('pineapple') && near >= 2 && G.cd.pineapple <= 0) want = 'pineapple'; else if (fr.includes('melon') && (M.shield || near >= 1 || m.k === 'big') && G.cd.melon <= 0) want = 'melon'; else if (fr.includes('banana') && M.hop && G.cd.banana <= 0) want = 'banana'; else if (fr.includes('grapes') && m.k === 'scut' && G.cd.grapes <= 0) want = 'grapes';
   if (G.fruit !== want) { ACT.setFruit(G, want); return; } if (G.cd[G.fruit] > 0) { if (G.fruit !== 'orange' && G.cd[G.fruit] > 0.5) ACT.setFruit(G, 'orange'); return; }
-  const lob = M.shield && G.fruit !== 'melon', ty = M.eye ? m.y + M.h * 0.85 : m.y + M.h * 0.5; let a = aimAt(G, G.fruit, m.x, ty, m.z, lob); if (!a) return;
-  const lead = m.slip > 0 ? 0 : M.hop ? m.sp * 0.8 : m.sp; a = aimAt(G, G.fruit, m.x, ty, m.z - lead * a.tof, lob) || a;
-  const e = 1 - acc; ACT.shoot(G, a.yaw + (R() - 0.5) * e * 0.7, a.pitch + (R() - 0.5) * e * 0.5, 1); }
+  const ty = M.eye ? m.y + M.h * 0.85 : m.y + M.h * 0.5; let a = aimPull(G, G.fruit, m.x, ty, m.z); if (!a) return;
+  const lead = m.slip > 0 ? 0 : M.hop ? m.sp * 0.8 : m.sp; a = aimPull(G, G.fruit, m.x, ty, m.z - lead * a.tof) || a;
+  const e = 1 - acc, sh = pullShot(G, G.fruit, clamp(a.u + (R() - 0.5) * e * 0.12, 0, 1), a.yaw + (R() - 0.5) * e * 0.35); ACT.shoot(G, sh.yaw, sh.pitch, sh.power); }
 function winNow(G) { if (!G || G.over || G.wait > 0) return; G.lesson = null; finish(G, true); }
 
 // what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move

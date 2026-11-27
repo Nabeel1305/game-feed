@@ -52,9 +52,10 @@ with sync_playwright() as p:
     tap(*scr(sw(2, 'x'), 0.2, sw(2, 'z'))); ok(E("__sim.G.lg.st") == 'back', 'and you cannot go again until you are back up the tower', E("__sim.G.lg.st"))
     # ---------- the rules ----------
     E("__sim.start(4, { seed: 5 }); (() => { const G = __sim.G; G.sw = []; G.tired = []; G.next = 1e9; G.cfg.wind = false; const s = addSwimmer(G, true, { x: 3, z: 6 }); s.st = 'trouble'; s.tr = 0; s.T = 5; s.stay = 1e9; for (let i = 0; i < 60 * 7; i++) __sim.step(1 / 60); })()")
-    ok(E("__sim.G.missed") == 1 and E("__sim.G.lives") == 1 and E("__sim.G.over") is None, 'trouble left too long is a miss (the jet ski gets them)')
+    ok(E("__sim.G.missed") == 1 and E("__sim.G.lives") == E("__sim.G.cfg.lives") - 1 and E("__sim.G.over") is None, 'trouble left too long is a miss (the jet ski gets them)')
+    E("__sim.G.lives = 1")      # (27 Nov 2026: three misses from level 2; here the last one is left)
     E("(() => { const G = __sim.G; const s = addSwimmer(G, true, { x: -3, z: 6 }); s.st = 'trouble'; s.tr = 0; s.T = 3; s.stay = 1e9; for (let i = 0; i < 60 * 5; i++) __sim.step(1 / 60); })()")
-    ok(E("__sim.G.over") == 'lost', 'two misses close the beach')
+    ok(E("__sim.G.over") == 'lost', 'the last miss closes the beach')
     E("__sim.start(4, { seed: 5 }); (() => { const G = __sim.G; G.sw = []; G.tired = []; G.next = 1e9; G.cfg.wind = false; G.cfg.shift = 5; for (let i = 0; i < 60 * 7; i++) __sim.step(1 / 60); })()")
     ok(E("__sim.G.over") == 'won', 'the shift ends in a win')
     E("localStorage.setItem('lg.taught', '3'); __sim.go(3)"); pg.wait_for_timeout(400)
