@@ -136,13 +136,13 @@ function drawMouth(G, now) { const L = layout(G), P = pat(G), A = archOf(G), S =
     if (sub) { ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = '#3a4a5a'; ctx.fillText(sub, b.x, b.y + b.r + 9 * k); } };
   const other = left(P).some(q => q.a !== G.arch);
   btn(L.flip, '⇅', other && left(P).every(q => q.a !== G.arch), G.arch ? 'LOWER' : 'UPPER'); btn(L.re, '💬', false, G.reCd > 0 ? `${Math.ceil(G.reCd)}s` : 'CALM'); btn(L.zoom, ui.zoom > 1 ? '➖' : '➕', ui.zoom > 1, 'ZOOM'); btn(L.done, '✓', !left(P).length, 'DONE');
-  const want = nextTool(G); for (const b of L.tray) { const sel = G.tool === b.id, glow = want === b.id && !sel && (G.N <= 10 || G.lesson); ctx.fillStyle = sel ? '#6ad0b8' : 'rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
+  const want = nextTool(G); for (const b of L.tray) { const sel = G.tool === b.id, glow = want === b.id && !sel && G.lesson;      /* 27 Nov 2026: after the lessons nothing says what to do */ ctx.fillStyle = sel ? '#6ad0b8' : 'rgba(255,255,255,.95)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
     if (glow) { ctx.strokeStyle = `rgba(255,190,60,${0.6 + 0.4 * Math.sin(now * 6)})`; ctx.lineWidth = 4; ctx.stroke(); } else { ctx.strokeStyle = 'rgba(60,80,100,.25)'; ctx.lineWidth = 1.5; ctx.stroke(); }
     ctx.font = `${Math.round(b.r * 1.05)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(TOOLS[b.id].icon, b.x, b.y + 1); }
   if (G.tool) { ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillStyle = '#3a4a5a'; ctx.fillText(TOOLS[G.tool].name.toUpperCase(), W / 2, L.flip.y); }
 }
 // which tool the next job wants (the tray glows it), from the checklist of this row
-function nextTool(G) { const P = pat(G), Lf = left(P).filter(q => q.a === G.arch), A = archOf(G); if (G.lesson) return G.lesson.steps[0].tool;
+function nextTool(G) { const P = pat(G), Lf = left(P).filter(q => q.a === G.arch), A = archOf(G); if (G.lesson) { const st = G.lesson.steps[0]; if (st.fix) { const n = dentNext(G); return n && n.tool; } return st.tool; }
   if (A.teeth.some(t => (t.cav || t.abscess) && !t.found)) return G.cfg.tools.includes('xray') && A.teeth.some(t => (t.cav === 'deep' || t.abscess) && !t.found && t.mHint) ? 'xray' : 'mirror';
   const w = (Lf[0] || {}).w, has = x => Lf.some(q => q.w === x); if (!w) return null;
   for (const [x, tl] of [['food', 'brush'], ['plaque', 'brush'], ['tartar', 'scaler'], ['stain', 'polish'], ['decay', 'drill'], ['rinse', 'water'], ['fill', 'fill'], ['chip', 'fill'], ['smooth', 'shaper'], ['prep', 'shaper'], ['cure', 'light'], ['crown', 'crown'], ['cement', 'light'], ['bracket', 'glue'], ['wire', 'wire']]) if (has(x)) return tl;
@@ -183,7 +183,7 @@ function onEvent(G, e) { const P = pat(G), A = archOf(G), at = i => { const t = 
     case 'ouch': sfx.ouch(); vibe(HAP.tick); FX.red = 0.3; say({ rough: 'TOO ROUGH!', enamel: 'OUCH! NOT THE HEALTHY PART', tight: 'OUCH! TOO TIGHT', healthy: 'THAT ONE IS HEALTHY!', numb: 'OUCH! NUMB IT FIRST' }[e.why] || 'OUCH!', W / 2, H * 0.3, '#f2604a', 20); if (e.why === 'rough') hint = { txt: 'Calm, steady strokes clean. Scrubbing fast does nothing and hurts.', t: 0, secs: 3 }; break;
     case 'enamel': hint = { txt: 'Only the dark decay. The drill on healthy tooth hurts and costs a star.', t: 0, secs: 3.2 }; break;
     case 'found': sfx.found(); vibe(HAP.light); { const p = at(e.t); say(e.what === 'abscess' ? 'BAD TOOTH FOUND' : 'CAVITY FOUND!', p.x, p.y - 30 * k, '#f2a03a', 20); burst(p.x, p.y, '#f2c23a', 10, 90); } break;
-    case 'deephint': { const p = at(e.t); say('HMM… DEEPER? X-RAY IT', p.x, p.y - 30 * k, '#6aaee8', 16); } break;
+    case 'deephint': { const p = at(e.t); say(G.lesson ? 'HMM… DEEPER? X-RAY IT' : 'HMM… DEEPER?', p.x, p.y - 30 * k, '#6aaee8', 16); } break;
     case 'xray': sfx.xray(); break;
     case 'clean': sfx.ding(); vibe(HAP.tick); { const p = at(e.t); burst(p.x, p.y, '#ffffff', 6, 70); if (e.what !== 'food') say('✨', p.x, p.y - 20 * k, '#fff', 20); } break;
     case 'drilled': sfx.ding(); { const p = at(e.t); say('DECAY GONE', p.x, p.y - 26 * k, '#5ac88a', 16); } break;

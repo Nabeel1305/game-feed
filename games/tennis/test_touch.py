@@ -27,8 +27,9 @@ with sync_playwright() as p:
         try: pg.wait_for_function(js, timeout=ms); return True
         except Exception: return False
     E("localStorage.setItem('ten.taught', '9'); __sim.go(4)"); until("__sim.G && __sim.G.phase === 'serve'")
-    touch('touchStart', [(1, (80, 700))]); touch('touchMove', [(1, (120, 700))]); touch('touchMove', [(1, (150, 700))]); pg.wait_for_timeout(50); st = E("[__sim.G.stick.x, __sim.G.stick.z]")
-    ok(st[0] > 0.8 and abs(st[1]) < 0.2, 'dragging the stick to the right moves you right', str(st)); touch('touchEnd', [(1, (150, 700))]); ok(E("__sim.G.stick.x") == 0, 'letting go stops')
+    # (27 Nov 2026: the stick now has one fixed place, its middle at (82, 726) on this phone; the drag starts there)
+    touch('touchStart', [(1, (82, 726))]); touch('touchMove', [(1, (120, 726))]); touch('touchMove', [(1, (150, 726))]); pg.wait_for_timeout(50); st = E("[__sim.G.stick.x, __sim.G.stick.z]")
+    ok(st[0] > 0.8 and abs(st[1]) < 0.2, 'dragging the stick to the right moves you right', str(st)); touch('touchEnd', [(1, (150, 726))]); ok(E("__sim.G.stick.x") == 0, 'letting go stops')
     # serve by touch
     E("(() => { const G = __sim.G; G.server = 0; G.phase = 'serve'; G.toss = null; G.wait = 0; G.side = 1; G.me.x = 0.8; G.me.z = HZ + 0.3; })()")
     touch('touchStart', [(2, (300, 600))]); touch('touchEnd', [(2, (300, 600))]); pg.wait_for_timeout(30); ok(E("!!__sim.G.toss"), 'a tap on the right tosses the ball')

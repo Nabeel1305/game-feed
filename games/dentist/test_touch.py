@@ -33,7 +33,7 @@ with sync_playwright() as p:
         for i in range(1, n + 1): touch('touchMove', [(1, pts[i])]); pg.wait_for_timeout(max(8, ms // n))
         touch('touchEnd', [(1, pts[-1])]); pg.wait_for_timeout(80)
     def fresh(N, relax=False):
-        E(f"localStorage.setItem('dnt.taught', '3'); __sim.practice({str(relax).lower()}); __sim.go({N})"); pg.wait_for_timeout(300)
+        E(f"localStorage.setItem('dnt.taught', '99'); __sim.practice({str(relax).lower()}); __sim.go({N})"); pg.wait_for_timeout(300)
     # ---------- the talk, the tray ----------
     fresh(4); ok(E("__sim.G.phase") == 'talk', 'a patient comes in and talks first')
     tap(200, 500); ok(until("__sim.G.phase === 'work'", 3000), 'a tap while they talk begins the work')

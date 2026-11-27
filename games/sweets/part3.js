@@ -39,7 +39,16 @@ function sprite(col, sp) { const key = col + ':' + sp; if (SPR.c[key]) return SP
   const g = x.createRadialGradient(-rr * 0.35, -rr * 0.45, rr * 0.1, 0, 0, rr * 1.1); g.addColorStop(0, shade(base, 1.45)); g.addColorStop(0.55, base); g.addColorStop(1, shade(base, 0.62)); shapePath(x, col, rr); x.fillStyle = g; x.fill();
   x.lineWidth = Math.max(1, rr * 0.07); x.strokeStyle = shade(base, 0.55); x.stroke();
   if (sp === 'h' || sp === 'v') { x.save(); shapePath(x, col, rr); x.clip(); x.fillStyle = 'rgba(255,255,255,.85)'; for (let k = -3; k <= 3; k++) { if (sp === 'h') x.fillRect(-rr * 1.2, k * rr * 0.36 - rr * 0.07, rr * 2.4, rr * 0.14); else x.fillRect(k * rr * 0.36 - rr * 0.07, -rr * 1.2, rr * 0.14, rr * 2.4); } x.restore(); shapePath(x, col, rr); x.stroke(); }
-  x.fillStyle = 'rgba(255,255,255,.55)'; x.beginPath(); x.ellipse(-rr * 0.32, -rr * 0.42, rr * 0.28, rr * 0.13, -0.6, 0, TAU); x.fill(); x.fillStyle = 'rgba(255,255,255,.8)'; x.beginPath(); x.arc(-rr * 0.5, -rr * 0.18, rr * 0.06, 0, TAU); x.fill();
+  // GLOSS (27 Nov 2026, his final fix: "make the graphics more glossy and eye catching"): like hard candy under a lamp. Inside the sweet's own
+  // outline: a warm glow from below (light coming through the sugar), a dark edge so it looks round, a wide glassy band across the top, then
+  // one sharp white spot and a small second one.
+  x.save(); shapePath(x, col, rr); x.clip();
+  const lo = x.createRadialGradient(rr * 0.1, rr * 0.75, rr * 0.05, rr * 0.1, rr * 0.6, rr * 0.75); lo.addColorStop(0, shade(base, 1.6).replace('rgb', 'rgba').replace(')', ',.75)')); lo.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = lo; x.fillRect(-rr * 1.3, -rr * 1.3, rr * 2.6, rr * 2.6);
+  const ed = x.createRadialGradient(-rr * 0.1, -rr * 0.15, rr * 0.55, 0, 0, rr * 1.15); ed.addColorStop(0, 'rgba(0,0,0,0)'); ed.addColorStop(1, 'rgba(40,0,30,.32)'); x.fillStyle = ed; x.fillRect(-rr * 1.3, -rr * 1.3, rr * 2.6, rr * 2.6);
+  const band = x.createLinearGradient(0, -rr, 0, -rr * 0.05); band.addColorStop(0, 'rgba(255,255,255,.75)'); band.addColorStop(1, 'rgba(255,255,255,.04)'); x.fillStyle = band; x.beginPath(); x.ellipse(-rr * 0.08, -rr * 0.52, rr * 0.74, rr * 0.42, -0.18, 0, TAU); x.fill();
+  x.restore(); shapePath(x, col, rr); x.lineWidth = Math.max(1, rr * 0.06); x.strokeStyle = shade(base, 0.5); x.stroke();
+  x.fillStyle = 'rgba(255,255,255,.95)'; x.beginPath(); x.ellipse(-rr * 0.36, -rr * 0.5, rr * 0.17, rr * 0.08, -0.6, 0, TAU); x.fill(); x.beginPath(); x.arc(-rr * 0.6, -rr * 0.22, rr * 0.055, 0, TAU); x.fill();
+  x.fillStyle = 'rgba(255,255,255,.55)'; x.beginPath(); x.arc(rr * 0.42, rr * 0.38, rr * 0.07, 0, TAU); x.fill();
   return SPR.c[key] = cnv; }
 function shade(hex, k) { const n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255, f = v => Math.round(clamp(k > 1 ? v + (255 - v) * (k - 1) : v * k, 0, 255)); return `rgb(${f(r)},${f(g)},${f(b)})`; }
 const spriteOf = k => sprite(k.col, k.sp || '');
@@ -97,7 +106,10 @@ function drawBoard(G, L, now) { const cs = L.cs;
     if ((ui.sel && ui.sel.i === i) || ui.pick === i) { sx *= 1.12; sy *= 1.12; }
     if (k.sp === 'b') { ctx.save(); ctx.translate(x, y); ctx.rotate(now * 1.2); ctx.drawImage(spriteOf(k), -cs / 2, -cs / 2, cs, cs); ctx.restore(); }
     else { const w = cs * sx, h = cs * sy; ctx.drawImage(spriteOf(k), x - w / 2, y - h / 2, w, h); }
-    if (k.sp === 'w' || k.sp === 'b') { ctx.globalAlpha = 0.3 + 0.2 * Math.sin(now * 5 + i); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, cs * 0.46, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; } }
+    if (k.sp === 'w' || k.sp === 'b') { ctx.globalAlpha = 0.3 + 0.2 * Math.sin(now * 5 + i); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, cs * 0.46, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+    // a glint: now and then a four-point star flashes on a sweet's shine and fades (each sweet at its own moment; 27 Nov 2026, "eye catching")
+    const tw = ((now * 0.37 + (k.id * 0.6180339) % 1) % 1.6); if (tw < 0.35 && !k.sp) { const a = Math.sin(tw / 0.35 * Math.PI), gx = x - cs * 0.17, gy = y - cs * 0.2, gl = cs * 0.2 * a;
+      ctx.save(); ctx.globalAlpha = a * 0.95; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(gx, gy - gl); ctx.quadraticCurveTo(gx, gy, gx + gl, gy); ctx.quadraticCurveTo(gx, gy, gx, gy + gl); ctx.quadraticCurveTo(gx, gy, gx - gl, gy); ctx.quadraticCurveTo(gx, gy, gx, gy - gl); ctx.fill(); ctx.restore(); } }
   ctx.restore();
   // frosting and cages on top
   for (let i = 0; i < R * C; i++) { const c = G.b[i], x = L.bx + colOf(i) * cs, y = L.by + rowOf(i) * cs;

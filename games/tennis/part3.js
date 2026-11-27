@@ -14,11 +14,23 @@ function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Mat
   if (ui.banner) { ui.banner.t += dt; if (ui.banner.t > (ui.banner.secs || 1)) ui.banner = null; }
   if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
 function mySkin() { if (typeof HEADLESS !== 'undefined' && HEADLESS) return SKINS[0]; const id = store.get('skin', 'classic'); return SKINS.find(q => q.id === id) || SKINS[0]; }
-function courtTex(cs) { const S = 48, w = Math.round((HX * 2 + 4) * S), h = Math.round((HZ * 2 + 6) * S), c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), X = x => (x + HX + 2) * S, Z = z => (z + HZ + 3) * S;
-  const col = '#' + cs.col.toString(16).padStart(6, '0'); g.fillStyle = col; g.fillRect(0, 0, w, h); for (let i = 0; i < 1200; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '255,255,255' : '0,0,0'},${Math.random() * 0.05})`; g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 8, 2 + Math.random() * 8); }
-  g.strokeStyle = '#' + cs.line.toString(16).padStart(6, '0'); g.lineWidth = 0.05 * S; g.strokeRect(X(-HX), Z(-HZ), 2 * HX * S, 2 * HZ * S);
-  g.beginPath(); for (const s of [-1, 1]) { g.moveTo(X(-HX), Z(s * SZ)); g.lineTo(X(HX), Z(s * SZ)); g.moveTo(X(0), Z(s * SZ)); g.lineTo(X(0), Z(0)); g.moveTo(X(0), Z(s * HZ)); g.lineTo(X(0), Z(s * (HZ - 0.15))); } g.stroke();
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
+// 27 Nov 2026, his final fix: "Do a better job at graphics". The court now has a run-off of its own shade, crisp lines with a soft edge, scuffed
+// baselines where players stand, and a grain; the net a real mesh; round it banners, an umpire's chair, benches and light towers; the players
+// are people (thighs, shins, socks, shoes, two arms, hair or a cap, rounded bodies) and cast shadows.
+function courtTex(cs) { const S = 64, w = Math.round((HX * 2 + 4) * S), h = Math.round((HZ * 2 + 6) * S), c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), X = x => (x + HX + 2) * S, Z = z => (z + HZ + 3) * S;
+  const hex = n => '#' + n.toString(16).padStart(6, '0'), base = new THREE.Color(cs.col), run = base.clone().multiplyScalar(0.82);
+  g.fillStyle = '#' + run.getHexString(); g.fillRect(0, 0, w, h); g.fillStyle = hex(cs.col); g.fillRect(X(-HX), Z(-HZ), 2 * HX * S, 2 * HZ * S);
+  for (let i = 0; i < 4000; i++) { g.fillStyle = `rgba(${Math.random() < 0.5 ? '255,255,255' : '0,0,0'},${Math.random() * 0.035})`; const r = 1 + Math.random() * 3; g.fillRect(Math.random() * w, Math.random() * h, r, r); }
+  for (const sz of [-1, 1]) { const gr = g.createRadialGradient(X(0), Z(sz * HZ), 4, X(0), Z(sz * HZ), 2.4 * S); gr.addColorStop(0, 'rgba(255,255,255,.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.ellipse(X(0), Z(sz * HZ), 3.2 * S, 1.4 * S, 0, 0, TAU); g.fill(); }
+  const line = (x1, z1, x2, z2) => { g.beginPath(); g.moveTo(X(x1), Z(z1)); g.lineTo(X(x2), Z(z2)); g.stroke(); };
+  for (const [wd, a] of [[0.09 * S, 0.18], [0.055 * S, 1]]) { g.strokeStyle = a < 1 ? `rgba(255,255,255,${a})` : hex(cs.line); g.lineWidth = wd; g.lineCap = 'square';
+    g.strokeRect(X(-HX), Z(-HZ), 2 * HX * S, 2 * HZ * S); for (const sd of [-1, 1]) { line(-HX, sd * SZ, HX, sd * SZ); line(0, sd * SZ, 0, 0); line(0, sd * HZ, 0, sd * (HZ - 0.15)); } }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; }
+function netTex() { const c = document.createElement('canvas'); c.width = 256; c.height = 32; const g = c.getContext('2d'); g.clearRect(0, 0, 256, 32); g.strokeStyle = 'rgba(20,24,20,.9)'; g.lineWidth = 1.2;
+  for (let x = 0; x <= 256; x += 6) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, 32); g.stroke(); } for (let y = 0; y <= 32; y += 6) { g.beginPath(); g.moveTo(0, y); g.lineTo(256, y); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 1); return t; }
+function bannerTex(cols) { const c = document.createElement('canvas'); c.width = 512; c.height = 64; const g = c.getContext('2d'); for (let i = 0; i < 8; i++) { g.fillStyle = cols[i % cols.length]; g.fillRect(i * 64, 0, 64, 64); g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(i * 64 + 32, 32, 12, 0, TAU); g.fill(); g.fillStyle = cols[(i + 1) % cols.length]; g.beginPath(); g.arc(i * 64 + 32, 32, 6, 0, TAU); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.repeat.set(3, 1); return t; }
 function buildWorld() {
   if (V3) return V3; const T = window.THREE; if (!T || !W3 || !W3.init({ canvas: $('gl'), fov: 55, far: 400, near: 0.1 })) { V3 = { none: true }; return V3; }
   V3 = { T, S: W3.scene, t: 0 }; const V = V3, S = V.S, M = (c, o = {}) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.7 }, o)); V.M = M;
@@ -28,10 +40,18 @@ function buildWorld() {
   V.court = new T.Mesh(new T.PlaneGeometry(HX * 2 + 4, HZ * 2 + 6), M(0xffffff, { roughness: 0.8 })); V.court.rotation.x = -Math.PI / 2; V.court.receiveShadow = true; S.add(V.court);
   // the net: posts, a dark mesh, a white band on top
   for (const s of [-1, 1]) { const p = new T.Mesh(V.cylG, M(0x2a3a2a, { metalness: 0.5 })); p.scale.set(0.05, 1.07, 0.05); p.position.set(s * (HX + 0.9), 0.535, 0); S.add(p); }
-  const net = new T.Mesh(new T.PlaneGeometry((HX + 0.9) * 2, NETH - 0.05), new T.MeshStandardMaterial({ color: 0x101810, transparent: true, opacity: 0.55, side: T.DoubleSide })); net.position.set(0, (NETH - 0.05) / 2, 0); S.add(net);
+  const net = new T.Mesh(new T.PlaneGeometry((HX + 0.9) * 2, NETH - 0.05), new T.MeshStandardMaterial({ map: netTex(), color: 0xffffff, transparent: true, alphaTest: 0.05, side: T.DoubleSide, roughness: 0.9 })); net.castShadow = true; net.position.set(0, (NETH - 0.05) / 2, 0); S.add(net);
   const band = new T.Mesh(V.boxG, M(0xffffff)); band.scale.set((HX + 0.9) * 2, 0.07, 0.03); band.position.set(0, NETH - 0.03, 0); S.add(band);
   // windscreens round the court, stands and lights for the stadium courts
   V.walls = new T.Group(); S.add(V.walls); const wm = M(0x1a4a2a, { roughness: 0.9 }); for (const s of [-1, 1]) { const w = new T.Mesh(V.boxG, wm); w.scale.set(24, 2.6, 0.2); w.position.set(0, 1.3, s * (HZ + 6.5)); V.walls.add(w); const w2 = new T.Mesh(V.boxG, wm); w2.scale.set(0.2, 2.6, 2 * HZ + 13); w2.position.set(s * 12, 1.3, 0); V.walls.add(w2); }
+  { const bm = new T.MeshStandardMaterial({ map: bannerTex(['#1d4f8a', '#2b6cb0', '#0f3a66']), roughness: 0.8 }); for (const sd of [-1, 1]) { const b = new T.Mesh(new T.PlaneGeometry(20, 0.8), bm); b.position.set(0, 0.95, sd * (HZ + 6.39)); b.rotation.y = sd > 0 ? Math.PI : 0; V.walls.add(b); }
+    const wood = M(0x8a5a32, { roughness: 0.8 }), steel = M(0x9aa4ae, { metalness: 0.6, roughness: 0.35 }), dk = M(0x223040), ch = new T.Group();      /* the umpire's chair at the net */
+    for (const [lx, lz] of [[-0.3, -0.3], [0.3, -0.3], [-0.3, 0.3], [0.3, 0.3]]) { const l = new T.Mesh(V.cylG, steel); l.scale.set(0.03, 1.8, 0.03); l.position.set(lx, 0.9, lz); ch.add(l); }
+    const seat = new T.Mesh(V.boxG, wood); seat.scale.set(0.8, 0.1, 0.8); seat.position.y = 1.85; ch.add(seat); const back = new T.Mesh(V.boxG, wood); back.scale.set(0.8, 0.7, 0.08); back.position.set(0, 2.2, 0.36); ch.add(back);
+    const ump = new T.Mesh(new T.CapsuleGeometry(0.2, 0.4, 4, 10), dk); ump.position.set(0, 2.25, 0.1); ch.add(ump); const uh = new T.Mesh(V.sphG, M(0xc88a64)); uh.scale.setScalar(0.12); uh.position.set(0, 2.7, 0.1); ch.add(uh);
+    ch.position.set(HX + 2.1, 0, 0); ch.rotation.y = -Math.PI / 2; ch.traverse(o => { if (o.isMesh) o.castShadow = true; }); S.add(ch);
+    for (const sd of [-1, 1]) { const bn = new T.Group(); const top = new T.Mesh(V.boxG, M(0x2a5a9a)); top.scale.set(0.5, 0.08, 2.4); top.position.y = 0.48; bn.add(top); for (const z of [-1, 1]) { const lg = new T.Mesh(V.boxG, steel); lg.scale.set(0.45, 0.45, 0.05); lg.position.set(0, 0.22, z * 1.1); bn.add(lg); } bn.position.set(-(HX + 2.4), 0, sd * 2.2); S.add(bn); }
+    V.towers = new T.Group(); for (const [tx, tz] of [[-13, -16], [13, -16], [-13, 16], [13, 16]]) { const pole = new T.Mesh(V.cylG, steel); pole.scale.set(0.12, 14, 0.12); pole.position.set(tx, 7, tz); V.towers.add(pole); const lamp = new T.Mesh(V.boxG, new T.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4d0, emissiveIntensity: 0.6 })); lamp.scale.set(1.6, 0.9, 0.3); lamp.position.set(tx * 0.97, 14.2, tz * 0.97); lamp.lookAt(0, 0, 0); V.towers.add(lamp); } S.add(V.towers); }
   V.stands = new T.Group(); S.add(V.stands); const tm = M(0x2a2e3a); const seats = []; for (const s of [-1, 1]) for (let r = 0; r < 6; r++) { const t2 = new T.Mesh(V.boxG, tm); t2.scale.set(1.2, 0.6, 30); t2.position.set(s * (13 + r * 1.2), 0.6 + r * 0.7, 0); V.stands.add(t2); for (let i = 0; i < 30; i++) seats.push([s * (13 + r * 1.2), 1.3 + r * 0.7, -14 + i]); }
   const fan = new T.InstancedMesh(new T.BoxGeometry(0.4, 0.65, 0.35), M(0xffffff), seats.length), d = new T.Object3D(), col = new T.Color(); seats.forEach((p, i) => { d.position.set(p[0], p[1], p[2]); d.updateMatrix(); fan.setMatrixAt(i, d.matrix); col.setHSL(Math.random(), 0.5, 0.35 + Math.random() * 0.3); fan.setColorAt(i, col); }); V.stands.add(fan); V.fans = fan; V.seats = seats;
   V.trees = W3.pines(Array.from({ length: 50 }, (_, i) => { const a = i / 50 * TAU; return { x: Math.cos(a) * (30 + Math.random() * 12), y: 0, z: Math.sin(a) * (45 + Math.random() * 12), s: 0.85 + Math.random() * 0.6 }; }), {});      /* 22 Nov 2026: the pines were a black wall twice this size */
@@ -43,16 +63,22 @@ function buildWorld() {
   V.target = new T.Mesh(new T.PlaneGeometry(2.6, 3.4), new T.MeshBasicMaterial({ color: 0xffe060, transparent: true, opacity: 0.35, depthWrite: false })); V.target.rotation.x = -Math.PI / 2; V.target.position.y = 0.015; S.add(V.target);
   V.markG = new T.Group(); S.add(V.markG);
   W3.setQuality(stepN); return V; }
-function player(V, them) { const T = V.T, M = V.M, g = new T.Group(), shirt = M(them ? 0x3a6ad8 : 0xd83a3a, { roughness: 0.8 }), skin = M(0xc88a64), dark = M(0xf4f4f0);
-  const torso = new T.Mesh(V.cylG, shirt); torso.scale.set(0.2, 0.55, 0.15); torso.position.y = 1.2; g.add(torso); const shorts = new T.Mesh(V.boxG, dark); shorts.scale.set(0.38, 0.28, 0.24); shorts.position.y = 0.82; g.add(shorts);
-  const legs = []; for (const s of [-1, 1]) { const L = new T.Group(); L.position.set(s * 0.1, 0.72, 0); const shin = new T.Mesh(V.boxG, skin); shin.scale.set(0.11, 0.66, 0.11); shin.position.y = -0.35; L.add(shin); const shoe = new T.Mesh(V.boxG, dark); shoe.scale.set(0.12, 0.08, 0.24); shoe.position.set(0, -0.68, 0.04); L.add(shoe); g.add(L); legs.push(L); }
-  const head = new T.Mesh(V.sphG, skin); head.scale.setScalar(0.13); head.position.y = 1.62; g.add(head); const cap = new T.Mesh(new T.SphereGeometry(1, 12, 8, 0, TAU, 0, Math.PI / 2), shirt); cap.scale.set(0.14, 0.1, 0.14); cap.position.y = 1.66; g.add(cap);
-  const arm = new T.Group(); arm.position.set(0.22, 1.42, 0); const up = new T.Mesh(V.boxG, skin); up.scale.set(0.08, 0.5, 0.08); up.position.y = -0.25; arm.add(up);
-  const rk = new T.Group(); rk.position.y = -0.5; const handle = new T.Mesh(V.cylG, M(0x1a1a1a)); handle.scale.set(0.02, 0.3, 0.02); handle.position.y = -0.15; rk.add(handle); const head2 = new T.Mesh(new T.TorusGeometry(0.13, 0.015, 6, 20), M(them ? 0x2a2a30 : mySkin().col, { roughness: 0.4 })); head2.scale.set(1, 1.3, 1); head2.position.y = -0.45; rk.add(head2);
-  const strings = new T.Mesh(new T.CircleGeometry(0.12, 16), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25, side: T.DoubleSide })); strings.scale.set(1, 1.3, 1); strings.position.y = -0.45; rk.add(strings); arm.add(rk);
-  g.add(arm); V.S.add(g); return { g, legs, arm, rk, head2, shirt, ph: 0 }; }
+function player(V, them) { const T = V.T, M = V.M, g = new T.Group(), shirt = M(them ? 0x3a6ad8 : 0xd83a3a, { roughness: 0.75 }), skin = M(them ? 0x8d5a3c : 0xc88a64, { roughness: 0.6 }), white = M(0xf4f4f0, { roughness: 0.8 }), shoe = M(them ? 0x22262e : 0xffffff, { roughness: 0.5 }), hair = M(them ? 0x1a1410 : 0x3a2414, { roughness: 0.9 });
+  const cap = (r, l, mat) => new T.Mesh(new T.CapsuleGeometry(r, l, 4, 10), mat);
+  const torso = cap(0.17, 0.3, shirt); torso.scale.set(1, 1, 0.72); torso.position.y = 1.18; g.add(torso); const sh = new T.Mesh(new T.CylinderGeometry(0.19, 0.2, 0.22, 14), white); sh.position.y = 0.84; g.add(sh);
+  const neck = new T.Mesh(V.cylG, skin); neck.scale.set(0.05, 0.08, 0.05); neck.position.y = 1.47; g.add(neck);
+  const legs = []; for (const sd of [-1, 1]) { const L = new T.Group(); L.position.set(sd * 0.095, 0.74, 0); const th = cap(0.07, 0.2, skin); th.position.y = -0.17; L.add(th); const shin = cap(0.055, 0.2, skin); shin.position.y = -0.45; L.add(shin);
+    const sock = new T.Mesh(V.cylG, white); sock.scale.set(0.058, 0.09, 0.058); sock.position.y = -0.6; L.add(sock); const sh2 = new T.Mesh(V.boxG, shoe); sh2.scale.set(0.12, 0.08, 0.26); sh2.position.set(0, -0.69, 0.04); L.add(sh2); g.add(L); legs.push(L); }
+  const head = new T.Mesh(V.sphG, skin); head.scale.set(0.12, 0.135, 0.125); head.position.y = 1.61; g.add(head);
+  const hairM = new T.Mesh(new T.SphereGeometry(1, 14, 8, 0, TAU, 0, Math.PI * 0.55), them ? shirt : hair); hairM.scale.set(0.128, 0.13, 0.13); hairM.position.y = 1.635; g.add(hairM);
+  if (them) { const brim = new T.Mesh(V.boxG, shirt); brim.scale.set(0.16, 0.015, 0.12); brim.position.set(0, 1.66, 0.14); g.add(brim); }
+  const off = new T.Group(); off.position.set(-0.22, 1.4, 0); const oa = cap(0.045, 0.42, skin); oa.position.y = -0.24; off.add(oa); off.rotation.z = -0.18; g.add(off);
+  const arm = new T.Group(); arm.position.set(0.22, 1.4, 0); const up = cap(0.048, 0.42, skin); up.position.y = -0.24; arm.add(up); const band = new T.Mesh(V.cylG, shirt); band.scale.set(0.055, 0.05, 0.055); band.position.y = -0.42; arm.add(band);
+  const rk = new T.Group(); rk.position.y = -0.5; const handle = new T.Mesh(V.cylG, M(0x1a1a1a)); handle.scale.set(0.02, 0.3, 0.02); handle.position.y = -0.15; rk.add(handle); const head2 = new T.Mesh(new T.TorusGeometry(0.13, 0.016, 8, 24), M(them ? 0x2a2a30 : mySkin().col, { roughness: 0.35, metalness: 0.2 })); head2.scale.set(1, 1.3, 1); head2.position.y = -0.45; rk.add(head2);
+  const strings = new T.Mesh(new T.CircleGeometry(0.12, 18), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, side: T.DoubleSide })); strings.scale.set(1, 1.3, 1); strings.position.y = -0.45; rk.add(strings); arm.add(rk);
+  g.add(arm); g.traverse(o => { if (o.isMesh) o.castShadow = true; }); V.S.add(g); return { g, legs, arm, rk, head2, shirt, ph: 0 }; }
 function setupCourt(V, G) { const cs = courtOf(G.N); if (V.cs === cs) return; V.cs = cs; V.court.material.map = courtTex(cs); V.court.material.needsUpdate = true; W3.setSky(cs.sky);
-  V.ground.material.color.setHex(cs.name === 'Club clay' ? 0xb05a30 : cs.name.includes('City') || cs.name.includes('Night') ? 0x1a3a5a : 0x2a6a3a); const stadium = cs.name.includes('Night') || cs.name.includes('City'); V.stands.visible = stadium; V.trees.visible = !stadium; }
+  V.ground.material.color.setHex(cs.name === 'Club clay' ? 0xb05a30 : cs.name.includes('City') || cs.name.includes('Night') ? 0x1a3a5a : 0x2a6a3a); const stadium = cs.name.includes('Night') || cs.name.includes('City'); V.stands.visible = stadium; V.trees.visible = !stadium; if (V.towers) V.towers.visible = stadium; }
 // ---------- every frame ----------
 function sync(V, G, dt) { V.t += dt; setupCourt(V, G); const b = G.ball, me = G.me, op = G.op;
   V.op.shirt.color.setHex([0x3a6ad8, 0x2a9a4a, 0x8a3ad0, 0xe8a020][(G.N * 3) % 4]); V.me.head2.material.color.setHex(mySkin().col);
@@ -96,6 +122,7 @@ function onEvent(G, e) { const cx = W / 2, b = G.ball;
     case 'lessondone': sfx.goal(); say('READY!', cx, H * 0.4, '#e8f87a', 28); break;
   } }
 let IG = null, IM = {}; function idleG() { if (!IG || IG.over || IG.t > 50) { IG = newGame(6 + ((Math.random() * 10) | 0), { seed: (Math.random() * 1e6) | 0 }); IM = {}; } honest(IG, { react: 0.25, acc: 0.95 }, IM); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
+function stickBase() { return { x: Math.max(78 * k, W * 0.21), y: H - 118 * k }; }
 function draw(now, dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   const V = buildWorld(); if (V.none) { ctx.fillStyle = '#10241c'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = `700 18px ${BC}`; ctx.fillText('This phone cannot draw the 3D court.', W / 2, H / 2); if (G) hud(G, now); return; }
@@ -126,7 +153,7 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const b = G.ball;
   if (G.phase === 'serve' && G.server === 0 && G.wait <= 0) { if (!G.toss) { ctx.font = `400 ${Math.round(22 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(8,20,14,.7)'; if (G && G.lesson) ctx.strokeText('Tap to toss', W * 0.72, H * 0.72); ctx.fillStyle = '#e8f87a'; if (G && G.lesson) ctx.fillText('Tap to toss', W * 0.72, H * 0.72); }
     else { const p = scr(b.x, b.y, b.z), q = clamp(1 - Math.abs(b.vy) / 3.2, 0, 1), good = q >= 0.8, r = (14 + 40 * (1 - q)) * k; ctx.strokeStyle = good ? '#3ad070' : q > 0.5 ? '#ffd36a' : '#ff6a4a'; ctx.lineWidth = 4 * k; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU); ctx.stroke(); if (good && (G && G.lesson)) { ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = '#3ad070'; ctx.textAlign = 'center'; ctx.fillText('SWIPE!', p.x, p.y - r - 12 * k); } } }
   // the stick
-  const s2 = ui.stick; if (s2) { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, 54 * k, 0, TAU); ctx.fill(); const dx = s2.x - s2.x0, dy = s2.y - s2.y0, d = Math.hypot(dx, dy), m = Math.min(1, 54 * k / (d || 1)); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx * m, s2.y0 + dy * m, 22 * k, 0, TAU); ctx.fill(); }
+  const s2 = ui.stick || (G && !G.over ? { x0: stickBase().x, y0: stickBase().y, x: stickBase().x, y: stickBase().y, idle: true } : null); if (s2) { ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, 54 * k, 0, TAU); ctx.fill(); const dx = s2.x - s2.x0, dy = s2.y - s2.y0, d = Math.hypot(dx, dy), m = Math.min(1, 54 * k / (d || 1)); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx * m, s2.y0 + dy * m, 22 * k, 0, TAU); ctx.fill(); }
   else if ((G && G.lesson) && G.t < 8 || G.lesson) { ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(W * 0.2, H - 110 * k, 54 * k, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('MOVE', W * 0.2, H - 110 * k); ctx.fillText('SWIPE ↑', W * 0.78, H - 110 * k); }
   // the swipe as it is drawn
   const sw = ui.swipe; if (sw && sw.pts.length > 1) { ctx.strokeStyle = 'rgba(232,248,122,.8)'; ctx.lineWidth = 6 * k; ctx.beginPath(); sw.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke();

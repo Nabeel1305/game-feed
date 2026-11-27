@@ -101,7 +101,7 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
   if (inB(L.flip, x, y)) { flip(G); return; } if (inB(L.re, x, y)) { if (!reassure(G)) sfx.no(); return; } if (inB(L.done, x, y)) { finishPatient(G); return; }
   if (inB(L.zoom, x, y)) { sfx.click(); if (ui.zoom > 1) ui.zoom = 1; else { ui.zc = { x: G.hand.x || 0, y: G.hand.y || -0.15 }; ui.zoom = 1.7; } return; }
   if (y < L.top - 8 * k || y > L.bot + 10 * k) return;
-  if (!G.tool) { hint = { txt: 'Pick a tool from the tray first (the glowing one is a good start).', t: 0, secs: 2.6 }; sfx.no(); return; }
+  if (!G.tool) { hint = { txt: G.lesson ? 'Pick a tool from the tray first (the glowing one).' : 'No tool in your hand', t: 0, secs: 2.2 }; sfx.no(); return; }
   try { cv.setPointerCapture(e.pointerId); } catch (err) {} ui.finger = { id: e.pointerId, x, y }; const m = s2m(G, x, y - LIFT * k); down(G, m.x, m.y); });
 cv.addEventListener('pointermove', e => { const f = ui.finger; if (!f || f.id !== e.pointerId || !G) return; f.x = e.clientX; f.y = e.clientY; const m = s2m(G, f.x, f.y - LIFT * k); moveTo(G, m.x, m.y); });
 function endTouch(e) { const f = ui.finger; if (!f || f.id !== e.pointerId) return; ui.finger = null; if (G) up(G); }

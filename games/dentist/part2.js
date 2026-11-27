@@ -152,7 +152,7 @@ function up(G) { const h = G.hand; if (!h.down) return; h.down = false;
     else if (p > g.g0 + g.gw) { hurt(G, 0.25, 'tight'); G.ev.push({ k: 'wire', why: 'tight' }); } else G.ev.push({ k: 'wire', why: 'loose' }); }
   if (G.tool === 'crown' && G.crownAt) { const A = archOf(G), t = A.teeth.find(q => q.broken && q.crown === 0 && Math.hypot(q.x - G.crownAt.x, q.y - G.crownAt.y) < q.r * 0.9);
     if (t) { if (t.cells.some(cl => cl.jag > 0.1)) warn(G, 'prep'); else { t.crown = 1; G.ev.push({ k: 'crownon', t: t.i }); } } G.crownAt = null; }
-  if (G.tool === 'forceps' && G.rock && G.rock.t) { const t = G.rock.t; if (t.loose >= 1 && h.y0 - h.y > 0.18) { t.gone = true; t.abscess = false; G.ev.push({ k: 'pulled', t: t.i }); G.stats.fixed++; } } G.rock = null; }
+  if (G.tool === 'forceps' && G.rock && G.rock.t) { const t = G.rock.t; if (t.loose >= 1 && h.y0 - h.y > 0.18) { t.gone = true; t.abscess = false; G.ev.push({ k: 'pulled', t: t.i }); G.stats.fixed++; } t.rdir = G.rock.dir; } G.rock = null; }
 function flip(G) { if (G.over || G.phase !== 'work') return false; if (G.hand.down) up(G); G.arch = 1 - G.arch; G.ev.push({ k: 'flip', a: G.arch }); return true; }
 function reassure(G) { if (G.over || G.phase !== 'work' || G.reCd > 0) return false; const P = pat(G), K = KINDS[P.kind]; G.reCd = 6; const add = (P.comfort < 0.5 ? 0.3 : 0.1) * K.re; P.comfort = Math.min(1, P.comfort + add); G.ev.push({ k: 'reassure', add }); return true; }
 function finishPatient(G) { if (G.over || G.phase !== 'work') return false; if (G.hand.down) up(G); const P = pat(G), L = left(P);
@@ -217,7 +217,8 @@ function useTool(G, dt) {
     case 'forceps': { const t = toothAt(G, h.x, h.y); if (!t) break; if (!t.abscess) { hint1(G, 'healthy'); if (h.t > 0.6 && !h.wr) { h.wr = 1; if (!G.lesson) G.mistakes++; hurt(G, 0.12 * dr, 'healthy'); } break; }
       if (!t.found) { hint1(G, 'lookfirst'); break; }
       const numb = t.numbAt != null ? Math.min(1, (G.t - t.numbAt) / 3) : 0; if (numb < 1) hurt(G, 0.55 * (1 - numb) * dr * dt, numb < 0.1 ? 'numb' : null);
-      if (!G.rock) G.rock = { t, dir: 0, lastX: h.x, seg: 0, segT: 0 }; const R = G.rock; const dx = h.x - R.lastX; R.lastX = h.x; R.segT += dt; const d = Math.sign(dx);
+      // (27 Nov 2026: a wiggle can be made of separate strokes, left then right; the tooth remembers the last way it was pushed)
+      if (!G.rock) G.rock = { t, dir: t.rdir || 0, lastX: h.x, seg: t.rdir ? 0.05 : 0, segT: t.rdir ? 0.2 : 0 }; const R = G.rock; const dx = h.x - R.lastX; R.lastX = h.x; R.segT += dt; const d = Math.sign(dx);
       if (sp > 3.2) { roughNow(3.2); break; }
       if (d && d !== R.dir && Math.abs(dx) > 1e-4) { if (R.dir && R.seg > 0.04 && R.segT > 0.12) { t.loose = Math.min(1, t.loose + 0.14); G.ev.push({ k: 'rock', v: t.loose }); } R.dir = d; R.seg = 0; R.segT = 0; } R.seg += Math.abs(dx); break; }
   }
@@ -239,16 +240,51 @@ const LESSONS = {
   1: [{ id: 'brush', title: 'BRUSH', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'brush', how: 'Take the 🪥 brush. Drag it calmly over the dirty teeth until they shine. Three teeth. Scrubbing fast starts the count again.', need: 3 }],
   2: [{ id: 'scaler', title: 'SCRAPE', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'scaler', how: 'The yellow crust at the gum is tartar. Take the 🪝 scaler and drag it slowly along the crust. Three teeth.', need: 3 }],
   3: [{ id: 'polish', title: 'POLISH', say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], tool: 'polish', how: 'Brown stains: hold the ✨ polisher on them and move it slowly. Three teeth.', need: 3 }],
+  // A COMPLETE TUTORIAL (27 Nov 2026, his final fix: "This is good do a complete tutorial them no more instructions"). Only cleaning had a lesson;
+  // every repair the levels bring had none, so the game guided you with glows and words all the way to level 10. Now each new job has its own
+  // lesson the first time it comes, on a patient with only that job, one move at a time (the hand on the tool, then on the tooth), and after
+  // the lessons nothing tells you what to do.
+  4: [{ id: 'fix', title: 'A HOLE', fix: true, say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], how: 'Find it with the 🔍 mirror, drill out the dark 🔩, rinse 💧, fill ⚪, smooth 🥄, set it with the light 💡.', need: 1 }],
+  5: [{ id: 'fix', title: 'A CHIP', fix: true, say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], how: 'Build the chip back with filling ⚪, smooth it 🥄, set it with the light 💡.', need: 1 }],
+  6: [{ id: 'fix', title: 'HIDDEN HOLE', fix: true, say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], how: 'It hurts but the mirror sees nothing: the ☢️ X-ray shows what is inside. Then fix it like any hole.', need: 1 }],
+  7: [{ id: 'fix', title: 'A CROWN', fix: true, say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], how: 'A broken tooth: smooth its edge 🥄, put the 👑 crown on it, set it with the light 💡.', need: 1 }],
+  8: [{ id: 'fix', title: 'BRACES', fix: true, say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], how: 'Glue the loose bracket 🧴, then tighten the wire 🔧 and let go in the green.', need: 1 }],
+  10: [{ id: 'fix', title: 'PULL IT', fix: true, say: G => dentCue(G)[0], do: G => dentCue(G)[1], at: G => dentCue(G)[2], how: 'Numb it 🧊, wait, then wiggle it out with the 🗜️ forceps.', need: 1 }],
 };
+// the next repair move, worked out the way the robot does it (honest): which tool, and the moves on the tooth. Pure: changes nothing.
+function dentNext(G) { const P = pat(G), A = archOf(G), mine = left(P).filter(q => q.a === G.arch), need = w => mine.find(q => q.w === w), hidden = A.teeth.filter(t => (t.cav || t.abscess) && !t.found);
+  const cells = (t, f) => t.cells.filter(f).sort((a, b) => a.y - b.y || a.x - b.x);
+  if (hidden.length) { const t = hidden[0]; return t.cav === 'deep' || t.abscess ? { tool: 'xray', hold: { x: 0, y: -0.2 }, say: 'HOLD THE X-RAY' } : { tool: 'mirror', drag: [t.x - t.r * 0.6, t.y, t.x + t.r * 0.6, t.y], say: 'LOOK HERE SLOWLY' }; }
+  let q;
+  if ((q = mine.find(z => z.w === 'decay' && A.teeth[z.t].found))) { const c = cells(A.teeth[q.t], c => c.decay > 0.05); if (c.length) return { tool: 'drill', drag: [c[0].x, c[0].y, c[c.length - 1].x, c[c.length - 1].y], say: 'DRILL THE DARK, SLOWLY' }; }
+  if ((q = need('rinse'))) { const t = A.teeth[q.t]; return { tool: 'water', hold: { x: t.x, y: t.y }, say: 'RINSE IT' }; }
+  if ((q = need('fill') || need('chip'))) { const c = cells(A.teeth[q.t], c => (c.hole > 0.2 || c.chip > 0) && c.fill < 0.9); if (c.length) return { tool: 'fill', drag: [c[0].x, c[0].y, c[c.length - 1].x, c[c.length - 1].y], say: 'FILL IT UP' }; }
+  if ((q = need('smooth') || need('prep'))) { const c = cells(A.teeth[q.t], c => c.extra > 0.1 || c.jag > 0.05); if (c.length) return { tool: 'shaper', drag: [c[0].x - 0.03, c[0].y, c[c.length - 1].x + 0.03, c[c.length - 1].y], say: 'SMOOTH IT' }; }
+  if ((q = need('cure') || need('cement'))) { const t = A.teeth[q.t]; return { tool: 'light', hold: { x: t.x, y: t.y }, say: 'HOLD THE LIGHT ON IT' }; }
+  if ((q = need('crown'))) { const t = A.teeth[q.t]; return { tool: 'crown', drag: [0, 0.3, t.x, t.y], say: 'DRAG THE CROWN ON' }; }
+  if ((q = need('bracket'))) { const B = A.braces, i = B.loose.find(j => !B.fixed.includes(j)), t = A.teeth[i]; return { tool: 'glue', hold: { x: t.x, y: t.y }, say: 'GLUE THIS BRACKET' }; }
+  if ((q = need('wire'))) { const B = A.braces, g = typeof gaugeP === 'function' && G.gauge ? gaugeP(G) : -1; return { tool: 'wire', hold: { x: 0, y: -0.3 }, say: 'HOLD TO TIGHTEN', release: g >= B.g0 && g <= B.g0 + (B.gw || 0.14) }; }
+  if ((q = need('extract'))) { const t = A.teeth[q.t]; if (t.numbAt == null) return { tool: 'gel', hold: { x: t.x, y: t.y }, say: 'NUMB IT' }; if (G.t - t.numbAt < 3.1) return { wait: true, say: 'WAIT… IT GOES NUMB' };
+    if (t.loose < 1) { const r = t.rdir > 0; return { tool: 'forceps', drag: r ? [t.x + 0.05, t.y, t.x - 0.05, t.y] : [t.x - 0.05, t.y, t.x + 0.05, t.y], say: 'WIGGLE IT' }; }
+    return { tool: 'forceps', drag: [t.x, t.y, t.x, t.y - 0.3], say: 'PULL IT OUT' }; }
+  return null; }
 // THE TUTORIAL SHOWS ONE MOVE AT A TIME, ON THE TOOTH (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens").
 // It said TAP 🪥, RUB SLOWLY (two moves) with a hand swiping in a box. Now: the hand on the tool in the tray (TAP 🪥), then a slow drag over
 // the dirt of the tooth the robot would clean next, from its first dirty patch to its last (the finger sits a little below what it cleans).
 function dentCue(G) { if (G.phase !== 'work' || !G.lesson) return ['WAIT…', 'wait', false]; const st = G.lesson.steps[0], L = layout(G), icon = { brush: '🪥', scaler: '🪝', polish: '✨' }[st.tool] || '';
+  if (st.fix) { const n = dentNext(G); if (!n) return ['ALL DONE ✓', 'wait', false]; if (n.wait) return [n.say, 'wait', false];
+    if (G.tool !== n.tool) { const b = L.tray.find(q => q.id === n.tool); return b ? ['TAP ' + TOOLS[n.tool].icon, 'tap', [b.x, b.y]] : ['WAIT…', 'wait', false]; }
+    if (n.release && G.hand && G.hand.down) return ['LET GO!', 'release', [m2s(G, n.hold.x, n.hold.y).x, m2s(G, n.hold.x, n.hold.y).y + LIFT * k]];
+    if (n.hold) { const a = m2s(G, n.hold.x, n.hold.y); return [n.say, 'hold', [a.x, a.y + LIFT * k]]; }
+    const a = m2s(G, n.drag[0], n.drag[1]), b = m2s(G, n.drag[2], n.drag[3]); return [n.say, 'drag', [a.x, a.y + LIFT * k, b.x, b.y + LIFT * k]]; }
   if (G.tool !== st.tool) { const b = L.tray.find(q => q.id === st.tool); return b ? ['TAP ' + icon, 'tap', [b.x, b.y]] : ['WAIT…', 'wait', false]; }
   const lay = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain', A = archOf(G), t = A.teeth.find(q => q.cells.some(c => c[lay] > CLEAN || (lay === 'plaque' && c.food > CLEAN))); if (!t) return ['WAIT…', 'wait', false];
   const cl = t.cells.filter(c => c[lay] > CLEAN || (lay === 'plaque' && c.food > CLEAN)).sort((a, b) => a.y - b.y || a.x - b.x), p0 = cl[0], p1 = cl.length > 1 ? cl[cl.length - 1] : { x: p0.x + 0.04, y: p0.y }, a = m2s(G, p0.x, p0.y), b = m2s(G, p1.x, p1.y);
   return [st.id === 'brush' ? 'RUB SLOWLY' : st.id === 'scaler' ? 'SCRAPE THE YELLOW SLOWLY' : 'POLISH THE BROWN SLOWLY', 'drag', [a.x, a.y + LIFT * k, b.x, b.y + LIFT * k]]; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, seen: [] }; G.ev.push({ k: 'lessonnext', first: true });
+  if (st.fix) { G.pts = G.pts.slice(0, 1); const P = G.pts[0]; for (const B of P.arches) for (const t of B.teeth) for (const cl of t.cells) { cl.food = cl.plaque = cl.tartar = cl.stain = 0; }
+    const a = P.probs.length ? P.probs[0].a : 0; if (a !== 0) { const sw = P.arches[0]; P.arches[0] = P.arches[1]; P.arches[1] = sw; P.probs.forEach(q => { q.a = q.a === a ? 0 : 1; }); }
+    P.before = snap(P); P.kind = 'calm'; return; }
   const P = G.pts[0], A = P.arches[0], R = rng(G.seed + 77), L = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain';
   for (const B of P.arches) for (const t of B.teeth) for (const cl of t.cells) { cl.food = cl.plaque = cl.tartar = cl.stain = 0; cl.decay = 0; cl.chip = 0; cl.jag = 0; }
   P.probs = []; A.teeth.forEach(t => { t.cav = null; t.abscess = false; t.broken = false; });
@@ -257,6 +293,7 @@ function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSON
   P.before = snap(P); P.kind = 'calm'; P.complaint = 'Just a check-up, please.'; }
 function lessonSee(G, what) { }
 function lessonTick(G, dt) { const D = G.lesson; if (!D) return; if (D.done) { D.wait -= dt; if (D.wait <= 0) { G.lesson = null; const R = rng(G.seed + 3); G.pts = []; for (let i = 0; i < G.cfg.patients; i++) G.pts.push(makePatient(G, R, i)); G.budget = G.pts.reduce((s, P) => s + needTime(P), 0) * G.cfg.time; G.clock = G.budget; G.pi = 0; G.arch = 0; G.tool = null; G.phase = 'talk'; G.phT = 1.2; G.mistakes = 0; G.breaks = 0; G.ev.push({ k: 'lessondone', N: G.N }); G.ev.push({ k: 'patient', i: 0 }); } return; }
+  if (D.steps[D.i].fix) { if (G.phase === 'work' && !left(pat(G)).length) { D.n = 1; G.ev.push({ k: 'lessonok', n: 1, need: 1 }); D.done = true; D.wait = 1.6; } return; }
   // count teeth made clean of this lesson's layer (each one once)
   const st = D.steps[D.i], L = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain', A = pat(G).arches[0];
   for (const t of A.teeth) { if (D.seen.includes(t.i)) continue; const had = t.cells.some(cl => cl['was' + L]); if (!had) { if (t.cells.some(cl => cl[L] > 0.3)) for (const cl of t.cells) cl['was' + L] = 1; continue; }
@@ -297,7 +334,7 @@ function honest(G, o, mem) {
   const L = left(P), mine = L.filter(q => q.a === G.arch), hidden = P.arches[G.arch].teeth.filter(t => (t.cav || t.abscess) && !t.found);
   const A = archOf(G), sweep = (t, layer, rr, v) => { const cl = t.cells.filter(c => layer == null || c[layer] > CLEAN), pts = []; cl.sort((a, b) => a.y - b.y || a.x - b.x); for (const c of cl) pts.push({ x: c.x, y: c.y }); return { pts, v }; };
   const go = (tool, job) => { pickTool(G, tool); if (!job.pts.length) return; const p0 = job.pts[0]; down(G, p0.x, p0.y); mem.job = job; mem.wait = 0; };
-  if (G.lesson) { const st = G.lesson.steps[0]; const lay = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain'; const t = A.teeth.find(q => q.cells.some(c => c[lay] > CLEAN || (lay === 'plaque' && c.food > CLEAN))); if (t) go(st.tool, sweep(t, null, 0, st.id === 'polish' ? 0.6 : 1.0)); return; }
+  if (G.lesson && !G.lesson.steps[0].fix) { const st = G.lesson.steps[0]; const lay = st.id === 'brush' ? 'plaque' : st.id === 'scaler' ? 'tartar' : 'stain'; const t = A.teeth.find(q => q.cells.some(c => c[lay] > CLEAN || (lay === 'plaque' && c.food > CLEAN))); if (t) go(st.tool, sweep(t, null, 0, st.id === 'polish' ? 0.6 : 1.0)); return; }
   const need = w => mine.find(q => q.w === w);
   // look first when something hurts and nothing has been found
   if (hidden.length && G.cfg.tools.includes('mirror') && !mem.looked?.[G.pi + ':' + G.arch]) { mem.looked = mem.looked || {}; mem.looked[G.pi + ':' + G.arch] = 1; const pts = A.teeth.filter(t => !t.gone).map(t => ({ x: t.x, y: t.y, hold: 0.35 })); go('mirror', { pts, v: 1.4 }); return; }

@@ -5681,24 +5681,29 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, R = G.route;
   if (V.for !== R) { V.for = R; W3.setSky(pick(rng(G.seed + 2), PLACES[G.cfg.place].skies)); buildPlace(V, G); buildRoute(V, G); V.me.top.color.setHex(mySkin().top); ui.lp = null; ui.snap = true; }
   R.bolts.forEach((b, i) => { V.bolts[i].userData.qd.visible = b.clip; });
   // where each limb is going: its hold (or the finger, while you drag it); the body follows
+  let bx = G.body.x, by = G.body.y;
+  if (G.phase === 'fall') { const b = R.bolts.filter(q => q.clip).sort((a, c) => c.y - a.y)[0], cy = b ? b.y - 1.4 : Math.max(0.6, G.body.y - 1.5), tt = 1.8 - G.fallT, tf = Math.sqrt(2 * Math.max(0, G.body.y - cy) / 9.8); by = tt < tf ? G.body.y - 4.9 * tt * tt : cy - 0.35 * Math.sin((tt - tf) * 9) * Math.exp(-(tt - tf) * 3); bx = b ? b.x : bx; }      // 23 Nov 2026: a real fall (faster and faster) until the rope comes tight at the last clip, then the stretch and bounce
   const hs = R.holds, tgt = {}, sk = G.phase === 'slip' || G.st < 0.22 ? (G.phase === 'slip' ? 0.035 : 0.015) : 0;
   for (const l of LIMBS) { const i = G.S[l]; let p = i >= 0 ? { x: hs[i].x, y: hs[i].y + (isHand(l) ? 0.02 : 0.03) } : { x: G.body.x + (l[0] === 'l' ? -0.25 : 0.25), y: G.body.y - (isHand(l) ? -0.2 : 0.9) };
     if (ui.drag && ui.drag.l === l && ui.drag.w) p = ui.drag.w;
-    if (G.phase === 'fall') p = { x: G.body.x + (l[0] === 'l' ? -0.3 : 0.3), y: G.body.y + (isHand(l) ? 0.6 : -0.7) };
+    // FALLING (27 Nov 2026, his final fix: "it currently looks like their hand being overstretched let them actually fall"): the hands and feet
+    // let go and go WITH the falling body (they were aimed at where the body had been, so the arms stretched up to the holds). Arms fly up
+    // loose above the shoulders, legs hang and kick, all flailing a little, never longer than the limb itself.
+    if (G.phase === 'fall') { const tt = 1.8 - G.fallT, s2 = l[0] === 'l' ? -1 : 1, fl = Math.sin(tt * 13 + (l === 'lh' ? 0 : l === 'rh' ? 2 : l === 'lf' ? 4 : 1)) * 0.12;
+      p = isHand(l) ? { x: bx + s2 * (0.5 + fl), y: by + SHY + 0.38 + fl * 0.6 } : { x: bx + s2 * (0.22 + fl * 0.6), y: by - 0.82 + Math.abs(fl) }; }
     if (sk && isHand(l)) p = { x: p.x + (Math.random() - 0.5) * sk, y: p.y - sk * 0.5 + (Math.random() - 0.5) * sk };
     tgt[l] = p; }
-  let bx = G.body.x, by = G.body.y;
-  if (G.phase === 'fall') { const b = R.bolts.filter(q => q.clip).sort((a, c) => c.y - a.y)[0], cy = b ? b.y - 1.4 : Math.max(0.6, G.body.y - 1.5), tt = 1.8 - G.fallT, tf = Math.sqrt(2 * Math.max(0, G.body.y - cy) / 9.8); by = tt < tf ? G.body.y - 4.9 * tt * tt : cy - 0.35 * Math.sin((tt - tf) * 9) * Math.exp(-(tt - tf) * 3); bx = b ? b.x : bx; }      // 23 Nov 2026: a real fall (faster and faster) until the rope comes tight at the last clip, then the stretch and bounce
   if (G.dyno) { const p = dynoP(G); by -= Math.min(1, p) * 0.25; }
   if (!ui.lp || ui.snap) ui.lp = { body: { x: bx, y: by }, ...Object.fromEntries(LIMBS.map(l => [l, Object.assign({}, tgt[l])])) };
   const kq = Math.min(1, dt * (G.phase === 'fall' ? 14 : 9));
-  for (const l of LIMBS) { const q = ui.lp[l]; q.x += (tgt[l].x - q.x) * Math.min(1, dt * 14); q.y += (tgt[l].y - q.y) * Math.min(1, dt * 14); }
+  for (const l of LIMBS) { const q = ui.lp[l], kl = Math.min(1, dt * (G.phase === 'fall' ? 22 : 14)); q.x += (tgt[l].x - q.x) * kl; q.y += (tgt[l].y - q.y) * kl; }
   ui.lp.body.x += (bx - ui.lp.body.x) * kq; ui.lp.body.y += (by - ui.lp.body.y) * kq;
   const B = ui.lp.body, zb = wallZ(G, B.y) - 0.34 - (G.phase === 'fall' ? 0.5 : 0), me = V.me, strained = G.body.strain > 0.95;
   const hip = V3v(B.x, B.y, zb), chest = V3v(B.x, B.y + SHY * 0.55, zb - 0.02); me.hips.position.copy(hip); me.belt.position.copy(hip).add(V3v(0, 0.03, 0)); segTo(T, me.torso, hip, V3v(B.x, B.y + SHY + 0.02, zb + 0.02)); me.torso.scale.y = 1;
   me.head.position.set(B.x, B.y + SHY + 0.2, zb - 0.02); me.helm.position.set(B.x, B.y + SHY + 0.22, zb - 0.02);
   for (const l of LIMBS) { const hand = isHand(l), s = l[0] === 'l' ? -1 : 1, j = hand ? V3v(B.x + s * SHX, B.y + SHY, zb + 0.02) : V3v(B.x + s * HPX, B.y, zb), q = ui.lp[l], e = V3v(q.x, q.y, wallZ(G, q.y) + bump(q.x, q.y) - (hand ? 0.08 : 0.1));
-    limb(T, me.limbs[l], j, e, (hand ? ARM : LEG) * (strained ? 1.0 : 1.04), hand ? V3v(s * 0.5, -1, -0.5) : V3v(s * 0.8, 0.2, -1)); if (!hand) me.limbs[l].end.rotation.set(0, 0, 0); }
+    const ln = (hand ? ARM : LEG) * (strained ? 1.0 : 1.04); if (G.phase === 'fall') { e.z = zb - 0.1 + (hand ? -0.15 : 0.05); const d = e.clone().sub(j), dl = d.length(); if (dl > ln * 0.97) e.copy(j).add(d.multiplyScalar(ln * 0.97 / dl)); }
+    limb(T, me.limbs[l], j, e, ln, hand ? V3v(s * 0.5, -1, -0.5) : V3v(s * 0.8, 0.2, -1)); if (!hand) me.limbs[l].end.rotation.set(0, 0, 0); }
   // the rope: from the ground, up through every clipped bolt, to the harness (slack below)
   { const pts = [V3v(-1.2, 0.05, -1.2)]; for (const b of R.bolts.filter(q => q.clip).sort((a, c) => a.y - c.y)) pts.push(V3v(b.x, b.y - 0.1, wallZ(G, b.y) - 0.08)); pts.push(hip.clone().add(V3v(0, 0.02, -0.1)));
     const pos = V.rope.geometry.attributes.position; for (let i = 0; i < 24; i++) { const p = pts[Math.min(i, pts.length - 1)]; pos.setXYZ(i, p.x, p.y, p.z); } pos.needsUpdate = true; V.rope.geometry.computeBoundingSphere(); }

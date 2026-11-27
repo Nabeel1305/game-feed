@@ -47,20 +47,28 @@ function layout(G) { const c = G.cfg, Rn = rng(G.N * 7919 + 17), N = G.N, h = c.
   const L = { hole: [], jelly: [], frost: [], lock: [], target: 0, moves: 0, collect: null, cherries: 0 };
   for (let r = 0; r < R; r++) for (let q = 0; q < C; q++) { const i = r * C + q; L.hole[i] = !sh(r, q); L.jelly[i] = 0; L.frost[i] = 0; L.lock[i] = false; }
   const cells = () => { const a = []; for (let i = 0; i < R * C; i++) if (!L.hole[i]) a.push(i); return a; };
-  if (c.goal === 'score') { L.target = Math.round(N <= 2 ? 4200 + 600 * N : 9000 + 9000 * h); L.moves = N <= 2 ? 16 : Math.round(20 - 3 * h); }
+  if (c.goal === 'score') { L.target = Math.round(N <= 2 ? 4200 + 600 * N : 8000 + 7000 * h); L.moves = N <= 2 ? 16 : Math.round(22 - 2 * h); }
   if (c.goal === 'jelly') { const two = N >= 12 && Rn() < 0.6, pat = N === 3 ? 0 : Math.floor(Rn() * 4);
     for (const i of cells()) { const r = Math.floor(i / C), q = i % C; let on = false;
       if (pat === 0) on = r >= 3 && r <= 5 && q >= 2 && q <= 5; if (pat === 1) on = r >= R - 3; if (pat === 2) on = q <= 1 || q >= C - 2; if (pat === 3) on = (r + q) % 2 === 0 && r >= 2;
       if (N === 3) on = r >= 6 && q >= 1 && q <= 6; if (on) L.jelly[i] = two && (r + q) % 3 === 0 ? 2 : 1; }
-    const n = L.jelly.reduce((a, b) => a + b, 0); L.moves = Math.round(N === 3 ? 22 : 12 + n * (0.84 - 0.24 * h)); }
+    const n = L.jelly.reduce((a, b) => a + b, 0); L.moves = Math.round(N === 3 ? 22 : 13 + n * (0.88 - 0.22 * h)); }
   if (c.goal === 'collect') { const k = N >= 14 ? 2 : 1, cs = []; while (cs.length < k) { const v = (Rn() * c.cols) | 0; if (!cs.includes(v)) cs.push(v); }
-    L.collect = cs.map(v => ({ col: v, n: N <= 2 ? 22 + 3 * N : Math.round((k === 2 ? 16 : 22) + 18 * h), got: 0 })); const tot = L.collect.reduce((a, b) => a + b.n, 0); L.moves = N <= 2 ? 16 : Math.round(tot * (0.62 - 0.17 * h) / k + 6); }
+    L.collect = cs.map(v => ({ col: v, n: N <= 2 ? 22 + 3 * N : Math.round((k === 2 ? 16 : 22) + 18 * h), got: 0 })); const tot = L.collect.reduce((a, b) => a + b.n, 0); L.moves = N <= 2 ? 16 : Math.round(tot * (0.68 - 0.14 * h) / k + 7); }
   if (c.goal === 'cherry') { L.cherries = Math.round(2 + 2 * h); L.moves = Math.round(L.cherries * (12 - 3 * h) + 10); }
   if (c.goal === 'frost') { const two = N >= 10; for (const i of cells()) { const r = Math.floor(i / C), q = i % C;
       if ((r >= R - 3 && (q + r) % 2 === 0) || (Rn() < 0.12 * h && r > 2)) L.frost[i] = two && Rn() < 0.4 ? 2 : 1; }
-    const n = L.frost.reduce((a, b) => a + b, 0); L.moves = Math.round(14 + n * (1.1 - 0.3 * h)); }
+    const n = L.frost.reduce((a, b) => a + b, 0), n2 = L.frost.filter(v => v > 1).length; L.moves = Math.round(15 + n * (1.15 - 0.28 * h) + n2 * 0.8); }      // (27 Nov 2026: a double layer takes a second hit in the same place; level 42, with six, was never won)
   // cages from level 9 on, a few
   if (N >= 9) { const k = Math.round(2 + 6 * h); for (let j = 0; j < k; j++) { const i = cells()[(Rn() * cells().length) | 0]; if (!L.frost[i] && Math.floor(i / C) > 1) L.lock[i] = true; } }
+  // (27 Nov 2026: moves for score, collect, jelly and frost made a little kinder in the middle levels: measured, a careful player won 0 to 25 in 100
+// of the collect and score levels from 25 to 60, while cherries stayed near 40; now each kind starts near half and goes down slowly.)
+// HARDER FOREVER (27 Nov 2026, his final fix: "make it incrementally harder and more challenging let the levels keep going up and it just keeps
+  // getting harder forever"). The level's hardness (h) levels off after about 60 levels; past level 12 a second, slow climb never stops: a little
+  // fewer moves, more to collect, a higher score, more cages, a step each time the level doubles (never fewer than 85 moves in 100: harder, never impossible).
+  const deep = Math.log2(1 + Math.max(0, N - 12) / 12);
+  if (deep > 0) { L.moves = Math.round(L.moves * Math.max(0.85, 1 - 0.03 * deep)); if (L.target) L.target = Math.round(L.target * (1 + 0.04 * deep)); if (L.collect) L.collect.forEach(q => { q.n = Math.round(q.n * (1 + 0.03 * deep)); });
+    if (L.cherries) L.cherries += Math.floor(deep / 2); const extra = Math.round(deep); for (let j = 0; j < extra; j++) { const cs = cells(), i = cs[(Rn() * cs.length) | 0]; if (!L.frost[i] && Math.floor(i / C) > 1) L.lock[i] = true; } }
   L.moves += c.extra; return L; }
 let UID = 1;
 const newCandy = (col, sp = null) => ({ id: UID++, col, sp });

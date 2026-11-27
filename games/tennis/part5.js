@@ -97,7 +97,9 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 const SWL = () => H * 0.28;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const x = e.clientX, y = e.clientY;
   if (G.cfg.practice && ui.drillBar && y < ui.drillBar.y + ui.drillBar.h + 6 && y > ui.drillBar.y - 6) { setDrill(G, G.drill + (x < W / 2 ? -1 : 1)); sfx.click(); return; }
-  if (x < W * 0.5) { if (!ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } return; }
+  // 27 Nov 2026, his final fix: "keep the joystick in a single appropriate place": the stick lives at one spot, bottom left (stickBase); a thumb
+  // anywhere on the left half drives it from there (it no longer jumps to wherever the thumb lands)
+  if (x < W * 0.5) { if (!ui.stick) { const b = stickBase(); ui.stick = { id: e.pointerId, x0: b.x, y0: b.y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} const R = 54 * k, dx = (x - b.x) / R, dy = (y - b.y) / R, m = Math.hypot(dx, dy); setStick(G, m < 0.12 ? 0 : dx / Math.max(1, m), m < 0.12 ? 0 : dy / Math.max(1, m)); } return; }
   if (!ui.swipe) { ui.swipe = { id: e.pointerId, x0: x, y0: y, t0: performance.now(), pts: [[x, y]] }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
 cv.addEventListener('pointermove', e => { const x = e.clientX, y = e.clientY; const s2 = ui.stick; if (s2 && s2.id === e.pointerId && G) { s2.x = x; s2.y = y; const R = 54 * k, dx = (x - s2.x0) / R, dy = (y - s2.y0) / R; setStick(G, Math.hypot(dx, dy) < 0.12 ? 0 : dx, Math.hypot(dx, dy) < 0.12 ? 0 : dy); }
   const sw = ui.swipe; if (sw && sw.id === e.pointerId) { sw.pts.push([x, y]); if (sw.pts.length > 30) sw.pts.shift(); } });

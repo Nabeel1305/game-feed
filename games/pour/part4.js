@@ -6,7 +6,20 @@ const sfx = {
   click() { tone(880, 0.04, 0.05, 'triangle', 0, 1100); },
   start() { [0, 4, 7].forEach((q, j) => pluck(note(523, q), 0.5, 0.05, j * 0.07)); },
   clink(v = 1) { if (!gate('clink', 60)) return; const f = 2600 + Math.random() * 300; tone(f, 0.18, 0.04 * v, 'sine'); tone(f * 1.5, 0.12, 0.02 * v, 'sine', 0.005); },
-  pour(n = 1) { for (let i = 0; i < 2 + n * 2; i++) { const t = 0.12 + i * 0.07; noise(0.07, 380 + Math.random() * 120, 0.06, 'bandpass', 3, t, 0.01); tone(160 + Math.random() * 60, 0.06, 0.03, 'sine', t, 110); } },
+  // 27 Nov 2026, his final fix: "Fix the sound effect of the pouring make it a nice watery sound." It was a run of knocks. Now a real pour: a
+  // stream of water (steady filtered noise, gently wobbling) whose ring rises as the glass fills (the note of a filling bottle), with little
+  // bubbles popping up through it, fading in as the stream starts and out as it stops. Longer for more layers.
+  pour(n = 1) { if (!actx || MUTE) return; try {
+    const dur = Math.min(1.2, 0.5 + n * 0.07), t = actx.currentTime + 0.06, sr = actx.sampleRate, len = Math.floor(sr * (dur + 0.1)), b = actx.createBuffer(1, len, sr), d = b.getChannelData(0);
+    for (let i = 0, last = 0; i < len; i++) { last = last * 0.55 + (Math.random() * 2 - 1) * 0.45; d[i] = last; }
+    const src = actx.createBufferSource(); src.buffer = b;
+    const bp = actx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 5; bp.frequency.setValueAtTime(520, t); bp.frequency.exponentialRampToValueAtTime(1450, t + dur);
+    const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+    const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + 0.08); g.gain.setValueAtTime(0.16, t + dur - 0.15); g.gain.exponentialRampToValueAtTime(0.0005, t + dur);
+    const lfo = actx.createOscillator(), lg = actx.createGain(); lfo.frequency.value = 7 + Math.random() * 3; lg.gain.value = 0.05; lfo.connect(lg); lg.connect(g.gain);
+    src.connect(bp); bp.connect(lp); lp.connect(g); g.connect(BUS); src.start(t); src.stop(t + dur + 0.05); lfo.start(t); lfo.stop(t + dur + 0.05);
+    for (let k = 0, tt = 0.12; tt < dur - 0.08; k++, tt += 0.05 + Math.random() * 0.09) { const f0 = 380 + Math.random() * 260 + tt * 300; tone(f0, 0.05, 0.035, 'sine', 0.06 + tt, f0 * 2.2); }
+  } catch (e) {} },
   reveal() { tone(1568, 0.25, 0.03, 'sine'); },
   full(n = 1) { const st = Math.min(14, n * 2); pluck(note(523, st), 0.9, 0.08); tone(note(1046, st), 0.4, 0.03, 'sine', 0.05); },
   nope() { if (!gate('nope', 200)) return; tone(180, 0.12, 0.06, 'triangle', 0, 140, 800); noise(0.05, 600, 0.03, 'lowpass', 1); },

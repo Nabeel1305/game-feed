@@ -207,7 +207,7 @@ const BLIND = {
 // shown. Now the robot is asked (dryPlanAll): MOVE THIS WAY on the left (under the ball), TAP: TOSS for a serve, then SWIPE UP! / LONG SWIPE UP:
 // LOB / SWIPE DOWN: SLICE along the very swipe it would make (its aim and length), only when it would hit.
 const TNC = { t: -1e9, v: null };
-function tenCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - TNC.t < 80) return TNC.v; TNC.t = now; const all = dryPlanAll(G, null, { cd: -1 }), last = n => all.filter(q => q[0] === n).pop(), sw = last('swing'), ts = last('toss'), st = last('setStick'), s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.24, y0 = s2 ? s2.y0 : H * 0.72, R = 54 * k; let v;
+function tenCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - TNC.t < 80) return TNC.v; TNC.t = now; const all = dryPlanAll(G, null, { cd: -1 }), last = n => all.filter(q => q[0] === n).pop(), sw = last('swing'), ts = last('toss'), st = last('setStick'), s2 = ui.stick, x0 = stickBase().x, y0 = stickBase().y, R = 54 * k; let v;
   if (ts || (sw && G.phase === 'serve' && G.server === 0 && !G.toss)) v = ['TAP: TOSS', 'tap', [W * 0.75, H * 0.66]];
   else if (sw) { const q = sw[1], L = Math.max(30 * k, q.len * SWL()), x1 = W * 0.74, y1 = q.ay > 0 ? H * 0.55 : H * 0.8, kind = shotOf(q.ax * L, q.ay * L); v = [kind === 'LOB' ? 'LONG SWIPE UP: LOB' : kind === 'SLICE' ? 'SWIPE DOWN: SLICE' : Math.abs(q.ax) > 0.25 ? 'SWIPE TO THE CORNER' : 'SWIPE UP!', 'swipe', [x1, y1, x1 + q.ax * L, y1 + q.ay * L]]; }
   else if (st && Math.hypot(st[1], st[2]) > 0.15) v = ['MOVE THIS WAY', 'drag', [x0, y0, x0 + st[1] * R * 0.8, y0 + st[2] * R * 0.8]];

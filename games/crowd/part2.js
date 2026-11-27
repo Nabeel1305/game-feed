@@ -7,7 +7,7 @@
 // Whoever is left climbs the bonus stairs. Units: metres; the track runs along z (0..LEN) and is HW wide each side of x = 0.
 const RULES = [
   '<b>Slide your thumb</b> left and right: your crowd follows.',
-  'Run through the <b>better gate</b>: +10 or x2? Watch out for − and ÷.',
+  'Run through the <b>better gate</b>: +10 or x2? Watch out for − and ÷. Later the gates all look alike: <b>count</b> which gives you more.',
   'Saws, bars and hammers knock runners off. On a <b>bridge</b>, anyone off the planks falls.',
   'A <b>red crowd</b> fights you one for one. Touch <b>grey runners</b> and they join you.',
   'At the end, be <b>more than the giant</b>. Everyone left climbs the bonus stairs.',
@@ -31,9 +31,27 @@ function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != n
   setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G; }
 // ---------- the gates: what each does to n ----------
-const apply = (g, n) => g.op === '+' ? n + g.v : g.op === '-' ? Math.max(0, n - g.v) : g.op === 'x' ? n * g.v : Math.floor(n / g.v);
-const gateTxt = g => (g.op === 'x' ? '×' : g.op === '/' ? '÷' : g.op) + g.v;
-function gatePair(G, n, R) { const c = G.cfg, good = () => { const r = R(), px = n > 400 ? 0.82 : 0.55; return r < px ? { op: '+', v: Math.max(4, Math.round((4 + R() * 10 + n * (0.2 + R() * 0.5)) / 2) * 2) + c.plus } : r < 0.94 ? { op: 'x', v: 2 } : { op: 'x', v: 3 }; },
+const apply = (g, n) => g.op === '+' ? n + g.v : g.op === '-' ? Math.max(0, n - g.v) : g.op === 'x' ? Math.floor(n * g.v) : g.op === 'xm' ? Math.max(0, n * g.v - g.k) : Math.floor(n / g.v);
+const numTxt = v => v === 0.5 ? '½' : String(v);
+const gateTxt = g => g.op === 'xm' ? `×${g.v} −${g.k}` : (g.op === 'x' ? '×' : g.op === '/' ? '÷' : g.op === '-' ? '−' : g.op) + numTxt(g.v);
+// THINKING GATES (27 Nov 2026, his final fix: "The numbers that increase your numbers are clearly blue and those that reduce it is clearly red. It should
+// be ambiguous and the player needs to find out which one would increase their numbers. Make it confusing so the player must actually think to go into
+// the right column except in the beginning rounds"). Levels 1-3 keep the clear gates (blue good, red bad) to learn on. From level 4 the two gates of a
+// pair are the same colour, and more and more of the pairs (a third at level 4, most from level 15) are ones where the sign does not tell you:
+//   +a or ×m   both grow you; which grows you MORE depends on how many you are now (a is close to what ×m would add)
+//   −a or ÷d   both cost you; pick the smaller loss (again close)
+//   ×½ or ÷½   the times sign halves you, the divide sign doubles you
+//   ×2 −k or +j   doubling then losing k, or a plain gain: count it
+// Every one has a right answer you can work out from your number in the corner; the robots (who count) still win at the measured rates.
+const clearGates = N => N <= 3;
+function thinkPair(G, n, R) { const c = G.cfg, r = R(), m = R() < 0.75 ? 2 : 3, near = 0.75 + R() * 0.55, ev = v => Math.max(4, Math.round(v / 2) * 2);
+  let p; if (r < 0.42) p = [{ op: '+', v: ev(n * (m - 1) * near) + c.plus }, { op: 'x', v: m }];
+  else if (r < 0.6 && R() < c.bad) { const d = R() < 0.7 ? 2 : 3; p = [{ op: '-', v: Math.max(3, Math.round(n * (1 - 1 / d) * near)) }, { op: '/', v: d }]; }
+  else if (r < 0.78) p = [{ op: 'x', v: 0.5 }, { op: '/', v: 0.5 }];
+  else { const k = ev(n * (0.3 + R() * 0.6)), j = ev(n * (1 + (R() - 0.5) * 0.7) - k); p = [{ op: 'xm', v: 2, k }, { op: '+', v: Math.max(4, j) + c.plus }]; }
+  if (apply(p[0], n) === apply(p[1], n)) p[0].v += p[0].op === '+' || p[0].op === '-' ? 4 : 0;
+  return R() < 0.5 ? p : [p[1], p[0]]; }
+function gatePair(G, n, R) { if (!clearGates(G.N) && R() < Math.min(0.85, 0.33 + (G.N - 4) * 0.05)) return thinkPair(G, n, R); const c = G.cfg, good = () => { const r = R(), px = n > 400 ? 0.82 : 0.55; return r < px ? { op: '+', v: Math.max(4, Math.round((4 + R() * 10 + n * (0.2 + R() * 0.5)) / 2) * 2) + c.plus } : r < 0.94 ? { op: 'x', v: 2 } : { op: 'x', v: 3 }; },
     bad = () => { const r = R(); return r < 0.55 ? { op: '-', v: Math.max(5, Math.round(n * (0.3 + R() * 0.4))) } : { op: '/', v: r < 0.85 ? 2 : 3 }; };
   const a = good(), b = R() < c.bad ? bad() : good(); if (b.op === a.op && b.v === a.v) b.v = a.op === 'x' ? 3 - (a.v === 3 ? 1 : 0) : a.v + 6; return R() < 0.5 ? [a, b] : [b, a]; }
 // ---------- the track: built from the start, in pieces about 20 m apart ----------
@@ -41,8 +59,8 @@ function setup(G, o = {}) { const c = G.cfg, R = G.rnd; G.len = o.len || c.len; 
   G.n = o.start || c.start; G.mem = []; resize0(G);
   if (o.track) o.track(G, R); else { let z = 26, n = G.n, best = G.n, k = 0;
     while (z < G.len - 20) { const r = R(), kind = k % 2 === 0 ? 'gate' : (k === 3 || k === 7 || r < 0.22) ? 'wall' : r < c.enemy ? 'enemy' : r < c.enemy + c.bridge ? 'bridge' : r < c.enemy + c.bridge + 0.15 ? 'recruit' : 'obst';
-      if (kind === 'gate') { const ops = gatePair(G, best, R); G.items.push({ type: 'gate', z, ops }); best = Math.min(9999, Math.max(apply(ops[0], best), apply(ops[1], best))); z += 10;
-        if (R() < c.trap) { const bs = apply(ops[0], 100) >= apply(ops[1], 100) ? -1 : 1; G.items.push({ type: 'wall', z: z + 0.5, side: bs }); best = Math.round(best * 0.97); z += 10; } }
+      if (kind === 'gate') { const ops = gatePair(G, best, R), b0 = best; G.items.push({ type: 'gate', z, ops }); best = Math.min(9999, Math.max(apply(ops[0], best), apply(ops[1], best))); z += 10;
+        if (R() < c.trap) { const bs = apply(ops[0], b0) >= apply(ops[1], b0) ? -1 : 1; G.items.push({ type: 'wall', z: z + 0.5, side: bs }); best = Math.round(best * 0.97); z += 10; } }
       else if (kind === 'wall') { G.items.push({ type: 'wall', z, side: R() < 0.5 ? -1 : 1 }); z += 10; }
       else if (kind === 'enemy') { const e = Math.max(4, Math.round(best * (c.esz + R() * 0.25))); G.items.push({ type: 'enemy', z, n: e }); best -= e; z += 12; }
       else if (kind === 'bridge') { const L = 9 + R() * 5, x = (R() - 0.5) * 3; G.items.push({ type: 'bridge', z, z1: z + L, x, hw: 1.1 + R() * 0.5 }); best = Math.round(best * 0.94); z += L + 10; }

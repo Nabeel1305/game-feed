@@ -656,8 +656,14 @@ function block(col, px) { const key = col + ':' + Math.round(px * DPR); if (SPR.
   const rr = (a, b, w, hh, q) => { x.beginPath(); x.roundRect(a, b, w, hh, q); };
   rr(m, m, d - 2 * m, d - 2 * m, r); x.fillStyle = shade(h, 0.62); x.fill();                                  // the dark edge
   const g = x.createLinearGradient(0, 0, 0, d); g.addColorStop(0, shade(h, 1.18)); g.addColorStop(1, shade(h, 0.92)); rr(m, m, d - 2 * m, d - 2 * m - d * 0.09, r); x.fillStyle = g; x.fill();      // the face
-  rr(d * 0.17, d * 0.15, d * 0.66, d * 0.56, r * 0.7); const g2 = x.createLinearGradient(0, d * 0.15, 0, d * 0.7); g2.addColorStop(0, shade(h, 1.05)); g2.addColorStop(1, shade(h, 0.98)); x.fillStyle = g2; x.fill();      // the raised top
-  x.fillStyle = 'rgba(255,255,255,.55)'; rr(d * 0.2, d * 0.17, d * 0.36, d * 0.1, d * 0.05); x.fill();          // the shine
+  rr(d * 0.17, d * 0.15, d * 0.66, d * 0.56, r * 0.7); const g2 = x.createLinearGradient(0, d * 0.15, 0, d * 0.7); g2.addColorStop(0, shade(h, 1.12)); g2.addColorStop(1, shade(h, 0.9)); x.fillStyle = g2; x.fill();      // the raised top
+  // GLOSS (27 Nov 2026, his final fix: "Make it glossier"): a glassy sheen over the top half of the face, a bright rim along the top edge,
+  // a sharp white spot, and a soft light along the bottom where it catches the light from below, like a boiled sweet.
+  x.save(); rr(m, m, d - 2 * m, d - 2 * m - d * 0.09, r); x.clip();
+  const sh = x.createLinearGradient(0, m, 0, d * 0.5); sh.addColorStop(0, 'rgba(255,255,255,.62)'); sh.addColorStop(1, 'rgba(255,255,255,.04)'); x.fillStyle = sh; x.beginPath(); x.ellipse(d * 0.42, d * 0.12, d * 0.62, d * 0.34, -0.08, 0, TAU); x.fill();
+  const lo = x.createLinearGradient(0, d * 0.62, 0, d * 0.88); lo.addColorStop(0, 'rgba(255,255,255,0)'); lo.addColorStop(1, 'rgba(255,255,255,.26)'); x.fillStyle = lo; x.fillRect(0, d * 0.62, d, d * 0.3); x.restore();
+  x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = Math.max(1, d * 0.035); x.beginPath(); x.moveTo(m + r, m + d * 0.03); x.lineTo(d - m - r, m + d * 0.03); x.stroke();
+  x.fillStyle = 'rgba(255,255,255,.95)'; x.beginPath(); x.ellipse(d * 0.3, d * 0.22, d * 0.12, d * 0.05, -0.35, 0, TAU); x.fill(); x.beginPath(); x.arc(d * 0.17, d * 0.33, d * 0.035, 0, TAU); x.fill();          // the shine
   if (col === 8) { x.strokeStyle = 'rgba(40,44,56,.5)'; x.lineWidth = d * 0.04; x.beginPath(); x.moveTo(d * 0.3, d * 0.3); x.lineTo(d * 0.48, d * 0.5); x.lineTo(d * 0.42, d * 0.68); x.moveTo(d * 0.48, d * 0.5); x.lineTo(d * 0.68, d * 0.45); x.stroke(); }
   return SPR.c[key] = cnv; }
 function gemPic(px) { const key = 'gem:' + Math.round(px * DPR); if (SPR.c[key]) return SPR.c[key]; const d = Math.max(4, Math.ceil(px * DPR)), cnv = document.createElement('canvas'); cnv.width = cnv.height = d; const x = cnv.getContext('2d');
@@ -682,7 +688,7 @@ function wouldClear(G, p, r, c) { const B = G.b.slice(); for (const [a, b] of p.
 // ---------- the picture ----------
 function draw(now) { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const L = lay(), s = L.s, g = G;
   const key = L.cs.toFixed(2) + ':' + DPR; if (SPR.key !== key) SPR = { key, c: {} };
-  const rk = W + 'x' + H + ':' + DPR + ':' + (g ? g.place : 0); if (draw.rk !== rk) { draw.rk = rk; paintBack(L, g); }
+  const rk = W + 'x' + H + ':' + DPR + ':' + (g ? g.place + ':g' : 'home'); if (draw.rk !== rk) { draw.rk = rk; paintBack(L, g); }
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(draw.oc, 0, 0); ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.save(); if (FX.shake > 0) ctx.translate((Math.random() - 0.5) * FX.shake, (Math.random() - 0.5) * FX.shake);
   if (g) { drawBoard(g, L, now); drawTray(g, L, now); hud(g, L, now); }
