@@ -1,15 +1,15 @@
-// ===================== RULES: Surf =====================
-// A session of three waves. Catch each one (hold PADDLE as it comes, stand when it lifts you), then ride its face: the wave
-// peels along the shore and the breaking part (the curl) chases you. Down the face you gain speed, up the face you spend it.
-// Turns, snaps off the lip, cutbacks, airs and barrel rides score; the same move again scores less. Beat the session target.
-// The face: x along the shore (metres, + the way the wave peels), s from 0 at the base to 1 at the lip; heading th (0 along
-// the wave, + up the face); speed v (m/s).
+// ===================== RULES: Surf (rebuilt 27 Nov 2026, his review: "complete overhaul... make one short wave fun first") =====================
+// Seen from the side. You ride along the face of a wave (it carries you along by itself); the breaking part, the white water, chases you from behind.
+// One pad, in one place: drag UP to climb the face, DOWN to carve back down it. Coming down the face gives you speed; climbing it spends speed. Turn
+// from climbing to dropping (and back) smoothly and in rhythm: each linked turn throws spray and gives you a little more. Stay ahead of the white
+// water and reach the end of the wave (the flag). Too slow, and the white water catches you: a wipeout (try again at once). From level 3 a TRICK button
+// lights up near the lip: tap it with speed and you fly off the top and spin, landing back on the face for points.
+// Units: x metres along the wave, s 0 (the bottom of the face) to 1 (the lip), v metres a second.
 const RULES = [
-  '<b>Catch it:</b> hold PADDLE as the wave comes; when it lifts you (the ring turns green), <b>let go</b>: you stand up.',
-  '<b>Left thumb: steer.</b> Push the way you want to ride: up the face to climb, down to drop. Down gains speed, up spends it.',
-  '<b>Stay ahead of the curl</b>, the breaking part chasing you. Pump up and down for speed.',
-  '<b>Tricks:</b> turn hard at the lip (a snap), turn back towards the curl and out again (a cutback), fly off the lip and tap to spin, then point down to land. Hold CROUCH inside a barrel.',
-  'The same move again scores less: mix them up. Beat the target over three waves.',
+  '<b>Drag up</b> on the pad to climb the wave, <b>drag down</b> to drop. Dropping gives speed, climbing spends it.',
+  '<b>Stay ahead</b> of the white water behind you and reach the flag at the end of the wave.',
+  'Up and down in rhythm (linked turns) keeps your speed up and throws spray.',
+  'From level 3: near the top, with speed, tap <b>TRICK</b> to fly off the lip and spin. Land it for points.',
 ];
 const SKINS = [{ id: 'sun', name: 'Sunburst', col: 0xffb020, col2: 0xff5a3a, stars: 0 }, { id: 'reef', name: 'Reef', col: 0x2ad8c0, col2: 0x1a5aa8, stars: 5 }, { id: 'kelp', name: 'Kelp', col: 0x5aa82a, col2: 0xf0e8c0, stars: 12 },
   { id: 'coral', name: 'Coral', col: 0xff6a8a, col2: 0xffffff, stars: 22 }, { id: 'night', name: 'Night swell', col: 0x2a2a6a, col2: 0x8ad8ff, stars: 34 }, { id: 'gold', name: 'Golden hour', col: 0xf0c040, col2: 0x8a3a1a, stars: 50 }];
@@ -19,168 +19,93 @@ const upLv = id => { if (typeof HEADLESS !== 'undefined' && HEADLESS) return 0; 
 const RANKS = [[0, 'Grom'], [60, 'Wave catcher'], [200, 'Local'], [500, 'Ripper'], [1100, 'Charger'], [2500, 'Legend of the line-up']];
 const PLACES = [{ name: 'Lagoon Point', sky: 'morning' }, { name: 'Palm Reef', sky: 'noon' }, { name: 'Sunset Bay', sky: 'golden' }, { name: 'Storm Cove', sky: 'overcast' }];
 const placeOf = N => Math.floor((N - 1) / 4) % PLACES.length;
-const MOVES = { carve: { name: 'CARVE', pts: 60 }, snap: { name: 'SNAP', pts: 160 }, cutback: { name: 'CUTBACK', pts: 240 }, air: { name: 'AIR', pts: 320 }, barrel: { name: 'BARREL', pts: 320 } };
-const GF = 4.0, DRAG = 0.35, VMAX = 16;
-function makeCfg(N, help, o = {}) {
-  const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
-  return { N, f, help: !!help, place: placeOf(N), H: x(1.6, 4.2, 18), Lw: x(130, 230, 16), vp: x(6.2, 9.0, 16), fast: N >= 4, barrels: N >= 3, rides: 3,
-    target: Math.round((820 + 2750 * (1 - Math.exp(-(N - 1) / 20))) * (help ? 0.75 : 1) / 10) * 10, win: x(0.6, 0.32, 12), early: 0.55, assist: N <= 6, free: !!o.free };
-}
-// ---------- one wave: its peel, its sections (learnable: the same for a level and a wave number) ----------
-function makeWave(cfg, n) { const R = rng(cfg.N * 977 + n * 131 + 7), w = { n, secs: [], H: cfg.H * (0.9 + R() * 0.2), L: cfg.Lw * (0.9 + R() * 0.2) }; let x = 25;
-  while (x < w.L) { const len = 22 + R() * 26, r = R(), type = cfg.barrels && r < 0.3 && x > 30 ? 'barrel' : cfg.fast && r < 0.55 ? 'fast' : 'normal';
-    w.secs.push({ x0: x, x1: Math.min(w.L, x + len), type, k: type === 'fast' ? 1.32 : type === 'barrel' ? 1.08 : 1 }); x += len; }
-  return w; }
-const secAt = (w, x) => w.secs.find(s => x >= s.x0 && x < s.x1) || { type: 'normal', k: 1, x0: -1e9, x1: 0 };
-const TUBE = 12;      // how long the hollow tube is ahead of the curl in a barrel section (metres)
+
+const SLOPE = 6, DRAG = 0.12, VMAX = 16;
+function makeCfg(N, help, o = {}) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), e = easyOf(N);
+  return { N, f, help: !!help, place: placeOf(N), free: !!o.free, D: Math.round(x(170, 420, 25)) * (o.free ? 4 : 1), vc: x(7.2, 12.3, 22) * (help ? 0.92 : 1) * (1 - 0.06 * e), start: 12,
+    fast: N >= 4 ? x(0.25, 0.8, 25) : 0, trick: N >= 3, target: Math.round(x(250, 1400, 28)) }; }
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, mini: !!o.mini, free: !!o.free, blind: {} };
-  G.ride = 0; G.score = 0; G.rides = []; G.stick = { x: 0, y: 0 }; G.crouch = false; G.paddle = 0; G.recent = []; G.combo = 0; G.comboT = 0;
-  startWave(G);
+  G.stick = { x: 0, y: 0 }; G.crouch = false; G.score = 0; G.links = 0; G.tricks = 0; startRide(G);
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
-  return G;
-}
-function startWave(G) { G.ride++; G.w = makeWave(G.cfg, G.ride); G.phase = 'wait'; G.tL = 3.2; G.pt = 0; G.paddle = 0; G.rideScore = 0; G.moves = []; G.why = null;
-  G.p = { x: 0, s: 0.35, th: 0, v: 0, bal: 0, air: false, h: 0, vy: 0, rot: 0, spins: 0, wob: 0, tube: 0, lipT: -9, turnAcc: 0, turnT: 0, back: false, backT: 0 };
-  G.xb = -14; G.ev.push({ k: 'wave', n: G.ride }); }
-// ---------- the player's actions ----------
+  return G; }
+// the wave: its fast sections (where the white water surges for a while)
+function startRide(G) { const c = G.cfg, R = G.rnd; G.phase = 'ride'; G.p = { x: 0, s: 0.55, vs: 0, v: 7.5, air: false, h: 0, vh: 0, rot: 0, lastSign: 0, lastTurn: -9, flow: 0 }; G.xb = -c.start; G.secs = [];
+  let x = 60; while (x < c.D - 30) { if (R() < c.fast) G.secs.push({ x0: x, x1: x + 24 + R() * 20 }); x += 50 + R() * 50; } G.ev.push({ k: 'wave' }); }
+// the wave is not the same height all along: bigger parts take longer to climb and give more speed coming down (so a rhythm has to follow the wave)
+const TRICKV = 7;      /* speed needed to fly off the lip */
+const faceH = (G, x) => 1 + 0.26 * Math.sin(x / 19 + G.seed % 7) + 0.1 * Math.sin(x / 7.3 + G.seed % 3);
+const fastAt = (G, x) => G.secs.some(q => x >= q.x0 && x < q.x1);
 function setStick(G, x, y) { const m = Math.hypot(x, y); G.stick = m > 1 ? { x: x / m, y: y / m } : { x, y }; }
 function crouchOn(G, on) { G.crouch = !!on; }
-function standUp(G) { if (G.over || G.phase !== 'wait') return; const d = G.pt - G.tL, cfg = G.cfg;
-  if (d < -cfg.early) { G.ev.push({ k: 'early' }); G.tries = (G.tries || 0) + 1; return; }      // too early: nothing happens yet (forgiving)
-  if (d > cfg.win || G.paddle < 0.55) return;
-  G.phase = 'ride'; const P = G.p; P.v = 7 + G.paddle * 1.5; P.th = -0.5; P.s = 0.7; P.x = G.xb + 9; G.ev.push({ k: 'stand' }); lessonSee(G, 'stand'); }
-function swipe(G, dx, dy) { if (G.over) return; if (G.phase === 'wait') { if (dy < -0.3) standUp(G); return; } const P = G.p; if (G.phase === 'ride' && P.air && P.spinTo == null) { P.spinTo = P.rot + Math.PI * (dx >= 0 ? 1 : -1); G.ev.push({ k: 'spin' }); } }
+function trick(G) { const P = G.p; if (G.over || G.phase !== 'ride' || P.air || !G.cfg.trick && !(G.lesson && G.lesson.id === 'trick')) return false; if (P.s < 0.8 || P.v < TRICKV) { G.ev.push({ k: 'notrick' }); return false; }
+  P.air = true; P.vh = 3.2 + (P.v - 8) * 0.35; P.h = 0.01; P.rot = 0; G.ev.push({ k: 'launch' }); return true; }
+function swipe() {}
+function standUp() {}
 // ---------- every frame ----------
-function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt); const cfg = G.cfg;
-  if (G.blind.cr != null) { G.blind.cr -= dt; if (G.blind.cr <= 0) { G.blind.cr = null; crouchOn(G, false); } }
-  if (G.phase === 'wait') { G.pt += dt; G.paddle = clamp(G.paddle + (G.crouch ? 1.1 : -0.6) * dt, 0, 1);
-    if (G.pt > G.tL + cfg.win) { G.ev.push({ k: 'missed', why: G.paddle < 0.55 ? 'paddle' : 'late' }); G.pt = 0; G.tL = 3.0; G.paddle = 0; }
-    return; }
-  if (G.phase === 'out') { G.outT -= dt; if (G.outT <= 0) nextWave(G); return; }
-  const P = G.p, w = G.w, sec = secAt(w, G.xb + 3);
-  // the curl peels along the wave; fast sections race; the end of the wave closes it
-  if (G.xb < w.L - 16) G.xb += cfg.vp * sec.k * dt;      // the wave peters out at its end: the curl stops
-  G.comboT -= dt; if (G.comboT <= 0) G.combo = 0;
-  const Lf = 1.4 * w.H;
-  if (P.air) { P.vy -= 9.8 * dt; P.h += P.vy * dt; P.x += (P.ax ?? P.v * Math.cos(P.th)) * dt;      /* in the air you keep the speed you took off with; the stick only turns the board (23 Nov 2026) */ const want = Math.atan2(G.stick.y, Math.max(0.2, G.stick.x)); if (Math.hypot(G.stick.x, G.stick.y) > 0.3) P.th += clamp(want - P.th, -3 * dt, 3 * dt);
-    if (P.spinTo != null) { const d = P.spinTo - P.rot, st = Math.sign(d) * Math.min(Math.abs(d), 10 * dt); P.rot += st; if (Math.abs(P.spinTo - P.rot) < 1e-3) { P.rot = P.spinTo; P.spinTo = null; P.spins++; } }
-    if (P.h <= 0) { P.air = false; P.h = 0; P.s = 0.97; P.landT = G.t; const r = ((P.rot % TAU) + TAU) % TAU, off = Math.min(r, TAU - r), down = P.th < -0.1;
-      if (off < 0.6 + 0.15 * upLv('wax') && down && P.spinTo == null) { const half = Math.round(P.spins); move(G, 'air', 1 + 0.75 * Math.floor(half / 2), half >= 2 ? `AIR ${half * 180}` : 'AIR'); P.rot = 0; P.spins = 0; vibeEv(G, 'land'); }
-      else return wipe(G, off >= 0.6 ? 'landed sideways: finish the spin' : 'landed nose up: point down to land'); }
-    else if (P.x < G.xb - 1) return wipe(G, 'caught by the break'); }
-  else { // steering: the board turns towards the stick (slower crouched; slower at high speed)
-    const m = Math.hypot(G.stick.x, G.stick.y), prev = P.th; let w2 = 0;
-    if (m > 0.25) { const want = Math.atan2(G.stick.y, G.stick.x); let d = Math.atan2(Math.sin(want - P.th), Math.cos(want - P.th)); if (Math.abs(d) > 1.8 && Math.cos(want) * Math.cos(P.th) < 0) { if (Math.cos(P.th) >= 0 && d < 0) d += TAU; else if (Math.cos(P.th) < 0 && d > 0) d -= TAU; }      // a big turn goes round through up the face (a cutback), not into the flats
-      const rate = (G.crouch ? 1.7 : 2.7) * (1.15 - P.v / VMAX * 0.35); w2 = clamp(d, -rate * dt, rate * dt); P.th += w2; }
-    P.th = Math.atan2(Math.sin(P.th), Math.cos(P.th));
-    const steep = 0.55 + 0.7 * P.s, near = clamp(1 - (P.x - G.xb) / 18, 0, 1), push = (2.5 + 2.8 * near) * cfg.vp / 6.2 * (P.s < 0.85 ? 1 : 0.4) * (P.x > w.L - 15 ? 0.7 : 1);      // the wave drives you, most in its pocket near the curl
-    P.v += (-GF * steep * Math.sin(P.th) * (Math.sin(P.th) > 0 ? 1 - 0.08 * upLv('rail') : 1) - (G.crouch ? (P.inTube ? 0.3 : 0.55) : DRAG) * P.v - 0.9 * Math.abs(w2 / dt) * P.v * 0.03 + push) * dt;
-    if (P.s <= 0.02 && Math.sin(P.th) <= 0.05) P.v -= P.v * 0.9 * dt;      // flat water at the bottom bogs you down
-    P.v = clamp(P.v, 0, VMAX);
-    P.x += P.v * Math.cos(P.th) * dt; P.s += P.v * Math.sin(P.th) * dt / Lf;
-    if (P.s < 0) { P.s = 0; if (P.th < 0) P.th *= 0.9; }
-    // balance: hard turns at speed and the whitewater wobble you; crouching steadies
-    const jerk = Math.abs(w2 / dt) * P.v; P.bal = clamp(P.bal + (Math.max(0, jerk - 22) * 0.012 * (G.crouch ? 0.45 : 1) * (1 - 0.15 * upLv('fins')) + (P.x - G.xb < 2 ? 0.25 : 0) - 0.45) * dt, 0, 1.2);
-    if (P.bal >= 1) return wipe(G, 'lost balance: turn less sharply, or crouch');
-    // the lip: fly off it with speed going up; otherwise ride the top
-    if (P.s >= 1) { if (Math.sin(P.th) > 0.8 && P.v > 8.5) { P.air = true; P.vy = P.v * Math.sin(P.th) * 0.7; P.ax = P.v * Math.cos(P.th); P.h = 0.01; P.rot = 0; P.spins = 0; P.spinTo = null; P.s = 1; G.ev.push({ k: 'launch' }); }
-      else P.s = 1; }
-    if (P.s > 0.86) P.lipT = G.t;
-    // moves: a snap (a hard turn down at the lip), a carve (a long linked turn), a cutback (back towards the curl and out again)
-    if (P.turnAcc === 0 && Math.abs(w2) >= 0.3 * dt) { P.turnS0 = P.s; P.turnDone = false; } P.turnAcc += w2; P.turnT += dt;
-    if (!P.turnDone && P.v > 5.5) { if (P.turnAcc < -1.0 && P.turnS0 > 0.8) { P.turnDone = true; move(G, 'snap', 1, 'SNAP'); } else if (Math.abs(P.turnAcc) > 1.25 && !P.back && !(P.turnAcc < 0 && P.turnS0 > 0.8)) { P.turnDone = true; move(G, 'carve', 1, 'CARVE'); } }
-    if (Math.abs(w2) < 0.3 * dt || Math.sign(w2) !== Math.sign(P.turnAcc)) { P.turnAcc = 0; P.turnT = 0; }
-    if (Math.cos(P.th) < -0.35) { if (!P.back) { P.back = true; P.backT = G.t; } } else if (P.back && Math.cos(P.th) > 0.5) { P.back = false; if (G.t - P.backT > 0.3 && G.t - P.backT < 3 && P.v > 1.5) move(G, 'cutback', 1, 'CUTBACK'); }
-    // the barrel: inside the tube you must crouch; ride out of it for the bonus
-    const cs = secAt(w, G.xb + 1), tl = cs.type === 'barrel' ? Math.min(TUBE, G.xb - cs.x0) : 0, tube = tl > 0 && secAt(w, P.x).type === 'barrel' && P.x - G.xb < tl && P.x > G.xb - 0.5 && P.s > 0.12;      // the tube grows out of the curl as it enters a barrel section
-    if (tube && G.t - (P.landT || -9) > 0.4) { if (P.s > 0.68) return wipe(G, 'the lip landed on you: stay low in the barrel'); if (!G.crouch) return wipe(G, 'hit by the lip: crouch in the barrel'); P.tube += dt; G.rideScore += 45 * dt; G.score += 45 * dt; if (!P.inTube) { P.inTube = true; G.ev.push({ k: 'tubein' }); } }
-    else if (P.inTube) { P.inTube = false; if (P.tube > 0.6) move(G, 'barrel', 1 + Math.min(1.5, P.tube / 2), `BARREL ${P.tube.toFixed(1)}s`); P.tube = 0; G.ev.push({ k: 'tubeout' }); }
-    if (P.x < G.xb - 0.5) return wipe(G, P.v < 4 ? 'too slow: pump down the face for speed' : 'caught by the break: stay ahead of the curl'); }
-  if (P.x >= w.L) { // ride complete: kick out over the back
-    const bonus = 100 + Math.round(G.rideScore * 0.2); G.score += bonus; G.rides.push({ pts: Math.round(G.rideScore + bonus), ok: true, moves: G.moves.length }); G.ev.push({ k: 'done', bonus }); lessonSee(G, 'done'); G.phase = 'out'; G.outT = 1.6; } }
-function vibeEv(G, k) { G.ev.push({ k: 'landair' }); }
-function move(G, id, mult, label) { const rep = G.recent.filter(q => q === id).length, k = Math.pow(0.5, rep), pts = Math.round(MOVES[id].pts * mult * k * (1 + 0.2 * G.combo));
-  G.recent.push(id); if (G.recent.length > 8) G.recent.shift(); G.combo = Math.min(3, G.combo + 1); G.comboT = 2.6;
-  G.score += pts; G.rideScore += pts; G.moves.push(id); G.ev.push({ k: 'move', id, label, pts, rep, combo: G.combo }); lessonSee(G, 'move', id); }
-function wipe(G, why) { if (G.phase !== 'ride') return; const keep = Math.round(G.rideScore * 0.25); G.score -= G.rideScore - keep; G.rides.push({ pts: keep, ok: false, why }); G.ev.push({ k: 'wipe', why, lost: G.rideScore - keep }); lessonSee(G, 'wipe');
-  G.phase = 'out'; G.outT = 1.8; G.why = why; }
-function nextWave(G) { if (G.lesson) { startWave(G); G.ride = Math.min(G.ride, 1); return; }
-  if (!G.free && G.score >= G.cfg.target && G.ride >= 1) return finish(G, true, 'target');
-  if (!G.free && G.ride >= G.cfg.rides) return finish(G, false, 'short');
-  startWave(G); }
+function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt); const c = G.cfg, P = G.p;
+  if (G.phase === 'out') { G.outT -= dt; if (G.outT <= 0) { if (G.lesson) { startRide(G); return; } finish(G, false, G.why); } return; }
+  if (G.phase !== 'ride') return;
+  // the white water: steady, faster in a fast section
+  G.xb += c.vc * (fastAt(G, G.xb) ? 1.35 : 1) * dt;
+  if (P.air) { P.vh -= 9 * dt; P.h += P.vh * dt; P.rot += dt * TAU * 1.35; P.x += P.v * dt;
+    if (P.h <= 0) { P.air = false; P.h = 0; const clean = Math.abs(((P.rot + Math.PI) % TAU) - Math.PI) < 1.1; if (clean) { const pts = 250 + Math.round(P.v * 10); G.score += pts; G.tricks++; G.ev.push({ k: 'trick', pts }); lessonSee(G, 'trick'); }
+      else { P.v *= 0.55; G.ev.push({ k: 'sloppy' }); } P.s = 0.8; P.vs = -0.6; P.v *= 0.92; } }
+  else { const want = G.stick.y > 0 ? G.stick.y * 0.9 * clamp(P.v / 7, 0.3, 1) : G.stick.y * 1.35;      /* dropping is quicker than climbing (gravity helps): to stay on the face you hold UP longer than DOWN, watching where you are */      // up the pad: climb; down: drop (it needs some speed to climb)
+    P.vs += (want - P.vs) * Math.min(1, dt * 7); const fh = faceH(G, P.x); P.s += P.vs * dt / fh;
+    if (P.s >= 1) { if (P.vs > 0.6 && P.v > 7) { P.s = 1; return wipe(G, 'over'); } P.s = 1; P.vs = Math.min(P.vs, 0); }      /* climbing hard right over the top: over the falls */ if (P.s <= 0) { P.s = 0; P.vs = Math.max(P.vs, 0); }
+    // speed: dropping gains it, climbing spends it, the water drags; at the very bottom the flat water bogs you down
+    const bell = Math.max(0, 1 - Math.pow(2 * P.s - 1, 2)), pump = 0.35 * Math.abs(P.vs) * bell;      // moving up and down the open face (pumping) draws speed from the wave; sitting still on it does not
+    P.v += (-P.vs * SLOPE * 1 + pump - DRAG * P.v - (P.s < 0.06 ? 1.2 : 0) - (P.s > 0.97 ? 0.6 : 0)) * dt; P.v = clamp(P.v, 0, VMAX);
+    // linked turns: from climbing to dropping (or back) with speed, in rhythm
+    const sg = P.vs > 0.35 ? 1 : P.vs < -0.35 ? -1 : 0; if (sg && sg !== P.lastSign && P.lastSign !== 0 && P.v > 3) { const good = sg < 0 ? P.s > 0.68 : P.s < 0.32, linked = good && G.t - P.lastTurn < 3.0; P.lastTurn = good ? G.t : -9; P.flow = linked ? Math.min(5, P.flow + 1) : 0; if (linked) { P.v = Math.min(VMAX, P.v + 1.5 + 0.15 * P.flow);      /* a turn counts when it is made high on the wave (a top turn) or low (a bottom turn), linked to the last one */ const pts = 20 + 10 * P.flow; G.score += pts; G.links++; G.ev.push({ k: 'link', n: P.flow, pts, top: sg < 0 }); lessonSee(G, 'link'); } }
+    if (sg) P.lastSign = sg;
+    P.x += P.v * dt; }
+  if (P.s > 0.8 && !P.air) lessonSee(G, 'up'); if (P.s < 0.2 && !P.air) lessonSee(G, 'down');
+  if (P.x - G.xb < 0) return wipe(G, P.v < 5 ? 'slow' : 'caught');
+  if (P.x >= c.D && !c.free) { G.score += 200; G.ev.push({ k: 'done' }); if (G.lesson) { lessonSee(G, 'end'); startRide(G); return; } finish(G, true, 'end'); } }
+function wipe(G, why) { if (G.phase !== 'ride') return; G.phase = 'out'; G.outT = 1.4; G.why = why; G.ev.push({ k: 'wipe', why }); }
 function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'; const sc = Math.round(G.score), tg = G.cfg.target;
-  const stars = win ? (sc >= tg * 1.6 ? 3 : sc >= tg * 1.25 ? 2 : 1) : 0;
-  G.res = { win, why, stars, score: sc, target: tg, rides: G.rides.slice(), coins: win ? 10 + stars * 6 + Math.min(20, Math.round(sc / 150)) : 3 };
+  const stars = win ? (sc >= tg * 1.4 ? 3 : sc >= tg ? 2 : 1) : 0;
+  G.res = { win, why, stars, score: sc, target: tg, dist: Math.round(G.p.x), D: G.cfg.D, coins: win ? 10 + stars * 6 + Math.min(20, Math.round(sc / 150)) : 3 };
   G.ev.push({ k: win ? 'won' : 'lost', why }); }
-function winNow(G) { if (!G || G.over || G.lesson) return; G.score = Math.max(G.score, G.cfg.target); finish(G, true, 'target'); }
-// ---------- lessons (levels 1-3) ----------
-const AIMCARD = {"pic": "🏄", "win": "BEAT THE SCORE", "lose": "SCORE TOO LOW", "how": "PADDLE, STAND, RIDE THE WAVE"};      // the aim card: specs/aims.json (tools/aims.py)
+function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true, 'end'); }
+// ---------- lessons: Drag up, Drag down, Stay ahead (level 1); a trick (level 3) ----------
+const AIMCARD = {"pic": "🏄", "win": "REACH THE FLAG", "lose": "THE WHITE WATER CATCHES YOU", "how": "UP AND DOWN THE WAVE"};
 const LESSONS = {
-  1: [{ id: 'ride', title: 'CATCH AND RIDE', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Hold PADDLE as the wave comes; when the ring turns green, let go and you stand up. Then steer along the wave, up and down the face, and stay ahead of the white water to the end. Ride one wave all the way.', need: 1 }],
-  2: [{ id: 'snap', title: 'SNAP OFF THE LIP', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Climb to the top of the wave, then turn hard back down as you reach the lip: a snap. Three snaps.', need: 3 }],
-  3: [{ id: 'barrel', title: 'GET BARRELLED', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Where the wave throws over (the dark hollow), drop low on the face and hold CROUCH: ride through the tube and out the other end.', need: 1 }],
+  1: [{ id: 'up', title: 'CLIMB', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Drag up.', need: 1 },
+      { id: 'down', title: 'DROP', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Drag down.', need: 1 },
+      { id: 'ahead', title: 'STAY AHEAD', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'Up and down: stay ahead.', need: 4 }],
+  3: [{ id: 'trick', title: 'TRICK', say: G => surfCue(G)[0], do: G => surfCue(G)[1], at: G => surfCue(G)[2], how: 'At the top, tap TRICK.', need: 1 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
-function lessonSee(G, what, id) { const D = G.lesson; if (!D || D.done) return; let good = false;
-  if (D.id === 'ride' && what === 'done') good = true;
-  if (D.id === 'snap' && what === 'move' && id === 'snap') good = true;
-  if (D.id === 'barrel' && what === 'move' && id === 'barrel') good = true;
-  if (what === 'wipe') { if (D.n && D.id === 'snap') { D.n = 0; G.ev.push({ k: 'lessonmiss', how: 'Wiped out: the count starts again. ' + G.why }); } else G.ev.push({ k: 'lessonmiss', how: G.why || 'Again!' }); return; }
-  if (good) { D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: D.need }); if (D.n >= D.need) { D.done = true; D.wait = 2.0; } } }
-function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.ride = 0; G.score = 0; G.rides = []; G.recent = []; G.combo = 0; startWave(G); G.ev.push({ k: 'lessondone', N: G.N }); }
-
-// ---------- for the robots: blind moves and an honest surfer ----------
-const BLIND = {
-  u: G => setStick(G, Math.random(), 1),                                                   // push up the face
-  d: G => setStick(G, Math.random(), -1),                                                  // push down the face
-  r: G => setStick(G, 1, (Math.random() - 0.5) * 0.6),                                     // push along the wave
-  a: G => { const a = Math.random() * TAU; setStick(G, Math.cos(a), Math.sin(a)); },       // push anywhere
-  c: G => { crouchOn(G, true); G.blind.cr = 0.3 + Math.random() * 1.5; },                  // hold CROUCH / PADDLE a while
-  w: G => swipe(G, Math.random() - 0.5, -1),                                               // swipe (up)
-};
-// HONEST: a surfer who looks: paddles as the wave comes and stands when it lifts (later or earlier by react); pumps up and
-// down the face to stay ahead of the curl; snaps at the lip; flies and spins when fast; crouches through barrels.
-// THE TUTORIAL SHOWS THE ONE MOVE TO MAKE NOW (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said HOLD,
-// LET GO ON GREEN with a hand holding nowhere in particular, and TOP, THEN TURN DOWN sliding up and down in a box. Now the robot is asked
-// (dryPlanAll): WAIT FOR THE WAVE, HOLD PADDLE (the hand on it), LET GO! as the ring turns green, then RIDE UP / RIDE DOWN the face on the stick
-// (up to the lip, down for the snap), HOLD CROUCH in the tube, SWIPE: SPIN in the air.
+function lessonSee(G, what) { const D = G.lesson; if (!D || D.done) return; const id = D.id;
+  if ((id === 'up' && what === 'up') || (id === 'down' && what === 'down') || (id === 'ahead' && what === 'link') || (id === 'trick' && what === 'trick')) { D.n++; G.ev.push({ k: 'lessonok', n: Math.min(D.n, D.need), need: D.need });
+    if (D.n >= D.need) { if (D.i + 1 < D.steps.length) { D.i++; D.id = D.steps[D.i].id; D.need = D.steps[D.i].need; D.n = 0; G.ev.push({ k: 'lessonnext' }); } else { D.done = true; D.wait = 1.2; } } } }
+function lessonTick(G, dt) { const D = G.lesson; if (!D.done) { if (G.phase === 'ride' && !G.p.air) G.p.v = Math.max(G.p.v, D.id === 'trick' ? TRICKV + 1.5 : 6);      /* while learning, the board never stalls */ if (G.phase === 'ride' && G.p.x - G.xb < 6) G.xb = G.p.x - 14; if (G.p.x > G.cfg.D - 20) { G.p.x -= 120; G.xb -= 120; } return; }      // in a lesson the white water waits for you
+  D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.score = 0; G.links = 0; G.tricks = 0; startRide(G); G.ev.push({ k: 'lessondone', N: G.N }); }
+// ---------- for the robots ----------
+const BLIND = { u: G => setStick(G, 0, 1), d: G => setStick(G, 0, -1), n: G => setStick(G, 0, 0), t: G => trick(G) };
+// HONEST: a surfer who looks: rides up to near the lip and back down to the lower face in rhythm, a little sooner when the white water is close; tries a
+// trick at the top when it has the speed. react: how late the turns are; acc: how well it judges the heights.
+function honest(G, o, mem) { if (G.over || G.phase !== 'ride') return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, P = G.p;
+  if (G.lesson && !G.lesson.done) { const id = G.lesson.id; if (id === 'up') { ACT.setStick(G, 0, 1); return; } if (id === 'down') { ACT.setStick(G, 0, -1); return; } }
+  if (P.air) return; mem.cd = (mem.cd || 0) - 1 / 60; if (mem.cd > 0) return; mem.cd = 0.05 + react * 0.25 * R();
+  const gap = P.x - G.xb, top = clamp(0.8 - (1 - acc) * 0.2 * R() - (gap < 10 ? 0.1 : 0), 0.5, 0.97), low = clamp(0.18 + (1 - acc) * 0.25 * R(), 0.05, 0.45);
+  if (mem.dir == null) mem.dir = -1; if (mem.dir > 0 && P.s >= top) mem.dir = -1; else if (mem.dir < 0 && P.s <= low) mem.dir = 1;
+  if ((G.cfg.trick || (G.lesson && G.lesson.id === 'trick')) && P.s > 0.85 && P.v > TRICKV + 1 && gap > 14 && R() < acc * 0.6) { ACT.trick(G); return; }
+  ACT.setStick(G, 0, mem.dir); }
+const ACT_REAL = { setStick, crouchOn, swipe, trick }; let ACT = ACT_REAL;
+// the cue: one move at a time, on the pad
 const SFC = { t: -1e9, v: null };
-function surfCue(G) { if (G.over) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SFC.t < 100) return SFC.v; SFC.t = now; const L = layout(G), C = [L.cr.x, L.cr.y], s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.24, y0 = s2 ? s2.y0 : H * 0.7, R = 56 * k;
-  const all = dryPlanAll(G, null, { ride: G.ride, pt: -1, st: G.tL }), last = n => all.filter(q => q[0] === n).pop(), cr = last('crouchOn'), sw = last('swipe'), st = last('setStick'); let v;
-  if (G.phase === 'wait') v = sw ? ['LET GO!', 'release', C] : cr && cr[1] ? ['HOLD PADDLE', 'hold', C] : ['WAIT FOR THE WAVE', 'wait', false];
-  else if (G.phase !== 'ride') v = ['WAIT…', 'wait', false];
-  else if (sw) v = ['SWIPE: SPIN!', 'swipe', [W * 0.72, H * 0.6, W * 0.72 + 90 * k, H * 0.6]];
-  else if (cr && cr[1] && !G.crouch) v = ['HOLD CROUCH', 'hold', C];
-  else if (cr && !cr[1] && G.crouch) v = ['LET GO OF CROUCH', 'release', C];
-  else if (st && Math.hypot(st[1], st[2]) > 0.15) v = [st[2] > 0.3 ? 'RIDE UP THE WAVE' : st[2] < -0.3 ? 'TURN DOWN!' : 'RIDE ALONG', 'drag', [x0, y0, x0 + st[1] * R * 0.8, y0 - st[2] * R * 0.8]];
-  else v = G.crouch ? ['KEEP HOLDING', 'hold', C] : ['RIDE…', 'wait', false];
-  SFC.v = v; return v; }
-function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, P = G.p, cfg = G.cfg;
-  if (G.phase === 'wait') { ACT.setStick(G, 0, 0); if (mem.ride !== G.ride || mem.pt > G.pt) { mem.ride = G.ride; mem.st = G.tL + (R() - 0.3) * react * 0.8; } mem.pt = G.pt;
-    ACT.crouchOn(G, G.pt > G.tL - 1.2); if (G.pt >= mem.st) { ACT.swipe(G, 0, -1); mem.st = 1e9; } return; }
-  if (G.phase !== 'ride') { ACT.crouchOn(G, false); ACT.setStick(G, 0, 0); mem.mode = null; return; }
-  if (P.air) { ACT.crouchOn(G, false); if (mem.spin == null) { mem.spin = acc > 0.9 && cfg.N >= 5 ? 2 : 0; mem.bad = R() < (1 - acc) * 1.5; } if (P.spins + (P.spinTo != null ? 1 : 0) < mem.spin && P.vy > -2) ACT.swipe(G, 1, 0);
-    ACT.setStick(G, 0.6, P.vy < 1.5 && !mem.bad ? -1 : 0.2); return; }
-  mem.spin = null; const gap = P.x - G.xb, w = G.w, ahead = secAt(w, G.xb + 2), tubeSoon = ahead.type === 'barrel' || secAt(w, G.xb + 8).type === 'barrel';
-  // a barrel: low in the face, crouched, riding just ahead of the curl
-  const inBarrel = cfg.barrels && (secAt(w, P.x).type === 'barrel' || secAt(w, P.x + 6).type === 'barrel') && (secAt(w, G.xb + 1).type === 'barrel' || secAt(w, G.xb + 16).type === 'barrel');
-  if (inBarrel) { ACT.crouchOn(G, true); const ty = clamp((0.38 - P.s) * 3, -0.6, 0.6), tx = gap > 9 ? 0.45 : gap < 3 ? 1 : 0.85; ACT.setStick(G, tx, ty); return; }
-  ACT.crouchOn(G, false);
-  // a fast section: race it in the pocket with small, flat pumps (no tricks)
-  if (secAt(w, G.xb + 4).type === 'fast' || secAt(w, G.xb + 10).type === 'fast' && gap < 8) { mem.mode = 'down'; mem.fp = mem.fp == null ? -1 : mem.fp; if (P.s < 0.25) mem.fp = 1; if (P.s > 0.55) mem.fp = -1; ACT.setStick(G, 1, 0.35 * mem.fp); return; }
-  // pumping: down to the base for speed, back up to the lip; at the lip a snap (or an air when fast)
-  if (mem.mode == null) mem.mode = 'down';
-  const late = (R() - 0.5) * react * 0.25;
-  
-  if (mem.mode === 'back') { if (!mem.turned && (Math.cos(P.th) < -0.45 || G.t - mem.backT > 1.0)) mem.turned = G.t; ACT.setStick(G, mem.turned ? 1 : -1, mem.turned ? -0.45 : 0.25); if (mem.turned && Math.cos(P.th) > 0.6 || gap < 5 || G.t - mem.backT > 2.2) { mem.turned = null; mem.mode = 'down'; } return; }
-  if (mem.mode === 'down') { ACT.setStick(G, 0.7, -0.75); if (P.s < 0.14 + late || gap < 4 && P.s < 0.3) { mem.mode = 'up'; mem.tryAir = R() < (acc > 0.9 ? 0.6 : 0.3); } return; }
-  if (mem.mode === 'up') { const goAir = mem.tryAir && cfg.N >= 5 && P.v > 10 && acc > 0.8 && gap > 8 && secAt(w, G.xb + 4).type !== 'fast' && secAt(w, P.x + 10).type !== 'barrel'; const fastNow = secAt(w, G.xb + 4).type === 'fast'; ACT.setStick(G, goAir ? 0.35 : 0.7, goAir ? 1 : 0.7); if (P.s > (fastNow && !goAir ? 0.6 : 0.88) + late * 0.2) { mem.mode = 'snap'; } return; }
-  if (mem.mode === 'snap') { ACT.setStick(G, 0.25, -1); if (P.th < -0.6) { mem.mode = 'down'; if (gap > 13 && P.v > 7.5 && secAt(w, G.xb + 4).type !== 'fast' && R() < 0.5 + acc * 0.3) { mem.mode = 'back'; mem.backT = G.t; mem.turned = null; } } return; } }
-
-// what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
-const ACT_REAL = { setStick, crouchOn, swipe }; let ACT = ACT_REAL;
+function surfCue(G) { if (G.over || G.phase !== 'ride') return ['WAIT…', 'wait', false]; const L = layout(G), P0 = L.pad, D = G.lesson, id = D && !D.done ? D.id : '';
+  if (G.p.air) return ['WAIT…', 'wait', false];
+  if (id === 'up') return ['DRAG UP', 'drag', [P0.x, P0.y, P0.x, P0.y - P0.r * 0.85]];
+  if (id === 'down') return ['DRAG DOWN', 'drag', [P0.x, P0.y, P0.x, P0.y + P0.r * 0.85]];
+  const P = G.p; if (G.cfg.trick && P.s > 0.8 && P.v > TRICKV && (id === 'trick' || !id)) return ['TAP TRICK', 'tap', [L.tr.x, L.tr.y]];
+  if (SFC.dir >= 0 && P.s > 0.76) SFC.dir = -1; else if (SFC.dir < 0 && P.s < 0.24) SFC.dir = 1; else if (!SFC.dir) SFC.dir = 1;      /* up to near the lip, down to the bottom: the same every time, so the hand never jumps about */
+  const dn = SFC.dir < 0; return [dn ? 'DRAG DOWN' : 'DRAG UP', 'drag', [P0.x, P0.y, P0.x, P0.y + (dn ? 1 : -1) * P0.r * 0.85]]; }
 function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
   const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */

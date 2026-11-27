@@ -17,7 +17,7 @@ function showHome() {
   savedLevel(); G = null; paused = false; $('pauseBtn').classList.add('hidden');
   $('hLvl').textContent = level;
   const bank = store.get('bank', 0), tot = store.get('earned', 0), cf = makeCfg(level), bt = best[level];
-  $('hStat').innerHTML = [`🪙 <b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name} · waves about <b>${cf.H.toFixed(1)} m</b>${cf.barrels ? ' · barrels' : ''}${cf.fast ? ' · fast sections' : ''}`, `Three waves: score <b>${cf.target}</b> points`, bt ? `Your best here: <b>${bt}</b>` : '', helpOn() ? '<span class="help">Help is on: a lower target.</span>' : ''].filter(Boolean).join('<br>');
+  $('hStat').innerHTML = [`🪙 <b>${bank}</b> coins · rank <b>${rankOf(tot)}</b>`, `${PLACES[cf.place].name}${cf.fast ? ' · fast sections' : ''}${cf.trick ? ' · tricks' : ''}`, `Ride <b>${cf.D} m</b> to the flag`, bt ? `Your best here: <b>${bt}</b>` : '', helpOn() ? '<span class="help">Help is on: a lower target.</span>' : ''].filter(Boolean).join('<br>');
   show('ovHome');
 }
 let practiceOn = false;
@@ -42,9 +42,9 @@ function showEnd() {
   const r = G.res, L = G.N; $('pauseBtn').classList.add('hidden');
   $('eTitle').textContent = r.win ? ['', 'NICE SESSION!', 'GREAT SESSION!', 'EPIC SESSION!'][r.stars] : 'SESSION OVER'; $('eTitle').style.color = r.win ? 'var(--acc)' : '#ffb4a8';
   $('eStars').innerHTML = r.win ? [1, 2, 3].map(i => `<span class="${i <= r.stars ? '' : 'off'}">★</span>`).join('') : '';
-  $('eSub').innerHTML = `🏄 <b>${r.score}</b> points · target ${r.target}` + '<br>' + r.rides.map((q, i) => `wave ${i + 1}: <b>${q.pts}</b>${q.ok ? '' : ' (wipeout)'}`).join(' · ') + `<br><b>+${r.coins} 🪙</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '')
-    + (r.newSkins ? `<br><b class="nb">NEW BOARD: ${r.newSkins.toUpperCase()}</b>` : '') + (r.win && r.stars < 3 ? `<br>Three stars: ${Math.round(r.target * 1.6)} points.` : '')
-    + (!r.win ? '<br>Mix your moves (the same one again scores less), ride each wave to the end, and try a barrel or an air.' + (r.rides.some(q => !q.ok) ? `<br>Last wipeout: ${r.rides.filter(q => !q.ok).slice(-1)[0].why}.` : '') : '')
+  $('eSub').innerHTML = `🏄 <b>${r.score}</b> points` + '<br>' + `${r.win ? 'to the flag' : `${r.dist} of ${r.D} m`}` + `<br><b>+${r.coins} 🪙</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '')
+    + (r.newSkins ? `<br><b class="nb">NEW BOARD: ${r.newSkins.toUpperCase()}</b>` : '') + (r.win && r.stars < 3 ? `<br>Three stars: ${Math.round(r.target * 1.4)} points.` : '')
+    + (!r.win ? (r.why === 'over' ? '<br>You climbed right over the top of the wave: turn down before the lip.' : r.why === 'slow' ? '<br>The white water caught you: you were too slow. Drop down the face for speed, and go up and down in rhythm.' : '<br>The white water caught you. Keep up and down in rhythm to stay ahead of it.') : '')
     + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: a lower target.</span>' : '');
   renderShop();
   $('eMain').textContent = r.win ? (practiceOn ? 'AGAIN' : 'NEXT BEACH') : 'PADDLE OUT AGAIN'; $('eMain').dataset.act = r.win && !practiceOn ? 'next' : 'again';
@@ -66,7 +66,7 @@ function showLevels(from) {
   lvFrom = from || 'home'; lvUnder = ['ovHome', 'ovEnd'].find(key => !$(key).classList.contains('hidden')) || null;
   const top = Math.ceil((unlocked + 5) / 5) * 5; let h = '';
   for (let L = 1; L <= top; L++) { const lock = L > unlocked, st = stars[L] || 0; h += `<button class="lvb${L % 5 === 0 ? ' boss' : ''}${L === level ? ' cur' : ''}${lock ? ' lock' : ''}" data-l="${L}" ${lock ? 'disabled' : ''}>${lock ? '🔒' : L}<small>${lock ? '' : '★'.repeat(st)}</small></button>`; }
-  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Gentle waves first; then bigger waves, faster breaks, barrels and higher targets.' : 'Beat the target to open the next level.';
+  $('lvGrid').innerHTML = h; $('lvSub').textContent = unlocked > 1 ? 'Gentle waves first; then longer waves, faster white water, fast sections and tricks.' : 'Beat the target to open the next level.';
   show('ovLevels');
 }
 $('lvGrid').addEventListener('click', e => {
@@ -90,19 +90,15 @@ $('pLevels').onclick = () => showLevels('pause');
 $('pQuit').onclick = () => showHome();
 window.gameFeedLevels = () => { if (G && !G.over && $('ovHome').classList.contains('hidden')) { openPause(); showLevels('pause'); } else showLevels('feed'); };      // the feed's Levels button
 document.addEventListener('visibilitychange', () => { if (document.hidden && G && !G.over && !paused) openPause(); });
-// input (two thumbs, sideways): the left thumb steers (a floating stick: up the screen is up the face, right is along the
-// wave); the right thumb holds CROUCH (PADDLE while waiting for a wave) and swipes (up to stand; any way to spin in the air).
-function stickTo(dx, dy) { const R = 56 * k, m = Math.hypot(dx, dy); if (m < R * 0.12) return setStick(G, 0, 0); setStick(G, dx / Math.max(R, m), -dy / Math.max(R, m)); }
+// input (27 Nov 2026): one pad in one place (bottom left): a thumb on the left part of the screen works it from there, up = climb, down = drop;
+// TRICK (bottom right) is a button
+function padTo(L, y) { const B = L.pad, dy = (B.y - y) / (B.r * 0.6); setStick(G, 0, Math.abs(dy) < 0.12 ? 0 : clamp(dy, -1, 1)); }
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-  if (Math.hypot(x - L.cr.x, y - L.cr.y) < L.cr.r + 16 * k) { ui.crId = e.pointerId; crouchOn(G, true); ui.sw = { id: e.pointerId, x0: x, y0: y, t: performance.now(), done: false }; return; }
-  if (x < W * 0.5) { if (!ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; stickTo(0, 0); } return; }
-  ui.sw = { id: e.pointerId, x0: x, y0: y, t: performance.now(), done: false }; });
-cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
-  if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; stickTo(x - s2.x0, y - s2.y0); return; }
-  const S = ui.sw; if (S && S.id === e.pointerId && !S.done) { const dx = x - S.x0, dy = y - S.y0; if (Math.hypot(dx, dy) > 34 * k) { S.done = true; swipe(G, dx / (Math.hypot(dx, dy)), dy / Math.hypot(dx, dy)); if (ui.crId === e.pointerId && G.phase === 'wait' && dy < 0) { } } } });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.crId === e.pointerId) { ui.crId = null; if (G) { if (G.phase === 'wait' && G.pt - G.tL >= -G.cfg.early) standUp(G); crouchOn(G, false); } }      /* 22 Nov 2026: LET GO of PADDLE in the green ring and you stand (the swipe up was a hidden gesture; it still works) */
-  if (ui.sw && ui.sw.id === e.pointerId) { if (!ui.sw.done && G && G.phase === 'ride' && G.p.air) swipe(G, 1, 0); ui.sw = null; } }      /* a tap in the air spins */
+  if (Math.hypot(x - L.tr.x, y - L.tr.y) < L.tr.r + 16 * k) { if (!trick(G) && G.cfg.trick) sfx.no(); return; }
+  if (x < W * 0.45 && !ui.stick) { ui.stick = { id: e.pointerId }; padTo(L, y); } });
+cv.addEventListener('pointermove', e => { if (!G || !ui.stick || ui.stick.id !== e.pointerId) return; const [x, y] = toStage(e.clientX, e.clientY); padTo(layout(G), y); });
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'sun');
@@ -154,7 +150,7 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  x() { return { k, layout, setStick, crouchOn, swipe, standUp, secAt, surferPos, scrOf, TUBE }; }, layout() { return layout(G); }, ui, store,
+  x() { return { k, layout, setStick, trick, surferPos, cam }; }, layout() { return layout(G); }, ui, store,
   practice(on) { practiceOn = on; }, showAqua, mySkin, SKINS, renderShop, get V3() { return V3; }, W3,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },

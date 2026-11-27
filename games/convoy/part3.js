@@ -22,18 +22,47 @@ function buildWorld() {
   V.boxG = new T.BoxGeometry(1, 1, 1); V.cylG = new T.CylinderGeometry(1, 1, 1, 12);
   V.sea = W3.water({ size: 9000, color: 0x2a4a52, y: 0 });
   { const T2 = THREE, tint = new T2.Mesh(new T2.PlaneGeometry(9000, 9000), new T2.MeshBasicMaterial({ color: 0x1f4f66, transparent: true, opacity: 0.5, depthWrite: false })); tint.rotation.x = -Math.PI / 2; tint.position.y = 0.05; tint.renderOrder = 1; W3.scene.add(tint); V.tint = tint; }      /* 22 Nov 2026: a sea-blue wash; the water was a glare of mirrored cloud that hid the ships */
-  V.me = ship(V, 'escort', mySkin().col); V.S.add(V.me);
+  V.me = ship(V, 'escort', mySkin().col); V.S.add(V.me); V.fxT = { foam: fxTex(T, 'rgba(255,255,255,.95)', 'rgba(255,255,255,0)'), smoke: fxTex(T, 'rgba(200,200,205,.8)', 'rgba(200,200,205,0)'), black: fxTex(T, 'rgba(30,28,26,.9)', 'rgba(30,28,26,0)'), fire: fxTex(T, 'rgba(255,220,120,1)', 'rgba(255,80,10,0)') };
   V.ringG = new T.RingGeometry(0.94, 1, 48).rotateX(-Math.PI / 2); V.wakeG = new T.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   V.course = new T.Line(new T.BufferGeometry().setFromPoints(Array.from({ length: 24 }, () => new T.Vector3())), new T.LineDashedMaterial({ color: 0xffffff, dashSize: 8, gapSize: 6, transparent: true, opacity: 0.7 })); V.S.add(V.course);
   V.port = new T.Group(); { const tw = new T.Mesh(V.cylG, M(0xe8e4dc)); tw.scale.set(4, 30, 4); tw.position.y = 15; V.port.add(tw); const lt = new T.Mesh(new T.SphereGeometry(3, 12, 8), new T.MeshBasicMaterial({ color: 0xffe080 })); lt.position.y = 32; V.port.add(lt); const isl = new T.Mesh(new T.CylinderGeometry(80, 110, 8, 16), M(0x5a6a4a)); isl.position.y = 0; V.port.add(isl); } V.S.add(V.port);
   W3.setQuality(stepN); return V; }
-// a ship: an escort (long, low, a gun forward), a merchant (big, a high bridge aft), a submarine (a dark cigar and a tower)
-function ship(V, kind, col) { const T = V.T, M = V.M, g = new T.Group(), b = (m, sx, sy, sz, x, y, z) => { const q = new T.Mesh(V.boxG, m); q.scale.set(sx, sy, sz); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; };
-  if (kind === 'escort' || kind === 'ally') { const hull = M(col || 0x7a8288), dk = M(0x4a4a48); b(hull, 95, 7, 11, 0, 1.5, 0); b(hull, 20, 6, 7, 47, 1.5, 0).rotation.y = 0; b(dk, 22, 6, 8, 8, 7, 0); b(dk, 9, 6, 6, 10, 13, 0); const f = new T.Mesh(V.cylG, M(0x3a3a3a)); f.scale.set(2.4, 9, 2.4); f.position.set(-6, 12, 0); g.add(f);
-    const gun = b(dk, 6, 3, 4, 32, 6.5, 0); b(dk, 8, 1, 1, 37, 7.5, 0); b(M(0x8a8a8a), 6, 2, 6, -40, 5, 0); }
-  else if (kind === 'merchant') { const hull = M(col || 0x3a2a24), top = M(0xd8d0c0); b(hull, 130, 14, 20, 0, 2, 0); b(top, 18, 10, 16, -44, 13, 0); b(M(0x9a3a2a), 3, 8, 3, -44, 22, 0); for (const x of [-10, 20, 45]) b(M(0x5a4a3a), 16, 6, 14, x, 11, 0); }
-  else { const hull = M(0x2a2e30, { roughness: 0.4 }); b(hull, 66, 6, 7, 0, 0, 0); b(hull, 9, 8, 4, 6, 6, 0); }
+// SHIPS (27 Nov 2026, his review: "the graphics are generally horrible... way way better with the graphics of the ship": "Substantially improve the ships'
+// models, proportions, textures and lighting. Add convincing wakes, waves, smoke and damage effects"). A real hull: a sharp bow and a rounded stern, a dark
+// band at the waterline, a flat deck; then what each ship carries. Bow along +x, beam along z.
+function hullGeo(T, L, B, D) { const s = new T.Shape(), h = B / 2; s.moveTo(-L / 2, -h * 0.82); s.quadraticCurveTo(-L / 2 - h * 0.35, 0, -L / 2, h * 0.82); s.lineTo(-L * 0.1, h); s.lineTo(L * 0.18, h); s.quadraticCurveTo(L * 0.42, h * 0.92, L / 2, 0); s.quadraticCurveTo(L * 0.42, -h * 0.92, L * 0.18, -h); s.lineTo(-L * 0.1, -h); s.closePath();
+  const g = new T.ExtrudeGeometry(s, { depth: D, bevelEnabled: true, bevelThickness: 0.6, bevelSize: 0.5, bevelSegments: 2, curveSegments: 10 }); g.rotateX(-Math.PI / 2); return g; }
+function hullTex(T, base, band, num) { const c = document.createElement('canvas'); c.width = 512; c.height = 64; const x = c.getContext('2d'); x.fillStyle = base; x.fillRect(0, 0, 512, 64); x.fillStyle = band; x.fillRect(0, 44, 512, 20); x.fillStyle = 'rgba(255,255,255,.08)'; for (let i = 0; i < 512; i += 24) x.fillRect(i, 0, 2, 44);
+  x.fillStyle = 'rgba(0,0,0,.18)'; for (let i = 0; i < 40; i++) x.fillRect(Math.random() * 512, Math.random() * 40, 12 + Math.random() * 30, 2); if (num) { x.fillStyle = '#f0f0e8'; x.font = 'bold 28px Arial'; x.fillText(num, 380, 34); x.fillText(num, 60, 34); }
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+function ship(V, kind, col) { const T = V.T, M = V.M, g = new T.Group(), b = (m, sx, sy, sz, x, y, z) => { const q = new T.Mesh(V.boxG, m); q.scale.set(sx, sy, sz); q.position.set(x, y, z); q.castShadow = true; g.add(q); return q; }, cyl = (m, r, h, x, y, z, rx) => { const q = new T.Mesh(V.cylG, m); q.scale.set(r, h, r); q.position.set(x, y, z); if (rx) q.rotation.z = rx; q.castShadow = true; g.add(q); return q; };
+  const win = M(0x1a2228, { roughness: 0.2, metalness: 0.4 }), white = M(0xe8e6e0), dark = M(0x2a2c2e), rust = M(0x6a3a22);
+  if (kind === 'escort' || kind === 'ally') { const hc = '#' + (col || 0x7a8288).toString(16).padStart(6, '0'), hull = new T.Mesh(hullGeo(T, 100, 12, 8), new T.MeshStandardMaterial({ map: hullTex(T, hc, '#5a1a14', kind === 'escort' ? 'K 21' : 'K 34'), roughness: 0.6 })); hull.position.y = -2.5; hull.castShadow = true; g.add(hull);
+    const sup = M(col || 0x7a8288, { roughness: 0.55 }); b(M(0x5a5a54), 96, 0.4, 11, 0, 6.2, 0);      // the deck
+    b(sup, 26, 5, 9, 6, 8.6, 0); b(sup, 14, 4.5, 7.5, 10, 13.2, 0); b(win, 0.4, 1.2, 6.8, 17.1, 14.2, 0); b(sup, 6, 2, 9, 12, 15.6, 0);      // the bridge, its windows, the wings
+    cyl(M(0x666a6e), 0.35, 16, 8, 24, 0); b(dark, 0.4, 0.4, 7, 8, 28, 0); { const rad = b(M(0x3a3e40), 2.6, 1.2, 0.4, 8, 31, 0); g.userData.radar = rad; }      // the mast, yard and turning radar
+    const fun = cyl(sup, 2.4, 9, -4, 14, 0); fun.rotation.z = 0.12; cyl(dark, 2.45, 1.4, -4.5, 18.6, 0).rotation.z = 0.12; g.userData.funnel = [-5, 20, 0];
+    const tur = cyl(sup, 3.2, 2.4, 33, 7.8, 0); const bar = cyl(dark, 0.35, 9, 38, 8.4, 0, Math.PI / 2); g.userData.gun = [tur, bar];      // the gun forward
+    for (const zz of [-3, 3]) for (let k2 = 0; k2 < 4; k2++) cyl(M(0x3a3a3a), 0.7, 1.4, -44 + k2 * 2, 7.2, zz);      // depth charges aft
+    for (const zz of [-5.2, 5.2]) { const lb = b(white, 7, 1.6, 2, -12, 9, zz); lb.rotation.x = 0; } }
+  else if (kind === 'merchant') { const hc = '#' + (col || 0x2a2a30).toString(16).padStart(6, '0'), hull = new T.Mesh(hullGeo(T, 132, 20, 13), new T.MeshStandardMaterial({ map: hullTex(T, hc, '#8a2a20', null), roughness: 0.7 })); hull.position.y = -3; hull.castShadow = true; g.add(hull);
+    b(M(0x6a5a48), 128, 0.4, 19, 0, 10.2, 0);
+    for (const x0 of [-8, 18, 44]) { b(M([0x3a5a7a, 0x7a4a2a, 0x4a6a3a][Math.abs(x0) % 3]), 16, 3, 15, x0, 12, 0); for (let k2 = 0; k2 < 3; k2++) b(M([0xc84a2a, 0x2a6ab0, 0xd8a030, 0x3a8a4a][(k2 + Math.abs(x0)) % 4]), 4.4, 3.2, 13, x0 - 5 + k2 * 5, 15.2, 0); }      // hatches and deck cargo
+    for (const x0 of [5, 31]) { cyl(M(0x8a7a5a), 0.5, 18, x0, 19, 0); const boom = cyl(M(0x8a7a5a), 0.3, 16, x0 + 6, 16, 0, -1.1); boom.rotation.y = 0.3; }      // kingposts and booms
+    b(white, 22, 12, 17, -50, 16, 0); b(white, 14, 5, 19, -46, 24.5, 0); b(win, 0.4, 1.4, 16, -38.8, 24.6, 0); b(win, 0.4, 1.4, 14, -38.8, 19, 0);      // the bridge aft
+    const fun = cyl(M(0x1a1a1a), 3, 11, -56, 26, 0); cyl(M(col === 0x2a2a30 ? 0xd8a030 : 0xc83a2a), 3.05, 2.4, -56, 28, 0); g.userData.funnel = [-56, 32, 0]; }
+  else { const hull = M(0x22272a, { roughness: 0.35, metalness: 0.2 }), body = new T.Mesh(new T.CapsuleGeometry(3.6, 58, 6, 14), hull); body.rotation.z = Math.PI / 2; body.scale.set(1, 1, 0.9); g.add(body); b(hull, 10, 7, 3.4, 6, 5, 0); cyl(M(0x3a3a3a), 0.25, 6, 7, 11, 0); b(hull, 4, 1.4, 1.4, 22, 4, 0); }
   return g; }
+// a ship's wake, smoke and fire (pooled sprites, shared by every ship)
+function fxTex(T, inner, outer) { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, inner); gr.addColorStop(1, outer); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
+function puff(V, kind, x, y, z, life, size, vx, vy, vz) { const T = V.T; V.puffs = V.puffs || []; let p = V.puffs.find(q => !q.on && q.kind === kind); if (!p) { if (V.puffs.length > 420) return; const mat = new T.SpriteMaterial({ map: V.fxT[kind], transparent: true, depthWrite: false, opacity: 0 }); if (kind === 'fire') mat.blending = T.AdditiveBlending; p = { kind, s: new T.Sprite(mat) }; V.S.add(p.s); V.puffs.push(p); }
+  Object.assign(p, { on: true, t: 0, life, size, x, y, z, vx, vy, vz }); p.s.visible = true; }
+function puffStep(V, dt) { for (const p of V.puffs || []) { if (!p.on) continue; p.t += dt; const u = p.t / p.life; if (u >= 1) { p.on = false; p.s.visible = false; continue; } p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.s.position.set(p.x, p.y, p.z);
+    const sc = p.size * (0.4 + u * (p.kind === 'foam' ? 1.6 : 1.2)); p.s.scale.set(sc, p.kind === 'foam' ? sc * 0.35 : sc, 1); p.s.material.opacity = (p.kind === 'foam' ? 0.75 : p.kind === 'fire' ? 0.9 : 0.6) * (1 - u) * Math.min(1, u * 6); } }
+function shipFx(V, G, o, x, z, h, v, dmg, dt, kind) { const c = Math.cos(h), s = Math.sin(h), L = kind === 'merchant' ? 66 : 50; o.userData.fxT = (o.userData.fxT || 0) - dt; if (o.userData.fxT > 0) return; o.userData.fxT = 0.12;
+  if (Math.abs(v) > 1) { for (const sd of [-1, 1]) puff(V, 'foam', x - c * L + -s * sd * 3, 0.6, z - s * L + c * sd * 3, 7, 10 + Math.abs(v) * 0.8, -s * sd * 1.2, 0, c * sd * 1.2); puff(V, 'foam', x + c * L * 0.95, 0.8, z + s * L * 0.95, 1.6, 6 + Math.abs(v) * 0.6, 0, 0, 0); }      // wake behind, and the bow wave
+  const f = o.userData.funnel; if (f) { const wx = x + c * f[0], wz = z + s * f[0]; puff(V, 'smoke', wx, f[1] + 2, wz, 5, 10, -c * 3 + 1.5, 4, -s * 3 + 1); }
+  if (dmg > 0) { for (let i = 0; i < 1 + dmg * 2; i++) { const a = (Math.random() - 0.5) * L; puff(V, 'black', x + c * a, 10, z + s * a, 6, 16, 2, 7, 1.5); puff(V, 'fire', x + c * a, 8, z + s * a, 0.8, 8, 0, 5, 0); } } }
 function buildPlace(V, G) { const T = V.T; for (const o of V.items) V.S.remove(o); V.items = []; const add = o => { V.S.add(o); V.items.push(o); return o; };
   W3.setSky(PLACES[G.cfg.place].sky, { wind: [Math.cos(G.dir), Math.sin(G.dir)] }); if (W3.S.night || W3.S.rain || W3.S.storm || /dusk|storm|night|overcast/.test(PLACES[G.cfg.place].sky)) { W3.S.exposure *= 1.2; W3.R.toneMappingExposure = W3.S.exposure; if (W3.S.hemiI != null) W3.S.hemiI *= 1.3; }      /* 22 Nov 2026: bad weather at sea was too dark to read */
   V.ms = G.M.map(m => add(ship(V, 'merchant', [0x3a2a24, 0x2a3a4a, 0x4a3a2a, 0x2a2a2a, 0x5a2a2a, 0x2a4a3a][m.i % 6])));
@@ -46,9 +75,9 @@ function poolEnd(V) { for (const k2 in V.pools || {}) { const P = V.pools[k2]; f
 function sync(V, G, dt) { V.t += dt; const T = V.T, me = G.me;
   if (V.for !== G.M || V.forSubs !== G.subs.length) { V.for = G.M; buildPlace(V, G); }
   const bob = (o, ph, s = 1) => { o.rotation.z = Math.sin(V.t * 0.8 + ph) * 0.03 * s; o.rotation.x = Math.sin(V.t * 0.6 + ph * 2) * 0.02 * s; };
-  V.me.position.set(me.x, 0, me.z); V.me.rotation.set(0, -me.h, 0); bob(V.me, 0);
-  G.M.forEach((m, i) => { const o = V.ms[i]; if (!o) return; o.position.set(m.x, m.sunk ? Math.max(-30, (o.position.y || 0) - dt * 2) : 0, m.z); o.rotation.y = -G.dir; if (m.sunk) o.rotation.z = Math.min(0.5, (o.rotation.z || 0) + dt * 0.05); else bob(o, i + 1, 0.6); });
-  G.allies.forEach((a, i) => { const o = V.al[i]; o.position.set(a.x, 0, a.z); o.rotation.y = -a.h; bob(o, i + 7); });
+  V.me.position.set(me.x, 0, me.z); V.me.rotation.set(0, -me.h, 0); bob(V.me, 0); shipFx(V, G, V.me, me.x, me.z, me.h, me.v, me.fire > 0 ? Math.min(2, me.fire) : 0, dt, 'escort'); if (V.me.userData.radar) V.me.userData.radar.rotation.y += dt * 2; puffStep(V, dt);
+  G.M.forEach((m, i) => { const o = V.ms[i]; if (!o) return; o.position.set(m.x, m.sunk ? Math.max(-30, (o.position.y || 0) - dt * 2) : 0, m.z); o.rotation.y = -G.dir; if (m.sunk) o.rotation.z = Math.min(0.5, (o.rotation.z || 0) + dt * 0.05); else bob(o, i + 1, 0.6); if (!m.sunk || o.position.y > -12) shipFx(V, G, o, m.x, m.z, G.dir, m.sunk ? 0 : 6, m.fire > 0 || m.sunk ? (m.sunk ? 2 : 1) : 0, dt, 'merchant'); });
+  G.allies.forEach((a, i) => { const o = V.al[i]; o.position.set(a.x, 0, a.z); o.rotation.y = -a.h; bob(o, i + 7); shipFx(V, G, o, a.x, a.z, a.h, a.v || 6, 0, dt, 'escort'); });
   G.subs.forEach((s, i) => { const o = V.subs[i]; if (!o) return; const show = s.surf && !s.gone; o.visible = show; o.position.set(s.x, s.surf ? 1 : -20, s.z); o.rotation.y = -s.h; const p = o.userData.peri; p.visible = !s.gone && !s.surf && s.peri > 0 && !G.cfg.night; p.position.set(s.x, 3.5, s.z); });
   // contacts, torpedo wakes, charges, survivors (pooled meshes)
   for (const c of G.contacts) { const r = pool(V, 'ring', () => new T.Mesh(V.ringG, new T.MeshBasicMaterial({ color: 0xff4a3a, transparent: true, opacity: 0.85, depthWrite: false }))); r.position.set(c.x, 0.6, c.z); r.scale.setScalar(Math.max(12, c.r)); const age = G.t - c.t; r.material.color.setHex(c.sure && age < 8 ? 0xff3a2a : c.heard ? 0xffd040 : 0xff9a3a); r.material.opacity = clamp(1 - age / 90, 0.2, 0.9); }
@@ -61,7 +90,7 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, me = G.me;
   { const p = V.course.geometry.attributes.position; let x = me.x, z = me.z, h = me.h; for (let i = 0; i < 24; i++) { p.setXYZ(i, x, 1.5, z); const dtt = 1.3; h += G.stick * 0.13 * clamp(Math.abs(me.v) / 6, 0.25, 1.2) * dtt; x += Math.cos(h) * Math.max(3, Math.abs(me.v)) * dtt; z += Math.sin(h) * Math.max(3, Math.abs(me.v)) * dtt; } p.needsUpdate = true; V.course.computeLineDistances(); }
   // the camera: above and behind, swinging after the ship's heading
   if (ui.snap) ui.yaw = me.h; let dy = me.h - ui.yaw; while (dy > Math.PI) dy -= TAU; while (dy < -Math.PI) dy += TAU; ui.yaw += dy * Math.min(1, dt * 1.5);
-  const back = 120, up = 62, pos = [me.x - Math.cos(ui.yaw) * back, up, me.z - Math.sin(ui.yaw) * back], tgt = [me.x + Math.cos(ui.yaw) * 120, 0, me.z + Math.sin(ui.yaw) * 120];
+  const back = 88, up = 40, side = 34, pos = [me.x - Math.cos(ui.yaw) * back - Math.sin(ui.yaw) * side, up, me.z - Math.sin(ui.yaw) * back + Math.cos(ui.yaw) * side], tgt = [me.x + Math.cos(ui.yaw) * 120, 0, me.z + Math.sin(ui.yaw) * 120];
   if (!ui.cam || ui.snap) { ui.cam = { p: pos.slice(), l: tgt.slice() }; ui.snap = false; } const kc = Math.min(1, dt * 3); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (pos[i] - ui.cam.p[i]) * kc; ui.cam.l[i] += (tgt[i] - ui.cam.l[i]) * kc; }
   const sh = FX.shake > 0 && optShake() ? (Math.random() - 0.5) * FX.shake * 0.1 : 0, cam = W3.cam; cam.position.set(ui.cam.p[0] + sh, ui.cam.p[1] + sh, ui.cam.p[2]); cam.lookAt(ui.cam.l[0], ui.cam.l[1], ui.cam.l[2]); cam.updateMatrixWorld();
   W3.setFocus(me.x, 0, me.z, 200); }
@@ -127,7 +156,13 @@ function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(10,20,26,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
 function rbtn(B, label, on, col, dis) { ctx.globalAlpha = dis ? 0.4 : 1; ctx.fillStyle = on ? col : 'rgba(10,20,26,.6)'; rrect(B.x, B.y, B.w, B.h, 8); ctx.fill(); ctx.strokeStyle = on ? '#fff' : 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5; rrect(B.x, B.y, B.w, B.h, 8); ctx.stroke(); txt(label, B.x + B.w / 2, B.y + B.h / 2 + 1, '#fff', `700 ${Math.round(12 * k)}px ${BC}`); ctx.globalAlpha = 1; }
 function cbtn(B, label, sub, col, ready, glow) { ctx.globalAlpha = ready ? 1 : 0.45; ctx.fillStyle = 'rgba(10,20,26,.55)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r, 0, TAU); ctx.fill(); ctx.strokeStyle = glow ? '#fff' : col; ctx.lineWidth = glow ? 5 : 3; ctx.stroke(); txt(label, B.x, B.y - (sub ? 6 * k : 0), col, `400 ${Math.round(B.r * 0.36)}px ${TF}`); if (sub) txt(sub, B.x, B.y + 13 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`); ctx.globalAlpha = 1; }
-function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.me;
+// TORPEDOES YOU CAN SEE COMING (27 Nov 2026, his review: "Clearly communicate... incoming torpedoes... Give players enough warning"): each one in the water has a
+// red arrow on the screen where it is (at the edge if it is off the picture) with how far it is from the nearest ship it is heading for
+function torpWarn(G, now) { const me = G.me; for (const tp of G.torps) { const tgt = [me].concat(live(G)).reduce((a, q) => Math.hypot(q.x - tp.x, q.z - tp.z) < Math.hypot(a.x - tp.x, a.z - tp.z) ? q : a, me), d = Math.hypot(tgt.x - tp.x, tgt.z - tp.z); if (d > 1600) continue;
+  let p = scrOf(tp.x, 1, tp.z); const off = !p || p.x < 30 || p.x > W - 30 || p.y < 70 || p.y > H - 30; if (!p) p = { x: W / 2, y: H / 2 }; const cx = clamp(p.x, 34, W - 34), cy = clamp(p.y, 80, H - 40), bl = Math.sin(now * 12) > 0;
+  ctx.save(); ctx.translate(cx, cy); ctx.fillStyle = bl ? '#ff3a2a' : '#ffb0a0'; ctx.beginPath(); ctx.arc(0, 0, 15 * k, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.font = `900 ${Math.round(16 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('!', 0, 1); ctx.restore();
+  txt(`TORPEDO ${Math.round(d)} m`, cx, cy + 24 * k, '#ff8a7a', `700 ${Math.round(11 * k)}px ${BC}`); } }
+function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.me; torpWarn(G, now);
   // contact labels: age, and "sure"
   for (const c of G.contacts) { const s = scrOf(c.x, 4, c.z); if (!s || !s.front) continue; const age = Math.round(G.t - c.t); txt(c.sure && age < 8 ? 'SURE' : c.heard ? 'HEARD' : `${age}s`, s.x, s.y - 12 * k, c.sure && age < 8 ? '#ff6a5a' : '#ffd36a', `700 ${Math.round(11 * k)}px ${BC}`); }
   for (const s of G.subs) if (s.surf && !s.gone) { const p = scrOf(s.x, 14, s.z); if (p && p.front) txt('▼ SURFACED', p.x, p.y - 10 * k, '#ff6a5a', `700 ${Math.round(12 * k)}px ${BC}`); }
@@ -144,16 +179,16 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   if (L.crewBtn) { const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 160); ctx.globalAlpha = 0.75 + 0.25 * pulse; rbtn(L.crewBtn, { repair: '🔧 TAP: REPAIR', fire: '🔥 TAP: FIGHT THE FIRE', rescue: '🛟 TAP: RESCUE THEM' }[L.crewBtn.job], true, '#3a7a5a'); ctx.globalAlpha = 1; }
   { const jobs = G.crew.filter(c => c.job).map(c => ({ repair: 'repairing', fire: 'fighting the fire', rescue: 'rescuing' }[c.job])); if (jobs.length) txt('crew: ' + jobs.join(', '), 12 * k, (L.crewBtn ? 102 : 64) * k, 'rgba(255,255,255,.8)', `700 ${Math.round(11 * k)}px ${BC}`, 'left'); }
   // throttle
-  rbtn(L.speed, `SPEED: ${['REVERSE', 'STOP', 'CRUISE', 'FULL'][me.thr]}`, me.thr === 3, '#3a6a9a'); txt(`${Math.round(Math.abs(me.v) * 1.94)} kn · tap to change`, L.speed.x + L.speed.w / 2, L.speed.y - 10 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`);
+  rbtn(L.speed, `SPEED: ${['REVERSE', 'STOP', 'CRUISE', 'FULL'][me.thr]}`, me.thr === 3, '#3a6a9a'); txt(`${Math.round(Math.abs(me.v) * 1.94)} kn`, L.speed.x + L.speed.w / 2, L.speed.y - 10 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`);
   // fast-forward and map
   rbtn(L.fast, G.fast > 1 ? '⏩ ×6' : '⏩', G.fast > 1, '#3a6a9a', danger(G)); rbtn(L.map, '🗺 MAP', ui.map, '#3a6a9a');
   // the wheel (floating stick)
   if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2; ctx.stroke(); const dx = clamp(s2.x - s2.x0, -R, R); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx, s2.y0, 22 * k, 0, TAU); ctx.fill(); }
-  else if (G.t < 6 && !G.lesson) txt('DRAG HERE TO STEER', 200 * k, H - 100 * k, '#fff', `700 ${Math.round(12 * k)}px ${BC}`);
+  else if (false) {}
   // the action buttons: PING, the depth setting and DROP, GUN
   const surf = G.subs.some(s => s.surf && !s.gone && Math.hypot(s.x - me.x, s.z - me.z) < 1600);
   cbtn(L.ping, 'PING', me.pingCd > 0 ? me.pingCd.toFixed(1) : 'sonar', '#7ad0ff', me.pingCd <= 0 && me.sonarOk);
-  rbtn(L.depthBtn, `DEPTH: ${DEPTHS[me.depth].name}`, true, '#9a6a2a'); txt('tap to change', L.depthBtn.x + L.depthBtn.w / 2, L.depthBtn.y - 9 * k, 'rgba(255,255,255,.8)', `700 ${Math.round(10 * k)}px ${BC}`);
+  rbtn(L.depthBtn, `DEPTH: ${DEPTHS[me.depth].name}`, true, '#9a6a2a');
   cbtn(L.drop, 'DROP', `${me.charges} left`, '#ffb347', me.reload <= 0 && me.charges > 0, G.contacts.some(c => c.sure && Math.hypot(c.x - me.x, c.z - me.z) < 70));
   if (L.gun) cbtn(L.gun, 'GUN', 'fire!', '#ff8a6a', me.gunOk && me.gunCd <= 0, true);
   if (ui.map) tacMap(G);
