@@ -9,7 +9,7 @@
 const RULES = [
   '<b>Right thumb: aim.</b> Drag to move the lance tip onto their shield. It sways with the gallop in a steady rhythm: learn where it will be at the crash.',
   '<b>Left thumb: lean.</b> It moves your shield; a late lean makes their lance glance off. Leaning far costs balance.',
-  '<b>Hold BRACE</b> just before the crash (it glows). Too early and your arm tires; too late and you take the hit unbraced.',
+  '<b>Lift your right thumb to BRACE</b>: the lance locks where you aimed and you brace. Do it just before the crash (the pad glows). Too early and your arm tires; too late and you take the hit unbraced. Touch the pad again to aim again.',
   '<b>Points:</b> a shield hit 1; a clean hit in the centre, braced, breaks the lance: 2. Knock them off and you win outright. Three passes.',
   'Watch them: one aims well but wobbles after a hit, one braces like a wall, one shifts at the last moment (their head dips first).',
 ];
@@ -30,7 +30,7 @@ const RIVALS = [
   { name: 'Sir Gareth Ironhand', habit: 'wall', aim: 0.08, brace: 0.9, recover: 0.4, lean: 0.3 },
 ];
 const HABIT = { steady: 'rides steady and true', aims: 'aims well, but wobbles after a hit', wall: 'braces like a wall', shifts: 'shifts their shield at the last moment: watch their head dip' };
-const SHIELD = 0.26, CLEAN = 0.09, PASS_T = 4.2;
+const SHIELD = 0.26, CLEAN = 0.09, PASS_T = 4.2, BW = G => G.N <= 3 ? 1.0 : G.N <= 6 ? 0.8 : 0.6;      // the brace window (s before the crash): wider on the first levels (27 Nov 2026)
 function makeCfg(N, help, o = {}) {
   const f = curve(N), e = easyOf(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, e, help: !!help, place: placeOf(N), training: N <= 2, rival: N <= 2 ? null : (N - 3) % RIVALS.length, assist: x(0.45, 0.1, 12) * (help ? 1.3 : 1), sway: x(0.3, 0.42, 15) * (1 - 0.12 * upLv('lance')),
@@ -62,7 +62,7 @@ function braceOn(G, on) { if (G.over || G.phase !== 'charge') { G.brace = false;
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt);
   if (G.blindT != null) { G.blindT -= dt; if (G.blindT <= 0) { G.blindT = null; braceOn(G, false); } }
   G.body = (G.body || 0) + (G.lean - (G.body || 0)) * Math.min(1, dt * 3.5);   // the rider's body follows the thumb, with weight
-  if (G.phase === 'charge') { G.pt += dt; if (G.brace && G.braceT != null && G.pt - G.braceT > 0.6) G.tired = Math.min(1, G.tired + dt * 0.9);
+  if (G.phase === 'charge') { G.pt += dt; if (G.brace && G.braceT != null && G.pt - G.braceT > BW(G)) G.tired = Math.min(1, G.tired + dt * 0.9);
     if (G.rv.shift && G.pt > G.rv.tellAt && !G.told) { G.told = true; G.ev.push({ k: 'tell', side: Math.sign(G.rv.shift) }); }
     if (G.leanAtTell == null && G.pt > PASS_T - 0.6) G.leanAtTell = G.body;
     if (G.pt >= PASS_T) clash(G); }
@@ -71,7 +71,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
 function clash(G) { const c = G.cfg, R = G.rnd; G.phase = 'after'; G.afterT = 2.2; G.told = false;
   let tp = tip(G); tp = { x: tp.x - G.body * 0.2, y: tp.y + Math.abs(G.body) * 0.08 }; const sh = rivalShield(G), dx0 = tp.x - sh.x, dy0 = tp.y - sh.y, d0 = Math.hypot(dx0, dy0);
   if (d0 < SHIELD * 1.2) { const pull = c.assist * clamp(1 - d0 / (SHIELD * 1.2), 0, 1); tp = { x: tp.x - dx0 * pull, y: tp.y - dy0 * pull }; }   // aim help: only near the shield
-  const d = Math.hypot(tp.x - sh.x, tp.y - sh.y), myBrace = G.braceT != null && G.brace ? PASS_T - G.braceT : null, braceOk = myBrace != null && myBrace <= 0.6, braceEarly = myBrace != null && myBrace > 0.6;
+  const d = Math.hypot(tp.x - sh.x, tp.y - sh.y), myBrace = G.braceT != null && G.brace ? PASS_T - G.braceT : null, braceOk = myBrace != null && myBrace <= BW(G), braceEarly = myBrace != null && myBrace > BW(G);
   const q = d < CLEAN ? 'clean' : d < SHIELD ? 'shield' : d < SHIELD * 1.35 ? 'glance' : 'miss';
   // your hit on them
   const braced = myBrace != null; let mine = 0; if (braced) { if (q === 'clean') mine = braceOk ? 2 : 1; else if (q === 'shield') mine = 1; }   // an unbraced lance skids off: no point
@@ -103,17 +103,20 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 // ---------- LESSONS: aim with the rhythm, brace on time, the whole pass ----------
 const AIMCARD = {"pic": "🐎", "win": "KNOCK THEM OFF THEIR HORSE", "lose": "THEY KNOCK YOU OFF", "how": "AIM THE LANCE, BRACE AT THE HIT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
-  1: [{ id: 'aim', title: 'AIM WITH THE RHYTHM', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
+  1: [{ id: 'lean', title: 'LEAN', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Slide your left thumb to lean.', need: 1 },
+      { id: 'aim', title: 'AIM WITH THE RHYTHM', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
   2: [{ id: 'brace', title: 'BRACE AT THE CRASH', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Hold BRACE just before the crash, when it glows (not earlier: your arm tires). Three braced hits.', need: 3 }],
   3: [{ id: 'clean', title: 'BREAK A LANCE', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Aim for the centre of the shield and brace on time: a clean braced hit breaks your lance (2 points). Twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); }
-function lessonSee(G, what, e) { const D = G.lesson; if (!D || D.done || what !== 'clash') return; const id = D.id;
+function lessonSee(G, what, e) { const D = G.lesson; if (!D || D.done || what !== 'clash') return; const id = D.id; if (id === 'lean') return;
   const good = id === 'aim' && e.d < CLEAN * 2 || id === 'brace' && e.braceOk && e.q !== 'miss' || id === 'clean' && e.broke;
-  if (good) { D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: D.steps[0].need }); if (D.n >= D.steps[0].need) { D.done = true; D.wait = 2.4; } }
+  if (good) lessonGood(G);
   else if (D.n && (id === 'aim' || id === 'brace' && !e.braceOk || id === 'clean' && e.q !== 'clean')) { D.n = 0; G.ev.push({ k: 'lessonmiss', how: id === 'aim' ? 'Not near the middle: three in a row, from the start.' : id === 'brace' ? (e.braceEarly ? 'Too early: brace in the last half second.' : 'Too late: hold BRACE as it glows.') : 'The centre of the shield, and brace on time.' }); }
   else if (!good) G.ev.push({ k: 'lessonmiss', how: e.q === 'miss' ? 'Missed: watch the sway, and aim so the tip swings onto the shield at the crash.' : 'Close: again.' }); }
-function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.pass = 0; G.pts = [0, 0]; G.bal = [0, 0]; G.clean = 0; G.hits = 0; G.log = []; startPass(G); G.ev.push({ k: 'lessondone', N: G.N }); }
+function lessonGood(G) { const D = G.lesson, st = D.steps[D.i]; D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: st.need });
+  if (D.n >= st.need) { if (D.i + 1 < D.steps.length) { D.i++; D.n = 0; D.id = D.steps[D.i].id; G.ev.push({ k: 'lessonnext' }); } else { D.done = true; D.wait = 2.4; } } }
+function lessonTick(G, dt) { const D = G.lesson; if (!D.done && D.id === 'lean') { D.leanT = Math.abs(G.lean) > 0.45 ? (D.leanT || 0) + dt : 0; if (D.leanT > 0.5) { D.leanT = 0; lessonGood(G); } return; } if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.pass = 0; G.pts = [0, 0]; G.bal = [0, 0]; G.clean = 0; G.hits = 0; G.log = []; startPass(G); G.ev.push({ k: 'lessondone', N: G.N }); }
 
 // ---------- for the robots: blind moves and an honest jouster ----------
 const BLIND = {
@@ -130,12 +133,16 @@ const BLIND = {
 // left and right in a box, and MIDDLE + BRACE was two things. Now: DRAG TO AIM (on the right: the drag that puts the ring on the middle, as
 // the robot works it out), WAIT FOR THE CRASH…, HOLD BRACE! a quarter second before the robot would brace (the time a thumb takes).
 function joustCue(G) { if (G.over || G.phase !== 'charge') return ['WAIT…', 'wait', false]; const L = layout(G), id = G.lesson && G.lesson.steps[G.lesson.i] ? G.lesson.steps[G.lesson.i].id : '';
-  if (G.brace) return ['KEEP HOLDING', 'hold', [L.brace.x, L.brace.y]];
-  if (id !== 'aim' && G.pt >= PASS_T - 0.6) return ['HOLD BRACE!', 'hold', [L.brace.x, L.brace.y]];
+  if (id === 'lean') return ['LEAN', 'drag', [L.lean.x, L.lean.y, L.lean.x + L.lean.r * 0.8, L.lean.y]];
+  const P0 = L.pad, here = [P0.x + clamp(G.aim.x / 0.7, -1, 1) * P0.r, P0.y - clamp(G.aim.y / 0.6, -1, 1) * P0.r];
+  if (G.brace) return G.pt >= PASS_T - BW(G) ? ['BRACED', 'wait', false] : ['TOO SOON: THUMB BACK', 'hold', here];
+  if (G.pt >= PASS_T - BW(G)) return ['LET GO: BRACE', 'release', [L.pad.x + clamp(G.aim.x / 0.7, -1, 1) * L.pad.r, L.pad.y - clamp(G.aim.y / 0.6, -1, 1) * L.pad.r]];
   const sw = sway(G, PASS_T), tx = G.sh0.x + (G.told ? G.rv.shift : 0) - sw.x, ty = G.sh0.y - sw.y, sc = 0.0042 / k, ex = tx - G.aim.x, ey = ty - G.aim.y;
-  if (G.pt > 1 && G.pt < PASS_T - 0.4 && Math.hypot(ex, ey) > 0.03) { const x0 = W * 0.72, y0 = H * 0.5; return ['DRAG TO AIM', 'drag', [x0, y0, x0 + ex / sc, y0 - ey / sc]]; }
-  return [id === 'aim' ? 'WAIT… HOLD IT THERE' : 'WAIT FOR THE CRASH…', 'wait', false]; }
+  if (G.pt > 1 && G.pt < PASS_T - 0.4 && Math.hypot(ex, ey) > 0.03) { const P = L.pad, ax = P.x + clamp(G.aim.x / 0.7, -1, 1) * P.r, ay = P.y - clamp(G.aim.y / 0.6, -1, 1) * P.r; return ['AIM', 'drag', [ax, ay, P.x + clamp(tx / 0.7, -1, 1) * P.r, P.y - clamp(ty / 0.6, -1, 1) * P.r]]; }
+  if (G.pt > 1) { const P = L.pad; return ['HOLD', 'hold', [P.x + clamp(G.aim.x / 0.7, -1, 1) * P.r, P.y - clamp(G.aim.y / 0.6, -1, 1) * P.r]]; }      // keep the thumb on the pad until it glows
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
+  if (G.lesson && G.lesson.id === 'lean' && !G.lesson.done) { setLean(G, 0.7); return; }
   if (G.phase !== 'charge') { braceOn(G, false); mem.pass = null; return; }
   if (mem.pass !== G.pass) { mem.pass = G.pass; mem.err = { x: (R() - 0.5) * (1 - acc) * 0.5, y: (R() - 0.5) * (1 - acc) * 0.4 }; mem.bt = PASS_T - 0.32 + (R() - 0.5) * react * 0.9; mem.seenTell = false; mem.lean = null; }
   if (G.told && !mem.seenTell && R() < acc) mem.seenTell = true;

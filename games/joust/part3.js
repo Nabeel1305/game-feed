@@ -57,6 +57,7 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, tr = !G.R, p = G.phase === '
   V.quintain.position.set(LANEX, 0, rvZ); V.quintain.rotation.y = Math.PI;
   // your lance: lowered from upright to level, pointing at the tip's place on their shield (or the target board)
   const sh = shieldWorld(G, rvZ), tw = tipWorld(G, rvZ), L = V.me.lance, base = new T.Vector3(); L.updateMatrixWorld(); L.getWorldPosition(base); const raise = clamp(G.aim.y > 0.5 && G.pt < 1.2 ? 1 - G.pt / 1.2 : 0, 0, 1);
+  { const bt = G.brace && G.phase === 'charge' ? 1 : 0; V.me.bp = (V.me.bp || 0) + (bt - (V.me.bp || 0)) * 0.2; V.me.rider.rotation.x = V.me.bp * 0.28; L.position.z = 0.2 - V.me.bp * 0.35; L.position.y = 0.5 - V.me.bp * 0.08; }      // braced: crouched forward, lance tucked under the arm
   if (G.phase === 'charge') { const d = new T.Vector3().subVectors(tw, base), yaw = Math.atan2(d.x, d.z), pitch = Math.atan2(d.y, Math.hypot(d.x, d.z)); L.rotation.set(-pitch - raise * 1.2, yaw, 0); L.visible = true; }
   V.me.pole.scale.y = G.phase === 'after' && last && last.broke ? 0.45 : 1; V.rv.pole.scale.y = G.phase === 'after' && last && last.theyBroke ? 0.45 : 1;
   { const L2 = V.rv.lance; L2.rotation.set(-0.05, 0.3, 0); }
@@ -79,13 +80,13 @@ function onEvent(G, e) {
       if (big) { sfx.crack(e.broke); vibe(e.broke ? HAP.heavy : HAP.thud); FX.shake = e.broke ? 14 : 8; burst(p.x, p.y, '#e8c890', e.broke ? 40 : 18, 260); } else if (e.q === 'glance') sfx.glance(); else sfx.whiff();
       if (e.tq === 'clean' || e.tq === 'shield') { sfx.hitme(); FX.red = 0.5; FX.shake = Math.max(FX.shake, 8); }
       say(e.broke ? 'LANCE BROKEN! +2' : !e.braced && (e.q === 'clean' || e.q === 'shield') ? 'NOT BRACED: IT SKIDS OFF' : e.q === 'clean' ? 'CENTRE! +1' : e.q === 'shield' ? 'SHIELD HIT +1' : e.q === 'glance' ? 'GLANCED OFF' : 'MISSED', W / 2, H * 0.3, big ? '#ffd36a' : '#ffd0a0', e.broke ? 34 : 28);
-      ui.card = { e, t: 0 }; if (e.late && e.q !== 'miss') tip2('late', 'Not braced, so your lance skidded off: hold BRACE just before the crash.', 3); if (e.braceEarly) tip2('early', 'Braced too early: your arm tired and the tip swayed more.', 3); sfx.crowd(big); } break;
+      ui.card = { e, t: 0 }; if (e.late && e.q !== 'miss') tip2('late', 'Not braced, so your lance skidded off: lift your aiming thumb just before the crash.', 3); if (e.braceEarly) tip2('early', 'Braced too early: your arm tired and the tip swayed more.', 3); sfx.crowd(big); } break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.36, '#ffd36a', 24); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.42, '#8fe0ab', 24); sfx.coin(e.n); break;
     case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('TO THE LISTS!', W / 2, H * 0.36, '#ffd36a', 24); sfx.fanfare(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.fanfare(); FX.flash = 0.5; vibe(HAP.best); if (e.why === 'unseat') ui.banner = { txt: 'UNSEATED!', sub: 'Outright victory', t: 0, secs: 2 }; break;
-    case 'lost': sfx.lose(); if (e.why === 'unseated') ui.banner = { txt: 'YOU ARE DOWN', sub: 'Unhorsed: brace on time and lean less', t: 0, secs: 2 }; break;      // (P11: never vibrate on failure)
+    case 'lost': sfx.lose(); if (e.why === 'unseated') ui.banner = { txt: 'YOU ARE DOWN', sub: 'Unhorsed: lift to brace on time, and lean less', t: 0, secs: 2 }; break;      // (P11: never vibrate on failure)
   } }
 // ---------- the picture ----------
 let IG = null, IM = {}; function idleG() { if (!IG || IG.over || IG.t > 40) { IG = newGame(3 + ((Math.random() * 12) | 0), { seed: (Math.random() * 1e6) | 0 }); IM = {}; } honest(IG, { react: 0.3, acc: 0.95 }, IM); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
@@ -103,7 +104,8 @@ function draw(now, dt) {
     ctx.fillStyle = 'rgba(30,20,10,.92)'; rrect(W / 2 - w / 2, hy - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the HUD ----------
-function layout(G) { return { brace: { x: W - 82 * k, y: H - 86 * k, r: 58 * k } }; }
+// (27 Nov 2026, his review) two fixed controls: a lean stick bottom left, an aiming pad bottom right; lift the aiming thumb to brace
+function layout(G) { return { lean: { x: 104 * k, y: H - 100 * k, r: 62 * k }, pad: { x: W - 122 * k, y: H - 112 * k, r: 84 * k } }; }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(30,20,10,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
 function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), rvZ = SPEED * (PASS_T - (G.phase === 'charge' ? G.pt : PASS_T));
@@ -118,10 +120,13 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), rvZ = S
     else txt(`TRAINING · lances broken ${G.log.filter(q => q.broke).length}/${G.cfg.needClean} · target ${G.pass}/${G.cfg.of}`, W / 2, y + 1, '#fff', `700 ${Math.round(13 * k)}px ${BC}`);
     const bx = 14 * k; txt('your seat', bx, H * 0.36 - 16 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(11 * k)}px ${BC}`, 'left'); ctx.fillStyle = 'rgba(30,20,10,.6)'; rrect(bx, H * 0.36, 14 * k, 100 * k, 6); ctx.fill(); const b = clamp(1 - G.bal[0], 0, 1); ctx.fillStyle = b > 0.5 ? '#8fe0ab' : b > 0.25 ? '#ffd36a' : '#ff6a4a'; rrect(bx, H * 0.36 + 100 * k * (1 - b), 14 * k, 100 * k * b, 6); ctx.fill(); }
   // the lean (left) and the aim (right) sticks
-  if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); const dx = clamp(s2.x - s2.x0, -R, R); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx, s2.y0, 20 * k, 0, TAU); ctx.fill(); txt('LEAN', s2.x0, s2.y0 - R - 12 * k, '#fff', `700 ${Math.round(11 * k)}px ${BC}`); }
-  else if (G.t < 6 || (G.lesson && G.pass <= 1)) { txt('◀ LEAN ▶', 110 * k, H - 70 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(13 * k)}px ${BC}`); txt('DRAG TO AIM THE LANCE', W * 0.62, H - 70 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(13 * k)}px ${BC}`); }
-  // BRACE: it glows in the last half second
-  { const B = L.brace, glow = G.phase === 'charge' && G.pt > PASS_T - 0.6, on = G.brace; ctx.globalAlpha = 0.92; ctx.fillStyle = on ? '#c8763a' : glow ? 'rgba(255,214,110,.85)' : 'rgba(30,20,10,.55)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = glow ? '#fff' : '#ffd36a'; ctx.lineWidth = glow ? 5 : 3; ctx.stroke(); txt('BRACE', B.x, B.y - 4 * k, '#fff', `400 ${Math.round(20 * k)}px ${TF}`); txt('hold', B.x, B.y + 16 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`); ctx.globalAlpha = 1; }
+  { const S = L.lean, on = !!ui.stick; ctx.globalAlpha = on ? 1 : 0.7; ctx.fillStyle = 'rgba(30,20,10,.45)'; ctx.beginPath(); ctx.arc(S.x, S.y, S.r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,214,110,.7)'; ctx.lineWidth = 2.5; ctx.stroke();      // the lean stick, always here
+    ctx.fillStyle = on ? '#ffd36a' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(S.x + clamp(G.lean, -1, 1) * S.r * 0.8, S.y, 24 * k, 0, TAU); ctx.fill(); txt('LEAN', S.x, S.y - S.r - 10 * k, '#fff', `700 ${Math.round(11 * k)}px ${BC}`); ctx.globalAlpha = 1; }
+  { const P = L.pad, aiming = !!ui.aimT, braced = G.brace, glow = G.phase === 'charge' && G.pt > PASS_T - BW(G) && !braced; ctx.globalAlpha = 0.95;      // the aiming pad: drag in it to aim; lift to brace
+    ctx.fillStyle = braced ? 'rgba(200,118,58,.85)' : glow ? 'rgba(255,214,110,.5)' : 'rgba(30,20,10,.45)'; rrect(P.x - P.r, P.y - P.r, P.r * 2, P.r * 2, 18 * k); ctx.fill(); ctx.strokeStyle = glow ? '#fff' : braced ? '#ffd36a' : 'rgba(255,214,110,.7)'; ctx.lineWidth = glow ? 5 : 2.5; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(P.x - P.r, P.y); ctx.lineTo(P.x + P.r, P.y); ctx.moveTo(P.x, P.y - P.r); ctx.lineTo(P.x, P.y + P.r); ctx.stroke(); ctx.beginPath(); ctx.arc(P.x, P.y, P.r * CLEAN / 0.6, 0, TAU); ctx.stroke();
+    const ax = P.x + clamp(G.aim.x / 0.7, -1, 1) * P.r, ay = P.y - clamp(G.aim.y / 0.6, -1, 1) * P.r; ctx.fillStyle = braced ? '#ffd36a' : '#fff'; ctx.beginPath(); ctx.arc(ax, ay, (braced ? 12 : 15) * k, 0, TAU); ctx.fill(); if (braced) { ctx.strokeStyle = '#3a1a0a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ax, ay, 12 * k, 0, TAU); ctx.stroke(); }
+    txt(braced ? 'BRACED' : aiming ? 'AIMING' : 'AIM', P.x - P.r + 4 * k, P.y - P.r - 14 * k, braced ? '#ffd36a' : '#fff', `400 ${Math.round(18 * k)}px ${TF}`, 'left'); ctx.globalAlpha = 1; }
   // after the crash: where both lances struck
   if (ui.card && G.phase === 'after') { const e = ui.card.e, cx = W / 2, cy = H * 0.58, r = 46 * k; for (const [i, lab, hitp, q] of [[-1, 'YOUR LANCE', { x: e.tip.x - e.sh.x, y: e.tip.y - e.sh.y }, e.q], [1, 'THEIR LANCE', e.their, e.tq]]) { if (i > 0 && !G.R) continue; const x = cx + i * 70 * k;
       ctx.fillStyle = 'rgba(30,20,10,.7)'; rrect(x - 58 * k, cy - 70 * k, 116 * k, 140 * k, 10); ctx.fill(); ctx.fillStyle = i < 0 ? '#' + (G.R ? 0x8a2a2a : 0xe8e0c8).toString(16).padStart(6, '0') : '#' + mySkin().col.toString(16).padStart(6, '0'); ctx.beginPath(); ctx.arc(x, cy, r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, cy, r * CLEAN / SHIELD, 0, TAU); ctx.stroke();

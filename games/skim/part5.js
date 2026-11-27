@@ -95,15 +95,26 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (one thumb, upright): while aiming, put your thumb down anywhere and drag back down the screen (further = harder; a
 // little left or right aims the other way, like a catapult; the dots show where it goes), let go to throw. A tap on one of the
 // three stones at the bottom picks it. While the stone flies, a tap anywhere is the tap for its next kiss.
-function aimFrom(x, y) { const D = ui.drag, dx = x - D.x0, dy = y - D.y0; setAim(G, clamp(-dx / (W * 0.42), -1, 1) * 0.7, clamp(dy / (H * 0.3), 0, 1)); }
+// TWO FIXED CONTROLS (27 Nov 2026, his review): left, the AIM PAD (where the thumb is in it: left/right the direction, up/down the stone's angle
+// to the water; it stays where you leave it); right, the THROW: pull the stone back down its slot (how far = how hard; it stays pulled if you
+// lift), then swipe up to throw. A quick, straight swipe is a good release.
+function padSet(L, x, y) { const P = L.pad; G.dir = clamp(-(x - P.x) / P.r, -1, 1) * -0.7; setTilt(G, clamp(0.5 - (y - P.y) / (2 * P.r), 0, 1)); }
+function slingMove(L, x, y, t) { const S = ui.sling; S.pts.push({ x, y, t }); if (S.pts.length > 12) S.pts.shift(); S.low = Math.max(S.low, y);
+  const up = S.low - y; if (up < 26 * k) { G.pull = clamp(S.p0 + (y - S.y0) / (L.sling.h), 0, 1); return false; }
+  const a = S.pts[0], b = S.pts[S.pts.length - 1], dt = Math.max(0.016, (b.t - a.t) / 1000), vy = (a.y - b.y) / dt, dx = Math.abs(b.x - a.x), dy = Math.max(1, a.y - b.y);
+  if (up > 60 * k && vy > 250 * k && G.pull >= 0.08) { const s1 = clamp((vy - 300 * k) / (1100 * k), 0, 1), s2 = clamp(1 - dx / dy * 1.4, 0, 1); throwIt(0.15 + 0.85 * s1 * (0.45 + 0.55 * s2)); return true; } return false; }
+function throwIt(rq) { setAim(G, G.dir || 0, G.pull || 0); release(G, rq); G.pull = 0; ui.sling = null; }
+function aimFrom(x, y) {}
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
   if (G.phase === 'fly') { tap(G); return; }
   if (G.phase !== 'aim' || ui.drag) return;
   const pk = L.picks.find(q => Math.hypot(x - q.x, y - q.y) < q.r + 8 * k); if (pk) { chooseStone(G, pk.i); return; }
-  ui.drag = { id: e.pointerId, x0: x, y0: y }; setAim(G, 0, 0); });
-cv.addEventListener('pointermove', e => { if (!G || !ui.drag || ui.drag.id !== e.pointerId) return; const [x, y] = toStage(e.clientX, e.clientY); if (G.phase !== 'aim') { ui.drag = null; return; } aimFrom(x, y); });
-function endTouch(e) { if (!ui.drag || ui.drag.id !== e.pointerId) return; const [x, y] = toStage(e.clientX, e.clientY); if (G && !G.over && !paused && G.phase === 'aim') aimFrom(x, y); ui.drag = null; if (!G || G.over || paused || G.phase !== 'aim') return; if (e.type === 'pointercancel') { setAim(G, null); return; } release(G); }
+  const P = L.pad; if (!ui.pad && Math.hypot(x - P.x, y - P.y) < P.r + 22 * k) { ui.pad = { id: e.pointerId }; padSet(L, x, y); return; }
+  const S = L.sling; if (!ui.sling && x > W * 0.52 && y > S.y - 60 * k) { ui.sling = { id: e.pointerId, y0: y, p0: G.pull || 0, low: y, pts: [{ x, y, t: performance.now() }] }; } });
+cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY), L = layout(G); if (G.phase !== 'aim') { ui.pad = ui.sling = null; return; }
+  if (ui.pad && ui.pad.id === e.pointerId) { padSet(L, x, y); return; } if (ui.sling && ui.sling.id === e.pointerId) slingMove(L, x, y, performance.now()); });
+function endTouch(e) { if (ui.pad && ui.pad.id === e.pointerId) ui.pad = null; if (ui.sling && ui.sling.id === e.pointerId) { const [x, y] = toStage(e.clientX, e.clientY); if (G && G.phase === 'aim' && !paused && e.type !== 'pointercancel') slingMove(layout(G), x, y, performance.now()); ui.sling = null; } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'slate');

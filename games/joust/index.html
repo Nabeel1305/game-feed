@@ -5287,7 +5287,7 @@ const W3 = (() => {
 const RULES = [
   '<b>Right thumb: aim.</b> Drag to move the lance tip onto their shield. It sways with the gallop in a steady rhythm: learn where it will be at the crash.',
   '<b>Left thumb: lean.</b> It moves your shield; a late lean makes their lance glance off. Leaning far costs balance.',
-  '<b>Hold BRACE</b> just before the crash (it glows). Too early and your arm tires; too late and you take the hit unbraced.',
+  '<b>Lift your right thumb to BRACE</b>: the lance locks where you aimed and you brace. Do it just before the crash (the pad glows). Too early and your arm tires; too late and you take the hit unbraced. Touch the pad again to aim again.',
   '<b>Points:</b> a shield hit 1; a clean hit in the centre, braced, breaks the lance: 2. Knock them off and you win outright. Three passes.',
   'Watch them: one aims well but wobbles after a hit, one braces like a wall, one shifts at the last moment (their head dips first).',
 ];
@@ -5308,7 +5308,7 @@ const RIVALS = [
   { name: 'Sir Gareth Ironhand', habit: 'wall', aim: 0.08, brace: 0.9, recover: 0.4, lean: 0.3 },
 ];
 const HABIT = { steady: 'rides steady and true', aims: 'aims well, but wobbles after a hit', wall: 'braces like a wall', shifts: 'shifts their shield at the last moment: watch their head dip' };
-const SHIELD = 0.26, CLEAN = 0.09, PASS_T = 4.2;
+const SHIELD = 0.26, CLEAN = 0.09, PASS_T = 4.2, BW = G => G.N <= 3 ? 1.0 : G.N <= 6 ? 0.8 : 0.6;      // the brace window (s before the crash): wider on the first levels (27 Nov 2026)
 function makeCfg(N, help, o = {}) {
   const f = curve(N), e = easyOf(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s));
   return { N, f, e, help: !!help, place: placeOf(N), training: N <= 2, rival: N <= 2 ? null : (N - 3) % RIVALS.length, assist: x(0.45, 0.1, 12) * (help ? 1.3 : 1), sway: x(0.3, 0.42, 15) * (1 - 0.12 * upLv('lance')),
@@ -5340,7 +5340,7 @@ function braceOn(G, on) { if (G.over || G.phase !== 'charge') { G.brace = false;
 function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson) lessonTick(G, dt);
   if (G.blindT != null) { G.blindT -= dt; if (G.blindT <= 0) { G.blindT = null; braceOn(G, false); } }
   G.body = (G.body || 0) + (G.lean - (G.body || 0)) * Math.min(1, dt * 3.5);   // the rider's body follows the thumb, with weight
-  if (G.phase === 'charge') { G.pt += dt; if (G.brace && G.braceT != null && G.pt - G.braceT > 0.6) G.tired = Math.min(1, G.tired + dt * 0.9);
+  if (G.phase === 'charge') { G.pt += dt; if (G.brace && G.braceT != null && G.pt - G.braceT > BW(G)) G.tired = Math.min(1, G.tired + dt * 0.9);
     if (G.rv.shift && G.pt > G.rv.tellAt && !G.told) { G.told = true; G.ev.push({ k: 'tell', side: Math.sign(G.rv.shift) }); }
     if (G.leanAtTell == null && G.pt > PASS_T - 0.6) G.leanAtTell = G.body;
     if (G.pt >= PASS_T) clash(G); }
@@ -5349,7 +5349,7 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
 function clash(G) { const c = G.cfg, R = G.rnd; G.phase = 'after'; G.afterT = 2.2; G.told = false;
   let tp = tip(G); tp = { x: tp.x - G.body * 0.2, y: tp.y + Math.abs(G.body) * 0.08 }; const sh = rivalShield(G), dx0 = tp.x - sh.x, dy0 = tp.y - sh.y, d0 = Math.hypot(dx0, dy0);
   if (d0 < SHIELD * 1.2) { const pull = c.assist * clamp(1 - d0 / (SHIELD * 1.2), 0, 1); tp = { x: tp.x - dx0 * pull, y: tp.y - dy0 * pull }; }   // aim help: only near the shield
-  const d = Math.hypot(tp.x - sh.x, tp.y - sh.y), myBrace = G.braceT != null && G.brace ? PASS_T - G.braceT : null, braceOk = myBrace != null && myBrace <= 0.6, braceEarly = myBrace != null && myBrace > 0.6;
+  const d = Math.hypot(tp.x - sh.x, tp.y - sh.y), myBrace = G.braceT != null && G.brace ? PASS_T - G.braceT : null, braceOk = myBrace != null && myBrace <= BW(G), braceEarly = myBrace != null && myBrace > BW(G);
   const q = d < CLEAN ? 'clean' : d < SHIELD ? 'shield' : d < SHIELD * 1.35 ? 'glance' : 'miss';
   // your hit on them
   const braced = myBrace != null; let mine = 0; if (braced) { if (q === 'clean') mine = braceOk ? 2 : 1; else if (q === 'shield') mine = 1; }   // an unbraced lance skids off: no point
@@ -5381,17 +5381,20 @@ function finish(G, win, why) { if (G.over) return; G.over = win ? 'won' : 'lost'
 // ---------- LESSONS: aim with the rhythm, brace on time, the whole pass ----------
 const AIMCARD = {"pic": "🐎", "win": "KNOCK THEM OFF THEIR HORSE", "lose": "THEY KNOCK YOU OFF", "how": "AIM THE LANCE, BRACE AT THE HIT"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
-  1: [{ id: 'aim', title: 'AIM WITH THE RHYTHM', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
+  1: [{ id: 'lean', title: 'LEAN', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Slide your left thumb to lean.', need: 1 },
+      { id: 'aim', title: 'AIM WITH THE RHYTHM', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Drag your right thumb to move the lance tip. It sways with the gallop in a steady figure of eight: aim so the yellow ring (where it will be as you arrive) sits on the red middle. Three in a row.', need: 3 }],
   2: [{ id: 'brace', title: 'BRACE AT THE CRASH', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Hold BRACE just before the crash, when it glows (not earlier: your arm tires). Three braced hits.', need: 3 }],
   3: [{ id: 'clean', title: 'BREAK A LANCE', say: G => joustCue(G)[0], do: G => joustCue(G)[1], at: G => joustCue(G)[2], how: 'Aim for the centre of the shield and brace on time: a clean braced hit breaks your lance (2 points). Twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); }
-function lessonSee(G, what, e) { const D = G.lesson; if (!D || D.done || what !== 'clash') return; const id = D.id;
+function lessonSee(G, what, e) { const D = G.lesson; if (!D || D.done || what !== 'clash') return; const id = D.id; if (id === 'lean') return;
   const good = id === 'aim' && e.d < CLEAN * 2 || id === 'brace' && e.braceOk && e.q !== 'miss' || id === 'clean' && e.broke;
-  if (good) { D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: D.steps[0].need }); if (D.n >= D.steps[0].need) { D.done = true; D.wait = 2.4; } }
+  if (good) lessonGood(G);
   else if (D.n && (id === 'aim' || id === 'brace' && !e.braceOk || id === 'clean' && e.q !== 'clean')) { D.n = 0; G.ev.push({ k: 'lessonmiss', how: id === 'aim' ? 'Not near the middle: three in a row, from the start.' : id === 'brace' ? (e.braceEarly ? 'Too early: brace in the last half second.' : 'Too late: hold BRACE as it glows.') : 'The centre of the shield, and brace on time.' }); }
   else if (!good) G.ev.push({ k: 'lessonmiss', how: e.q === 'miss' ? 'Missed: watch the sway, and aim so the tip swings onto the shield at the crash.' : 'Close: again.' }); }
-function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.pass = 0; G.pts = [0, 0]; G.bal = [0, 0]; G.clean = 0; G.hits = 0; G.log = []; startPass(G); G.ev.push({ k: 'lessondone', N: G.N }); }
+function lessonGood(G) { const D = G.lesson, st = D.steps[D.i]; D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: st.need });
+  if (D.n >= st.need) { if (D.i + 1 < D.steps.length) { D.i++; D.n = 0; D.id = D.steps[D.i].id; G.ev.push({ k: 'lessonnext' }); } else { D.done = true; D.wait = 2.4; } } }
+function lessonTick(G, dt) { const D = G.lesson; if (!D.done && D.id === 'lean') { D.leanT = Math.abs(G.lean) > 0.45 ? (D.leanT || 0) + dt : 0; if (D.leanT > 0.5) { D.leanT = 0; lessonGood(G); } return; } if (!D.done) return; D.wait -= dt; if (D.wait > 0) return; G.lesson = null; G.pass = 0; G.pts = [0, 0]; G.bal = [0, 0]; G.clean = 0; G.hits = 0; G.log = []; startPass(G); G.ev.push({ k: 'lessondone', N: G.N }); }
 
 // ---------- for the robots: blind moves and an honest jouster ----------
 const BLIND = {
@@ -5408,12 +5411,16 @@ const BLIND = {
 // left and right in a box, and MIDDLE + BRACE was two things. Now: DRAG TO AIM (on the right: the drag that puts the ring on the middle, as
 // the robot works it out), WAIT FOR THE CRASH…, HOLD BRACE! a quarter second before the robot would brace (the time a thumb takes).
 function joustCue(G) { if (G.over || G.phase !== 'charge') return ['WAIT…', 'wait', false]; const L = layout(G), id = G.lesson && G.lesson.steps[G.lesson.i] ? G.lesson.steps[G.lesson.i].id : '';
-  if (G.brace) return ['KEEP HOLDING', 'hold', [L.brace.x, L.brace.y]];
-  if (id !== 'aim' && G.pt >= PASS_T - 0.6) return ['HOLD BRACE!', 'hold', [L.brace.x, L.brace.y]];
+  if (id === 'lean') return ['LEAN', 'drag', [L.lean.x, L.lean.y, L.lean.x + L.lean.r * 0.8, L.lean.y]];
+  const P0 = L.pad, here = [P0.x + clamp(G.aim.x / 0.7, -1, 1) * P0.r, P0.y - clamp(G.aim.y / 0.6, -1, 1) * P0.r];
+  if (G.brace) return G.pt >= PASS_T - BW(G) ? ['BRACED', 'wait', false] : ['TOO SOON: THUMB BACK', 'hold', here];
+  if (G.pt >= PASS_T - BW(G)) return ['LET GO: BRACE', 'release', [L.pad.x + clamp(G.aim.x / 0.7, -1, 1) * L.pad.r, L.pad.y - clamp(G.aim.y / 0.6, -1, 1) * L.pad.r]];
   const sw = sway(G, PASS_T), tx = G.sh0.x + (G.told ? G.rv.shift : 0) - sw.x, ty = G.sh0.y - sw.y, sc = 0.0042 / k, ex = tx - G.aim.x, ey = ty - G.aim.y;
-  if (G.pt > 1 && G.pt < PASS_T - 0.4 && Math.hypot(ex, ey) > 0.03) { const x0 = W * 0.72, y0 = H * 0.5; return ['DRAG TO AIM', 'drag', [x0, y0, x0 + ex / sc, y0 - ey / sc]]; }
-  return [id === 'aim' ? 'WAIT… HOLD IT THERE' : 'WAIT FOR THE CRASH…', 'wait', false]; }
+  if (G.pt > 1 && G.pt < PASS_T - 0.4 && Math.hypot(ex, ey) > 0.03) { const P = L.pad, ax = P.x + clamp(G.aim.x / 0.7, -1, 1) * P.r, ay = P.y - clamp(G.aim.y / 0.6, -1, 1) * P.r; return ['AIM', 'drag', [ax, ay, P.x + clamp(tx / 0.7, -1, 1) * P.r, P.y - clamp(ty / 0.6, -1, 1) * P.r]]; }
+  if (G.pt > 1) { const P = L.pad; return ['HOLD', 'hold', [P.x + clamp(G.aim.x / 0.7, -1, 1) * P.r, P.y - clamp(G.aim.y / 0.6, -1, 1) * P.r]]; }      // keep the thumb on the pad until it glows
+  return ['WAIT…', 'wait', false]; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random;
+  if (G.lesson && G.lesson.id === 'lean' && !G.lesson.done) { setLean(G, 0.7); return; }
   if (G.phase !== 'charge') { braceOn(G, false); mem.pass = null; return; }
   if (mem.pass !== G.pass) { mem.pass = G.pass; mem.err = { x: (R() - 0.5) * (1 - acc) * 0.5, y: (R() - 0.5) * (1 - acc) * 0.4 }; mem.bt = PASS_T - 0.32 + (R() - 0.5) * react * 0.9; mem.seenTell = false; mem.lean = null; }
   if (G.told && !mem.seenTell && R() < acc) mem.seenTell = true;
@@ -5481,6 +5488,7 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, tr = !G.R, p = G.phase === '
   V.quintain.position.set(LANEX, 0, rvZ); V.quintain.rotation.y = Math.PI;
   // your lance: lowered from upright to level, pointing at the tip's place on their shield (or the target board)
   const sh = shieldWorld(G, rvZ), tw = tipWorld(G, rvZ), L = V.me.lance, base = new T.Vector3(); L.updateMatrixWorld(); L.getWorldPosition(base); const raise = clamp(G.aim.y > 0.5 && G.pt < 1.2 ? 1 - G.pt / 1.2 : 0, 0, 1);
+  { const bt = G.brace && G.phase === 'charge' ? 1 : 0; V.me.bp = (V.me.bp || 0) + (bt - (V.me.bp || 0)) * 0.2; V.me.rider.rotation.x = V.me.bp * 0.28; L.position.z = 0.2 - V.me.bp * 0.35; L.position.y = 0.5 - V.me.bp * 0.08; }      // braced: crouched forward, lance tucked under the arm
   if (G.phase === 'charge') { const d = new T.Vector3().subVectors(tw, base), yaw = Math.atan2(d.x, d.z), pitch = Math.atan2(d.y, Math.hypot(d.x, d.z)); L.rotation.set(-pitch - raise * 1.2, yaw, 0); L.visible = true; }
   V.me.pole.scale.y = G.phase === 'after' && last && last.broke ? 0.45 : 1; V.rv.pole.scale.y = G.phase === 'after' && last && last.theyBroke ? 0.45 : 1;
   { const L2 = V.rv.lance; L2.rotation.set(-0.05, 0.3, 0); }
@@ -5503,13 +5511,13 @@ function onEvent(G, e) {
       if (big) { sfx.crack(e.broke); vibe(e.broke ? HAP.heavy : HAP.thud); FX.shake = e.broke ? 14 : 8; burst(p.x, p.y, '#e8c890', e.broke ? 40 : 18, 260); } else if (e.q === 'glance') sfx.glance(); else sfx.whiff();
       if (e.tq === 'clean' || e.tq === 'shield') { sfx.hitme(); FX.red = 0.5; FX.shake = Math.max(FX.shake, 8); }
       say(e.broke ? 'LANCE BROKEN! +2' : !e.braced && (e.q === 'clean' || e.q === 'shield') ? 'NOT BRACED: IT SKIDS OFF' : e.q === 'clean' ? 'CENTRE! +1' : e.q === 'shield' ? 'SHIELD HIT +1' : e.q === 'glance' ? 'GLANCED OFF' : 'MISSED', W / 2, H * 0.3, big ? '#ffd36a' : '#ffd0a0', e.broke ? 34 : 28);
-      ui.card = { e, t: 0 }; if (e.late && e.q !== 'miss') tip2('late', 'Not braced, so your lance skidded off: hold BRACE just before the crash.', 3); if (e.braceEarly) tip2('early', 'Braced too early: your arm tired and the tip swayed more.', 3); sfx.crowd(big); } break;
+      ui.card = { e, t: 0 }; if (e.late && e.q !== 'miss') tip2('late', 'Not braced, so your lance skidded off: lift your aiming thumb just before the crash.', 3); if (e.braceEarly) tip2('early', 'Braced too early: your arm tired and the tip swayed more.', 3); sfx.crowd(big); } break;
     case 'lessonnext': if (e.first) hint = null; say('FIRST, A LESSON', W / 2, H * 0.36, '#ffd36a', 24); break;
     case 'lessonok': say(`GOOD! ${e.n} OF ${e.need}`, W / 2, H * 0.42, '#8fe0ab', 24); sfx.coin(e.n); break;
     case 'lessonmiss': coachMiss(); break;
     case 'lessondone': say('TO THE LISTS!', W / 2, H * 0.36, '#ffd36a', 24); sfx.fanfare(); if (!HEADLESS) store.set('taught', Math.max(store.get('taught', 0) | 0, e.N)); break;
     case 'won': sfx.fanfare(); FX.flash = 0.5; vibe(HAP.best); if (e.why === 'unseat') ui.banner = { txt: 'UNSEATED!', sub: 'Outright victory', t: 0, secs: 2 }; break;
-    case 'lost': sfx.lose(); if (e.why === 'unseated') ui.banner = { txt: 'YOU ARE DOWN', sub: 'Unhorsed: brace on time and lean less', t: 0, secs: 2 }; break;      // (P11: never vibrate on failure)
+    case 'lost': sfx.lose(); if (e.why === 'unseated') ui.banner = { txt: 'YOU ARE DOWN', sub: 'Unhorsed: lift to brace on time, and lean less', t: 0, secs: 2 }; break;      // (P11: never vibrate on failure)
   } }
 // ---------- the picture ----------
 let IG = null, IM = {}; function idleG() { if (!IG || IG.over || IG.t > 40) { IG = newGame(3 + ((Math.random() * 12) | 0), { seed: (Math.random() * 1e6) | 0 }); IM = {}; } honest(IG, { react: 0.3, acc: 0.95 }, IM); step(IG, 1 / 60); IG.ev.length = 0; return IG; }
@@ -5527,7 +5535,8 @@ function draw(now, dt) {
     ctx.fillStyle = 'rgba(30,20,10,.92)'; rrect(W / 2 - w / 2, hy - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the HUD ----------
-function layout(G) { return { brace: { x: W - 82 * k, y: H - 86 * k, r: 58 * k } }; }
+// (27 Nov 2026, his review) two fixed controls: a lean stick bottom left, an aiming pad bottom right; lift the aiming thumb to brace
+function layout(G) { return { lean: { x: 104 * k, y: H - 100 * k, r: 62 * k }, pad: { x: W - 122 * k, y: H - 112 * k, r: 84 * k } }; }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(30,20,10,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
 function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), rvZ = SPEED * (PASS_T - (G.phase === 'charge' ? G.pt : PASS_T));
@@ -5542,10 +5551,13 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), rvZ = S
     else txt(`TRAINING · lances broken ${G.log.filter(q => q.broke).length}/${G.cfg.needClean} · target ${G.pass}/${G.cfg.of}`, W / 2, y + 1, '#fff', `700 ${Math.round(13 * k)}px ${BC}`);
     const bx = 14 * k; txt('your seat', bx, H * 0.36 - 16 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(11 * k)}px ${BC}`, 'left'); ctx.fillStyle = 'rgba(30,20,10,.6)'; rrect(bx, H * 0.36, 14 * k, 100 * k, 6); ctx.fill(); const b = clamp(1 - G.bal[0], 0, 1); ctx.fillStyle = b > 0.5 ? '#8fe0ab' : b > 0.25 ? '#ffd36a' : '#ff6a4a'; rrect(bx, H * 0.36 + 100 * k * (1 - b), 14 * k, 100 * k * b, 6); ctx.fill(); }
   // the lean (left) and the aim (right) sticks
-  if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); const dx = clamp(s2.x - s2.x0, -R, R); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx, s2.y0, 20 * k, 0, TAU); ctx.fill(); txt('LEAN', s2.x0, s2.y0 - R - 12 * k, '#fff', `700 ${Math.round(11 * k)}px ${BC}`); }
-  else if (G.t < 6 || (G.lesson && G.pass <= 1)) { txt('◀ LEAN ▶', 110 * k, H - 70 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(13 * k)}px ${BC}`); txt('DRAG TO AIM THE LANCE', W * 0.62, H - 70 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(13 * k)}px ${BC}`); }
-  // BRACE: it glows in the last half second
-  { const B = L.brace, glow = G.phase === 'charge' && G.pt > PASS_T - 0.6, on = G.brace; ctx.globalAlpha = 0.92; ctx.fillStyle = on ? '#c8763a' : glow ? 'rgba(255,214,110,.85)' : 'rgba(30,20,10,.55)'; ctx.beginPath(); ctx.arc(B.x, B.y, B.r * (on ? 0.94 : 1), 0, TAU); ctx.fill(); ctx.strokeStyle = glow ? '#fff' : '#ffd36a'; ctx.lineWidth = glow ? 5 : 3; ctx.stroke(); txt('BRACE', B.x, B.y - 4 * k, '#fff', `400 ${Math.round(20 * k)}px ${TF}`); txt('hold', B.x, B.y + 16 * k, 'rgba(255,255,255,.85)', `700 ${Math.round(10 * k)}px ${BC}`); ctx.globalAlpha = 1; }
+  { const S = L.lean, on = !!ui.stick; ctx.globalAlpha = on ? 1 : 0.7; ctx.fillStyle = 'rgba(30,20,10,.45)'; ctx.beginPath(); ctx.arc(S.x, S.y, S.r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,214,110,.7)'; ctx.lineWidth = 2.5; ctx.stroke();      // the lean stick, always here
+    ctx.fillStyle = on ? '#ffd36a' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(S.x + clamp(G.lean, -1, 1) * S.r * 0.8, S.y, 24 * k, 0, TAU); ctx.fill(); txt('LEAN', S.x, S.y - S.r - 10 * k, '#fff', `700 ${Math.round(11 * k)}px ${BC}`); ctx.globalAlpha = 1; }
+  { const P = L.pad, aiming = !!ui.aimT, braced = G.brace, glow = G.phase === 'charge' && G.pt > PASS_T - BW(G) && !braced; ctx.globalAlpha = 0.95;      // the aiming pad: drag in it to aim; lift to brace
+    ctx.fillStyle = braced ? 'rgba(200,118,58,.85)' : glow ? 'rgba(255,214,110,.5)' : 'rgba(30,20,10,.45)'; rrect(P.x - P.r, P.y - P.r, P.r * 2, P.r * 2, 18 * k); ctx.fill(); ctx.strokeStyle = glow ? '#fff' : braced ? '#ffd36a' : 'rgba(255,214,110,.7)'; ctx.lineWidth = glow ? 5 : 2.5; ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(P.x - P.r, P.y); ctx.lineTo(P.x + P.r, P.y); ctx.moveTo(P.x, P.y - P.r); ctx.lineTo(P.x, P.y + P.r); ctx.stroke(); ctx.beginPath(); ctx.arc(P.x, P.y, P.r * CLEAN / 0.6, 0, TAU); ctx.stroke();
+    const ax = P.x + clamp(G.aim.x / 0.7, -1, 1) * P.r, ay = P.y - clamp(G.aim.y / 0.6, -1, 1) * P.r; ctx.fillStyle = braced ? '#ffd36a' : '#fff'; ctx.beginPath(); ctx.arc(ax, ay, (braced ? 12 : 15) * k, 0, TAU); ctx.fill(); if (braced) { ctx.strokeStyle = '#3a1a0a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ax, ay, 12 * k, 0, TAU); ctx.stroke(); }
+    txt(braced ? 'BRACED' : aiming ? 'AIMING' : 'AIM', P.x - P.r + 4 * k, P.y - P.r - 14 * k, braced ? '#ffd36a' : '#fff', `400 ${Math.round(18 * k)}px ${TF}`, 'left'); ctx.globalAlpha = 1; }
   // after the crash: where both lances struck
   if (ui.card && G.phase === 'after') { const e = ui.card.e, cx = W / 2, cy = H * 0.58, r = 46 * k; for (const [i, lab, hitp, q] of [[-1, 'YOUR LANCE', { x: e.tip.x - e.sh.x, y: e.tip.y - e.sh.y }, e.q], [1, 'THEIR LANCE', e.their, e.tq]]) { if (i > 0 && !G.R) continue; const x = cx + i * 70 * k;
       ctx.fillStyle = 'rgba(30,20,10,.7)'; rrect(x - 58 * k, cy - 70 * k, 116 * k, 140 * k, 10); ctx.fill(); ctx.fillStyle = i < 0 ? '#' + (G.R ? 0x8a2a2a : 0xe8e0c8).toString(16).padStart(6, '0') : '#' + mySkin().col.toString(16).padStart(6, '0'); ctx.beginPath(); ctx.arc(x, cy, r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, cy, r * CLEAN / SHIELD, 0, TAU); ctx.stroke();
@@ -5636,7 +5648,7 @@ function showEnd() {
   const hits = r.log.map(e => ({ clean: '◉', shield: '●', glance: '◌', miss: '·' })[e.q]).join(' ');
   $('eSub').innerHTML = (G.R ? `⚔ You <b>${r.pts[0]}</b> : <b>${r.pts[1]}</b> ${r.rival}` : `Lances broken: <b>${r.log.filter(e => e.q === 'clean').length}</b>`) + `<br>Your lance, pass by pass: ${hits} <span style="opacity:.7">(◉ centre · ● shield · ◌ glance · · miss)</span>` + `<br><b>+${r.coins} 🪙</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '')
     + (r.newSkins ? `<br><b class="nb">NEW COLOURS: ${r.newSkins.toUpperCase()}</b>` : '') + (r.win && r.stars < 3 ? '<br>Three stars: unhorse them, or win by four points.' : '')
-    + (!r.win ? (r.why === 'unseated' ? '<br>Brace in the last half second, and do not lean far: leaning takes your seat.' : '<br>Watch the sway: aim so the tip swings onto the centre of the shield at the crash, and brace as BRACE glows.') : '')
+    + (!r.win ? (r.why === 'unseated' ? '<br>Brace in the last half second, and do not lean far: leaning takes your seat.' : '<br>Watch the sway: aim so the tip swings onto the centre of the shield at the crash, and lift your thumb as the pad glows.') : '')
     + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: more aim help, and they are a little weaker.</span>' : '');
   renderShop();
   $('eMain').textContent = r.win ? (practiceOn ? 'PRACTISE AGAIN' : 'NEXT BOUT') : 'REMATCH'; $('eMain').dataset.act = r.win ? 'next' : 'again';
@@ -5685,14 +5697,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (two thumbs, sideways): the left thumb leans (a floating stick, left or right); the right thumb drags to aim the
 // lance (the aim stays where you leave it) and holds BRACE (bottom right). Touches are turned into the sideways picture first.
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
-  if (Math.hypot(x - L.brace.x, y - L.brace.y) < L.brace.r + 14 * k) { ui.btn = { id: e.pointerId }; braceOn(G, true); return; }
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-  if (x < W * 0.45) { if (!ui.stick) ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; return; }
-  ui.aimT = { id: e.pointerId, x0: x, y0: y, ax: G.aim.x, ay: G.aim.y }; });
+  const P = L.pad; if (Math.abs(x - P.x) < P.r + 30 * k && Math.abs(y - P.y) < P.r + 30 * k) { ui.aimT = { id: e.pointerId }; braceOn(G, false); padAim(L, x, y); return; }      // the aiming pad: aim (and stop bracing)
+  if (x < W * 0.5 && !ui.stick) { ui.stick = { id: e.pointerId }; stickLean(L, x); } });      // the left half works the lean stick from its one place
+function padAim(L, x, y) { const P = L.pad; setAim(G, clamp((x - P.x) / P.r, -1, 1) * 0.7, -clamp((y - P.y) / P.r, -1, 1) * 0.6); }
+function stickLean(L, x) { const dx = (x - L.lean.x) / (L.lean.r * 0.8); setLean(G, Math.abs(dx) < 0.08 ? 0 : clamp(dx, -1, 1)); }
 cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
-  if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; const dx = (x - s2.x0) / (56 * k); setLean(G, Math.abs(dx) < 0.08 ? 0 : clamp(dx, -1, 1)); return; }
-  const A = ui.aimT; if (A && A.id === e.pointerId) { const sc = 0.0042 / k; setAim(G, A.ax + (x - A.x0) * sc, A.ay - (y - A.y0) * sc); } });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setLean(G, 0); } if (ui.aimT && ui.aimT.id === e.pointerId) ui.aimT = null; if (ui.btn.id === e.pointerId) { ui.btn = {}; if (G) braceOn(G, false); } }
+  const L = layout(G); if (ui.stick && ui.stick.id === e.pointerId) { stickLean(L, x); return; }
+  const A = ui.aimT; if (A && A.id === e.pointerId) padAim(L, x, y); });
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setLean(G, 0); } if (ui.aimT && ui.aimT.id === e.pointerId) { ui.aimT = null; if (G && G.phase === 'charge') braceOn(G, true); } }      // lifting the aiming thumb locks the aim and braces
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'blue');

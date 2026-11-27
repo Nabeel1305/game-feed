@@ -46,7 +46,7 @@ function showEnd() {
   const hits = r.log.map(e => ({ clean: '◉', shield: '●', glance: '◌', miss: '·' })[e.q]).join(' ');
   $('eSub').innerHTML = (G.R ? `⚔ You <b>${r.pts[0]}</b> : <b>${r.pts[1]}</b> ${r.rival}` : `Lances broken: <b>${r.log.filter(e => e.q === 'clean').length}</b>`) + `<br>Your lance, pass by pass: ${hits} <span style="opacity:.7">(◉ centre · ● shield · ◌ glance · · miss)</span>` + `<br><b>+${r.coins} 🪙</b>` + (r.nb ? ' <b class="nb">NEW BEST</b>' : '')
     + (r.newSkins ? `<br><b class="nb">NEW COLOURS: ${r.newSkins.toUpperCase()}</b>` : '') + (r.win && r.stars < 3 ? '<br>Three stars: unhorse them, or win by four points.' : '')
-    + (!r.win ? (r.why === 'unseated' ? '<br>Brace in the last half second, and do not lean far: leaning takes your seat.' : '<br>Watch the sway: aim so the tip swings onto the centre of the shield at the crash, and brace as BRACE glows.') : '')
+    + (!r.win ? (r.why === 'unseated' ? '<br>Brace in the last half second, and do not lean far: leaning takes your seat.' : '<br>Watch the sway: aim so the tip swings onto the centre of the shield at the crash, and lift your thumb as the pad glows.') : '')
     + (r.rankUp ? `<br><b class="nb">NEW RANK: ${r.rankUp.toUpperCase()}</b>` : '') + ((streaks[L] || 0) >= 3 ? '<br><span class="help">Help is on: more aim help, and they are a little weaker.</span>' : '');
   renderShop();
   $('eMain').textContent = r.win ? (practiceOn ? 'PRACTISE AGAIN' : 'NEXT BOUT') : 'REMATCH'; $('eMain').dataset.act = r.win ? 'next' : 'again';
@@ -95,14 +95,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (two thumbs, sideways): the left thumb leans (a floating stick, left or right); the right thumb drags to aim the
 // lance (the aim stays where you leave it) and holds BRACE (bottom right). Touches are turned into the sideways picture first.
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G);
-  if (Math.hypot(x - L.brace.x, y - L.brace.y) < L.brace.r + 14 * k) { ui.btn = { id: e.pointerId }; braceOn(G, true); return; }
   try { cv.setPointerCapture(e.pointerId); } catch (err) {}
-  if (x < W * 0.45) { if (!ui.stick) ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; return; }
-  ui.aimT = { id: e.pointerId, x0: x, y0: y, ax: G.aim.x, ay: G.aim.y }; });
+  const P = L.pad; if (Math.abs(x - P.x) < P.r + 30 * k && Math.abs(y - P.y) < P.r + 30 * k) { ui.aimT = { id: e.pointerId }; braceOn(G, false); padAim(L, x, y); return; }      // the aiming pad: aim (and stop bracing)
+  if (x < W * 0.5 && !ui.stick) { ui.stick = { id: e.pointerId }; stickLean(L, x); } });      // the left half works the lean stick from its one place
+function padAim(L, x, y) { const P = L.pad; setAim(G, clamp((x - P.x) / P.r, -1, 1) * 0.7, -clamp((y - P.y) / P.r, -1, 1) * 0.6); }
+function stickLean(L, x) { const dx = (x - L.lean.x) / (L.lean.r * 0.8); setLean(G, Math.abs(dx) < 0.08 ? 0 : clamp(dx, -1, 1)); }
 cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
-  if (ui.stick && ui.stick.id === e.pointerId) { const s2 = ui.stick; s2.x = x; s2.y = y; const dx = (x - s2.x0) / (56 * k); setLean(G, Math.abs(dx) < 0.08 ? 0 : clamp(dx, -1, 1)); return; }
-  const A = ui.aimT; if (A && A.id === e.pointerId) { const sc = 0.0042 / k; setAim(G, A.ax + (x - A.x0) * sc, A.ay - (y - A.y0) * sc); } });
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setLean(G, 0); } if (ui.aimT && ui.aimT.id === e.pointerId) ui.aimT = null; if (ui.btn.id === e.pointerId) { ui.btn = {}; if (G) braceOn(G, false); } }
+  const L = layout(G); if (ui.stick && ui.stick.id === e.pointerId) { stickLean(L, x); return; }
+  const A = ui.aimT; if (A && A.id === e.pointerId) padAim(L, x, y); });
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setLean(G, 0); } if (ui.aimT && ui.aimT.id === e.pointerId) { ui.aimT = null; if (G && G.phase === 'charge') braceOn(G, true); } }      // lifting the aiming thumb locks the aim and braces
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'blue');

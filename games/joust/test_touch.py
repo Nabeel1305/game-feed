@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Joust with real touches, held upright and sideways: the left thumb leans (drag right leans right, letting go sits up
 straight); the right thumb drags the lance's aim (right moves the tip right on the screen, up moves it up) and the aim stays
-where it is left; holding BRACE braces and letting go stops; both thumbs at once work. Then the rules: a braced hit in the
+where the thumb is in the pad; lifting the aiming thumb locks the aim and braces, touching the pad again aims again; both thumbs at once work. Then the rules: a braced hit in the
 centre of their shield breaks the lance (2 points); the same hit unbraced skids off for no point; far off is a miss; bracing too early tires the
 arm and the tip sways more; their lance knocks your seat, less when braced; leaning after their aim is set moves their hit off
 your shield; an empty seat unhorses (you lose, or they do and you win); training ends after three broken lances; a bout of
@@ -29,29 +29,26 @@ with sync_playwright() as p:
         E("localStorage.setItem('jst.taught', '3'); __sim.go(5)"); pg.wait_for_timeout(300)
         E("(() => { const G = __sim.G; G.pt = -1e9; })()")      # a very long charge, so nothing ends while we touch
         Wd, Ht = E("[innerWidth > innerHeight ? innerWidth : innerHeight, innerWidth > innerHeight ? innerHeight : innerWidth]")
-        # the aim: drag right and up on the right half
-        a0 = E("[__sim.G.aim.x, __sim.G.aim.y]"); ax, ay = Wd * 0.62, Ht * 0.5
-        touch('touchStart', [at(1, ax, ay)]); touch('touchMove', [at(1, ax + 20, ay)]); touch('touchMove', [at(1, ax + 40, ay - 30)]); pg.wait_for_timeout(80)
-        a1 = E("[__sim.G.aim.x, __sim.G.aim.y]"); touch('touchEnd', [at(1, ax + 40, ay - 30)]); pg.wait_for_timeout(200); a2 = E("[__sim.G.aim.x, __sim.G.aim.y]")
-        ok(a1[0] > a0[0] + 0.05 and a1[1] > a0[1] - 0.001 + 0.05 or (a1[0] > a0[0] + 0.05 and a1[1] >= 0.6 - 1e-6), f'{tag}: dragging right and up moves the aim right and up', str([a0, a1]))
-        ok(abs(a2[0] - a1[0]) < 1e-6 and abs(a2[1] - a1[1]) < 1e-6, f'{tag}: the aim stays where you leave it', str([a1, a2]))
-        touch('touchStart', [at(1, ax, ay)]); touch('touchMove', [at(1, ax - 20, ay + 20)]); touch('touchMove', [at(1, ax - 40, ay + 60)]); pg.wait_for_timeout(80)
-        a3 = E("[__sim.G.aim.x, __sim.G.aim.y]"); touch('touchEnd', [at(1, ax - 40, ay + 60)])
-        ok(a3[0] < a2[0] - 0.05 and a3[1] < a2[1] - 0.05, f'{tag}: dragging left and down moves it left and down', str([a2, a3]))
-        # the tip on the screen goes the way the thumb went
-        s = E("(() => { const X = __sim.x(), G = __sim.G, pt0 = G.pt; G.pt = 3.6; __sim.frame(); const rz = 9 * (X.PASS_T - 3.6); G.aim = { x: 0, y: 0 }; G.body = 0; G.lean = 0; const p0 = X.scrOf(X.tipWorld(G, rz)); G.aim = { x: 0.3, y: 0.3 }; const p1 = X.scrOf(X.tipWorld(G, rz)); G.pt = pt0; return [p0.x, p0.y, p1.x, p1.y]; })()")
-        ok(s[2] > s[0] + 3 and s[3] < s[1] - 3, f'{tag}: a higher, more right aim puts the tip higher and further right on the screen', str(s))
-        # the lean (left thumb)
-        lx, ly = Wd * 0.18, Ht * 0.6
-        touch('touchStart', [at(2, lx, ly)]); touch('touchMove', [at(2, lx + 25, ly)]); touch('touchMove', [at(2, lx + 50, ly)]); pg.wait_for_timeout(80)
-        l1 = E("__sim.G.lean"); ok(l1 > 0.5, f'{tag}: dragging the left thumb right leans right', str(l1))
-        touch('touchMove', [at(2, lx - 50, ly)]); pg.wait_for_timeout(60); ok(E("__sim.G.lean") < -0.5, f'{tag}: and left leans left')
-        # both thumbs: hold the lean, press BRACE with the other
-        L = E("__sim.layout()"); B = L['brace']
-        touch('touchMove', [at(2, lx + 50, ly)]); touch('touchStart', [at(2, lx + 50, ly), at(3, B['x'], B['y'])]); pg.wait_for_timeout(80)
-        ok(E("__sim.G.brace") is True and E("__sim.G.lean") > 0.5, f'{tag}: holding BRACE braces, while the other thumb still leans', str([E("__sim.G.brace"), E("__sim.G.lean")]))
-        touch('touchEnd', [at(3, B['x'], B['y'])]); pg.wait_for_timeout(60); ok(E("__sim.G.brace") is False, f'{tag}: letting go of BRACE stops bracing')
-        touch('touchEnd', [at(2, lx + 50, ly)]); pg.wait_for_timeout(60); ok(abs(E("__sim.G.lean")) < 1e-6, f'{tag}: letting go of the lean sits up straight')
+        # (27 Nov 2026) two fixed controls: the aiming pad (bottom right: where the thumb is in the pad is where the lance points; lifting the thumb
+        # locks the aim and braces; touching the pad again aims again and stops bracing) and the lean stick (bottom left, in one place)
+        L = E("__sim.layout()"); P = L['pad']; S = L['lean']; E("(() => { const G = __sim.G; G.pt = 1; G.phase = 'charge'; })()")
+        touch('touchStart', [at(1, P['x'], P['y'])]); pg.wait_for_timeout(60); a0 = E("[__sim.G.aim.x, __sim.G.aim.y]")
+        ok(abs(a0[0]) < 0.02 and abs(a0[1]) < 0.02 and E("__sim.G.brace") is False, f'{tag}: a thumb in the middle of the pad aims at the middle (and is not bracing)', str(a0))
+        touch('touchMove', [at(1, P['x'] + P['r'] * 0.5, P['y'] - P['r'] * 0.5)]); pg.wait_for_timeout(60); a1 = E("[__sim.G.aim.x, __sim.G.aim.y]")
+        ok(a1[0] > 0.3 and a1[1] > 0.25, f'{tag}: moving it up and right in the pad aims up and right', str(a1))
+        touch('touchEnd', [at(1, P['x'] + P['r'] * 0.5, P['y'] - P['r'] * 0.5)]); pg.wait_for_timeout(80); a2 = E("[__sim.G.aim.x, __sim.G.aim.y]")
+        ok(abs(a2[0] - a1[0]) < 1e-6 and abs(a2[1] - a1[1]) < 1e-6 and E("__sim.G.brace") is True, f'{tag}: lifting the thumb locks the aim and braces', str([a2, E("__sim.G.brace")]))
+        touch('touchStart', [at(1, P['x'] - P['r'] * 0.5, P['y'] + P['r'] * 0.5)]); pg.wait_for_timeout(60); a3 = E("[__sim.G.aim.x, __sim.G.aim.y]")
+        ok(E("__sim.G.brace") is False and a3[0] < -0.3 and a3[1] < -0.25, f'{tag}: touching the pad again aims again and stops bracing', str([a3, E("__sim.G.brace")]))
+        # the lean, from its one place, while the other thumb aims
+        touch('touchStart', [at(1, P['x'] - P['r'] * 0.5, P['y'] + P['r'] * 0.5), at(2, S['x'] + S['r'] * 0.8, S['y'])]); pg.wait_for_timeout(60)
+        ok(E("__sim.G.lean") > 0.8 and E("__sim.G.brace") is False, f'{tag}: a thumb right of the lean stick leans right, while the other aims', str(E("__sim.G.lean")))
+        touch('touchMove', [at(1, P['x'] - P['r'] * 0.5, P['y'] + P['r'] * 0.5), at(2, S['x'] - S['r'] * 0.8, S['y'])]); pg.wait_for_timeout(60); ok(E("__sim.G.lean") < -0.8, f'{tag}: and left of it leans left')
+        touch('touchEnd', [at(2, S['x'] - S['r'] * 0.8, S['y'])]); pg.wait_for_timeout(60); ok(abs(E("__sim.G.lean")) < 1e-6, f'{tag}: letting go of the lean sits up straight')
+        touch('touchEnd', [at(1, P['x'] - P['r'] * 0.5, P['y'] + P['r'] * 0.5)]); pg.wait_for_timeout(60)
+        # a touch on the right side outside the pad does nothing (no stick appears)
+        a4 = E("[__sim.G.aim.x, __sim.G.aim.y, __sim.G.lean]"); touch('touchStart', [at(4, Wd * 0.62, Ht * 0.3)]); touch('touchMove', [at(4, Wd * 0.62 + 40, Ht * 0.3 - 30)]); pg.wait_for_timeout(60)
+        ok(E("[__sim.G.aim.x, __sim.G.aim.y, __sim.G.lean]") == a4, f'{tag}: a touch outside the two controls does nothing', str(a4)); touch('touchEnd', [at(4, Wd * 0.62 + 40, Ht * 0.3 - 30)])
         ok(not errs, f'{tag}: no JavaScript errors', str(errs[:3])); ctx.close()
     # ---------- the rules ----------
     ctx = b.new_context(viewport={'width': 844, 'height': 390}); pg = ctx.new_page(); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))

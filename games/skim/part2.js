@@ -40,18 +40,24 @@ const duckPos = (d, t) => ({ x: d.x0 + d.amp * Math.sin(d.w * t + d.ph), z: d.z 
 function newGame(N, o = {}) {
   const cfg = makeCfg(N, o.help, o), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
   const G = { N, cfg, seed, rnd: rng(seed), t: 0, over: null, res: null, ev: [], teach: !!o.teach, taught: o.taught | 0, lesson: null, mini: !!o.mini, free: !!o.free, blind: {} };
-  G.L = makeLake(cfg); G.left = cfg.stones + upLv('pocket'); G.throws = 0; G.best = { skips: 0, far: 0 }; G.stone = 0; G.phase = 'aim'; G.aim = null; G.s = null; G.log = [];
+  G.L = makeLake(cfg); G.left = cfg.stones + upLv('pocket'); G.throws = 0; G.best = { skips: 0, far: 0 }; G.stone = 0; G.phase = 'aim'; G.aim = null; G.s = null; G.log = []; G.tilt = 0.55; G.dir = 0; G.pull = 0;
   if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G);
   return G;
 }
 // ---------- the player's actions ----------
 function chooseStone(G, i) { if (G.phase === 'aim') { G.stone = clamp(i | 0, 0, STONES.length - 1); G.ev.push({ k: 'stone', i: G.stone }); } }
 function setAim(G, ang, pow) { if (G.phase !== 'aim') return; G.aim = ang == null ? null : { ang: clamp(ang, -0.7, 0.7), pow: clamp(pow, 0, 1) }; }
+// TECHNIQUE (27 Nov 2026, his review: "Make direction, angle, power and release work together. Pulling harder alone should not guarantee success").
+// The ANGLE the stone meets the water: tilt 0..1 is 5..45 degrees; about 20 is best (the old skimmers' rule). Too steep and it digs in and sinks
+// (past about 34 degrees it stops at the first kiss); too flat and it skates and loses its speed. The RELEASE: a smooth, quick swipe forward
+// (rq near 1) sends it faster and steadier; a jerky or lazy one throws away speed, and pulling right to the end makes a smooth release harder.
+const DEG = t => 5 + 40 * t, angQ = t => clamp(1 - Math.abs(DEG(t) - 20) / 22, 0.15, 1);
+function setTilt(G, t) { G.tilt = clamp(t, 0, 1); }
 // let go: the stone flies (a drag too short does nothing)
-function release(G) { if (G.phase !== 'aim' || !G.aim) return; const a = G.aim; G.aim = null; if (a.pow < 0.08) return; if (!G.free && !G.lesson && G.left <= 0) return;
-  const st = STONES[G.stone], v = (7 + 17 * a.pow) * (1 + 0.05 * upLv('arm'));
-  G.s = { x: 0, z: 0.8, y: H0, vx: Math.sin(a.ang) * v, vz: Math.cos(a.ang) * v, vy: 0.5 + 2.5 * a.pow, st, skips: 0, hop: 0, tdT: null, taps: 0, lastQ: null, done: false, sinkT: 0, path: [] };
-  G.phase = 'fly'; G.throws++; if (!G.free && !G.lesson) G.left--; G.s.tdT = nextTouch(G.s); G.ev.push({ k: 'throw', v, ang: a.ang }); }
+function release(G, rq = 0.75) { if (G.phase !== 'aim' || !G.aim) return; const a = G.aim; G.aim = null; if (a.pow < 0.08) return; if (!G.free && !G.lesson && G.left <= 0) return;
+  const tilt = G.tilt == null ? 0.375 : G.tilt, rqE = clamp(rq - Math.max(0, a.pow - 0.9) * 1.6, 0, 1), st = STONES[G.stone], v = (7 + 19 * a.pow) * (0.85 + 0.15 * rqE) * (1 + 0.05 * upLv('arm'));
+  G.s = { x: 0, z: 0.8, y: H0, vx: Math.sin(a.ang) * v, vz: Math.cos(a.ang) * v, vy: 0.5 + 2.5 * a.pow, st, skips: 0, hop: 0, tdT: null, taps: 0, lastQ: null, done: false, sinkT: 0, path: [], tilt, aq: angQ(tilt), rqE, pow: a.pow, ang: a.ang };
+  lessonSee(G, 'throw'); G.phase = 'fly'; G.throws++; if (!G.free && !G.lesson) G.left--; G.s.tdT = nextTouch(G.s); G.ev.push({ k: 'throw', v, ang: a.ang }); }
 // tap: the stone is about to kiss the water; how close to the moment decides how well it skips
 function tap(G) { if (G.phase !== 'fly') return; const s = G.s, gd = G.cfg.good * (1 + 0.2 * upLv('eye')), pw = G.cfg.perfect * (1 + 0.2 * upLv('eye')), lk = s.lastKiss;
   // a tap just after a kiss that had no tap still counts (a moment late)
@@ -82,15 +88,17 @@ function step(G, dt) { if (G.over || !(dt > 0)) return; G.t += dt; if (G.lesson)
 // the kiss: perfect keeps most of the speed, good some, a miss loses a lot; wobbles cost too; slow stones sink
 const kissK = (q, st) => Math.max(0.15, 1 - (1 - (q === 'perfect' ? 0.94 : q === 'good' ? 0.85 : 0.45)) / st.flat);
 function resolveKiss(G, d, pw, gd) { const s = G.s, st = s.st, q = d == null ? 'miss' : d <= pw ? 'perfect' : d <= gd ? 'good' : 'miss';
-  s.run = q === 'miss' || s.extra ? 0 : (s.run | 0) + 1; let k = kissK(q, st); if (s.extra) k *= Math.pow(0.85, s.extra); s.lastKiss = { t: s.kT != null ? s.kT : G.t, q, k, none: d == null };
+  s.run = q === 'miss' || s.extra ? 0 : (s.run | 0) + 1; let k = kissK(q, st); if (s.extra) k *= Math.pow(0.85, s.extra); if (s.aq != null) { k *= (0.8 + 0.2 * s.aq) * (0.95 + 0.05 * s.rqE); if (s.skips === 0 && DEG(s.tilt) > 34) k = 0; } s.lastKiss = { t: s.kT != null ? s.kT : G.t, q, k, none: d == null };
   s.vx *= k; s.vz *= k; const hspd = Math.hypot(s.vx, s.vz); s.tapT = null; s.extra = 0; s.taps = 0;
   if (hspd < VMIN || s.skips > 60) return sink(G);
   s.skips++; s.vy = hspd * Math.tan(0.16 * st.flat + 0.04) * (q === 'perfect' ? 1.05 : 1); s.tdT = nextTouch(s); s.path.push({ x: s.x, z: s.z });
   if (d != null || G.lesson) { G.ev.push({ k: 'kiss', q, n: s.skips, x: s.x, z: s.z, early: s.early, none: d == null }); if (d != null) lessonSee(G, 'kiss', q); } else G.ev.push({ k: 'kiss', q, n: s.skips, x: s.x, z: s.z, quiet: true });
   if (s.skips > G.best.skips) G.best.skips = s.skips; checkGoal(G, false); }
 function sink(G) { const s = G.s; G.ev.push({ k: 'sink', x: s.x, z: s.z, skips: s.skips, far: s.z }); stopStone(G, 'sink'); }
-function stopStone(G, why) { const s = G.s; if (G.phase !== 'fly') return; if (why !== 'sink') G.ev.push({ k: why, x: s.x, z: s.z });
+function stopStone(G, why) { const s = G.s; if (G.phase !== 'fly') return; if (why !== 'sink') G.ev.push({ k: why, x: s.x, z: s.z }); if (s.aq != null) G.ev.push({ k: 'advice', txt: advice(G, s), prev: G.best.far, far: s.z, path: s.path.slice(), x: s.x });
   if (s.z > G.best.far) G.best.far = s.z; G.log.push({ skips: s.skips, far: Math.round(s.z), why }); G.phase = 'rest'; G.restT = 1.2; checkGoal(G, true); }
+// what to change, after each throw (shown as a short line, with a little replay of the throw from above)
+function advice(G, s) { const d = DEG(s.tilt); if (d > 32) return 'TOO STEEP'; if (d < 11) return 'TOO FLAT'; if (s.pow > 0.93 && s.rqE < 0.55) return 'TOO HARD: SMOOTHER'; if (s.rqE < 0.5) return 'SMOOTHER RELEASE'; if (s.pow < 0.45 && s.z < 25) return 'MORE POWER'; if (s.aq < 0.7) return d > 20 ? 'A BIT FLATTER' : 'A BIT STEEPER'; return 'GREAT RELEASE'; }
 function goalMet(G) { const c = G.cfg, b = G.best; return c.kind === 'skips' ? b.skips >= c.skips : c.kind === 'far' ? b.far >= c.far : c.kind === 'rings' ? G.L.rings.every(r => r.done) : G.log.some(l => l.why === 'jetty'); }
 function checkGoal(G, end) { if (G.lesson || G.free || G.over) return; if (goalMet(G)) { if (end) finish(G, true, 'goal'); else G.goalHit = true; } }
 function afterStone(G) { G.s = null; if (G.over) return; if (G.lesson) { G.phase = 'aim'; return; }
@@ -106,23 +114,27 @@ function goalText(cfg) { return cfg.kind === 'skips' ? `Skip a stone ${cfg.skips
 // ---------- lessons (levels 1-3) ----------
 const AIMCARD = {"pic": "🪨", "win": "MAKE THE SKIPS ASKED FOR", "lose": "NO STONES LEFT", "how": "DRAG BACK, LET GO, TAP AS IT LANDS"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
-  1: [{ id: 'throw', title: 'DRAG BACK, LET GO', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Put your thumb on the stone and drag back down the screen: the line shows where it goes. Let go to throw. Then tap each time it kisses the water. Three good taps in a row.', need: 3 }],
+  // (27 Nov 2026, his review: a short visual tutorial: Aim, Set angle, Pull back, Throw, one action at a time)
+  1: [{ id: 'aim', title: 'AIM', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Aim.', need: 1 }, { id: 'angle', title: 'SET ANGLE', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Set the angle.', need: 1 },
+      { id: 'pull', title: 'PULL BACK', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Pull back.', need: 1 }, { id: 'throwit', title: 'THROW', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Swipe up.', need: 1 }],
   2: [{ id: 'perfect', title: 'RIGHT ON TIME', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Watch the ring close on the stone as it comes down: tap just as it touches. Three PERFECT kisses.', need: 3 }],
   3: [{ id: 'chain', title: 'KEEP IT GOING', say: G => skimCue(G)[0], do: G => skimCue(G)[1], at: G => skimCue(G)[2], how: 'Throw hard and tap every kiss: each perfect tap keeps its speed. Six skips on one stone.', need: 6 }],
 };
-function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need }; G.ev.push({ k: 'lessonnext', first: true }); }
-function lessonSee(G, what, q) { const D = G.lesson; if (!D || D.done) return; let good = false;
+function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id, need: st.need, tdir: 0.32 }; G.ev.push({ k: 'lessonnext', first: true }); }
+function lessonNextStep(G) { const D = G.lesson; G.ev.push({ k: 'lessonok', n: 1, need: 1 }); if (D.i + 1 < D.steps.length) { D.i++; D.id = D.steps[D.i].id; D.need = D.steps[D.i].need; D.n = 0; D.hold = 0; G.ev.push({ k: 'lessonnext' }); } else { D.done = true; D.wait = 1.8; } }
+function lessonSee(G, what, q) { const D = G.lesson; if (!D || D.done) return; let good = false; if (D.id === 'throwit' && what === 'throw') { lessonNextStep(G); return; }
   if (D.id === 'throw' && what === 'kiss') { const n = G.s ? G.s.run | 0 : 0; if (n > D.n) { D.n = n; good = true; } }
   if (D.id === 'perfect' && what === 'kiss') { if (q === 'perfect') { D.n++; good = true; } }
   if (D.id === 'chain' && what === 'kiss') { D.n = G.s.skips; good = true; }
   if (good) { G.ev.push({ k: 'lessonok', n: Math.min(D.n, D.need), need: D.need }); if (D.n >= D.need) { D.done = true; D.wait = 1.8; } } }
-function lessonTick(G, dt) { const D = G.lesson; if (!D.done) return; D.wait -= dt; if (D.wait > 0 || G.phase === 'fly') return; G.lesson = null; G.left = G.cfg.stones + upLv('pocket'); G.throws = 0; G.best = { skips: 0, far: 0 }; G.log = []; G.L = makeLake(G.cfg); G.phase = 'aim'; G.s = null; G.ev.push({ k: 'lessondone', N: G.N }); }
+function lessonTick(G, dt) { const D = G.lesson; if (!D.done && G.phase === 'aim' && (D.id === 'aim' || D.id === 'angle' || D.id === 'pull')) { const ok = D.id === 'aim' ? Math.abs((G.dir || 0) - D.tdir) < 0.1 : D.id === 'angle' ? DEG(G.tilt == null ? 0.5 : G.tilt) >= 15 && DEG(G.tilt == null ? 0.5 : G.tilt) <= 24 : (G.pull || 0) >= 0.5; D.hold = ok ? (D.hold || 0) + dt : 0; if (D.hold > 0.3) lessonNextStep(G); return; }
+  if (!D.done) return; D.wait -= dt; if (D.wait > 0 || G.phase === 'fly') return; G.lesson = null; G.left = G.cfg.stones + upLv('pocket'); G.throws = 0; G.best = { skips: 0, far: 0 }; G.log = []; G.L = makeLake(G.cfg); G.phase = 'aim'; G.s = null; G.ev.push({ k: 'lessondone', N: G.N }); }
 
 // ---------- for the robots: blind moves and an honest skimmer ----------
 const BLIND = {
   t: G => tap(G),                                                                                          // tap
-  h: G => { setAim(G, (Math.random() - 0.5) * 1.2, 0.5 + Math.random() * 0.5); release(G); },             // a hard throw anywhere
-  s: G => { setAim(G, (Math.random() - 0.5) * 1.2, Math.random() * 0.5); release(G); },                   // a soft throw anywhere
+  h: G => { setTilt(G, Math.random()); setAim(G, (Math.random() - 0.5) * 1.2, 0.5 + Math.random() * 0.5); release(G, Math.random()); },             // a hard throw anywhere
+  s: G => { setTilt(G, Math.random()); setAim(G, (Math.random() - 0.5) * 1.2, Math.random() * 0.5); release(G, Math.random()); },                   // a soft throw anywhere
   k: G => chooseStone(G, (Math.random() * STONES.length) | 0),                                             // pick another stone
 };
 // HONEST: a skimmer who looks: picks the flat stone (the heavy one in a strong wind), aims at what the lake asks for (allowing
@@ -133,12 +145,18 @@ const BLIND = {
 // stone comes down.
 const SMC = { t: -1e9, v: null };
 function skimCue(G) { if (G.over) return ['WAIT…', 'wait', false]; if (G.phase === 'fly') { const s2 = G.s; return s2 && s2.tdT != null && s2.tdT < 0.3 ? ['TAP AS IT LANDS!', 'tap', false] : ['WATCH THE STONE…', 'wait', false]; }
-  if (G.phase !== 'aim') return ['WAIT…', 'wait', false]; if (ui.drag && SMC.v) return SMC.v; const now = performance.now(); if (now - SMC.t < 300) return SMC.v; SMC.t = now;
+  if (G.phase !== 'aim') return ['WAIT…', 'wait', false]; if ((ui.pad || ui.sling) && SMC.v) return SMC.v; const now = performance.now(); if (now - SMC.t < 300) return SMC.v; SMC.t = now;
   const all = dryPlanAll(G, null, { wait: -1e9 }), cs = all.find(q => q[0] === 'chooseStone'), am = all.find(q => q[0] === 'setAim'), L = layout(G); let v = ['WAIT…', 'wait', false];
-  if (cs && cs[1] !== G.stone && L.picks[cs[1]]) v = ['TAP THIS STONE', 'tap', [L.picks[cs[1]].x, L.picks[cs[1]].y]];
-  else if (am) { const x0 = W / 2, y0 = H * 0.42; v = ['DRAG BACK, LET GO', 'drag', [x0, y0, x0 - am[1] / 0.7 * W * 0.42, y0 + Math.max(0.15, am[2]) * H * 0.3]]; }
+  const Pd = L.pad, Sl = L.sling, dotX = Pd.x + clamp((G.dir || 0) / 0.7, -1, 1) * Pd.r, dotY = Pd.y - ((G.tilt == null ? 0.5 : G.tilt) - 0.5) * 2 * Pd.r, D = G.lesson, sid = D && !D.done ? D.id : '';
+  if (sid === 'aim') v = ['AIM', 'drag', [dotX, dotY, Pd.x + D.tdir / 0.7 * Pd.r, dotY]];
+  else if (sid === 'angle') v = ['SET ANGLE', 'drag', [dotX, dotY, dotX, Pd.y - (0.375 - 0.5) * 2 * Pd.r]];
+  else if (sid === 'pull') v = ['PULL BACK', 'drag', [Sl.x, Sl.y + (G.pull || 0) * Sl.h, Sl.x, Sl.y + 0.65 * Sl.h]];
+  else if (sid === 'throwit') v = ['THROW: SWIPE UP', 'swipe', [Sl.x, Sl.y + (G.pull || 0) * Sl.h, Sl.x, Sl.y - 60 * k]];
+  else if (cs && cs[1] !== G.stone && L.picks[cs[1]]) v = ['TAP THIS STONE', 'tap', [L.picks[cs[1]].x, L.picks[cs[1]].y]];
+  else if (am) { const tx2 = Pd.x + clamp(am[1] / 0.7, -1, 1) * Pd.r; if (Math.abs(tx2 - dotX) > 8 * k) v = ['AIM', 'drag', [dotX, dotY, tx2, dotY]]; else if ((G.pull || 0) < Math.max(0.15, am[2]) - 0.05) v = ['PULL BACK', 'drag', [Sl.x, Sl.y + (G.pull || 0) * Sl.h, Sl.x, Sl.y + Math.max(0.15, am[2]) * Sl.h]]; else v = ['THROW: SWIPE UP', 'swipe', [Sl.x, Sl.y + (G.pull || 0) * Sl.h, Sl.x, Sl.y - 60 * k]]; }
   SMC.v = v; return v; }
 function honest(G, o, mem) { if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, R = Math.random, cfg = G.cfg;
+  const D = G.lesson; if (D && !D.done && G.phase === 'aim') { if (D.id === 'aim') { ACT.setDir(G, D.tdir); return; } if (D.id === 'angle') { ACT.setTilt(G, 0.375); return; } if (D.id === 'pull') { ACT.setPull(G, 0.6); return; } if (D.id === 'throwit') { ACT.setAim(G, G.dir || 0, G.pull || 0.6); ACT.release(G, 0.9); ACT.setPull(G, 0); return; } }      /* (only through ACT: the tutorial asks this robot what it would do without letting it do it) */
   if (G.phase === 'aim') { if (mem.wait == null) mem.wait = G.t + 0.4 + R() * 0.4; if (G.t < mem.wait) return; mem.wait = null;
     ACT.chooseStone(G, Math.abs(cfg.wind) > 2 ? 2 : 0); let tx = 0, tz = 40, pow = 1;
     if (cfg.kind === 'rings') { const r = G.L.rings.find(q => !q.done); if (r) { tx = r.x; tz = r.z; } }
@@ -147,20 +165,22 @@ function honest(G, o, mem) { if (G.over) return; const react = o.react == null ?
     const drift = cfg.wind / STONES[G.stone].heavy * 0.35 * Math.pow(tz / 16, 2) * 0.5, ang = Math.atan2(tx - drift, tz) + (R() - 0.5) * (1 - acc) * 0.25;
     let a2 = ang, clear = !pathHit(G, ang, pow); if (!clear && (cfg.kind === 'skips' || cfg.kind === 'far')) { for (const off of [0.07, -0.07, 0.14, -0.14, 0.21, -0.21, 0.3, -0.3]) if (!pathHit(G, ang + off, pow)) { a2 = ang + off; clear = true; break; } }      // steer clear of lily pads and ducks
     if (!clear && (mem.waited || 0) < 5) { mem.waited = (mem.waited || 0) + 0.3; mem.wait = G.t + 0.3; return; } mem.waited = 0;      // or wait for the duck to paddle out of the way
-    ACT.setAim(G, a2, clamp(pow + (R() - 0.5) * (1 - acc) * 0.2, 0.1, 1)); ACT.release(G); mem.tap = null; return; }
+    ACT.setTilt(G, 0.375 + (R() - 0.5) * (1 - acc) * 0.6); ACT.setAim(G, a2, clamp((cfg.kind === 'jetty' ? pow : Math.min(pow, 0.9)) + (R() - 0.5) * (1 - acc) * 0.2, 0.1, 1)); ACT.release(G, clamp(0.95 - R() * (1 - acc) * 0.9, 0, 1)); mem.tap = null; return; }
   if (G.phase !== 'fly') return; const s = G.s;
   if (mem.tap != null && mem.hop !== s.skips && !mem.tapped && mem.hop === s.skips - 1) { mem.tapped = true; ACT.tap(G); }      // a moment late: it still counts
   if (mem.tap == null || mem.hop !== s.skips) { mem.hop = s.skips; mem.tap = G.t + s.tdT - 0.022 + (R() - 0.5) * react * 0.2 + (R() < (1 - acc) * 0.5 ? (R() - 0.5) * 0.4 : 0); mem.tapped = false; }
   if (!mem.tapped && G.t >= mem.tap) { mem.tapped = true; ACT.tap(G); } }
 // does the stone (good taps, with the wind) come down on a lily pad, or meet a duck?
-function pathHit(G, ang, pow) { const st = STONES[G.stone], v = 7 + 17 * pow; let x = 0, z = 0.8, y = H0, vx = Math.sin(ang) * v, vz = Math.cos(ang) * v, vy = 0.5 + 2.5 * pow, n = 0;
+function pathHit(G, ang, pow) { const st = STONES[G.stone], v = (7 + 19 * pow) * (0.85 + 0.15 * rqOf(pow)); let x = 0, z = 0.8, y = H0, vx = Math.sin(ang) * v, vz = Math.cos(ang) * v, vy = 0.5 + 2.5 * pow, n = 0;
   for (let i = 0; i < 3000; i++) { const dt = 1 / 60; vy -= GRAV * dt; vx += G.cfg.wind / st.heavy * 0.35 * dt; x += vx * dt; z += vz * dt; y += vy * dt; if (y < 0.5 && G.L.ducks.some(d => { const q = duckPos(d, G.t + i * dt); return Math.hypot(q.x - x, q.z - z) < d.r + 0.8; })) return true; if (y <= 0) { if (G.L.pads.some(p => Math.hypot(p.x - x, p.z - z) < p.r + 0.6)) return true; const k = kissK('good', st); vx *= k; vz *= k; if (Math.hypot(vx, vz) < VMIN || n++ > 30) return false; y = 0; vy = Math.hypot(vx, vz) * Math.tan(0.16 * st.flat + 0.04); } } return false; }
 // the power that lands a stone near (tx, tz) with good taps (for the jetty)
 function planPow(G, tx, tz) { let best = 1, bd = 1e9; for (let p = 0.2; p <= 1.001; p += 0.05) { const z = simFar(G, p); const d = Math.abs(z - tz); if (d < bd) { bd = d; best = p; } } return best; }
-function simFar(G, pow) { const st = STONES[G.stone], v = 7 + 17 * pow; let x = 0, z = 0.8, y = H0, vz = v, vy = 0.5 + 2.5 * pow, n = 0; for (let i = 0; i < 4000; i++) { const dt = 1 / 60; vy -= GRAV * dt; z += vz * dt; y += vy * dt; if (y <= 0) { y = 0; let k = 0.9; k = 1 - (1 - k) / st.flat; vz *= k; if (vz < VMIN || n++ > 60) return z; vy = vz * Math.tan(0.16 * st.flat + 0.04); } } return z; }
+const rqOf = pow => clamp(0.9 - Math.max(0, pow - 0.9) * 1.6, 0, 1);      // a careful thrower's release at this pull (for the robots' planning)
+function simFar(G, pow) { const st = STONES[G.stone], v = (7 + 19 * pow) * (0.85 + 0.15 * rqOf(pow)); let x = 0, z = 0.8, y = H0, vz = v, vy = 0.5 + 2.5 * pow, n = 0; for (let i = 0; i < 4000; i++) { const dt = 1 / 60; vy -= GRAV * dt; z += vz * dt; y += vy * dt; if (y <= 0) { y = 0; let k = 0.9; k = (1 - (1 - k) / st.flat) * (0.95 + 0.05 * rqOf(pow)); vz *= k; if (vz < VMIN || n++ > 60) return z; vy = vz * Math.tan(0.16 * st.flat + 0.04); } } return z; }
 
 // what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
-const ACT_REAL = { setAim, release, chooseStone, tap }; let ACT = ACT_REAL;
+function setDir(G, a) { G.dir = clamp(a, -0.7, 0.7); } function setPull(G, p) { G.pull = clamp(p, 0, 1); }
+const ACT_REAL = { setAim, setTilt, setDir, setPull, release, chooseStone, tap }; let ACT = ACT_REAL;
 function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
   const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */
