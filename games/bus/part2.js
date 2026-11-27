@@ -4,8 +4,13 @@
 // slow (both ease in: a short press is gentle). Stop with the front door on the stop's mark and the doors open by themselves;
 // everyone gets on; leave on time (never before it: the timetable is on screen). Red lights, people on zebra crossings and
 // the car in front all need stopping for; a crash ends the shift. Smooth driving keeps the passengers' tea in its cup.
+// DRIVING AND MANOEUVRING (27 Nov 2026, his review: "you can't navigate you cant maneuver you cant reverse"). The bus now steers: the stick (bottom left, in one
+// place) moves it across the road while it is moving (it turns itself round the corners). Parked vans and roadworks block your lane: pull out into the other
+// lane when it is clear of oncoming cars and back in after. R puts it in reverse (GO then backs up): to back away from something you stopped too close to,
+// or back to a stop you overshot. Bumping into something slowly stops you dead (a lost moment, spilt tea); fast is a crash.
 const RULES = [
-  '<b>Hold GO</b> (right) to drive, <b>hold BRAKE</b> (left) to slow. Both ease in: tap for a little, hold for a lot.',
+  '<b>Steer</b> with the stick (bottom left). <b>Hold GO</b> to drive, <b>hold BRAKE</b> to slow. <b>R</b> for reverse (GO then backs up), <b>D</b> to drive forward again.',
+  '<b>Vans and roadworks</b> block your lane: pull out into the other lane when no car is coming, and back in after.',
   '<b>Stop on the mark.</b> Stop with the front door at the stop\'s mark: the doors open, everyone gets on. Drive past a stop and those people are left behind.',
   '<b>Keep to time.</b> Every stop has a time. Leave on it, not before. Late at the end of the line and the shift is lost.',
   '<b>Red means stop</b>, and so do people on a zebra crossing and the car in front. A crash ends the shift; two red lights too.',
@@ -27,7 +32,7 @@ const UPGRADES = [
 const upLv = id => (typeof HEADLESS !== 'undefined' && HEADLESS) ? 0 : ((store.get('ups', {}) || {})[id] | 0);
 const RANKS = [[0, 'Trainee'], [60, 'Driver'], [200, 'Senior driver'], [500, 'Route master'], [1100, 'Inspector'], [2500, 'Depot chief']];
 function makeCfg(N, help) { const f = curve(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), boss = N % 5 === 0;
-  return { stops: Math.min(6, 3 + Math.floor(f / 9) + (boss ? 1 : 0)), lights: N >= 2 ? x(0.35, 0.8, 20) : 0, zebras: N >= 3 ? x(0.3, 0.7, 25) : 0, cars: N >= 4 ? x(0.25, 0.7, 25) : 0, zones: N >= 5,
+  return { stops: Math.min(6, 3 + Math.floor(f / 9) + (boss ? 1 : 0)), lights: N >= 2 ? x(0.35, 0.8, 20) : 0, zebras: N >= 3 ? x(0.3, 0.7, 25) : 0, cars: N >= 4 ? x(0.25, 0.7, 25) : 0, zones: N >= 5, blocks: N >= 2 ? x(0.45, 1.4, 22) : 0, bt: x(14, 10.5, 25), onc: N >= 3 ? x(0.3, 0.8, 25) : 0,
     vRef: x(5.0, 7.3, 26) * (1 - 0.1 * easyOf(N)) * (boss ? 1.04 : 1) * (help ? 0.9 : 1), grace: Math.round(x(28, 8, 22)) + (help ? 10 : 0), boss, help: !!help,
     vmax: 13.5 * (1 + 0.03 * upLv('engine')), acc: 2.3 * (1 + 0.08 * upLv('engine')), brake: 4.6 * (1 + 0.08 * upLv('brakes')), comfy: 2.9 + 0.25 * upLv('springs'), fare: 2 + upLv('seats') }; }
 function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != null ? o.seed : (Math.random() * 1e9) | 0;
@@ -35,25 +40,32 @@ function newGame(N, o = {}) { const cfg = makeCfg(N, o.help), seed = o.seed != n
   setup(G); if (G.teach && LESSONS[N] && G.taught < N) lessonStart(G); else G.ev.push({ k: 'start' });
   return G; }
 // ---------- the route: straights and quarter turns on a city grid; stops, lights, zebras, speed zones, cars ----------
-function route(G, o = {}) { const c = G.cfg, R = G.rnd, legs = [], items = { stops: [], lights: [], zebras: [], zones: [], cars: [] }; let s = 0, turnSide = R() < 0.5 ? 1 : -1;
+function route(G, o = {}) { const c = G.cfg, R = G.rnd, legs = [], items = { stops: [], lights: [], zebras: [], zones: [], cars: [], blocks: [] }; let s = 0, turnSide = R() < 0.5 ? 1 : -1;
   const nStraights = o.yard ? o.n : c.stops + 1;
   for (let i = 0; i < nStraights; i++) { const L = o.yard ? 62 : 78 + Math.round(R() * 32), s0 = s; legs.push({ kind: 'S', s0, L }); s += L;
-    if (o.yard === 'light') { if (i % 2 === 0) items.lights.push({ s: s0 + L - 6, off: 0, g: 6, a: 2.2, r: 5, startRed: true }); else items.zebras.push({ s: s0 + L * 0.55, p: 1, ped: null, done: false }); }
+    if (o.yard === 'around') items.blocks.push({ s: s0 + 26, len: 6.5, kind: i % 3 });
+    else if (o.yard === 'light') { if (i % 2 === 0) items.lights.push({ s: s0 + L - 6, off: 0, g: 6, a: 2.2, r: 5, startRed: true }); else items.zebras.push({ s: s0 + L * 0.55, p: 1, ped: null, done: false }); }
     else { items.stops.push({ s: s0 + L * (i === nStraights - 1 && !o.yard ? 0.72 : 0.62), n: 2 + ((R() * (o.yard ? 3 : 5)) | 0), served: false, last: i === nStraights - 1 && !o.yard });
       if (!o.yard && i > 0 && R() < c.zebras) items.zebras.push({ s: s0 + L * 0.3, p: 0.75, ped: null, done: false });
       if (!o.yard && i < nStraights - 1 && R() < c.lights) items.lights.push({ s: s0 + L - 5, off: R() * 13, g: 6.5 + R() * 2, a: 2.2, r: 5 + R() * 2 });
       if (!o.yard && c.zones && R() < 0.35) items.zones.push({ s0: s0 + 8, s1: s0 + L * 0.5, lim: 20 / 3.6 * (R() < 0.5 ? 1 : 1.5) });
-      if (!o.yard && i < nStraights - 1 && R() < c.cars) items.cars.push({ s: s0 + 30 + R() * 25, v: 0, vt: 7 + R() * 3, gone: false, lane: 0, kind: (R() * 4) | 0 }); }
+      if (!o.yard && i < nStraights - 1 && R() < c.cars) items.cars.push({ s: s0 + 30 + R() * 25, v: 0, vt: 7 + R() * 3, gone: false, lane: 0, kind: (R() * 4) | 0 });
+      if (!o.yard) { let nb = Math.floor(c.blocks) + (R() < c.blocks % 1 ? 1 : 0); if (i === 0) nb = Math.min(nb, 1); for (let j = 0; j < nb; j++) { const bs = s0 + 14 + (L * 0.62 - 50) * (nb === 1 ? 0.3 : j / Math.max(1, nb - 1)) * 0.8; if (bs + 7 + BUSLEN + 16 < s0 + L * 0.62) items.blocks.push({ s: bs, len: R() < 0.5 ? 6.5 : 4, kind: (R() * 3) | 0 }); } } }
     if (i < nStraights - 1) { turnSide = R() < 0.6 ? -turnSide : turnSide; legs.push({ kind: 'T', s0: s, L: Math.PI / 2 * RT, side: turnSide }); s += Math.PI / 2 * RT; } }
   G.legs = legs; G.D = s; Object.assign(G, items);
   // the timetable: each stop's time from the distance at a steady pace, with time to board
-  G.stops.forEach((st, i) => { const lb = G.lights.filter(L => L.s < st.s).length, zb = G.zebras.filter(Z => Z.s < st.s).length, cb = G.cars.filter(q => q.s < st.s).length; st.due = o.yard === 'stop' ? -1 : Math.round(st.s / (c.vRef * (o.yard ? 0.75 : 1)) + 4 + i * 7 + lb * 4.5 + zb * 2.5 + cb * 3); }); }
+  G.stops.forEach((st, i) => { const lb = G.lights.filter(L => L.s < st.s).length, zb = G.zebras.filter(Z => Z.s < st.s).length, cb = G.cars.filter(q => q.s < st.s).length, bb = G.blocks.filter(q => q.s < st.s).length; st.due = o.yard === 'stop' || o.yard === 'around' ? -1 : Math.round(st.s / (c.vRef * (o.yard ? 0.75 : 1)) + 4 + i * 7 + lb * 4.5 + zb * 2.5 + cb * 3 + bb * c.bt); });
+  // oncoming cars in the other lane: a steady stream with gaps
+  G.onc = []; if (c.onc > 0 && !o.yard) { let s2 = 60; while (s2 < G.D + 200) { G.onc.push({ s: s2, v: 8 + R() * 3 }); s2 += (34 + R() * 60) / c.onc; } } }
 function setup(G, o = {}) { const c = G.cfg; G.t = 0; G.yard = o.yard || null; route(G, o.yard ? { yard: o.yard, n: o.yard === 'light' ? 6 : 4, stops: o.yard !== 'light' } : {});
-  G.bus = { s: 0, v: 0, a: 0, go: 0, br: 0, goH: false, brH: false, doors: 0, dwell: null, served: 0, stopI: 0 };
+  G.bus = { s: o.start || 0, v: 0, a: 0, go: 0, br: 0, goH: false, brH: false, doors: 0, dwell: null, served: 0, stopI: 0, x: 0, steer: 0, gear: 'D' }; if (!G.onc) G.onc = []; G.bumps = 0;
   G.tea = 100; G.spill = 0; G.pax = 0; G.boarded = 0; G.fares = 0; G.reds = 0; G.speeding = 0; G.spT = 0; G.late = []; G.early = 0; G.perfect = 0; G.coins = 0; G.tips = 0; G.runner = null; G.ok = 0; G.missed = 0; }
 function lightAt(L, t) { if (L.startRed && t < 3.5) return 'r'; const C = L.g + L.a + L.r, p = ((t + L.off) % C + C) % C; return p < L.g ? 'g' : p < L.g + L.a ? 'a' : 'r'; }
 // ---------- the pedals ----------
 function pedal(G, which, on) { if (G.over || !G.bus) return; const b = G.bus; if (which === 'go') { b.goH = on; if (on && b.doors > 0) G.ev.push({ k: 'doorsopen' }); } else b.brH = on; }
+function steer(G, u) { if (G.over || !G.bus) return; G.bus.steer = clamp(u, -1, 1); }
+function gear(G, g) { if (G.over || !G.bus) return; const b = G.bus; if (b.gear === g) return; if (Math.abs(b.v) > 0.5) { G.ev.push({ k: 'gearno' }); return; } b.gear = g; b.v = 0; G.ev.push({ k: 'gear', g }); }
+const LANE2 = -3.5, BUSW = 1.3;      // the other lane's middle; half the bus's width
 const nextStop = G => G.stops.find(st => !st.served);
 const inTurn = (G, s) => G.legs.find(l => l.kind === 'T' && s >= l.s0 - 2 && s < l.s0 + l.L + 2);
 // ---------- the clock ----------
@@ -66,9 +78,17 @@ function step(G, dt) { if (G.over || !(dt > 0)) return;
   for (const car of G.cars) if (!car.gone) moveCar(G, car, dt);
   if (b.doors > 0) { doors(G, st, dt); b.a = 0; b.v = 0; return; }
   if (G.yard && b.s > G.D + 8) { if (G.lesson) lessonDeal(G); return; }
-  const a = (b.br > 0 ? -b.br * c.brake : b.go * c.acc * (1 - b.v / c.vmax)) - 0.18 - 0.004 * b.v * b.v;
-  const v0 = b.v; b.v = Math.max(0, b.v + a * dt); const realA = (b.v - v0) / dt; b.a += (realA - b.a) * Math.min(1, dt * 8);
-  const s0 = b.s; b.s += b.v * dt;
+  const v0 = b.v; if (b.gear === 'R') { const ar = b.br > 0 ? b.br * c.brake : -(b.go * c.acc * 0.7 * (1 + b.v / 3.2)) + 0.18; b.v = Math.min(0, b.v + ar * dt); }
+  else { const a = (b.br > 0 ? -b.br * c.brake : b.go * c.acc * (1 - b.v / c.vmax)) - 0.18 - 0.004 * b.v * b.v; b.v = Math.max(0, b.v + a * dt); }
+  const realA = (b.v - v0) / dt; b.a += (realA - b.a) * Math.min(1, dt * 8);
+  const s0 = b.s, x0 = b.x; b.s += b.v * dt; if (b.s < -2) { b.s = -2; b.v = 0; }
+  { const tn = inTurn(G, b.s); if (tn) b.x += (0 - b.x) * Math.min(1, dt * 2.5); else b.x = clamp(b.x + b.steer * 0.55 * Math.abs(b.v) * dt * (b.gear === 'R' ? 1 : 1), LANE2 - 0.8, 1.0); }
+  // vans and roadworks: slowly into one stops you dead; fast is a crash
+  for (const o2 of G.blocks) { if (b.s > o2.s && b.s - BUSLEN < o2.s + o2.len && Math.abs(b.x) < BUSW + 1.1) { const hard = Math.abs(v0) > 3.2; if (hard) { crash(G, 'block'); return; }
+      if (x0 !== b.x && !(s0 > o2.s && s0 - BUSLEN < o2.s + o2.len && Math.abs(x0) < BUSW + 1.1)) { b.x = x0; } else if (b.v >= 0) b.s = Math.min(b.s, o2.s - 0.01); else b.s = Math.max(b.s, o2.s + o2.len + BUSLEN + 0.01); b.v = 0; G.bumps++; G.tea = Math.max(0, G.tea - 4); G.ev.push({ k: 'bump' }); if (G.lesson) lessonSee(G, 'bump'); } }
+  // oncoming cars: in the other lane, coming towards you
+  for (const q of G.onc) { q.s -= q.v * dt; if (b.x < LANE2 + BUSW + 1.0 && q.s > b.s - BUSLEN && q.s - CARLEN < b.s) { crash(G, 'oncoming'); return; } }
+  for (const o2 of G.blocks) if (!o2.passed && b.s - BUSLEN > o2.s + o2.len + 0.5) { o2.passed = true; G.ev.push({ k: 'around' }); if (G.lesson) lessonSee(G, 'around'); }
   // the tea: hard starts and stops slop it
   const lim = c.comfy, turn = inTurn(G, b.s), lat = turn ? b.v * b.v / RT : 0, ga = Math.hypot(b.a, lat); b.lat = lat * (turn ? turn.side : 0); if (ga > lim) { const d = (ga - lim) * dt * 5; G.tea = Math.max(0, G.tea - d); G.spill += d; if (!G.sloshT || G.t - G.sloshT > 1.2) { G.sloshT = G.t; G.ev.push({ k: 'slosh', a: b.a, turn: lat > Math.abs(b.a) }); } }
   // speed zones and the camera
@@ -82,12 +102,12 @@ function step(G, dt) { if (G.over || !(dt > 0)) return;
     if (b.s >= Z.s - 1 && s0 < Z.s - 1) { if (on) { crash(G, 'ped'); return; } }
     if (b.s > Z.s + 2) { Z.done = true; if (Z.ped) { G.ev.push({ k: 'zebraok' }); if (G.lesson) lessonSee(G, 'pass'); } } }
   // the car in front
-  for (const car of G.cars) if (!car.gone && b.s > car.s - CARLEN + 0.2) { crash(G, 'car'); return; }
+  for (const car of G.cars) if (!car.gone && b.s > car.s - CARLEN + 0.2 && b.s - BUSLEN < car.s && Math.abs(b.x) < BUSW + 1.0) { crash(G, 'car'); return; }
   // stops
   if (st) { const d = st.s - b.s;
-    if (b.v < 0.06 && Math.abs(d) <= 1.6) { b.doors = 0.001; b.v = 0; st.at = G.t; st.off = d; const late = st.due >= 0 ? Math.max(0, Math.round(G.t - st.due)) : 0; st.late = late; if (Math.abs(d) <= 0.5) { G.perfect++; G.coins += 2; }
+    if (Math.abs(b.v) < 0.06 && Math.abs(d) <= 1.6 && b.x > -1.8) { b.doors = 0.001; b.v = 0; st.at = G.t; st.off = d; const late = st.due >= 0 ? Math.max(0, Math.round(G.t - st.due)) : 0; st.late = late; if (Math.abs(d) <= 0.5) { G.perfect++; G.coins += 2; }
       G.ev.push({ k: 'arrive', perfect: Math.abs(d) <= 0.5, late, n: st.n, last: st.last }); }
-    else if (d < -6) { st.served = true; G.missed++; G.ev.push({ k: 'missed', n: st.n }); if (G.lesson) { lessonMiss(G, 'missed'); return; } finish(G, false, { why: 'missed' }); return; }
+    else if (d < -25) { st.served = true; G.missed++; G.ev.push({ k: 'missed', n: st.n }); if (G.lesson) { lessonMiss(G, 'missed'); return; } finish(G, false, { why: 'missed' }); return; }
     else if (b.v < 0.06 && d > 1.6 && d < 14 && !G.hintShort) { G.hintShort = 1; G.ev.push({ k: 'short' }); } }
   if (!G.lesson && !G.yard) { const lastDue = G.stops[G.stops.length - 1].due; if (G.t > lastDue + c.grace + 40) finish(G, false, { why: 'time' }); } }
 function doors(G, st, dt) { const b = G.bus;
@@ -129,15 +149,30 @@ function honest(G, o, mem) { if (G.over || G.wait > 0 || !G.bus) return; const b
   if (mem.err == null || mem.errFor !== (nextStop(G) || {}).s) { mem.errFor = (nextStop(G) || {}).s; mem.err = gauss() * (1 - acc) * 2.2; }
   const st = nextStop(G);
   if (b.doors > 0) { pedal(G, 'br', false); const D = b.dwell; const ready = D && D.ready != null && D.on >= D.off + D.board; if (ready && !G.runner && (st.due < 0 || G.t >= st.due - 0.2)) pedal(G, 'go', true); else pedal(G, 'go', false); return; }
+  const S = busSteer(G, mem); steer(G, S.u);
+  if (S.rev) { if (b.gear !== 'R') { pedal(G, 'go', false); pedal(G, 'br', true); if (Math.abs(b.v) < 0.3) gear(G, 'R'); return; } pedal(G, 'br', false); pedal(G, 'go', true); return; }
+  if (b.gear === 'R') { pedal(G, 'go', false); pedal(G, 'br', true); if (Math.abs(b.v) < 0.3) gear(G, 'D'); return; }
   const P = busPlan(G, acc, mem.err, st); pedal(G, 'go', P.go); pedal(G, 'br', P.br); }
+// where a careful driver steers now (the robot's, and the tutorial's cue): pull out round a van when the other lane is clear, back in after; back up when
+// stuck nose to it, or to a stop gone past. { u: the stick, tx: where across the road it wants to be, rev: backing up, wait: holding back for a gap }
+function blockAhead(G) { const b = G.bus; return G.blocks.find(o2 => !o2.passed && o2.s + o2.len > b.s - BUSLEN - 1 && o2.s - b.s < 40); }
+function lane2Clear(G, ahead) { const b = G.bus; return !G.onc.some(q => q.s > b.s - BUSLEN - 6 && q.s - q.v * (ahead / 3 + 4) < b.s + ahead + 8); }
+function busSteer(G, mem) { const b = G.bus, o2 = blockAhead(G), st = nextStop(G); mem = mem || {}; let tx = 0, rev = false, wait = false;
+  if (mem.revTo != null) { if (b.s > mem.revTo && !(st && st.s - b.s > 1.6 && mem.revStop)) rev = true; else mem.revTo = null; }
+  if (!rev && Math.abs(b.v) < 0.05 && b.gear === 'D' && o2 && o2.s - b.s < 2.5 && o2.s - b.s > -0.5 && Math.abs(b.x) < BUSW + 1.1) { mem.revTo = b.s - 6; mem.revStop = false; rev = true; }
+  if (!rev && Math.abs(b.v) < 0.05 && st && st.s - b.s < -1.6 && st.s - b.s > -25) { mem.revTo = st.s - 0.6; mem.revStop = true; rev = true; }
+  if (o2) { const behind = b.s < o2.s, past = b.s - BUSLEN > o2.s + o2.len + 1.2; if (!past) { if (b.x < LANE2 + 1.2 || lane2Clear(G, o2.s + o2.len + BUSLEN - b.s + 4)) tx = LANE2; else wait = behind; } }
+  const tn = G.legs.find(l => l.kind === 'T' && l.s0 - b.s < 14 && l.s0 - b.s > -2); if (tn && !(o2 && b.s - BUSLEN <= o2.s + o2.len + 1.2)) tx = 0;
+  return { u: clamp((tx - b.x) * 0.9, -1, 1), tx, rev, wait }; }
 // what a careful driver's feet do now (the robot's, and the tutorial's cue): { go, br }
-function busPlan(G, acc, err, st) { const b = G.bus, c = G.cfg, out = { go: false, br: false };
+function busPlan(G, acc, err, st) { const b = G.bus, c = G.cfg, out = { go: false, br: false }; let vlimBlock = 1e9;
   let stopAt = Infinity; const dec = 2.0 + acc * 0.6;
   if (st) stopAt = st.s + err;
   for (const L of G.lights) { if (L.passed) continue; const d = L.s - b.s; if (d < 0) continue; const tArr = d / Math.max(1, b.v), col = lightAt(L, G.t + Math.min(tArr, 3)), now = lightAt(L, G.t); if (now !== 'g' && !(now === 'a' && d < b.v * 0.9) || (now === 'g' && col !== 'g' && d > b.v * b.v / (2 * dec) + 3)) stopAt = Math.min(stopAt, L.s - 1.5); }
   for (const Z of G.zebras) { if (Z.done) continue; const d = Z.s - b.s; if (Z.ped && G.t < Z.ped.t0 + Z.ped.dur && d > 0) stopAt = Math.min(stopAt, Z.s - 3); }
-  for (const car of G.cars) if (!car.gone && car.s > b.s) stopAt = Math.min(stopAt, car.s - CARLEN - 4 - b.v * 0.6);
-  const z = G.zones.find(q => b.s >= q.s0 - 15 && b.s <= q.s1); let vlim = z ? z.lim + 0.5 : c.vmax * 0.95; const vt0 = Math.sqrt(c.comfy * RT) * (0.88 + 0.08 * acc);
+  for (const car of G.cars) if (!car.gone && car.s > b.s && Math.abs(b.x) < BUSW + 1.0) stopAt = Math.min(stopAt, car.s - CARLEN - 4 - b.v * 0.6);
+  { const o2 = blockAhead(G); if (o2 && b.s < o2.s && b.x > LANE2 + 1.5) { const S2 = busSteer(G, {}); if (S2.wait) stopAt = Math.min(stopAt, o2.s - 3); else if (Math.abs(b.x - LANE2) > 1.2) { stopAt = Math.min(stopAt, o2.s - 0.6); vlimBlock = 4.5; } } }
+  const z = G.zones.find(q => b.s >= q.s0 - 15 && b.s <= q.s1); let vlim = Math.min(z ? z.lim + 0.5 : c.vmax * 0.95, vlimBlock); const vt0 = Math.sqrt(c.comfy * RT) * (0.88 + 0.08 * acc);
   for (const l of G.legs) { if (l.kind !== 'T') continue; const d0 = l.s0 - 2 - b.s; if (b.s > l.s0 + l.L + 2) continue; vlim = Math.min(vlim, d0 <= 0 ? vt0 : Math.sqrt(vt0 * vt0 + 2 * dec * 0.8 * d0)); }
   const d = stopAt - b.s, vt = Math.min(vlim, d > 0 ? Math.sqrt(2 * dec * Math.max(0, d)) : 0);
   const need = d > 0.3 ? b.v * b.v / (2 * Math.max(0.3, d)) : 9;
@@ -153,23 +188,29 @@ function winNow(G) { if (!G || G.over) return; G.lesson = null; G.wait = 0; G.st
 const AIMCARD = {"pic": "🚌", "win": "PICK EVERYONE UP ON TIME", "lose": "RUN RED LIGHTS OR MISS STOPS", "how": "GAS, BRAKE, STOP ON THE MARK"};      // the aim card: specs/aims.json (tools/aims.py)
 const LESSONS = {
   1: [{ id: 'stop', title: 'GO, BRAKE, STOP ON THE MARK', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Hold GO (right) to drive. Hold BRAKE (left) to slow. Stop with the front door on the yellow mark: the doors open by themselves. Serve 2 stops.', need: 2 }],
-  2: [{ id: 'time', title: 'KEEP TO TIME', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Every stop has a time. When everyone is on, wait for the time, then press GO to leave. Not before it! Leave 2 stops on time.', need: 2 }],
+  2: [{ id: 'around', title: 'STEER AND REVERSE', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Back away from the van, then steer round it.', need: 2 }],
+  4: [{ id: 'time', title: 'KEEP TO TIME', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Every stop has a time. When everyone is on, wait for the time, then press GO to leave. Not before it! Leave 2 stops on time.', need: 2 }],
   3: [{ id: 'light', title: 'RED LIGHTS AND ZEBRAS', say: G => busCue(G)[0], do: G => busCue(G)[1], at: G => busCue(G)[2], how: 'Stop at a red light and go on green. Stop for people on a zebra crossing. Get past 3 of them safely.', need: 3 }],
 };
 // THE TUTORIAL SHOWS THE PEDAL FOR THIS MOMENT (26 Nov 2026, his words: "it tells me to swipe. I swipe up and then nothing happens"). It said
 // HOLD GO, STOP ON YELLOW for the whole lesson; now it is what a careful driver's feet do this second (busPlan, the robot's own driving):
 // HOLD GO on the right, HOLD BRAKE on the left, LET GO, WAIT while people get on, and at the stop's time TAP GO.
-function busCue(G) { const b = G.bus; if (!b || G.wait > 0) return ['WAIT…', 'wait', false]; const R = [W * 0.76, H * 0.72], Lf = [W * 0.24, H * 0.72], st = nextStop(G);
+function busCue(G) { const b = G.bus; if (!b || G.wait > 0) return ['WAIT…', 'wait', false]; const pg = pedalPos('go'), pb = pedalPos('br'), R = [pg.x + pg.w / 2, pg.y + pg.h / 2], Lf = [pb.x + pb.w / 2, pb.y + pb.h / 2], st = nextStop(G), Q = gearPos(), SP = stickPos();
+  if (G.blocks.length && b.doors <= 0) { const S = busSteer(G, G.lmem = G.lmem || {});      // round a van: back up (R, GO), then D, roll, steer out, and back in
+    if (S.rev) { if (b.gear !== 'R') return Math.abs(b.v) > 0.3 ? ['HOLD BRAKE', 'hold', Lf] : ['TAP R', 'tap', [Q.x, Q.y]]; return ['HOLD GO: BACK UP', 'hold', R]; }
+    if (b.gear === 'R') return Math.abs(b.v) > 0.3 ? ['HOLD BRAKE', 'hold', Lf] : ['TAP D', 'tap', [Q.x, Q.y]];
+    if (Math.abs(S.tx - b.x) > 0.5 && !S.wait) { if (Math.abs(b.v) < 1.6) return ['HOLD GO', 'hold', R]; return [S.tx < b.x ? 'STEER ◀' : 'STEER ▶', 'hold', [SP.x + (S.tx < b.x ? -1 : 1) * SP.r * 0.7, SP.y]]; } }
   if (b.doors > 0) { const D = b.dwell, ready = D && D.ready != null && D.on >= D.off + D.board; if (!ready || G.runner) return ['WAIT: PEOPLE GETTING ON', 'wait', false]; if (st && st.due >= 0 && G.t < st.due - 0.2) return ['WAIT FOR THE TIME…', 'wait', false]; return ['HOLD GO', 'hold', R]; }
   const P = busPlan(G, 1, 0, st); if (P.br) return [b.v < 0.3 ? 'KEEP HOLDING BRAKE' : 'HOLD BRAKE', 'hold', Lf]; if (P.go) return ['HOLD GO', 'hold', R]; return [b.goH || b.brH ? 'LET GO' : 'ROLL…', b.goH || b.brH ? 'release' : 'wait', b.goH ? R : b.brH ? Lf : false]; }
 function lessonStart(G) { G.lesson = { steps: LESSONS[G.N], i: 0, n: 0 }; G.ev.push({ k: 'lessonnext', first: true }); lessonDeal(G); }
 const lessonNow = G => G.lesson && G.lesson.steps[G.lesson.i];
-function lessonDeal(G) { const st = lessonNow(G); G.rnd = rng(G.seed + (G.deals = (G.deals | 0) + 1)); const n = G.lesson.n; setup(G, { yard: st.id }); G.lesson.n = st.id === 'stop' ? 0 : n; G.ev.push({ k: 'yard' }); }
+function lessonDeal(G) { const st = lessonNow(G); G.rnd = rng(G.seed + (G.deals = (G.deals | 0) + 1)); const n = G.lesson.n; setup(G, { yard: st.id, start: st.id === 'around' ? 24.6 : 0 }); G.lmem = {}; G.lesson.n = st.id === 'stop' ? 0 : n; G.ev.push({ k: 'yard' }); }
 function lessonMiss(G, why) { const msg = { red: 'That light was RED! Stop at the line until it is green.', ped: 'Someone was on the crossing! Stop for them.', car: 'Too close! Brake in time.', missed: 'You drove past the stop! Brake sooner: stop with the door on the mark.' }[why] || lessonNow(G).how;
   G.ev.push({ k: 'lessonmiss', how: msg }); G.wait = 1.6; G.next = () => lessonDeal(G); }
 function lessonSee(G, what, st) { const L = lessonNow(G); if (!L || G.wait > 0) return;
   if (L.id === 'stop' && what === 'depart') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
   if (L.id === 'time' && what === 'depart') { if (st.early > 0) { G.lesson.n = 0; G.ev.push({ k: 'lessonreset', how: `Too early by ${st.early} s! Wait for the stop's time, then GO.` }); } else if (st.late > 12) { G.ev.push({ k: 'lessonreset', how: 'A bit late: drive on sooner between stops.' }); } else { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); } }
+  if (L.id === 'around' && what === 'around') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
   if (L.id === 'light' && what === 'pass') { G.lesson.n++; G.ev.push({ k: 'lessonok', n: G.lesson.n, need: L.need }); }
   if (what === 'end' && G.lesson.n < L.need) { lessonDeal(G); return; }
   if (G.lesson.n < L.need) return;

@@ -19,21 +19,33 @@ with sync_playwright() as p:
     E = pg.evaluate; cdp = ctx.new_cdp_session(pg)
     def down(*pts): cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': x, 'y': y, 'id': i + 1} for i, (x, y) in enumerate(pts)]})
     def up(): cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []}); pg.wait_for_timeout(30)
-    E("localStorage.setItem('bsd.taught', '3'); __sim.go(6)"); pg.wait_for_timeout(300); E("(() => { const G = __sim.G; G.cars.forEach(c => c.gone = true); })()")
+    E("localStorage.setItem('bsd.taught', '3'); __sim.go(6)"); pg.wait_for_timeout(300); E("(() => { const G = __sim.G; G.cars.forEach(c => c.gone = true); G.blocks.length = 0; G.onc.length = 0; })()")
     down((320, 700)); pg.wait_for_timeout(150); g1 = E("__sim.G.bus.go"); pg.wait_for_timeout(1200); v1 = E("__sim.G.bus.v")
-    ok(E("__sim.G.bus.goH") and 0 < g1 < 0.6 and v1 > 1, 'holding the right half is GO: it eases in and the bus pulls away', str([g1, v1]))
+    ok(E("__sim.G.bus.goH") and 0 < g1 < 0.6 and v1 > 1, 'holding GO: it eases in and the bus pulls away', str([g1, v1]))
     up(); pg.wait_for_timeout(300); ok(not E("__sim.G.bus.goH") and E("__sim.G.bus.go") < 0.2, 'letting go: off the pedal, the bus coasts', str(E("[__sim.G.bus.goH, __sim.G.bus.go]")))
-    va = E("__sim.G.bus.v"); down((70, 700)); pg.wait_for_timeout(700); vb = E("__sim.G.bus.v"); ok(E("__sim.G.bus.brH") and vb < va - 0.8, 'holding the left half is BRAKE: it slows', str([va, vb])); up()
+    va = E("__sim.G.bus.v"); down((218, 770)); pg.wait_for_timeout(700); vb = E("__sim.G.bus.v"); ok(E("__sim.G.bus.brH") and vb < va - 0.8, 'holding BRAKE slows', str([va, vb])); up()
+    # (27 Nov 2026) steering, reverse, the van in your lane
+    stick = E("(() => { const q = __sim.stickPos(); return [q.x, q.y]; })()")
+    down((320, 700)); pg.wait_for_timeout(900); up(); down((stick[0] + 40, stick[1])); pg.wait_for_timeout(600); x1 = E("__sim.G.bus.x"); up(); pg.wait_for_timeout(100)
+    ok(x1 > 0.2 and E("__sim.G.bus.steer") == 0, 'the stick right of its middle steers right while moving; letting go centres it', str(x1))
+    down((218, 770)); pg.wait_for_timeout(2500); up(); g0 = E("[__sim.G.bus.gear, +__sim.G.bus.v.toFixed(2)]")
+    E("(() => { const G = __sim.G; G.bus.v = 0; })()")
+    gp = E("(() => { const q = __sim.gearPos(); return [q.x, q.y]; })()")
+    down((gp[0], gp[1])); up(); ok(E("__sim.G.bus.gear") == 'R', 'the gear button puts it in reverse', str(E("__sim.G.bus.gear")))
+    s0 = E("__sim.G.bus.s"); down((320, 760)); pg.wait_for_timeout(900); up(); ok(E("__sim.G.bus.s") < s0 - 0.3 and E("__sim.G.bus.v") <= 0, 'in reverse, GO backs the bus up', str([s0, E("__sim.G.bus.s")]))
+    E("(() => { const G = __sim.G; G.bus.v = 0; })()"); down((gp[0], gp[1])); up(); ok(E("__sim.G.bus.gear") == 'D', 'and again: drive forward')
+    r = E("(() => { const S = __sim, G = S.G; G.blocks.length = 0; G.onc.length = 0; G.bus.x = 0; G.bus.v = 0; G.blocks.push({ s: G.bus.s + 8, len: 6.5, kind: 0 }); S.pedal('go', true); let bumped = 0; for (let i = 0; i < 300 && !G.over; i++) { for (const e of S.stepEv(1 / 60)) if (e.k === 'bump') bumped++; if (G.bus.v > 2.2) S.pedal('go', false); } S.pedal('go', false); return [bumped > 0, G.over, +G.bus.v.toFixed(2)]; })()")
+    ok(r[0] and r[1] is None and r[2] == 0, 'rolling slowly into a parked van stops you dead (no crash)', str(r))
     E("document.getElementById('pauseBtn').click()"); pg.wait_for_timeout(150); down((320, 700)); pg.wait_for_timeout(200); ok(not E("__sim.G.bus.goH"), 'touches while paused do nothing'); up(); E("document.getElementById('pResume').click()")
     # ---------- the rules, stepped exactly ----------
-    drive = """(N, fn) => { const S = __sim; S.start(N, { seed: 9 }); const G = S.G; G.far = () => G.stops.forEach(st => st.s += 3000); G.cars.length = 0; G.lights.length = 0; G.zebras.length = 0; G.zones.length = 0; return fn(G, S); }"""
+    drive = """(N, fn) => { const S = __sim; S.start(N, { seed: 9 }); const G = S.G; G.far = () => G.stops.forEach(st => st.s += 3000); G.cars.length = 0; G.lights.length = 0; G.zebras.length = 0; G.zones.length = 0; G.blocks.length = 0; G.onc.length = 0; return fn(G, S); }"""
     stopAt = """(G, S, at) => { const st = G.stops.find(x => !x.served); while (G.bus.s < st.s - 30 && !G.over) { S.pedal('go', true); S.step(1 / 60); } S.pedal('go', false);
       for (let i = 0; i < 6000 && !G.over && G.bus.doors <= 0; i++) { const d = st.s + at - G.bus.s, need = G.bus.v * G.bus.v / (2 * Math.max(0.2, d)); S.pedal('br', need > 1.2 || d < 0.3); if (G.bus.v < 0.5 && d > 0.4) { S.pedal('br', false); S.pedal('go', G.bus.v < 0.4); } else S.pedal('go', false); S.step(1 / 60); if (G.bus.s > st.s + 8) break; } return st; }"""
     r = E(f"({drive})(6, (G, S) => {{ const st = ({stopAt})(G, S, 0); for (let i = 0; i < 600; i++) S.step(1 / 60); return [G.bus.doors > 0, G.pax, st.n, +(st.s - G.bus.s).toFixed(2)]; }})")
     ok(r[0] and r[1] == r[2] and abs(r[3]) < 1.6, 'stopping with the door on the mark: the doors open and everyone gets on', str(r))
     r = E(f"({drive})(6, (G, S) => {{ const st = ({stopAt})(G, S, 0); S.pedal('br', false); for (let i = 0; i < 400; i++) S.step(1 / 60); st.due = Math.round(G.t + 20); const early = st.due - G.t; S.pedal('go', true); S.step(1 / 60); return [+early.toFixed(1), G.early, st.served]; }})")
     ok(r[0] > 0 and r[1] == 1 and r[2], 'leaving before the stop\'s time counts as an early departure', str(r))
-    r = E(f"({drive})(6, (G, S) => {{ const st = G.stops[0]; while (!G.over && G.bus.s < st.s + 10) {{ S.pedal('go', true); S.step(1 / 60); }} return [G.over, G.res && G.res.why]; }})")
+    r = E(f"({drive})(6, (G, S) => {{ const st = G.stops[0]; while (!G.over && G.bus.s < st.s + 30) {{ S.pedal('go', true); S.step(1 / 60); }} return [G.over, G.res && G.res.why]; }})")
     ok(r == ['lost', 'missed'], 'driving past a stop ends the shift', str(r))
     r = E(f"({drive})(6, (G, S) => {{ G.lights.push({{ s: 25, off: 0, g: 0.01, a: 0.01, r: 100 }}, {{ s: 40, off: 0, g: 0.01, a: 0.01, r: 100 }}); let n = 0; while (!G.over && G.bus.s < 45) {{ S.pedal('go', true); for (const e of S.stepEv(1 / 60)) if (e.k === 'red') n++; }} return [n, G.over, G.res && G.res.why]; }})")
     ok(r == [2, 'lost', 'reds'], 'a red light counts; the second ends the shift', str(r))

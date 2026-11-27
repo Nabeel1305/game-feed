@@ -92,9 +92,16 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && G &
 // input (two thumbs): hold the left half for BRAKE, the right half for GO (each touch is followed to its own lift); keys too
 const PTR = new Map();
 function pedalsFromTouches() { if (!G) return; let go = false, br = false; for (const w of PTR.values()) { if (w === 'go') go = true; else br = true; } if (go !== G.bus.goH) pedal(G, 'go', go); if (br !== G.bus.brH) pedal(G, 'br', br); }
-cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); PTR.set(e.pointerId, e.clientX < W / 2 ? 'br' : 'go'); try { cv.setPointerCapture(e.pointerId); } catch (err) {} pedalsFromTouches(); });
-const ptrUp = e => { if (PTR.delete(e.pointerId)) pedalsFromTouches(); }; cv.addEventListener('pointerup', ptrUp); cv.addEventListener('pointercancel', ptrUp);
-const KEYS = new Set(); const keyPed = () => { if (!G || G.over || paused) return; const go = KEYS.has('ArrowUp') || KEYS.has('ArrowRight') || KEYS.has('KeyW'), br = KEYS.has('ArrowDown') || KEYS.has('ArrowLeft') || KEYS.has('KeyS') || KEYS.has('Space'); pedal(G, 'go', go); pedal(G, 'br', br); };
+// (27 Nov 2026) the steering stick (bottom left: a thumb anywhere on the left part works it from its one place), the gear button (D / R), BRAKE and GO
+const inR = (x, y, p, m = 10 * k) => x > p.x - m && x < p.x + p.w + m && y > p.y - m && y < p.y + p.h + m;
+function steerTo(x) { const S = stickPos(); steer(G, clamp((x - S.x) / (S.r * 0.75), -1, 1)); }
+cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const x = e.clientX, y = e.clientY; try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  const Q = gearPos(); if (Math.hypot(x - Q.x, y - Q.y) < Q.r + 12 * k) { gear(G, G.bus.gear === 'R' ? 'D' : 'R'); return; }
+  if (inR(x, y, pedalPos('go'))) { PTR.set(e.pointerId, 'go'); pedalsFromTouches(); return; } if (inR(x, y, pedalPos('br'))) { PTR.set(e.pointerId, 'br'); pedalsFromTouches(); return; }
+  if (x < W * 0.45 && y > H * 0.45 && ui.steerId == null) { ui.steerId = e.pointerId; steerTo(x); } });
+cv.addEventListener('pointermove', e => { if (!G || e.pointerId !== ui.steerId) return; steerTo(e.clientX); });
+const ptrUp = e => { if (e.pointerId === ui.steerId) { ui.steerId = null; if (G) steer(G, 0); } if (PTR.delete(e.pointerId)) pedalsFromTouches(); }; cv.addEventListener('pointerup', ptrUp); cv.addEventListener('pointercancel', ptrUp);
+const KEYS = new Set(); const keyPed = () => { if (!G || G.over || paused) return; const go = KEYS.has('ArrowUp') || KEYS.has('KeyW'), br = KEYS.has('ArrowDown') || KEYS.has('KeyS') || KEYS.has('Space'); pedal(G, 'go', go); pedal(G, 'br', br); steer(G, (KEYS.has('ArrowRight') || KEYS.has('KeyD') ? 1 : 0) - (KEYS.has('ArrowLeft') || KEYS.has('KeyA') ? 1 : 0)); };
 addEventListener('keydown', e => { if (e.repeat) return; KEYS.add(e.code); keyPed(); }); addEventListener('keyup', e => { KEYS.delete(e.code); keyPed(); });
 // your buses: liveries opened by the stars you win
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
@@ -145,7 +152,7 @@ window.__sim = {
   stepEv(dt) { step(G, dt); const e = G.ev.slice(); G.ev.length = 0; return e; },
   adv(sec) { for (let i = 0; i < sec * 60; i++) { if (!G.over) step(G, 1 / 60); for (const e of G.ev) onEvent(G, e); G.ev.length = 0; fxStep(1 / 60); } },
   frame() { draw(performance.now() / 1000, 1 / 60); },
-  pedal(w, on) { pedal(G, w, on); }, showAqua, mySkin, SKINS, store, scr, renderShop, ui, get V3() { return V3; }, W3, pathAt, lightAt, nextStop, pedalPos,
+  pedal(w, on) { pedal(G, w, on); }, showAqua, mySkin, SKINS, store, scr, renderShop, ui, get V3() { return V3; }, W3, pathAt, lightAt, nextStop, pedalPos, gearPos, stickPos,
   go(N) { HEADLESS = false; level = N; startGame(); },
   playing, makeCfg, LESSONS, BLIND, honest, winNow() { winNow(G); }, live() { HEADLESS = false; last = performance.now(); },
   finest() { stepN = 0; applyStep(); }, smooth() { return { step: stepN, ms: +ftAvg.toFixed(1), dpr: DPR }; },

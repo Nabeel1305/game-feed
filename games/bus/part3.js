@@ -139,14 +139,24 @@ function buildRoute(V, g) { const T = V.T, S = V.S; legPoses(g);
     const n = Math.round(z.lim * 3.6), t = canvasTex(128, 128, (c) => { c.fillStyle = '#fff'; c.beginPath(); c.arc(64, 64, 60, 0, TAU); c.fill(); c.strokeStyle = '#e02020'; c.lineWidth = 14; c.beginPath(); c.arc(64, 64, 52, 0, TAU); c.stroke(); c.fillStyle = '#111'; c.font = '900 52px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(n, 64, 68); });
     const sg = new T.Mesh(new T.CircleGeometry(0.5, 24), new T.MeshBasicMaterial({ map: t, side: T.DoubleSide })); sg.position.set(-2.4, 2.6, 0); sg.rotation.y = Math.PI; grp.add(sg); const pole = new T.Mesh(V.cylG, new T.MeshStandardMaterial({ color: 0x777777 })); pole.scale.set(0.04, 2.4, 0.04); pole.position.set(-2.4, 1.2, 0); grp.add(pole);
     const paint = new T.Mesh(new T.PlaneGeometry(2.2, 2.2), new T.MeshBasicMaterial({ map: t, transparent: true, opacity: 0.8 })); paint.rotation.x = -Math.PI / 2; paint.rotation.z = Math.PI; paint.position.set(0, 0.03, 3); grp.add(paint); }
-  // the oncoming traffic (just for life): cars on a loop in the other lane
-  V.onc = [0, 1, 2, 3, 4].map(i => ({ s: g.D * (i / 5) + 30, v: 9 + i, car: V.cars[7 + i] }));
+  // vans and roadworks blocking your lane (27 Nov 2026): a parked van with its hazard lights, or cones and a striped barrier round a hole
+  V.blinks = []; for (const o2 of g.blocks) { const p = pathAt(g, o2.s + o2.len / 2), grp = new T.Group(); grp.position.set(p.x, 0, p.z); grp.rotation.y = p.h; V.route.add(grp);
+    if (o2.len > 5) { const col = [0xf2f2f2, 0x3a7ad8, 0xe8c030][o2.kind % 3], body = new T.Mesh(V.boxG, new T.MeshStandardMaterial({ color: col, roughness: 0.5 })); body.scale.set(2.1, 2.3, o2.len - 0.4); body.position.y = 1.45; body.castShadow = true; grp.add(body);
+      const cab = new T.Mesh(V.boxG, new T.MeshStandardMaterial({ color: 0x223344, roughness: 0.2 })); cab.scale.set(2.0, 0.8, 0.1); cab.position.set(0, 2.0, o2.len / 2 - 0.15); grp.add(cab);
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const w = new T.Mesh(V.cylG, new T.MeshStandardMaterial({ color: 0x111111 })); w.scale.set(0.42, 0.25, 0.42); w.rotation.z = Math.PI / 2; w.position.set(sx * 1.0, 0.42, sz * (o2.len / 2 - 1.1)); grp.add(w); }
+      for (const sx of [-1, 1]) { const hz = new T.Mesh(V.sphG, new T.MeshStandardMaterial({ color: 0x442200, emissive: 0xffa000, emissiveIntensity: 0 })); hz.scale.setScalar(0.14); hz.position.set(sx * 0.85, 0.95, -o2.len / 2 + 0.15); grp.add(hz); V.blinks.push(hz.material); } }
+    else { const bar = new T.Mesh(V.boxG, new T.MeshStandardMaterial({ map: canvasTex(64, 16, c => { for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#ffffff' : '#e02020'; c.fillRect(i * 8, 0, 8, 16); } }) })); bar.scale.set(2.6, 0.3, 0.12); bar.position.set(0, 0.9, -o2.len / 2); grp.add(bar);
+      for (const sx of [-1.2, 1.2]) { const leg = new T.Mesh(V.boxG, V.white); leg.scale.set(0.08, 0.9, 0.08); leg.position.set(sx, 0.45, -o2.len / 2); grp.add(leg); }
+      const hole = new T.Mesh(new T.CircleGeometry(0.9, 18), new T.MeshStandardMaterial({ color: 0x3a2a1a })); hole.rotation.x = -Math.PI / 2; hole.position.set(0, 0.03, 0); grp.add(hole);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU, cn = new T.Mesh(new T.ConeGeometry(0.22, 0.7, 10), new T.MeshStandardMaterial({ color: 0xff6a10 })); cn.position.set(Math.cos(a) * 1.3, 0.35, Math.sin(a) * (o2.len / 2)); cn.castShadow = true; grp.add(cn); } } }
+  // the oncoming traffic: cars in the other lane (from the rules now: pull out only into a gap)
+  V.onc = [0, 1, 2, 3, 4].map(i => ({ car: V.cars[7 + i] }));
   V.bus.paint.color.setHex(mySkin().col); for (const p of V.people) { p.g.visible = false; p.busy = false; } ui.snap = true; }
 function setSign(V, g) { const c = V.signC.getContext('2d'); c.fillStyle = '#0a0a0a'; c.fillRect(0, 0, 256, 40); c.fillStyle = '#ffb020'; c.font = '700 26px "Courier New", monospace'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(`${(g.N % 90) + 7}  ${PLACES[placeOf(g.N)].name.toUpperCase()}`.slice(0, 18), 128, 21); V.signT.needsUpdate = true; V.signFor = g; }
 // ---------- each frame ----------
 function sync(V, g, dt) { const b = g.bus, T = V.T; V.t += dt; if (V.signFor !== g) setSign(V, g);
   // the bus: front at s, back at s - 11.5 (so it bends round the corners)
-  const f = pathAt(g, b.s), r = pathAt(g, b.s - BUSLEN + 0.5), yaw = Math.atan2(f.x - r.x, f.z - r.z), B = V.bus;
+  const f0 = pathAt(g, b.s), r0 = pathAt(g, b.s - BUSLEN + 0.5), fr = RIGHT(f0.h), rr = RIGHT(r0.h), xr = ui.xr = (ui.xr == null ? b.x : ui.xr + (b.x - ui.xr) * Math.min(1, dt * 10)), f = { x: f0.x + fr[0] * b.x, z: f0.z + fr[1] * b.x, h: f0.h }, r = { x: r0.x + rr[0] * xr, z: r0.z + rr[1] * xr, h: r0.h }, yaw = Math.atan2(f.x - r.x, f.z - r.z), B = V.bus;
   B.g.position.set(f.x, 0, f.z); B.g.rotation.y = yaw; const pitch = clamp(-b.a * 0.012, -0.04, 0.04), roll = clamp((b.lat || 0) * 0.012, -0.05, 0.05); B.body.rotation.x += (pitch - B.body.rotation.x) * Math.min(1, dt * 5); B.body.rotation.z += (roll - B.body.rotation.z) * Math.min(1, dt * 5);
   for (const w of B.wheels) w.rotation.x += b.v * dt / 0.52; const op = b.doors > 0 ? 1 : 0; for (const d of B.doors) { d.o = (d.o || 0) + (op - (d.o || 0)) * Math.min(1, dt * 6); d.d1.position.z = d.z + 0.31 + d.o * 0.55; d.d2.position.z = d.z - 0.31 - d.o * 0.55; }
   const br = b.br > 0.05; V.brakeL.material.emissiveIntensity = V.brakeR.material.emissiveIntensity = br ? 3 : 0.5;
@@ -167,7 +177,9 @@ function sync(V, g, dt) { const b = g.bus, T = V.T; V.t += dt; if (V.signFor !==
   // cars: the ones in your lane, and the oncoming ones
   let ci = 0; for (const car of g.cars) { const c = V.cars[ci++]; if (!c) break; c.g.visible = !car.gone && car.s - b.s < 220; if (!c.g.visible) continue; const p = pathAt(g, car.s - CARLEN / 2), p2 = pathAt(g, car.s - CARLEN); c.g.position.set(p.x, 0, p.z); c.g.rotation.y = Math.atan2(p.x - p2.x, p.z - p2.z); c.bl.material.emissiveIntensity = car.v < 1 ? 2.5 : 0.4; }
   for (; ci < 7; ci++) V.cars[ci].g.visible = false;
-  for (const o of V.onc) { o.s -= o.v * dt; if (o.s < b.s - 60) o.s += 260 + Math.random() * 60; const p = pathAt(g, o.s), [rx, rz] = RIGHT(p.h), vis = o.s > -30 && o.s < g.D + 40; o.car.g.visible = vis; o.car.g.position.set(p.x - rx * 3.5, 0, p.z - rz * 3.5); o.car.g.rotation.y = p.h + Math.PI; }
+  for (const bl of V.blinks || []) bl.emissiveIntensity = Math.sin(V.t * 6) > 0 ? 2.5 : 0;
+  { const near = (g.onc || []).filter(q => q.s > b.s - 40 && q.s < b.s + 200).sort((a, c) => Math.abs(a.s - b.s) - Math.abs(c.s - b.s)); V.onc.forEach((o, i) => { const q = near[i]; o.car.g.visible = !!q; if (!q) return; const p = pathAt(g, q.s - CARLEN / 2), [rx, rz] = RIGHT(p.h); o.car.g.position.set(p.x + rx * LANE2, 0, p.z + rz * LANE2); o.car.g.rotation.y = p.h + Math.PI; }); }
+  for (const o of []) { const p = pathAt(g, o.s), [rx, rz] = RIGHT(p.h), vis = false; o.car.g.visible = vis; o.car.g.position.set(p.x - rx * 3.5, 0, p.z - rz * 3.5); o.car.g.rotation.y = p.h + Math.PI; }
   // the camera: behind and above; at the stop it swings round to the door
   const fw = [Math.sin(yaw), Math.cos(yaw)], rt = RIGHT(yaw), asp = innerWidth / innerHeight, portrait = asp < 0.8, atStop = b.doors > 0;
   let cp, cl; if (atStop) { cp = [f.x + rt[0] * 6 + fw[0] * 9, 6.5, f.z + rt[1] * 6 + fw[1] * 9]; cl = [f.x - fw[0] * 2.5 + rt[0] * 1.2, 1.1, f.z - fw[1] * 2.5 + rt[1] * 1.2]; }
@@ -226,7 +238,9 @@ function draw(now, dt) {
   if (FX.red > 0) { ctx.fillStyle = `rgba(255,60,30,${FX.red * 0.2})`; ctx.fillRect(0, 0, W, H); }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${FX.flash * 0.45})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the 2D layer: the pedals, the stop meter, the timetable, the tea ----------
-const pedalPos = w => w === 'br' ? { x: 16, y: H - 150 * k, w: W * 0.36, h: 132 * k } : { x: W - 16 - W * 0.36, y: H - 150 * k, w: W * 0.36, h: 132 * k };
+// the controls (27 Nov 2026): the steering stick bottom left (one place), BRAKE and GO bottom right, and the gear (D / R) above GO
+const pedalPos = w => { const gw = 104 * k, bw = 84 * k; return w === 'br' ? { x: W - 16 - gw - 10 * k - bw, y: H - 128 * k, w: bw, h: 112 * k } : { x: W - 16 - gw, y: H - 150 * k, w: gw, h: 134 * k }; };
+const stickPos = () => ({ x: 74 * k, y: H - 92 * k, r: 56 * k }), gearPos = () => { const p = pedalPos('go'); return { x: p.x + p.w / 2, y: p.y - 36 * k, r: 26 * k }; };
 function hud(G, t) { ctx.textBaseline = 'middle'; const b = G.bus, st = nextStop(G), i = G.stops.indexOf(st);
   if (G.lesson) lessonPanel(G);
   else { // the top: the clock, the next stop and its time, the tea
@@ -236,7 +250,9 @@ function hud(G, t) { ctx.textBaseline = 'middle'; const b = G.bus, st = nextStop
       ctx.font = `700 ${Math.round(14 * k)}px ${BC}`; ctx.fillStyle = left >= 0 ? '#80ff90' : '#ffb070'; ctx.fillText(st.due < 0 ? 'NO TIMETABLE' : left >= 0 ? `DUE ${clockTxt(st.due)} · in ${Math.ceil(left)} s` : `DUE ${clockTxt(st.due)} · ${Math.ceil(-left)} s LATE`, x0 + 78 * k, y0 + 9 * k); }
     // the tea cup (comfort)
     const cx = x0 + w - 26 * k, cy = y0 + 8 * k; ctx.fillStyle = 'rgba(255,255,255,.9)'; rrect(cx - 13 * k, cy - 14 * k, 26 * k, 28 * k, 5 * k); ctx.fill(); ctx.fillStyle = '#a0682a'; const lv = G.tea / 100; rrect(cx - 11 * k, cy + 12 * k - 24 * k * lv, 22 * k, 24 * k * lv, 3 * k); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx + 15 * k, cy, 6 * k, -1.2, 1.2); ctx.stroke(); ctx.font = `700 ${Math.round(10 * k)}px ${BC}`; ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('TEA', cx, cy + 24 * k);
-    ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(12 * k)}px ${BC}`; ctx.fillStyle = '#ffd040'; ctx.fillText(`🧍 ${G.pax} on board`, W / 2, y0 + 50 * k); }
+    if (G.stops.length) { const lastDue = G.stops[G.stops.length - 1].due, tl = Math.max(0, lastDue + G.cfg.grace + 40 - G.t), done = G.stops.filter(q => q.served).length, tn = G.legs.find(l => l.kind === 'T' && l.s0 > b.s), d2 = st ? Math.max(0, Math.round(st.s - b.s)) : 0;
+      ctx.textAlign = 'center'; ctx.font = `700 ${Math.round(13 * k)}px ${BC}`; ctx.fillStyle = tl < 30 ? '#ffb070' : '#fff'; ctx.fillText(`⏱ ${clockTxt(tl).replace(/^0/, '')} left · stops ${done}/${G.stops.length} · 🧍 ${G.pax}`, W / 2, y0 + 50 * k);
+      if (st && b.doors <= 0) { const turn = tn && tn.s0 < st.s ? (tn.side > 0 ? '↱' : '↰') : '▲', td = tn && tn.s0 < st.s ? Math.round(tn.s0 - b.s) : d2; ctx.font = `400 ${Math.round(22 * k)}px ${TF}`; ctx.fillStyle = '#ffd040'; ctx.fillText(`${turn} ${td} m`, W / 2, y0 + 76 * k); } } }
   // the banner
   if (ui.banner) { const B = ui.banner, sc = B.t < 0.12 ? 1.25 - B.t / 0.12 * 0.25 : 1; ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(40 * k * sc)}px ${TF}`; ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(10,12,20,.7)'; ctx.strokeText(B.txt, W / 2, H * 0.3); ctx.fillStyle = B.col || '#fff'; ctx.fillText(B.txt, W / 2, H * 0.3); }
   // the next light, the speed limit
@@ -252,14 +268,17 @@ function hud(G, t) { ctx.textBaseline = 'middle'; const b = G.bus, st = nextStop
     if (D.on < want) { ctx.font = `400 ${Math.round(18 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.fillText(D.on < D.off ? `GETTING OFF ${D.on}/${D.off}` : `GETTING ON ${D.on - D.off}/${D.board}`, W / 2, y); }
     else if (st) { const left = st.due - G.t; ctx.font = `400 ${Math.round(18 * k)}px ${TF}`; if (G.runner) { ctx.fillStyle = '#7af0ff'; ctx.fillText('SOMEONE IS COMING... WAIT', W / 2, y); } else if (st.due >= 0 && left > 0.5) { ctx.fillStyle = '#ffd040'; ctx.fillText(`LEAVE AT ${clockTxt(st.due)} · ${Math.ceil(left)} s`, W / 2, y); } else { ctx.fillStyle = '#80ff90'; ctx.globalAlpha = 0.7 + 0.3 * Math.sin(t * 10); ctx.fillText((G && G.lesson) ? 'ALL ON: PRESS GO!' : 'ALL ON!', W / 2, y); ctx.globalAlpha = 1; } } }
   // speed
-  ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,12,20,.6)'; const kmh = Math.round(b.v * 3.6); ctx.strokeText(kmh, W / 2, H - 112 * k); ctx.fillStyle = '#fff'; ctx.fillText(kmh, W / 2, H - 112 * k); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('km/h', W / 2, H - 92 * k);
+  ctx.textAlign = 'center'; ctx.font = `400 ${Math.round(26 * k)}px ${TF}`; ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(10,12,20,.6)'; const kmh = Math.round(Math.abs(b.v) * 3.6), sx0 = stickPos().x, sy0 = stickPos().y - stickPos().r - 36 * k; ctx.strokeText(kmh, sx0, sy0); ctx.fillStyle = '#fff'; ctx.fillText(kmh, sx0, sy0); ctx.font = `700 ${Math.round(11 * k)}px ${BC}`; ctx.fillText('km/h', sx0, sy0 + 20 * k);
   pedals(G, t);
   if ((G && G.lesson) && G.N <= 1 && !G.lesson && G.t < 5) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(t * 5); ctx.font = `400 ${Math.round(15 * k)}px ${TF}`; ctx.fillStyle = '#fff'; ctx.fillText('HOLD GO TO DRIVE', W / 2, H - 175 * k); ctx.globalAlpha = 1; } }
-function pedals(G, t) { const b = G.bus; for (const [w, name, col, lv] of [['br', 'BRAKE', '#e0463a', b.br], ['go', 'GO', '#2fbf5a', b.go]]) { const p = pedalPos(w), held = w === 'go' ? b.goH : b.brH;
+function pedals(G, t) { const b = G.bus; { const S = stickPos(), u = b.steer || 0; ctx.fillStyle = 'rgba(14,18,28,.45)'; ctx.beginPath(); ctx.arc(S.x, S.y, S.r, 0, TAU); ctx.fill(); ctx.strokeStyle = ui.steerId != null ? '#fff' : 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.5 * k; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.font = `700 ${Math.round(16 * k)}px ${BC}`; ctx.textAlign = 'center'; ctx.fillText('◀', S.x - S.r * 0.72, S.y + 1); ctx.fillText('▶', S.x + S.r * 0.72, S.y + 1); ctx.fillStyle = ui.steerId != null ? '#ffd040' : 'rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(S.x + u * S.r * 0.75, S.y, 20 * k, 0, TAU); ctx.fill(); }
+  { const Q = gearPos(), rv = b.gear === 'R'; ctx.fillStyle = rv ? '#ffd040' : 'rgba(14,18,28,.6)'; ctx.beginPath(); ctx.arc(Q.x, Q.y, Q.r, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5 * k; ctx.stroke(); ctx.fillStyle = rv ? '#111' : '#fff'; ctx.font = `400 ${Math.round(20 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(rv ? 'R' : 'D', Q.x, Q.y + 1); }
+  for (const [w, name, col, lv] of [['br', 'BRAKE', '#e0463a', b.br], ['go', 'GO', '#2fbf5a', b.go]]) { const p = pedalPos(w), held = w === 'go' ? b.goH : b.brH;
     ctx.fillStyle = 'rgba(14,18,28,.45)'; rrect(p.x, p.y, p.w, p.h, 18 * k); ctx.fill(); ctx.fillStyle = col; ctx.globalAlpha = 0.35 + 0.55 * lv; rrect(p.x, p.y + p.h * (1 - lv), p.w, p.h * lv, 18 * k); ctx.fill(); ctx.globalAlpha = 1;
     ctx.strokeStyle = held ? '#fff' : 'rgba(255,255,255,.55)'; ctx.lineWidth = (held ? 4 : 2.5) * k; rrect(p.x, p.y, p.w, p.h, 18 * k); ctx.stroke();
     for (let i = 0; i < 4; i++) { ctx.fillStyle = 'rgba(255,255,255,.18)'; rrect(p.x + p.w * 0.2, p.y + p.h * (0.22 + i * 0.16), p.w * 0.6, 5 * k, 3); ctx.fill(); }
-    ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round(20 * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(name, p.x + p.w / 2, p.y + p.h / 2);
+    ctx.fillStyle = '#fff'; ctx.font = `400 ${Math.round((w === 'br' ? 16 : 20) * k)}px ${TF}`; ctx.textAlign = 'center'; ctx.fillText(w === 'go' && b.gear === 'R' ? 'BACK' : name, p.x + p.w / 2, p.y + p.h / 2);
     if (w === 'go' && b.doors > 0 && b.dwell && b.dwell.on >= b.dwell.off + b.dwell.board && !G.runner) { const st = nextStop(G); if (st && (st.due < 0 || G.t >= st.due - 0.3)) { ctx.strokeStyle = '#80ff90'; ctx.lineWidth = 5 * k; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 10); rrect(p.x - 4, p.y - 4, p.w + 8, p.h + 8, 20 * k); ctx.stroke(); ctx.globalAlpha = 1; } } } }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of t.split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function lessonPanel(G) { coachPanel(G); }
