@@ -2,6 +2,14 @@
 
 Everything learned building the first games. Every new game must follow the **rules**; reuse the **build notes** when a new game is similar to an old one (read that game's `index.html` in `games/<id>/`).
 
+
+### Needs-fixing round of 27 Nov 2026 (what was learned)
+- A `// comment` put in the middle of a line comments out everything after it (froze Dentist, lost Crowd's gate colours, lost Paint's new blob). Use `/* */` mid-line and scan diffs for it.
+- A 2D game drawn over a wave or hill whose top moves must paint the WHOLE frame every time: Surf's lower wave left old pictures (ghost text, a ghost rider) in the strip above it.
+- Text drawn with a thick stroke needs `lineJoin = 'round'`: sharp corners shoot long spikes (Surf's FLOW text grew black bars).
+- The lesson tester touches like a person: one drag, then lets go for most of a second. A game whose speed can die while the thumb is off (Surf climbing) must not stall in a lesson; Surf keeps the board moving while you learn, and its cue now switches only at the top and bottom of the face so the hand never jumps about.
+- An aim card pauses the game until tapped; a live test that never taps it sees time stand still.
+
 ## Nabeel's taste
 - **Clean screens.** Home = title + 2-3 big buttons (Play / Choose level / Rules). Rules on their own screen. No clutter, no pop-up text for things the game handles silently.
 - **Looks:** as real as possible, in 3D (17 Nov 2026; it used to say "not hyper-real"). Real-looking objects (a proper revolver, proper buildings). Scenery drawn past the screen edges so camera moves never show a blank corner.

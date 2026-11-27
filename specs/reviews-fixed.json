@@ -512,6 +512,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: PICK EVERYONE UP ON TIME. YOU LOSE IF: RUN RED LIGHTS OR MISS STOPS. HOW: GAS, BRAKE, STOP ON THE MARK. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "This game is really bad you can't navigate you cant maneuver you cant reve. Bus Driver — fixes needed (his full list on this page)",
+   "did": "Real steering with a fixed stick, a Drive/Reverse button, brake and go; vans and roadworks to steer round and oncoming cars; stops to reach on a timetable you can keep; time left, stops done and the next turn always on screen; a lesson for backing up and steering round."
   }
  ],
  "drone": [
@@ -642,6 +649,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: WALK ACROSS THE WIRE. YOU LOSE IF: FALL OFF TOO OFTEN. HOW: PUSH UP TO WALK, SLIDE TO BALANCE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Make the joystick in a single place then actually make it playable.",
+   "did": "The stick is fixed at the bottom of the screen and no longer appears wherever you touch; the balance is gentler so it can be played."
   }
  ],
  "balloon": [
@@ -987,6 +1001,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: BEAT THE SCORE. YOU LOSE IF: SCORE TOO LOW. HOW: PADDLE, STAND, RIDE THE WAVE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Surf game — complete overhaul needed (his full list on this page)",
+   "did": "Rebuilt as a 2D side view: one fixed pad (up climbs, down drops and gains speed), linked turns give speed and points, the wave changes height so you watch it, white water behind you to outrun to the flag, wipeouts with a quick retry, TRICK near the lip from level 3, and a Drag up → Drag down → Stay ahead tutorial."
   }
  ],
  "splash": [
@@ -1033,6 +1054,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: FINISH IN TIME. YOU LOSE IF: TOO SLOW. HOW: PUSH THIS WAY, HOLD JUMP, LET GO. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Splash Course — fixes needed: Better graphics... Visible obstacle movement... Match visuals to gameplay... Understandable failure... Reliable rendering (his full list on this page)",
+   "did": "The wheels and arms now always move with the game, also after a restart (that was the fault); brighter, cleaner course, runner and crowd; a hit shows a burst and a moment of slow motion, and the banner says what hit you."
   }
  ],
  "sandworm": [
@@ -1217,6 +1245,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: LAND ON THE X. YOU LOSE IF: LAND HARD OR FAR AWAY. HOW: FLY, OPEN THE CHUTE, FLARE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Skydiving — fixes needed: Look around freely... Fixed joystick... Better manoeuvring... Tricks and progression... Major graphics improvements (his full list on this page)",
+   "did": "Fixed stick bottom left, drag anywhere else to look around; forward and sideways moves; a TRICK button with new tricks by level; fields, far land, clouds and haze that clears as you fall."
   }
  ],
  "wolf": [
@@ -1918,6 +1953,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: STOP EVERY MONSTER. YOU LOSE IF: MONSTERS REACH YOU. HOW: PULL BACK, AIM, LET GO. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Make all the monsters that approach in view. As the levels go up give more and more fruits the aiming mechanism is bad its shooting straight. Make the monsters less cute just a little",
+   "did": "Monsters now stay on screen as they come; the pull sets how far the fruit flies, so it arcs to where you aim instead of going straight; new fruits as you go up (grapes at 6, coconut at 10, pineapple at 15); monsters have brows, slit eyes, teeth and darker skins."
   }
  ],
  "shark": [
@@ -3262,6 +3304,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: MAKE THE SKIPS ASKED FOR. YOU LOSE IF: NO STONES LEFT. HOW: DRAG BACK, LET GO, TAP AS IT LANDS. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Skimming Stones — fixes and gameplay improvements: Two fixed controls... aiming pad... pull back, then swipe forwards... clear feedback... mark the previous best... short visual tutorial (his full list on this page)",
+   "did": "Aim pad bottom left (left/right direction, up/down angle, angle shown); throw area bottom right: pull down, then swipe up; power, angle and a smooth release all matter; advice after each throw (TOO STEEP, MORE POWER, GREAT RELEASE...), a short replay, and your best marked on the water; Aim → Angle → Pull → Throw tutorial."
   }
  ],
  "knife": [
@@ -4175,6 +4224,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: GET THE SHIPS HOME. YOU LOSE IF: SUBMARINES SINK TOO MANY. HOW: PING, FIND THE SUB, DROP A CHARGE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "For the game convoy escort, the graphics are generally horrible. You need to do way better with the graphics of the ship, way, way better... (his full list on this page)",
+   "did": "New ships: a shaped hull, bridge, mast with turning radar, funnel, gun and lifeboats on your ship, cargo ships with holds and cranes, a proper submarine; wakes and bow waves, funnel smoke, black smoke and fire when hit; a flashing torpedo warning with its distance."
   }
  ],
  "paint": [
@@ -4223,6 +4279,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: MAKE THE COLOUR ASKED FOR. YOU LOSE IF: THE JAR OVERFLOWS. HOW: SLIDE, DROP: SAME COLOURS JOIN. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "So when i don't drop two same colors on top of one another but rather they meet naturally in the pile should they still make another color is they touch regardless like if three reds or more are touching each other shouldn't they combine to make whatever color with a nice sound effect and stuff",
+   "did": "Yes: three or more of the same colour touching in the pile now squash together into the next colour (five or more jump two colours), with their own sound and 'N TOGETHER!' on the screen."
   }
  ],
  "santa": [
@@ -4424,6 +4487,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: SAVE EVERY SWIMMER. YOU LOSE IF: SOMEONE GETS IN TROUBLE: NO HEARTS. HOW: TAP A SWIMMER TO SAVE THEM. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Way too hard  check if a person can actually win",
+   "did": "Swimmers in trouble now have a red flashing ring and a '!', those getting into trouble a yellow ring; more time to reach them, three misses instead of two, fewer rips early on and spread-out rips later. Checked with a slow, careless player: level 3 went from about 1 win in 6 to 2 in 3."
   }
  ],
  "critters": [
@@ -4791,6 +4861,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: KNOCK THEM OFF THEIR HORSE. YOU LOSE IF: THEY KNOCK YOU OFF. HOW: AIM THE LANCE, BRACE AT THE HIT. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Jousting — fixes needed: Two fixed controls... Release to brace... Short visual tutorial: Lean → Aim → Release to brace (his full list on this page)",
+   "did": "Lean stick fixed bottom left, aiming pad fixed bottom right; lift the aiming thumb to brace, touch the pad again to aim; the rider visibly tucks the lance when braced; forgiving brace time early on; a Lean → Aim → Let go tutorial with hands on the controls."
   }
  ],
  "gridiron": [
@@ -4831,6 +4908,13 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: SCORE MORE POINTS. YOU LOSE IF: THEY SCORE MORE. HOW: PICK A PLAY, THROW TO THE OPEN MAN. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "said": "Make the graphics way better simulate running and make the players look better explain the rules better",
+   "did": "New players (helmets with stripes and face masks, numbers, arms and legs) with a real running stride, juke and tackle poses; the screen now says in plain words which try it is and how many yards to the yellow line."
   }
  ],
  "sinkhole": [
