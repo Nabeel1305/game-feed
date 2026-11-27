@@ -1087,6 +1087,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: RIDE TO THE END. YOU LOSE IF: FALL OFF THE WORM. HOW: STEER, SURGE, BRACE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "Improve the graphics immensely ",
+   "did": "New graphics: canyon walls of layered red and cream sandstone, broken like real rock (not boxes); flat-topped mesas on the skyline; wind ripples on the sand; a warm desert haze instead of a blue one; the worm has a ringed, leathery hide. The moving thumb and DRAG TO STEER now appear only in the tutorial."
   }
  ],
  "climb": [
@@ -1147,6 +1155,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: REACH THE TOP. YOU LOSE IF: FALL THREE TIMES. HOW: DRAG A HAND TO A HOLD. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "Simulator tha hands better especially the falling it currently looks like their hand being overstreched let them actually fall",
+   "did": "When you fall, your hands let go and go with your body: arms fly up loose and flail, legs hang and kick, and the climber drops until the rope catches. (Before, the hands were still aimed at the holds you had left, so the arms stretched.) An arm or leg is never drawn longer than it is."
   }
  ],
  "skydive": [
@@ -1753,6 +1769,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: BE BIGGER THAN THE GIANT. YOU LOSE IF: YOUR CROWD IS GONE. HOW: SLIDE THROUGH THE BEST GATE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "The numbers that increase your numbers are clearly blue and those that reduce it is clearly red. It should be ambiguous and the player needs to find out which one would increase their numbers. Make it confusing so the player must actually think to go into the right column except in the beginning rounds it shouldn't be clear like minus or plus",
+   "did": "Levels 1 to 3 keep blue and red gates to learn on. From level 4 both gates are the same purple, and more and more pairs (a third at level 4, most from level 15) need counting: +40 or ×2 (which is more depends on how many you have), −15 or ÷2, ×½ or ÷½ (the divide one doubles you), ×2 −20 or +30. Every pair has a right answer you can work out from your number."
   }
  ],
  "lighthouse": [
@@ -2262,6 +2286,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: EACH GLASS ONE COLOUR. YOU LOSE IF: RUN OUT OF MOVES. HOW: TAP A GLASS, TAP WHERE TO POUR. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "Fix the sound effect of the pouring make it a nice watery sound. ",
+   "did": "The pour is a real watery sound now: a running stream that rises in pitch as the glass fills, with a wobble and little bubble blips."
   }
  ],
  "sniper": [
@@ -2369,6 +2401,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: FIX EVERY PATIENT. YOU LOSE IF: HURT THEM, OR THE DAY ENDS. HOW: FIND THE PROBLEM, USE THE TOOL. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "This is good do a complete tutorial them no more instructions ",
+   "did": "The tutorial now teaches every job, not just the first three: a hole (find, drill, rinse, fill, smooth, light), a chip, a hidden hole (X-ray), a crown, braces and pulling a tooth. Each shows the tool to tap and the move with a hand, a few big words. After the tutorial nothing tells you what to do. (Also fixed: pulling a tooth was broken; the forceps did nothing.)"
   }
  ],
  "peaks": [
@@ -3127,6 +3167,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: MAKE THE DRINK THEY ORDER. YOU LOSE IF: WRONG DRINKS UPSET THEM. HOW: GLASS, POUR, SHAKE, SERVE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "Why is it still giving instructions after the tutorial after the tutorial no more telling the player what to do",
+   "did": "After the tutorial there is no guide at all: no step list, no highlighted tool, no 'HOLD: POUR INTO IT' on the shaker (it just says SHAKER)."
   }
  ],
  "hotel": [
@@ -3649,6 +3697,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: NAME WHO DID IT. YOU LOSE IF: ACCUSE WRONG TOO MANY TIMES. HOW: SEARCH, ASK, PROVE IT. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "The game is good as long as it gets increasingly harder and a much wider arrray of crimes people clues and scenarios is included so a player can play for years and still be finding new things at the higher levels they should be obvious cases multiple people could have done it and it should take genuine deduction and reasoning",
+   "did": "Three new kinds of case (tampering, poison-pen letters, art swaps; eight kinds in all, each with seven ways it was done), more of everything else. From level 8 more and more cases (all from level 20) have no clue naming the culprit: what was left at the scene belongs to one of two people (three from level 25), the means to one of two others, and they all have motives. You must find who has an alibi and cross them off: only one fits both."
   }
  ],
  "powder": [
@@ -3783,6 +3839,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: REACH THE GOAL. YOU LOSE IF: RUN OUT OF MOVES. HOW: SWIPE TO MAKE 3 IN A ROW. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "This is good make it incrementally harder and more challenging let the levels keep going up and it just keeps getting harder forever. Also make the graphics more glossy and eye catching ",
+   "did": "Past level 12 it keeps getting harder for ever: a step harder each time the level number doubles (a few fewer moves, more to collect, a higher score, more cages), never fewer than 85 moves in 100, so it never becomes impossible. Measured with a careful player: about half won at levels 25 to 60, one in four at 100 and 250. The sweets are glossier: a glassy band, a glow from below and a sharp shine, and a star glint flashes on them now and then."
   }
  ],
  "roach": [
@@ -4312,6 +4376,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: WIN THE MATCH. YOU LOSE IF: THEY WIN THE POINTS. HOW: MOVE UNDER IT, SWIPE UP TO HIT. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "Do a better job at graphics and keep the joystick in a single appropriate place ",
+   "did": "The stick has one fixed place at the bottom left; touching anywhere on the left half moves it from there. New graphics: a court with texture and worn baselines, a real net, banners, umpire's chair, benches, light towers, and players with proper legs, arms, shoes and hair."
   }
  ],
  "lifeguard": [
@@ -4438,6 +4510,14 @@
    "general": true,
    "said": "When somebody goes through the tutorial, a person must always understand what is the aim of this game, how do I win, what causes me to lose... when they press pause... they can basically understand the aim of the game... simple, and visual cues, as little words as possible... the words should be big.",
    "did": "Before the first lesson a card now says, in big words with a picture: TO WIN: REACH THE SCORE. YOU LOSE IF: NO ROOM FOR A BLOCK. HOW: DRAG BLOCKS, FILL A LINE. The game waits while it is up. The same card is in the pause menu (❓ How to play)."
+  },
+  {
+   "kind": "yours",
+   "when": "27 Nov, written on this page",
+   "round": "2026-11-27",
+   "final": true,
+   "said": "Make it glossiier and make sure of the rules and everything is running like it should ",
+   "did": "The blocks are glossy now, like boiled sweets: a glassy sheen, a bright rim and a sharp white shine. Checking the rules I found a real fault: on levels set in the Toy Box, starting from the home screen, the 8 by 8 board was never drawn (only the rocks showed). Fixed. Every rule test passes."
   }
  ],
  "hoopshot": [
