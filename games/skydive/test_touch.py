@@ -27,7 +27,7 @@ with sync_playwright() as p:
         def at(i, gx, gy): x, y = toScreen(gx, gy); return (i, x, y)
         E("localStorage.setItem('sky.taught', '3'); __sim.go(4)"); pg.wait_for_timeout(300)
         E("(() => { const G = __sim.G; G.p.y += 3000; })()")
-        Wd, Ht = E("[innerWidth > innerHeight ? innerWidth : innerHeight, innerWidth > innerHeight ? innerHeight : innerWidth]"); sx, sy = Wd * 0.2, Ht * 0.6
+        Wd, Ht = E("[innerWidth > innerHeight ? innerWidth : innerHeight, innerWidth > innerHeight ? innerHeight : innerWidth]"); S0 = E("__sim.layout()")["s"]; sx, sy = S0["x"], S0["y"]      # (27 Nov 2026: the stick has one place; drags start in its middle)
         def drag(dx, dy, ms):
             touch('touchStart', [at(1, sx, sy)]); touch('touchMove', [at(1, sx + dx * 0.5, sy + dy * 0.5)]); touch('touchMove', [at(1, sx + dx, sy + dy)]); pg.wait_for_timeout(ms); r = E("[__sim.G.p.yaw, __sim.G.p.vx, __sim.G.p.vz, __sim.G.stick.x, __sim.G.stick.y]"); touch('touchEnd', [at(1, sx + dx, sy + dy)]); return r
         y0 = E("__sim.G.p.yaw"); r = drag(60, 0, 900); ok(r[0] - y0 > 0.4, f'{tag}: in freefall, dragging right turns you right', str([y0, r[0]]))

@@ -17,7 +17,7 @@ function fxStep(dt) { FX.shake = Math.max(0, FX.shake - dt * 30); FX.flash = Mat
   if (hint) { hint.t += dt; if (hint.t >= hint.secs) hint = null; } }
 function mySkin() { if (typeof HEADLESS !== 'undefined' && HEADLESS) return SKINS[0]; const id = store.get('skin', 'red'); return SKINS.find(q => q.id === id) || SKINS[0]; }
 function buildWorld() {
-  if (V3) return V3; const T = window.THREE; if (!T || !W3 || !W3.init({ canvas: $('gl'), fov: 60, far: 4000, near: 0.5, dims: () => [W, H] })) { V3 = { none: true }; return V3; }
+  if (V3) return V3; const T = window.THREE; if (!T || !W3 || !W3.init({ canvas: $('gl'), fov: 60, far: 12000, near: 0.5, dims: () => [W, H] })) { V3 = { none: true }; return V3; }
   V3 = { T, S: W3.scene, t: 0, for: null, items: [] }; const V = V3, M = (c, o = {}) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.8 }, o)); V.M = M;
   V.sphG = new T.SphereGeometry(1, 14, 10); V.boxG = new T.BoxGeometry(1, 1, 1); V.cylG = new T.CylinderGeometry(1, 1, 1, 10);
   V.me = makeJumper(V); V.S.add(V.me.g);
@@ -51,10 +51,17 @@ function buildPlace(V, G) { const T = V.T, R = rng(G.seed + 5), c = G.cfg, P = c
   const lin = v => Math.pow(clamp(v, 0, 1), 2.2);
   const col = (x, z, h, sl) => { const f = Math.floor(x / 70 + 100) + Math.floor(z / 55 + 100) * 3, u = Math.abs((Math.sin(f * 12.9898) * 43758.5453) % 1), d = Math.hypot(x - Tg.x, z - Tg.z);
     let c3; if (c.isl && h < 2) c3 = [0.9, 0.82, 0.6]; else if (c.mtn && h > 60) c3 = h > 230 ? [0.95, 0.96, 0.98] : [0.5 - sl * 0.1, 0.48 - sl * 0.1, 0.42]; else if (P === 3) c3 = [0.42 + u * 0.08, 0.42 + u * 0.08, 0.44];
-    else c3 = u < 0.33 ? [0.42, 0.62, 0.28] : u < 0.66 ? [0.8, 0.72, 0.38] : [0.32, 0.52, 0.24]; if (d < c.zone + 40 && !G.roof) c3 = [0.36, 0.62, 0.3];
+    else { const F = [[0.38, 0.6, 0.24], [0.84, 0.74, 0.36], [0.28, 0.48, 0.2], [0.62, 0.7, 0.3], [0.74, 0.56, 0.34], [0.46, 0.66, 0.36]]; c3 = F[Math.floor(u * F.length) % F.length].slice(); const rx = Math.abs(((x + 2000) % 380) - 190), rz = Math.abs(((z + 2000) % 320) - 160); if (rx > 186 || rz > 156) c3 = [0.55, 0.53, 0.5]; else if ((Math.floor(x / 7) + Math.floor(z / 7)) % 2 && u > 0.5) c3 = c3.map(q => q * 0.93); }      /* a patchwork of fields in six colours, furrowed, with lanes between them (27 Nov 2026: "Substantially improve the scenery, terrain... and sense of height") */
+    if (d < c.zone + 40 && !G.roof) c3 = [0.36, 0.62, 0.3];
     return c3.map(lin); };
   add(W3.terrain({ size: 3400, seg: 170, x: Tg.x, z: Tg.z, height: (x, z) => groundAt(G, x, z), colour: col }));
   if (c.isl) add(W3.water({ size: 6000, color: 0x1a5a8a, y: 0 }));
+  // far below and far off: a wider, plainer land out to the horizon, and a ring of hills, so the ground never ends under you
+  { const far = add(W3.terrain({ size: 14000, seg: 90, x: Tg.x, z: Tg.z, height: (x, z) => { const d = Math.hypot(x - Tg.x, z - Tg.z); return d < 1650 ? -30 : groundAt(G, x, z) * 0.6 - 4 + Math.max(0, d - 4500) * 0.06 * (1 + Math.sin(Math.atan2(z - Tg.z, x - Tg.x) * 7) * 0.5); }, colour: (x, z, h, sl) => { const q = Math.abs(Math.sin(Math.floor(x / 160) * 12.9898 + Math.floor(z / 140) * 78.233) * 43758.5453) % 1; return (h > 180 ? [0.55, 0.6, 0.66] : q < 0.5 ? [0.36, 0.56, 0.26] : [0.7, 0.66, 0.38]).map(lin); } })); far.position.y = 0; }
+  // clouds: soft puffs at several heights, so you fall past them and feel the drop
+  { const cc = document.createElement('canvas'); cc.width = cc.height = 128; const g2 = cc.getContext('2d'); for (let i = 0; i < 14; i++) { const x = 30 + Math.random() * 68, y = 44 + Math.random() * 40, r = 18 + Math.random() * 26, gr = g2.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128); }
+    const tex = new T.CanvasTexture(cc); tex.colorSpace = T.SRGBColorSpace; const cm = new T.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, toneMapped: false, opacity: P === 3 ? 0.6 : 0.95 }), p0 = G.p;
+    for (let i = 0; i < 70; i++) { const sp = new T.Sprite(cm), a = R() * TAU, d = 60 + R() * 1400, y = 350 + R() * 1400; sp.position.set(Tg.x + (p0.x - Tg.x) * R() + Math.cos(a) * d, y, Tg.z + (p0.z - Tg.z) * R() + Math.sin(a) * d); const sc = 120 + R() * 260; sp.scale.set(sc, sc * 0.55, 1); add(sp); } }
   // trees, houses, towers
   if (P !== 3) { const trees = []; for (let i = 0; i < 320; i++) { const x = Tg.x + (R() - 0.5) * 2200, z = Tg.z + (R() - 0.5) * 2200, y = groundAt(G, x, z); if (Math.hypot(x - Tg.x, z - Tg.z) < c.zone + 60 || (c.isl && y < 2) || y > 200) continue; trees.push({ x, y, z, s: 2 + R() * 2.2, rot: R() * 6, hue: R(), shade: R() }); } add(W3.pines(trees, { shadow: false })); }
   { const n = P === 3 ? 160 : 26, ms = [V.M(0xd8d4cc), V.M(0x9aa4b0), V.M(0xc8b8a0)]; for (let i = 0; i < n; i++) { const x = Tg.x + (R() - 0.5) * (P === 3 ? 1400 : 1800), z = Tg.z + (R() - 0.5) * (P === 3 ? 1400 : 1800), y = groundAt(G, x, z); if (Math.hypot(x - Tg.x, z - Tg.z) < c.zone + (P === 3 ? 30 : 80) || (c.isl && y < 2)) continue;
@@ -79,7 +86,8 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, p = G.p, h = agl(G);
   // the jumper: belly to earth and spread, tucked head-down, or hanging under the canopy
   const J = V.me, free = p.phase === 'free', op = p.phase === 'opening', can = p.phase === 'canopy' || p.phase === 'landed' && p.open > 0;
   J.g.position.set(p.x, p.y, p.z); J.g.rotation.set(0, -p.yaw + Math.PI / 2, 0);
-  if (free) { const tk = G.tuck ? 1 : 0, tilt = Math.PI / 2 + tk * 0.9 + G.stick.y * 0.25; J.body.rotation.set(tilt, 0, -G.stick.x * 0.35); J.aL.rotation.z = lerp(-1.9, -0.3, tk); J.aR.rotation.z = lerp(1.9, 0.3, tk); J.lL.rotation.z = lerp(-0.45, -0.05, tk); J.lR.rotation.z = lerp(0.45, 0.05, tk); J.aL.rotation.x = J.aR.rotation.x = tk ? 0.3 : 0; }
+  if (free) { const tk = G.tuck ? 1 : 0, tilt = Math.PI / 2 + tk * 0.9 + G.stick.y * 0.25; J.body.rotation.set(tilt, 0, -G.stick.x * 0.35); J.aL.rotation.z = lerp(-1.9, -0.3, tk); J.aR.rotation.z = lerp(1.9, 0.3, tk); J.lL.rotation.z = lerp(-0.45, -0.05, tk); J.lR.rotation.z = lerp(0.45, 0.05, tk); J.aL.rotation.x = J.aR.rotation.x = tk ? 0.3 : 0;
+    if (G.tr) { const u = clamp(G.tr.t / G.tr.dur, 0, 1), e = u * u * (3 - 2 * u); if (G.tr.id === 'spin') J.g.rotation.y += e * TAU; else if (G.tr.id === 'barrel') J.body.rotation.z += e * TAU; else J.body.rotation.x += e * TAU * (G.tr.id === 'double' ? 2 : 1); J.aL.rotation.z = J.aR.rotation.z = 0; J.aL.rotation.z = -0.4; J.aR.rotation.z = 0.4; J.lL.rotation.z = J.lR.rotation.z = 0; } }
   else { J.body.rotation.set(G.flareOn ? 0.25 : 0, 0, -G.stick.x * 0.15); J.aL.rotation.z = -2.6; J.aR.rotation.z = 2.6; J.aL.rotation.x = J.aR.rotation.x = G.flareOn ? 0.9 : 0; J.lL.rotation.z = J.lR.rotation.z = 0; }
   J.can.visible = op || p.phase === 'canopy' || (p.phase === 'landed' && p.openAt > 0); if (op) J.can.scale.set(clamp(p.open / 0.9, 0.08, 1), clamp(p.open / 0.6, 0.15, 1), clamp(p.open / 0.9, 0.08, 1)); else J.can.scale.set(1, 1, 1); J.can.rotation.z = -G.stick.x * 0.25; J.can.rotation.x = G.flareOn ? -0.25 : 0;
   if (p.phase === 'landed') { J.can.rotation.x = Math.min(1.4, (J.can.rotation.x || 0) + dt * 1.2); }
@@ -93,11 +101,13 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, p = G.p, h = agl(G);
   for (const sp of V.socks || []) { const w = windAt(G, 5); sp.rotation.y = -Math.atan2(w.z, w.x); sp.scale.x = 0.5 + clamp(Math.hypot(w.x, w.z) / 7, 0, 1) * 0.6; }
   // after a landing: the path you flew
   if (p.phase === 'landed' && !V.pathL && G.path.length > 2) { V.pathL = new T.Line(new T.BufferGeometry().setFromPoints(G.path.map(q => new T.Vector3(q[0], q[1], q[2])).concat([new T.Vector3(p.x, p.y + 1, p.z)])), new T.LineBasicMaterial({ color: 0xffe040 })); V.S.add(V.pathL); }
+  { const f = W3.scene.fog; if (f) { const hi = clamp(h / 1200, 0, 1); f.near = 200 + hi * 600; f.far = 1400 + hi * 4600; } }
   // the camera: behind the jumper, the horizon level; looking down more in freefall; above the zone after landing
   let want = p.yaw; if (p.phase === 'landed') want = ui.yaw; if (ui.snap) ui.yaw = want; let dy = want - ui.yaw; while (dy > Math.PI) dy -= TAU; while (dy < -Math.PI) dy += TAU; ui.yaw += dy * Math.min(1, dt * (free ? 1.8 : 2.4));
-  const cyw = ui.yaw, dir = [Math.cos(cyw), Math.sin(cyw)]; let pos, tgt;
+  if (!ui.look && (ui.lookYaw || ui.lookPit)) { const kb = Math.min(1, dt * 0.8); ui.lookYaw -= ui.lookYaw * kb; ui.lookPit -= ui.lookPit * kb; }      // let go: the view drifts back behind you
+  const cyw = ui.yaw + (ui.lookYaw || 0), dir = [Math.cos(cyw), Math.sin(cyw)], lp = ui.lookPit || 0; let pos, tgt;
   if (p.phase === 'landed') { pos = [p.x - dir[0] * 40, p.y + 30, p.z - dir[1] * 40]; tgt = [p.x, p.y + 1, p.z]; }
-  else if (free || op) { pos = [p.x - dir[0] * 13, p.y + 7, p.z - dir[1] * 13]; tgt = [p.x + dir[0] * 30, p.y - 26, p.z + dir[1] * 30]; }
+  else if (free || op) { pos = [p.x - dir[0] * 13 * Math.cos(lp), p.y + 7 + 12 * Math.sin(lp), p.z - dir[1] * 13 * Math.cos(lp)]; tgt = [p.x + dir[0] * 30, p.y - 26 - 30 * lp, p.z + dir[1] * 30]; }
   else { pos = [p.x - dir[0] * 17, p.y + 6, p.z - dir[1] * 17]; tgt = [p.x + dir[0] * 34, p.y - 10, p.z + dir[1] * 34]; }
   pos[1] = Math.max(pos[1], surfAt(G, pos[0], pos[2]) + 3);
   if (!ui.cam || ui.snap) { ui.cam = { p: pos.slice(), l: tgt.slice() }; ui.snap = false; } const kc = Math.min(1, dt * (p.phase === 'landed' ? 1.2 : 5)); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (pos[i] - ui.cam.p[i]) * kc; ui.cam.l[i] += (tgt[i] - ui.cam.l[i]) * kc; }
@@ -111,6 +121,9 @@ const meAt = G => scrOf(G.p.x, G.p.y + 2, G.p.z) || { x: W / 2, y: H * 0.45 };
 // ---------- events ----------
 function onEvent(G, e) {
   switch (e.k) {
+    case 'trick': sfx.whoosh(); break;
+    case 'trickdone': say(`${e.name}! +${e.pts}`, W / 2, H * 0.3, '#e0a0ff', 26); vibe(HAP.light); break;
+    case 'notrick': say('TOO LOW FOR A TRICK', W / 2, H * 0.3, '#ffd0d0', 16); break;
     case 'open': sfx.open(); vibe(HAP.heavy); FX.shake = 10; { const h = e.h; say(h > DEPLOY[1] ? 'HIGH OPENING' : h >= DEPLOY[0] ? 'GOOD OPENING' : 'LOW!', W / 2, H * 0.3, h > DEPLOY[1] ? '#fff' : h >= DEPLOY[0] ? '#8fe0ab' : '#ffb0a0', 26); } break;
     case 'canopy': tip('canopy', 'Under the canopy: drag left or right to turn, pull back for brakes. The ring on the ground is where you will land.', 4); break;
     case 'aad': ui.banner = { txt: 'SAFETY OPENED IT!', sub: 'Open between the yellow marks next time (-200)', t: 0, secs: 2.2, small: true }; break;
@@ -147,7 +160,8 @@ function draw(now, dt) {
     ctx.fillStyle = 'rgba(20,30,50,.92)'; rrect(W / 2 - w / 2, hy - h / 2, w, h, 12); ctx.fill(); ctx.fillStyle = '#fff'; lines.forEach((l, i) => ctx.fillText(l, W / 2, hy - h / 2 + 8 * k + lh * (i + 0.5))); ctx.globalAlpha = 1; }
   if (FX.flash > 0) { ctx.fillStyle = `rgba(255,250,230,${FX.flash * 0.3})`; ctx.fillRect(0, 0, W, H); } }
 // ---------- the HUD: stick (left), the buttons (right), the altimeter, the wind, the X ----------
-function layout(G) { return { a: { x: W - 74 * k, y: H - 80 * k, r: 52 * k }, b: { x: W - 190 * k, y: H - 66 * k, r: 40 * k }, alt: { x: W - 30 * k, y0: 70 * k, y1: H - 150 * k } }; }
+// (27 Nov 2026) the stick has one place (bottom left); TRICK sits above TUCK; anywhere else, a drag looks around
+function layout(G) { return { a: { x: W - 74 * k, y: H - 80 * k, r: 52 * k }, b: { x: W - 190 * k, y: H - 66 * k, r: 40 * k }, c: { x: W - 190 * k, y: H - 158 * k, r: 36 * k }, s: { x: 100 * k, y: H - 96 * k, r: 62 * k }, alt: { x: W - 30 * k, y0: 70 * k, y1: H - 150 * k } }; }
 function btnLabels(G) { const ph = G.p.phase; if (ph === 'free') return { a: 'CHUTE', as: 'tap', b: 'TUCK', bs: 'hold' }; if (ph === 'canopy' || ph === 'opening') return { a: 'FLARE', as: 'hold', b: '', bs: '' }; return { a: '', b: '' }; }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
 function txt(s, x, y, col = '#fff', font, al = 'center') { ctx.textAlign = al; if (font) ctx.font = font; ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(20,30,50,.7)'; ctx.strokeText(s, x, y); ctx.fillStyle = col; ctx.fillText(s, x, y); }
@@ -175,8 +189,9 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), p = G.p
   else if (G.rings.length) { txt(`◯ ${G.rings.filter(r => r.done).length}/${G.rings.length}${G.cfg.course ? ' · COURSE: fly every ring' : ''}`, W / 2, 16 * k, G.cfg.course ? '#ffd36a' : '#fff', `700 ${Math.round(13 * k)}px ${BC}`); }
   if (G.cfg.free && !G.lesson) txt(`SCENIC · jump ${(G.scenicN || 0) + 1}${G.scenicBest ? ` · best ${Math.round(G.scenicBest)} m` : ''}`, W / 2, 34 * k, '#fff', `700 ${Math.round(12 * k)}px ${BC}`);
   // the stick
-  if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2; ctx.stroke(); let dx = s2.x - s2.x0, dy = s2.y - s2.y0; const dl = Math.hypot(dx, dy); if (dl > R) { dx *= R / dl; dy *= R / dl; } ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx, s2.y0 + dy, 22 * k, 0, TAU); ctx.fill(); }
-  else if (G.t < 6 || (G.lesson && G.lesson.id === 'fly')) { const x = 110 * k, y = H - 90 * k, a = Math.sin(now * 3) * 26 * k; ctx.globalAlpha = 0.6; ctx.fillStyle = 'rgba(255,255,255,.15)'; ctx.beginPath(); ctx.arc(x, y, 56 * k, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + a * 0.6, y - Math.abs(a), 20 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; txt('DRAG TO FLY', x, y - 70 * k, '#fff', `700 ${Math.round(12 * k)}px ${BC}`); }
+  { const S = L.s, on = !!ui.stick, dx = G.stick.x * S.r * 0.85, dy = -G.stick.y * S.r * 0.85; ctx.globalAlpha = on ? 1 : 0.6; ctx.fillStyle = 'rgba(20,30,50,.4)'; ctx.beginPath(); ctx.arc(S.x, S.y, S.r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2.5; ctx.stroke();      // the stick, in its one place
+    ctx.fillStyle = on ? '#ffe040' : 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.arc(S.x + dx, S.y + dy, 24 * k, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+  if (p.phase === 'free' && tricksOf(G).length) button(L.c, !!G.tr, G.tr ? G.tr.name.split(' ')[0] : 'TRICK', 'tap', '#c060ff');
   const inBand = p.phase === 'free' && h <= DEPLOY[1] && h >= DEPLOY[0] && Math.sin(now * 8) > 0, flareBand = p.phase === 'canopy' && h < 6.5 && h > 2.2;
   button(L.a, lab.a === 'FLARE' ? G.flareOn : false, lab.a, lab.as, lab.a === 'CHUTE' ? '#ff5a4a' : '#40c070', inBand || flareBand); button(L.b, G.tuck, lab.b, lab.bs, '#5aa0ff');
   if (ui.banner) banner(); }

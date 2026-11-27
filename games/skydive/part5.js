@@ -99,9 +99,14 @@ const inC = (b, x, y, pad = 14) => Math.hypot(x - b.x, y - b.y) < b.r + pad * k;
 cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) return; e.preventDefault(); const [x, y] = toStage(e.clientX, e.clientY), L = layout(G), ph = G.p.phase;
   if (x > W * 0.5 && inC(L.a, x, y)) { if (ph === 'free') { if (!chute(G)) sfx.no(); } else if (ph === 'canopy' || ph === 'opening') { flareOn(G, true); ui.btn = { id: e.pointerId, k: 'flare' }; } return; }
   if (x > W * 0.5 && inC(L.b, x, y)) { if (ph === 'free') { tuckOn(G, true); ui.btn = { id: e.pointerId, k: 'tuck' }; } return; }
-  if (x < W * 0.55 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
-cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId || !G) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; const R = 56 * k, dx = (x - s2.x0) / R, dy = (y - s2.y0) / R, d = Math.hypot(dx, dy); setStick(G, d < 0.1 ? 0 : dx, d < 0.1 ? 0 : -dy); });      // up the screen: forward
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); }
+  if (x > W * 0.5 && inC(L.c, x, y) && ph === 'free') { if (!trick(G)) sfx.no(); return; }
+  try { cv.setPointerCapture(e.pointerId); } catch (err) {}
+  if (x < W * 0.42 && y > H * 0.45 && !ui.stick) { ui.stick = { id: e.pointerId }; stickAt(L, x, y); return; }      // the stick works from its one place
+  if (!ui.look) ui.look = { id: e.pointerId, x, y, yaw0: ui.lookYaw || 0, pit0: ui.lookPit || 0 }; });      // anywhere else: drag to look around
+function stickAt(L, x, y) { const S = L.s, dx = (x - S.x) / (S.r * 0.85), dy = (y - S.y) / (S.r * 0.85), d = Math.hypot(dx, dy); setStick(G, d < 0.12 ? 0 : clamp(dx, -1, 1), d < 0.12 ? 0 : clamp(-dy, -1, 1)); }
+cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY); if (ui.stick && ui.stick.id === e.pointerId) { stickAt(layout(G), x, y); return; }
+  const Lk = ui.look; if (Lk && Lk.id === e.pointerId) { ui.lookYaw = Lk.yaw0 + (x - Lk.x) / (W * 0.5) * Math.PI; ui.lookPit = clamp(Lk.pit0 + (y - Lk.y) / (H * 0.6) * 1.2, -0.9, 0.9); } });      // up the screen: forward
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0, 0); } if (ui.look && ui.look.id === e.pointerId) ui.look = null;
   if (ui.btn.id === e.pointerId) { if (G) { if (ui.btn.k === 'flare') flareOn(G, false); else tuckOn(G, false); } ui.btn = {}; } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;

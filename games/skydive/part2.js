@@ -25,7 +25,7 @@ const AAD = 140;                // the safety opens the canopy here
 function makeCfg(N, help, o = {}) {
   const f = curve(N), e = easyOf(N), x = (a, b, s) => a + (b - a) * (1 - Math.exp(-f / s)), place = placeOf(N), scenic = !!o.free;
   return { N, f, e, help: !!help, scenic, free: scenic, place,
-    zone: x(55, 24, 16) * (help ? 1.3 : 1) * (scenic ? 1.6 : 1), wind: x(1.5, 6.5, 18) * (scenic ? 0.5 : 1), shift: N >= 5 && !scenic, dist: x(360, 640, 14), alt: 820 + Math.min(400, f * 10),
+    zone: x(45, 24, 16) * (help ? 1.3 : 1) * (scenic ? 1.6 : 1), wind: x(1.5, 6.5, 18) * (scenic ? 0.5 : 1), shift: N >= 5 && !scenic, dist: x(360, 640, 14), alt: 820 + Math.min(400, f * 10),
     rings: N >= 2 ? Math.min(6, 2 + Math.floor(f / 4)) : 0, course: N >= 8 && N % 4 === 0 && !scenic, roof: place === 3 && N >= 12 && !scenic, isl: place === 1 || place === 4, mtn: place === 2,
     hardOk: scenic, assist: N <= 2 || scenic, canopy: 1 + 0.08 * upLv('canopy'), suit: 1 + 0.08 * upLv('suit') };
 }
@@ -63,6 +63,14 @@ function layout0(G, R) { const c = G.cfg; G.T = { x: 0, z: 0 };
 const agl = G => G.p.y - surfAt(G, G.p.x, G.p.z);
 // ---------- the player's actions ----------
 function setStick(G, x, y) { const L = Math.hypot(x, y); G.stick = L > 1 ? { x: x / L, y: y / L } : { x, y }; }
+// TRICKS (27 Nov 2026, his review: "Allow performing tricks, introducing more advanced manoeuvres as levels progress"): in freefall, TRICK does the best trick
+// you have (a spin from level 4, a front flip from 6, a barrel roll from 9, a double flip from 13), if there is height for it (it ends above the yellow marks).
+// Points for each one, more for the harder ones and for a new kind; while it lasts the stick does nothing.
+const TRICKS = [{ id: 'spin', name: 'SPIN', lv: 4, dur: 1.3, pts: 40 }, { id: 'flip', name: 'FRONT FLIP', lv: 6, dur: 1.5, pts: 70 }, { id: 'barrel', name: 'BARREL ROLL', lv: 9, dur: 1.6, pts: 90 }, { id: 'double', name: 'DOUBLE FLIP', lv: 13, dur: 2.2, pts: 150 }];
+const tricksOf = G => TRICKS.filter(t => G.N >= t.lv || (G.lesson && G.lesson.id === 'trick' && t.lv <= 6));
+function trick(G) { const p = G.p; if (G.over || p.phase !== 'free' || G.tr) return false; const L = tricksOf(G); if (!L.length) return false; const h = agl(G), sp = Math.max(30, -p.vy);
+  const ok = L.filter(t => h - sp * t.dur > DEPLOY[1] + 40); if (!ok.length) { G.ev.push({ k: 'notrick' }); return false; }
+  G.trN = (G.trN || 0) + 1; const t = ok[(G.trN - 1) % ok.length]; G.tr = { t: 0, ...t }; G.tuck = false; G.ev.push({ k: 'trick', id: t.id, name: t.name }); return true; }
 function tuckOn(G, on) { if (G.over) return false; G.tuck = !!on && G.p.phase === 'free'; return G.p.phase === 'free'; }
 function chute(G) { const p = G.p; if (G.over || p.phase !== 'free') return false; p.phase = 'opening'; p.open = 0; p.openAt = agl(G); G.ev.push({ k: 'open', h: p.openAt }); lessonSee(G, 'open', p.openAt); return true; }
 function flareOn(G, on) { if (G.over) return false; const was = G.flareOn; G.flareOn = !!on && G.p.phase === 'canopy'; if (G.flareOn && !was) G.ev.push({ k: 'flare' }); return G.p.phase === 'canopy'; }
@@ -72,10 +80,11 @@ function step(G, dt) {
   if (G.blindT != null) { G.blindT -= dt; if (G.blindT <= 0) { G.blindT = null; tuckOn(G, false); flareOn(G, false); } }
   if (p.phase === 'landed') { G.endT -= dt; if (G.endT <= 0) finishLanding(G); return; }
   const h = agl(G), w = windAt(G, h);
-  if (p.phase === 'free') {
-    p.yaw += G.stick.x * 1.3 * dt;
-    const fwd = G.tuck ? 6 + 30 * Math.max(0, G.stick.y) : 4 + 18 * c.suit * Math.max(0, G.stick.y) - 3 * Math.max(0, -G.stick.y), sink = G.tuck ? 64 : 44 - 6 * Math.max(0, -G.stick.y);
-    const tx = Math.cos(p.yaw) * fwd + w.x, tz = Math.sin(p.yaw) * fwd + w.z, kk = Math.min(1, dt * 0.9);
+  if (G.tr) { G.tr.t += dt; if (G.tr.t >= G.tr.dur) { const fresh = !(G.trDone = G.trDone || {})[G.tr.id]; G.trDone[G.tr.id] = 1; const pts = G.tr.pts + (fresh ? 30 : 0); G.trickPts = (G.trickPts || 0) + pts; G.ev.push({ k: 'trickdone', name: G.tr.name, pts }); lessonSee(G, 'trick'); G.tr = null; } else if (p.phase !== 'free') G.tr = null; }
+  if (p.phase === 'free') { const sx = G.tr ? 0 : G.stick.x, sy = G.tr ? 0 : G.stick.y;
+    p.yaw += sx * 0.7 * dt;      /* (27 Nov 2026: "Make movement responsive, allowing forward and sideways adjustments": left/right now slides you sideways (and turns you a little), and you answer the stick quicker) */
+    const fwd = G.tuck ? 6 + 30 * Math.max(0, sy) : 4 + 18 * c.suit * Math.max(0, sy) - 3 * Math.max(0, -sy), sink = G.tuck ? 64 : 44 - 6 * Math.max(0, -sy), side = sx * 8 * c.suit;
+    const tx = Math.cos(p.yaw) * fwd - Math.sin(p.yaw) * side + w.x, tz = Math.sin(p.yaw) * fwd + Math.cos(p.yaw) * side + w.z, kk = Math.min(1, dt * 1.8);
     p.vx += (tx - p.vx) * kk; p.vz += (tz - p.vz) * kk; p.vy += (-9.8 - 9.8 / (sink * sink) * p.vy * Math.abs(p.vy)) * dt;      /* 23 Nov 2026: gravity and air drag (falls at 9.8 m/s/s at the door, levels off at the falling speed; it was 3 to 4 times gravity at the door) */
     if (h < AAD && !G.lesson) { p.aad = true; G.ev.push({ k: 'aad' }); p.phase = 'opening'; p.open = 0; p.openAt = h; }
     if (h < DEPLOY[1] + 60 && h > DEPLOY[1] && !G.deployCue) { G.deployCue = true; G.ev.push({ k: 'deploycue' }); }
@@ -106,7 +115,7 @@ function touchdown(G, s) { const p = G.p, vs = -p.vy, hs = Math.hypot(p.vx, p.vz
 function finishLanding(G) { const L = G.landed, c = G.cfg; if (G.lesson) return lessonLanded(G);
   if (c.free) { G.ev.push({ k: 'again' }); const R = rng(G.seed + G.t * 1000); layout0(G, R); G.deployCue = G.flareCue = false; G.scenicN = (G.scenicN || 0) + 1; G.scenicBest = Math.min(G.scenicBest || 1e9, L.d); return; }
   const acc = Math.round(1000 * Math.pow(Math.max(0, 1 - L.d / c.zone), 2)), land = { soft: 300, ok: 100, hard: 0, crash: 0 }[L.q], aad = G.p.aad ? -200 : 0;
-  G.score = Math.max(0, acc + land + G.ringPts + aad);
+  G.score = Math.max(0, acc + land + G.ringPts + aad + (G.trickPts || 0));
   const inZone = L.d <= c.zone && !L.water && !L.street, courseOk = !c.course || G.rings.every(r => r.done), qOk = L.q === 'soft' || L.q === 'ok' || (L.q === 'hard' && c.hardOk);
   const win = inZone && courseOk && qOk, why = !win ? (L.water ? 'water' : L.street ? 'street' : !inZone ? 'missed' : !courseOk ? 'course' : 'hard') : null;
   finish(G, win, why); }
@@ -121,21 +130,23 @@ const AIMCARD = {"pic": "🪂", "win": "LAND ON THE X", "lose": "LAND HARD OR FA
 const LESSONS = {
   1: [{ id: 'fly', title: 'FLY YOUR BODY', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Drag the left thumb: forward to fly forward, left or right to turn. Fly through three gold rings.', need: 3 }],
   2: [{ id: 'open', title: 'OPEN BETWEEN THE MARKS', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Watch the altimeter on the right. When the needle is between the yellow marks, tap CHUTE. Twice.', need: 2 }],
+  4: [{ id: 'trick', title: 'TRICKS', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Tap TRICK.', need: 2 }],
   3: [{ id: 'flare', title: 'FLARE', say: G => skyCue(G)[0], do: G => skyCue(G)[1], at: G => skyCue(G)[2], how: 'Turn to face the wind arrow, then hold FLARE when the ground is close (the ring turns green). Land softly twice.', need: 2 }],
 };
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 function lessonSetup(G) { const D = G.lesson, p = G.p, T = G.T; G.deployCue = G.flareCue = false; p.aad = false;
-  if (D.id === 'fly') { G.rings = []; lessonRing(G); }
+  if (D.id === 'fly' || D.id === 'trick') { G.rings = []; if (D.id === 'fly') lessonRing(G); else { p.phase = 'free'; p.y = surfAt(G, p.x, p.z) + 1600; p.vy = -45; } }
   if (D.id === 'open') { G.rings = []; p.phase = 'free'; p.y = surfAt(G, p.x, p.z) + DEPLOY[1] + 260; p.vy = -40; }
   if (D.id === 'flare') { G.rings = []; const wl = G.W.lo, ws = Math.hypot(wl.x, wl.z) || 1, a = Math.atan2(-wl.z, -wl.x); p.phase = 'canopy'; p.fe = 1; p.x = T.x + wl.x / ws * 140; p.z = T.z + wl.z / ws * 140; p.y = surfAt(G, p.x, p.z) + 70; p.yaw = a; p.vx = Math.cos(a) * 14 + wl.x; p.vz = Math.sin(a) * 14 + wl.z; p.vy = -9; } }
 function lessonRing(G) { const p = G.p, a = p.yaw + (G.lesson.n % 2 ? 0.5 : -0.5), d = 110; if (p.y - surfAt(G, p.x, p.z) < 700) { p.y += 600; } G.rings = [{ x: p.x + Math.cos(a) * d, y: p.y - 44 * 7, z: p.z + Math.sin(a) * d, r: 22, done: false, miss: false }]; }
 function lessonSee(G, what, v) { const D = G.lesson; if (!D || D.done) return; const id = D.id;
-  const good = id === 'fly' && what === 'ring' || id === 'open' && what === 'open' && v >= DEPLOY[0] && v <= DEPLOY[1] || id === 'flare' && what === 'land' && v === 'soft';
+  const good = id === 'trick' && what === 'trick' || id === 'fly' && what === 'ring' || id === 'open' && what === 'open' && v >= DEPLOY[0] && v <= DEPLOY[1] || id === 'flare' && what === 'land' && v === 'soft';
   const bad = id === 'open' && what === 'open' && !good || id === 'flare' && what === 'land' && !good;
   if (good) { D.n++; G.ev.push({ k: 'lessonok', n: D.n, need: D.steps[0].need }); if (D.n >= D.steps[0].need) { D.done = true; D.wait = 1.4; } }
   else if (bad) G.ev.push({ k: 'lessonmiss', how: id === 'open' ? (v > DEPLOY[1] ? 'Too high: wait for the needle to reach the yellow marks.' : 'Too low: tap as soon as the needle reaches the yellow marks.') : 'Hold FLARE a little later: when the ring turns green, about the height of a house.' }); }
 function lessonTick(G, dt) { const D = G.lesson, p = G.p;
-  if (!D.done) { if (D.id === 'fly') { const r = G.rings[0]; if (!r || r.done || r.miss) lessonRing(G); if (agl(G) < 400) p.y += 500; }
+  if (!D.done) { if (D.id === 'trick' && agl(G) < DEPLOY[1] + 300) { p.y += 900; }
+    if (D.id === 'fly') { const r = G.rings[0]; if (!r || r.done || r.miss) lessonRing(G); if (agl(G) < 400) p.y += 500; }
     if (D.id === 'open' && p.phase === 'free' && agl(G) < AAD + 20) { G.ev.push({ k: 'lessonmiss', how: 'Too low: tap CHUTE as soon as the needle reaches the yellow marks.' }); lessonSetup(G); }
     if (D.id === 'open' && p.phase === 'canopy') { lessonSetup(G); }
     return; }
@@ -164,8 +175,9 @@ const BLIND = {
 // FLY THIS WAY on the stick (to the ring, into the wind), TAP CHUTE! / HOLD FLARE! only when it would, HOLD TUCK, LET GO, and WAIT… between.
 const SKY = { t: -1e9, v: null };
 function skyCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]; const now = performance.now(); if (now - SKY.t < 120) return SKY.v; SKY.t = now; const all = dryPlanAll(G, null, { t: -1, next: -1 }), last = n => all.filter(q => q[0] === n).pop(), L = layout(G);
-  const ch = last('chute'), fl = last('flareOn'), tk = last('tuckOn'), st = last('setStick'), sx = st ? st[1] : 0, sy = st ? st[2] : 0, s2 = ui.stick, x0 = s2 ? s2.x0 : W * 0.25, y0 = s2 ? s2.y0 : H * 0.7, R = 56 * k; let v;
-  if (ch) v = ['TAP CHUTE!', 'tap', [L.a.x, L.a.y]];
+  const ch = last('chute'), fl = last('flareOn'), tk = last('tuckOn'), st = last('setStick'), sx = st ? st[1] : 0, sy = st ? st[2] : 0, x0 = L.s.x, y0 = L.s.y, R = L.s.r; let v;
+  const tq = last('trick'); if (tq) v = ['TAP TRICK', 'tap', [L.c.x, L.c.y]];
+  else if (ch) v = ['TAP CHUTE!', 'tap', [L.a.x, L.a.y]];
   else if (fl && fl[1] && !G.flareOn) v = ['HOLD FLARE!', 'hold', [L.a.x, L.a.y]];
   else if (tk && tk[1] && !G.tuck) v = ['HOLD TUCK', 'hold', [L.b.x, L.b.y]];
   else if (Math.hypot(sx, sy) > 0.25) v = ['FLY THIS WAY', 'drag', [x0, y0, x0 + sx * R * 0.8, y0 - sy * R * 0.8]];
@@ -175,6 +187,7 @@ function skyCue(G) { if (G.over || G.wait > 0) return ['WAIT…', 'wait', false]
 function honest(G, o, mem) {
   if (G.over) return; const react = o.react == null ? 0.3 : o.react, acc = o.acc == null ? 0.9 : o.acc, p = G.p, R = Math.random;
   if (G.t < (mem.next || 0)) return; mem.next = G.t + 0.08 + react * 0.3; const h = agl(G), T = G.T;
+  if (G.lesson && G.lesson.id === 'trick' && !G.lesson.done && p.phase === 'free' && !G.tr) { ACT.trick(G); return; }
   if (mem.openH == null) mem.openH = DEPLOY[0] + 50 + R() * (DEPLOY[1] - DEPLOY[0] - 100) + (1 - acc) * (R() - 0.5) * 300;
   const turnTo = (yaw, k2 = 1.6) => { let d = yaw - p.yaw; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return clamp(d * k2, -1, 1) + (1 - acc) * (R() - 0.5) * 0.5; };
   if (p.phase === 'free') {
@@ -199,7 +212,7 @@ function honest(G, o, mem) {
 function winNow(G) { if (!G || G.over || G.lesson) return; G.landed = { d: 0, q: 'soft', vs: 1, hs: 2 }; G.p.phase = 'landed'; G.score = 1300; finish(G, true); }
 
 // what the robot would do now, without doing it (tools/dry_plan.py): the tutorial shows this move
-const ACT_REAL = { setStick, tuckOn, chute, flareOn }; let ACT = ACT_REAL;
+const ACT_REAL = { setStick, tuckOn, chute, flareOn, trick }; let ACT = ACT_REAL;
 function dryPlan(G, o, mem) { let got = null; const rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { if (!got && !(a.length > 2 && a.slice(1).every(v => v === 0 || v === false))) got = [n, ...a.slice(1)]; return true; };      /* (a stick at rest, all its numbers 0, is not a move; a first bed, number 0, is) */
   const sr = Math.random; ACT = rec; Math.random = () => 0.5; try { honest(G, Object.assign({ acc: 1, react: 0 }, o || {}), mem || {}); } catch (e) {} finally { ACT = ACT_REAL; Math.random = sr; } return got; }
 function dryPlanAll(G, o, mem) { const all = [], rec = {}; for (const n in ACT_REAL) rec[n] = (...a) => { all.push([n, ...a.slice(1)]); return true; };      /* every call, in order (for a robot that steers and drifts at once) */

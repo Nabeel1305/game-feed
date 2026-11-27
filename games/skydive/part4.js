@@ -7,6 +7,7 @@ let windN = 0, engN = 0, flutN = 0;
 const sfx = {
   click() { tone(880, 0.04, 0.04, 'triangle', 0, 1100); },
   open() { noise(0.25, 140, 0.12, 'lowpass', 0.9); noise(0.5, 600, 0.05, 'bandpass', 0.5, 0.05); tone(70, 0.4, 0.08, 'sine', 0, 45); },
+  whoosh() { noise(0.6, 1200, 0.07, 'bandpass', 0.8, 0, 0.15); tone(300, 0.5, 0.03, 'sine', 0.05, 900); },      // a trick: the air tearing past as you turn
   flare() { noise(0.4, 900, 0.03, 'bandpass', 0.6); },
   beep(n = 1) { for (let i = 0; i < n + 1; i++) tone(1760, 0.07, 0.035, 'square', i * 0.14, null, 3000); },
   ring(n = 0) { noise(0.35, 2400, 0.03, 'bandpass', 0.7); [0, 4, 7].forEach((q, j) => pluck(note(523, q + Math.min(12, n * 2)), 0.7, 0.05, j * 0.06)); },
