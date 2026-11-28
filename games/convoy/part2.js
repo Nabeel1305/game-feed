@@ -176,7 +176,7 @@ function convoyCue(G) { const me = G.me, L = layout(G), D = G.lesson, c = (q, r)
   if (me.pingCd <= 0 && (!ct || ct.r > 70)) return ['TAP PING', 'tap', c(L.ping)];
   if (D.id === 'charge' && ct) { const dd = dist(me, ct), sub = G.subs[ct.sub]; if (dd < 60 + ct.r * 0.3 && ct.r < 70 && me.reload <= 0 && me.charges > 0) { if (sub && me.depth !== sub.band) return ['TAP DEPTH: ' + ['SHALLOW', 'MEDIUM', 'DEEP'][sub.band], 'tap', R(L.depthBtn)]; return ['TAP DROP!', 'tap', c(L.drop)]; } }
   if (tgt) { let d = Math.atan2(tgt.z - me.z, tgt.x - me.x) - me.h; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU;
-    if (Math.abs(d) > 0.25) { const x0 = W * 0.3, y0 = H * 0.68, r = d > 0 ? 1 : -1; return [r > 0 ? 'SLIDE RIGHT TO TURN' : 'SLIDE LEFT TO TURN', 'drag', [x0, y0, x0 + r * 70 * k, y0]]; } }
+    if (Math.abs(d) > 0.25) { const B = L.wheel, r = d > 0 ? 1 : -1; return [r > 0 ? 'WHEEL RIGHT' : 'WHEEL LEFT', 'drag', [B.x, B.y, B.x + r * B.r * 0.8, B.y]]; } }
   return ['WAIT… STEAMING ON', 'wait', false]; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 function lessonSetup(G) { const D = G.lesson, me = G.me, R = G.rnd; G.torps = []; G.subs.forEach(s => s.gone = true); G.contacts = []; G.lessonNoFire = true;

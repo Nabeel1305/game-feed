@@ -3556,7 +3556,7 @@
       "id": "convoy",
       "name": "Convoy Escort",
       "status": "testing",
-      "version": "0.2.6",
+      "version": "0.2.7",
       "added": "2026-11-22",
       "path": "games/convoy/index.html",
       "artifact": "https://claude.ai/artifact/69SNiM1Z8ufMyXTYu3R4xD",

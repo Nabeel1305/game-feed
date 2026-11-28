@@ -30,10 +30,11 @@ with sync_playwright() as p:
         def mid(bx): return (bx['x'] + bx['w'] / 2, bx['y'] + bx['h'] / 2) if 'w' in bx else (bx['x'], bx['y'])
         E("localStorage.setItem('cvy.taught', '3'); __sim.go(1)"); pg.wait_for_timeout(300)
         E("(() => { const G = __sim.G; G.subs.forEach(s => s.gone = true); })()")
-        Wd, Ht = E("[innerWidth > innerHeight ? innerWidth : innerHeight, innerWidth > innerHeight ? innerHeight : innerWidth]"); sx, sy = Wd * 0.35, Ht * 0.6
+        Wd, Ht = E("[innerWidth > innerHeight ? innerWidth : innerHeight, innerWidth > innerHeight ? innerHeight : innerWidth]"); Lw = E("__sim.layout()")['wheel']; sx, sy = Lw['x'], Lw['y']
         h0 = E("__sim.G.me.h"); touch('touchStart', [at(1, sx, sy)]); touch('touchMove', [at(1, sx + 30, sy)]); touch('touchMove', [at(1, sx + 60, sy)]); pg.wait_for_timeout(2500)
         ok(E("__sim.G.stick") > 0.8 and E("__sim.G.me.h") - h0 > 0.1, f'{tag}: dragging the wheel right turns the ship right', str([h0, E("__sim.G.me.h")])); touch('touchEnd', [at(1, sx + 60, sy)]); pg.wait_for_timeout(100)
         ok(E("__sim.G.stick") == 0, f'{tag}: letting go centres the wheel')
+        touch('touchStart', [at(2, Wd * 0.45, Ht * 0.35)]); touch('touchMove', [at(2, Wd * 0.55, Ht * 0.35)]); pg.wait_for_timeout(60); ok(E("__sim.G.stick") == 0, f'{tag}: a drag in the open sea does not steer'); touch('touchEnd', [at(2, Wd * 0.55, Ht * 0.35)])
         L = E("__sim.layout()")
         E("__sim.G.me.thr = 2"); tapG(*mid(L['speed'])); ok(E("__sim.G.me.thr") == 3, f'{tag}: a tap on SPEED goes from CRUISE to FULL', str(E("__sim.G.me.thr"))); tapG(*mid(L['speed'])); ok(E("__sim.G.me.thr") == 1, f'{tag}: another tap goes to STOP'); tapG(*mid(L['speed'])); ok(E("__sim.G.me.thr") == 2, f'{tag}: and another back to CRUISE')
         tapG(*mid(L['ping'])); ok(E("__sim.G.me.pingCd") > 0, f'{tag}: PING pings'); cd = E("__sim.G.me.pingCd"); tapG(*mid(L['ping'])); ok(E("__sim.G.me.pingCd") <= cd, f'{tag}: and has to wait to ping again')

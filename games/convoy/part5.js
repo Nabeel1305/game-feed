@@ -24,7 +24,7 @@ let practiceOn = false;
 function startGame(mini) {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(practiceOn ? 1 + ((Math.random() * unlocked) | 0) : level, { help: helpOn(), teach: !practiceOn, mini: !!mini, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  TXT.length = 0; PARTS.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.banner = null; ui.stick = null; ui.btn = {}; ui.map = false;
+  TXT.length = 0; PARTS.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.look = null; ui.lookYaw = ui.lookUp = ui.lookT = 0; ui.snap = true; ui.banner = null; ui.stick = null; ui.btn = {}; ui.map = false;
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -81,7 +81,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; ui.stick = null; ui.btn = {}; if (G) { setStick(G, 0); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; ui.stick = null; ui.look = null; ui.btn = {}; if (G) { setStick(G, 0); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -101,9 +101,13 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
   if (L.crewBtn && inR(L.crewBtn, x, y)) { if (!crewJob(G, L.crewBtn.job)) sfx.no(); return; }
   if (inR(L.fast, x, y)) { fastOn(G, G.fast === 1); return; }
   if (inR(L.map, x, y)) { ui.map = !ui.map; sfx.click(); return; }
-  if (x < W * 0.6 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
-cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId || !G) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; const dx = (x - s2.x0) / (56 * k); setStick(G, Math.abs(dx) < 0.08 ? 0 : clamp(dx, -1, 1)); });      // drag right: turn right
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0); } }
+  const B = L.wheel; if (!ui.stick && Math.hypot(x - B.x, y - B.y) < B.r * 1.35) { ui.stick = { id: e.pointerId }; wheelTo(x); try { cv.setPointerCapture(e.pointerId); } catch (err) {} return; }      /* the wheel, in its one place: where the thumb is on it sets the rudder */
+  if (!ui.look) { ui.look = { id: e.pointerId, x, y, yaw0: ui.lookYaw, up0: ui.lookUp }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });      /* anywhere else: drag to look around */
+function wheelTo(x) { const B = layout(G).wheel, dx = (x - B.x) / B.r; setStick(G, Math.abs(dx) < 0.1 ? 0 : clamp(dx * 1.15, -1, 1)); }
+cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
+  if (ui.stick && ui.stick.id === e.pointerId) { wheelTo(x); return; }      // thumb right of the middle: turn right
+  const l = ui.look; if (l && l.id === e.pointerId) { ui.lookYaw = l.yaw0 + (x - l.x) / W * 3.4; while (ui.lookYaw > Math.PI) ui.lookYaw -= TAU; while (ui.lookYaw < -Math.PI) ui.lookYaw += TAU; ui.lookUp = clamp(l.up0 + (y - l.y) / H * 1.6, 0, 1); } });      // drag left/right: turn the view; drag down: rise above the sea to see further
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0); } if (ui.look && ui.look.id === e.pointerId) { ui.look = null; ui.lookT = 2.5; } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'grey');

@@ -5453,7 +5453,7 @@ function convoyCue(G) { const me = G.me, L = layout(G), D = G.lesson, c = (q, r)
   if (me.pingCd <= 0 && (!ct || ct.r > 70)) return ['TAP PING', 'tap', c(L.ping)];
   if (D.id === 'charge' && ct) { const dd = dist(me, ct), sub = G.subs[ct.sub]; if (dd < 60 + ct.r * 0.3 && ct.r < 70 && me.reload <= 0 && me.charges > 0) { if (sub && me.depth !== sub.band) return ['TAP DEPTH: ' + ['SHALLOW', 'MEDIUM', 'DEEP'][sub.band], 'tap', R(L.depthBtn)]; return ['TAP DROP!', 'tap', c(L.drop)]; } }
   if (tgt) { let d = Math.atan2(tgt.z - me.z, tgt.x - me.x) - me.h; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU;
-    if (Math.abs(d) > 0.25) { const x0 = W * 0.3, y0 = H * 0.68, r = d > 0 ? 1 : -1; return [r > 0 ? 'SLIDE RIGHT TO TURN' : 'SLIDE LEFT TO TURN', 'drag', [x0, y0, x0 + r * 70 * k, y0]]; } }
+    if (Math.abs(d) > 0.25) { const B = L.wheel, r = d > 0 ? 1 : -1; return [r > 0 ? 'WHEEL RIGHT' : 'WHEEL LEFT', 'drag', [B.x, B.y, B.x + r * B.r * 0.8, B.y]]; } }
   return ['WAIT… STEAMING ON', 'wait', false]; }
 function lessonStart(G) { const st = LESSONS[G.N][0]; G.lesson = { steps: LESSONS[G.N], i: 0, n: 0, id: st.id }; G.ev.push({ k: 'lessonnext', first: true }); lessonSetup(G); }
 function lessonSetup(G) { const D = G.lesson, me = G.me, R = G.rnd; G.torps = []; G.subs.forEach(s => s.gone = true); G.contacts = []; G.lessonNoFire = true;
@@ -5510,7 +5510,7 @@ function winNow(G) { if (!G || G.over || G.lesson) return; finish(G, true); }
 // it gets old), torpedo wakes running white, depth-charge columns, survivors' rafts. The map button shows it all from above.
 const FX = { shake: 0, stop: 0, flash: 0, red: 0, slow: 0 }, TXT = [], PARTS = [];
 let hint = null, V3 = null;
-const ui = { snap: true, banner: null, stick: null, btn: {}, cam: null, yaw: 0, map: false };
+const ui = { snap: true, banner: null, stick: null, btn: {}, cam: null, yaw: 0, map: false, look: null, lookYaw: 0, lookUp: 0, lookT: 0 };
 const optShake = () => store.get('shake', true) !== false;
 function say(txt, x, y, col = '#fff', size = 24) { TXT.push({ txt, x, y, col, size, t: 0 }); if (TXT.length > 8) TXT.shift(); }
 function tip(key, txt, secs = 3) { if (HEADLESS || !(G && G.lesson)) return; tip.seen = tip.seen || {}; if (tip.seen[key]) return; tip.seen[key] = 1; hint = { txt, t: 0, secs }; }
@@ -5595,8 +5595,9 @@ function sync(V, G, dt) { V.t += dt; const T = V.T, me = G.me;
   { const p = V.course.geometry.attributes.position; let x = me.x, z = me.z, h = me.h; for (let i = 0; i < 24; i++) { p.setXYZ(i, x, 1.5, z); const dtt = 1.3; h += G.stick * 0.13 * clamp(Math.abs(me.v) / 6, 0.25, 1.2) * dtt; x += Math.cos(h) * Math.max(3, Math.abs(me.v)) * dtt; z += Math.sin(h) * Math.max(3, Math.abs(me.v)) * dtt; } p.needsUpdate = true; V.course.computeLineDistances(); }
   // the camera: above and behind, swinging after the ship's heading
   if (ui.snap) ui.yaw = me.h; let dy = me.h - ui.yaw; while (dy > Math.PI) dy -= TAU; while (dy < -Math.PI) dy += TAU; ui.yaw += dy * Math.min(1, dt * 1.5);
-  const back = 88, up = 40, side = 34, pos = [me.x - Math.cos(ui.yaw) * back - Math.sin(ui.yaw) * side, up, me.z - Math.sin(ui.yaw) * back + Math.cos(ui.yaw) * side], tgt = [me.x + Math.cos(ui.yaw) * 120, 0, me.z + Math.sin(ui.yaw) * 120];
-  if (!ui.cam || ui.snap) { ui.cam = { p: pos.slice(), l: tgt.slice() }; ui.snap = false; } const kc = Math.min(1, dt * 3); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (pos[i] - ui.cam.p[i]) * kc; ui.cam.l[i] += (tgt[i] - ui.cam.l[i]) * kc; }
+  if (!ui.look && (ui.lookT -= dt) <= 0) { const e = Math.min(1, dt * 1.2); ui.lookYaw -= ui.lookYaw * e; ui.lookUp -= ui.lookUp * e; }      /* let go of looking: after a moment the view swings back behind the ship */
+  const yw = ui.yaw + ui.lookYaw, back = 88 + 130 * ui.lookUp, up = 40 + 190 * ui.lookUp, side = 34 * (1 - ui.lookUp), pos = [me.x - Math.cos(yw) * back - Math.sin(yw) * side, up, me.z - Math.sin(yw) * back + Math.cos(yw) * side], tgt = [me.x + Math.cos(yw) * 120, 0, me.z + Math.sin(yw) * 120];
+  if (!ui.cam || ui.snap) { ui.cam = { p: pos.slice(), l: tgt.slice() }; ui.snap = false; } const kc = Math.min(1, dt * (ui.look ? 12 : 3)); for (let i = 0; i < 3; i++) { ui.cam.p[i] += (pos[i] - ui.cam.p[i]) * kc; ui.cam.l[i] += (tgt[i] - ui.cam.l[i]) * kc; }
   const sh = FX.shake > 0 && optShake() ? (Math.random() - 0.5) * FX.shake * 0.1 : 0, cam = W3.cam; cam.position.set(ui.cam.p[0] + sh, ui.cam.p[1] + sh, ui.cam.p[2]); cam.lookAt(ui.cam.l[0], ui.cam.l[1], ui.cam.l[2]); cam.updateMatrixWorld();
   W3.setFocus(me.x, 0, me.z, 200); }
 function scrOf(x, y, z) { const V = V3; if (!V || V.none) return null; return W3.screen(new V.T.Vector3(x, y, z)); }
@@ -5654,7 +5655,7 @@ function crewNeed(G) { const me = G.me; if (!G.crew.some(c => !c.job)) return nu
 // when there is a job to do (it sends a team to the most urgent one).
 function layout(G) { const need = G ? crewNeed(G) : null, surf = G ? G.subs.some(s => s.surf && !s.gone && Math.hypot(s.x - G.me.x, s.z - G.me.z) < 1600) : false;
   return { ping: { x: W - 74 * k, y: H - 80 * k, r: 48 * k }, drop: { x: W - 186 * k, y: H - 66 * k, r: 40 * k }, gun: surf ? { x: W - 74 * k, y: H - 192 * k, r: 34 * k } : null,
-  depthBtn: { x: W - 246 * k, y: H - 150 * k, w: 120 * k, h: 36 * k }, speed: { x: 12 * k, y: H - 48 * k, w: 124 * k, h: 38 * k },
+  depthBtn: { x: W - 246 * k, y: H - 150 * k, w: 120 * k, h: 36 * k }, speed: { x: 12 * k, y: H - 236 * k, w: 124 * k, h: 38 * k }, wheel: { x: 96 * k, y: H - 104 * k, r: 72 * k },
   crewBtn: need ? { job: need, x: 12 * k, y: 52 * k, w: 150 * k, h: 38 * k } : null,
   fast: { x: W - 118 * k, y: 10 * k, w: 50 * k, h: 34 * k }, map: { x: W - 62 * k, y: 10 * k, w: 50 * k, h: 34 * k } }; }
 function wrapText(t, w) { const out = []; let cur = ''; for (const wd of String(t).split(' ')) { const tr = cur ? cur + ' ' + wd : wd; if (ctx.measureText(tr).width > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
@@ -5675,9 +5676,9 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   for (const m of G.M) { if (m.sunk) continue; const p = scrOf(m.x, 22, m.z), d = Math.round(Math.hypot(m.x - me.x, m.z - me.z)), hurt = m.fire > 0;
     const col = hurt ? '#ff8a6a' : '#9fe8ff';
     if (p && p.front && p.x > 30 * k && p.x < W - 30 * k && p.y > 40 * k && p.y < H - 30 * k) { txt('▼ CONVOY', p.x, p.y - 6 * k, col, `700 ${Math.round(12 * k)}px ${BC}`); continue; }
-    let ang = Math.atan2(m.z - me.z, m.x - me.x) - ui.yaw; ang = Math.atan2(Math.sin(ang), Math.cos(ang));      /* 0 = straight ahead */
+    let ang = Math.atan2(m.z - me.z, m.x - me.x) - ui.yaw - ui.lookYaw; ang = Math.atan2(Math.sin(ang), Math.cos(ang));      /* 0 = straight ahead */
     const ex = W / 2 + Math.sin(ang) * W, ey = H / 2 - Math.cos(ang) * H, sx = W / 2, sy = H / 2, f = Math.min((W / 2 - 46 * k) / Math.max(1, Math.abs(ex - sx)), (H / 2 - 60 * k) / Math.max(1, Math.abs(ey - sy)));
-    const ax = sx + (ex - sx) * f, ay = Math.min(H - 100 * k, sy + (ey - sy) * f), dir = Math.atan2(ey - sy, ex - sx);
+    const ax = sx + (ex - sx) * f, ay0 = sy + (ey - sy) * f, ay = Math.min(ax < 230 * k || ax > W - 300 * k ? H - 220 * k : H - 100 * k, ay0),      /* (never over the wheel or the buttons) */ dir = Math.atan2(ey - sy, ex - sx);
     ctx.save(); ctx.translate(ax, ay); ctx.fillStyle = 'rgba(10,20,26,.7)'; ctx.beginPath(); ctx.arc(0, 0, 22 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
     ctx.rotate(dir); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(30 * k, 0); ctx.lineTo(20 * k, -8 * k); ctx.lineTo(20 * k, 8 * k); ctx.closePath(); ctx.fill(); ctx.restore();
     txt('🚢', ax, ay - 4 * k, '#fff', `${Math.round(14 * k)}px sans-serif`); txt('CONVOY', ax, ay - 30 * k, col, `700 ${Math.round(10 * k)}px ${BC}`); txt(`${d} m`, ax, ay + 11 * k, col, `700 ${Math.round(9 * k)}px ${BC}`); }
@@ -5698,8 +5699,9 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   // fast-forward and map
   rbtn(L.fast, G.fast > 1 ? '⏩ ×6' : '⏩', G.fast > 1, '#3a6a9a', danger(G)); rbtn(L.map, '🗺 MAP', ui.map, '#3a6a9a');
   // the wheel (floating stick)
-  if (ui.stick) { const s2 = ui.stick, R = 56 * k; ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(s2.x0, s2.y0, R, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = 2; ctx.stroke(); const dx = clamp(s2.x - s2.x0, -R, R); ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(s2.x0 + dx, s2.y0, 22 * k, 0, TAU); ctx.fill(); }
-  else if (false) {}
+  { const B = L.wheel, R = B.r, dx = clamp(G.stick, -1, 1) * R; ctx.fillStyle = ui.stick ? 'rgba(255,255,255,.18)' : 'rgba(10,20,26,.45)'; ctx.beginPath(); ctx.arc(B.x, B.y, R, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.stroke();      /* the wheel: always in this one place */
+    ctx.fillStyle = 'rgba(255,255,255,.55)'; for (const sgn of [-1, 1]) { ctx.beginPath(); ctx.moveTo(B.x + sgn * R * 0.86, B.y); ctx.lineTo(B.x + sgn * R * 0.68, B.y - 9 * k); ctx.lineTo(B.x + sgn * R * 0.68, B.y + 9 * k); ctx.closePath(); ctx.fill(); }
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.moveTo(B.x - R * 0.6, B.y); ctx.lineTo(B.x + R * 0.6, B.y); ctx.stroke(); ctx.fillStyle = ui.stick ? '#fff' : 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(B.x + dx, B.y, 26 * k, 0, TAU); ctx.fill(); }
   // the action buttons: PING, the depth setting and DROP, GUN
   const surf = G.subs.some(s => s.surf && !s.gone && Math.hypot(s.x - me.x, s.z - me.z) < 1600);
   cbtn(L.ping, 'PING', me.pingCd > 0 ? me.pingCd.toFixed(1) : 'sonar', '#7ad0ff', me.pingCd <= 0 && me.sonarOk);
@@ -5786,7 +5788,7 @@ let practiceOn = false;
 function startGame(mini) {
   audio(); if (tutForce == null) tutRun = null; if (!HEADLESS && tutForce == null) store.set('level', level);
   G = newGame(practiceOn ? 1 + ((Math.random() * unlocked) | 0) : level, { help: helpOn(), teach: !practiceOn, mini: !!mini, taught: tutForce != null ? tutForce : store.get('taught', 0) | 0 }); paused = false; endT = 0;
-  TXT.length = 0; PARTS.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.snap = true; ui.banner = null; ui.stick = null; ui.btn = {}; ui.map = false;
+  TXT.length = 0; PARTS.length = 0; FX.shake = FX.stop = FX.flash = FX.red = 0; hint = null; ui.look = null; ui.lookYaw = ui.lookUp = ui.lookT = 0; ui.snap = true; ui.banner = null; ui.stick = null; ui.btn = {}; ui.map = false;
   if (!HEADLESS) { $('pauseBtn').classList.remove('hidden'); show(null); }
   last = performance.now(); warm = 30; winN = 0; winSum = 0;
 }
@@ -5843,7 +5845,7 @@ function sndIcon() { $('sndBtn').textContent = MUTE ? '🔇' : '🔊'; }
 MUTE = !!store.get('mute', false); sndIcon();
 $('sndBtn').onclick = () => { audio(); setMute(!MUTE); store.set('mute', MUTE); sndIcon(); if (!MUTE) sfx.click(); };
 // pause: the same three controls in every game
-function openPause() { paused = true; ui.stick = null; ui.btn = {}; if (G) { setStick(G, 0); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
+function openPause() { paused = true; ui.stick = null; ui.look = null; ui.btn = {}; if (G) { setStick(G, 0); } $('pLvl').textContent = `Level ${G.N}`; $('pDiag').textContent = `Picture ${stepN + 1} of ${STEPS.length} · ${Math.round(1000 / ftAvg)} a second · ${W3 && W3.ok ? '3D' : 'no 3D'}`; show('ovPause'); }
 $('pauseBtn').onclick = () => { if (G && !G.over) openPause(); };
 $('pResume').onclick = () => { paused = false; show(null); last = performance.now(); };
 $('pRestart').onclick = () => { sfx.click(); level = G.N; startGame(); };
@@ -5863,9 +5865,13 @@ cv.addEventListener('pointerdown', e => { audio(); if (!G || G.over || paused) r
   if (L.crewBtn && inR(L.crewBtn, x, y)) { if (!crewJob(G, L.crewBtn.job)) sfx.no(); return; }
   if (inR(L.fast, x, y)) { fastOn(G, G.fast === 1); return; }
   if (inR(L.map, x, y)) { ui.map = !ui.map; sfx.click(); return; }
-  if (x < W * 0.6 && !ui.stick) { ui.stick = { id: e.pointerId, x0: x, y0: y, x, y }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });
-cv.addEventListener('pointermove', e => { const s2 = ui.stick; if (!s2 || s2.id !== e.pointerId || !G) return; const [x, y] = toStage(e.clientX, e.clientY); s2.x = x; s2.y = y; const dx = (x - s2.x0) / (56 * k); setStick(G, Math.abs(dx) < 0.08 ? 0 : clamp(dx, -1, 1)); });      // drag right: turn right
-function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0); } }
+  const B = L.wheel; if (!ui.stick && Math.hypot(x - B.x, y - B.y) < B.r * 1.35) { ui.stick = { id: e.pointerId }; wheelTo(x); try { cv.setPointerCapture(e.pointerId); } catch (err) {} return; }      /* the wheel, in its one place: where the thumb is on it sets the rudder */
+  if (!ui.look) { ui.look = { id: e.pointerId, x, y, yaw0: ui.lookYaw, up0: ui.lookUp }; try { cv.setPointerCapture(e.pointerId); } catch (err) {} } });      /* anywhere else: drag to look around */
+function wheelTo(x) { const B = layout(G).wheel, dx = (x - B.x) / B.r; setStick(G, Math.abs(dx) < 0.1 ? 0 : clamp(dx * 1.15, -1, 1)); }
+cv.addEventListener('pointermove', e => { if (!G) return; const [x, y] = toStage(e.clientX, e.clientY);
+  if (ui.stick && ui.stick.id === e.pointerId) { wheelTo(x); return; }      // thumb right of the middle: turn right
+  const l = ui.look; if (l && l.id === e.pointerId) { ui.lookYaw = l.yaw0 + (x - l.x) / W * 3.4; while (ui.lookYaw > Math.PI) ui.lookYaw -= TAU; while (ui.lookYaw < -Math.PI) ui.lookYaw += TAU; ui.lookUp = clamp(l.up0 + (y - l.y) / H * 1.6, 0, 1); } });      // drag left/right: turn the view; drag down: rise above the sea to see further
+function endTouch(e) { if (ui.stick && ui.stick.id === e.pointerId) { ui.stick = null; if (G) setStick(G, 0); } if (ui.look && ui.look.id === e.pointerId) { ui.look = null; ui.lookT = 2.5; } }
 cv.addEventListener('pointerup', endTouch); cv.addEventListener('pointercancel', endTouch);
 const starsAll = () => Object.values(store.get('stars', {}) || {}).reduce((a, b) => a + b, 0), skinOpen = q => starsAll() >= q.stars, skinsOpen = () => SKINS.filter(skinOpen).length;
 function showAqua() { const sel = store.get('skin', 'grey');
