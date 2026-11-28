@@ -44,7 +44,7 @@ function setup(G, R) { const c = G.cfg; c.route = Math.max(c.route, 1000 + c.sub
   G.M = []; const n = c.merchants; for (let i = 0; i < n; i++) { const col = i % 2 ? 1 : -1, row = Math.floor(i / 2); const sx = -dz * col * 160 * (n > 1 ? 1 : 0) - dx * row * 220, sz = dx * col * 160 * (n > 1 ? 1 : 0) - dz * row * 220;
     G.M.push({ i, x: sx, z: sz, ox: sx, oz: sz, hp: c.mission === 'cripple' ? 2 : N_HP(c.N), sunk: false, fire: 0 }); }
   G.cv = { x: 0, z: 0, v: c.mission === 'cripple' ? 5 : 7 };
-  // your ship: ahead of the convoy
+  // your ship: ahead of the convoy (arrows on the screen show where the convoy is)
   G.me = { x: dx * 350, z: dz * 350, h: G.dir, v: THR[2], thr: 2, rud: 0, hp: 100, flood: 0, fire: 0, sonarOk: true, gunOk: true, engOk: true, charges: c.charges, reload: 0, pingCd: 0, gunCd: 0, depth: 1 };
   G.allies = []; for (let i = 0; i < c.allies; i++) G.allies.push({ i, x: -dz * 500 * (i ? -1 : 1), z: dx * 500 * (i ? -1 : 1), h: G.dir, ph: i * Math.PI });
   G.stick = 0; G.subs = []; G.torps = []; G.contacts = []; G.blasts = []; G.surv = []; G.reports = []; G.crew = [{ job: null, t: 0 }, { job: null, t: 0 }]; G.kills = 0; G.lost = 0; G.rescued = 0; G.score = 0; G.alarm = 0;

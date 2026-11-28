@@ -4231,6 +4231,13 @@
    "round": "2026-11-27",
    "said": "For the game convoy escort, the graphics are generally horrible. You need to do way better with the graphics of the ship, way, way better... (his full list on this page)",
    "did": "New ships: a shaped hull, bridge, mast with turning radar, funnel, gun and lifeboats on your ship, cargo ships with holds and cranes, a proper submarine; wakes and bow waves, funnel smoke, black smoke and fire when hit; a flashing torpedo warning with its distance."
+  },
+  {
+   "kind": "yours",
+   "when": "28 Nov, in the chat",
+   "round": "2026-11-28",
+   "said": "It says get the ships home, but I can't see any ships. I can only see my ship.",
+   "did": "The convoy starts behind you, out of sight. Now every convoy ship you can see has CONVOY over it, and every one you cannot has an arrow at the edge of the screen pointing to it, with its distance."
   }
  ],
  "paint": [

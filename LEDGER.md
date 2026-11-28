@@ -112,7 +112,7 @@ _Generated from `games.json` by `tools/ledger.py`. Do not edit by hand._
 | 102 | **Sandworm Rider** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/PbXWEHsATZqDX9T7CuvtmZ) | `games/sandworm/index.html` |
 | 103 | **Skydive** | testing | not yet (he has not said so) | 0.1.6 | [play](https://claude.ai/artifact/MNp1BHLVL7mAUuG2g3LBQS) | `games/skydive/index.html` |
 | 104 | **Detective** | testing | not yet (he has not said so) | 0.2.1 | [play](https://claude.ai/artifact/DoNRuvKurjoX26yW9XdhHv) | `games/detective/index.html` |
-| 105 | **Convoy Escort** | testing | not yet (he has not said so) | 0.2.5 | [play](https://claude.ai/artifact/69SNiM1Z8ufMyXTYu3R4xD) | `games/convoy/index.html` |
+| 105 | **Convoy Escort** | testing | not yet (he has not said so) | 0.2.6 | [play](https://claude.ai/artifact/69SNiM1Z8ufMyXTYu3R4xD) | `games/convoy/index.html` |
 | 106 | **Pottery Wheel** | testing | not yet (he has not said so) | 0.2.0 | [play](https://claude.ai/artifact/CKQSrVfQeUR3YjaxGHgR6S) | `games/pottery/index.html` |
 | 107 | **Joust** | testing | not yet (he has not said so) | 0.1.5 | [play](https://claude.ai/artifact/7YEdDKBqpVbzBNgsC4ygxX) | `games/joust/index.html` |
 | 108 | **Splash Course** | testing | not yet (he has not said so) | 0.1.7 | [play](https://claude.ai/artifact/QYpVghGPM1iKKzFaMdMQYw) | `games/splash/index.html` |

@@ -166,6 +166,16 @@ function hud(G, now) { ctx.textBaseline = 'middle'; const L = layout(G), me = G.
   // contact labels: age, and "sure"
   for (const c of G.contacts) { const s = scrOf(c.x, 4, c.z); if (!s || !s.front) continue; const age = Math.round(G.t - c.t); txt(c.sure && age < 8 ? 'SURE' : c.heard ? 'HEARD' : `${age}s`, s.x, s.y - 12 * k, c.sure && age < 8 ? '#ff6a5a' : '#ffd36a', `700 ${Math.round(11 * k)}px ${BC}`); }
   for (const s of G.subs) if (s.surf && !s.gone) { const p = scrOf(s.x, 14, s.z); if (p && p.front) txt('▼ SURFACED', p.x, p.y - 10 * k, '#ff6a5a', `700 ${Math.round(12 * k)}px ${BC}`); }
+  // the convoy ships you guard: a label over each one you can see, an arrow at the edge of the screen for each one you cannot
+  for (const m of G.M) { if (m.sunk) continue; const p = scrOf(m.x, 22, m.z), d = Math.round(Math.hypot(m.x - me.x, m.z - me.z)), hurt = m.fire > 0;
+    const col = hurt ? '#ff8a6a' : '#9fe8ff';
+    if (p && p.front && p.x > 30 * k && p.x < W - 30 * k && p.y > 40 * k && p.y < H - 30 * k) { txt('▼ CONVOY', p.x, p.y - 6 * k, col, `700 ${Math.round(12 * k)}px ${BC}`); continue; }
+    let ang = Math.atan2(m.z - me.z, m.x - me.x) - ui.yaw; ang = Math.atan2(Math.sin(ang), Math.cos(ang));      /* 0 = straight ahead */
+    const ex = W / 2 + Math.sin(ang) * W, ey = H / 2 - Math.cos(ang) * H, sx = W / 2, sy = H / 2, f = Math.min((W / 2 - 46 * k) / Math.max(1, Math.abs(ex - sx)), (H / 2 - 60 * k) / Math.max(1, Math.abs(ey - sy)));
+    const ax = sx + (ex - sx) * f, ay = Math.min(H - 100 * k, sy + (ey - sy) * f), dir = Math.atan2(ey - sy, ex - sx);
+    ctx.save(); ctx.translate(ax, ay); ctx.fillStyle = 'rgba(10,20,26,.7)'; ctx.beginPath(); ctx.arc(0, 0, 22 * k, 0, TAU); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+    ctx.rotate(dir); ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(30 * k, 0); ctx.lineTo(20 * k, -8 * k); ctx.lineTo(20 * k, 8 * k); ctx.closePath(); ctx.fill(); ctx.restore();
+    txt('🚢', ax, ay - 4 * k, '#fff', `${Math.round(14 * k)}px sans-serif`); txt('CONVOY', ax, ay - 30 * k, col, `700 ${Math.round(10 * k)}px ${BC}`); txt(`${d} m`, ax, ay + 11 * k, col, `700 ${Math.round(9 * k)}px ${BC}`); }
   // top: the convoy, the harbour, your ship, your charges
   { const cx = W / 2, y = 22 * k, ships = G.M.map(m => m.sunk ? '✕' : '●').join(' '), dPort = Math.max(0, Math.hypot(G.cv.x - G.port.x, G.cv.z - G.port.z)), need = G.cfg.need || Math.ceil(G.cfg.merchants * G.cfg.keep - 0.001);
     ctx.fillStyle = 'rgba(10,20,26,.6)'; rrect(cx - 175 * k, y - 15 * k, 350 * k, 30 * k, 10); ctx.fill();
